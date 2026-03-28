@@ -3,7 +3,7 @@
 import { useState } from 'react'
 import { DragDropContext, Droppable, Draggable, DropResult } from '@hello-pangea/dnd'
 import SprintHeader from './SprintHeader'
-import { moveCardInSprintAction, addSprintColumnAction } from '@/app/actions/sprintBoard'
+import { moveCardInSprintAction, addSprintColumnAction, createCardInSprintAction } from '@/app/actions/sprintBoard'
 
 interface SprintCard {
   id: string
@@ -36,6 +36,76 @@ interface Sprint {
 interface SprintBoardProps {
   sprint: Sprint
   columns: SprintColumn[]
+  users?: { id: string; name: string; email: string; avatarUrl?: string | null }[]
+  tags?: { id: string; name: string; color: string }[]
+}
+
+function AddCardInline({ sprintId, columnId, onAdded }: { sprintId: string; columnId: string; onAdded: (card: SprintCard) => void }) {
+  const [open, setOpen] = useState(false)
+  const [title, setTitle] = useState('')
+  const [saving, setSaving] = useState(false)
+
+  async function handleAdd() {
+    if (!title.trim()) return
+    setSaving(true)
+    const result = await createCardInSprintAction({ sprintId, sprintColumnId: columnId, title: title.trim() })
+    setSaving(false)
+    if ('card' in result && result.card) {
+      onAdded({
+        id: result.card.id,
+        title: result.card.title,
+        description: result.card.description,
+        responsible: result.card.responsible,
+        color: result.card.color,
+        tags: [],
+      })
+      setTitle('')
+      setOpen(false)
+    }
+  }
+
+  if (!open) {
+    return (
+      <button
+        onClick={() => setOpen(true)}
+        className="w-full flex items-center gap-1.5 px-3 py-2 text-sm text-gray-500 hover:text-gray-700 hover:bg-white/60 rounded-lg transition-colors mt-1"
+      >
+        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
+        </svg>
+        Adicionar card
+      </button>
+    )
+  }
+
+  return (
+    <div className="mt-2 space-y-2">
+      <textarea
+        autoFocus
+        value={title}
+        onChange={e => setTitle(e.target.value)}
+        onKeyDown={e => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); handleAdd() } if (e.key === 'Escape') setOpen(false) }}
+        placeholder="Título do card..."
+        rows={2}
+        className="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-400 resize-none"
+        aria-label="Título do novo card"
+      />
+      <div className="flex gap-2">
+        <button
+          onClick={handleAdd}
+          disabled={saving || !title.trim()}
+          className="flex-1 bg-blue-600 text-white text-xs py-1.5 rounded-lg hover:bg-blue-700 disabled:opacity-50 transition-colors"
+        >
+          {saving ? 'Criando...' : 'Adicionar card'}
+        </button>
+        <button onClick={() => { setOpen(false); setTitle('') }} className="p-1.5 text-gray-400 hover:text-gray-600">
+          <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+          </svg>
+        </button>
+      </div>
+    </div>
+  )
 }
 
 export default function SprintBoard({ sprint, columns: initialColumns }: SprintBoardProps) {
@@ -70,17 +140,23 @@ export default function SprintBoard({ sprint, columns: initialColumns }: SprintB
     }
   }
 
+  function handleCardAdded(columnId: string, card: SprintCard) {
+    setColumns(cols => cols.map(col =>
+      col.id === columnId ? { ...col, cards: [...col.cards, card] } : col
+    ))
+  }
+
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-100 via-blue-50 to-indigo-100 flex flex-col">
+    <div className="min-h-screen bg-gradient-to-br from-slate-100 via-blue-50 to-indigo-100 flex flex-col pb-16">
       <SprintHeader sprint={sprint} />
-      <div className="flex-1 overflow-x-auto p-6">
+      <div className="flex-1 overflow-x-auto p-4">
         <DragDropContext onDragEnd={handleDragEnd}>
-          <div className="flex gap-4 h-full items-start">
+          <div className="flex gap-3 h-full items-start">
             {columns.map(col => (
               <div key={col.id} className="flex flex-col w-72 shrink-0">
-                <div className="flex items-center justify-between mb-3 px-1">
+                <div className="flex items-center justify-between mb-2 px-1">
                   <h3 className="text-sm font-semibold text-gray-700">{col.title}</h3>
-                  <span className="text-xs text-gray-400 bg-gray-100 rounded-full px-2 py-0.5">
+                  <span className="text-xs text-gray-400 bg-white/60 rounded-full px-2 py-0.5">
                     {col.cards.length}
                   </span>
                 </div>
@@ -89,7 +165,7 @@ export default function SprintBoard({ sprint, columns: initialColumns }: SprintB
                     <div
                       ref={provided.innerRef}
                       {...provided.droppableProps}
-                      className={`flex flex-col gap-2 min-h-[120px] rounded-xl p-2 transition-colors ${
+                      className={`flex flex-col gap-2 min-h-[80px] rounded-xl p-2 transition-colors ${
                         snapshot.isDraggingOver ? 'bg-blue-50' : 'bg-white/60'
                       }`}
                     >
@@ -101,7 +177,7 @@ export default function SprintBoard({ sprint, columns: initialColumns }: SprintB
                               {...dragProvided.draggableProps}
                               {...dragProvided.dragHandleProps}
                               className={`bg-white rounded-lg border border-gray-100 p-3 cursor-grab transition-all ${
-                                dragSnapshot.isDragging ? 'shadow-lg ring-2 ring-blue-300' : 'hover:shadow-md'
+                                dragSnapshot.isDragging ? 'shadow-lg ring-2 ring-blue-300 rotate-1' : 'shadow-sm hover:shadow-md hover:bg-gray-50'
                               }`}
                               style={{
                                 ...dragProvided.draggableProps.style,
@@ -137,6 +213,11 @@ export default function SprintBoard({ sprint, columns: initialColumns }: SprintB
                     </div>
                   )}
                 </Droppable>
+                <AddCardInline
+                  sprintId={sprint.id}
+                  columnId={col.id}
+                  onAdded={(card) => handleCardAdded(col.id, card)}
+                />
               </div>
             ))}
 
@@ -165,7 +246,7 @@ export default function SprintBoard({ sprint, columns: initialColumns }: SprintB
               ) : (
                 <button
                   onClick={() => setAddingCol(true)}
-                  className="w-full h-12 border-2 border-dashed border-gray-300 rounded-xl text-sm text-gray-400 hover:border-blue-400 hover:text-blue-500 transition-colors flex items-center justify-center gap-2"
+                  className="w-full flex items-center gap-2 px-4 py-3 bg-white/50 hover:bg-white/70 rounded-xl text-sm text-gray-600 hover:text-gray-800 transition-all font-medium"
                 >
                   <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />

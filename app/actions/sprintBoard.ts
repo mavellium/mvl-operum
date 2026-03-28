@@ -2,6 +2,7 @@
 
 import { verifySession } from '@/lib/dal'
 import prisma from '@/lib/prisma'
+import { randomUUID } from 'crypto'
 import {
   getSprintColumns,
   createSprintColumn,
@@ -51,6 +52,50 @@ export async function moveCardInSprintAction(cardId: string, sprintColumnId: str
     return { success: true }
   } catch (err) {
     return { error: err instanceof Error ? err.message : 'Erro ao mover card' }
+  }
+}
+
+export async function createCardInSprintAction(input: {
+  sprintId: string
+  sprintColumnId: string
+  title: string
+  description?: string
+  color?: string
+}) {
+  try {
+    await verifySession()
+
+    // Find first available board column (fallback for required columnId)
+    const sprint = await prisma.sprint.findUnique({ where: { id: input.sprintId } })
+    if (!sprint) return { error: 'Sprint não encontrado' }
+
+    const firstColumn = await prisma.column.findFirst({
+      where: { boardId: sprint.boardId },
+      orderBy: { position: 'asc' },
+    })
+    if (!firstColumn) return { error: 'Nenhuma coluna encontrada no board' }
+
+    const existingCards = await prisma.card.count({
+      where: { sprintColumnId: input.sprintColumnId },
+    })
+
+    const card = await prisma.card.create({
+      data: {
+        id: randomUUID(),
+        title: input.title,
+        description: input.description ?? '',
+        responsible: '',
+        color: input.color ?? '#3b82f6',
+        position: 0,
+        columnId: firstColumn.id,
+        sprintId: input.sprintId,
+        sprintColumnId: input.sprintColumnId,
+        sprintPosition: existingCards,
+      },
+    })
+    return { card }
+  } catch (err) {
+    return { error: err instanceof Error ? err.message : 'Erro ao criar card' }
   }
 }
 

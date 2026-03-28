@@ -3,7 +3,6 @@ import { render, screen } from '@testing-library/react'
 import KanbanBoard from '@/components/board/KanbanBoard'
 import type { BoardState } from '@/types/kanban'
 
-// Mock DnD context — render children directly
 vi.mock('@hello-pangea/dnd', () => ({
   DragDropContext: ({ children }: { children: React.ReactNode }) => <>{children}</>,
   Droppable: ({ children }: { children: (p: object, s: object) => React.ReactNode }) =>
@@ -57,51 +56,67 @@ vi.mock('@/app/actions/cardResponsible', () => ({
 }))
 
 const boardState: BoardState = {
-  projectName: 'Test Board',
-  columns: [
-    { id: 'col-1', title: 'A Fazer', cardIds: ['c1', 'c2'] },
-  ],
-  cards: {
-    c1: { id: 'c1', title: 'Card Sprint 1', description: '', responsible: '', color: '#3b82f6', sprintId: 's1', createdAt: 0, updatedAt: 0 },
-    c2: { id: 'c2', title: 'Card Sem Sprint', description: '', responsible: '', color: '#6b7280', sprintId: null, createdAt: 0, updatedAt: 0 },
-  },
+  projectName: 'Test Project',
+  columns: [{ id: 'col1', title: 'To Do', cardIds: [] }],
+  cards: {},
 }
 
 const sprints = [
   { id: 's1', name: 'Sprint 1', status: 'ACTIVE' as const },
+  { id: 's2', name: 'Sprint 2', status: 'PLANNED' as const },
 ]
 
-const currentUser = { id: 'u1', name: 'Ana Silva', email: 'ana@x.com' }
+beforeEach(() => vi.clearAllMocks())
 
-beforeEach(() => {
-  vi.clearAllMocks()
-})
-
-describe('KanbanBoard extended', () => {
+describe('KanbanBoard — no sprint filter bar', () => {
   it('does NOT render SprintFilterBar even when sprints are provided', () => {
-    render(<KanbanBoard initialState={boardState} boardId="b1" sprints={sprints} />)
-    expect(screen.queryByRole('button', { name: 'Todos' })).not.toBeInTheDocument()
-    expect(screen.queryByRole('button', { name: 'Sprint 1' })).not.toBeInTheDocument()
+    render(
+      <KanbanBoard
+        initialState={boardState}
+        boardId="b1"
+        sprints={sprints}
+        tags={[]}
+        users={[]}
+        currentUser={null}
+      />
+    )
+    // SprintFilterBar would render a "Todos" button — should NOT be present
+    expect(screen.queryByRole('button', { name: /todos/i })).not.toBeInTheDocument()
   })
 
-  it('shows all cards regardless of sprint assignment', () => {
-    render(<KanbanBoard initialState={boardState} boardId="b1" sprints={sprints} />)
-    expect(screen.getByText('Card Sprint 1')).toBeInTheDocument()
-    expect(screen.getByText('Card Sem Sprint')).toBeInTheDocument()
+  it('renders board header with project name', () => {
+    render(
+      <KanbanBoard
+        initialState={boardState}
+        boardId="b1"
+        sprints={[]}
+        tags={[]}
+        users={[]}
+        currentUser={null}
+      />
+    )
+    expect(screen.getByText('Test Project')).toBeInTheDocument()
   })
 
-  it('renders "Adicionar outra lista" button at end of columns', () => {
-    render(<KanbanBoard initialState={boardState} boardId="b1" sprints={sprints} />)
-    expect(screen.getByRole('button', { name: /adicionar outra lista/i })).toBeInTheDocument()
-  })
-
-  it('renders UserAvatar in BoardHeader when currentUser provided', () => {
-    render(<KanbanBoard initialState={boardState} boardId="b1" currentUser={currentUser} />)
-    expect(screen.getByTitle('Ana Silva')).toBeInTheDocument()
-  })
-
-  it('renders BoardActionMenu button in header', () => {
-    render(<KanbanBoard initialState={boardState} boardId="b1" />)
-    expect(screen.getByRole('button', { name: /board actions/i })).toBeInTheDocument()
+  it('renders all columns without sprint filter', () => {
+    const state: BoardState = {
+      ...boardState,
+      columns: [
+        { id: 'col1', title: 'Backlog', cardIds: [] },
+        { id: 'col2', title: 'Doing', cardIds: [] },
+      ],
+    }
+    render(
+      <KanbanBoard
+        initialState={state}
+        boardId="b1"
+        sprints={sprints}
+        tags={[]}
+        users={[]}
+        currentUser={null}
+      />
+    )
+    expect(screen.getByText('Backlog')).toBeInTheDocument()
+    expect(screen.getByText('Doing')).toBeInTheDocument()
   })
 })

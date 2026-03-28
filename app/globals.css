@@ -24,3 +24,32 @@ body {
   color: var(--foreground);
   font-family: Arial, Helvetica, sans-serif;
 }
+
+/* Improved contrast for inputs and labels */
+input::placeholder,
+textarea::placeholder {
+  color: #6b7280; /* gray-500 — legível mas sem dominar */
+  opacity: 1;
+}
+
+label {
+  color: #374151; /* gray-700 — contraste forte para labels */
+}
+
+/* Ensure form inputs have readable text */
+input[type="text"],
+input[type="email"],
+input[type="password"],
+input[type="number"],
+input[type="date"],
+textarea,
+select {
+  color: #111827; /* gray-900 */
+}
+
+input[type="text"]:disabled,
+input[type="email"]:disabled,
+textarea:disabled {
+  color: #6b7280;
+  background-color: #f9fafb;
+}

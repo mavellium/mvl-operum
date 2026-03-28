@@ -14,6 +14,7 @@ vi.mock('@/app/actions/sprintBoard', () => ({
   moveCardInSprintAction: vi.fn(),
   addSprintColumnAction: vi.fn(),
   updateSprintMetaAction: vi.fn(),
+  createCardInSprintAction: vi.fn(),
 }))
 
 const sprint = {

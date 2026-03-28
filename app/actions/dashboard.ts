@@ -2,7 +2,7 @@
 
 import { verifySession } from '@/lib/dal'
 import prisma from '@/lib/prisma'
-import { getGlobalKPIs, getUserMetrics, getSprintMetrics } from '@/services/dashboardService'
+import { getGlobalKPIs, getUserMetrics, getSprintMetrics, getSprintDashboard } from '@/services/dashboardService'
 
 export async function getDashboardDataAction(boardId: string) {
   try {
@@ -21,5 +21,14 @@ export async function getDashboardDataAction(boardId: string) {
     return { kpis, userMetrics, sprintMetrics }
   } catch (err) {
     return { error: err instanceof Error ? err.message : 'Erro ao carregar dashboard' }
+  }
+}
+
+export async function getSprintDashboardAction(sprintId: string) {
+  try {
+    await verifySession()
+    return await getSprintDashboard(sprintId)
+  } catch (err) {
+    return { error: err instanceof Error ? err.message : 'Erro ao carregar dashboard da sprint' }
   }
 }

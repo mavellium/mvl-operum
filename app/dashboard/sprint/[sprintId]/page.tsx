@@ -1,5 +1,5 @@
-import { getSprintBoardAction } from '@/app/actions/sprintBoard'
-import SprintBoard from '@/components/sprint/SprintBoard'
+import { getSprintDashboardAction } from '@/app/actions/dashboard'
+import SprintDashboard from '@/components/dashboard/SprintDashboard'
 import Link from 'next/link'
 
 export const dynamic = 'force-dynamic'
@@ -8,9 +8,9 @@ interface Props {
   params: Promise<{ sprintId: string }>
 }
 
-export default async function SprintPage({ params }: Props) {
+export default async function SprintDashboardPage({ params }: Props) {
   const { sprintId } = await params
-  const result = await getSprintBoardAction(sprintId)
+  const result = await getSprintDashboardAction(sprintId)
 
   if ('error' in result) {
     return (
@@ -22,14 +22,12 @@ export default async function SprintPage({ params }: Props) {
   }
 
   return (
-    <SprintBoard
+    <SprintDashboard
       sprint={{
         ...result.sprint,
-        status: result.sprint.status as 'PLANNED' | 'ACTIVE' | 'COMPLETED',
+        status: result.sprint.status as string,
       }}
-      columns={result.columns}
-      users={result.users}
-      tags={result.tags}
+      metrics={result.metrics}
     />
   )
 }

@@ -1,5 +1,12 @@
 import prisma from '@/lib/prisma'
 
+export class NotFoundError extends Error {
+  constructor(message: string) {
+    super(message)
+    this.name = 'NotFoundError'
+  }
+}
+
 export async function getSprintMetrics(sprintId: string) {
   const [timeEntries, cards] = await Promise.all([
     prisma.timeEntry.findMany({
@@ -78,4 +85,13 @@ export async function getGlobalKPIs(boardId: string) {
     horasTotais,
     totalUsuarios: users.length,
   }
+}
+
+export async function getSprintDashboard(sprintId: string) {
+  const sprint = await prisma.sprint.findUnique({ where: { id: sprintId } })
+  if (!sprint) throw new NotFoundError(`Sprint não encontrado: ${sprintId}`)
+
+  const metrics = await getSprintMetrics(sprintId)
+
+  return { sprint, metrics }
 }

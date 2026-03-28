@@ -7,6 +7,7 @@ import CardModal from './CardModal'
 import ConfirmDialog from '@/components/ui/ConfirmDialog'
 import { SprintBadge } from '@/components/sprint/SprintBadge'
 import { TagBadge } from '@/components/tag/TagBadge'
+import UserAvatar from '@/components/user/UserAvatar'
 
 interface Sprint {
   id: string
@@ -18,6 +19,7 @@ interface User {
   id: string
   name: string
   email: string
+  avatarUrl?: string | null
 }
 
 interface Tag {
@@ -44,6 +46,10 @@ export default function Card({ card, index, columnId, onUpdate, onDelete, sprint
 
   const sprintName = card.sprintId && sprints
     ? sprints.find(s => s.id === card.sprintId)?.name
+    : undefined
+
+  const responsibleUser = card.responsibleId && users
+    ? users.find(u => u.id === card.responsibleId)
     : undefined
 
   return (
@@ -84,13 +90,12 @@ export default function Card({ card, index, columnId, onUpdate, onDelete, sprint
 
             {card.responsible && (
               <div className="flex items-center gap-1.5 mt-2.5">
-                <div
-                  className="w-5 h-5 rounded-full flex items-center justify-center text-white text-[10px] font-bold shrink-0"
-                  style={{ backgroundColor: card.color }}
-                >
-                  {card.responsible.charAt(0).toUpperCase()}
-                </div>
-                <span className="text-xs text-gray-500 truncate">{card.responsible}</span>
+                <UserAvatar
+                  name={responsibleUser?.name ?? card.responsible}
+                  avatarUrl={responsibleUser?.avatarUrl}
+                  size="sm"
+                />
+                <span className="text-xs text-gray-600 truncate">{responsibleUser?.name ?? card.responsible}</span>
               </div>
             )}
 

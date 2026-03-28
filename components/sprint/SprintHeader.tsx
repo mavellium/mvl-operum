@@ -51,7 +51,7 @@ export default function SprintHeader({ sprint }: SprintHeaderProps) {
   return (
     <header className="bg-white border-b border-gray-200 px-6 py-4">
       <div className="flex items-center gap-4 mb-3">
-        <Link href="/" className="text-gray-400 hover:text-gray-600 transition-colors" aria-label="Voltar ao board">
+        <Link href="/sprints" className="text-gray-400 hover:text-gray-600 transition-colors" aria-label="Voltar às sprints">
           <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
           </svg>
@@ -62,6 +62,12 @@ export default function SprintHeader({ sprint }: SprintHeaderProps) {
             {STATUS_LABELS[sprint.status]}
           </span>
         </div>
+        <Link
+          href={`/dashboard/sprint/${sprint.id}`}
+          className="text-xs text-gray-500 hover:text-blue-600 border border-gray-200 px-3 py-1 rounded-lg transition-colors hidden sm:block"
+        >
+          Ver Dashboard
+        </Link>
         {(sprint.startDate || sprint.endDate) && (
           <div className="text-sm text-gray-500 hidden sm:block">
             {formatDate(sprint.startDate)} → {formatDate(sprint.endDate)}

@@ -3,7 +3,7 @@ import { describe, it, expect, vi, beforeEach } from 'vitest'
 
 vi.mock('@/lib/prisma', () => ({
   default: {
-    sprint: { findMany: vi.fn() },
+    sprint: { findMany: vi.fn(), findUnique: vi.fn() },
     timeEntry: { findMany: vi.fn() },
     card: { findMany: vi.fn() },
     user: { findMany: vi.fn() },
@@ -11,10 +11,10 @@ vi.mock('@/lib/prisma', () => ({
 }))
 
 import prisma from '@/lib/prisma'
-import { getSprintMetrics, getUserMetrics, getGlobalKPIs } from '@/services/dashboardService'
+import { getSprintMetrics, getUserMetrics, getGlobalKPIs, getSprintDashboard } from '@/services/dashboardService'
 
 const mockPrisma = prisma as {
-  sprint: { findMany: ReturnType<typeof vi.fn> }
+  sprint: { findMany: ReturnType<typeof vi.fn>; findUnique: ReturnType<typeof vi.fn> }
   timeEntry: { findMany: ReturnType<typeof vi.fn> }
   card: { findMany: ReturnType<typeof vi.fn> }
   user: { findMany: ReturnType<typeof vi.fn> }
@@ -61,5 +61,38 @@ describe('getGlobalKPIs', () => {
     expect(kpis).toHaveProperty('totalSprints')
     expect(kpis).toHaveProperty('totalCards')
     expect(kpis).toHaveProperty('custoTotal')
+  })
+})
+
+describe('getSprintDashboard', () => {
+  it('returns sprint data with metrics', async () => {
+    const now = new Date()
+    mockPrisma.sprint.findUnique.mockResolvedValue({
+      id: 's1',
+      name: 'Sprint 1',
+      status: 'ACTIVE',
+      startDate: new Date('2025-03-01'),
+      endDate: new Date('2025-03-15'),
+      qualidade: 8,
+      dificuldade: 6,
+    })
+    mockPrisma.timeEntry.findMany.mockResolvedValue([
+      { duration: 7200, user: { valorHora: 50 } },
+    ])
+    mockPrisma.card.findMany.mockResolvedValue([
+      { id: 'c1', endDate: null, column: { title: 'Concluído' } },
+      { id: 'c2', endDate: new Date(now.getTime() - 86400000), column: { title: 'A Fazer' } },
+    ])
+    const result = await getSprintDashboard('s1')
+    expect(result.sprint.name).toBe('Sprint 1')
+    expect(result.sprint.qualidade).toBe(8)
+    expect(result.metrics.horasTotais).toBeCloseTo(2)
+    expect(result.metrics.custoTotal).toBeCloseTo(100)
+    expect(result.metrics.cardsTotal).toBe(2)
+  })
+
+  it('throws NotFoundError when sprint does not exist', async () => {
+    mockPrisma.sprint.findUnique.mockResolvedValue(null)
+    await expect(getSprintDashboard('nonexistent')).rejects.toThrow(/não encontrado/i)
   })
 })
