@@ -2,22 +2,49 @@
 
 import { useState } from 'react'
 import { Draggable } from '@hello-pangea/dnd'
-import { Card as CardType } from '@/types/kanban'
+import { Card as CardType, CardColor } from '@/types/kanban'
 import CardModal from './CardModal'
 import ConfirmDialog from '@/components/ui/ConfirmDialog'
-import { CardColor } from '@/types/kanban'
+import { SprintBadge } from '@/components/sprint/SprintBadge'
+import { TagBadge } from '@/components/tag/TagBadge'
+
+interface Sprint {
+  id: string
+  name: string
+  status?: 'PLANNED' | 'ACTIVE' | 'COMPLETED'
+}
+
+interface User {
+  id: string
+  name: string
+  email: string
+}
+
+interface Tag {
+  id: string
+  name: string
+  color: string
+}
 
 interface CardProps {
   card: CardType
   index: number
   columnId: string
-  onUpdate: (cardId: string, data: { title: string; description: string; responsible: string; color: CardColor }) => void
+  onUpdate: (cardId: string, data: { title: string; description: string; responsible: string; color: CardColor; responsibleId?: string | null; sprintId?: string | null }) => void
   onDelete: (cardId: string, columnId: string) => void
+  sprints?: Sprint[]
+  users?: User[]
+  boardTags?: Tag[]
+  boardId?: string
 }
 
-export default function Card({ card, index, columnId, onUpdate, onDelete }: CardProps) {
+export default function Card({ card, index, columnId, onUpdate, onDelete, sprints, users, boardTags, boardId }: CardProps) {
   const [editOpen, setEditOpen] = useState(false)
   const [confirmOpen, setConfirmOpen] = useState(false)
+
+  const sprintName = card.sprintId && sprints
+    ? sprints.find(s => s.id === card.sprintId)?.name
+    : undefined
 
   return (
     <>
@@ -74,6 +101,20 @@ export default function Card({ card, index, columnId, onUpdate, onDelete }: Card
                 <span className="text-xs text-gray-500 truncate">{card.responsible}</span>
               </div>
             )}
+
+            {sprintName && (
+              <div className="mt-2">
+                <SprintBadge name={sprintName} status="ACTIVE" />
+              </div>
+            )}
+
+            {card.tags && card.tags.length > 0 && (
+              <div className="flex flex-wrap gap-1 mt-2">
+                {card.tags.map(ct => (
+                  <TagBadge key={ct.tagId} name={ct.tag.name} color={ct.tag.color} />
+                ))}
+              </div>
+            )}
           </div>
         )}
       </Draggable>
@@ -83,6 +124,20 @@ export default function Card({ card, index, columnId, onUpdate, onDelete }: Card
         onClose={() => setEditOpen(false)}
         onSubmit={data => onUpdate(card.id, data)}
         initialCard={card}
+        users={users}
+        sprints={sprints}
+        boardTags={boardTags}
+        boardId={boardId}
+        attachments={card.attachments ?? []}
+        onAttachmentUpload={async (file) => {
+          const fd = new FormData()
+          fd.append('file', file)
+          fd.append('cardId', card.id)
+          await fetch('/api/uploads', { method: 'POST', body: fd })
+        }}
+        onAttachmentDelete={async (attachmentId) => {
+          await fetch(`/api/uploads?id=${attachmentId}`, { method: 'DELETE' })
+        }}
       />
 
       <ConfirmDialog

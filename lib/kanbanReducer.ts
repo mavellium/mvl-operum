@@ -8,7 +8,7 @@ export type KanbanAction =
   | { type: 'DELETE_COLUMN'; payload: { columnId: string } }
   | { type: 'REORDER_COLUMNS'; payload: { startIndex: number; endIndex: number } }
   | { type: 'ADD_CARD'; payload: { columnId: string; title: string; description: string; responsible: string; color: CardColor } }
-  | { type: 'UPDATE_CARD'; payload: { cardId: string; title: string; description: string; responsible: string; color: CardColor } }
+  | { type: 'UPDATE_CARD'; payload: { cardId: string; title: string; description: string; responsible: string; color: CardColor; sprintId?: string | null; responsibleId?: string | null; tags?: Card['tags'] } }
   | { type: 'DELETE_CARD'; payload: { cardId: string; columnId: string } }
   | { type: 'MOVE_CARD'; payload: { sourceColumnId: string; destinationColumnId: string; sourceIndex: number; destinationIndex: number; cardId: string } }
 
@@ -71,21 +71,21 @@ export function kanbanReducer(state: BoardState, action: KanbanAction): BoardSta
       }
     }
 
-    case 'UPDATE_CARD':
-      return {
-        ...state,
-        cards: {
-          ...state.cards,
-          [action.payload.cardId]: {
-            ...state.cards[action.payload.cardId],
-            title: action.payload.title,
-            description: action.payload.description,
-            responsible: action.payload.responsible,
-            color: action.payload.color,
-            updatedAt: Date.now(),
-          },
-        },
+    case 'UPDATE_CARD': {
+      const { cardId, title, description, responsible, color, sprintId, responsibleId, tags } = action.payload
+      const updated: Card = {
+        ...state.cards[cardId],
+        title,
+        description,
+        responsible,
+        color,
+        updatedAt: Date.now(),
       }
+      if ('sprintId' in action.payload) updated.sprintId = sprintId
+      if ('responsibleId' in action.payload) updated.responsibleId = responsibleId
+      if ('tags' in action.payload) updated.tags = tags
+      return { ...state, cards: { ...state.cards, [cardId]: updated } }
+    }
 
     case 'DELETE_CARD': {
       const newCards = { ...state.cards }

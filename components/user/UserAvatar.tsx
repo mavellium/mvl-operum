@@ -1,0 +1,25 @@
+'use client'
+
+interface UserAvatarProps {
+  name?: string
+  size?: 'sm' | 'md'
+}
+
+function getInitials(name?: string): string {
+  if (!name) return '?'
+  const parts = name.trim().split(/\s+/)
+  if (parts.length === 1) return parts[0][0].toUpperCase()
+  return (parts[0][0] + parts[parts.length - 1][0]).toUpperCase()
+}
+
+export default function UserAvatar({ name, size = 'md' }: UserAvatarProps) {
+  const sizeClass = size === 'sm' ? 'w-6 h-6 text-xs' : 'w-8 h-8 text-sm'
+  return (
+    <div
+      title={name}
+      className={`${sizeClass} rounded-full bg-blue-500 flex items-center justify-center text-white font-bold shrink-0`}
+    >
+      {getInitials(name)}
+    </div>
+  )
+}

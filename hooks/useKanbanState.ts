@@ -62,6 +62,8 @@ async function syncActionToServer(action: KanbanAction, state: BoardState, board
         description: card.description,
         responsible: card.responsible,
         color: card.color,
+        sprintId: card.sprintId,
+        responsibleId: card.responsibleId,
       })
       break
     }

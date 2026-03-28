@@ -7,6 +7,24 @@ import ColumnHeader from './ColumnHeader'
 import CardComponent from '@/components/card/Card'
 import CardModal from '@/components/card/CardModal'
 
+interface Sprint {
+  id: string
+  name: string
+  status?: 'PLANNED' | 'ACTIVE' | 'COMPLETED'
+}
+
+interface User {
+  id: string
+  name: string
+  email: string
+}
+
+interface Tag {
+  id: string
+  name: string
+  color: string
+}
+
 interface ColumnProps {
   column: ColumnType
   cards: CardType[]
@@ -14,14 +32,19 @@ interface ColumnProps {
   onRenameColumn: (columnId: string, title: string) => void
   onDeleteColumn: (columnId: string) => void
   onAddCard: (columnId: string, data: { title: string; description: string; responsible: string; color: CardColor }) => void
-  onUpdateCard: (cardId: string, data: { title: string; description: string; responsible: string; color: CardColor }) => void
+  onUpdateCard: (cardId: string, data: { title: string; description: string; responsible: string; color: CardColor; responsibleId?: string | null; sprintId?: string | null }) => void
   onDeleteCard: (cardId: string, columnId: string) => void
+  sprints?: Sprint[]
+  users?: User[]
+  boardTags?: Tag[]
+  boardId?: string
 }
 
 export default function Column({
   column, cards, index,
   onRenameColumn, onDeleteColumn,
   onAddCard, onUpdateCard, onDeleteCard,
+  sprints, users, boardTags, boardId,
 }: ColumnProps) {
   const [addCardOpen, setAddCardOpen] = useState(false)
 
@@ -64,6 +87,10 @@ export default function Column({
                       columnId={column.id}
                       onUpdate={onUpdateCard}
                       onDelete={onDeleteCard}
+                      sprints={sprints}
+                      users={users}
+                      boardTags={boardTags}
+                      boardId={boardId}
                     />
                   ))}
                   {dropProvided.placeholder}
@@ -90,6 +117,10 @@ export default function Column({
         isOpen={addCardOpen}
         onClose={() => setAddCardOpen(false)}
         onSubmit={data => onAddCard(column.id, data)}
+        users={users}
+        sprints={sprints}
+        boardTags={boardTags}
+        boardId={boardId}
       />
     </>
   )

@@ -6,12 +6,35 @@ import { KanbanAction } from '@/lib/kanbanReducer'
 import { buildDragAction } from '@/lib/reorderUtils'
 import Column from './Column'
 
+interface Sprint {
+  id: string
+  name: string
+  status?: 'PLANNED' | 'ACTIVE' | 'COMPLETED'
+}
+
+interface User {
+  id: string
+  name: string
+  email: string
+}
+
+interface Tag {
+  id: string
+  name: string
+  color: string
+}
+
 interface ColumnListProps {
   state: BoardState
   dispatch: React.Dispatch<KanbanAction>
+  visibleCardIds?: string[] | null
+  sprints?: Sprint[]
+  users?: User[]
+  boardTags?: Tag[]
+  boardId?: string
 }
 
-export default function ColumnList({ state, dispatch }: ColumnListProps) {
+export default function ColumnList({ state, dispatch, visibleCardIds, sprints, users, boardTags, boardId }: ColumnListProps) {
   const handleDragEnd = (result: DropResult) => {
     const action = buildDragAction(result)
     if (action) dispatch(action)
@@ -21,7 +44,7 @@ export default function ColumnList({ state, dispatch }: ColumnListProps) {
     dispatch({ type: 'ADD_CARD', payload: { columnId, ...data } })
   }
 
-  const handleUpdateCard = (cardId: string, data: { title: string; description: string; responsible: string; color: CardColor }) => {
+  const handleUpdateCard = (cardId: string, data: { title: string; description: string; responsible: string; color: CardColor; responsibleId?: string | null; sprintId?: string | null }) => {
     dispatch({ type: 'UPDATE_CARD', payload: { cardId, ...data } })
   }
 
@@ -47,7 +70,10 @@ export default function ColumnList({ state, dispatch }: ColumnListProps) {
             className="flex gap-4 items-start pb-6 min-h-full"
           >
             {state.columns.map((col, index) => {
-              const cards = col.cardIds.map(id => state.cards[id]).filter(Boolean)
+              const allCards = col.cardIds.map(id => state.cards[id]).filter(Boolean)
+              const cards = visibleCardIds
+                ? allCards.filter(card => visibleCardIds.includes(card.id))
+                : allCards
               return (
                 <Column
                   key={col.id}
@@ -59,6 +85,10 @@ export default function ColumnList({ state, dispatch }: ColumnListProps) {
                   onAddCard={handleAddCard}
                   onUpdateCard={handleUpdateCard}
                   onDeleteCard={handleDeleteCard}
+                  sprints={sprints}
+                  users={users}
+                  boardTags={boardTags}
+                  boardId={boardId}
                 />
               )
             })}

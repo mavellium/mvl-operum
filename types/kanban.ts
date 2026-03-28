@@ -21,12 +21,32 @@ export const CARD_COLORS: { value: CardColor; label: string }[] = [
   { value: '#14b8a6', label: 'Teal' },
 ]
 
+export interface CardTag {
+  tagId: string
+  tag: { id: string; name: string; color: string }
+}
+
+export interface Attachment {
+  id: string
+  fileName: string
+  fileType: string
+  filePath: string
+  fileSize: number
+  uploadedAt: number
+}
+
 export interface Card {
   id: string
   title: string
   description: string
   responsible: string
+  responsibleId?: string | null
   color: CardColor
+  sprintId?: string | null
+  tags?: CardTag[]
+  attachments?: Attachment[]
+  startDate?: Date | null
+  endDate?: Date | null
   createdAt: number
   updatedAt: number
 }

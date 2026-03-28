@@ -1,6 +1,7 @@
 'use server'
 
 import { prisma } from '@/lib/prisma'
+import { verifySession } from '@/lib/dal'
 import { BoardState, CardColor } from '@/types/kanban'
 
 // Fetch (or seed) the single board and return it as BoardState
@@ -75,22 +76,27 @@ export async function getOrCreateBoard(): Promise<{ boardState: BoardState; boar
 }
 
 export async function renameBoardAction(boardId: string, name: string) {
+  await verifySession()
   await prisma.board.update({ where: { id: boardId }, data: { name } })
 }
 
 export async function addColumnAction(boardId: string, id: string, title: string, position: number) {
+  await verifySession()
   await prisma.column.create({ data: { id, boardId, title, position } })
 }
 
 export async function renameColumnAction(id: string, title: string) {
+  await verifySession()
   await prisma.column.update({ where: { id }, data: { title } })
 }
 
 export async function deleteColumnAction(id: string) {
+  await verifySession()
   await prisma.column.delete({ where: { id } })
 }
 
 export async function reorderColumnsAction(columns: { id: string; position: number }[]) {
+  await verifySession()
   await prisma.$transaction(
     columns.map(({ id, position }) => prisma.column.update({ where: { id }, data: { position } }))
   )
@@ -105,17 +111,20 @@ export async function addCardAction(card: {
   color: string
   position: number
 }) {
+  await verifySession()
   await prisma.card.create({ data: card })
 }
 
 export async function updateCardAction(
   id: string,
-  data: { title: string; description: string; responsible: string; color: string }
+  data: { title: string; description: string; responsible: string; color: string; sprintId?: string | null; responsibleId?: string | null }
 ) {
+  await verifySession()
   await prisma.card.update({ where: { id }, data })
 }
 
 export async function deleteCardAction(id: string) {
+  await verifySession()
   await prisma.card.delete({ where: { id } })
 }
 
@@ -124,6 +133,7 @@ export async function moveCardAction(
   newColumnId: string,
   affectedColumns: { id: string; cardIds: string[] }[]
 ) {
+  await verifySession()
   await prisma.$transaction([
     prisma.card.update({ where: { id: cardId }, data: { columnId: newColumnId } }),
     ...affectedColumns.flatMap(({ id: colId, cardIds }) =>

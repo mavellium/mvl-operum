@@ -3,16 +3,84 @@
 import { useState } from 'react'
 import InlineEdit from '@/components/ui/InlineEdit'
 import Button from '@/components/ui/Button'
+import Modal from '@/components/ui/Modal'
 import AddColumnModal from './AddColumnModal'
+import BoardActionMenu from './BoardActionMenu'
+import UserAvatar from '@/components/user/UserAvatar'
+import { CsvImportModal } from '@/components/csv/CsvImportModal'
+import { SprintManager } from '@/components/sprint/SprintManager'
+import { TagManager } from '@/components/tag/TagManager'
+import { logoutAction } from '@/app/actions/auth'
+
+interface User {
+  id: string
+  name: string
+  email: string
+}
+
+interface Sprint {
+  id: string
+  name: string
+  status: 'PLANNED' | 'ACTIVE' | 'COMPLETED'
+  boardId: string
+  startDate: Date | null
+  endDate: Date | null
+  createdBy: string | null
+  createdAt: Date
+  updatedAt: Date
+}
+
+interface Tag {
+  id: string
+  name: string
+  color: string
+  boardId: string
+  userId: string
+}
 
 interface BoardHeaderProps {
   projectName: string
   onRenameProject: (name: string) => void
   onAddColumn: (title: string) => void
+  currentUser?: User | null
+  boardId?: string
+  sprints?: { id: string; name: string; status?: string }[]
+  tags?: { id: string; name: string; color: string; boardId?: string; userId?: string }[]
 }
 
-export default function BoardHeader({ projectName, onRenameProject, onAddColumn }: BoardHeaderProps) {
+export default function BoardHeader({
+  projectName,
+  onRenameProject,
+  onAddColumn,
+  currentUser,
+  boardId,
+  sprints,
+  tags,
+}: BoardHeaderProps) {
   const [addColumnOpen, setAddColumnOpen] = useState(false)
+  const [csvOpen, setCsvOpen] = useState(false)
+  const [sprintOpen, setSprintOpen] = useState(false)
+  const [tagOpen, setTagOpen] = useState(false)
+
+  const normalizedSprints: Sprint[] = (sprints ?? []).map(s => ({
+    id: s.id,
+    name: s.name,
+    status: (s.status ?? 'PLANNED') as 'PLANNED' | 'ACTIVE' | 'COMPLETED',
+    boardId: boardId ?? '',
+    startDate: null,
+    endDate: null,
+    createdBy: null,
+    createdAt: new Date(),
+    updatedAt: new Date(),
+  }))
+
+  const normalizedTags: Tag[] = (tags ?? []).map(t => ({
+    id: t.id,
+    name: t.name,
+    color: t.color,
+    boardId: t.boardId ?? boardId ?? '',
+    userId: t.userId ?? '',
+  }))
 
   return (
     <>
@@ -33,12 +101,35 @@ export default function BoardHeader({ projectName, onRenameProject, onAddColumn 
           <span className="text-xs text-gray-400 hidden sm:block">(clique para editar)</span>
         </div>
 
-        <Button variant="primary" onClick={() => setAddColumnOpen(true)}>
-          <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
-          </svg>
-          Nova Coluna
-        </Button>
+        <div className="flex items-center gap-2">
+          {currentUser && (
+            <>
+              <UserAvatar name={currentUser.name} size="sm" />
+              <span className="text-sm text-gray-600 hidden sm:block">{currentUser.name}</span>
+              <form action={logoutAction}>
+                <button
+                  type="submit"
+                  className="text-xs text-gray-500 hover:text-red-600 px-2 py-1 rounded transition-colors"
+                >
+                  Sair
+                </button>
+              </form>
+            </>
+          )}
+
+          <Button variant="primary" onClick={() => setAddColumnOpen(true)}>
+            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
+            </svg>
+            Nova Coluna
+          </Button>
+
+          <BoardActionMenu
+            onImportCsv={() => setCsvOpen(true)}
+            onCreateSprint={() => setSprintOpen(true)}
+            onManageTags={() => setTagOpen(true)}
+          />
+        </div>
       </header>
 
       <AddColumnModal
@@ -46,6 +137,26 @@ export default function BoardHeader({ projectName, onRenameProject, onAddColumn 
         onClose={() => setAddColumnOpen(false)}
         onAdd={onAddColumn}
       />
+
+      {boardId && (
+        <CsvImportModal
+          isOpen={csvOpen}
+          onClose={() => setCsvOpen(false)}
+          boardId={boardId}
+        />
+      )}
+
+      {boardId && (
+        <Modal isOpen={sprintOpen} onClose={() => setSprintOpen(false)} title="Sprints">
+          <SprintManager boardId={boardId} sprints={normalizedSprints} />
+        </Modal>
+      )}
+
+      {boardId && (
+        <Modal isOpen={tagOpen} onClose={() => setTagOpen(false)} title="Tags">
+          <TagManager boardId={boardId} tags={normalizedTags} />
+        </Modal>
+      )}
     </>
   )
 }

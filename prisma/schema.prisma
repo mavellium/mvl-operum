@@ -7,10 +7,26 @@ datasource db {
   provider = "postgresql"
 }
 
+model User {
+  id           String   @id @default(cuid())
+  name         String
+  email        String   @unique
+  passwordHash String
+  role         String   @default("member")
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  cards        Card[]   @relation("CardResponsible")
+  tags         Tag[]
+  sprints      Sprint[]
+}
+
 model Board {
   id        String   @id @default(cuid())
   name      String   @default("Meu Projeto")
   columns   Column[]
+  sprints   Sprint[]
+  tags      Tag[]
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 }
@@ -26,15 +42,79 @@ model Column {
   updatedAt DateTime @updatedAt
 }
 
+enum SprintStatus {
+  PLANNED
+  ACTIVE
+  COMPLETED
+}
+
+model Sprint {
+  id        String       @id @default(cuid())
+  name      String
+  boardId   String
+  board     Board        @relation(fields: [boardId], references: [id], onDelete: Cascade)
+  status    SprintStatus @default(PLANNED)
+  startDate DateTime?
+  endDate   DateTime?
+  createdBy String?
+  creator   User?        @relation(fields: [createdBy], references: [id])
+  cards     Card[]
+  createdAt DateTime     @default(now())
+  updatedAt DateTime     @updatedAt
+}
+
+model Tag {
+  id      String    @id @default(cuid())
+  name    String
+  color   String    @default("#6b7280")
+  userId  String
+  user    User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  boardId String
+  board   Board     @relation(fields: [boardId], references: [id], onDelete: Cascade)
+  cards   CardTag[]
+
+  @@unique([name, userId, boardId])
+}
+
+model CardTag {
+  cardId String
+  tagId  String
+  card   Card   @relation(fields: [cardId], references: [id], onDelete: Cascade)
+  tag    Tag    @relation(fields: [tagId], references: [id], onDelete: Cascade)
+
+  @@id([cardId, tagId])
+}
+
 model Card {
-  id          String   @id
-  title       String
-  description String   @default("")
-  responsible String   @default("")
-  color       String   @default("#6b7280")
-  position    Int
-  columnId    String
-  column      Column   @relation(fields: [columnId], references: [id], onDelete: Cascade)
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
+  id              String    @id
+  title           String
+  description     String    @default("")
+  responsible     String    @default("")
+  responsibleId   String?
+  responsibleUser User?     @relation("CardResponsible", fields: [responsibleId], references: [id], onDelete: SetNull)
+  color           String    @default("#6b7280")
+  position        Int
+  columnId        String
+  column          Column    @relation(fields: [columnId], references: [id], onDelete: Cascade)
+  sprintId        String?
+  sprint          Sprint?   @relation(fields: [sprintId], references: [id], onDelete: SetNull)
+  tagsImport      String    @default("")
+  startDate       DateTime?
+  endDate         DateTime?
+  createdAt       DateTime  @default(now())
+  updatedAt       DateTime  @updatedAt
+
+  tags        CardTag[]
+  attachments Attachment[]
+}
+
+model Attachment {
+  id         String   @id @default(cuid())
+  cardId     String
+  card       Card     @relation(fields: [cardId], references: [id], onDelete: Cascade)
+  fileName   String
+  fileType   String
+  filePath   String
+  fileSize   Int
+  uploadedAt DateTime @default(now())
 }
