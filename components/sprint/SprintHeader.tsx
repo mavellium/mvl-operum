@@ -196,11 +196,11 @@ export default function SprintHeader({ sprint, boardId, currentUser, tags = [] }
         <div className="flex items-center gap-6 px-6 py-2">
           <div className="flex items-center gap-2">
             <label className="text-xs text-gray-500 font-medium">Qualidade (0–10):</label>
-            <input type="number" min="0" max="10" step="0.1" value={qualidade} onChange={e => setQualidade(e.target.value)} onBlur={handleSaveMeta} className="w-16 px-2 py-1 border border-gray-200 rounded text-sm text-center" placeholder="—" aria-label="Qualidade da sprint" />
+            <input type="number" min="0" max="10" step="0.1" value={qualidade} onChange={e => setQualidade(e.target.value)} onBlur={handleSaveMeta} className="w-16 px-2 py-1 border border-gray-300 rounded text-sm text-center text-gray-900 placeholder:text-gray-400" placeholder="—" aria-label="Qualidade da sprint" />
           </div>
           <div className="flex items-center gap-2">
             <label className="text-xs text-gray-500 font-medium">Dificuldade (0–10):</label>
-            <input type="number" min="0" max="10" step="0.1" value={dificuldade} onChange={e => setDificuldade(e.target.value)} onBlur={handleSaveMeta} className="w-16 px-2 py-1 border border-gray-200 rounded text-sm text-center" placeholder="—" aria-label="Dificuldade da sprint" />
+            <input type="number" min="0" max="10" step="0.1" value={dificuldade} onChange={e => setDificuldade(e.target.value)} onBlur={handleSaveMeta} className="w-16 px-2 py-1 border border-gray-300 rounded text-sm text-center text-gray-900 placeholder:text-gray-400" placeholder="—" aria-label="Dificuldade da sprint" />
           </div>
           {saving && <span className="text-xs text-gray-400">Salvando...</span>}
         </div>

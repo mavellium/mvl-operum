@@ -79,7 +79,7 @@ export function SprintManager({ boardId, sprints: initialSprints, onSprintCreate
           value={newName}
           onChange={(e) => setNewName(e.target.value)}
           placeholder="Nome da sprint"
-          className="rounded border border-gray-300 px-2 py-1 text-sm focus:outline-none focus:ring-2 focus:ring-blue-400"
+          className="rounded border border-gray-300 px-2 py-1 text-sm text-gray-900 placeholder:text-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-400"
           onKeyDown={(e) => e.key === 'Enter' && handleCreate()}
           aria-label="Nome"
         />
@@ -91,7 +91,7 @@ export function SprintManager({ boardId, sprints: initialSprints, onSprintCreate
               type="date"
               value={startDate}
               onChange={(e) => setStartDate(e.target.value)}
-              className="w-full rounded border border-gray-300 px-2 py-1 text-sm focus:outline-none focus:ring-2 focus:ring-blue-400"
+              className="w-full rounded border border-gray-300 px-2 py-1 text-sm text-gray-900 focus:outline-none focus:ring-2 focus:ring-blue-400"
               aria-label="Data de início"
             />
           </div>
@@ -102,7 +102,7 @@ export function SprintManager({ boardId, sprints: initialSprints, onSprintCreate
               type="date"
               value={endDate}
               onChange={(e) => setEndDate(e.target.value)}
-              className="w-full rounded border border-gray-300 px-2 py-1 text-sm focus:outline-none focus:ring-2 focus:ring-blue-400"
+              className="w-full rounded border border-gray-300 px-2 py-1 text-sm text-gray-900 focus:outline-none focus:ring-2 focus:ring-blue-400"
               aria-label="Data de fim"
             />
           </div>

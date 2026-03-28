@@ -111,7 +111,7 @@ export default function ColumnList({ state, dispatch, sprints, users, boardTags,
                     onChange={e => setNewListTitle(e.target.value)}
                     onKeyDown={e => { if (e.key === 'Enter') handleAddList(); if (e.key === 'Escape') setAddingList(false) }}
                     placeholder="Nome da lista"
-                    className="w-full px-3 py-1.5 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-400"
+                    className="w-full px-3 py-1.5 border border-gray-300 rounded-lg text-sm text-gray-900 placeholder:text-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-400"
                     aria-label="Nome da nova lista"
                   />
                   <div className="flex gap-2">

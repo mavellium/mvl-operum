@@ -36,7 +36,7 @@ export default function AddColumnModal({ isOpen, onClose, onAdd }: AddColumnModa
             value={title}
             onChange={e => { setTitle(e.target.value); setError('') }}
             placeholder="Ex: Em Revisão"
-            className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-blue-400 transition"
+            className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm text-gray-900 placeholder:text-gray-400 outline-none focus:ring-2 focus:ring-blue-400 transition"
             autoFocus
           />
           {error && <p className="text-red-500 text-xs mt-1">{error}</p>}

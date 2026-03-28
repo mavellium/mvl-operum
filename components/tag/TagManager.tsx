@@ -48,7 +48,7 @@ export function TagManager({ boardId, tags: initialTags }: TagManagerProps) {
           value={newName}
           onChange={(e) => setNewName(e.target.value)}
           placeholder="Nome da tag"
-          className="flex-1 rounded border border-gray-300 px-2 py-1 text-sm"
+          className="flex-1 rounded border border-gray-300 px-2 py-1 text-sm text-gray-900 placeholder:text-gray-400"
           onKeyDown={(e) => e.key === 'Enter' && handleCreate()}
         />
         <div className="flex gap-1">

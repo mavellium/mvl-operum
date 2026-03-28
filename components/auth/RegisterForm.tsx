@@ -19,7 +19,7 @@ export function RegisterForm() {
           type="text"
           required
           autoComplete="name"
-          className="rounded-lg border border-gray-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+          className="rounded-lg border border-gray-300 px-3 py-2 text-sm text-gray-900 placeholder:text-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500"
         />
         {state?.errors?.name && <p className="text-xs text-red-600">{state.errors.name}</p>}
       </div>
@@ -34,7 +34,7 @@ export function RegisterForm() {
           type="email"
           required
           autoComplete="email"
-          className="rounded-lg border border-gray-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+          className="rounded-lg border border-gray-300 px-3 py-2 text-sm text-gray-900 placeholder:text-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500"
         />
         {state?.errors?.email && <p className="text-xs text-red-600">{state.errors.email}</p>}
       </div>
@@ -49,7 +49,7 @@ export function RegisterForm() {
           type="password"
           required
           autoComplete="new-password"
-          className="rounded-lg border border-gray-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+          className="rounded-lg border border-gray-300 px-3 py-2 text-sm text-gray-900 placeholder:text-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500"
         />
         <p className="text-xs text-gray-500">Mínimo 8 caracteres, com número e caractere especial</p>
         {state?.errors?.password && <p className="text-xs text-red-600">{state.errors.password}</p>}

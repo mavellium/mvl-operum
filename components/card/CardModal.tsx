@@ -138,7 +138,7 @@ export default function CardModal({
             value={title}
             onChange={e => { setTitle(e.target.value); setError('') }}
             placeholder="Ex: Implementar autenticação"
-            className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-blue-400 focus:border-blue-400 transition"
+            className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm text-gray-900 placeholder:text-gray-400 outline-none focus:ring-2 focus:ring-blue-400 focus:border-blue-400 transition"
           />
           {error && <p className="text-red-500 text-xs mt-1">{error}</p>}
         </div>
@@ -150,7 +150,7 @@ export default function CardModal({
             onChange={e => setDescription(e.target.value)}
             placeholder="Descreva a tarefa..."
             rows={3}
-            className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-blue-400 focus:border-blue-400 transition resize-none"
+            className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm text-gray-900 placeholder:text-gray-400 outline-none focus:ring-2 focus:ring-blue-400 focus:border-blue-400 transition resize-none"
           />
         </div>
 
@@ -168,7 +168,7 @@ export default function CardModal({
               value={responsible}
               onChange={e => setResponsible(e.target.value)}
               placeholder="Nome do responsável"
-              className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-blue-400 focus:border-blue-400 transition"
+              className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm text-gray-900 placeholder:text-gray-400 outline-none focus:ring-2 focus:ring-blue-400 focus:border-blue-400 transition"
             />
           </div>
         )}
