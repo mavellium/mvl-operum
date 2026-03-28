@@ -1,11 +1,18 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useRef, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
 import { SprintBadge } from './SprintBadge'
 import { SprintManager } from './SprintManager'
 import { migrateOrphanCardsAction } from '@/app/actions/migration'
+import { logoutAction } from '@/app/actions/auth'
+import GlobalSearch from '@/components/search/GlobalSearch'
+import BoardActionMenu from '@/components/board/BoardActionMenu'
+import UserAvatar from '@/components/user/UserAvatar'
+import Modal from '@/components/ui/Modal'
+import { CsvImportModal } from '@/components/csv/CsvImportModal'
+import { TagManager } from '@/components/tag/TagManager'
 
 interface Sprint {
   id: string
@@ -30,10 +37,25 @@ interface SprintWithMetrics {
   metrics: SprintMetrics
 }
 
+interface CurrentUser {
+  id: string
+  name: string
+  email: string
+  avatarUrl?: string | null
+}
+
+interface Tag {
+  id: string
+  name: string
+  color: string
+}
+
 interface SprintListPageProps {
   sprintsWithMetrics: SprintWithMetrics[]
   boardId: string
   orphanCount?: number
+  currentUser?: CurrentUser | null
+  tags?: Tag[]
 }
 
 function formatDate(date: Date | string | null | undefined) {
@@ -66,12 +88,32 @@ function ProgressBar({ value, total }: { value: number; total: number }) {
   )
 }
 
-export default function SprintListPage({ sprintsWithMetrics: initial, boardId, orphanCount = 0 }: SprintListPageProps) {
+export default function SprintListPage({
+  sprintsWithMetrics: initial,
+  boardId,
+  orphanCount = 0,
+  currentUser,
+  tags = [],
+}: SprintListPageProps) {
   const [sprintsWithMetrics, setSprintsWithMetrics] = useState(initial)
   const [showCreate, setShowCreate] = useState(false)
   const [migrating, setMigrating] = useState(false)
   const [orphans, setOrphans] = useState(orphanCount)
+  const [csvOpen, setCsvOpen] = useState(false)
+  const [tagOpen, setTagOpen] = useState(false)
+  const [userMenuOpen, setUserMenuOpen] = useState(false)
+  const userMenuRef = useRef<HTMLDivElement>(null)
   const router = useRouter()
+
+  useEffect(() => {
+    function handleClickOutside(e: MouseEvent) {
+      if (userMenuRef.current && !userMenuRef.current.contains(e.target as Node)) {
+        setUserMenuOpen(false)
+      }
+    }
+    document.addEventListener('mousedown', handleClickOutside)
+    return () => document.removeEventListener('mousedown', handleClickOutside)
+  }, [])
 
   async function handleMigrate() {
     setMigrating(true)
@@ -85,6 +127,69 @@ export default function SprintListPage({ sprintsWithMetrics: initial, boardId, o
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-100 via-blue-50 to-indigo-100">
+
+      {/* Top header — mirrors BoardHeader */}
+      <header className="flex items-center justify-between px-6 py-4 bg-white/80 backdrop-blur-sm border-b border-gray-100 sticky top-0 z-10">
+        <div className="flex items-center gap-3">
+          <div className="w-8 h-8 bg-gradient-to-br from-blue-500 to-violet-600 rounded-lg flex items-center justify-center">
+            <svg className="w-4 h-4 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 17V7m0 10a2 2 0 01-2 2H5a2 2 0 01-2-2V7a2 2 0 012-2h2a2 2 0 012 2m0 10a2 2 0 002 2h2a2 2 0 002-2M9 7a2 2 0 012-2h2a2 2 0 012 2m0 10V7m0 10a2 2 0 002 2h2a2 2 0 002-2V7a2 2 0 00-2-2h-2a2 2 0 00-2 2" />
+            </svg>
+          </div>
+          <span className="text-xl font-bold text-gray-900">Sprints</span>
+        </div>
+
+        <div className="flex items-center gap-2">
+          <GlobalSearch />
+
+          {currentUser && (
+            <div className="relative" ref={userMenuRef}>
+              <button
+                onClick={() => setUserMenuOpen(v => !v)}
+                className="flex items-center gap-2 rounded-lg px-2 py-1 hover:bg-gray-100 transition-colors"
+                aria-label="Menu do usuário"
+              >
+                <UserAvatar name={currentUser.name} avatarUrl={currentUser.avatarUrl} size="sm" />
+                <span className="text-sm text-gray-600 hidden sm:block">{currentUser.name}</span>
+              </button>
+              {userMenuOpen && (
+                <div className="absolute right-0 top-full mt-1 w-44 bg-white rounded-xl shadow-lg border border-gray-100 py-1 z-20">
+                  <Link
+                    href="/perfil"
+                    className="flex items-center gap-2 px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 transition-colors"
+                    onClick={() => setUserMenuOpen(false)}
+                  >
+                    Meu Perfil
+                  </Link>
+                  <Link
+                    href="/dashboard"
+                    className="flex items-center gap-2 px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 transition-colors"
+                    onClick={() => setUserMenuOpen(false)}
+                  >
+                    Dashboard
+                  </Link>
+                  <div className="border-t border-gray-100 my-1" />
+                  <form action={logoutAction}>
+                    <button
+                      type="submit"
+                      className="w-full text-left px-4 py-2 text-sm text-red-600 hover:bg-red-50 transition-colors"
+                    >
+                      Sair
+                    </button>
+                  </form>
+                </div>
+              )}
+            </div>
+          )}
+
+          <BoardActionMenu
+            onImportCsv={() => setCsvOpen(true)}
+            onCreateSprint={() => setShowCreate(true)}
+            onManageTags={() => setTagOpen(true)}
+          />
+        </div>
+      </header>
+
       <div className="max-w-3xl mx-auto px-4 py-8 pb-24">
 
         {/* Orphan cards banner */}
@@ -108,7 +213,7 @@ export default function SprintListPage({ sprintsWithMetrics: initial, boardId, o
           </div>
         )}
 
-        {/* Header */}
+        {/* Page header row */}
         <div className="flex items-center justify-between mb-6">
           <div>
             <h1 className="text-2xl font-bold text-gray-900">Sprints</h1>
@@ -263,6 +368,17 @@ export default function SprintListPage({ sprintsWithMetrics: initial, boardId, o
           </div>
         )}
       </div>
+
+      {/* Modals */}
+      <CsvImportModal
+        isOpen={csvOpen}
+        onClose={() => setCsvOpen(false)}
+        boardId={boardId}
+      />
+
+      <Modal isOpen={tagOpen} onClose={() => setTagOpen(false)} title="Tags">
+        <TagManager boardId={boardId} tags={tags} />
+      </Modal>
     </div>
   )
 }
