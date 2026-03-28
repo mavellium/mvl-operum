@@ -13,12 +13,18 @@ model User {
   email        String   @unique
   passwordHash String
   role         String   @default("member")
+  avatarUrl    String?
+  cargo        String?
+  departamento String?
+  valorHora    Float    @default(0)
   createdAt    DateTime @default(now())
   updatedAt    DateTime @updatedAt
 
-  cards        Card[]   @relation("CardResponsible")
-  tags         Tag[]
-  sprints      Sprint[]
+  cards            Card[]            @relation("CardResponsible")
+  tags             Tag[]
+  sprints          Sprint[]
+  timeEntries      TimeEntry[]
+  responsibleCards CardResponsible[]
 }
 
 model Board {
@@ -49,18 +55,33 @@ enum SprintStatus {
 }
 
 model Sprint {
-  id        String       @id @default(cuid())
-  name      String
-  boardId   String
-  board     Board        @relation(fields: [boardId], references: [id], onDelete: Cascade)
-  status    SprintStatus @default(PLANNED)
-  startDate DateTime?
-  endDate   DateTime?
-  createdBy String?
-  creator   User?        @relation(fields: [createdBy], references: [id])
-  cards     Card[]
-  createdAt DateTime     @default(now())
-  updatedAt DateTime     @updatedAt
+  id            String         @id @default(cuid())
+  name          String
+  description   String?
+  boardId       String
+  board         Board          @relation(fields: [boardId], references: [id], onDelete: Cascade)
+  status        SprintStatus   @default(PLANNED)
+  startDate     DateTime?
+  endDate       DateTime?
+  qualidade     Float?
+  dificuldade   Float?
+  createdBy     String?
+  creator       User?          @relation(fields: [createdBy], references: [id])
+  cards         Card[]
+  sprintColumns SprintColumn[]
+  createdAt     DateTime       @default(now())
+  updatedAt     DateTime       @updatedAt
+}
+
+model SprintColumn {
+  id        String   @id @default(cuid())
+  title     String
+  position  Int
+  sprintId  String
+  sprint    Sprint   @relation(fields: [sprintId], references: [id], onDelete: Cascade)
+  cards     Card[]   @relation("SprintColumnCards")
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 }
 
 model Tag {
@@ -85,27 +106,41 @@ model CardTag {
   @@id([cardId, tagId])
 }
 
+model CardResponsible {
+  cardId String
+  userId String
+  card   Card   @relation(fields: [cardId], references: [id], onDelete: Cascade)
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@id([cardId, userId])
+}
+
 model Card {
-  id              String    @id
+  id              String        @id
   title           String
-  description     String    @default("")
-  responsible     String    @default("")
+  description     String        @default("")
+  responsible     String        @default("")
   responsibleId   String?
-  responsibleUser User?     @relation("CardResponsible", fields: [responsibleId], references: [id], onDelete: SetNull)
-  color           String    @default("#6b7280")
+  responsibleUser User?         @relation("CardResponsible", fields: [responsibleId], references: [id], onDelete: SetNull)
+  color           String        @default("#6b7280")
   position        Int
   columnId        String
-  column          Column    @relation(fields: [columnId], references: [id], onDelete: Cascade)
+  column          Column        @relation(fields: [columnId], references: [id], onDelete: Cascade)
   sprintId        String?
-  sprint          Sprint?   @relation(fields: [sprintId], references: [id], onDelete: SetNull)
-  tagsImport      String    @default("")
+  sprint          Sprint?       @relation(fields: [sprintId], references: [id], onDelete: SetNull)
+  sprintColumnId  String?
+  sprintColumn    SprintColumn? @relation("SprintColumnCards", fields: [sprintColumnId], references: [id], onDelete: SetNull)
+  sprintPosition  Int?
+  tagsImport      String        @default("")
   startDate       DateTime?
   endDate         DateTime?
-  createdAt       DateTime  @default(now())
-  updatedAt       DateTime  @updatedAt
+  createdAt       DateTime      @default(now())
+  updatedAt       DateTime      @updatedAt
 
-  tags        CardTag[]
-  attachments Attachment[]
+  tags         CardTag[]
+  attachments  Attachment[]
+  timeEntries  TimeEntry[]
+  responsibles CardResponsible[]
 }
 
 model Attachment {
@@ -117,4 +152,18 @@ model Attachment {
   filePath   String
   fileSize   Int
   uploadedAt DateTime @default(now())
+}
+
+model TimeEntry {
+  id        String    @id @default(cuid())
+  userId    String
+  cardId    String
+  startedAt DateTime  @default(now())
+  endedAt   DateTime?
+  duration  Int       @default(0)
+  isRunning Boolean   @default(false)
+  user      User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  card      Card      @relation(fields: [cardId], references: [id], onDelete: Cascade)
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
 }

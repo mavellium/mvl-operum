@@ -44,6 +44,19 @@ vi.mock('@/app/actions/sprints', () => ({
   getSprintsForBoardAction: vi.fn(),
 }))
 
+vi.mock('@/app/actions/time', () => ({
+  startTimerAction: vi.fn(),
+  pauseTimerAction: vi.fn(),
+  getCardTimeAction: vi.fn().mockResolvedValue({ seconds: 0 }),
+  getActiveTimerAction: vi.fn().mockResolvedValue({ entry: null }),
+}))
+
+vi.mock('@/app/actions/cardResponsible', () => ({
+  addResponsibleAction: vi.fn(),
+  removeResponsibleAction: vi.fn(),
+  getResponsiblesAction: vi.fn().mockResolvedValue({ responsibles: [] }),
+}))
+
 const boardState: BoardState = {
   projectName: 'Test Board',
   columns: [

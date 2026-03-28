@@ -1,6 +1,7 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useRef, useEffect } from 'react'
+import Link from 'next/link'
 import InlineEdit from '@/components/ui/InlineEdit'
 import Button from '@/components/ui/Button'
 import Modal from '@/components/ui/Modal'
@@ -11,11 +12,13 @@ import { CsvImportModal } from '@/components/csv/CsvImportModal'
 import { SprintManager } from '@/components/sprint/SprintManager'
 import { TagManager } from '@/components/tag/TagManager'
 import { logoutAction } from '@/app/actions/auth'
+import GlobalSearch from '@/components/search/GlobalSearch'
 
 interface User {
   id: string
   name: string
   email: string
+  avatarUrl?: string | null
 }
 
 interface Sprint {
@@ -61,6 +64,18 @@ export default function BoardHeader({
   const [csvOpen, setCsvOpen] = useState(false)
   const [sprintOpen, setSprintOpen] = useState(false)
   const [tagOpen, setTagOpen] = useState(false)
+  const [userMenuOpen, setUserMenuOpen] = useState(false)
+  const userMenuRef = useRef<HTMLDivElement>(null)
+
+  useEffect(() => {
+    function handleClickOutside(e: MouseEvent) {
+      if (userMenuRef.current && !userMenuRef.current.contains(e.target as Node)) {
+        setUserMenuOpen(false)
+      }
+    }
+    document.addEventListener('mousedown', handleClickOutside)
+    return () => document.removeEventListener('mousedown', handleClickOutside)
+  }, [])
 
   const normalizedSprints: Sprint[] = (sprints ?? []).map(s => ({
     id: s.id,
@@ -102,19 +117,46 @@ export default function BoardHeader({
         </div>
 
         <div className="flex items-center gap-2">
+          <GlobalSearch />
+
           {currentUser && (
-            <>
-              <UserAvatar name={currentUser.name} size="sm" />
-              <span className="text-sm text-gray-600 hidden sm:block">{currentUser.name}</span>
-              <form action={logoutAction}>
-                <button
-                  type="submit"
-                  className="text-xs text-gray-500 hover:text-red-600 px-2 py-1 rounded transition-colors"
-                >
-                  Sair
-                </button>
-              </form>
-            </>
+            <div className="relative" ref={userMenuRef}>
+              <button
+                onClick={() => setUserMenuOpen(v => !v)}
+                className="flex items-center gap-2 rounded-lg px-2 py-1 hover:bg-gray-100 transition-colors"
+                aria-label="Menu do usuário"
+              >
+                <UserAvatar name={currentUser.name} avatarUrl={currentUser.avatarUrl} size="sm" />
+                <span className="text-sm text-gray-600 hidden sm:block">{currentUser.name}</span>
+              </button>
+              {userMenuOpen && (
+                <div className="absolute right-0 top-full mt-1 w-44 bg-white rounded-xl shadow-lg border border-gray-100 py-1 z-20">
+                  <Link
+                    href="/perfil"
+                    className="flex items-center gap-2 px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 transition-colors"
+                    onClick={() => setUserMenuOpen(false)}
+                  >
+                    Meu Perfil
+                  </Link>
+                  <Link
+                    href="/dashboard"
+                    className="flex items-center gap-2 px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 transition-colors"
+                    onClick={() => setUserMenuOpen(false)}
+                  >
+                    Dashboard
+                  </Link>
+                  <div className="border-t border-gray-100 my-1" />
+                  <form action={logoutAction}>
+                    <button
+                      type="submit"
+                      className="w-full text-left px-4 py-2 text-sm text-red-600 hover:bg-red-50 transition-colors"
+                    >
+                      Sair
+                    </button>
+                  </form>
+                </div>
+              )}
+            </div>
           )}
 
           <Button variant="primary" onClick={() => setAddColumnOpen(true)}>

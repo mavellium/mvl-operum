@@ -10,6 +10,8 @@ import { SprintSelector } from '@/components/sprint/SprintSelector'
 import { TagSelector } from '@/components/tag/TagSelector'
 import { assignTagToCardAction, removeTagFromCardAction } from '@/app/actions/tags'
 import { Card, CardColor, Attachment } from '@/types/kanban'
+import CardTimer from './CardTimer'
+import MultiUserSelector from './MultiUserSelector'
 
 interface User {
   id: string
@@ -195,6 +197,20 @@ export default function CardModal({
               selectedTagIds={selectedTagIds}
               onToggle={handleTagToggle}
             />
+          </div>
+        )}
+
+        {isEditing && initialCard && users && users.length > 0 && (
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-2">Responsáveis</label>
+            <MultiUserSelector cardId={initialCard.id} users={users} />
+          </div>
+        )}
+
+        {isEditing && initialCard && (
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1">Tempo</label>
+            <CardTimer cardId={initialCard.id} />
           </div>
         )}
 

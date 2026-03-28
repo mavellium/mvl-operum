@@ -54,26 +54,18 @@ export default function Card({ card, index, columnId, onUpdate, onDelete, sprint
             ref={provided.innerRef}
             {...provided.draggableProps}
             {...provided.dragHandleProps}
-            className={`group bg-white rounded-xl shadow-sm border border-gray-100 p-3 cursor-grab active:cursor-grabbing transition-all
+            className={`group bg-white rounded-xl shadow-sm border border-gray-100 p-3 cursor-pointer transition-all
               ${snapshot.isDragging ? 'shadow-xl rotate-1 ring-2 ring-blue-300' : 'hover:shadow-md'}`}
             style={{
               ...provided.draggableProps.style,
               borderLeftWidth: '4px',
               borderLeftColor: card.color,
             }}
+            onClick={() => setEditOpen(true)}
           >
             <div className="flex items-start justify-between gap-2">
               <p className="text-sm font-medium text-gray-900 leading-snug flex-1 break-words">{card.title}</p>
               <div className="flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity shrink-0">
-                <button
-                  onClick={e => { e.stopPropagation(); setEditOpen(true) }}
-                  className="p-1 rounded text-gray-400 hover:text-blue-600 hover:bg-blue-50 transition-colors"
-                  aria-label="Editar card"
-                >
-                  <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
-                  </svg>
-                </button>
                 <button
                   onClick={e => { e.stopPropagation(); setConfirmOpen(true) }}
                   className="p-1 rounded text-gray-400 hover:text-red-600 hover:bg-red-50 transition-colors"

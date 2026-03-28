@@ -8,6 +8,19 @@ vi.mock('@/app/actions/tags', () => ({
   removeTagFromCardAction: vi.fn().mockResolvedValue({ success: true }),
 }))
 
+vi.mock('@/app/actions/time', () => ({
+  startTimerAction: vi.fn(),
+  pauseTimerAction: vi.fn(),
+  getCardTimeAction: vi.fn().mockResolvedValue({ seconds: 0 }),
+  getActiveTimerAction: vi.fn().mockResolvedValue({ entry: null }),
+}))
+
+vi.mock('@/app/actions/cardResponsible', () => ({
+  addResponsibleAction: vi.fn(),
+  removeResponsibleAction: vi.fn(),
+  getResponsiblesAction: vi.fn().mockResolvedValue({ responsibles: [] }),
+}))
+
 const users = [
   { id: 'u1', name: 'Ana Silva', email: 'ana@x.com' },
   { id: 'u2', name: 'Carlos Souza', email: 'carlos@x.com' },

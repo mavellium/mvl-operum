@@ -3,6 +3,7 @@
 interface UserAvatarProps {
   name?: string
   size?: 'sm' | 'md'
+  avatarUrl?: string | null
 }
 
 function getInitials(name?: string): string {
@@ -12,8 +13,19 @@ function getInitials(name?: string): string {
   return (parts[0][0] + parts[parts.length - 1][0]).toUpperCase()
 }
 
-export default function UserAvatar({ name, size = 'md' }: UserAvatarProps) {
+export default function UserAvatar({ name, size = 'md', avatarUrl }: UserAvatarProps) {
   const sizeClass = size === 'sm' ? 'w-6 h-6 text-xs' : 'w-8 h-8 text-sm'
+  if (avatarUrl) {
+    return (
+      // eslint-disable-next-line @next/next/no-img-element
+      <img
+        src={avatarUrl}
+        alt={name ?? 'Avatar'}
+        title={name}
+        className={`${sizeClass} rounded-full object-cover shrink-0`}
+      />
+    )
+  }
   return (
     <div
       title={name}
