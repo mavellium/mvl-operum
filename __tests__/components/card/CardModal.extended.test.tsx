@@ -106,4 +106,22 @@ describe('CardModal extended', () => {
     render(<CardModal {...defaultProps} />)
     expect(screen.queryByText(/sprint 1/i)).not.toBeInTheDocument()
   })
+
+  it('shows priority select with options baixa, media, alta', () => {
+    render(<CardModal {...defaultProps} />)
+    expect(screen.getByRole('combobox', { name: /prioridade/i })).toBeInTheDocument()
+    expect(screen.getByRole('option', { name: /baixa/i })).toBeInTheDocument()
+    expect(screen.getByRole('option', { name: /média|media/i })).toBeInTheDocument()
+    expect(screen.getByRole('option', { name: /alta/i })).toBeInTheDocument()
+  })
+
+  it('onSubmit includes priority field', async () => {
+    const user = userEvent.setup()
+    const onSubmit = vi.fn()
+    render(<CardModal {...defaultProps} initialCard={{ ...baseCard, priority: 'alta' }} onSubmit={onSubmit} />)
+    await user.click(screen.getByRole('button', { name: /salvar/i }))
+    expect(onSubmit).toHaveBeenCalledWith(
+      expect.objectContaining({ priority: 'alta' }),
+    )
+  })
 })

@@ -13,10 +13,14 @@ export async function GET(request: Request) {
 
   const user = await prisma.user.findUnique({
     where: { id: session.userId as string },
-    select: { id: true, name: true, email: true, role: true, tokenVersion: true },
+    select: { id: true, name: true, email: true, role: true, isActive: true, tokenVersion: true },
   })
 
   if (!user) {
+    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+  }
+
+  if (user.isActive === false) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
   }
 

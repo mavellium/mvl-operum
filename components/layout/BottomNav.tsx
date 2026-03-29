@@ -2,8 +2,9 @@
 
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
+import { useEffect, useState } from 'react'
 
-const tabs = [
+const BASE_TABS = [
   {
     label: 'Dashboard',
     href: '/dashboard',
@@ -33,17 +34,37 @@ const tabs = [
   },
 ]
 
+const ADMIN_TAB = {
+  label: 'Admin',
+  href: '/admin/users',
+  icon: (
+    <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.8} d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z" />
+    </svg>
+  ),
+}
+
 export default function BottomNav() {
   const pathname = usePathname()
+  const [isAdmin, setIsAdmin] = useState(false)
+
+  useEffect(() => {
+    fetch('/api/me')
+      .then(r => r.json())
+      .then(d => { if (d?.user?.role === 'admin') setIsAdmin(true) })
+      .catch(() => {})
+  }, [])
 
   if (['/login', '/register'].some(p => pathname.startsWith(p))) return null
+
+  const tabs = isAdmin ? [...BASE_TABS, ADMIN_TAB] : BASE_TABS
 
   return (
     <nav
       className="fixed bottom-0 left-0 right-0 z-50 bg-white/90 backdrop-blur-md border-t border-gray-200 h-16 flex items-center"
       aria-label="Navegação principal"
     >
-      <div className="flex w-full">
+      <div className="flex w-full overflow-x-auto">
         {tabs.map(tab => {
           const isActive = pathname === tab.href || pathname.startsWith(tab.href + '/')
           return (

@@ -15,7 +15,7 @@ vi.mock('@/lib/prisma', () => ({
 }))
 
 import prisma from '@/lib/prisma'
-import { startTimer, pauseTimer, getActiveTimer, getTotalDuration } from '@/services/timeService'
+import { startTimer, pauseTimer, getActiveTimer, getTotalDuration, addManualTimeEntry } from '@/services/timeService'
 
 const mockPrisma = prisma as {
   timeEntry: {
@@ -93,5 +93,30 @@ describe('getTotalDuration', () => {
     mockPrisma.timeEntry.aggregate.mockResolvedValue({ _sum: { duration: null } })
     const total = await getTotalDuration('u1', 'c1')
     expect(total).toBe(0)
+  })
+})
+
+describe('addManualTimeEntry', () => {
+  it('creates TimeEntry with isManual true and isRunning false', async () => {
+    mockPrisma.timeEntry.create.mockResolvedValue({
+      id: 't1', userId: 'u1', cardId: 'c1', isManual: true, isRunning: false, duration: 5400,
+    })
+    const result = await addManualTimeEntry('u1', 'c1', 5400)
+    expect(mockPrisma.timeEntry.create).toHaveBeenCalledWith(
+      expect.objectContaining({
+        data: expect.objectContaining({ isManual: true, isRunning: false, duration: 5400 }),
+      }),
+    )
+    expect(result.isManual).toBe(true)
+    expect(result.isRunning).toBe(false)
+  })
+
+  it('sets duration correctly from seconds param', async () => {
+    mockPrisma.timeEntry.create.mockResolvedValue({
+      id: 't2', userId: 'u1', cardId: 'c1', isManual: true, isRunning: false, duration: 3600,
+    })
+    await addManualTimeEntry('u1', 'c1', 3600)
+    const callData = mockPrisma.timeEntry.create.mock.calls[0][0].data
+    expect(callData.duration).toBe(3600)
   })
 })

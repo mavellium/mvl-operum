@@ -23,10 +23,12 @@ interface SprintCard {
   title: string
   description: string
   color: string
+  priority?: string | null
   sprintPosition?: number | null
   tags?: { tagId: string; tag: { id?: string; name: string; color: string } }[]
-  attachments?: { id: string }[]
+  attachments?: { id: string; fileName: string; fileType: string; filePath: string; fileSize: number; isCover?: boolean; uploadedAt: string | Date }[]
   timeEntries?: { duration: number }[]
+  responsibles?: { user: { id: string; name: string; avatarUrl: string | null } }[]
 }
 
 interface SprintColumnData {
@@ -66,12 +68,22 @@ function toCardType(card: SprintCard, sprintId: string): CardType {
     title: card.title,
     description: card.description ?? '',
     color: (card.color ?? '#6b7280') as CardColor,
+    priority: card.priority ?? 'media',
     sprintId,
     tags: card.tags?.map(ct => ({
       tagId: ct.tagId,
       tag: { id: ct.tag.id ?? ct.tagId, name: ct.tag.name, color: ct.tag.color },
     })),
-    attachments: [],
+    attachments: card.attachments?.map(a => ({
+      id: a.id,
+      fileName: a.fileName,
+      fileType: a.fileType,
+      filePath: a.filePath,
+      fileSize: a.fileSize,
+      isCover: a.isCover ?? false,
+      uploadedAt: typeof a.uploadedAt === 'string' ? new Date(a.uploadedAt).getTime() : a.uploadedAt instanceof Date ? a.uploadedAt.getTime() : Date.now(),
+    })) ?? [],
+    responsibles: card.responsibles ?? [],
     createdAt: Date.now(),
     updatedAt: Date.now(),
   }
@@ -144,13 +156,14 @@ export default function SprintBoard({ sprint, columns: initialColumns, users, ta
     await deleteSprintColumnAction(columnId)
   }
 
-  async function handleAddCard(columnId: string, data: { title: string; description: string; color: CardColor }) {
+  async function handleAddCard(columnId: string, data: { title: string; description: string; color: CardColor; priority?: string }) {
     const result = await createCardInSprintAction({
       sprintId: sprint.id,
       sprintColumnId: columnId,
       title: data.title,
       description: data.description,
       color: data.color,
+      priority: data.priority,
     })
     if ('card' in result && result.card) {
       const newCard: SprintCard = {
@@ -170,7 +183,7 @@ export default function SprintBoard({ sprint, columns: initialColumns, users, ta
 
   async function handleUpdateCard(
     cardId: string,
-    data: { title: string; description: string; color: CardColor },
+    data: { title: string; description: string; color: CardColor; priority?: string },
   ) {
     setColumns(cols => cols.map(col => ({
       ...col,
@@ -180,6 +193,7 @@ export default function SprintBoard({ sprint, columns: initialColumns, users, ta
       title: data.title,
       description: data.description,
       color: data.color,
+      priority: data.priority,
     })
   }
 

@@ -38,9 +38,19 @@ export async function saveUpload(file: File, cardId: string) {
   return attachment
 }
 
-export async function deleteUpload(attachmentId: string) {
-  const attachment = await prisma.attachment.findUnique({ where: { id: attachmentId } })
+export async function deleteUpload(attachmentId: string, userId?: string) {
+  const attachment = await prisma.attachment.findUnique({
+    where: { id: attachmentId },
+    include: { card: { include: { responsibles: { select: { userId: true } } } } },
+  })
   if (!attachment) return
+
+  if (userId) {
+    const isResponsible = attachment.card.responsibles.some(r => r.userId === userId)
+    if (!isResponsible) {
+      throw new Error('Sem permissão para excluir este anexo')
+    }
+  }
 
   try {
     await del(attachment.filePath)

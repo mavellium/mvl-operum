@@ -32,7 +32,16 @@ export interface Attachment {
   fileType: string
   filePath: string
   fileSize: number
+  isCover?: boolean
   uploadedAt: number
+}
+
+export interface CardResponsible {
+  user: {
+    id: string
+    name: string
+    avatarUrl: string | null
+  }
 }
 
 export interface Card {
@@ -40,9 +49,11 @@ export interface Card {
   title: string
   description: string
   color: CardColor
+  priority?: string
   sprintId?: string | null
   tags?: CardTag[]
   attachments?: Attachment[]
+  responsibles?: CardResponsible[]
   startDate?: Date | null
   endDate?: Date | null
   createdAt: number

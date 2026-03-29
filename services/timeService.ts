@@ -55,6 +55,21 @@ export async function getTotalDuration(userId: string, cardId: string) {
   return result._sum.duration ?? 0
 }
 
+export async function addManualTimeEntry(userId: string, cardId: string, seconds: number) {
+  const now = new Date()
+  return prisma.timeEntry.create({
+    data: {
+      userId,
+      cardId,
+      isManual: true,
+      isRunning: false,
+      duration: seconds,
+      startedAt: now,
+      endedAt: now,
+    },
+  })
+}
+
 export async function getTotalDurationForSprint(sprintId: string) {
   const result = await prisma.timeEntry.aggregate({
     where: { card: { sprintId } },

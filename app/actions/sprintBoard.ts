@@ -63,6 +63,7 @@ export async function createCardInSprintAction(input: {
   title: string
   description?: string
   color?: string
+  priority?: string
 }) {
   try {
     await verifySession()
@@ -76,6 +77,7 @@ export async function createCardInSprintAction(input: {
         title: input.title,
         description: input.description ?? '',
         color: input.color ?? '#3b82f6',
+        priority: input.priority ?? 'media',
         position: existingCards,
         sprintId: input.sprintId,
         sprintColumnId: input.sprintColumnId,
@@ -124,6 +126,7 @@ export async function updateCardInSprintAction(
     title: string
     description: string
     color: string
+    priority?: string
   },
 ) {
   try {
@@ -147,7 +150,7 @@ export async function deleteCardInSprintAction(cardId: string) {
 
 export async function updateSprintMetaAction(
   sprintId: string,
-  data: { qualidade?: number; dificuldade?: number; description?: string; name?: string },
+  data: { qualidade?: number; dificuldade?: number; description?: string; name?: string; startDate?: Date | null; endDate?: Date | null },
 ) {
   try {
     await verifySession()

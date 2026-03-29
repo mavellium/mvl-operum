@@ -30,6 +30,7 @@ interface CardModalProps {
     title: string
     description: string
     color: CardColor
+    priority: string
   }) => void
   initialCard?: Card
   users?: User[]
@@ -37,6 +38,7 @@ interface CardModalProps {
   attachments?: Attachment[]
   onAttachmentUpload?: (file: File) => void
   onAttachmentDelete?: (attachmentId: string) => void
+  onAttachmentSetCover?: (attachmentId: string) => void
 }
 
 const DEFAULT_COLOR: CardColor = '#6b7280'
@@ -51,10 +53,12 @@ export default function CardModal({
   attachments,
   onAttachmentUpload,
   onAttachmentDelete,
+  onAttachmentSetCover,
 }: CardModalProps) {
   const [title, setTitle] = useState('')
   const [description, setDescription] = useState('')
   const [color, setColor] = useState<CardColor>(DEFAULT_COLOR)
+  const [priority, setPriority] = useState('media')
   const [selectedTagIds, setSelectedTagIds] = useState<string[]>([])
   const [error, setError] = useState('')
 
@@ -63,6 +67,7 @@ export default function CardModal({
       setTitle(initialCard?.title ?? '')
       setDescription(initialCard?.description ?? '')
       setColor(initialCard?.color ?? DEFAULT_COLOR)
+      setPriority(initialCard?.priority ?? 'media')
       setSelectedTagIds(initialCard?.tags?.map(t => t.tagId) ?? [])
       setError('')
     }
@@ -86,6 +91,7 @@ export default function CardModal({
       title: title.trim(),
       description: description.trim(),
       color,
+      priority,
     })
     onClose()
   }
@@ -124,6 +130,21 @@ export default function CardModal({
           <ColorPicker value={color} onChange={setColor} />
         </div>
 
+        <div>
+          <label htmlFor="priority-select" className="block text-sm font-medium text-gray-700 mb-1">Prioridade</label>
+          <select
+            id="priority-select"
+            value={priority}
+            onChange={e => setPriority(e.target.value)}
+            aria-label="Prioridade"
+            className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm text-gray-900 outline-none focus:ring-2 focus:ring-blue-400 focus:border-blue-400 transition"
+          >
+            <option value="baixa">Baixa</option>
+            <option value="media">Média</option>
+            <option value="alta">Alta</option>
+          </select>
+        </div>
+
         {boardTags && boardTags.length > 0 && (
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-2">Tags</label>
@@ -154,6 +175,7 @@ export default function CardModal({
             attachments={attachments}
             onUpload={onAttachmentUpload}
             onDelete={onAttachmentDelete}
+            onSetCover={onAttachmentSetCover}
           />
         )}
 

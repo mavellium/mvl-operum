@@ -1,7 +1,17 @@
+import { NextResponse } from 'next/server'
 import { decrypt } from '@/lib/session'
-import { saveUpload, ValidationError } from '@/services/fileUploadService'
+import { saveUpload, deleteUpload, ValidationError } from '@/services/fileUploadService'
+import prisma from '@/lib/prisma'
 
-const ALLOWED_TYPES = ['image/png', 'image/jpeg', 'image/webp', 'application/pdf']
+const ALLOWED_TYPES = [
+  'image/png',
+  'image/jpeg',
+  'image/webp',
+  'image/gif',
+  'application/pdf',
+  'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+  'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+]
 
 export async function POST(request: Request) {
   // Auth check
@@ -37,6 +47,39 @@ export async function POST(request: Request) {
   } catch (err) {
     if (err instanceof ValidationError) {
       return Response.json({ error: err.message }, { status: 400 })
+    }
+    throw err
+  }
+}
+
+export async function DELETE(request: Request) {
+  const cookieHeader = request.headers.get('cookie') ?? ''
+  const sessionToken = cookieHeader.match(/session=([^;]+)/)?.[1]
+  const session = await decrypt(sessionToken)
+  if (!session?.userId) {
+    return NextResponse.json({ error: 'Não autorizado' }, { status: 401 })
+  }
+
+  const url = new URL(request.url)
+  const attachmentId = url.searchParams.get('id')
+  if (!attachmentId) {
+    return NextResponse.json({ error: 'id é obrigatório' }, { status: 400 })
+  }
+
+  const attachment = await prisma.attachment.findUnique({ where: { id: attachmentId } })
+  if (!attachment) {
+    return NextResponse.json({ error: 'Anexo não encontrado' }, { status: 404 })
+  }
+
+  try {
+    await deleteUpload(attachmentId, session.userId as string)
+    return new Response(null, { status: 204 })
+  } catch (err) {
+    if (err instanceof Error) {
+      const statusCode = (err as Error & { status?: number }).status
+      if (statusCode === 403 || err.message.includes('permiss') || err.message.toLowerCase().includes('forbid')) {
+        return NextResponse.json({ error: err.message }, { status: 403 })
+      }
     }
     throw err
   }

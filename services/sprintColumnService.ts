@@ -16,7 +16,7 @@ export async function getSprintColumns(sprintId: string) {
         include: {
           tags: { include: { tag: true } },
           responsibles: { include: { user: { select: { id: true, name: true, avatarUrl: true } } } },
-          attachments: { select: { id: true } },
+          attachments: { select: { id: true, fileName: true, fileType: true, filePath: true, fileSize: true, isCover: true, uploadedAt: true } },
           timeEntries: { select: { duration: true } },
         },
       },

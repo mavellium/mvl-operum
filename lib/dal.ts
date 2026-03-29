@@ -16,10 +16,15 @@ export const verifySession = cache(async () => {
 
   const user = await prisma.user.findUnique({
     where: { id: session.userId as string },
-    select: { id: true, role: true, tokenVersion: true },
+    select: { id: true, role: true, isActive: true, tokenVersion: true },
   })
 
   if (!user) {
+    cookieStore.delete('session')
+    redirect('/login')
+  }
+
+  if (user.isActive === false) {
     cookieStore.delete('session')
     redirect('/login')
   }

@@ -1,7 +1,7 @@
 'use client'
 
 import { useState, useEffect, useRef } from 'react'
-import { startTimerAction, pauseTimerAction, getCardTimeAction, getActiveTimerAction } from '@/app/actions/time'
+import { startTimerAction, pauseTimerAction, getCardTimeAction, getActiveTimerAction, addManualTimeAction } from '@/app/actions/time'
 
 function formatDuration(seconds: number): string {
   const h = Math.floor(seconds / 3600)
@@ -19,6 +19,10 @@ export default function CardTimer({ cardId }: CardTimerProps) {
   const [isRunning, setIsRunning] = useState(false)
   const [elapsed, setElapsed] = useState(0) // seconds displayed
   const [loading, setLoading] = useState(true)
+  const [showManual, setShowManual] = useState(false)
+  const [manualHours, setManualHours] = useState('0')
+  const [manualMinutes, setManualMinutes] = useState('0')
+  const [manualError, setManualError] = useState('')
   const intervalRef = useRef<ReturnType<typeof setInterval> | null>(null)
   const startedAtRef = useRef<Date | null>(null)
   const baseSecondsRef = useRef(0)
@@ -89,38 +93,114 @@ export default function CardTimer({ cardId }: CardTimerProps) {
     setLoading(false)
   }
 
+  async function handleManualSave() {
+    setManualError('')
+    const h = parseInt(manualHours) || 0
+    const m = parseInt(manualMinutes) || 0
+    if (h < 0 || m < 0 || (h === 0 && m === 0)) {
+      setManualError('Informe um tempo válido maior que zero.')
+      return
+    }
+    setLoading(true)
+    const result = await addManualTimeAction(cardId, h, m)
+    setLoading(false)
+    if ('error' in result && result.error) {
+      setManualError(result.error)
+      return
+    }
+    // Refresh total displayed
+    const timeResult = await getCardTimeAction(cardId)
+    if ('seconds' in timeResult && timeResult.seconds != null) {
+      baseSecondsRef.current = timeResult.seconds
+      setElapsed(timeResult.seconds)
+    }
+    setManualHours('0')
+    setManualMinutes('0')
+    setShowManual(false)
+  }
+
   return (
-    <div className="flex items-center gap-3 py-2">
-      <span
-        className="text-2xl font-mono font-semibold text-gray-800 tabular-nums min-w-[80px]"
-        aria-label="Tempo acumulado"
-      >
-        {formatDuration(elapsed)}
-      </span>
-      {isRunning ? (
-        <button
-          onClick={handlePause}
-          disabled={loading}
-          aria-label="Pausar timer"
-          className="flex items-center gap-1.5 px-3 py-1.5 bg-amber-100 text-amber-700 rounded-lg text-sm font-medium hover:bg-amber-200 transition-colors disabled:opacity-50"
+    <div className="flex flex-col gap-2 py-2">
+      <div className="flex items-center gap-3">
+        <span
+          className="text-2xl font-mono font-semibold text-gray-800 tabular-nums min-w-[80px]"
+          aria-label="Tempo acumulado"
         >
-          <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 24 24">
-            <path d="M6 4h4v16H6V4zm8 0h4v16h-4V4z" />
-          </svg>
-          Pausar
-        </button>
-      ) : (
+          {formatDuration(elapsed)}
+        </span>
+        {isRunning ? (
+          <button
+            onClick={handlePause}
+            disabled={loading}
+            aria-label="Pausar timer"
+            className="flex items-center gap-1.5 px-3 py-1.5 bg-amber-100 text-amber-700 rounded-lg text-sm font-medium hover:bg-amber-200 transition-colors disabled:opacity-50"
+          >
+            <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 24 24">
+              <path d="M6 4h4v16H6V4zm8 0h4v16h-4V4z" />
+            </svg>
+            Pausar
+          </button>
+        ) : (
+          <button
+            onClick={handleStart}
+            disabled={loading}
+            aria-label="Iniciar timer"
+            className="flex items-center gap-1.5 px-3 py-1.5 bg-green-100 text-green-700 rounded-lg text-sm font-medium hover:bg-green-200 transition-colors disabled:opacity-50"
+          >
+            <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 24 24">
+              <path d="M8 5v14l11-7z" />
+            </svg>
+            Iniciar
+          </button>
+        )}
         <button
-          onClick={handleStart}
-          disabled={loading}
-          aria-label="Iniciar timer"
-          className="flex items-center gap-1.5 px-3 py-1.5 bg-green-100 text-green-700 rounded-lg text-sm font-medium hover:bg-green-200 transition-colors disabled:opacity-50"
+          onClick={() => { setShowManual(v => !v); setManualError('') }}
+          className="text-xs text-gray-500 hover:text-blue-600 border border-gray-200 px-2.5 py-1.5 rounded-lg transition-colors"
         >
-          <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 24 24">
-            <path d="M8 5v14l11-7z" />
-          </svg>
-          Iniciar
+          Adicionar manualmente
         </button>
+      </div>
+
+      {showManual && (
+        <div className="flex items-end gap-2 mt-1">
+          <div>
+            <label className="block text-xs text-gray-500 mb-0.5">Horas</label>
+            <input
+              type="number"
+              min="0"
+              value={manualHours}
+              onChange={e => setManualHours(e.target.value)}
+              aria-label="Horas"
+              className="w-16 px-2 py-1 border border-gray-300 rounded-lg text-sm text-gray-900 focus:outline-none focus:ring-2 focus:ring-blue-400"
+            />
+          </div>
+          <div>
+            <label className="block text-xs text-gray-500 mb-0.5">Minutos</label>
+            <input
+              type="number"
+              min="0"
+              max="59"
+              value={manualMinutes}
+              onChange={e => setManualMinutes(e.target.value)}
+              aria-label="Minutos"
+              className="w-16 px-2 py-1 border border-gray-300 rounded-lg text-sm text-gray-900 focus:outline-none focus:ring-2 focus:ring-blue-400"
+            />
+          </div>
+          <button
+            onClick={handleManualSave}
+            disabled={loading}
+            className="px-3 py-1.5 bg-blue-600 text-white text-sm rounded-lg hover:bg-blue-700 disabled:opacity-50"
+          >
+            Salvar
+          </button>
+          <button
+            onClick={() => setShowManual(false)}
+            className="px-3 py-1.5 border border-gray-200 text-gray-600 text-sm rounded-lg hover:bg-gray-50"
+          >
+            Cancelar
+          </button>
+          {manualError && <p className="text-xs text-red-500">{manualError}</p>}
+        </div>
       )}
     </div>
   )

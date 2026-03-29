@@ -10,6 +10,7 @@ import UserAvatar from '@/components/user/UserAvatar'
 import Modal from '@/components/ui/Modal'
 import { CsvImportModal } from '@/components/csv/CsvImportModal'
 import { TagManager } from '@/components/tag/TagManager'
+import EditSprintModal from './EditSprintModal'
 
 interface CurrentUser {
   id: string
@@ -60,6 +61,11 @@ export default function SprintHeader({ sprint, currentUser, tags = [] }: SprintH
   const [saving, setSaving] = useState(false)
   const [csvOpen, setCsvOpen] = useState(false)
   const [tagOpen, setTagOpen] = useState(false)
+  const [editSprintOpen, setEditSprintOpen] = useState(false)
+  const [sprintDates, setSprintDates] = useState({
+    startDate: sprint.startDate,
+    endDate: sprint.endDate,
+  })
   const [userMenuOpen, setUserMenuOpen] = useState(false)
   const [editingName, setEditingName] = useState(false)
   const [sprintName, setSprintName] = useState(sprint.name)
@@ -128,11 +134,17 @@ export default function SprintHeader({ sprint, currentUser, tags = [] }: SprintH
             <span className={`text-xs font-medium px-2 py-0.5 rounded-full shrink-0 ${STATUS_COLORS[sprint.status]}`}>
               {STATUS_LABELS[sprint.status]}
             </span>
-            {(sprint.startDate || sprint.endDate) && (
+            {(sprintDates.startDate || sprintDates.endDate) && (
               <div className="text-sm text-gray-500 hidden sm:block shrink-0">
-                {formatDate(sprint.startDate)} → {formatDate(sprint.endDate)}
+                {formatDate(sprintDates.startDate)} → {formatDate(sprintDates.endDate)}
               </div>
             )}
+            <button
+              onClick={() => setEditSprintOpen(true)}
+              className="text-xs text-gray-500 hover:text-blue-600 border border-gray-200 px-3 py-1 rounded-lg transition-colors hidden md:block shrink-0"
+            >
+              Editar Sprint
+            </button>
             <Link
               href={`/dashboard/sprint/${sprint.id}`}
               className="text-xs text-gray-500 hover:text-blue-600 border border-gray-200 px-3 py-1 rounded-lg transition-colors hidden md:block shrink-0"
@@ -184,6 +196,17 @@ export default function SprintHeader({ sprint, currentUser, tags = [] }: SprintH
       </header>
 
       <CsvImportModal isOpen={csvOpen} onClose={() => setCsvOpen(false)} sprintId={sprint.id} />
+
+      {editSprintOpen && (
+        <EditSprintModal
+          sprint={{ ...sprint, ...sprintDates, name: sprintName }}
+          onClose={() => setEditSprintOpen(false)}
+          onUpdated={data => {
+            setSprintName(data.name)
+            setSprintDates({ startDate: data.startDate, endDate: data.endDate })
+          }}
+        />
+      )}
 
       <Modal isOpen={tagOpen} onClose={() => setTagOpen(false)} title="Tags">
         <TagManager tags={tags} />

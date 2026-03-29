@@ -98,16 +98,39 @@ describe('saveUpload', () => {
 })
 
 describe('deleteUpload', () => {
-  it('deletes blob and removes DB record', async () => {
+  it('deletes blob and removes DB record when no userId provided (internal)', async () => {
     const blobUrl = 'https://blob.vercel-storage.com/uploads/card1/uuid.png'
     mockPrisma.attachment.findUnique.mockResolvedValue({
       id: 'att1',
       filePath: blobUrl,
+      card: { responsibles: [] },
     })
     mockPrisma.attachment.delete.mockResolvedValue({ id: 'att1' })
     await deleteUpload('att1')
     expect(mockBlob.del).toHaveBeenCalledOnce()
     expect(mockBlob.del).toHaveBeenCalledWith(blobUrl)
     expect(mockPrisma.attachment.delete).toHaveBeenCalledOnce()
+  })
+
+  it('deletes blob when userId matches a responsible', async () => {
+    const blobUrl = 'https://blob.vercel-storage.com/uploads/card1/uuid.png'
+    mockPrisma.attachment.findUnique.mockResolvedValue({
+      id: 'att1',
+      filePath: blobUrl,
+      card: { responsibles: [{ userId: 'u1' }] },
+    })
+    mockPrisma.attachment.delete.mockResolvedValue({ id: 'att1' })
+    await deleteUpload('att1', 'u1')
+    expect(mockBlob.del).toHaveBeenCalledOnce()
+    expect(mockPrisma.attachment.delete).toHaveBeenCalledOnce()
+  })
+
+  it('throws 403 error if userId is provided and user is not a responsible', async () => {
+    mockPrisma.attachment.findUnique.mockResolvedValue({
+      id: 'att1',
+      filePath: 'https://blob.test/f.png',
+      card: { responsibles: [{ userId: 'other' }] },
+    })
+    await expect(deleteUpload('att1', 'u1')).rejects.toThrow(/permiss|autoriza|forbid/i)
   })
 })

@@ -6,6 +6,7 @@ import { Card as CardType, CardColor } from '@/types/kanban'
 import CardModal from './CardModal'
 import ConfirmDialog from '@/components/ui/ConfirmDialog'
 import { TagBadge } from '@/components/tag/TagBadge'
+import UserAvatar from '@/components/user/UserAvatar'
 
 interface User {
   id: string
@@ -42,7 +43,7 @@ export default function Card({ card, index, columnId, onUpdate, onDelete, users,
             ref={provided.innerRef}
             {...provided.draggableProps}
             {...provided.dragHandleProps}
-            className={`group bg-white rounded-xl shadow-sm border border-gray-100 p-3 cursor-pointer transition-all
+            className={`group bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden cursor-pointer transition-all
               ${snapshot.isDragging ? 'shadow-xl rotate-1 ring-2 ring-blue-300' : 'hover:shadow-md'}`}
             style={{
               ...provided.draggableProps.style,
@@ -51,6 +52,15 @@ export default function Card({ card, index, columnId, onUpdate, onDelete, users,
             }}
             onClick={() => setEditOpen(true)}
           >
+            {(() => {
+              const cover = card.attachments?.find(a => a.isCover)
+              if (!cover) return null
+              return (
+                // eslint-disable-next-line @next/next/no-img-element
+                <img src={cover.filePath} alt="Capa" className="w-full h-24 object-cover" />
+              )
+            })()}
+            <div className="p-3">
             <div className="flex items-start justify-between gap-2">
               <p className="text-sm font-medium text-gray-900 leading-snug flex-1 break-words">{card.title}</p>
               <div className="flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity shrink-0">
@@ -77,6 +87,33 @@ export default function Card({ card, index, columnId, onUpdate, onDelete, users,
                 ))}
               </div>
             )}
+
+            {(card.priority || (card.responsibles && card.responsibles.length > 0)) && (
+              <div className="flex items-center justify-between mt-2 gap-2">
+                {card.priority && (
+                  <span className={`text-xs px-1.5 py-0.5 rounded font-medium ${
+                    card.priority === 'alta'
+                      ? 'bg-red-100 text-red-700'
+                      : card.priority === 'media'
+                      ? 'bg-yellow-100 text-yellow-700'
+                      : 'bg-green-100 text-green-700'
+                  }`}>
+                    {card.priority}
+                  </span>
+                )}
+                {card.responsibles && card.responsibles.length > 0 && (
+                  <div className="flex items-center gap-0.5 ml-auto">
+                    {card.responsibles.slice(0, 3).map(r => (
+                      <UserAvatar key={r.user.id} name={r.user.name} avatarUrl={r.user.avatarUrl} size="xs" />
+                    ))}
+                    {card.responsibles.length > 3 && (
+                      <span className="text-xs text-gray-400 ml-0.5">+{card.responsibles.length - 3}</span>
+                    )}
+                  </div>
+                )}
+              </div>
+            )}
+            </div>
           </div>
         )}
       </Draggable>
@@ -97,6 +134,10 @@ export default function Card({ card, index, columnId, onUpdate, onDelete, users,
         }}
         onAttachmentDelete={async (attachmentId) => {
           await fetch(`/api/uploads?id=${attachmentId}`, { method: 'DELETE' })
+        }}
+        onAttachmentSetCover={async (attachmentId) => {
+          const { setCoverAction } = await import('@/app/actions/attachments')
+          await setCoverAction(card.id, attachmentId)
         }}
       />
 
