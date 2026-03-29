@@ -1,7 +1,9 @@
 {
   "permissions": {
     "allow": [
-      "Bash(npm install:*)"
+      "Bash(npm install:*)",
+      "Bash(ls -la /c/temp/ClaudeCode/kanban-board/middleware.*)",
+      "Bash(xargs grep:*)"
     ],
     "additionalDirectories": [
       "c:\\temp\\ClaudeCode\\kanban-board\\app\\dashboard\\sprint",
