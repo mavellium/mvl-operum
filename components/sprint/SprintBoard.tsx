@@ -206,16 +206,16 @@ export default function SprintBoard({ sprint, columns: initialColumns, users, ta
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-100 via-blue-50 to-indigo-100 flex flex-col pb-16">
+    <div className="h-screen bg-gradient-to-br from-slate-100 via-blue-50 to-indigo-100 flex flex-col pb-16">
       <SprintHeader sprint={sprint} currentUser={currentUser} tags={tags} />
-      <div className="flex-1 overflow-x-auto p-4">
+      <div className="flex-1 min-h-0 overflow-x-auto p-4">
         <DragDropContext onDragEnd={handleDragEnd}>
           <Droppable droppableId="sprint-columns" direction="horizontal" type="COLUMN">
             {provided => (
               <div
                 ref={provided.innerRef}
                 {...provided.droppableProps}
-                className="flex gap-3 items-start"
+                className="flex gap-3 items-stretch h-full"
               >
                 {columns.map((col, index) => (
                   <ColumnComponent

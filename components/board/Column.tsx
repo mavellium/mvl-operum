@@ -47,7 +47,7 @@ export default function Column({
           <div
             ref={provided.innerRef}
             {...provided.draggableProps}
-            className={`flex flex-col w-72 shrink-0 bg-gray-100 rounded-2xl transition-shadow
+            className={`flex flex-col w-72 shrink-0 h-full bg-gray-100 rounded-2xl transition-shadow
               ${snapshot.isDragging ? 'shadow-2xl ring-2 ring-blue-300 rotate-1' : 'shadow-sm'}`}
           >
             <ColumnHeader
@@ -63,7 +63,7 @@ export default function Column({
                 <div
                   ref={dropProvided.innerRef}
                   {...dropProvided.droppableProps}
-                  className={`flex-1 px-2 pb-2 flex flex-col gap-2 min-h-[80px] rounded-b-2xl transition-colors overflow-y-auto max-h-[calc(100vh-260px)]
+                  className={`flex-1 min-h-0 px-2 pb-2 flex flex-col gap-2 rounded-b-2xl transition-colors overflow-y-auto
                     ${dropSnapshot.isDraggingOver ? 'bg-blue-50' : ''}`}
                 >
                   {cards.length === 0 && !dropSnapshot.isDraggingOver && (
