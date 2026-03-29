@@ -133,9 +133,10 @@ model TimeEntry {
   cardId    String
   startedAt DateTime  @default(now())
   endedAt   DateTime?
-  duration  Int       @default(0)
-  isRunning Boolean   @default(false)
-  isManual  Boolean   @default(false)
+  duration    Int       @default(0)
+  description String?
+  isRunning   Boolean   @default(false)
+  isManual    Boolean   @default(false)
   user      User      @relation(fields: [userId], references: [id], onDelete: Cascade)
   card      Card      @relation(fields: [cardId], references: [id], onDelete: Cascade)
   createdAt DateTime  @default(now())

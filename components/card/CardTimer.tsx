@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useRef } from 'react'
 import { startTimerAction, pauseTimerAction, getCardTimeAction, getActiveTimerAction, addManualTimeAction } from '@/app/actions/time'
+import TimeEntryList from './TimeEntryList'
 
 function formatDuration(seconds: number): string {
   const h = Math.floor(seconds / 3600)
@@ -22,7 +23,9 @@ export default function CardTimer({ cardId }: CardTimerProps) {
   const [showManual, setShowManual] = useState(false)
   const [manualHours, setManualHours] = useState('0')
   const [manualMinutes, setManualMinutes] = useState('0')
+  const [manualDescription, setManualDescription] = useState('')
   const [manualError, setManualError] = useState('')
+  const [listRefreshKey, setListRefreshKey] = useState(0)
   const intervalRef = useRef<ReturnType<typeof setInterval> | null>(null)
   const startedAtRef = useRef<Date | null>(null)
   const baseSecondsRef = useRef(0)
@@ -102,7 +105,7 @@ export default function CardTimer({ cardId }: CardTimerProps) {
       return
     }
     setLoading(true)
-    const result = await addManualTimeAction(cardId, h, m)
+    const result = await addManualTimeAction(cardId, h, m, manualDescription || undefined)
     setLoading(false)
     if ('error' in result && result.error) {
       setManualError(result.error)
@@ -116,7 +119,17 @@ export default function CardTimer({ cardId }: CardTimerProps) {
     }
     setManualHours('0')
     setManualMinutes('0')
+    setManualDescription('')
     setShowManual(false)
+    setListRefreshKey(k => k + 1)
+  }
+
+  async function handleRefreshTotal() {
+    const timeResult = await getCardTimeAction(cardId)
+    if ('seconds' in timeResult && timeResult.seconds != null) {
+      baseSecondsRef.current = timeResult.seconds
+      setElapsed(timeResult.seconds)
+    }
   }
 
   return (
@@ -165,48 +178,63 @@ export default function CardTimer({ cardId }: CardTimerProps) {
       </div>
 
       {showManual && (
-        <div className="flex items-end gap-2 mt-1">
-          <div>
-            <label className="block text-xs text-gray-500 mb-0.5">Horas</label>
-            <input
-              type="number"
-              min="0"
-              value={manualHours}
-              onChange={e => setManualHours(e.target.value)}
-              aria-label="Horas"
-              className="w-16 px-2 py-1 border border-gray-300 rounded-lg text-sm text-gray-900 focus:outline-none focus:ring-2 focus:ring-blue-400"
-            />
+        <div className="flex flex-col gap-2 mt-1">
+          <div className="flex items-end gap-2">
+            <div>
+              <label className="block text-xs text-gray-500 mb-0.5">Horas</label>
+              <input
+                type="number"
+                min="0"
+                value={manualHours}
+                onChange={e => setManualHours(e.target.value)}
+                aria-label="Horas"
+                className="w-16 px-2 py-1 border border-gray-300 rounded-lg text-sm text-gray-900 focus:outline-none focus:ring-2 focus:ring-blue-400"
+              />
+            </div>
+            <div>
+              <label className="block text-xs text-gray-500 mb-0.5">Minutos</label>
+              <input
+                type="number"
+                min="0"
+                max="59"
+                value={manualMinutes}
+                onChange={e => setManualMinutes(e.target.value)}
+                aria-label="Minutos"
+                className="w-16 px-2 py-1 border border-gray-300 rounded-lg text-sm text-gray-900 focus:outline-none focus:ring-2 focus:ring-blue-400"
+              />
+            </div>
+            <button
+              type="button"
+              onClick={(e) => { e.stopPropagation(); handleManualSave() }}
+              disabled={loading}
+              className="px-3 py-1.5 bg-blue-600 text-white text-sm rounded-lg hover:bg-blue-700 disabled:opacity-50"
+            >
+              Salvar
+            </button>
+            <button
+              type="button"
+              onClick={(e) => { e.stopPropagation(); setShowManual(false) }}
+              className="px-3 py-1.5 border border-gray-200 text-gray-600 text-sm rounded-lg hover:bg-gray-50"
+            >
+              Cancelar
+            </button>
           </div>
-          <div>
-            <label className="block text-xs text-gray-500 mb-0.5">Minutos</label>
-            <input
-              type="number"
-              min="0"
-              max="59"
-              value={manualMinutes}
-              onChange={e => setManualMinutes(e.target.value)}
-              aria-label="Minutos"
-              className="w-16 px-2 py-1 border border-gray-300 rounded-lg text-sm text-gray-900 focus:outline-none focus:ring-2 focus:ring-blue-400"
-            />
-          </div>
-          <button
-            type="button"
-            onClick={(e) => { e.stopPropagation(); handleManualSave() }}
-            disabled={loading}
-            className="px-3 py-1.5 bg-blue-600 text-white text-sm rounded-lg hover:bg-blue-700 disabled:opacity-50"
-          >
-            Salvar
-          </button>
-          <button
-            type="button"
-            onClick={(e) => { e.stopPropagation(); setShowManual(false) }}
-            className="px-3 py-1.5 border border-gray-200 text-gray-600 text-sm rounded-lg hover:bg-gray-50"
-          >
-            Cancelar
-          </button>
+          <input
+            type="text"
+            placeholder="Descrição (opcional)"
+            value={manualDescription}
+            onChange={e => setManualDescription(e.target.value)}
+            aria-label="Descrição"
+            className="w-full px-2 py-1 border border-gray-300 rounded-lg text-sm text-gray-900 focus:outline-none focus:ring-2 focus:ring-blue-400"
+          />
           {manualError && <p className="text-xs text-red-500">{manualError}</p>}
         </div>
       )}
+
+      <div className="mt-3 pt-3 border-t border-gray-100">
+        <p className="text-xs font-medium text-gray-500 mb-1">Histórico</p>
+        <TimeEntryList cardId={cardId} refreshKey={listRefreshKey} onChanged={handleRefreshTotal} />
+      </div>
     </div>
   )
 }

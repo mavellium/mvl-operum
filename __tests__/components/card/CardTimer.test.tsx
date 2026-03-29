@@ -115,7 +115,7 @@ describe('CardTimer', () => {
     await user.clear(screen.getByLabelText(/minutos/i))
     await user.type(screen.getByLabelText(/minutos/i), '30')
     await user.click(screen.getByRole('button', { name: /salvar/i }))
-    expect(mockAddManual).toHaveBeenCalledWith('c1', 1, 30)
+    expect(mockAddManual).toHaveBeenCalledWith('c1', 1, 30, undefined)
   })
 
   it('shows error when hours and minutes are both 0', async () => {

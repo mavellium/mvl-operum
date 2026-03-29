@@ -6,24 +6,31 @@ vi.mock('@/lib/prisma', () => ({
     timeEntry: {
       findFirst: vi.fn(),
       findMany: vi.fn(),
+      findUnique: vi.fn(),
       create: vi.fn(),
       update: vi.fn(),
       updateMany: vi.fn(),
+      delete: vi.fn(),
       aggregate: vi.fn(),
     },
   },
 }))
 
 import prisma from '@/lib/prisma'
-import { startTimer, pauseTimer, getActiveTimer, getTotalDuration, addManualTimeEntry } from '@/services/timeService'
+import {
+  startTimer, pauseTimer, getActiveTimer, getTotalDuration, addManualTimeEntry,
+  getTimeEntries, updateTimeEntry, deleteTimeEntry,
+} from '@/services/timeService'
 
 const mockPrisma = prisma as {
   timeEntry: {
     findFirst: ReturnType<typeof vi.fn>
     findMany: ReturnType<typeof vi.fn>
+    findUnique: ReturnType<typeof vi.fn>
     create: ReturnType<typeof vi.fn>
     update: ReturnType<typeof vi.fn>
     updateMany: ReturnType<typeof vi.fn>
+    delete: ReturnType<typeof vi.fn>
     aggregate: ReturnType<typeof vi.fn>
   }
 }
@@ -118,5 +125,82 @@ describe('addManualTimeEntry', () => {
     await addManualTimeEntry('u1', 'c1', 3600)
     const callData = mockPrisma.timeEntry.create.mock.calls[0][0].data
     expect(callData.duration).toBe(3600)
+  })
+
+  it('stores description when provided', async () => {
+    mockPrisma.timeEntry.create.mockResolvedValue({
+      id: 't3', userId: 'u1', cardId: 'c1', isManual: true, isRunning: false, duration: 1800, description: 'Reunião',
+    })
+    await addManualTimeEntry('u1', 'c1', 1800, 'Reunião')
+    const callData = mockPrisma.timeEntry.create.mock.calls[0][0].data
+    expect(callData.description).toBe('Reunião')
+  })
+})
+
+describe('getTimeEntries', () => {
+  it('returns completed entries for user+card ordered by createdAt desc', async () => {
+    const entries = [
+      { id: 't2', duration: 3600, description: null, createdAt: new Date('2024-01-02') },
+      { id: 't1', duration: 1800, description: 'Revisão', createdAt: new Date('2024-01-01') },
+    ]
+    mockPrisma.timeEntry.findMany.mockResolvedValue(entries)
+    const result = await getTimeEntries('u1', 'c1')
+    expect(mockPrisma.timeEntry.findMany).toHaveBeenCalledWith(
+      expect.objectContaining({
+        where: expect.objectContaining({ userId: 'u1', cardId: 'c1', isRunning: false }),
+        orderBy: { createdAt: 'desc' },
+      })
+    )
+    expect(result).toHaveLength(2)
+  })
+
+  it('returns empty array if no entries', async () => {
+    mockPrisma.timeEntry.findMany.mockResolvedValue([])
+    const result = await getTimeEntries('u1', 'c1')
+    expect(result).toEqual([])
+  })
+})
+
+describe('updateTimeEntry', () => {
+  it('updates duration and description when user is owner', async () => {
+    mockPrisma.timeEntry.findUnique.mockResolvedValue({ id: 't1', userId: 'u1' })
+    mockPrisma.timeEntry.update.mockResolvedValue({ id: 't1', duration: 7200, description: 'Atualizado' })
+    const result = await updateTimeEntry('t1', 'u1', { duration: 7200, description: 'Atualizado' })
+    expect(mockPrisma.timeEntry.update).toHaveBeenCalledWith(
+      expect.objectContaining({
+        where: { id: 't1' },
+        data: expect.objectContaining({ duration: 7200, description: 'Atualizado' }),
+      })
+    )
+    expect(result.duration).toBe(7200)
+  })
+
+  it('throws if entry not found', async () => {
+    mockPrisma.timeEntry.findUnique.mockResolvedValue(null)
+    await expect(updateTimeEntry('t99', 'u1', { duration: 3600 })).rejects.toThrow('não encontrado')
+  })
+
+  it('throws if user is not owner', async () => {
+    mockPrisma.timeEntry.findUnique.mockResolvedValue({ id: 't1', userId: 'u2' })
+    await expect(updateTimeEntry('t1', 'u1', { duration: 3600 })).rejects.toThrow('permissão')
+  })
+})
+
+describe('deleteTimeEntry', () => {
+  it('deletes entry when user is owner', async () => {
+    mockPrisma.timeEntry.findUnique.mockResolvedValue({ id: 't1', userId: 'u1' })
+    mockPrisma.timeEntry.delete.mockResolvedValue({ id: 't1' })
+    await deleteTimeEntry('t1', 'u1')
+    expect(mockPrisma.timeEntry.delete).toHaveBeenCalledWith({ where: { id: 't1' } })
+  })
+
+  it('throws if entry not found', async () => {
+    mockPrisma.timeEntry.findUnique.mockResolvedValue(null)
+    await expect(deleteTimeEntry('t99', 'u1')).rejects.toThrow('não encontrado')
+  })
+
+  it('throws if user is not owner', async () => {
+    mockPrisma.timeEntry.findUnique.mockResolvedValue({ id: 't1', userId: 'u2' })
+    await expect(deleteTimeEntry('t1', 'u1')).rejects.toThrow('permissão')
   })
 })

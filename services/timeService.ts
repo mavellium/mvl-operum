@@ -55,7 +55,7 @@ export async function getTotalDuration(userId: string, cardId: string) {
   return result._sum.duration ?? 0
 }
 
-export async function addManualTimeEntry(userId: string, cardId: string, seconds: number) {
+export async function addManualTimeEntry(userId: string, cardId: string, seconds: number, description?: string) {
   const now = new Date()
   return prisma.timeEntry.create({
     data: {
@@ -64,10 +64,36 @@ export async function addManualTimeEntry(userId: string, cardId: string, seconds
       isManual: true,
       isRunning: false,
       duration: seconds,
+      description: description ?? null,
       startedAt: now,
       endedAt: now,
     },
   })
+}
+
+export async function getTimeEntries(userId: string, cardId: string) {
+  return prisma.timeEntry.findMany({
+    where: { userId, cardId, isRunning: false },
+    orderBy: { createdAt: 'desc' },
+  })
+}
+
+export async function updateTimeEntry(
+  entryId: string,
+  userId: string,
+  data: { duration?: number; description?: string | null },
+) {
+  const entry = await prisma.timeEntry.findUnique({ where: { id: entryId } })
+  if (!entry) throw new Error('Registro não encontrado')
+  if (entry.userId !== userId) throw new Error('Sem permissão para editar este registro')
+  return prisma.timeEntry.update({ where: { id: entryId }, data })
+}
+
+export async function deleteTimeEntry(entryId: string, userId: string) {
+  const entry = await prisma.timeEntry.findUnique({ where: { id: entryId } })
+  if (!entry) throw new Error('Registro não encontrado')
+  if (entry.userId !== userId) throw new Error('Sem permissão para excluir este registro')
+  return prisma.timeEntry.delete({ where: { id: entryId } })
 }
 
 export async function getTotalDurationForSprint(sprintId: string) {
