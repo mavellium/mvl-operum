@@ -10,11 +10,11 @@ export class NotFoundError extends Error {
 export async function getSprintMetrics(sprintId: string) {
   const [timeEntries, cards] = await Promise.all([
     prisma.timeEntry.findMany({
-      where: { card: { sprintId } },
+      where: { card: { sprintId, deletedAt: null }, deletedAt: null },
       include: { user: { select: { valorHora: true } } },
     }),
     prisma.card.findMany({
-      where: { sprintId },
+      where: { sprintId, deletedAt: null },
       include: { sprintColumn: { select: { title: true } } },
     }),
   ])
@@ -37,7 +37,7 @@ export async function getSprintMetrics(sprintId: string) {
 
 export async function getUserMetrics() {
   const users = await prisma.user.findMany({
-    where: { timeEntries: { some: {} } },
+    where: { deletedAt: null, timeEntries: { some: { deletedAt: null } } },
     select: {
       id: true,
       name: true,
@@ -45,6 +45,7 @@ export async function getUserMetrics() {
       avatarUrl: true,
       valorHora: true,
       timeEntries: {
+        where: { deletedAt: null },
         select: { duration: true },
       },
     },
@@ -67,19 +68,21 @@ export async function getUserMetrics() {
 export async function getMemberCardMetrics() {
   const now = new Date()
   const users = await prisma.user.findMany({
+    where: { deletedAt: null },
     select: {
       id: true,
       name: true,
       cargo: true,
       avatarUrl: true,
       valorHora: true,
-      timeEntries: { select: { duration: true } },
+      timeEntries: { where: { deletedAt: null }, select: { duration: true } },
       responsibleCards: {
         select: {
           card: {
             select: {
               id: true,
               endDate: true,
+              deletedAt: true,
               sprintColumn: { select: { title: true } },
             },
           },
@@ -90,7 +93,7 @@ export async function getMemberCardMetrics() {
   })
 
   return users.map(u => {
-    const cards = u.responsibleCards.map(r => r.card)
+    const cards = u.responsibleCards.map(r => r.card).filter(c => c.deletedAt === null)
     const isDone = (c: typeof cards[number]) => /conclu/i.test(c.sprintColumn?.title ?? '')
     const horasTotais = u.timeEntries.reduce((sum, e) => sum + e.duration / 3600, 0)
     return {
@@ -110,7 +113,7 @@ export async function getMemberCardMetrics() {
 export async function getOverdueCards() {
   const now = new Date()
   const cards = await prisma.card.findMany({
-    where: { endDate: { lt: now } },
+    where: { endDate: { lt: now }, deletedAt: null },
     include: {
       sprint: { select: { id: true, name: true } },
       sprintColumn: { select: { title: true } },
@@ -128,12 +131,13 @@ export async function getOverdueCards() {
 
 export async function getGlobalKPIs() {
   const [sprints, cards, timeEntries, users] = await Promise.all([
-    prisma.sprint.findMany(),
-    prisma.card.findMany(),
+    prisma.sprint.findMany({ where: { deletedAt: null } }),
+    prisma.card.findMany({ where: { deletedAt: null } }),
     prisma.timeEntry.findMany({
+      where: { deletedAt: null },
       include: { user: { select: { valorHora: true } } },
     }),
-    prisma.user.findMany({ select: { id: true, valorHora: true } }),
+    prisma.user.findMany({ where: { deletedAt: null }, select: { id: true, valorHora: true } }),
   ])
 
   const custoTotal = timeEntries.reduce((sum, e) => sum + (e.duration / 3600) * e.user.valorHora, 0)
@@ -149,13 +153,13 @@ export async function getGlobalKPIs() {
 }
 
 export async function getSprintsWithMetrics() {
-  const sprints = await prisma.sprint.findMany({ orderBy: { createdAt: 'asc' } })
+  const sprints = await prisma.sprint.findMany({ where: { deletedAt: null }, orderBy: { createdAt: 'asc' } })
   const metricsArray = await Promise.all(sprints.map(s => getSprintMetrics(s.id)))
   return sprints.map((sprint, i) => ({ sprint, metrics: metricsArray[i] }))
 }
 
 export async function getSprintDashboard(sprintId: string) {
-  const sprint = await prisma.sprint.findUnique({ where: { id: sprintId } })
+  const sprint = await prisma.sprint.findUnique({ where: { id: sprintId, deletedAt: null } })
   if (!sprint) throw new NotFoundError(`Sprint não encontrado: ${sprintId}`)
 
   const metrics = await getSprintMetrics(sprintId)

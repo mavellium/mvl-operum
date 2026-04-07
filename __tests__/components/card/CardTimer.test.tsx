@@ -10,6 +10,7 @@ vi.mock('@/app/actions/time', () => ({
   getCardTimeAction: vi.fn(),
   getActiveTimerAction: vi.fn(),
   addManualTimeAction: vi.fn(),
+  getTimeEntriesAction: vi.fn().mockResolvedValue({ entries: [] }),
 }))
 
 import { startTimerAction, pauseTimerAction, getCardTimeAction, getActiveTimerAction, addManualTimeAction } from '@/app/actions/time'

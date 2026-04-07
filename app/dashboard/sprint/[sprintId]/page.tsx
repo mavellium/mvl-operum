@@ -28,6 +28,12 @@ export default async function SprintDashboardPage({ params }: Props) {
         status: result.sprint.status as string,
       }}
       metrics={result.metrics}
+      userMetrics={result.userMetrics}
+      cardsByColumn={result.cardsByColumn}
+      overdueCards={result.overdueCards}
+      feedbacks={result.feedbacks}
+      avgQualidade={result.avgQualidade}
+      avgDificuldade={result.avgDificuldade}
     />
   )
 }

@@ -3,6 +3,7 @@ import bcrypt from 'bcryptjs'
 
 export async function listAllUsers() {
   return prisma.user.findMany({
+    where: { deletedAt: null },
     select: {
       id: true,
       name: true,
@@ -23,9 +24,9 @@ export async function adminCreateUser(data: {
   name: string
   email: string
   password: string
-  cargo?: string
-  departamento?: string
-  valorHora?: number
+  isAdmin?: boolean
+  forcePasswordChange?: boolean
+  tenantId: string
 }) {
   const passwordHash = await bcrypt.hash(data.password, 10)
   return prisma.user.create({
@@ -33,11 +34,10 @@ export async function adminCreateUser(data: {
       name: data.name,
       email: data.email,
       passwordHash,
-      role: 'member',
+      role: data.isAdmin ? 'admin' : 'member',
+      forcePasswordChange: data.forcePasswordChange ?? false,
       isActive: true,
-      cargo: data.cargo,
-      departamento: data.departamento,
-      valorHora: data.valorHora ?? 0,
+      tenantId: data.tenantId,
     },
     select: {
       id: true,
@@ -64,7 +64,7 @@ export async function adminUpdateUser(
     valorHora?: number
   },
 ) {
-  const existing = await prisma.user.findUnique({ where: { id: userId } })
+  const existing = await prisma.user.findUnique({ where: { id: userId, deletedAt: null } })
   if (!existing) throw new Error('Usuário não encontrado')
 
   const updateData: Record<string, unknown> = {}
@@ -93,7 +93,7 @@ export async function adminUpdateUser(
 }
 
 export async function toggleUserActive(userId: string, active: boolean) {
-  const existing = await prisma.user.findUnique({ where: { id: userId } })
+  const existing = await prisma.user.findUnique({ where: { id: userId, deletedAt: null } })
   if (!existing) throw new Error('Usuário não encontrado')
 
   const data: Record<string, unknown> = { isActive: active }
@@ -116,7 +116,7 @@ export async function toggleUserActive(userId: string, active: boolean) {
 }
 
 export async function setUserRole(userId: string, role: string) {
-  const existing = await prisma.user.findUnique({ where: { id: userId } })
+  const existing = await prisma.user.findUnique({ where: { id: userId, deletedAt: null } })
   if (!existing) throw new Error('Usuário não encontrado')
 
   return prisma.user.update({

@@ -25,9 +25,8 @@ export default function AdminCreateUserModal({ onClose, onCreated }: Props) {
     name: '',
     email: '',
     password: '',
-    cargo: '',
-    departamento: '',
-    valorHora: '',
+    isAdmin: false,
+    forcePasswordChange: false,
   })
   const [error, setError] = useState('')
   const [loading, setLoading] = useState(false)
@@ -44,9 +43,8 @@ export default function AdminCreateUserModal({ onClose, onCreated }: Props) {
       name: form.name.trim(),
       email: form.email.trim(),
       password: form.password,
-      cargo: form.cargo.trim() || undefined,
-      departamento: form.departamento.trim() || undefined,
-      valorHora: form.valorHora ? parseFloat(form.valorHora) : undefined,
+      isAdmin: form.isAdmin,
+      forcePasswordChange: form.forcePasswordChange,
     })
     setLoading(false)
     if ('error' in result) {
@@ -61,12 +59,60 @@ export default function AdminCreateUserModal({ onClose, onCreated }: Props) {
       <div className="bg-white rounded-2xl shadow-xl w-full max-w-md p-6">
         <h2 className="text-lg font-bold text-gray-900 mb-4">Novo Usuário</h2>
         <form onSubmit={handleSubmit} className="space-y-3">
-          <Field label="Nome *" value={form.name} onChange={v => setForm(f => ({ ...f, name: v }))} />
-          <Field label="E-mail *" type="email" value={form.email} onChange={v => setForm(f => ({ ...f, email: v }))} />
-          <Field label="Senha *" type="password" value={form.password} onChange={v => setForm(f => ({ ...f, password: v }))} />
-          <Field label="Cargo" value={form.cargo} onChange={v => setForm(f => ({ ...f, cargo: v }))} />
-          <Field label="Departamento" value={form.departamento} onChange={v => setForm(f => ({ ...f, departamento: v }))} />
-          <Field label="Valor/hora (R$)" type="number" value={form.valorHora} onChange={v => setForm(f => ({ ...f, valorHora: v }))} />
+          <div>
+            <label className="block text-xs font-medium text-gray-600 mb-1">Nome *</label>
+            <input
+              type="text"
+              value={form.name}
+              onChange={e => setForm(f => ({ ...f, name: e.target.value }))}
+              autoFocus
+              className="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+            />
+          </div>
+          <div>
+            <label className="block text-xs font-medium text-gray-600 mb-1">E-mail *</label>
+            <input
+              type="email"
+              value={form.email}
+              onChange={e => setForm(f => ({ ...f, email: e.target.value }))}
+              className="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+            />
+          </div>
+          <div>
+            <label className="block text-xs font-medium text-gray-600 mb-1">Senha *</label>
+            <input
+              type="password"
+              value={form.password}
+              onChange={e => setForm(f => ({ ...f, password: e.target.value }))}
+              className="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+            />
+          </div>
+
+          <div className="space-y-2 pt-1">
+            <label className="flex items-center gap-3 cursor-pointer group">
+              <input
+                type="checkbox"
+                checked={form.isAdmin}
+                onChange={e => setForm(f => ({ ...f, isAdmin: e.target.checked }))}
+                className="w-4 h-4 rounded border-gray-300 text-blue-600 focus:ring-blue-500"
+              />
+              <span className="text-sm text-gray-700 group-hover:text-gray-900">
+                Administrador global
+              </span>
+            </label>
+            <label className="flex items-center gap-3 cursor-pointer group">
+              <input
+                type="checkbox"
+                checked={form.forcePasswordChange}
+                onChange={e => setForm(f => ({ ...f, forcePasswordChange: e.target.checked }))}
+                className="w-4 h-4 rounded border-gray-300 text-amber-600 focus:ring-amber-500"
+              />
+              <span className="text-sm text-gray-700 group-hover:text-gray-900">
+                Obrigar troca de senha no próximo login
+              </span>
+            </label>
+          </div>
+
           {error && <p className="text-sm text-red-500">{error}</p>}
           <div className="flex gap-2 pt-2">
             <button type="button" onClick={onClose} className="flex-1 px-4 py-2 rounded-xl border border-gray-200 text-gray-600 hover:bg-gray-50 text-sm">
@@ -78,30 +124,6 @@ export default function AdminCreateUserModal({ onClose, onCreated }: Props) {
           </div>
         </form>
       </div>
-    </div>
-  )
-}
-
-function Field({
-  label,
-  value,
-  onChange,
-  type = 'text',
-}: {
-  label: string
-  value: string
-  onChange: (v: string) => void
-  type?: string
-}) {
-  return (
-    <div>
-      <label className="block text-xs font-medium text-gray-600 mb-1">{label}</label>
-      <input
-        type={type}
-        value={value}
-        onChange={e => onChange(e.target.value)}
-        className="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
-      />
     </div>
   )
 }

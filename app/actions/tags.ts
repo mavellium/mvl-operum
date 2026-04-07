@@ -5,8 +5,8 @@ import { createTag, deleteTag, assignTagToCard, removeTagFromCard, getTagsForUse
 
 export async function createTagAction(input: { name: string; color?: string }) {
   try {
-    const { userId } = await verifySession()
-    const tag = await createTag({ ...input, userId })
+    const { userId, tenantId } = await verifySession()
+    const tag = await createTag({ ...input, userId, tenantId })
     return { tag }
   } catch (err) {
     return { error: err instanceof Error ? err.message : 'Erro ao criar tag' }

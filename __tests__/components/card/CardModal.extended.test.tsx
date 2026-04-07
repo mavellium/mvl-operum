@@ -13,6 +13,7 @@ vi.mock('@/app/actions/time', () => ({
   pauseTimerAction: vi.fn(),
   getCardTimeAction: vi.fn().mockResolvedValue({ seconds: 0 }),
   getActiveTimerAction: vi.fn().mockResolvedValue({ entry: null }),
+  getTimeEntriesAction: vi.fn().mockResolvedValue({ entries: [] }),
 }))
 
 vi.mock('@/app/actions/cardResponsible', () => ({

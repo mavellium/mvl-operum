@@ -1,7 +1,9 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect, useTransition } from 'react'
 import { adminUpdateUserAction, setUserRoleAction } from '@/app/actions/admin'
+import { getUserProjetosAction, addMemberAction, updateUsuarioProjetoAction } from '@/app/actions/projetos'
+import { getProjetosAction } from '@/app/actions/projetos'
 import type { AdminUser } from './AdminCreateUserModal'
 
 interface Props {
@@ -10,18 +12,61 @@ interface Props {
   onUpdated: (user: AdminUser) => void
 }
 
+interface UserProjeto {
+  id: string
+  userId: string
+  projetoId: string
+  ativo: boolean
+  cargo: string | null
+  departamento: string | null
+  valorHora: number | null
+  dataEntrada: string
+  projeto: { id: string; nome: string; status: string }
+}
+
+interface Projeto {
+  id: string
+  nome: string
+}
+
+const STATUS_LABELS: Record<string, string> = {
+  ATIVO: 'Ativo',
+  INATIVO: 'Inativo',
+  CONCLUIDO: 'Concluído',
+  ARQUIVADO: 'Arquivado',
+}
+
 export default function AdminEditUserModal({ user, onClose, onUpdated }: Props) {
   const [form, setForm] = useState({
     name: user.name,
     email: user.email,
     password: '',
-    cargo: user.cargo ?? '',
-    departamento: user.departamento ?? '',
-    valorHora: user.valorHora?.toString() ?? '0',
     role: user.role,
   })
   const [error, setError] = useState('')
   const [loading, setLoading] = useState(false)
+  const [isPending, startTransition] = useTransition()
+
+  // Projects
+  const [userProjetos, setUserProjetos] = useState<UserProjeto[]>([])
+  const [allProjetos, setAllProjetos] = useState<Projeto[]>([])
+  const [showAddProject, setShowAddProject] = useState(false)
+  const [selectedProjetoId, setSelectedProjetoId] = useState('')
+  const [editingProjetoId, setEditingProjetoId] = useState<string | null>(null)
+  const [editForm, setEditForm] = useState({ cargo: '', departamento: '', valorHora: '' })
+
+  useEffect(() => {
+    getUserProjetosAction(user.id).then(result => {
+      setUserProjetos(result as UserProjeto[])
+    })
+    getProjetosAction().then(result => {
+      if (Array.isArray(result)) {
+        setAllProjetos(result.map(p => ({ id: p.id, nome: p.nome })))
+      }
+    })
+  }, [user.id])
+
+  const projetosNaoMembro = allProjetos.filter(p => !userProjetos.some(up => up.projetoId === p.id))
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault()
@@ -36,9 +81,6 @@ export default function AdminEditUserModal({ user, onClose, onUpdated }: Props) 
       name: form.name.trim(),
       email: form.email.trim(),
       password: form.password || undefined,
-      cargo: form.cargo.trim() || undefined,
-      departamento: form.departamento.trim() || undefined,
-      valorHora: parseFloat(form.valorHora) || 0,
     })
 
     if ('error' in updateResult) {
@@ -60,38 +102,240 @@ export default function AdminEditUserModal({ user, onClose, onUpdated }: Props) 
     onUpdated({ ...updateResult.user, role: form.role } as AdminUser)
   }
 
+  function handleToggleAtivo(up: UserProjeto) {
+    startTransition(async () => {
+      const result = await updateUsuarioProjetoAction(user.id, up.projetoId, { ativo: !up.ativo })
+      if (!('error' in result)) {
+        setUserProjetos(prev => prev.map(p => p.projetoId === up.projetoId ? { ...p, ativo: !up.ativo } : p))
+      }
+    })
+  }
+
+  function handleStartEdit(up: UserProjeto) {
+    setEditingProjetoId(up.projetoId)
+    setEditForm({
+      cargo: up.cargo ?? '',
+      departamento: up.departamento ?? '',
+      valorHora: up.valorHora?.toString() ?? '',
+    })
+  }
+
+  function handleSaveEdit(up: UserProjeto) {
+    startTransition(async () => {
+      const result = await updateUsuarioProjetoAction(user.id, up.projetoId, {
+        cargo: editForm.cargo,
+        departamento: editForm.departamento,
+        valorHora: editForm.valorHora ? parseFloat(editForm.valorHora) : null,
+      })
+      if (!('error' in result)) {
+        setUserProjetos(prev => prev.map(p => p.projetoId === up.projetoId ? {
+          ...p,
+          cargo: editForm.cargo || null,
+          departamento: editForm.departamento || null,
+          valorHora: editForm.valorHora ? parseFloat(editForm.valorHora) : null,
+        } : p))
+        setEditingProjetoId(null)
+      }
+    })
+  }
+
+  function handleAddProject() {
+    if (!selectedProjetoId) return
+    startTransition(async () => {
+      const result = await addMemberAction(selectedProjetoId, user.id)
+      if (!('error' in result)) {
+        const novoProjeto = allProjetos.find(p => p.id === selectedProjetoId)
+        if (novoProjeto) {
+          const newUp: UserProjeto = {
+            id: '',
+            userId: user.id,
+            projetoId: selectedProjetoId,
+            ativo: true,
+            cargo: null,
+            departamento: null,
+            valorHora: null,
+            dataEntrada: new Date().toISOString(),
+            projeto: { id: novoProjeto.id, nome: novoProjeto.nome, status: 'ATIVO' },
+          }
+          setUserProjetos(prev => [...prev, newUp])
+        }
+        setSelectedProjetoId('')
+        setShowAddProject(false)
+      }
+    })
+  }
+
   return (
-    <div className="fixed inset-0 bg-black/40 flex items-center justify-center z-50">
-      <div className="bg-white rounded-2xl shadow-xl w-full max-w-md p-6 max-h-[90vh] overflow-y-auto">
-        <h2 className="text-lg font-bold text-gray-900 mb-4">Editar Usuário</h2>
-        <form onSubmit={handleSubmit} className="space-y-3">
-          <Field label="Nome *" value={form.name} onChange={v => setForm(f => ({ ...f, name: v }))} />
-          <Field label="E-mail *" type="email" value={form.email} onChange={v => setForm(f => ({ ...f, email: v }))} />
-          <Field label="Nova senha (deixe em branco para manter)" type="password" value={form.password} onChange={v => setForm(f => ({ ...f, password: v }))} />
-          <Field label="Cargo" value={form.cargo} onChange={v => setForm(f => ({ ...f, cargo: v }))} />
-          <Field label="Departamento" value={form.departamento} onChange={v => setForm(f => ({ ...f, departamento: v }))} />
-          <Field label="Valor/hora (R$)" type="number" value={form.valorHora} onChange={v => setForm(f => ({ ...f, valorHora: v }))} />
-          <div>
-            <label className="block text-xs font-medium text-gray-600 mb-1">Role</label>
-            <select
-              value={form.role}
-              onChange={e => setForm(f => ({ ...f, role: e.target.value }))}
-              className="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+    <div className="fixed inset-0 bg-black/40 flex items-center justify-center z-50 p-4">
+      <div className="bg-white rounded-2xl shadow-xl w-full max-w-lg max-h-[90vh] overflow-y-auto">
+        <div className="p-6">
+          <h2 className="text-lg font-bold text-gray-900 mb-4">Editar Usuário</h2>
+          <form onSubmit={handleSubmit} className="space-y-3">
+            <Field label="Nome *" value={form.name} onChange={v => setForm(f => ({ ...f, name: v }))} />
+            <Field label="E-mail *" type="email" value={form.email} onChange={v => setForm(f => ({ ...f, email: v }))} />
+            <Field label="Nova senha (deixe em branco para manter)" type="password" value={form.password} onChange={v => setForm(f => ({ ...f, password: v }))} />
+            <div>
+              <label className="block text-xs font-medium text-gray-600 mb-1">Role global</label>
+              <select
+                value={form.role}
+                onChange={e => setForm(f => ({ ...f, role: e.target.value }))}
+                className="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+              >
+                <option value="member">Membro</option>
+                <option value="gerente">Gerente</option>
+                <option value="admin">Administrador</option>
+              </select>
+            </div>
+            {error && <p className="text-sm text-red-500">{error}</p>}
+            <div className="flex gap-2 pt-1">
+              <button type="button" onClick={onClose} className="flex-1 px-4 py-2 rounded-xl border border-gray-200 text-gray-600 hover:bg-gray-50 text-sm">
+                Cancelar
+              </button>
+              <button type="submit" disabled={loading} className="flex-1 px-4 py-2 rounded-xl bg-blue-600 text-white text-sm font-medium hover:bg-blue-700 disabled:opacity-60">
+                {loading ? 'Salvando…' : 'Salvar'}
+              </button>
+            </div>
+          </form>
+        </div>
+
+        {/* Projects section */}
+        <div className="border-t border-gray-100 px-6 pb-6">
+          <div className="flex items-center justify-between py-4">
+            <h3 className="text-sm font-semibold text-gray-900">
+              Projetos ({userProjetos.filter(p => p.ativo).length} ativo{userProjetos.filter(p => p.ativo).length !== 1 ? 's' : ''})
+            </h3>
+            <button
+              onClick={() => setShowAddProject(v => !v)}
+              className="text-xs text-blue-600 hover:underline"
             >
-              <option value="member">Membro</option>
-              <option value="admin">Administrador</option>
-            </select>
-          </div>
-          {error && <p className="text-sm text-red-500">{error}</p>}
-          <div className="flex gap-2 pt-2">
-            <button type="button" onClick={onClose} className="flex-1 px-4 py-2 rounded-xl border border-gray-200 text-gray-600 hover:bg-gray-50 text-sm">
-              Cancelar
-            </button>
-            <button type="submit" disabled={loading} className="flex-1 px-4 py-2 rounded-xl bg-blue-600 text-white text-sm font-medium hover:bg-blue-700 disabled:opacity-60">
-              {loading ? 'Salvando…' : 'Salvar'}
+              + Adicionar a projeto
             </button>
           </div>
-        </form>
+
+          {showAddProject && (
+            <div className="mb-3 flex gap-2">
+              <select
+                value={selectedProjetoId}
+                onChange={e => setSelectedProjetoId(e.target.value)}
+                className="flex-1 px-3 py-2 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+              >
+                <option value="">Selecionar projeto…</option>
+                {projetosNaoMembro.map(p => (
+                  <option key={p.id} value={p.id}>{p.nome}</option>
+                ))}
+              </select>
+              <button
+                onClick={handleAddProject}
+                disabled={!selectedProjetoId || isPending}
+                className="px-4 py-2 bg-blue-600 text-white text-sm rounded-lg hover:bg-blue-700 disabled:opacity-50"
+              >
+                Adicionar
+              </button>
+            </div>
+          )}
+
+          {userProjetos.length === 0 ? (
+            <p className="text-sm text-gray-400 text-center py-2">Não está em nenhum projeto</p>
+          ) : (
+            <div className="space-y-2">
+              {userProjetos.map(up => (
+                <div key={up.projetoId} className={`rounded-xl border p-3 ${up.ativo ? 'border-gray-100' : 'border-gray-100 bg-gray-50 opacity-60'}`}>
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-2 min-w-0">
+                      <span className={`inline-flex items-center px-1.5 py-0.5 rounded text-xs font-medium ${up.ativo ? 'bg-green-100 text-green-700' : 'bg-gray-200 text-gray-500'}`}>
+                        {up.ativo ? 'Ativo' : 'Inativo'}
+                      </span>
+                      <span className="text-sm font-medium text-gray-900 truncate">{up.projeto.nome}</span>
+                    </div>
+                    <div className="flex items-center gap-2 shrink-0">
+                      {up.ativo && editingProjetoId !== up.projetoId && (
+                        <button
+                          onClick={() => handleStartEdit(up)}
+                          className="text-xs text-gray-500 hover:text-gray-700"
+                        >
+                          Editar
+                        </button>
+                      )}
+                      <button
+                        onClick={() => handleToggleAtivo(up)}
+                        disabled={isPending}
+                        className={`text-xs px-2 py-1 rounded-lg border disabled:opacity-50 ${up.ativo ? 'border-red-200 text-red-600 hover:bg-red-50' : 'border-green-200 text-green-600 hover:bg-green-50'}`}
+                      >
+                        {up.ativo ? 'Desativar' : 'Ativar'}
+                      </button>
+                    </div>
+                  </div>
+
+                  {/* Inline edit form */}
+                  {editingProjetoId === up.projetoId && (
+                    <div className="mt-3 space-y-2">
+                      <div className="grid grid-cols-2 gap-2">
+                        <div>
+                          <label className="block text-xs text-gray-500 mb-1">Cargo</label>
+                          <input
+                            type="text"
+                            value={editForm.cargo}
+                            onChange={e => setEditForm(f => ({ ...f, cargo: e.target.value }))}
+                            placeholder="Ex: Dev Backend"
+                            className="w-full px-2 py-1.5 border border-gray-200 rounded-lg text-xs focus:outline-none focus:ring-2 focus:ring-blue-500"
+                          />
+                        </div>
+                        <div>
+                          <label className="block text-xs text-gray-500 mb-1">Departamento</label>
+                          <input
+                            type="text"
+                            value={editForm.departamento}
+                            onChange={e => setEditForm(f => ({ ...f, departamento: e.target.value }))}
+                            placeholder="Ex: Tecnologia"
+                            className="w-full px-2 py-1.5 border border-gray-200 rounded-lg text-xs focus:outline-none focus:ring-2 focus:ring-blue-500"
+                          />
+                        </div>
+                      </div>
+                      <div>
+                        <label className="block text-xs text-gray-500 mb-1">Valor/hora (R$)</label>
+                        <input
+                          type="number"
+                          step="0.01"
+                          min="0"
+                          value={editForm.valorHora}
+                          onChange={e => setEditForm(f => ({ ...f, valorHora: e.target.value }))}
+                          placeholder="0.00"
+                          className="w-full px-2 py-1.5 border border-gray-200 rounded-lg text-xs focus:outline-none focus:ring-2 focus:ring-blue-500"
+                        />
+                      </div>
+                      <div className="flex gap-2 pt-1">
+                        <button
+                          type="button"
+                          onClick={() => setEditingProjetoId(null)}
+                          className="flex-1 px-3 py-1.5 text-xs border border-gray-200 rounded-lg text-gray-600 hover:bg-gray-50"
+                        >
+                          Cancelar
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => handleSaveEdit(up)}
+                          disabled={isPending}
+                          className="flex-1 px-3 py-1.5 text-xs bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50"
+                        >
+                          {isPending ? '…' : 'Salvar'}
+                        </button>
+                      </div>
+                    </div>
+                  )}
+
+                  {/* Show current values when not editing */}
+                  {editingProjetoId !== up.projetoId && (up.cargo || up.departamento || up.valorHora) && (
+                    <div className="mt-1.5 flex flex-wrap gap-x-3 gap-y-0.5">
+                      {up.cargo && <span className="text-xs text-gray-500">{up.cargo}</span>}
+                      {up.departamento && <span className="text-xs text-gray-400">{up.departamento}</span>}
+                      {up.valorHora && <span className="text-xs text-gray-400">R$ {up.valorHora.toFixed(2)}/h</span>}
+                    </div>
+                  )}
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
       </div>
     </div>
   )

@@ -4,7 +4,7 @@ import { UserProfileSchema, ChangePasswordSchema } from '@/lib/validation/userSc
 
 export async function getUserProfile(userId: string) {
   const user = await prisma.user.findUnique({
-    where: { id: userId },
+    where: { id: userId, deletedAt: null },
     select: {
       id: true,
       name: true,
@@ -41,7 +41,7 @@ export async function changePassword(
     throw new Error(parsed.error.issues[0].message)
   }
 
-  const user = await prisma.user.findUnique({ where: { id: userId } })
+  const user = await prisma.user.findUnique({ where: { id: userId, deletedAt: null } })
   if (!user) throw new Error('Usuário não encontrado')
 
   const valid = await bcrypt.compare(input.senhaAtual, user.passwordHash)

@@ -186,12 +186,17 @@ describe('updateTimeEntry', () => {
   })
 })
 
-describe('deleteTimeEntry', () => {
-  it('deletes entry when user is owner', async () => {
-    mockPrisma.timeEntry.findUnique.mockResolvedValue({ id: 't1', userId: 'u1' })
-    mockPrisma.timeEntry.delete.mockResolvedValue({ id: 't1' })
+describe('deleteTimeEntry (soft delete)', () => {
+  it('sets deletedAt instead of hard delete when user is owner', async () => {
+    mockPrisma.timeEntry.findUnique.mockResolvedValue({ id: 't1', userId: 'u1', deletedAt: null })
+    mockPrisma.timeEntry.update.mockResolvedValue({ id: 't1', deletedAt: new Date() })
     await deleteTimeEntry('t1', 'u1')
-    expect(mockPrisma.timeEntry.delete).toHaveBeenCalledWith({ where: { id: 't1' } })
+    expect(mockPrisma.timeEntry.update).toHaveBeenCalledWith(
+      expect.objectContaining({
+        where: { id: 't1' },
+        data: expect.objectContaining({ deletedAt: expect.any(Date) }),
+      }),
+    )
   })
 
   it('throws if entry not found', async () => {
@@ -202,5 +207,37 @@ describe('deleteTimeEntry', () => {
   it('throws if user is not owner', async () => {
     mockPrisma.timeEntry.findUnique.mockResolvedValue({ id: 't1', userId: 'u2' })
     await expect(deleteTimeEntry('t1', 'u1')).rejects.toThrow('permissão')
+  })
+})
+
+describe('timeService (deletedAt filters)', () => {
+  it('getTimeEntries should filter by deletedAt: null', async () => {
+    mockPrisma.timeEntry.findMany.mockResolvedValue([])
+    await getTimeEntries('u1', 'c1')
+    expect(mockPrisma.timeEntry.findMany).toHaveBeenCalledWith(
+      expect.objectContaining({
+        where: expect.objectContaining({ deletedAt: null }),
+      }),
+    )
+  })
+
+  it('getActiveTimer should filter by deletedAt: null', async () => {
+    mockPrisma.timeEntry.findFirst.mockResolvedValue(null)
+    await getActiveTimer('u1', 'c1')
+    expect(mockPrisma.timeEntry.findFirst).toHaveBeenCalledWith(
+      expect.objectContaining({
+        where: expect.objectContaining({ deletedAt: null }),
+      }),
+    )
+  })
+
+  it('getTotalDuration should filter by deletedAt: null', async () => {
+    mockPrisma.timeEntry.aggregate.mockResolvedValue({ _sum: { duration: 0 } })
+    await getTotalDuration('u1', 'c1')
+    expect(mockPrisma.timeEntry.aggregate).toHaveBeenCalledWith(
+      expect.objectContaining({
+        where: expect.objectContaining({ deletedAt: null }),
+      }),
+    )
   })
 })

@@ -18,7 +18,7 @@ export async function createSprint(input: { name: string; startDate?: Date | str
 }
 
 export async function updateSprint(id: string, input: Record<string, unknown>) {
-  const existing = await prisma.sprint.findUnique({ where: { id } })
+  const existing = await prisma.sprint.findUnique({ where: { id, deletedAt: null } })
   if (!existing) {
     throw new NotFoundError(`Sprint não encontrado: ${id}`)
   }
@@ -32,7 +32,10 @@ export async function updateSprint(id: string, input: Record<string, unknown>) {
 }
 
 export async function deleteSprint(id: string) {
-  return prisma.sprint.delete({ where: { id } })
+  return prisma.sprint.update({
+    where: { id },
+    data: { deletedAt: new Date() },
+  })
 }
 
 export async function completeSprint(id: string) {
@@ -44,5 +47,15 @@ export async function completeSprint(id: string) {
 }
 
 export async function getAllSprints() {
-  return prisma.sprint.findMany({ orderBy: { createdAt: 'asc' } })
+  return prisma.sprint.findMany({
+    where: { deletedAt: null },
+    orderBy: { createdAt: 'asc' },
+  })
+}
+
+export async function findAllByProjeto(projetoId: string) {
+  return prisma.sprint.findMany({
+    where: { projetoId, deletedAt: null },
+    orderBy: { createdAt: 'asc' },
+  })
 }

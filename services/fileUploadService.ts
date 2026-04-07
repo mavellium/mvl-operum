@@ -58,5 +58,5 @@ export async function deleteUpload(attachmentId: string, userId?: string) {
     // blob may already be gone
   }
 
-  await prisma.attachment.delete({ where: { id: attachmentId } })
+  await prisma.attachment.update({ where: { id: attachmentId }, data: { deletedAt: new Date() } })
 }

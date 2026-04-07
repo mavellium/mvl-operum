@@ -1,13 +1,13 @@
 import prisma from '@/lib/prisma'
 import { TagCreateSchema } from '@/lib/validation/tagSchemas'
 
-export async function createTag(input: { name: string; color?: string; userId: string }) {
+export async function createTag(input: { name: string; color?: string; userId: string; tenantId: string }) {
   const parsed = TagCreateSchema.safeParse(input)
   if (!parsed.success) {
     throw new Error(parsed.error.issues[0].message)
   }
 
-  return prisma.tag.create({ data: parsed.data })
+  return prisma.tag.create({ data: { ...parsed.data, tenantId: input.tenantId } })
 }
 
 export async function deleteTag(tagId: string) {

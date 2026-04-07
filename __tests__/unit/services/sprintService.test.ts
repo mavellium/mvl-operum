@@ -17,7 +17,7 @@ vi.mock('@/lib/prisma', () => ({
 }))
 
 import prisma from '@/lib/prisma'
-import { createSprint, updateSprint, completeSprint } from '@/services/sprintService'
+import { createSprint, updateSprint, completeSprint, deleteSprint, getAllSprints, findAllByProjeto } from '@/services/sprintService'
 
 const mockPrisma = prisma as {
   sprint: {
@@ -79,5 +79,69 @@ describe('completeSprint', () => {
       data: { status: 'COMPLETED' },
     })
     expect(result.status).toBe('COMPLETED')
+  })
+})
+
+describe('sprintService (with projeto)', () => {
+  it('should create sprint with projetoId', async () => {
+    mockPrisma.sprint.create.mockResolvedValue({
+      id: 's2',
+      name: 'Sprint in Project',
+      projetoId: 'p1',
+      status: 'PLANNED',
+    })
+    const sprint = await createSprint({ name: 'Sprint in Project', projetoId: 'p1' })
+    expect(sprint.projetoId).toBe('p1')
+    expect(mockPrisma.sprint.create).toHaveBeenCalledWith({
+      data: expect.objectContaining({ projetoId: 'p1' }),
+    })
+  })
+
+  it('should return only sprints from given projeto in findAllByProjeto', async () => {
+    mockPrisma.sprint.findMany.mockResolvedValue([
+      { id: 's1', name: 'Sprint 1', projetoId: 'p1' },
+    ])
+
+    const sprints = await findAllByProjeto('p1')
+    expect(sprints).toHaveLength(1)
+    expect(mockPrisma.sprint.findMany).toHaveBeenCalledWith(
+      expect.objectContaining({
+        where: expect.objectContaining({ projetoId: 'p1', deletedAt: null }),
+      }),
+    )
+  })
+})
+
+describe('sprintService (soft delete)', () => {
+  it('should not return sprints with deletedAt set in getAllSprints', async () => {
+    mockPrisma.sprint.findMany.mockResolvedValue([])
+    await getAllSprints()
+    expect(mockPrisma.sprint.findMany).toHaveBeenCalledWith(
+      expect.objectContaining({
+        where: expect.objectContaining({ deletedAt: null }),
+      }),
+    )
+  })
+
+  it('should not return sprint with deletedAt set in findUnique (updateSprint)', async () => {
+    mockPrisma.sprint.findUnique.mockResolvedValue(null) // simulates deletedAt filter
+    await expect(updateSprint('s-deleted', { name: 'test' })).rejects.toThrow(/não encontrado/i)
+    expect(mockPrisma.sprint.findUnique).toHaveBeenCalledWith(
+      expect.objectContaining({
+        where: expect.objectContaining({ id: 's-deleted', deletedAt: null }),
+      }),
+    )
+  })
+
+  it('should set deletedAt instead of hard delete', async () => {
+    mockPrisma.sprint.findUnique.mockResolvedValue({ id: 's1', deletedAt: null })
+    mockPrisma.sprint.update.mockResolvedValue({ id: 's1', deletedAt: expect.any(Date) })
+    await deleteSprint('s1')
+    expect(mockPrisma.sprint.update).toHaveBeenCalledWith(
+      expect.objectContaining({
+        where: { id: 's1' },
+        data: expect.objectContaining({ deletedAt: expect.any(Date) }),
+      }),
+    )
   })
 })

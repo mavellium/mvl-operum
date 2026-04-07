@@ -3,7 +3,7 @@ import prisma from '@/lib/prisma'
 export async function startTimer(userId: string, cardId: string) {
   // Stop any currently running timers for this user
   await prisma.timeEntry.updateMany({
-    where: { userId, isRunning: true },
+    where: { userId, isRunning: true, deletedAt: null },
     data: {
       isRunning: false,
       endedAt: new Date(),
@@ -23,7 +23,7 @@ export async function startTimer(userId: string, cardId: string) {
 
 export async function pauseTimer(userId: string, cardId: string) {
   const running = await prisma.timeEntry.findFirst({
-    where: { userId, cardId, isRunning: true },
+    where: { userId, cardId, isRunning: true, deletedAt: null },
   })
   if (!running) return null
 
@@ -43,13 +43,13 @@ export async function pauseTimer(userId: string, cardId: string) {
 
 export async function getActiveTimer(userId: string, cardId: string) {
   return prisma.timeEntry.findFirst({
-    where: { userId, cardId, isRunning: true },
+    where: { userId, cardId, isRunning: true, deletedAt: null },
   })
 }
 
 export async function getTotalDuration(userId: string, cardId: string) {
   const result = await prisma.timeEntry.aggregate({
-    where: { userId, cardId },
+    where: { userId, cardId, deletedAt: null },
     _sum: { duration: true },
   })
   return result._sum.duration ?? 0
@@ -73,7 +73,7 @@ export async function addManualTimeEntry(userId: string, cardId: string, seconds
 
 export async function getTimeEntries(userId: string, cardId: string) {
   return prisma.timeEntry.findMany({
-    where: { userId, cardId, isRunning: false },
+    where: { userId, cardId, isRunning: false, deletedAt: null },
     orderBy: { createdAt: 'desc' },
   })
 }
@@ -93,12 +93,15 @@ export async function deleteTimeEntry(entryId: string, userId: string) {
   const entry = await prisma.timeEntry.findUnique({ where: { id: entryId } })
   if (!entry) throw new Error('Registro não encontrado')
   if (entry.userId !== userId) throw new Error('Sem permissão para excluir este registro')
-  return prisma.timeEntry.delete({ where: { id: entryId } })
+  return prisma.timeEntry.update({
+    where: { id: entryId },
+    data: { deletedAt: new Date() },
+  })
 }
 
 export async function getTotalDurationForSprint(sprintId: string) {
   const result = await prisma.timeEntry.aggregate({
-    where: { card: { sprintId } },
+    where: { card: { sprintId }, deletedAt: null },
     _sum: { duration: true },
   })
   return result._sum.duration ?? 0

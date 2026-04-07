@@ -1,0 +1,313 @@
+@startuml
+title UML Multi-Tenant SaaS - Gerenciamento de Projetos (Atualizado + Feedback e Notificações)
+
+' ========================
+' TENANT (ORGANIZAÇÃO / ENTIDADE)
+' ========================
+entity Tenant {
+  +id: UUID
+  +nome: string
+  +subdominio: string
+  +status: string
+  +tipo: string
+  +config: json
+  +createdAt: datetime
+}
+
+' ========================
+' USUÁRIO
+' ========================
+entity Usuario {
+  +id: UUID
+  +nome: string
+  +email: string
+  +status: string
+  +senhaHash: string
+  +mfaEnabled: boolean
+  +ultimoAcesso: datetime
+  +avatarUrl: string
+  +valorHora: decimal
+  +tokenVersion: int
+  +createdAt: datetime
+}
+
+' ========================
+' PROJETO
+' ========================
+entity Projeto {
+  +id: UUID
+  +tenantId: UUID
+  +nome: string
+  +descricao: string
+  +status: string
+  +cursoId: UUID
+  +turmaId: UUID
+  +createdAt: datetime
+}
+
+' ========================
+' DEPARTAMENTO
+' ========================
+entity Departamento {
+  +id: UUID
+  +tenantId: UUID
+  +nome: string
+  +descricao: string
+}
+
+' ========================
+' USUARIO_PROJETO (vínculo)
+' ========================
+entity UsuarioProjeto {
+  +id: UUID
+  +usuarioId: UUID
+  +projetoId: UUID
+  +dataEntrada: datetime
+}
+
+' ========================
+' USUARIO_DEPARTAMENTO
+' ========================
+entity UsuarioDepartamento {
+  +id: UUID
+  +usuarioId: UUID
+  +departamentoId: UUID
+}
+
+' ========================
+' PAPEL (ROLE)
+' ========================
+entity Papel {
+  +id: UUID
+  +tenantId: UUID
+  +nome: string
+  +descricao: string
+}
+
+' ========================
+' PERMISSÃO
+' ========================
+entity Permissao {
+  +id: UUID
+  +nome: string
+  +descricao: string
+}
+
+' ========================
+' PAPEL_PERMISSAO
+' ========================
+entity PapelPermissao {
+  +papelId: UUID
+  +permissaoId: UUID
+}
+
+' ========================
+' USUARIO_PROJETO_PAPEL
+' ========================
+entity UsuarioProjetoPapel {
+  +usuarioProjetoId: UUID
+  +papelId: UUID
+}
+
+' ========================
+' SPRINT
+' ========================
+entity Sprint {
+  +id: UUID
+  +projetoId: UUID
+  +nome: string
+  +descricao: string
+  +status: string
+  +startDate: datetime
+  +endDate: datetime
+  +createdBy: UUID
+  +avaliacaoMediaQualidade: decimal
+  +avaliacaoMediaDificuldade: decimal
+}
+
+' ========================
+' SPRINT_COLUMN (KANBAN)
+' ========================
+entity SprintColumn {
+  +id: UUID
+  +sprintId: UUID
+  +title: string
+  +position: int
+  +maxHeight: int
+}
+
+' ========================
+' CARD
+' ========================
+entity Card {
+  +id: UUID
+  +sprintId: UUID
+  +sprintColumnId: UUID
+  +title: string
+  +description: string
+  +color: string
+  +priority: string
+  +startDate: datetime
+  +endDate: datetime
+  +sprintPosition: int
+  +base36Code: string
+  +criadorId: UUID
+}
+
+' ========================
+' CARD_COMMENT
+' ========================
+entity CardComment {
+  +id: UUID
+  +cardId: UUID
+  +usuarioId: UUID
+  +conteudo: string
+  +createdAt: datetime
+}
+
+' ========================
+' TAG
+' ========================
+entity Tag {
+  +id: UUID
+  +usuarioId: UUID
+  +nome: string
+  +color: string
+}
+
+' ========================
+' CARD_TAG
+' ========================
+entity CardTag {
+  +cardId: UUID
+  +tagId: UUID
+}
+
+' ========================
+' ATTACHMENT
+' ========================
+entity Attachment {
+  +id: UUID
+  +cardId: UUID
+  +fileName: string
+  +fileType: string
+  +filePath: string
+  +fileSize: int
+  +isCover: boolean
+}
+
+' ========================
+' TIME_ENTRY
+' ========================
+entity TimeEntry {
+  +id: UUID
+  +usuarioId: UUID
+  +cardId: UUID
+  +startedAt: datetime
+  +endedAt: datetime
+  +duration: int
+  +isRunning: boolean
+  +isManual: boolean
+}
+
+' ========================
+' DASHBOARD_METRICS
+' ========================
+entity DashboardMetric {
+  +id: UUID
+  +sprintId: UUID
+  +usuarioId: UUID
+  +horas: decimal
+  +tarefasPendentes: int
+  +custoTotal: decimal
+  +rankingPosicao: int
+}
+
+' ========================
+' SPRINT_FEEDBACK
+' ========================
+entity SprintFeedback {
+  +id: UUID
+  +sprintId: UUID
+  +usuarioId: UUID
+  +tarefasRealizadas: text
+  +dificuldades: text
+  +qualidade: int
+  +dificuldade: int
+  +createdAt: datetime
+}
+
+' ========================
+' NOTIFICATION
+' ========================
+entity Notification {
+  +id: UUID
+  +usuarioId: UUID
+  +tipo: string
+  +titulo: string
+  +mensagem: text
+  +link: string
+  +lida: boolean
+  +createdAt: datetime
+}
+
+' ========================
+' AUDITORIA
+' ========================
+entity Auditoria {
+  +id: UUID
+  +tenantId: UUID
+  +usuarioId: UUID
+  +acao: string
+  +entidade: string
+  +entidadeId: UUID
+  +timestamp: datetime
+  +detalhes: json
+}
+
+' ========================
+' RELACIONAMENTOS
+' ========================
+Tenant ||--o{ Projeto
+Tenant ||--o{ Usuario
+Tenant ||--o{ Departamento
+Tenant ||--o{ Papel
+
+Usuario ||--o{ UsuarioProjeto
+Projeto ||--o{ UsuarioProjeto
+
+UsuarioProjeto ||--o{ UsuarioProjetoPapel
+Papel ||--o{ UsuarioProjetoPapel
+
+Papel ||--o{ PapelPermissao
+Permissao ||--o{ PapelPermissao
+
+Usuario ||--o{ UsuarioDepartamento
+Departamento ||--o{ UsuarioDepartamento
+
+Projeto ||--o{ Sprint
+Sprint ||--o{ SprintColumn
+SprintColumn ||--o{ Card
+
+Card ||--o{ CardComment
+Usuario ||--o{ CardComment
+
+Card ||--o{ CardTag
+Tag ||--o{ CardTag
+
+Card ||--o{ Attachment
+Card ||--o{ TimeEntry
+Usuario ||--o{ TimeEntry
+
+Sprint ||--o{ DashboardMetric
+Usuario ||--o{ DashboardMetric
+
+Sprint ||--o{ SprintFeedback
+Usuario ||--o{ SprintFeedback
+
+Usuario ||--o{ Notification
+
+Tenant ||--o{ Auditoria
+Usuario ||--o{ Auditoria
+
+@enduml

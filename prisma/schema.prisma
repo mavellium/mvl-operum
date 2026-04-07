@@ -7,25 +7,208 @@ datasource db {
   provider = "postgresql"
 }
 
-model User {
-  id           String   @id @default(cuid())
-  name         String
-  email        String   @unique
-  passwordHash String
-  role         String   @default("member")
-  avatarUrl    String?
+// ── Multi-Tenant ──────────────────────────────────────────
+
+enum TenantStatus {
+  ATIVO
+  INATIVO
+  SUSPENSO
+  REMOVIDO
+}
+
+model Tenant {
+  id         String       @id @default(cuid())
+  nome       String
+  subdominio String       @unique
+  status     TenantStatus @default(ATIVO)
+  config     Json?
+  deletedAt  DateTime?
+  createdAt  DateTime     @default(now())
+  updatedAt  DateTime     @updatedAt
+
+  users         User[]
+  tags          Tag[]
+  projetos      Projeto[]
+  departamentos Departamento[]
+  roles         Role[]
+  auditorias    Auditoria[]
+}
+
+// ── Projetos ──────────────────────────────────────────────
+
+enum ProjetoStatus {
+  ATIVO
+  INATIVO
+  CONCLUIDO
+  ARQUIVADO
+}
+
+model Projeto {
+  id        String        @id @default(cuid())
+  tenantId  String
+  tenant    Tenant        @relation(fields: [tenantId], references: [id])
+  nome      String
+  descricao String?
+  status    ProjetoStatus @default(ATIVO)
+  deletedAt DateTime?
+  createdAt DateTime      @default(now())
+  updatedAt DateTime      @updatedAt
+
+  sprints  Sprint[]
+  membros  UsuarioProjeto[]
+  usuariosRole UserProjectRole[]
+
+  @@unique([nome, tenantId])
+}
+
+// ── Departamentos ─────────────────────────────────────────
+
+model Departamento {
+  id        String    @id @default(cuid())
+  tenantId  String
+  tenant    Tenant    @relation(fields: [tenantId], references: [id])
+  nome      String
+  descricao String?
+  ativo     Boolean   @default(true)
+  valorHora Float?
+  deletedAt DateTime?
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+
+  usuarios UsuarioDepartamento[]
+
+  @@unique([nome, tenantId])
+}
+
+model UsuarioDepartamento {
+  id              String       @id @default(cuid())
+  userId          String
+  departamentoId  String
+  user            User         @relation(fields: [userId], references: [id], onDelete: Cascade)
+  departamento    Departamento @relation(fields: [departamentoId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, departamentoId])
+}
+
+model UsuarioProjeto {
+  id           String    @id @default(cuid())
+  userId       String
+  projetoId    String
+  ativo        Boolean   @default(true)
   cargo        String?
   departamento String?
-  valorHora    Float    @default(0)
-  isActive     Boolean  @default(true)
-  tokenVersion Int      @default(0)
-  createdAt    DateTime @default(now())
-  updatedAt    DateTime @updatedAt
+  valorHora    Float?
+  dataEntrada  DateTime  @default(now())
+  dataSaida    DateTime?
+  user         User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  projeto      Projeto   @relation(fields: [projetoId], references: [id], onDelete: Cascade)
 
-  tags             Tag[]
-  sprints          Sprint[]
-  timeEntries      TimeEntry[]
-  responsibleCards CardResponsible[]
+  @@unique([userId, projetoId])
+}
+
+// ── RBAC ───────────────────────────────────────────────────
+
+enum RoleScope {
+  TENANT
+  PROJETO
+}
+
+model Role {
+  id        String      @id @default(cuid())
+  tenantId  String
+  tenant    Tenant      @relation(fields: [tenantId], references: [id])
+  nome      String
+  escopo    RoleScope
+  descricao String?
+  deletedAt DateTime?
+  createdAt DateTime    @default(now())
+  updatedAt DateTime    @updatedAt
+
+  permissoes RolePermission[]
+  usuariosProjetoRole UserProjectRole[]
+
+  @@unique([nome, tenantId, escopo])
+}
+
+model Permission {
+  id        String    @id @default(cuid())
+  nome      String    @unique
+  descricao String?
+  recurso   String
+  acao      String
+  deletedAt DateTime?
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+
+  roles RolePermission[]
+
+  @@unique([recurso, acao])
+}
+
+model RolePermission {
+  id           String   @id @default(cuid())
+  roleId       String
+  permissionId String
+  role         Role     @relation(fields: [roleId], references: [id], onDelete: Cascade)
+  permission   Permission @relation(fields: [permissionId], references: [id], onDelete: Cascade)
+
+  @@unique([roleId, permissionId])
+}
+
+model UserProjectRole {
+  id        String    @id @default(cuid())
+  userId    String
+  projetoId String
+  roleId    String
+  projeto   Projeto   @relation(fields: [projetoId], references: [id], onDelete: Cascade)
+  role      Role      @relation(fields: [roleId], references: [id], onDelete: Cascade)
+  deletedAt DateTime?
+  criadoEm  DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+
+  @@unique([userId, projetoId])
+}
+
+// ── Users ─────────────────────────────────────────────────
+
+model User {
+  id            String    @id @default(cuid())
+  tenantId      String
+  tenant        Tenant    @relation(fields: [tenantId], references: [id])
+  name          String
+  email         String
+  passwordHash  String
+  role          String    @default("member")
+  avatarUrl     String?
+  cargo         String?
+  departamento  String?
+  valorHora     Float     @default(0)
+  isActive      Boolean   @default(true)
+  status        String    @default("ativo")
+  mfaEnabled          Boolean   @default(false)
+  mfaSecret           String?
+  loginAttempts       Int       @default(0)
+  forcePasswordChange Boolean   @default(false)
+  lastLogin     DateTime?
+  tokenVersion  Int       @default(0)
+  resetToken       String?
+  resetTokenExpiry DateTime?
+  deletedAt     DateTime?
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+
+  tags              Tag[]
+  sprints           Sprint[]
+  timeEntries       TimeEntry[]
+  responsibleCards  CardResponsible[]
+  departamentos     UsuarioDepartamento[]
+  projetos          UsuarioProjeto[]
+  comentarios       Comentario[]
+  notificacoes      Notificacao[]
+  dashboardMetrics  DashboardMetric[]
+  sprintFeedbacks   SprintFeedback[]
+
+  @@unique([email, tenantId])
 }
 
 enum SprintStatus {
@@ -43,32 +226,40 @@ model Sprint {
   endDate       DateTime?
   qualidade     Float?
   dificuldade   Float?
+  projetoId     String?
+  projeto       Projeto?       @relation(fields: [projetoId], references: [id])
   createdBy     String?
   creator       User?          @relation(fields: [createdBy], references: [id])
-  cards         Card[]
-  sprintColumns SprintColumn[]
-  createdAt     DateTime       @default(now())
-  updatedAt     DateTime       @updatedAt
+  cards            Card[]
+  sprintColumns    SprintColumn[]
+  dashboardMetrics DashboardMetric[]
+  sprintFeedbacks  SprintFeedback[]
+  deletedAt        DateTime?
+  createdAt        DateTime          @default(now())
+  updatedAt        DateTime          @updatedAt
 }
 
 model SprintColumn {
-  id        String   @id @default(cuid())
+  id        String    @id @default(cuid())
   title     String
   position  Int
   sprintId  String
-  sprint    Sprint   @relation(fields: [sprintId], references: [id], onDelete: Cascade)
-  cards     Card[]   @relation("SprintColumnCards")
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+  sprint    Sprint    @relation(fields: [sprintId], references: [id], onDelete: Cascade)
+  cards     Card[]    @relation("SprintColumnCards")
+  deletedAt DateTime?
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
 }
 
 model Tag {
-  id      String    @id @default(cuid())
-  name    String
-  color   String    @default("#6b7280")
-  userId  String
-  user    User      @relation(fields: [userId], references: [id], onDelete: Cascade)
-  cards   CardTag[]
+  id       String    @id @default(cuid())
+  tenantId String
+  tenant   Tenant    @relation(fields: [tenantId], references: [id])
+  name     String
+  color    String    @default("#6b7280")
+  userId   String
+  user     User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  cards    CardTag[]
 
   @@unique([name, userId])
 }
@@ -106,6 +297,7 @@ model Card {
   tagsImport     String        @default("")
   startDate      DateTime?
   endDate        DateTime?
+  deletedAt      DateTime?
   createdAt      DateTime      @default(now())
   updatedAt      DateTime      @updatedAt
 
@@ -113,32 +305,135 @@ model Card {
   attachments  Attachment[]
   timeEntries  TimeEntry[]
   responsibles CardResponsible[]
+  comentarios  Comentario[]
+}
+
+enum ComentarioTipo {
+  COMENTARIO
+  FEEDBACK
+}
+
+enum NotificacaoTipo {
+  COMENTARIO
+  ATRIBUICAO
+  ATUALIZACAO
+  CONCLUSAO
+  MENCIONADO
+  CONVITE
+}
+
+enum NotificacaoStatus {
+  NAO_LIDA
+  LIDA
+  ARQUIVADA
+}
+
+model Comentario {
+  id        String         @id @default(cuid())
+  cardId    String
+  card      Card           @relation(fields: [cardId], references: [id], onDelete: Cascade)
+  userId    String
+  user      User           @relation(fields: [userId], references: [id], onDelete: Cascade)
+  texto     String
+  tipo      ComentarioTipo @default(COMENTARIO)
+  reacoes   Json?
+  deletedAt DateTime?
+  createdAt DateTime       @default(now())
+  updatedAt DateTime       @updatedAt
+}
+
+model Notificacao {
+  id          String                @id @default(cuid())
+  userId      String
+  user        User                  @relation(fields: [userId], references: [id], onDelete: Cascade)
+  tipo        NotificacaoTipo
+  titulo      String
+  mensagem    String
+  referencia  String?
+  referenciaTipo String?
+  status      NotificacaoStatus     @default(NAO_LIDA)
+  deletedAt   DateTime?
+  criadoEm    DateTime              @default(now())
+  lido_em     DateTime?
+  updatedAt   DateTime              @updatedAt
 }
 
 model Attachment {
-  id         String   @id @default(cuid())
+  id         String    @id @default(cuid())
   cardId     String
-  card       Card     @relation(fields: [cardId], references: [id], onDelete: Cascade)
+  card       Card      @relation(fields: [cardId], references: [id], onDelete: Cascade)
   fileName   String
   fileType   String
   filePath   String
   fileSize   Int
-  isCover    Boolean  @default(false)
-  uploadedAt DateTime @default(now())
+  isCover    Boolean   @default(false)
+  deletedAt  DateTime?
+  uploadedAt DateTime  @default(now())
 }
 
 model TimeEntry {
-  id        String    @id @default(cuid())
-  userId    String
-  cardId    String
-  startedAt DateTime  @default(now())
-  endedAt   DateTime?
+  id          String    @id @default(cuid())
+  userId      String
+  cardId      String
+  startedAt   DateTime  @default(now())
+  endedAt     DateTime?
   duration    Int       @default(0)
   description String?
   isRunning   Boolean   @default(false)
   isManual    Boolean   @default(false)
-  user      User      @relation(fields: [userId], references: [id], onDelete: Cascade)
-  card      Card      @relation(fields: [cardId], references: [id], onDelete: Cascade)
-  createdAt DateTime  @default(now())
-  updatedAt DateTime  @updatedAt
+  user        User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  card        Card      @relation(fields: [cardId], references: [id], onDelete: Cascade)
+  deletedAt   DateTime?
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+}
+
+// ── Auditoria ─────────────────────────────────────────────
+
+model Auditoria {
+  id          String    @id @default(cuid())
+  tenantId    String
+  tenant      Tenant    @relation(fields: [tenantId], references: [id])
+  userId      String?
+  acao        String
+  entidade    String
+  entidadeId  String?
+  detalhes    Json?
+  timestamp   DateTime  @default(now())
+}
+
+// ── DashboardMetric ───────────────────────────────────────
+
+model DashboardMetric {
+  id               String   @id @default(cuid())
+  sprintId         String
+  sprint           Sprint   @relation(fields: [sprintId], references: [id], onDelete: Cascade)
+  userId           String
+  user             User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  horas            Float    @default(0)
+  tarefasPendentes Int      @default(0)
+  custoTotal       Float    @default(0)
+  rankingPosicao   Int      @default(0)
+  createdAt        DateTime @default(now())
+  updatedAt        DateTime @updatedAt
+
+  @@unique([sprintId, userId])
+}
+
+// ── SprintFeedback ────────────────────────────────────────
+
+model SprintFeedback {
+  id                 String   @id @default(cuid())
+  sprintId           String
+  sprint             Sprint   @relation(fields: [sprintId], references: [id], onDelete: Cascade)
+  userId             String
+  user               User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  tarefasRealizadas  String?
+  dificuldades       String?
+  qualidade          Int
+  dificuldade        Int
+  createdAt          DateTime @default(now())
+  updatedAt          DateTime @updatedAt
+
+  @@unique([sprintId, userId])
 }

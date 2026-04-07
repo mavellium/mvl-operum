@@ -8,16 +8,20 @@ export async function createSprintColumn(sprintId: string, title: string, positi
 
 export async function getSprintColumns(sprintId: string) {
   return prisma.sprintColumn.findMany({
-    where: { sprintId },
+    where: { sprintId, deletedAt: null },
     orderBy: { position: 'asc' },
     include: {
       cards: {
+        where: { deletedAt: null },
         orderBy: { sprintPosition: 'asc' },
         include: {
           tags: { include: { tag: true } },
           responsibles: { include: { user: { select: { id: true, name: true, avatarUrl: true } } } },
-          attachments: { select: { id: true, fileName: true, fileType: true, filePath: true, fileSize: true, isCover: true, uploadedAt: true } },
-          timeEntries: { select: { duration: true } },
+          attachments: {
+            where: { deletedAt: null },
+            select: { id: true, fileName: true, fileType: true, filePath: true, fileSize: true, isCover: true, uploadedAt: true },
+          },
+          timeEntries: { where: { deletedAt: null }, select: { duration: true } },
         },
       },
     },
@@ -46,7 +50,10 @@ export async function renameSprintColumn(columnId: string, title: string) {
 }
 
 export async function deleteSprintColumn(columnId: string) {
-  return prisma.sprintColumn.delete({ where: { id: columnId } })
+  return prisma.sprintColumn.update({
+    where: { id: columnId },
+    data: { deletedAt: new Date() },
+  })
 }
 
 export async function reorderSprintColumns(columnIds: string[]) {

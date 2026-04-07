@@ -44,20 +44,29 @@ beforeEach(() => {
 })
 
 describe('verifySession', () => {
-  it('returns session data when JWT valid and user exists with matching tokenVersion', async () => {
-    mockDecrypt.mockResolvedValue({ userId: 'u1', role: 'admin', tokenVersion: 2 })
-    mockUserFindUnique.mockResolvedValue({ id: 'u1', role: 'admin', tokenVersion: 2 })
+  it('returns session data with tenantId when JWT valid and user exists', async () => {
+    mockDecrypt.mockResolvedValue({ userId: 'u1', role: 'admin', tenantId: 't1', tokenVersion: 2 })
+    mockUserFindUnique.mockResolvedValue({
+      id: 'u1',
+      role: 'admin',
+      tenantId: 't1',
+      isActive: true,
+      status: 'ativo',
+      tokenVersion: 2,
+      deletedAt: null,
+    })
 
     const result = await verifySession()
 
     expect(result.userId).toBe('u1')
     expect(result.role).toBe('admin')
+    expect(result.tenantId).toBe('t1')
     expect(result.isAuth).toBe(true)
     expect(mockDelete).not.toHaveBeenCalled()
   })
 
   it('deletes cookie and redirects when user does not exist in DB', async () => {
-    mockDecrypt.mockResolvedValue({ userId: 'u1', role: 'member', tokenVersion: 0 })
+    mockDecrypt.mockResolvedValue({ userId: 'u1', role: 'member', tenantId: 't1', tokenVersion: 0 })
     mockUserFindUnique.mockResolvedValue(null)
 
     await expect(verifySession()).rejects.toThrow('REDIRECT:/login')
@@ -67,12 +76,52 @@ describe('verifySession', () => {
   })
 
   it('deletes cookie and redirects when tokenVersion in JWT differs from DB', async () => {
-    mockDecrypt.mockResolvedValue({ userId: 'u1', role: 'member', tokenVersion: 0 })
-    mockUserFindUnique.mockResolvedValue({ id: 'u1', role: 'member', tokenVersion: 3 })
+    mockDecrypt.mockResolvedValue({ userId: 'u1', role: 'member', tenantId: 't1', tokenVersion: 0 })
+    mockUserFindUnique.mockResolvedValue({
+      id: 'u1',
+      role: 'member',
+      tenantId: 't1',
+      isActive: true,
+      status: 'ativo',
+      tokenVersion: 3,
+      deletedAt: null,
+    })
 
     await expect(verifySession()).rejects.toThrow('REDIRECT:/login')
 
     expect(mockDelete).toHaveBeenCalledWith('session')
     expect(mockRedirect).toHaveBeenCalledWith('/login')
+  })
+
+  it('rejects user with status !== ativo', async () => {
+    mockDecrypt.mockResolvedValue({ userId: 'u1', role: 'member', tenantId: 't1', tokenVersion: 0 })
+    mockUserFindUnique.mockResolvedValue({
+      id: 'u1',
+      role: 'member',
+      tenantId: 't1',
+      isActive: false,
+      status: 'inativo',
+      tokenVersion: 0,
+      deletedAt: null,
+    })
+
+    await expect(verifySession()).rejects.toThrow('REDIRECT:/login')
+    expect(mockDelete).toHaveBeenCalledWith('session')
+  })
+
+  it('rejects soft-deleted user (deletedAt not null)', async () => {
+    mockDecrypt.mockResolvedValue({ userId: 'u1', role: 'member', tenantId: 't1', tokenVersion: 0 })
+    mockUserFindUnique.mockResolvedValue({
+      id: 'u1',
+      role: 'member',
+      tenantId: 't1',
+      isActive: true,
+      status: 'ativo',
+      tokenVersion: 0,
+      deletedAt: new Date(),
+    })
+
+    await expect(verifySession()).rejects.toThrow('REDIRECT:/login')
+    expect(mockDelete).toHaveBeenCalledWith('session')
   })
 })

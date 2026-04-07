@@ -1,0 +1,13 @@
+version: "3.9"
+services:
+  postgres:
+    ports:
+      - "5432:5432"   # Local dev
+    environment:
+      POSTGRES_PASSWORD: dev_senha
+      POSTGRES_USER: postgres
+      POSTGRES_DB: mvl_operum_dev
+
+  redis:
+    ports:
+      - "6379:6379"

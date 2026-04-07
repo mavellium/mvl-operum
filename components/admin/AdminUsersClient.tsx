@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import { useMemo, useState } from 'react'
 import UserAvatar from '@/components/user/UserAvatar'
 import AdminCreateUserModal, { type AdminUser } from './AdminCreateUserModal'
 import AdminEditUserModal from './AdminEditUserModal'
@@ -10,11 +10,33 @@ interface Props {
   initialUsers: AdminUser[]
 }
 
+const ROLE_LABELS: Record<string, { label: string; cls: string }> = {
+  admin:   { label: 'Admin',   cls: 'bg-purple-100 text-purple-700' },
+  gerente: { label: 'Gerente', cls: 'bg-blue-100 text-blue-700' },
+  member:  { label: 'Membro',  cls: 'bg-gray-100 text-gray-600' },
+}
+
 export default function AdminUsersClient({ initialUsers }: Props) {
   const [users, setUsers] = useState<AdminUser[]>(initialUsers)
   const [showCreate, setShowCreate] = useState(false)
   const [editUser, setEditUser] = useState<AdminUser | null>(null)
   const [loading, setLoading] = useState<string | null>(null)
+  const [search, setSearch] = useState('')
+  const [filterRole, setFilterRole] = useState('')
+  const [filterStatus, setFilterStatus] = useState('')
+
+  const filtered = useMemo(() => {
+    return users.filter(u => {
+      if (search) {
+        const q = search.toLowerCase()
+        if (!u.name.toLowerCase().includes(q) && !u.email.toLowerCase().includes(q)) return false
+      }
+      if (filterRole && u.role !== filterRole) return false
+      if (filterStatus === 'ativo' && !u.isActive) return false
+      if (filterStatus === 'inativo' && u.isActive) return false
+      return true
+    })
+  }, [users, search, filterRole, filterStatus])
 
   function handleCreated(user: AdminUser) {
     setUsers(prev => [...prev, user])
@@ -34,17 +56,50 @@ export default function AdminUsersClient({ initialUsers }: Props) {
     setUsers(prev => prev.map(u => (u.id === user.id ? { ...u, isActive: !u.isActive } : u)))
   }
 
+  const roleInfo = (role: string) => ROLE_LABELS[role] ?? ROLE_LABELS.member
+
   return (
     <>
-      <div className="flex items-center justify-between mb-6">
-        <p className="text-sm text-gray-500">{users.length} usuário{users.length !== 1 ? 's' : ''}</p>
+      {/* Toolbar */}
+      <div className="flex flex-col sm:flex-row gap-3 mb-6">
+        <input
+          type="search"
+          placeholder="Buscar por nome ou email…"
+          value={search}
+          onChange={e => setSearch(e.target.value)}
+          className="flex-1 rounded-xl border border-gray-200 px-3 py-2 text-sm text-gray-900 placeholder:text-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500"
+        />
+        <select
+          value={filterRole}
+          onChange={e => setFilterRole(e.target.value)}
+          className="rounded-xl border border-gray-200 px-3 py-2 text-sm text-gray-700 focus:outline-none focus:ring-2 focus:ring-blue-500"
+        >
+          <option value="">Todos os papéis</option>
+          <option value="admin">Admin</option>
+          <option value="gerente">Gerente</option>
+          <option value="member">Membro</option>
+        </select>
+        <select
+          value={filterStatus}
+          onChange={e => setFilterStatus(e.target.value)}
+          className="rounded-xl border border-gray-200 px-3 py-2 text-sm text-gray-700 focus:outline-none focus:ring-2 focus:ring-blue-500"
+        >
+          <option value="">Todos os status</option>
+          <option value="ativo">Ativo</option>
+          <option value="inativo">Inativo</option>
+        </select>
         <button
           onClick={() => setShowCreate(true)}
-          className="px-4 py-2 bg-blue-600 text-white text-sm font-medium rounded-xl hover:bg-blue-700"
+          className="px-4 py-2 bg-blue-600 text-white text-sm font-medium rounded-xl hover:bg-blue-700 whitespace-nowrap"
         >
           + Novo usuário
         </button>
       </div>
+
+      <p className="text-sm text-gray-500 mb-3">
+        {filtered.length} usuário{filtered.length !== 1 ? 's' : ''}
+        {search || filterRole || filterStatus ? ' (filtrado)' : ''}
+      </p>
 
       <div className="bg-white rounded-2xl border border-gray-100 overflow-hidden">
         <table className="w-full text-sm">
@@ -54,58 +109,68 @@ export default function AdminUsersClient({ initialUsers }: Props) {
               <th className="text-left text-xs font-medium text-gray-500 px-4 py-3 hidden md:table-cell">Cargo / Depto</th>
               <th className="text-right text-xs font-medium text-gray-500 px-4 py-3 hidden lg:table-cell">R$/h</th>
               <th className="text-center text-xs font-medium text-gray-500 px-4 py-3">Status</th>
-              <th className="text-center text-xs font-medium text-gray-500 px-4 py-3">Role</th>
+              <th className="text-center text-xs font-medium text-gray-500 px-4 py-3">Papel</th>
               <th className="text-right text-xs font-medium text-gray-500 px-4 py-3">Ações</th>
             </tr>
           </thead>
           <tbody>
-            {users.map(user => (
-              <tr key={user.id} className="border-b border-gray-50 last:border-0 hover:bg-gray-50">
-                <td className="px-4 py-3">
-                  <div className="flex items-center gap-3">
-                    <UserAvatar name={user.name} avatarUrl={user.avatarUrl} size="sm" />
-                    <div>
-                      <p className="font-medium text-gray-900 leading-tight">{user.name}</p>
-                      <p className="text-xs text-gray-400">{user.email}</p>
-                    </div>
-                  </div>
-                </td>
-                <td className="px-4 py-3 hidden md:table-cell">
-                  <p className="text-gray-700">{user.cargo ?? '—'}</p>
-                  {user.departamento && <p className="text-xs text-gray-400">{user.departamento}</p>}
-                </td>
-                <td className="px-4 py-3 text-right text-gray-600 hidden lg:table-cell">
-                  {user.valorHora > 0 ? `R$ ${user.valorHora.toFixed(2)}` : '—'}
-                </td>
-                <td className="px-4 py-3 text-center">
-                  <span className={`inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium ${user.isActive ? 'bg-green-100 text-green-700' : 'bg-gray-100 text-gray-500'}`}>
-                    {user.isActive ? 'Ativo' : 'Inativo'}
-                  </span>
-                </td>
-                <td className="px-4 py-3 text-center">
-                  <span className={`inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium ${user.role === 'admin' ? 'bg-purple-100 text-purple-700' : 'bg-gray-100 text-gray-600'}`}>
-                    {user.role === 'admin' ? 'Admin' : 'Membro'}
-                  </span>
-                </td>
-                <td className="px-4 py-3">
-                  <div className="flex items-center justify-end gap-1">
-                    <button
-                      onClick={() => setEditUser(user)}
-                      className="px-2.5 py-1 text-xs rounded-lg border border-gray-200 text-gray-600 hover:bg-gray-50"
-                    >
-                      Editar
-                    </button>
-                    <button
-                      onClick={() => handleToggleActive(user)}
-                      disabled={loading === user.id + '-active'}
-                      className={`px-2.5 py-1 text-xs rounded-lg border text-gray-600 hover:bg-gray-50 disabled:opacity-50 ${user.isActive ? 'border-gray-200' : 'border-green-200 text-green-700 hover:bg-green-50'}`}
-                    >
-                      {user.isActive ? 'Inativar' : 'Ativar'}
-                    </button>
-                  </div>
+            {filtered.length === 0 && (
+              <tr>
+                <td colSpan={6} className="px-4 py-8 text-center text-sm text-gray-400">
+                  Nenhum usuário encontrado
                 </td>
               </tr>
-            ))}
+            )}
+            {filtered.map(user => {
+              const ri = roleInfo(user.role)
+              return (
+                <tr key={user.id} className="border-b border-gray-50 last:border-0 hover:bg-gray-50">
+                  <td className="px-4 py-3">
+                    <div className="flex items-center gap-3">
+                      <UserAvatar name={user.name} avatarUrl={user.avatarUrl} size="sm" />
+                      <div>
+                        <p className="font-medium text-gray-900 leading-tight">{user.name}</p>
+                        <p className="text-xs text-gray-400">{user.email}</p>
+                      </div>
+                    </div>
+                  </td>
+                  <td className="px-4 py-3 hidden md:table-cell">
+                    <p className="text-gray-700">{user.cargo ?? '—'}</p>
+                    {user.departamento && <p className="text-xs text-gray-400">{user.departamento}</p>}
+                  </td>
+                  <td className="px-4 py-3 text-right text-gray-600 hidden lg:table-cell">
+                    {user.valorHora > 0 ? `R$ ${user.valorHora.toFixed(2)}` : '—'}
+                  </td>
+                  <td className="px-4 py-3 text-center">
+                    <span className={`inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium ${user.isActive ? 'bg-green-100 text-green-700' : 'bg-gray-100 text-gray-500'}`}>
+                      {user.isActive ? 'Ativo' : 'Inativo'}
+                    </span>
+                  </td>
+                  <td className="px-4 py-3 text-center">
+                    <span className={`inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium ${ri.cls}`}>
+                      {ri.label}
+                    </span>
+                  </td>
+                  <td className="px-4 py-3">
+                    <div className="flex items-center justify-end gap-1">
+                      <button
+                        onClick={() => setEditUser(user)}
+                        className="px-2.5 py-1 text-xs rounded-lg border border-gray-200 text-gray-600 hover:bg-gray-50"
+                      >
+                        Editar
+                      </button>
+                      <button
+                        onClick={() => handleToggleActive(user)}
+                        disabled={loading === user.id + '-active'}
+                        className={`px-2.5 py-1 text-xs rounded-lg border text-gray-600 hover:bg-gray-50 disabled:opacity-50 ${user.isActive ? 'border-gray-200' : 'border-green-200 text-green-700 hover:bg-green-50'}`}
+                      >
+                        {user.isActive ? 'Inativar' : 'Ativar'}
+                      </button>
+                    </div>
+                  </td>
+                </tr>
+              )
+            })}
           </tbody>
         </table>
       </div>

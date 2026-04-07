@@ -1,6 +1,7 @@
 'use server'
 
 import { put } from '@vercel/blob'
+import { revalidatePath } from 'next/cache'
 import { verifySession } from '@/lib/dal'
 import { getUserProfile, updateUserProfile, changePassword, updateAvatar } from '@/services/userService'
 
@@ -26,6 +27,7 @@ export async function updateProfileAction(prevState: ProfileActionState, formDat
       departamento: (formData.get('departamento') as string) || undefined,
       valorHora: Number(formData.get('valorHora') ?? 0),
     })
+    revalidatePath('/perfil')
     return { message: 'Perfil atualizado com sucesso' }
   } catch (err) {
     return { error: err instanceof Error ? err.message : 'Erro ao atualizar perfil' }
@@ -56,6 +58,7 @@ export async function uploadAvatarAction(formData: FormData) {
     const blob = await put(`avatars/${userId}/avatar.${ext}`, file, { access: 'public' })
 
     await updateAvatar(userId, blob.url)
+    revalidatePath('/perfil')
     return { avatarUrl: blob.url }
   } catch (err) {
     return { error: err instanceof Error ? err.message : 'Erro ao fazer upload' }

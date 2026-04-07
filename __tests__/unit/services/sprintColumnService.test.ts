@@ -54,7 +54,7 @@ describe('getSprintColumns', () => {
     const result = await getSprintColumns('s1')
     expect(result).toHaveLength(2)
     expect(mockPrisma.sprintColumn.findMany).toHaveBeenCalledWith(
-      expect.objectContaining({ where: { sprintId: 's1' }, orderBy: { position: 'asc' } })
+      expect.objectContaining({ where: expect.objectContaining({ sprintId: 's1', deletedAt: null }), orderBy: { position: 'asc' } })
     )
   })
 })

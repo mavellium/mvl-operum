@@ -6,6 +6,7 @@ vi.mock('@/lib/prisma', () => ({
     attachment: {
       create: vi.fn(),
       delete: vi.fn(),
+      update: vi.fn(),
       findUnique: vi.fn(),
     },
   },
@@ -24,6 +25,7 @@ const mockPrisma = prisma as {
   attachment: {
     create: ReturnType<typeof vi.fn>
     delete: ReturnType<typeof vi.fn>
+    update: ReturnType<typeof vi.fn>
     findUnique: ReturnType<typeof vi.fn>
   }
 }
@@ -98,31 +100,36 @@ describe('saveUpload', () => {
 })
 
 describe('deleteUpload', () => {
-  it('deletes blob and removes DB record when no userId provided (internal)', async () => {
+  it('deletes blob and soft-deletes DB record when no userId provided (internal)', async () => {
     const blobUrl = 'https://blob.vercel-storage.com/uploads/card1/uuid.png'
     mockPrisma.attachment.findUnique.mockResolvedValue({
       id: 'att1',
       filePath: blobUrl,
       card: { responsibles: [] },
     })
-    mockPrisma.attachment.delete.mockResolvedValue({ id: 'att1' })
+    mockPrisma.attachment.update.mockResolvedValue({ id: 'att1', deletedAt: new Date() })
     await deleteUpload('att1')
     expect(mockBlob.del).toHaveBeenCalledOnce()
     expect(mockBlob.del).toHaveBeenCalledWith(blobUrl)
-    expect(mockPrisma.attachment.delete).toHaveBeenCalledOnce()
+    expect(mockPrisma.attachment.update).toHaveBeenCalledWith(
+      expect.objectContaining({
+        where: { id: 'att1' },
+        data: expect.objectContaining({ deletedAt: expect.any(Date) }),
+      }),
+    )
   })
 
-  it('deletes blob when userId matches a responsible', async () => {
+  it('soft-deletes blob when userId matches a responsible', async () => {
     const blobUrl = 'https://blob.vercel-storage.com/uploads/card1/uuid.png'
     mockPrisma.attachment.findUnique.mockResolvedValue({
       id: 'att1',
       filePath: blobUrl,
       card: { responsibles: [{ userId: 'u1' }] },
     })
-    mockPrisma.attachment.delete.mockResolvedValue({ id: 'att1' })
+    mockPrisma.attachment.update.mockResolvedValue({ id: 'att1', deletedAt: new Date() })
     await deleteUpload('att1', 'u1')
     expect(mockBlob.del).toHaveBeenCalledOnce()
-    expect(mockPrisma.attachment.delete).toHaveBeenCalledOnce()
+    expect(mockPrisma.attachment.update).toHaveBeenCalledOnce()
   })
 
   it('throws 403 error if userId is provided and user is not a responsible', async () => {

@@ -1,0 +1,313 @@
+{
+  "main": {
+    "id": "609cd147743758e3",
+    "type": "split",
+    "children": [
+      {
+        "id": "914a7323f19215b1",
+        "type": "tabs",
+        "children": [
+          {
+            "id": "d0d3a36f9a3220ec",
+            "type": "leaf",
+            "state": {
+              "type": "markdown",
+              "state": {
+                "file": "MVL Operum.md",
+                "mode": "source",
+                "source": false
+              },
+              "icon": "lucide-file",
+              "title": "MVL Operum"
+            }
+          },
+          {
+            "id": "09a8af563f44814c",
+            "type": "leaf",
+            "state": {
+              "type": "markdown",
+              "state": {
+                "file": "Telas/Tela Painel Administrativo.md",
+                "mode": "source",
+                "source": false
+              },
+              "icon": "lucide-file",
+              "title": "Tela Painel Administrativo"
+            }
+          },
+          {
+            "id": "e7e67228cb154aff",
+            "type": "leaf",
+            "state": {
+              "type": "markdown",
+              "state": {
+                "file": "Telas/Sistema de Alertas e Feedbacks.md",
+                "mode": "source",
+                "source": false
+              },
+              "icon": "lucide-file",
+              "title": "Sistema de Alertas e Feedbacks"
+            }
+          },
+          {
+            "id": "0691325eaf801e9f",
+            "type": "leaf",
+            "state": {
+              "type": "markdown",
+              "state": {
+                "file": "Telas/Tela Projeto.md",
+                "mode": "source",
+                "source": false
+              },
+              "icon": "lucide-file",
+              "title": "Tela Projeto"
+            }
+          }
+        ]
+      },
+      {
+        "id": "5633bcebce959c97",
+        "type": "tabs",
+        "children": [
+          {
+            "id": "3c3b684a5021fb00",
+            "type": "leaf",
+            "pinned": true,
+            "state": {
+              "type": "graph",
+              "state": {},
+              "pinned": true,
+              "icon": "lucide-git-fork",
+              "title": "Visualização em gráfico"
+            }
+          },
+          {
+            "id": "6cdf3514cb1a697d",
+            "type": "leaf",
+            "state": {
+              "type": "markdown",
+              "state": {
+                "file": "Telas/Dashboard - Sprint.md",
+                "mode": "source",
+                "source": false
+              },
+              "icon": "lucide-file",
+              "title": "Dashboard - Sprint"
+            }
+          },
+          {
+            "id": "07a2d359c311fec4",
+            "type": "leaf",
+            "pinned": true,
+            "state": {
+              "type": "markdown",
+              "state": {
+                "file": "UML/Modelo RBAC em arquitetura multi-tenant.md",
+                "mode": "source",
+                "source": false
+              },
+              "pinned": true,
+              "icon": "lucide-file",
+              "title": "Modelo RBAC em arquitetura multi-tenant"
+            }
+          }
+        ],
+        "currentTab": 2
+      }
+    ],
+    "direction": "vertical"
+  },
+  "left": {
+    "id": "7d3304b28132d23a",
+    "type": "split",
+    "children": [
+      {
+        "id": "08a8dadda2947cff",
+        "type": "tabs",
+        "children": [
+          {
+            "id": "ef6842345a9f2b9f",
+            "type": "leaf",
+            "state": {
+              "type": "file-explorer",
+              "state": {
+                "sortOrder": "alphabetical",
+                "autoReveal": false
+              },
+              "icon": "lucide-folder-closed",
+              "title": "Explorador de arquivos"
+            }
+          },
+          {
+            "id": "0349f9c8ed7c7d50",
+            "type": "leaf",
+            "state": {
+              "type": "search",
+              "state": {
+                "query": "",
+                "matchingCase": false,
+                "explainSearch": false,
+                "collapseAll": false,
+                "extraContext": false,
+                "sortOrder": "alphabetical"
+              },
+              "icon": "lucide-search",
+              "title": "Procurar"
+            }
+          },
+          {
+            "id": "128d968eba3cc8f5",
+            "type": "leaf",
+            "state": {
+              "type": "bookmarks",
+              "state": {},
+              "icon": "lucide-bookmark",
+              "title": "Marcadores"
+            }
+          }
+        ]
+      }
+    ],
+    "direction": "horizontal",
+    "width": 300
+  },
+  "right": {
+    "id": "f39c6737f779c40b",
+    "type": "split",
+    "children": [
+      {
+        "id": "058c1278af629abf",
+        "type": "tabs",
+        "children": [
+          {
+            "id": "b784bb92d8c6a8d1",
+            "type": "leaf",
+            "state": {
+              "type": "backlink",
+              "state": {
+                "file": "MVL Operum.md",
+                "collapseAll": false,
+                "extraContext": false,
+                "sortOrder": "alphabetical",
+                "showSearch": false,
+                "searchQuery": "",
+                "backlinkCollapsed": false,
+                "unlinkedCollapsed": true
+              },
+              "icon": "links-coming-in",
+              "title": "Links inversos para MVL Operum"
+            }
+          },
+          {
+            "id": "ac199fb290b35739",
+            "type": "leaf",
+            "state": {
+              "type": "outgoing-link",
+              "state": {
+                "file": "MVL Operum.md",
+                "linksCollapsed": false,
+                "unlinkedCollapsed": true
+              },
+              "icon": "links-going-out",
+              "title": "Links de saída para MVL Operum"
+            }
+          },
+          {
+            "id": "7d16d78eef7daeb1",
+            "type": "leaf",
+            "state": {
+              "type": "tag",
+              "state": {
+                "sortOrder": "frequency",
+                "useHierarchy": true,
+                "showSearch": false,
+                "searchQuery": ""
+              },
+              "icon": "lucide-tags",
+              "title": "Etiquetas"
+            }
+          },
+          {
+            "id": "7bf00a14d77ca4ff",
+            "type": "leaf",
+            "state": {
+              "type": "all-properties",
+              "state": {
+                "sortOrder": "frequency",
+                "showSearch": false,
+                "searchQuery": ""
+              },
+              "icon": "lucide-archive",
+              "title": "Todas as propriedades"
+            }
+          },
+          {
+            "id": "0951a9a8740d288d",
+            "type": "leaf",
+            "state": {
+              "type": "outline",
+              "state": {
+                "file": "MVL Operum.md",
+                "followCursor": false,
+                "showSearch": false,
+                "searchQuery": ""
+              },
+              "icon": "lucide-list",
+              "title": "Sumário de MVL Operum"
+            }
+          }
+        ]
+      }
+    ],
+    "direction": "horizontal",
+    "width": 300,
+    "collapsed": true
+  },
+  "left-ribbon": {
+    "hiddenItems": {
+      "switcher:Abrir a troca rápida": false,
+      "graph:Abrir visualização em gráfico": false,
+      "canvas:Criar novo canvas": false,
+      "daily-notes:Abrir a nota de hoje": false,
+      "templates:Inserir modelo": false,
+      "command-palette:Abrir paleta de comandos": false,
+      "bases:Criar nova base": false
+    }
+  },
+  "active": "d0d3a36f9a3220ec",
+  "lastOpenFiles": [
+    "Telas/Tela Usuarios.md",
+    "Telas/Sistema de Alertas e Feedbacks.md",
+    "Telas/Tela Painel Administrativo.md",
+    "Telas/Tela Projeto.md",
+    "MVL Operum.md",
+    "Telas/Upload - Download de Arquivos.md",
+    "Telas/Recuperação de Senha.md",
+    "Arquitetura antiga.md",
+    "Telas/Dashboard - Projeto.md",
+    "UML/Modelo RBAC em arquitetura multi-tenant.md",
+    "Telas/Dashboard - Administrador.md",
+    "Telas/Dashboard - Sprint.md",
+    "Domínios/Tenant.md",
+    "Domínios/Papel.md",
+    "Domínios/Usuário.md",
+    "Telas/Login.md",
+    "UML/Pasted image 20260405152045.png",
+    "Domínios/Sprint.md",
+    "Domínios/TimeEntry.md",
+    "Domínios/Permissão.md",
+    "Domínios/PapelPermissão.md",
+    "Domínios/UsuárioProjetoPapel.md",
+    "Domínios/UsuárioProjeto.md",
+    "Domínios/UsuárioDepartamento.md",
+    "Domínios/Auditoria.md",
+    "Domínios/Notification.md",
+    "Domínios/SprintFeedback.md",
+    "Domínios",
+    "Papel",
+    "Usuário",
+    "UML",
+    "Pasted image 20260405151236.png",
+    "Cargo"
+  ]
+}
