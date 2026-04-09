@@ -1,6 +1,7 @@
 // @vitest-environment node
 import { describe, it, expect, vi, beforeEach } from 'vitest'
 
+
 vi.mock('@/lib/session', () => ({
   decrypt: vi.fn(),
 }))
@@ -12,12 +13,14 @@ vi.mock('@/lib/prisma', () => {
   return { default: mockPrisma, prisma: mockPrisma }
 })
 
+
+
 import { decrypt } from '@/lib/session'
 import prisma from '@/lib/prisma'
 import { GET } from '@/app/api/me/route'
 
 const mockDecrypt = decrypt as ReturnType<typeof vi.fn>
-const mockUserFindUnique = (prisma as { user: { findUnique: ReturnType<typeof vi.fn> } }).user.findUnique
+const mockUserFindUnique = (prisma as unknown as { user: { findUnique: ReturnType<typeof vi.fn> } }).user.findUnique;
 
 function makeRequest(cookie?: string) {
   return new Request('http://localhost/api/me', {
