@@ -1,15 +1,10 @@
 import { verifySession } from '@/lib/dal'
 import { findAllByTenant } from '@/services/projetoService'
+import { STATUS_CONFIG } from '@/lib/statusConfig'
+import EmptyState from '@/components/ui/EmptyState'
 import Link from 'next/link'
 
 export const dynamic = 'force-dynamic'
-
-const STATUS_CONFIG: Record<string, { label: string; cls: string }> = {
-  ATIVO:     { label: 'Ativo',     cls: 'bg-green-100 text-green-700' },
-  INATIVO:   { label: 'Inativo',   cls: 'bg-gray-100 text-gray-500' },
-  CONCLUIDO: { label: 'Concluído', cls: 'bg-blue-100 text-blue-700' },
-  ARQUIVADO: { label: 'Arquivado', cls: 'bg-amber-100 text-amber-700' },
-}
 
 export default async function ProjetosPage() {
   const { tenantId, role } = await verifySession()
@@ -19,11 +14,13 @@ export default async function ProjetosPage() {
     <div className="min-h-screen bg-gray-50">
       <header className="bg-white border-b border-gray-200 px-6 py-4 flex items-center justify-between">
         <div className="flex items-center gap-4">
-          <Link href={role === 'admin' ? '/admin' : '/sprints'} className="text-gray-400 hover:text-gray-600 transition-colors">
-            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
-            </svg>
-          </Link>
+          {role === 'admin' && (
+            <Link href="/admin" className="text-gray-400 hover:text-gray-600 transition-colors">
+              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
+              </svg>
+            </Link>
+          )}
           <h1 className="text-xl font-bold text-gray-900">Projetos</h1>
         </div>
         <Link
@@ -36,13 +33,11 @@ export default async function ProjetosPage() {
 
       <main className="max-w-5xl mx-auto px-4 py-8">
         {projetos.length === 0 ? (
-          <div className="bg-white rounded-2xl border border-gray-100 p-12 text-center">
-            <svg className="w-12 h-12 text-gray-300 mx-auto mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M3 7v10a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-6l-2-2H5a2 2 0 00-2 2z" />
-            </svg>
-            <p className="text-gray-500 font-medium">Nenhum projeto encontrado</p>
-            <p className="text-sm text-gray-400 mt-1">Crie seu primeiro projeto para começar</p>
-          </div>
+          <EmptyState
+            heading="Nenhum projeto encontrado"
+            subtext="Crie seu primeiro projeto para começar"
+            size="md"
+          />
         ) : (
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
             {projetos.map(projeto => {

@@ -13,7 +13,7 @@ export async function GET(request: Request) {
 
   const user = await prisma.user.findUnique({
     where: { id: session.userId as string },
-    select: { id: true, name: true, email: true, role: true, isActive: true, tokenVersion: true },
+    select: { id: true, name: true, email: true, role: true, isActive: true, tokenVersion: true, avatarUrl: true },
   })
 
   if (!user) {
@@ -29,6 +29,6 @@ export async function GET(request: Request) {
   }
 
   return NextResponse.json({
-    user: { id: user.id, name: user.name, email: user.email, role: user.role },
+    user: { id: user.id, name: user.name, email: user.email, role: user.role, avatarUrl: user.avatarUrl },
   })
 }

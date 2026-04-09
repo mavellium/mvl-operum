@@ -150,3 +150,14 @@ export async function getUserProjetosComDetalhes(userId: string) {
     orderBy: { dataEntrada: 'asc' },
   })
 }
+
+export async function getUserActiveProjects(userId: string, tenantId: string) {
+  return prisma.usuarioProjeto.findMany({
+    where: {
+      userId,
+      ativo: true,
+      projeto: { tenantId, deletedAt: null },
+    },
+    select: { id: true, projetoId: true },
+  })
+}

@@ -1,8 +1,8 @@
-# Arquitetura do Projeto — Kanban Board
+# Arquitetura do Projeto — MVL Operum
 
 ## Visão Geral
 
-Aplicação web de gerenciamento de projetos no estilo Kanban, com suporte a sprints, rastreamento de tempo, importação CSV, upload de arquivos, dashboard analítico e controle de usuários. Construída com Next.js 16 App Router, PostgreSQL via Prisma e estilização com Tailwind CSS 4.
+Plataforma de gerenciamento de projetos multi-tenant com board Kanban por sprint, rastreamento de tempo, controle de membros por projeto, dashboard analítico, auditoria, notificações e controle de acesso por papel. Construída com Next.js 16 App Router, PostgreSQL via Prisma e Tailwind CSS 4.
 
 ---
 
@@ -22,7 +22,6 @@ Aplicação web de gerenciamento de projetos no estilo Kanban, com suporte a spr
 | Validação | Zod 4.3.6 |
 | Gráficos | Recharts 3.8.1 |
 | CSV | papaparse 5.5.3 |
-| UUIDs | uuid 13.0.0 |
 | Testes | Vitest 4.1.2, Testing Library, MSW, JSDOM |
 
 ---
@@ -30,338 +29,339 @@ Aplicação web de gerenciamento de projetos no estilo Kanban, com suporte a spr
 ## Estrutura de Diretórios
 
 ```
-kanban-board/
+mvl-operum/
 ├── app/                          # Next.js App Router
-│   ├── (auth)/                   # Grupo de rotas públicas (sem sidebar)
-│   │   ├── layout.tsx
+│   ├── (auth)/                   # Rotas públicas (sem sidebar)
 │   │   ├── login/page.tsx
-│   │   └── register/page.tsx
-│   ├── actions/                  # Server Actions do Next.js
-│   │   ├── actions.ts            # Ações gerais do board (cards, colunas)
-│   │   ├── admin.ts              # Gerenciamento de usuários pelo admin
-│   │   ├── attachments.ts        # Upload e remoção de anexos
+│   │   ├── register/page.tsx
+│   │   └── recuperar-senha/page.tsx
+│   ├── actions/                  # Server Actions
+│   │   ├── admin.ts              # CRUD de usuários pelo admin
+│   │   ├── alterarSenha.ts       # Troca de senha obrigatória
+│   │   ├── attachments.ts        # Upload/remoção de anexos
 │   │   ├── auth.ts               # Login, registro, logout
-│   │   ├── cardResponsible.ts    # Atribuição de responsáveis aos cards
-│   │   ├── dashboard.ts          # Métricas e dados analíticos
+│   │   ├── cardResponsible.ts    # Responsáveis por card
+│   │   ├── dashboard.ts          # Métricas e analytics
+│   │   ├── departamentos.ts      # CRUD de departamentos
 │   │   ├── migration.ts          # Migrações de dados
-│   │   ├── profile.ts            # Edição de perfil do usuário
-│   │   ├── sprintBoard.ts        # Ações do board de sprint (CRUD de cards/colunas)
+│   │   ├── notificacoes.ts       # Leitura/arquivamento de notificações
+│   │   ├── profile.ts            # Edição de perfil
+│   │   ├── projetos.ts           # CRUD de projetos e membros
+│   │   ├── roles.ts              # CRUD de roles/permissões
+│   │   ├── sprintBoard.ts        # Ações do board (cards, colunas)
 │   │   ├── sprints.ts            # CRUD de sprints
 │   │   ├── tags.ts               # CRUD de tags
-│   │   ├── time.ts               # Controle de tempo (timer, entradas manuais)
+│   │   ├── time.ts               # Controle de tempo
 │   │   └── users.ts              # Listagem de usuários
-│   ├── api/                      # Rotas de API REST
-│   │   ├── csv/route.ts          # Importação de CSV
-│   │   ├── me/route.ts           # Dados do usuário autenticado
-│   │   ├── search/route.ts       # Busca global
-│   │   └── uploads/route.ts      # Upload e exclusão de arquivos
+│   ├── api/                      # Rotas REST (FormData / consumo direto)
+│   │   ├── csv/route.ts
+│   │   ├── me/route.ts
+│   │   ├── notificacoes/count/route.ts
+│   │   ├── search/route.ts
+│   │   └── uploads/route.ts
 │   ├── admin/
 │   │   ├── layout.tsx
-│   │   └── users/page.tsx        # Painel de administração de usuários
+│   │   ├── dashboard/page.tsx    # Métricas por projeto (admin)
+│   │   ├── hub/page.tsx          # Hub de navegação do admin
+│   │   └── users/page.tsx        # Gerenciamento de usuários
+│   ├── alterar-senha/page.tsx    # Troca de senha forçada
+│   ├── arquivos/page.tsx         # Galeria de anexos
 │   ├── dashboard/
-│   │   ├── page.tsx              # Dashboard geral
-│   │   └── sprint/[sprintId]/page.tsx  # Dashboard de sprint específico
+│   │   ├── page.tsx
+│   │   └── sprint/[sprintId]/page.tsx
+│   ├── notificacoes/page.tsx
+│   ├── perfil/page.tsx
+│   ├── projetos/
+│   │   ├── page.tsx              # Lista de projetos
+│   │   ├── novo/page.tsx         # Criar projeto
+│   │   └── [projetoId]/
+│   │       ├── page.tsx          # Detalhe do projeto
+│   │       ├── dashboard/page.tsx
+│   │       └── membros/page.tsx  # Gerenciar membros
 │   ├── sprints/
-│   │   ├── page.tsx              # Lista de sprints
-│   │   └── [sprintId]/page.tsx   # Board de um sprint
-│   ├── perfil/page.tsx           # Página de perfil do usuário
-│   ├── layout.tsx                # Layout raiz (com navegação)
-│   ├── page.tsx                  # Home (redireciona para /sprints)
-│   └── globals.css               # Estilos globais
-├── components/                   # Componentes React
-│   ├── admin/                    # Modais e tabela de admin de usuários
-│   ├── auth/                     # Formulários de login e registro
+│   │   ├── page.tsx
+│   │   ├── nova/page.tsx         # Criar sprint (com projeto pre-selecionável)
+│   │   └── [sprintId]/page.tsx   # Board Kanban
+│   ├── layout.tsx
+│   ├── page.tsx                  # Redireciona para /sprints
+│   └── globals.css
+├── components/
+│   ├── admin/                    # AdminCreateUserModal, AdminEditUserModal, UsersTable
+│   ├── arquivos/                 # ArquivosClient
+│   ├── auth/                     # Formulários de login/registro
 │   ├── board/                    # Column, ColumnHeader, ColumnList, BoardActionMenu
 │   ├── card/                     # Card, CardModal, CardTimer, CardAttachments, etc.
 │   ├── csv/                      # CsvImportModal
-│   ├── dashboard/                # KPICard, gráficos, tabelas de métricas
-│   ├── layout/                   # BottomNav (navegação inferior)
+│   ├── dashboard/                # KPICard, SprintDashboard (Recharts), tabelas
+│   ├── layout/                   # BottomNav
+│   ├── notificacoes/             # NotificacaoList
 │   ├── profile/                  # AvatarUpload, ProfileForm, ChangePasswordForm
+│   ├── projetos/                 # ProjetoMembrosClient
 │   ├── search/                   # GlobalSearch
 │   ├── sprint/                   # SprintBoard, SprintHeader, SprintManager, etc.
 │   ├── tag/                      # TagBadge, TagManager, TagSelector
 │   ├── ui/                       # Button, Modal, ConfirmDialog, InlineEdit
 │   └── user/                     # UserAvatar, UserSelector
-├── lib/                          # Utilitários e lógica de infraestrutura
-│   ├── generated/prisma/         # Cliente Prisma gerado (não editar manualmente)
+├── lib/
+│   ├── generated/prisma/         # Cliente Prisma gerado (não editar)
 │   ├── validation/               # Schemas Zod por domínio
-│   │   ├── authSchemas.ts
-│   │   ├── cardSchemas.ts
-│   │   ├── csvSchemas.ts
-│   │   ├── fileSchemas.ts
-│   │   ├── sprintSchemas.ts
-│   │   ├── tagSchemas.ts
-│   │   └── userSchemas.ts
-│   ├── dal.ts                    # Data Access Layer — verifica sessão
-│   ├── defaultData.ts            # Dados padrão (colunas iniciais do board)
-│   ├── kanbanReducer.ts          # Reducer para estado local do board
+│   ├── dal.ts                    # verifySession() — proteção de todas as rotas
+│   ├── defaultData.ts            # Colunas padrão do board
+│   ├── kanbanReducer.ts          # Reducer de drag-and-drop otimista
 │   ├── prisma.ts                 # Singleton do cliente Prisma
-│   ├── reorderUtils.ts           # Utilitários de reordenação de listas
-│   └── session.ts                # Criptografia/descriptografia de JWT
-├── services/                     # Camada de negócio (chamada pelas actions)
+│   ├── reorderUtils.ts           # Utilitários de reordenação
+│   └── session.ts                # Encrypt/decrypt JWT
+├── services/                     # Camada de negócio
 │   ├── adminService.ts
+│   ├── auditoriaService.ts
 │   ├── authService.ts
 │   ├── cardResponsibleService.ts
+│   ├── comentarioService.ts
 │   ├── csvImportService.ts
+│   ├── dashboardMetricService.ts
 │   ├── dashboardService.ts
+│   ├── departamentoService.ts
 │   ├── fileUploadService.ts
 │   ├── migrationService.ts
+│   ├── notificacaoService.ts
+│   ├── permissionService.ts
+│   ├── projetoService.ts
+│   ├── roleService.ts
 │   ├── sprintColumnService.ts
+│   ├── sprintFeedbackService.ts
 │   ├── sprintService.ts
 │   ├── tagService.ts
+│   ├── tenantService.ts
 │   ├── timeService.ts
 │   └── userService.ts
-├── types/                        # Interfaces TypeScript globais
-│   ├── auth.ts                   # Tipos de sessão e usuário autenticado
-│   └── kanban.ts                 # Tipos do board (Card, Column, Sprint, etc.)
+├── types/
+│   ├── auth.ts                   # SessionPayload, tipos de sessão
+│   └── kanban.ts                 # Card, Column, Sprint, etc.
 ├── prisma/
-│   ├── schema.prisma             # Schema do banco de dados
-│   ├── migrations/               # Histórico de migrações
-│   └── seed.ts                   # Dados iniciais para desenvolvimento
-├── __tests__/                    # Suite de testes
-│   ├── api/                      # Testes de rotas de API
-│   ├── components/               # Testes de componentes (28 arquivos)
-│   ├── integration/              # Testes de integração (actions + API)
-│   ├── middleware/               # Testes de middleware
-│   └── unit/                     # Testes unitários
-│       ├── actions/
-│       ├── lib/
-│       ├── reducers/
-│       ├── services/             # 11 arquivos de testes de serviços
-│       └── validation/
-├── proxy.ts                      # Proxy local para Next.js 16
-├── next.config.ts
-├── tailwind.config.ts
-├── vitest.config.mts
-├── vitest.setup.ts
-├── tsconfig.json
-├── postcss.config.mjs
-└── eslint.config.mjs
+│   ├── schema.prisma
+│   └── migrations/
+├── __tests__/
+│   ├── api/, components/, integration/, middleware/, unit/
+├── proxy.ts
+└── [config files]
 ```
+
+---
+
+## Multi-Tenancy
+
+Toda entidade do sistema está vinculada a um `Tenant`. O fluxo é:
+
+1. No login, o sistema busca o primeiro tenant ativo no banco e inclui o `tenantId` no JWT.
+2. `verifySession()` em `lib/dal.ts` descriptografa o JWT e retorna `{ userId, tenantId, role, ... }`.
+3. Todas as Server Actions chamam `verifySession()` e passam o `tenantId` para isolar os dados.
+
+```
+Tenant 1 ─┬─ Users ─┬─ Projetos ─ Sprints ─ Cards
+           │         └─ UsuarioProjeto
+           ├─ Tags
+           ├─ Departamentos
+           ├─ Roles
+           └─ Auditorias
+```
+
+> Na prática atual o sistema opera com um único tenant. A estrutura já suporta múltiplos.
+
+---
+
+## Papéis e Controle de Acesso
+
+### Role global (campo `User.role`)
+
+| Valor | Acesso |
+|-------|--------|
+| `admin` | Painel `/admin/*`, gerenciamento de usuários e projetos |
+| `gerente` | Gerenciamento de membros em projetos que participa |
+| `member` | Apenas operações no board e perfil próprio |
+
+### Role por projeto (`UserProjectRole`)
+
+Além do papel global, cada usuário pode ter um papel específico dentro de um projeto, gerenciado pela tabela `UserProjectRole` (userId + projetoId + roleId). Os roles de projeto são criados pelo admin e têm `escopo = PROJETO`.
+
+### Restrição na navegação
+
+- `/admin/*` — verificado em `app/admin/layout.tsx` e nas actions via `requireAdmin()`
+- `/projetos/:id/membros` — apenas `admin` ou `gerente`
+- Demais rotas — qualquer usuário autenticado
 
 ---
 
 ## Schema do Banco de Dados
 
-O Prisma schema define 8 modelos principais:
+### Tenant
+
+| Campo | Tipo | Descrição |
+|-------|------|-----------|
+| id | CUID | Chave primária |
+| nome | String | Nome do tenant |
+| subdominio | String (único) | Identificador único |
+| status | Enum | `ATIVO`, `INATIVO`, `SUSPENSO`, `REMOVIDO` |
+| config | Json? | Configurações customizáveis |
 
 ### User
-Representa um usuário do sistema.
 
 | Campo | Tipo | Descrição |
 |-------|------|-----------|
 | id | CUID | Chave primária |
+| tenantId | String | Tenant ao qual pertence |
 | name | String | Nome completo |
-| email | String (único) | E-mail de login |
+| email | String | Único por tenant `(email, tenantId)` |
 | passwordHash | String | Senha com bcrypt |
-| role | String | `"member"` ou `"admin"` |
-| avatarUrl | String? | URL da imagem de perfil (Blob) |
-| cargo | String? | Cargo na empresa |
-| departamento | String? | Departamento |
-| valorHora | Float? | Custo por hora (usado no dashboard) |
-| isActive | Boolean | Se o usuário pode fazer login |
-| tokenVersion | Int | Controle de invalidação de sessões |
+| role | String | `"admin"`, `"gerente"`, `"member"` |
+| avatarUrl | String? | URL da imagem de perfil |
+| cargo | String? | Cargo global (pode ser sobrescrito por projeto) |
+| departamento | String? | Departamento global |
+| valorHora | Float | Custo/hora global |
+| isActive | Boolean | Bloqueia login sem excluir dados |
+| forcePasswordChange | Boolean | Força troca de senha no próximo login |
+| tokenVersion | Int | Invalida sessões ao incrementar |
+| loginAttempts | Int | Controle de tentativas de login |
+| mfaEnabled / mfaSecret | Boolean/String? | Campos para MFA (reservado) |
+
+### Projeto
+
+| Campo | Tipo | Descrição |
+|-------|------|-----------|
+| id | CUID | Chave primária |
+| tenantId | String | Tenant |
+| nome | String | Único por tenant `(nome, tenantId)` |
+| descricao | String? | Descrição |
+| status | Enum | `ATIVO`, `INATIVO`, `CONCLUIDO`, `ARQUIVADO` |
+
+### UsuarioProjeto
+
+Tabela de junção entre User e Projeto. Armazena dados **contextuais ao projeto** — campos que variam por projeto, não por usuário globalmente.
+
+| Campo | Tipo | Descrição |
+|-------|------|-----------|
+| id | CUID | Chave primária |
+| userId | String | Usuário |
+| projetoId | String | Projeto |
+| ativo | Boolean | Membro ativo no projeto |
+| cargo | String? | Cargo neste projeto |
+| departamento | String? | Departamento neste projeto |
+| valorHora | Float? | Custo/hora neste projeto |
+| dataEntrada | DateTime | Quando entrou no projeto |
+| dataSaida | DateTime? | Quando saiu (histórico) |
+
+> **Regra**: tudo que varia por projeto fica em `UsuarioProjeto`, não em `User`.
+
+### Departamento / UsuarioDepartamento
+
+Departamentos globais do tenant. Um usuário pode pertencer a múltiplos departamentos via `UsuarioDepartamento`.
+
+### Role / Permission / RolePermission / UserProjectRole
+
+Sistema RBAC:
+- `Role` — papel com escopo `TENANT` ou `PROJETO`, pertence a um tenant
+- `Permission` — ação sobre recurso (`recurso + acao`, único globalmente)
+- `RolePermission` — M2M entre Role e Permission
+- `UserProjectRole` — atribui um Role de escopo PROJETO a um usuário em um projeto específico
 
 ### Sprint
-Representa um sprint de trabalho.
 
 | Campo | Tipo | Descrição |
 |-------|------|-----------|
 | id | CUID | Chave primária |
+| projetoId | String? | Projeto ao qual pertence (opcional para legado) |
 | name | String | Nome do sprint |
-| description | String? | Descrição |
 | status | Enum | `PLANNED`, `ACTIVE`, `COMPLETED` |
-| startDate / endDate | DateTime? | Período do sprint |
-| qualidade / dificuldade | Int? | Avaliações ao encerrar |
-| createdBy | User | Usuário criador |
+| startDate / endDate | DateTime? | Período |
+| createdBy | String? | Usuário criador |
 
-### SprintColumn
-Coluna dentro de um sprint (ex.: "A Fazer", "Em Andamento").
+### SprintColumn / Card / CardTag / CardResponsible
 
-| Campo | Tipo | Descrição |
-|-------|------|-----------|
-| id | CUID | Chave primária |
-| title | String | Nome da coluna |
-| position | Int | Ordem de exibição |
-| sprintId | String | Sprint pai (cascade delete) |
-
-### Card
-Item de trabalho dentro de uma coluna.
-
-| Campo | Tipo | Descrição |
-|-------|------|-----------|
-| id | CUID | Chave primária |
-| title | String | Título do card |
-| description | String? | Descrição detalhada |
-| color | String? | Cor hex do card |
-| priority | String | `"alta"`, `"media"`, `"baixa"` |
-| sprintId | String | Sprint ao qual pertence |
-| sprintColumnId | String | Coluna atual |
-| sprintPosition / position | Int | Ordem no board |
-| startDate / endDate | DateTime? | Datas planejadas |
-
-### Tag
-Etiqueta criada por usuário para classificar cards.
-
-| Campo | Tipo | Descrição |
-|-------|------|-----------|
-| id | CUID | Chave primária |
-| name | String | Nome da tag |
-| color | String | Cor hex |
-| userId | String | Dono da tag |
-
-Restrição única: `(name, userId)` — tags são por usuário, sem duplicatas.
-
-### CardTag
-Tabela de junção entre Card e Tag (chave composta `cardId + tagId`, cascade delete em ambas as direções).
-
-### Attachment
-Arquivo anexado a um card.
-
-| Campo | Tipo | Descrição |
-|-------|------|-----------|
-| id | CUID | Chave primária |
-| cardId | String | Card ao qual pertence |
-| fileName | String | Nome original do arquivo |
-| fileType | String | MIME type |
-| filePath | String | URL no Vercel Blob |
-| fileSize | Int | Tamanho em bytes |
-| isCover | Boolean | Se é a imagem de capa do card |
+Estrutura do board Kanban (igual à versão anterior). Cards têm título, descrição, cor, prioridade, datas, múltiplos responsáveis, tags e anexos.
 
 ### TimeEntry
-Entrada de tempo rastreado (timer ou manual).
 
-| Campo | Tipo | Descrição |
-|-------|------|-----------|
-| id | CUID | Chave primária |
-| userId | String | Usuário que registrou |
-| cardId | String | Card relacionado (cascade delete) |
-| startedAt | DateTime | Início do período |
-| endedAt | DateTime? | Fim (null se timer rodando) |
-| duration | Int | Duração em segundos |
-| isRunning | Boolean | Timer ativo |
-| isManual | Boolean | Entrada manual vs. timer |
+Entradas de tempo por usuário/card. Suporta timer ativo (`isRunning`) e entradas manuais (`isManual`).
+
+### Comentario / Notificacao
+
+- `Comentario` — texto com tipo `COMENTARIO` ou `FEEDBACK`, vinculado a card + usuário
+- `Notificacao` — notificação para um usuário com tipo, título, mensagem e status (`NAO_LIDA`, `LIDA`, `ARQUIVADA`)
+
+### Auditoria
+
+Log imutável de ações no sistema. Campos: `tenantId`, `userId?`, `acao`, `entidade`, `entidadeId?`, `detalhes (Json?)`, `timestamp`.
+
+### DashboardMetric
+
+Cache de métricas por sprint + usuário: `horas`, `tarefasPendentes`, `custoTotal`, `rankingPosicao`.
+
+### SprintFeedback
+
+Avaliação por usuário ao encerrar um sprint: `qualidade` e `dificuldade` (1–5) + campos texto. Único por `(sprintId, userId)`.
+
+### Tag / Attachment
+
+- `Tag` — etiqueta por usuário, vinculada a cards via `CardTag`
+- `Attachment` — arquivo anexado a card (Vercel Blob), pode ser capa do card
 
 ---
 
 ## Fluxo de Dados
 
-### Fluxo Padrão (ação do usuário)
+### Fluxo padrão (ação do usuário)
 
 ```
 Componente React (Client)
        ↓
 Server Action (app/actions/*.ts)
-  - Valida sessão via verifySession()
-  - Valida input via Zod
+  - verifySession() → tenantId, userId, role
+  - Validação Zod do input
        ↓
 Service Layer (services/*.ts)
-  - Lógica de negócio
-  - Consultas ao Prisma
-       ↓
-Prisma Client (lib/prisma.ts)
+  - Lógica de negócio + consultas Prisma
        ↓
 PostgreSQL
        ↓
-Retorno sobe pela cadeia até o componente
+revalidatePath() → Next.js revalida a rota
+       ↓
+Retorno ao componente
 ```
 
-### Fluxo de Autenticação
+### Fluxo de autenticação
 
 ```
-Formulário de login
+Login:
   → Zod valida email/senha
-  → authService verifica usuário no banco
+  → authService busca usuário no banco (por email + tenantId)
   → bcrypt compara senha
-  → jose gera JWT com userId + tokenVersion
+  → JWT gerado com { userId, tenantId, role, tokenVersion }
   → Cookie httpOnly "session" setado (7 dias)
-  → Redirect para /sprints
+  → Se forcePasswordChange=true → redirect /alterar-senha
+  → Senão → redirect /sprints
 
-Cada requisição protegida:
-  → dal.ts lê cookie "session"
+Cada requisição protegida (verifySession):
+  → Lê cookie "session"
   → jose descriptografa JWT
   → Busca usuário no banco
-  → Verifica isActive e tokenVersion
-  → Retorna dados do usuário ou redireciona para /login
+  → Verifica isActive, tokenVersion e forcePasswordChange
+  → Se forcePasswordChange=true → redirect /alterar-senha
+  → Retorna { userId, tenantId, role, ... }
 ```
 
-### Gerenciamento de Estado do Board
+### Fluxo de troca de senha forçada
 
-O board de sprint usa dois padrões complementares:
+```
+Admin cria usuário com forcePasswordChange=true
+  → No próximo login, redirectiona para /alterar-senha
+  → alterarSenhaAction lê cookie diretamente (bypass de verifySession para evitar loop)
+  → Atualiza passwordHash + forcePasswordChange=false + incrementa tokenVersion
+  → Deleta cookie de sessão → redirect /login?changed=1
+```
 
-1. **useReducer + kanbanReducer** — estado local para drag-and-drop otimista. Ao soltar um card, o estado local atualiza imediatamente para evitar flickering, enquanto a Server Action persiste a mudança em background.
-2. **Server Actions com revalidação** — todas as mutações chamam `revalidatePath()` para sincronizar com o servidor após operações que não são de drag.
+### Gerenciamento de estado do board
 
----
-
-## Funcionalidades em Detalhe
-
-### Autenticação e Autorização
-- Registro com validação de email único e força de senha
-- Login com cookies httpOnly e JWT assinado
-- Controle de acesso por `role` (`member` vs. `admin`)
-- Campo `tokenVersion` permite invalidar todas as sessões de um usuário sem alterar a senha
-- Campo `isActive` permite bloquear usuário sem excluir dados
-
-### Gerenciamento de Sprints
-- Status workflow: `PLANNED → ACTIVE → COMPLETED`
-- Ao criar o primeiro board de um sprint, 3 colunas padrão são geradas automaticamente: "A Fazer", "Em Andamento", "Concluído"
-- Sprints encerrados podem receber avaliações de qualidade e dificuldade
-
-### Board Kanban (Sprint Board)
-- Drag & drop de cards entre colunas e dentro de colunas
-- Drag & drop de colunas para reordenar
-- Adição, renomeação e exclusão de colunas
-- Adição rápida de card no topo ou no final de uma coluna
-- Edição inline de título de coluna
-
-### Cards
-- Título, descrição (rich text), cor (9 opções), prioridade (alta/média/baixa)
-- Datas de início e fim
-- Múltiplos responsáveis por card
-- Tags coloridas (por usuário)
-- Anexos (imagens, PDFs, documentos Office) via Vercel Blob
-- Imagem de capa (destaque visual no card)
-- Timer de tempo integrado ao modal
-
-### Rastreamento de Tempo
-- Timer de início/pausa embutido em cada card
-- Entradas manuais de horas/minutos
-- Histórico completo de entradas com possibilidade de exclusão
-- Total exibido no card e no modal
-- Custo calculado no dashboard: `horas × valorHora do usuário`
-
-### Tags
-- Cada usuário cria e gerencia suas próprias tags
-- Cada tag tem nome e cor hex
-- Tags são atribuídas a cards via seletor multi-select
-- Não permite nomes duplicados por usuário
-
-### Importação CSV
-- Modal de upload aceita arquivo `.csv`
-- Mapeamento flexível de cabeçalhos para campos do sistema (ex.: "nome" → título, "descrição" → descrição)
-- Suporte a datas em português: "1 de março de 2026"
-- Tentativa de correspondência da coluna de status com as colunas existentes no sprint
-- Validação linha a linha com relatório de erros
-- Criação em batch de todos os cards válidos
-
-### Dashboard e Analytics
-- **KPIs gerais:** total de sprints, cards, horas acumuladas, custo total
-- **Por sprint:** horas, custo, cards concluídos, cards atrasados
-- **Por usuário:** horas registradas, custo, cards atribuídos
-- **Cards atrasados:** cards com `endDate` passada e não na coluna "Concluído"
-- **Gráficos:** custo por sprint (área/barra), horas por usuário — via Recharts
-
-### Busca Global
-- Pesquisa por título, descrição, nome de sprint e tags
-- Case-insensitive via modo `insensitive` do Prisma
-- Mínimo 2 caracteres, máximo 20 resultados
-- Retorna card completo com sprint, coluna e tags
-
-### Perfil e Admin
-- Usuário edita: nome, email, cargo, departamento, valorHora, avatar
-- Troca de senha com verificação da senha atual
-- Admin pode criar, editar, ativar/desativar usuários e alterar roles
+1. **useReducer + kanbanReducer** — atualização otimista local para drag-and-drop (evita flickering)
+2. **Server Actions + revalidatePath** — todas as mutações persistem no banco e revalidam a rota
 
 ---
 
@@ -369,58 +369,111 @@ O board de sprint usa dois padrões complementares:
 
 | Método | Rota | Descrição |
 |--------|------|-----------|
-| `GET` | `/api/me` | Retorna dados do usuário autenticado |
-| `GET` | `/api/search?q=query` | Busca global em cards, tags e sprints |
-| `POST` | `/api/csv` | Importa cards de um arquivo CSV (multipart FormData) |
-| `POST` | `/api/uploads` | Faz upload de arquivo e cria registro de Attachment |
-| `DELETE` | `/api/uploads?id=attachmentId` | Remove arquivo do Blob e do banco |
+| `GET` | `/api/me` | Dados do usuário autenticado |
+| `GET` | `/api/search?q=query` | Busca global em cards e sprints |
+| `GET` | `/api/notificacoes/count` | Contagem de notificações não lidas |
+| `POST` | `/api/csv` | Importação de cards via CSV (multipart) |
+| `POST` | `/api/uploads` | Upload de arquivo (Vercel Blob) |
+| `DELETE` | `/api/uploads?id=attachmentId` | Remove arquivo e registro |
 
-A maioria das operações usa **Server Actions** diretamente, sem passar por rotas de API. As rotas REST acima existem para casos onde é necessário `FormData` (uploads, CSV) ou consumo direto pelo cliente (busca, info de usuário).
+A maioria das operações usa **Server Actions**, sem API REST. As rotas acima existem para `FormData` (uploads, CSV) ou polling de baixo custo (contagem de notificações).
+
+---
+
+## Páginas e Funcionalidades
+
+### `/admin/hub`
+Hub central do admin com links para: gerenciamento de usuários, projetos, configurações e dashboard.
+
+### `/admin/dashboard`
+Métricas por projeto: % conclusão de cards, horas acumuladas, custo estimado, sprints ativos. Dados calculados em tempo real via `getSprintMetrics`.
+
+### `/admin/users`
+Tabela de usuários com:
+- Criar usuário (nome, email, senha, isAdmin, forcePasswordChange)
+- Editar usuário: dados básicos (nome, email, senha, role global) + seção **Projetos** (ativar/desativar por projeto, editar cargo/departamento/valorHora por projeto, adicionar a novo projeto)
+- Ativar/desativar conta
+
+### `/projetos`
+Lista de projetos do tenant com status e contagem de sprints.
+
+### `/projetos/novo`
+Formulário de criação de projeto (nome, descrição).
+
+### `/projetos/:id`
+Detalhe do projeto: dados básicos, status, ações (dashboard, membros, sprints).
+
+### `/projetos/:id/membros`
+Gerenciamento de membros com dados **por projeto** (lidos de `UsuarioProjeto`):
+- Listagem: nome, email, role global, cargo, departamento, valorHora do projeto
+- Edição inline por membro: cargo, departamento, valorHora
+- Adicionar membro da lista de usuários disponíveis
+- Remover membro (seta `ativo=false` em `UsuarioProjeto`)
+
+### `/sprints/nova`
+Formulário de criação de sprint com seleção de projeto (pre-selecionável via `?projetoId=`).
+
+### `/dashboard/sprint/:id`
+Dashboard de sprint com:
+- PieChart de cards por coluna (Recharts)
+- BarChart de horas por usuário (Recharts)
+- Tabela de ranking por usuário: horas, custo, cards concluídos
+- Lista de cards atrasados
+- SprintFeedback: qualidade/dificuldade médias + detalhes por usuário
+
+### `/notificacoes`
+Lista de notificações com filtros por status, marcar como lida, arquivar.
+
+### `/arquivos`
+Galeria de todos os anexos do usuário, com preview e download.
+
+### `/alterar-senha`
+Página exclusiva para troca de senha forçada pelo admin. Inacessível via navegação normal — só via redirect automático.
+
+---
+
+## Serviços (`services/`)
+
+Cada serviço é responsável por um domínio:
+
+| Serviço | Responsabilidade |
+|---------|-----------------|
+| `authService` | Login, registro, hash de senha |
+| `adminService` | CRUD de usuários pelo admin |
+| `projetoService` | CRUD de projetos, membros (UsuarioProjeto) |
+| `sprintService` | CRUD de sprints |
+| `sprintColumnService` | CRUD de colunas |
+| `dashboardService` | Métricas gerais e por sprint |
+| `dashboardMetricService` | Cache de métricas por sprint/usuário |
+| `sprintFeedbackService` | Feedbacks por sprint |
+| `auditoriaService` | Registro de log de auditoria |
+| `notificacaoService` | CRUD de notificações |
+| `tagService` | CRUD de tags (requer tenantId) |
+| `timeService` | Timer e entradas manuais de tempo |
+| `fileUploadService` | Upload/delete no Vercel Blob |
+| `csvImportService` | Parse e importação de CSV |
+| `roleService` | CRUD de roles RBAC |
+| `permissionService` | CRUD de permissões |
+| `departamentoService` | CRUD de departamentos |
+| `tenantService` | Lookup de tenant |
+| `userService` | Listagem de usuários por tenant |
 
 ---
 
 ## Validação (Zod)
 
-Cada domínio possui um arquivo de schema em `lib/validation/`:
+Schemas em `lib/validation/`:
 
 | Arquivo | Schemas |
 |---------|---------|
 | `authSchemas.ts` | Login, registro, troca de senha |
 | `cardSchemas.ts` | Criação e edição de card |
 | `csvSchemas.ts` | Estrutura de linha CSV |
-| `fileSchemas.ts` | Validação de tipo e tamanho de arquivo |
+| `fileSchemas.ts` | Tipo e tamanho de arquivo |
+| `projetoSchemas.ts` | Criação e edição de projeto |
 | `sprintSchemas.ts` | Criação e edição de sprint |
 | `tagSchemas.ts` | Criação e edição de tag |
 | `userSchemas.ts` | Edição de perfil e admin |
-
-Todas as Server Actions validam o input com `.safeParse()` antes de chamar a camada de serviço.
-
----
-
-## Testes
-
-**Runner:** Vitest 4.1.2 com ambiente JSDOM
-
-**Scripts:**
-```bash
-npm test              # modo watch
-npm run test:run      # execução única
-npm run test:coverage # cobertura via v8
-```
-
-**Organização:**
-
-| Pasta | O que testa |
-|-------|-------------|
-| `__tests__/unit/services/` | Lógica de negócio isolada (Prisma mockado) |
-| `__tests__/unit/actions/` | Server Actions com sessão mockada |
-| `__tests__/unit/reducers/` | kanbanReducer |
-| `__tests__/unit/validation/` | Schemas Zod |
-| `__tests__/unit/lib/` | Utilitários (session, reorderUtils, etc.) |
-| `__tests__/components/` | Componentes com Testing Library |
-| `__tests__/integration/` | Actions e API com banco real ou MSW |
-| `__tests__/api/` | Rotas REST |
-| `__tests__/middleware/` | Middleware de autenticação |
 
 ---
 
@@ -428,48 +481,68 @@ npm run test:coverage # cobertura via v8
 
 | Mecanismo | Implementação |
 |-----------|---------------|
-| Armazenamento de senha | bcrypt com salt (rounds 10–12) |
-| Sessão | JWT httpOnly cookie, `SameSite=strict` |
-| Invalidação de sessão | Campo `tokenVersion` no usuário |
-| Bloqueio de conta | Campo `isActive` verificado em cada request |
-| Execução server-only | Pacote `server-only` no DAL e services |
-| Permissão de arquivo | Delete de attachment verifica se usuário é responsável pelo card |
-| Validação de input | Zod em toda entrada de dados (actions + API routes) |
+| Senha | bcrypt rounds 10–12 |
+| Sessão | JWT httpOnly cookie, `SameSite=strict`, 7 dias |
+| Invalidação de sessão | `tokenVersion` — incrementar invalida todas as sessões |
+| Bloqueio de conta | `isActive=false` verificado em cada request |
+| Troca de senha forçada | `forcePasswordChange` verificado no login e em `verifySession` |
+| Isolamento de dados | Toda query usa `tenantId` da sessão |
+| Validação de input | Zod em todas as actions e API routes |
+| Auditoria | `Auditoria` registra ações críticas com userId, entidade e detalhes |
+
+---
+
+## Migrações Aplicadas
+
+| Migração | O que faz |
+|----------|-----------|
+| `init` | Schema base: User, Sprint, Card, Tag, TimeEntry, Attachment |
+| `add_user_sprint_tags_attachments` | Relações adicionais |
+| `add_sprint_board_profile_time_tracking` | Board, perfil, time tracking |
+| `add_token_version` | Campo `tokenVersion` em User |
+| `init` (2406) | Multi-tenant: Tenant, Projeto, UsuarioProjeto, RBAC, Comentario, Notificacao |
+| `add_auditoria_dashboardmetric_sprintfeedback` | Auditoria, DashboardMetric, SprintFeedback |
+| `add_force_password_change` | Campo `forcePasswordChange` em User |
+| `add_usuario_projeto_fields` | Campos `ativo`, `cargo`, `departamento`, `valorHora` em UsuarioProjeto |
 
 ---
 
 ## Configuração e Ambiente
 
-**Variáveis de ambiente necessárias:**
+**Variáveis de ambiente:**
 
 | Variável | Uso |
 |----------|-----|
 | `DATABASE_URL` | Connection string do PostgreSQL |
 | `SESSION_SECRET` | Chave de assinatura dos JWTs |
-| `BLOB_READ_WRITE_TOKEN` | Token do Vercel Blob para uploads |
+| `BLOB_READ_WRITE_TOKEN` | Token do Vercel Blob |
 
 **Comandos úteis:**
+
 ```bash
-npm run dev           # servidor de desenvolvimento
-npm run build         # build de produção
-npx prisma migrate dev   # aplicar migrações
-npx prisma generate      # regenerar cliente (roda automaticamente no postinstall)
-npx prisma studio        # GUI do banco de dados
-npx tsx prisma/seed.ts   # popular banco com dados iniciais
+pnpm dev                          # servidor de desenvolvimento
+pnpm build                        # build de produção
+npx prisma migrate dev            # aplicar migrações
+npx prisma generate               # regenerar cliente Prisma
+npx prisma studio                 # GUI do banco
 ```
 
 ---
 
 ## Decisões de Arquitetura Notáveis
 
-1. **App Router + Server Actions** — elimina a necessidade de uma API REST separada para a maioria das operações; o cliente chama funções TypeScript que rodam no servidor.
+1. **Server Actions sobre API REST** — elimina camada extra. O cliente chama funções TypeScript que rodam no servidor. API REST é reservada para `FormData` e polling leve.
 
-2. **Camada de serviços separada** — as Server Actions são finas (validação de sessão + input, chamada de serviço, revalidação). A lógica de negócio fica nos services para facilitar testes unitários independentes do framework.
+2. **Services finas nas actions** — actions fazem apenas: `verifySession` + validação Zod + chamada de service + `revalidatePath`. Lógica de negócio fica nos services para testabilidade.
 
-3. **Prisma com adapter `pg`** — o Next.js 16 exige o uso explícito do adapter `@prisma/adapter-pg` em vez da integração padrão, por mudanças no runtime edge.
+3. **UsuarioProjeto como entidade central** — dados que variam por projeto (cargo, departamento, valorHora, ativo) ficam em `UsuarioProjeto`, não em `User`. Isso permite que o mesmo usuário tenha papéis e custos diferentes em cada projeto.
 
-4. **Zod 4 com `.safeParse()`** — o projeto usa Zod v4, que tem APIs ligeiramente diferentes de v3 (ex.: `z.string().min()` com mensagens, tratamento de unions). Schemas centralizados em `lib/validation/`.
+4. **forcePasswordChange sem loop** — a action de `/alterar-senha` lê o cookie diretamente (sem chamar `verifySession`) para evitar redirect loop. Após trocar, incrementa `tokenVersion` e invalida a sessão.
 
-5. **Tags por usuário** — a constraint única `(name, userId)` permite que múltiplos usuários tenham tags com o mesmo nome sem conflito.
+5. **Multi-tenant via JWT** — `tenantId` é embutido no token no login, não precisa de lookup em cada request. Toda query usa esse `tenantId` para isolar dados.
 
-6. **Invalidação de sessão por `tokenVersion`** — ao incrementar esse campo, todas as sessões ativas do usuário são invalidadas sem precisar de uma lista negra de tokens.
+6. **Drag-and-drop otimista** — `useReducer` com `kanbanReducer` atualiza o estado local imediatamente; a Server Action persiste em background. Se falhar, o estado local é corrigido na próxima renderização.
+
+7. **Prisma com adapter `pg`** — Next.js 16 exige o adapter explícito `@prisma/adapter-pg` para compatibilidade com o runtime.
+
+8. **`tokenVersion` para invalidação** — incrementar esse campo invalida todas as sessões ativas do usuário sem lista negra de tokens.

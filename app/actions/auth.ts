@@ -3,6 +3,7 @@
 import { cookies } from 'next/headers'
 import { redirect } from 'next/navigation'
 import { register, login, ConflictError, AuthError } from '@/services/authService'
+import { getUserActiveProjects } from '@/services/projetoService'
 import { encrypt } from '@/lib/session'
 import prisma from '@/lib/prisma'
 import bcrypt from 'bcryptjs'
@@ -44,6 +45,7 @@ export async function loginAction(prevState: FormState, formData: FormData): Pro
   const password = formData.get('password') as string
 
   let forcePasswordChange = false
+  let projectRedirect = '/projetos'
   try {
     const tenant = await prisma.tenant.findFirst({ where: { status: 'ATIVO' } })
     if (!tenant) return { message: 'Nenhum tenant disponível' }
@@ -59,6 +61,16 @@ export async function loginAction(prevState: FormState, formData: FormData): Pro
       expires: expiresAt,
       path: '/',
     })
+    if (role !== 'admin') {
+      const projects = await getUserActiveProjects(userId, tenantId)
+      if (projects.length === 0) {
+        projectRedirect = '/no-project'
+      } else if (projects.length === 1) {
+        projectRedirect = `/projetos/${projects[0].projetoId}/dashboard`
+      } else {
+        projectRedirect = '/projetos'
+      }
+    }
   } catch (err) {
     if (err instanceof AuthError) {
       return { message: err.message }
@@ -66,10 +78,8 @@ export async function loginAction(prevState: FormState, formData: FormData): Pro
     return { message: 'Erro ao fazer login. Tente novamente.' }
   }
 
-  if (forcePasswordChange) {
-    redirect('/alterar-senha')
-  }
-  redirect('/')
+  if (forcePasswordChange) redirect('/alterar-senha')
+  redirect(projectRedirect)
 }
 
 export async function logoutAction() {

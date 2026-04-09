@@ -114,18 +114,6 @@ export default async function ProjetoDashboardPage({ params }: { params: Promise
 
   return (
     <div className="min-h-screen bg-gray-50">
-      <header className="bg-white border-b border-gray-200 px-6 py-4 flex items-center gap-4">
-        <Link href={`/projetos/${projetoId}`} className="text-gray-400 hover:text-gray-600 transition-colors">
-          <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
-          </svg>
-        </Link>
-        <div>
-          <h1 className="text-xl font-bold text-gray-900">Dashboard — {projeto.nome}</h1>
-          <p className="text-sm text-gray-500">Métricas do projeto</p>
-        </div>
-      </header>
-
       <main className="max-w-6xl mx-auto px-4 py-8 space-y-8">
         {/* KPIs */}
         <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">

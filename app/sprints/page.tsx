@@ -1,13 +1,13 @@
 import { getSprintsWithMetricsAction } from '@/app/actions/dashboard'
 import { getCurrentUserAction } from '@/app/actions/users'
-import { verifySession } from '@/lib/dal'
+import { verifyProjectAccess } from '@/lib/dal'
 import prisma from '@/lib/prisma'
 import SprintListPage from '@/components/sprint/SprintListPage'
 
 export const dynamic = 'force-dynamic'
 
 export default async function SprintsPage() {
-  const { userId } = await verifySession()
+  const { userId } = await verifyProjectAccess()
 
   const [result, currentUser, tags] = await Promise.all([
     getSprintsWithMetricsAction(),

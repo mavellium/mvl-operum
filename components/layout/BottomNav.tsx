@@ -14,22 +14,6 @@ function IconDashboard() {
   )
 }
 
-function IconSprints() {
-  return (
-    <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.8} d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
-    </svg>
-  )
-}
-
-function IconPerfil() {
-  return (
-    <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.8} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
-    </svg>
-  )
-}
-
 function IconProjetos() {
   return (
     <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -46,49 +30,36 @@ function IconAdmin() {
   )
 }
 
-function IconAlertas({ count }: { count: number }) {
+function IconGerenciar() {
   return (
-    <span className="relative inline-flex">
-      <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.8} d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9" />
-      </svg>
-      {count > 0 && (
-        <span className="absolute -top-1 -right-1 min-w-[16px] h-4 px-0.5 bg-red-500 text-white text-[10px] font-bold rounded-full flex items-center justify-center leading-none">
-          {count > 99 ? '99+' : count}
-        </span>
-      )}
-    </span>
+    <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.8} d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" />
+      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.8} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+    </svg>
   )
 }
 
 // ── Tab definitions ────────────────────────────────────────
 
-const MEMBRO_TABS = [
-  { label: 'Sprints', href: '/sprints', icon: <IconSprints /> },
-  { label: 'Perfil', href: '/perfil', icon: <IconPerfil /> },
-]
+type Tab = { label: string; href: string; icon: React.ReactNode }
 
-const GERENTE_TABS = [
+const BASE_TABS: Tab[] = [
   { label: 'Dashboard', href: '/dashboard', icon: <IconDashboard /> },
-  { label: 'Projetos', href: '/projetos', icon: <IconProjetos /> },
-  { label: 'Sprints', href: '/sprints', icon: <IconSprints /> },
-  { label: 'Perfil', href: '/perfil', icon: <IconPerfil /> },
+  { label: 'Projetos',  href: '/projetos',  icon: <IconProjetos /> },
 ]
 
-const ADMIN_TABS = [
-  { label: 'Dashboard', href: '/admin/dashboard', icon: <IconDashboard /> },
-  { label: 'Projetos', href: '/projetos', icon: <IconProjetos /> },
+const ADMIN_EXTRA: Tab[] = [
   { label: 'Usuários', href: '/admin/users', icon: <IconAdmin /> },
-  { label: 'Admin', href: '/admin', icon: <IconAdmin /> },
-  { label: 'Perfil', href: '/perfil', icon: <IconPerfil /> },
+  { label: 'Admin',    href: '/admin',       icon: <IconAdmin /> },
 ]
+
+const HIDDEN_PATHS = ['/login', '/register', '/recuperar-senha', '/alterar-senha', '/no-project']
 
 // ── Component ──────────────────────────────────────────────
 
 export default function BottomNav() {
   const pathname = usePathname()
   const [role, setRole] = useState<string | null>(null)
-  const [unreadCount, setUnreadCount] = useState(0)
 
   useEffect(() => {
     fetch('/api/me')
@@ -97,34 +68,19 @@ export default function BottomNav() {
       .catch(() => {})
   }, [])
 
-  useEffect(() => {
-    if (!role) return
-    fetch('/api/notificacoes/count')
-      .then(r => r.json())
-      .then(d => { if (typeof d?.count === 'number') setUnreadCount(d.count) })
-      .catch(() => {})
-  }, [role])
+  if (HIDDEN_PATHS.some(p => pathname.startsWith(p))) return null
 
-  if (['/login', '/register', '/recuperar-senha', '/alterar-senha'].some(p => pathname.startsWith(p))) return null
+  const baseTabs: Tab[] = role === 'admin' ? [...BASE_TABS, ...ADMIN_EXTRA] : BASE_TABS
 
-  const baseTabs = role === 'admin'
-    ? ADMIN_TABS
-    : role === 'gerente'
-    ? GERENTE_TABS
-    : MEMBRO_TABS
+  // Dynamic "Gerenciar" tab — visible when inside a project and role allows member management
+  const projetoMatch = pathname.match(/^\/projetos\/([^/]+)/)
+  const projetoId = projetoMatch?.[1] ?? null
+  const gerenciarTab: Tab[] =
+    projetoId && (role === 'gerente' || role === 'admin')
+      ? [{ label: 'Gerenciar', href: `/projetos/${projetoId}/membros`, icon: <IconGerenciar /> }]
+      : []
 
-  // Inject alertas tab for non-admin roles (admin sees full panel)
-  const tabs = role === 'admin'
-    ? baseTabs
-    : [
-        ...baseTabs.slice(0, -1), // all except Perfil
-        {
-          label: 'Alertas',
-          href: '/notificacoes',
-          icon: <IconAlertas count={unreadCount} />,
-        },
-        baseTabs[baseTabs.length - 1], // Perfil last
-      ]
+  const tabs = [...baseTabs, ...gerenciarTab]
 
   return (
     <nav

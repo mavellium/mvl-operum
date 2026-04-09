@@ -113,7 +113,12 @@ export async function updateUsuarioProjetoAction(
 export async function getUserProjetosAction(userId: string) {
   try {
     await verifySession()
-    return await getUserProjetosComDetalhes(userId)
+    const rows = await getUserProjetosComDetalhes(userId)
+    return rows.map(r => ({
+      ...r,
+      dataEntrada: r.dataEntrada.toISOString(),
+      dataSaida: r.dataSaida?.toISOString() ?? null,
+    }))
   } catch {
     return []
   }

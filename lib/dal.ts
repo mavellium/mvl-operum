@@ -4,6 +4,7 @@ import { cookies } from 'next/headers'
 import { redirect } from 'next/navigation'
 import { decrypt } from '@/lib/session'
 import prisma from '@/lib/prisma'
+import { getUserActiveProjects } from '@/services/projetoService'
 
 export const verifySession = cache(async () => {
   const cookieStore = await cookies()
@@ -58,4 +59,17 @@ export const verifySession = cache(async () => {
     role: user.role,
     tenantId: user.tenantId,
   }
+})
+
+export const verifyProjectAccess = cache(async () => {
+  const session = await verifySession()
+
+  if (session.role !== 'admin') {
+    const projects = await getUserActiveProjects(session.userId, session.tenantId)
+    if (projects.length === 0) {
+      redirect('/no-project')
+    }
+  }
+
+  return session
 })
