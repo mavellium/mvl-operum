@@ -98,9 +98,9 @@ export default function SprintBoard({ sprint, columns: initialColumns, users, ta
   const [newColTitle, setNewColTitle] = useState('')
   const [addingCol, setAddingCol] = useState(false)
   const [openCardId, setOpenCardId] = useState<string | null>(initialCardId ?? null)
+  const [addingCardToColumn, setAddingCardToColumn] = useState<string | null>(null)
   const [boardBg, setBoardBg] = useState('bg-gradient-to-br from-slate-900 via-blue-950 to-slate-900')
   
-  // Ref para o container do board para implementar o "Arraste para o lado"
   const scrollContainerRef = useRef<HTMLDivElement>(null)
   const [isDragging, setIsDragging] = useState(false)
   const [startX, setStartX] = useState(0)
@@ -108,10 +108,8 @@ export default function SprintBoard({ sprint, columns: initialColumns, users, ta
 
   const isImageBg = boardBg.startsWith('url')
 
-  // Lógica de "Click and Drag" para o Scroll Horizontal
   const handleMouseDown = (e: React.MouseEvent) => {
-    if (e.button !== 0) return // Apenas clique esquerdo
-    // Impede o drag se clicar em inputs ou botões
+    if (e.button !== 0) return 
     const target = e.target as HTMLElement
     if (target.tagName === 'INPUT' || target.tagName === 'BUTTON' || target.closest('.drag-handle')) return
 
@@ -127,7 +125,7 @@ export default function SprintBoard({ sprint, columns: initialColumns, users, ta
     if (!isDragging || !scrollContainerRef.current) return
     e.preventDefault()
     const x = e.pageX - scrollContainerRef.current.offsetLeft
-    const walk = (x - startX) * 1.5 // Velocidade do scroll
+    const walk = (x - startX) * 1.5
     scrollContainerRef.current.scrollLeft = scrollLeft - walk
   }
 
@@ -238,7 +236,6 @@ export default function SprintBoard({ sprint, columns: initialColumns, users, ta
         onChangeBackground={setBoardBg} 
       />
 
-      {/* ÁREA DO BOARD: h-full e flex-1 garantem que ocupe o espaço restante sem estourar a tela */}
       <div 
         ref={scrollContainerRef}
         onMouseDown={handleMouseDown}
@@ -257,7 +254,6 @@ export default function SprintBoard({ sprint, columns: initialColumns, users, ta
                   {...provided.droppableProps}
                   className="flex h-full items-start space-x-4"
                 >
-                  {/* COLUNAS: ColumnComponent deve ter max-h-full internamente agora */}
                   {columns.map((col, index) => (
                     <div key={col.id} className="h-full">
                       <ColumnComponent
@@ -266,17 +262,17 @@ export default function SprintBoard({ sprint, columns: initialColumns, users, ta
                         index={index}
                         onRenameColumn={handleRenameColumn}
                         onDeleteColumn={handleDeleteColumn}
-                        onAddCard={handleAddCard}
+                        onAddCard={(colId) => setAddingCardToColumn(colId)}
                         onUpdateCard={handleUpdateCard}
                         onDeleteCard={handleDeleteCard}
                         users={users}
                         boardTags={tags}
+                        onCardClick={(cardId) => setOpenCardId(cardId)}
                       />
                     </div>
                   ))}
                   {provided.placeholder}
 
-                  {/* ADICIONAR NOVA COLUNA: Design flutuante elegante */}
                   <div className="w-72 shrink-0 h-full">
                     {addingCol ? (
                       <div className="bg-white/90 backdrop-blur-xl rounded-2xl p-4 shadow-2xl border border-white/20 animate-in fade-in zoom-in-95 duration-300">
@@ -327,23 +323,57 @@ export default function SprintBoard({ sprint, columns: initialColumns, users, ta
         </div>
       </div>
 
-      {/* MODAL DO CARD (Lógica de busca igual ao seu) */}
+      {/* MODAL DO CARD - TOTALMENTE INTEGRADO */}
       {(() => {
         if (!openCardId) return null
-        const openCard = columns.flatMap(c => c.cards).find(c => c.id === openCardId)
-        if (!openCard) return null
+        
+        // Encontra a coluna atual para passar o nome como referência (caso você adicione no modal no futuro)
+        const currentColumn = columns.find(col => col.cards.some(c => c.id === openCardId))
+        const openCardRaw = currentColumn?.cards.find(c => c.id === openCardId)
+        
+        if (!openCardRaw) return null
+        
+        const openCardType = toCardType(openCardRaw, sprint.id)
+
         return (
           <CardModal
             isOpen
             onClose={() => setOpenCardId(null)}
             onSubmit={data => handleUpdateCard(openCardId, data)}
-            initialCard={toCardType(openCard, sprint.id)}
+            initialCard={openCardType}
             users={users}
             boardTags={tags}
-            attachments={[]}
+            
+            // Repassando os anexos (o componente CardModal já mapeia eles)
+            attachments={openCardType.attachments}
+            
+            // Handlers de anexo mockados/iniciais (Implemente as APIs reais depois)
+            onAttachmentUpload={(file) => console.log('Upload:', file)}
+            onAttachmentDelete={(id) => console.log('Deletar Anexo:', id)}
+            onAttachmentSetCover={(id) => console.log('Setar Capa:', id)}
+            
+            // Handlers de comentário mockados/iniciais
+            onAddComment={(content) => {
+              console.log('Comentário Adicionado:', content)
+              // Aqui você chamaria a Action do servidor para salvar o comentário
+            }}
+            comments={[]} // Aqui você passaria openCardRaw.comments se eles existissem na sua interface
           />
         )
       })()}
+
+      <CardModal
+        isOpen={!!addingCardToColumn}
+        onClose={() => setAddingCardToColumn(null)}
+        onSubmit={async (data) => {
+          if (addingCardToColumn) {
+            await handleAddCard(addingCardToColumn, data)
+            setAddingCardToColumn(null)
+          }
+        }}
+        users={users}
+        boardTags={tags}
+      />
     </div>
   )
 }
