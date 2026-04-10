@@ -123,8 +123,8 @@ export default function AdminEditUserModal({ user, onClose, onUpdated }: Props) 
   function handleSaveEdit(up: UserProjeto) {
     startTransition(async () => {
       const result = await updateUsuarioProjetoAction(user.id, up.projetoId, {
-        cargo: editForm.cargo,
-        departamento: editForm.departamento,
+        cargos: editForm.cargo ? [editForm.cargo] : [],
+        departamentos: editForm.departamento ? [editForm.departamento] : [],
         valorHora: editForm.valorHora ? parseFloat(editForm.valorHora) : null,
       })
       if (!('error' in result)) {
