@@ -7,7 +7,7 @@ export const dynamic = 'force-dynamic'
 export default async function Home() {
   const { userId, role, tenantId } = await verifySession()
 
-  if (role === 'admin') redirect('/projetos')
+  if (role === 'admin') redirect('/admin')
 
   const projects = await getUserActiveProjects(userId, tenantId)
 

@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import { useSearchParams, useRouter, usePathname } from 'next/navigation'
 import { DragDropContext, Droppable, DropResult } from '@hello-pangea/dnd'
 import SprintHeader from './SprintHeader'
@@ -93,22 +93,43 @@ export default function SprintBoard({ sprint, columns: initialColumns, users, ta
   const searchParams = useSearchParams()
   const router = useRouter()
   const pathname = usePathname()
+  
   const [columns, setColumns] = useState(initialColumns)
   const [newColTitle, setNewColTitle] = useState('')
   const [addingCol, setAddingCol] = useState(false)
   const [openCardId, setOpenCardId] = useState<string | null>(initialCardId ?? null)
+  const [boardBg, setBoardBg] = useState('bg-gradient-to-br from-slate-900 via-blue-950 to-slate-900')
+  
+  // Ref para o container do board para implementar o "Arraste para o lado"
+  const scrollContainerRef = useRef<HTMLDivElement>(null)
+  const [isDragging, setIsDragging] = useState(false)
+  const [startX, setStartX] = useState(0)
+  const [scrollLeft, setScrollLeft] = useState(0)
 
-  useEffect(() => {
-    const cardParam = searchParams.get('card')
-    if (cardParam) {
-      setOpenCardId(cardParam)
-      // Remove ?card= from URL without reload
-      const params = new URLSearchParams(searchParams.toString())
-      params.delete('card')
-      const newUrl = params.toString() ? `${pathname}?${params}` : pathname
-      router.replace(newUrl, { scroll: false })
-    }
-  }, [searchParams, pathname, router])
+  const isImageBg = boardBg.startsWith('url')
+
+  // Lógica de "Click and Drag" para o Scroll Horizontal
+  const handleMouseDown = (e: React.MouseEvent) => {
+    if (e.button !== 0) return // Apenas clique esquerdo
+    // Impede o drag se clicar em inputs ou botões
+    const target = e.target as HTMLElement
+    if (target.tagName === 'INPUT' || target.tagName === 'BUTTON' || target.closest('.drag-handle')) return
+
+    setIsDragging(true)
+    setStartX(e.pageX - (scrollContainerRef.current?.offsetLeft || 0))
+    setScrollLeft(scrollContainerRef.current?.scrollLeft || 0)
+  }
+
+  const handleMouseLeave = () => setIsDragging(false)
+  const handleMouseUp = () => setIsDragging(false)
+
+  const handleMouseMove = (e: React.MouseEvent) => {
+    if (!isDragging || !scrollContainerRef.current) return
+    e.preventDefault()
+    const x = e.pageX - scrollContainerRef.current.offsetLeft
+    const walk = (x - startX) * 1.5 // Velocidade do scroll
+    scrollContainerRef.current.scrollLeft = scrollLeft - walk
+  }
 
   async function handleDragEnd(result: DropResult) {
     const { destination, source, draggableId, type } = result
@@ -206,82 +227,107 @@ export default function SprintBoard({ sprint, columns: initialColumns, users, ta
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-100 via-blue-50 to-indigo-100 flex flex-col pb-16">
-      <SprintHeader sprint={sprint} currentUser={currentUser} tags={tags} />
-      <div className="flex-1 overflow-auto p-4">
-        <DragDropContext onDragEnd={handleDragEnd}>
-          <Droppable droppableId="sprint-columns" direction="horizontal" type="COLUMN">
-            {provided => (
-              <div
-                ref={provided.innerRef}
-                {...provided.droppableProps}
-                className="flex gap-3 items-start"
-              >
-                {columns.map((col, index) => (
-                  <ColumnComponent
-                    key={col.id}
-                    column={toColumnType(col)}
-                    cards={col.cards.map(c => toCardType(c, sprint.id))}
-                    index={index}
-                    onRenameColumn={handleRenameColumn}
-                    onDeleteColumn={handleDeleteColumn}
-                    onAddCard={handleAddCard}
-                    onUpdateCard={handleUpdateCard}
-                    onDeleteCard={(cardId) => handleDeleteCard(cardId)}
-                    users={users}
-                    boardTags={tags}
-                  />
-                ))}
-                {provided.placeholder}
+    <div 
+      className={`h-[calc(100vh-64px)] w-full flex flex-col overflow-hidden bg-cover bg-center bg-fixed transition-all duration-700 selection:bg-blue-500/30 ${!isImageBg ? boardBg : ''}`}
+      style={isImageBg ? { backgroundImage: boardBg } : {}}
+    >
+      <SprintHeader 
+        sprint={sprint} 
+        currentUser={currentUser} 
+        tags={tags}
+        onChangeBackground={setBoardBg} 
+      />
 
-                <div className="w-72 shrink-0">
-                  {addingCol ? (
-                    <div className="bg-white/80 rounded-xl p-3 space-y-2">
-                      <input
-                        autoFocus
-                        value={newColTitle}
-                        onChange={e => setNewColTitle(e.target.value)}
-                        onKeyDown={e => {
-                          if (e.key === 'Enter') handleAddColumn()
-                          if (e.key === 'Escape') setAddingCol(false)
-                        }}
-                        placeholder="Nome da coluna"
-                        className="w-full px-3 py-1.5 border border-gray-300 rounded-lg text-sm text-gray-900 placeholder:text-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-400"
-                        aria-label="Nome da nova coluna"
+      {/* ÁREA DO BOARD: h-full e flex-1 garantem que ocupe o espaço restante sem estourar a tela */}
+      <div 
+        ref={scrollContainerRef}
+        onMouseDown={handleMouseDown}
+        onMouseLeave={handleMouseLeave}
+        onMouseUp={handleMouseUp}
+        onMouseMove={handleMouseMove}
+        className={`flex-1 overflow-x-auto overflow-y-hidden cursor-default ${isDragging ? 'cursor-grabbing select-none' : ''} 
+          [&::-webkit-scrollbar]:h-2 [&::-webkit-scrollbar-track]:bg-black/10 [&::-webkit-scrollbar-thumb]:bg-white/20 [&::-webkit-scrollbar-thumb]:rounded-full hover:[&::-webkit-scrollbar-thumb]:bg-white/30`}
+      >
+        <div className="h-full inline-flex items-start p-6 space-x-4">
+          <DragDropContext onDragEnd={handleDragEnd}>
+            <Droppable droppableId="sprint-columns" direction="horizontal" type="COLUMN">
+              {provided => (
+                <div
+                  ref={provided.innerRef}
+                  {...provided.droppableProps}
+                  className="flex h-full items-start space-x-4"
+                >
+                  {/* COLUNAS: ColumnComponent deve ter max-h-full internamente agora */}
+                  {columns.map((col, index) => (
+                    <div key={col.id} className="h-full">
+                      <ColumnComponent
+                        column={toColumnType(col)}
+                        cards={col.cards.map(c => toCardType(c, sprint.id))}
+                        index={index}
+                        onRenameColumn={handleRenameColumn}
+                        onDeleteColumn={handleDeleteColumn}
+                        onAddCard={handleAddCard}
+                        onUpdateCard={handleUpdateCard}
+                        onDeleteCard={handleDeleteCard}
+                        users={users}
+                        boardTags={tags}
                       />
-                      <div className="flex gap-2">
-                        <button
-                          onClick={handleAddColumn}
-                          className="flex-1 bg-blue-600 text-white text-sm py-1 rounded-lg hover:bg-blue-700 transition-colors"
-                        >
-                          Adicionar
-                        </button>
-                        <button
-                          onClick={() => setAddingCol(false)}
-                          className="flex-1 bg-gray-100 text-gray-600 text-sm py-1 rounded-lg hover:bg-gray-200 transition-colors"
-                        >
-                          Cancelar
-                        </button>
-                      </div>
                     </div>
-                  ) : (
-                    <button
-                      onClick={() => setAddingCol(true)}
-                      className="w-full flex items-center gap-2 px-4 py-3 bg-white/50 hover:bg-white/70 rounded-xl text-sm text-gray-600 hover:text-gray-800 transition-all font-medium"
-                    >
-                      <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
-                      </svg>
-                      Nova Coluna
-                    </button>
-                  )}
+                  ))}
+                  {provided.placeholder}
+
+                  {/* ADICIONAR NOVA COLUNA: Design flutuante elegante */}
+                  <div className="w-72 shrink-0 h-full">
+                    {addingCol ? (
+                      <div className="bg-white/90 backdrop-blur-xl rounded-2xl p-4 shadow-2xl border border-white/20 animate-in fade-in zoom-in-95 duration-300">
+                        <input
+                          autoFocus
+                          value={newColTitle}
+                          onChange={e => setNewColTitle(e.target.value)}
+                          onKeyDown={e => {
+                            if (e.key === 'Enter') handleAddColumn()
+                            if (e.key === 'Escape') setAddingCol(false)
+                          }}
+                          placeholder="Título da coluna..."
+                          className="w-full px-4 py-2.5 bg-gray-100/50 border-none rounded-xl text-sm font-medium focus:ring-2 focus:ring-blue-500 transition-all mb-3"
+                        />
+                        <div className="flex gap-2">
+                          <button
+                            onClick={handleAddColumn}
+                            className="flex-1 bg-blue-600 text-white text-xs font-bold py-2 rounded-lg hover:bg-blue-700 transition-all shadow-lg shadow-blue-500/20"
+                          >
+                            Criar Coluna
+                          </button>
+                          <button
+                            onClick={() => setAddingCol(false)}
+                            className="px-3 bg-gray-200 text-gray-600 rounded-lg hover:bg-gray-300 transition-all"
+                          >
+                            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" /></svg>
+                          </button>
+                        </div>
+                      </div>
+                    ) : (
+                      <button
+                        onClick={() => setAddingCol(true)}
+                        className="w-full flex items-center justify-center gap-2 px-6 py-4 bg-white/10 hover:bg-white/20 backdrop-blur-md border border-white/10 rounded-2xl text-sm text-white font-semibold transition-all hover:scale-[1.02] active:scale-[0.98] group"
+                      >
+                        <div className="bg-white/20 p-1 rounded-md group-hover:bg-blue-500 transition-colors">
+                          <svg className="w-4 h-4 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M12 4v16m8-8H4" /></svg>
+                        </div>
+                        Nova Coluna
+                      </button>
+                    )}
+                  </div>
+
+                  <div className="w-8 shrink-0 invisible" />
                 </div>
-              </div>
-            )}
-          </Droppable>
-        </DragDropContext>
+              )}
+            </Droppable>
+          </DragDropContext>
+        </div>
       </div>
 
+      {/* MODAL DO CARD (Lógica de busca igual ao seu) */}
       {(() => {
         if (!openCardId) return null
         const openCard = columns.flatMap(c => c.cards).find(c => c.id === openCardId)

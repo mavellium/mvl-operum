@@ -9,19 +9,39 @@ import Link from 'next/link'
 export const dynamic = 'force-dynamic'
 
 const SPRINT_STATUS: Record<string, { label: string; cls: string }> = {
-  PLANNED:   { label: 'Planejada',  cls: 'bg-gray-100 text-gray-600' },
-  ACTIVE:    { label: 'Ativa',      cls: 'bg-green-100 text-green-700' },
-  COMPLETED: { label: 'Concluída',  cls: 'bg-blue-100 text-blue-700' },
+  PLANNED:   { label: 'Planejada',  cls: 'bg-gray-100 text-gray-600 border-gray-200' },
+  ACTIVE:    { label: 'Ativa',      cls: 'bg-green-50 text-green-700 border-green-200' },
+  COMPLETED: { label: 'Concluída',  cls: 'bg-blue-50 text-blue-700 border-blue-200' },
 }
 
+// Funções utilitárias de formatação importadas do seu design favorito
+function formatDate(date: Date | string | null | undefined) {
+  if (!date) return null
+  return new Date(date).toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit', year: 'numeric' })
+}
+
+function formatHours(h: number) {
+  const hh = Math.floor(h)
+  const mm = Math.round((h - hh) * 60)
+  return `${hh}h ${mm.toString().padStart(2, '0')}m`
+}
+
+function formatCurrency(v: number) {
+  return v.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })
+}
+
+// Barra de progresso atualizada com o design premium
 function ProgressBar({ value, total }: { value: number; total: number }) {
   const pct = total > 0 ? Math.round((value / total) * 100) : 0
   return (
-    <div className="flex items-center gap-2 mt-2">
+    <div className="flex items-center gap-2">
       <div className="flex-1 bg-gray-100 rounded-full h-1.5 overflow-hidden">
-        <div className="h-full bg-blue-500 rounded-full" style={{ width: `${pct}%` }} />
+        <div
+          className="h-full bg-blue-500 rounded-full transition-all"
+          style={{ width: `${pct}%` }}
+        />
       </div>
-      <span className="text-xs font-medium text-gray-500 w-8 text-right">{pct}%</span>
+      <span className="text-xs font-semibold text-gray-700 w-9 text-right">{pct}%</span>
     </div>
   )
 }
@@ -47,71 +67,144 @@ export default async function ProjetoSprintsPage({
   )
 
   return (
-    <div className="min-h-screen bg-gray-50">
-      <main className="max-w-3xl mx-auto px-4 py-8">
+    // Fundo com gradiente suave igual ao do seu primeiro código
+    <div className="min-h-screen bg-gradient-to-br from-slate-100 via-blue-50 to-indigo-100">
+      <main className="max-w-3xl mx-auto px-4 py-8 pb-24">
+        
+        {/* Cabeçalho */}
         <div className="flex items-center justify-between mb-6">
-          <h1 className="text-xl font-bold text-gray-900">Sprints</h1>
+          <div>
+            <h1 className="text-2xl font-bold text-gray-900">Sprints</h1>
+            <p className="text-sm text-gray-500 mt-0.5">
+              Projeto: {projeto.nome} • {sprintsWithMetrics.length} sprint{sprintsWithMetrics.length !== 1 ? 's' : ''}
+            </p>
+          </div>
           {canEdit && (
             <Link
               href={`/sprints/nova?projetoId=${projetoId}`}
-              className="px-4 py-2 bg-blue-600 text-white text-sm font-medium rounded-xl hover:bg-blue-700 transition-colors"
+              className="flex items-center gap-2 bg-blue-600 text-white px-4 py-2 rounded-lg text-sm font-medium hover:bg-blue-700 transition-colors"
             >
-              + Nova Sprint
+              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
+              </svg>
+              Nova Sprint
             </Link>
           )}
         </div>
 
         {sprintsWithMetrics.length === 0 ? (
-          <EmptyState
-            heading="Nenhuma sprint neste projeto"
-            subtext="Crie a primeira sprint para começar a organizar o trabalho"
-            size="md"
-            action={canEdit ? { label: 'Criar sprint', href: `/sprints/nova?projetoId=${projetoId}` } : undefined}
-          />
+          <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-8">
+            <EmptyState
+              heading="Nenhuma sprint neste projeto"
+              subtext="Crie a primeira sprint para começar a organizar o trabalho"
+              size="md"
+              action={canEdit ? { label: 'Criar sprint', href: `/sprints/nova?projetoId=${projetoId}` } : undefined}
+            />
+          </div>
         ) : (
-          <div className="space-y-3">
+          <div className="flex flex-col gap-3">
             {sprintsWithMetrics.map(({ sprint, metrics }) => {
               const sc = SPRINT_STATUS[sprint.status] ?? SPRINT_STATUS.PLANNED
+              const pct = metrics.cardsTotal > 0
+                ? Math.round((metrics.cardsConcluidos / metrics.cardsTotal) * 100)
+                : 0
+
               return (
-                <div
+                // O Card inteiro virou um Link com efeitos de hover
+                <Link
                   key={sprint.id}
-                  className="bg-white rounded-2xl border border-gray-100 p-4 hover:border-gray-200 hover:shadow-sm transition-all"
+                  href={`/sprints/${sprint.id}`}
+                  className="block bg-white rounded-xl shadow-sm border border-gray-100 p-5 hover:shadow-md hover:border-blue-200 transition-all group"
                 >
-                  <div className="flex items-start justify-between gap-4">
+                  {/* Topo do Card: Título, Status e Datas */}
+                  <div className="flex items-start justify-between gap-3 mb-3">
                     <div className="flex-1 min-w-0">
                       <div className="flex items-center gap-2 mb-1">
-                        <span className={`inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium ${sc.cls}`}>
+                        <h2 className="font-bold text-gray-900 text-lg leading-tight group-hover:text-blue-700 transition-colors truncate">
+                          {sprint.name}
+                        </h2>
+                        <span className={`inline-flex items-center px-2 py-0.5 rounded-full text-[11px] font-medium border ${sc.cls}`}>
                           {sc.label}
                         </span>
                       </div>
-                      <p className="font-semibold text-gray-900 truncate">{sprint.name}</p>
                       {(sprint.startDate || sprint.endDate) && (
-                        <p className="text-xs text-gray-400 mt-0.5">
-                          {sprint.startDate && new Date(sprint.startDate).toLocaleDateString('pt-BR')}
-                          {sprint.startDate && sprint.endDate && ' — '}
-                          {sprint.endDate && new Date(sprint.endDate).toLocaleDateString('pt-BR')}
+                        <p className="text-xs text-gray-400">
+                          {formatDate(sprint.startDate) ?? '—'} → {formatDate(sprint.endDate) ?? '—'}
                         </p>
-                      )}
-                      {metrics.cardsTotal > 0 && (
-                        <ProgressBar value={metrics.cardsConcluidos} total={metrics.cardsTotal} />
                       )}
                     </div>
+                    {/* Ícone de seta que aparece no hover */}
+                    <svg className="w-5 h-5 text-gray-300 group-hover:text-blue-400 transition-colors shrink-0 mt-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+                    </svg>
+                  </div>
 
-                    <div className="flex flex-col items-end gap-2 shrink-0">
-                      <Link
-                        href={`/sprints/${sprint.id}`}
-                        className="px-3 py-1.5 text-xs font-medium rounded-lg border border-gray-200 text-gray-600 hover:bg-gray-50 transition-colors"
-                      >
-                        Abrir board
-                      </Link>
-                      {metrics.cardsTotal > 0 && (
-                        <p className="text-xs text-gray-400">
-                          {metrics.cardsConcluidos}/{metrics.cardsTotal} cards
-                        </p>
-                      )}
+                  {/* Barra de Progresso */}
+                  {metrics.cardsTotal > 0 && (
+                    <div className="mb-3">
+                      <ProgressBar value={metrics.cardsConcluidos} total={metrics.cardsTotal} />
+                    </div>
+                  )}
+
+                  {/* Grid de Métricas (Cards, Progresso, Horas, Custo) */}
+                  <div className="grid grid-cols-2 gap-x-4 gap-y-2 sm:grid-cols-4">
+                    <div>
+                      <p className="text-[10px] font-medium text-gray-400 uppercase tracking-wide">Cards</p>
+                      <p className="text-sm font-semibold text-gray-800">
+                        {metrics.cardsConcluidos}/{metrics.cardsTotal}
+                      </p>
+                    </div>
+                    <div>
+                      <p className="text-[10px] font-medium text-gray-400 uppercase tracking-wide">Progresso</p>
+                      <p className="text-sm font-semibold text-gray-800">{pct}%</p>
+                    </div>
+                    <div>
+                      <p className="text-[10px] font-medium text-gray-400 uppercase tracking-wide">Horas</p>
+                      <p className="text-sm font-semibold text-gray-800">{formatHours(metrics.horasTotais)}</p>
+                    </div>
+                    <div>
+                      <p className="text-[10px] font-medium text-gray-400 uppercase tracking-wide">Custo</p>
+                      <p className="text-sm font-semibold text-gray-800">{formatCurrency(metrics.custoTotal)}</p>
                     </div>
                   </div>
-                </div>
+
+                  {/* Rodapé: Qualidade, Dificuldade e Alertas de Atraso */}
+                  {/* Se qualidade/dificuldade não existirem no seu banco para essa tela, eles simplesmente não aparecerão */}
+                  {('qualidade' in sprint || 'dificuldade' in sprint || metrics.cardsAtrasados > 0) && (
+                    <div className="flex gap-4 mt-3 pt-3 border-t border-gray-50">
+                      {/* @ts-ignore - Caso o Prisma não tenha esses campos mapeados, ignoramos o TS momentaneamente */}
+                      {sprint.qualidade != null && (
+                        <div className="flex items-center gap-1.5">
+                          <svg className="w-3.5 h-3.5 text-green-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                          </svg>
+                          <span className="text-xs text-gray-500">Qualidade</span>
+                          {/* @ts-ignore */}
+                          <span className="text-xs font-bold text-gray-700">{sprint.qualidade}/10</span>
+                        </div>
+                      )}
+                      {/* @ts-ignore */}
+                      {sprint.dificuldade != null && (
+                        <div className="flex items-center gap-1.5">
+                          <svg className="w-3.5 h-3.5 text-amber-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />
+                          </svg>
+                          <span className="text-xs text-gray-500">Dificuldade</span>
+                          {/* @ts-ignore */}
+                          <span className="text-xs font-bold text-gray-700">{sprint.dificuldade}/10</span>
+                        </div>
+                      )}
+                      {metrics.cardsAtrasados > 0 && (
+                        <div className="flex items-center gap-1.5">
+                          <svg className="w-3.5 h-3.5 text-red-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                          </svg>
+                          <span className="text-xs text-red-600 font-medium">{metrics.cardsAtrasados} atrasado{metrics.cardsAtrasados !== 1 ? 's' : ''}</span>
+                        </div>
+                      )}
+                    </div>
+                  )}
+                </Link>
               )
             })}
           </div>

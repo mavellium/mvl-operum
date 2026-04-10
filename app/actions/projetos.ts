@@ -2,7 +2,18 @@
 
 import { verifySession } from '@/lib/dal'
 import { revalidatePath } from 'next/cache'
-import { createProjeto, findAllByTenant, findById, updateProjeto, deleteProjeto, addMember, removeMember, getMembrosComDetalhes, updateUsuarioProjeto, getUserProjetosComDetalhes } from '@/services/projetoService'
+import { 
+  createProjeto, 
+  findAllByTenant, 
+  findById, 
+  updateProjeto, 
+  deleteProjeto, 
+  addMember, 
+  removeMember, 
+  getMembrosComDetalhes, 
+  updateUsuarioProjeto, 
+  getUserProjetosComDetalhes 
+} from '@/services/projetoService'
 
 export async function createProjetoAction(_prevState: unknown, input: { nome: string; descricao?: string }) {
   try {
@@ -93,17 +104,28 @@ export async function getMembrosAction(projetoId: string) {
   }
 }
 
+// ATUALIZADO: 'cargo' e 'departamento' viraram arrays ('cargos' e 'departamentos')
 export async function updateUsuarioProjetoAction(
   userId: string,
   projetoId: string,
-  data: { cargo?: string; departamento?: string; valorHora?: number | null; ativo?: boolean },
+  data: { 
+    role?: string; 
+    cargos?: string[]; // Antes era cargo?: string
+    departamentos?: string[]; // Antes era departamento?: string
+    valorHora?: number | null; 
+    ativo?: boolean 
+  },
 ) {
   try {
     await verifySession()
+    
+    // Repassamos os dados para a camada de serviço que fará a mágica no banco
     const membro = await updateUsuarioProjeto(userId, projetoId, data)
+    
     revalidatePath(`/projetos/${projetoId}/membros`)
     revalidatePath(`/projetos/${projetoId}`)
     revalidatePath('/admin/users')
+    
     return { membro }
   } catch (err) {
     return { error: err instanceof Error ? err.message : 'Erro ao atualizar membro' }

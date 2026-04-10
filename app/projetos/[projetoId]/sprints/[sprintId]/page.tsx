@@ -1,4 +1,3 @@
-
 import { getSprintBoardAction } from '@/app/actions/sprintBoard'
 import { getCurrentUserAction } from '@/app/actions/users'
 import SprintBoard from '@/components/sprint/SprintBoard'

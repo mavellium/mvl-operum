@@ -2,11 +2,9 @@
 
 import { useState, useRef, useEffect } from 'react'
 import Link from 'next/link'
+import { useRouter } from 'next/navigation'
 import { updateSprintMetaAction } from '@/app/actions/sprintBoard'
-import { logoutAction } from '@/app/actions/auth'
-import GlobalSearch from '@/components/search/GlobalSearch'
 import BoardActionMenu from '@/components/board/BoardActionMenu'
-import UserAvatar from '@/components/user/UserAvatar'
 import Modal from '@/components/ui/Modal'
 import { CsvImportModal } from '@/components/csv/CsvImportModal'
 import { TagManager } from '@/components/tag/TagManager'
@@ -38,6 +36,8 @@ interface SprintHeaderProps {
   }
   currentUser?: CurrentUser | null
   tags?: Tag[]
+  // NOVA PROP: Para avisar a tela principal que o fundo mudou
+  onChangeBackground?: (bg: string) => void 
 }
 
 const STATUS_LABELS: Record<string, string> = {
@@ -47,35 +47,58 @@ const STATUS_LABELS: Record<string, string> = {
 }
 
 const STATUS_COLORS: Record<string, string> = {
-  PLANNED: 'bg-gray-100 text-gray-600',
-  ACTIVE: 'bg-blue-100 text-blue-700',
-  COMPLETED: 'bg-green-100 text-green-700',
+  PLANNED: 'bg-gray-100 text-gray-600 border-gray-200',
+  ACTIVE: 'bg-blue-50 text-blue-700 border-blue-200',
+  COMPLETED: 'bg-emerald-50 text-emerald-700 border-emerald-200',
 }
+
+// PRESETS PARA O LAYOUT DO BOARD
+const PRESET_COLORS = [
+  'bg-slate-100', 'bg-blue-50', 'bg-indigo-50', 'bg-emerald-50', 'bg-rose-50', 
+  'bg-amber-50', 'bg-purple-50', 'bg-gray-900', 'bg-blue-900', 'bg-emerald-900'
+]
+
+const PRESET_IMAGES = [
+  'https://images.unsplash.com/photo-1507525428034-b723cf961d3e?auto=format&fit=crop&w=1000&q=80', // Praia
+  'https://images.unsplash.com/photo-1518655048521-f130df041f66?auto=format&fit=crop&w=1000&q=80', // Abstrato
+  'https://images.unsplash.com/photo-1478760329108-5c3ed9d495a0?auto=format&fit=crop&w=1000&q=80', // Escuro
+  'https://images.unsplash.com/photo-1557682250-33bd709cbe85?auto=format&fit=crop&w=1000&q=80'  // Gradiente
+]
 
 function formatDate(d: Date | string | null) {
   if (!d) return null
-  return new Date(d).toLocaleDateString('pt-BR')
+  return new Date(d).toLocaleDateString('pt-BR', { day: '2-digit', month: 'short' })
 }
 
-export default function SprintHeader({ sprint, currentUser, tags = [] }: SprintHeaderProps) {
+export default function SprintHeader({ sprint, tags = [], onChangeBackground }: SprintHeaderProps) {
+  const router = useRouter()
+
   const [saving, setSaving] = useState(false)
   const [csvOpen, setCsvOpen] = useState(false)
   const [tagOpen, setTagOpen] = useState(false)
   const [editSprintOpen, setEditSprintOpen] = useState(false)
+  
+  // NOVOS ESTADOS PARA FILTRO E LAYOUT
+  const [filterOpen, setFilterOpen] = useState(false)
+  const [layoutOpen, setLayoutOpen] = useState(false)
+  const [layoutTab, setLayoutTab] = useState<'color' | 'image'>('color')
+  const [customImageUrl, setCustomImageUrl] = useState('')
+
   const [sprintDates, setSprintDates] = useState({
     startDate: sprint.startDate,
     endDate: sprint.endDate,
   })
-  const [userMenuOpen, setUserMenuOpen] = useState(false)
+  
   const [editingName, setEditingName] = useState(false)
   const [sprintName, setSprintName] = useState(sprint.name)
   const nameInputRef = useRef<HTMLInputElement>(null)
-  const userMenuRef = useRef<HTMLDivElement>(null)
+  const filterRef = useRef<HTMLDivElement>(null)
 
+  // Fechar popover de filtros ao clicar fora
   useEffect(() => {
     function handleClickOutside(e: MouseEvent) {
-      if (userMenuRef.current && !userMenuRef.current.contains(e.target as Node)) {
-        setUserMenuOpen(false)
+      if (filterRef.current && !filterRef.current.contains(e.target as Node)) {
+        setFilterOpen(false)
       }
     }
     document.addEventListener('mousedown', handleClickOutside)
@@ -99,101 +122,207 @@ export default function SprintHeader({ sprint, currentUser, tags = [] }: SprintH
     setEditingName(false)
   }
 
+  function applyBackground(bg: string) {
+    if (onChangeBackground) onChangeBackground(bg)
+  }
+
   return (
     <>
-      <header className="bg-white/80 backdrop-blur-sm border-b border-gray-100 sticky top-0 z-10">
-        <div className="flex items-center justify-between px-6 py-3">
-          <div className="flex items-center gap-3 min-w-0">
-            <Link href="/sprints" className="text-gray-400 hover:text-gray-600 transition-colors shrink-0" aria-label="Voltar às sprints">
-              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
-              </svg>
-            </Link>
-            {editingName ? (
-              <input
-                ref={nameInputRef}
-                value={sprintName}
-                onChange={e => setSprintName(e.target.value)}
-                onBlur={handleSaveName}
-                onKeyDown={e => {
-                  if (e.key === 'Enter') handleSaveName()
-                  if (e.key === 'Escape') { setSprintName(sprint.name); setEditingName(false) }
-                }}
-                className="text-xl font-bold text-gray-900 bg-transparent border-b-2 border-blue-400 outline-none truncate min-w-0"
-                aria-label="Nome da sprint"
-              />
-            ) : (
-              <h1
-                className="text-xl font-bold text-gray-900 truncate cursor-pointer hover:text-blue-600 transition-colors"
-                onClick={() => setEditingName(true)}
-                title="Clique para renomear"
-              >
-                {sprintName}
-              </h1>
-            )}
-            <span className={`text-xs font-medium px-2 py-0.5 rounded-full shrink-0 ${STATUS_COLORS[sprint.status]}`}>
-              {STATUS_LABELS[sprint.status]}
-            </span>
-            {(sprintDates.startDate || sprintDates.endDate) && (
-              <div className="text-sm text-gray-500 hidden sm:block shrink-0">
-                {formatDate(sprintDates.startDate)} → {formatDate(sprintDates.endDate)}
-              </div>
-            )}
-            <button
-              onClick={() => setEditSprintOpen(true)}
-              className="text-xs text-gray-500 hover:text-blue-600 border border-gray-200 px-3 py-1 rounded-lg transition-colors hidden md:block shrink-0"
+      <header className="bg-white/80 backdrop-blur-md border-b border-gray-200 sticky top-0 z-10 shadow-sm">
+        <div className="flex items-center justify-between px-4 sm:px-6 py-3 h-16">
+          
+          {/* LADO ESQUERDO: Voltar, Título e Meta */}
+          <div className="flex items-center gap-3 min-w-0 flex-1">
+            <button 
+              onClick={() => router.back()}
+              className="p-1.5 text-gray-400 hover:text-gray-900 hover:bg-gray-100 rounded-full transition-all shrink-0 focus:outline-none focus:ring-2 focus:ring-blue-500" 
+              aria-label="Voltar"
             >
-              Editar Sprint
+              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M15 19l-7-7 7-7" /></svg>
             </button>
-            <Link
-              href={`/dashboard/sprint/${sprint.id}`}
-              className="text-xs text-gray-500 hover:text-blue-600 border border-gray-200 px-3 py-1 rounded-lg transition-colors hidden md:block shrink-0"
-            >
-              Ver Dashboard
-            </Link>
-            {saving && <span className="text-xs text-gray-400 shrink-0">Salvando...</span>}
-          </div>
 
-          <div className="flex items-center gap-2 shrink-0 ml-4">
-            <GlobalSearch />
+            <div className="h-6 w-px bg-gray-200 hidden sm:block mx-1"></div>
 
-            {currentUser && (
-              <div className="relative" ref={userMenuRef}>
-                <button
-                  onClick={() => setUserMenuOpen(v => !v)}
-                  className="flex items-center gap-2 rounded-lg px-2 py-1 hover:bg-gray-100 transition-colors"
-                  aria-label="Menu do usuário"
-                >
-                  <UserAvatar name={currentUser.name} avatarUrl={currentUser.avatarUrl} size="sm" />
-                  <span className="text-sm text-gray-600 hidden sm:block">{currentUser.name}</span>
-                </button>
-                {userMenuOpen && (
-                  <div className="absolute right-0 top-full mt-1 w-44 bg-white rounded-xl shadow-lg border border-gray-100 py-1 z-20">
-                    <Link href="/perfil" className="flex items-center gap-2 px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 transition-colors" onClick={() => setUserMenuOpen(false)}>
-                      Meu Perfil
-                    </Link>
-                    <Link href="/dashboard" className="flex items-center gap-2 px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 transition-colors" onClick={() => setUserMenuOpen(false)}>
-                      Dashboard
-                    </Link>
-                    <div className="border-t border-gray-100 my-1" />
-                    <form action={logoutAction}>
-                      <button type="submit" className="w-full text-left px-4 py-2 text-sm text-red-600 hover:bg-red-50 transition-colors">
-                        Sair
-                      </button>
-                    </form>
+            <div className="flex flex-col sm:flex-row sm:items-center gap-1 sm:gap-3 min-w-0">
+              {editingName ? (
+                <div className="relative flex items-center min-w-0">
+                  <input
+                    ref={nameInputRef}
+                    value={sprintName}
+                    onChange={e => setSprintName(e.target.value)}
+                    onBlur={handleSaveName}
+                    onKeyDown={e => {
+                      if (e.key === 'Enter') handleSaveName()
+                      if (e.key === 'Escape') { setSprintName(sprint.name); setEditingName(false) }
+                    }}
+                    className="text-lg sm:text-xl font-bold text-gray-900 bg-blue-50/50 border border-blue-200 rounded-lg px-2 py-0.5 outline-none focus:ring-2 focus:ring-blue-500 min-w-[200px] w-full transition-all"
+                  />
+                  <div className="absolute right-2 flex items-center">
+                    {saving && <div className="w-3 h-3 border-2 border-blue-500 border-t-transparent rounded-full animate-spin" />}
                   </div>
+                </div>
+              ) : (
+                <div className="flex items-center gap-2 min-w-0 group cursor-pointer" onClick={() => setEditingName(true)}>
+                  <h1 className="text-lg sm:text-xl font-bold text-gray-900 truncate group-hover:text-blue-600 transition-colors">
+                    {sprintName}
+                  </h1>
+                  <svg className="w-4 h-4 text-gray-300 group-hover:text-blue-500 opacity-0 group-hover:opacity-100 transition-opacity shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" />
+                  </svg>
+                </div>
+              )}
+
+              <div className="flex items-center gap-2 mt-1 sm:mt-0">
+                <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-[11px] font-semibold border uppercase tracking-wider shrink-0 ${STATUS_COLORS[sprint.status]}`}>
+                  {STATUS_LABELS[sprint.status]}
+                </span>
+
+                {(sprintDates.startDate || sprintDates.endDate) && (
+                  <>
+                    <span className="text-gray-300 text-xs hidden sm:block">•</span>
+                    <div className="flex items-center text-xs font-medium text-gray-500 bg-gray-50 px-2 py-0.5 rounded-md border border-gray-100 shrink-0">
+                      <svg className="w-3 h-3 mr-1 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" /></svg>
+                      {formatDate(sprintDates.startDate)} <span className="mx-1 text-gray-400">→</span> {formatDate(sprintDates.endDate)}
+                    </div>
+                  </>
                 )}
               </div>
-            )}
+            </div>
+          </div>
 
+          {/* LADO DIREITO: Ações */}
+          <div className="flex items-center gap-2 shrink-0 ml-4">
+            
+            {/* NOVO: Botão de Filtros */}
+            <div className="relative" ref={filterRef}>
+              <button
+                onClick={() => setFilterOpen(!filterOpen)}
+                className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-sm font-medium transition-colors border ${filterOpen ? 'bg-blue-50 text-blue-700 border-blue-200' : 'bg-white text-gray-600 hover:bg-gray-50 border-gray-200'}`}
+              >
+                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 4a1 1 0 011-1h16a1 1 0 011 1v2.586a1 1 0 01-.293.707l-6.414 6.414a1 1 0 00-.293.707V17l-4 4v-6.586a1 1 0 00-.293-.707L3.293 7.293A1 1 0 013 6.586V4z" /></svg>
+                Filtros
+              </button>
+
+              {/* Popover Placeholder de Filtros */}
+              {filterOpen && (
+                <div className="absolute right-0 top-full mt-2 w-64 bg-white rounded-xl shadow-xl border border-gray-100 p-4 z-50 animate-in fade-in slide-in-from-top-2">
+                  <h4 className="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-3">Filtrar Cards</h4>
+                  <div className="space-y-3">
+                    <div>
+                      <label className="text-sm font-medium text-gray-700 mb-1.5 block">Por Responsável</label>
+                      <select className="w-full text-sm border-gray-200 rounded-lg p-2">
+                        <option>Qualquer um</option>
+                        <option>Atribuídos a mim</option>
+                      </select>
+                    </div>
+                    <div>
+                      <label className="text-sm font-medium text-gray-700 mb-1.5 block">Por Tag</label>
+                      <select className="w-full text-sm border-gray-200 rounded-lg p-2">
+                        <option>Qualquer tag</option>
+                        {tags.map(t => <option key={t.id}>{t.name}</option>)}
+                      </select>
+                    </div>
+                    <button className="w-full mt-2 py-2 text-sm font-medium text-white bg-blue-600 rounded-lg hover:bg-blue-700 transition-colors">Aplicar Filtros</button>
+                  </div>
+                </div>
+              )}
+            </div>
+
+            <Link
+              href={`/dashboard/sprint/${sprint.id}`}
+              className="hidden sm:flex items-center gap-1.5 px-3 py-1.5 bg-indigo-50 text-indigo-700 hover:bg-indigo-100 hover:text-indigo-800 rounded-lg text-sm font-medium transition-colors border border-indigo-100"
+            >
+              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" /></svg>
+              Dashboard
+            </Link>
+
+            <button
+              onClick={() => setEditSprintOpen(true)}
+              className="p-1.5 text-gray-400 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition-colors focus:outline-none"
+              title="Configurações da Sprint"
+            >
+              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" /><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" /></svg>
+            </button>
+
+            <div className="h-6 w-px bg-gray-200 mx-1"></div>
+
+            {/* AÇÃO DO LAYOUT PASSADA VIA PROP PARA O MENU */}
             <BoardActionMenu
               onImportCsv={() => setCsvOpen(true)}
               onCreateSprint={() => {}}
               onManageTags={() => setTagOpen(true)}
+              onChangeLayout={() => setLayoutOpen(true)} // <--- AQUI
             />
           </div>
         </div>
       </header>
+
+      {/* MODAL DE ALTERAR LAYOUT */}
+      <Modal isOpen={layoutOpen} onClose={() => setLayoutOpen(false)} title="Personalizar Layout">
+        <div className="space-y-6">
+          <div className="flex border-b border-gray-200">
+            <button
+              onClick={() => setLayoutTab('color')}
+              className={`pb-2 px-4 text-sm font-medium ${layoutTab === 'color' ? 'text-blue-600 border-b-2 border-blue-600' : 'text-gray-500 hover:text-gray-700'}`}
+            >
+              Cores Sólidas
+            </button>
+            <button
+              onClick={() => setLayoutTab('image')}
+              className={`pb-2 px-4 text-sm font-medium ${layoutTab === 'image' ? 'text-blue-600 border-b-2 border-blue-600' : 'text-gray-500 hover:text-gray-700'}`}
+            >
+              Imagens
+            </button>
+          </div>
+
+          {layoutTab === 'color' && (
+            <div className="grid grid-cols-5 gap-3">
+              {PRESET_COLORS.map(color => (
+                <button
+                  key={color}
+                  onClick={() => applyBackground(color)}
+                  className={`w-full aspect-square rounded-xl shadow-sm border border-black/5 hover:scale-105 transition-transform ${color}`}
+                  aria-label={`Mudar para cor ${color}`}
+                />
+              ))}
+            </div>
+          )}
+
+          {layoutTab === 'image' && (
+            <div className="space-y-4">
+              <div className="grid grid-cols-2 gap-3">
+                {PRESET_IMAGES.map((img, i) => (
+                  <button
+                    key={i}
+                    onClick={() => applyBackground(`url(${img})`)}
+                    className="w-full h-24 rounded-xl shadow-sm overflow-hidden border border-black/5 hover:scale-[1.02] transition-transform relative"
+                  >
+                    <img src={img} alt={`Fundo ${i}`} className="w-full h-full object-cover" />
+                  </button>
+                ))}
+              </div>
+              <div>
+                <label className="text-xs font-medium text-gray-700 mb-1.5 block">Ou cole a URL de uma imagem:</label>
+                <div className="flex gap-2">
+                  <input 
+                    type="url" 
+                    value={customImageUrl}
+                    onChange={e => setCustomImageUrl(e.target.value)}
+                    placeholder="https://..." 
+                    className="flex-1 text-sm border-gray-200 rounded-lg p-2"
+                  />
+                  <button 
+                    onClick={() => { if(customImageUrl) applyBackground(`url(${customImageUrl})`) }}
+                    className="px-3 py-2 bg-blue-600 text-white text-sm rounded-lg hover:bg-blue-700"
+                  >
+                    Aplicar
+                  </button>
+                </div>
+              </div>
+            </div>
+          )}
+        </div>
+      </Modal>
 
       <CsvImportModal isOpen={csvOpen} onClose={() => setCsvOpen(false)} sprintId={sprint.id} />
 
@@ -208,7 +337,7 @@ export default function SprintHeader({ sprint, currentUser, tags = [] }: SprintH
         />
       )}
 
-      <Modal isOpen={tagOpen} onClose={() => setTagOpen(false)} title="Tags">
+      <Modal isOpen={tagOpen} onClose={() => setTagOpen(false)} title="Gerenciar Tags">
         <TagManager tags={tags} />
       </Modal>
     </>

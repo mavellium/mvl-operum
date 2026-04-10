@@ -20,22 +20,23 @@ export default function ColumnHeader({ title, cardCount, dragHandleProps, onRena
     <>
       <div
         {...dragHandleProps}
-        className="flex items-center justify-between px-3 py-2.5 cursor-grab active:cursor-grabbing"
+        className="flex items-center justify-between px-4 py-3 cursor-grab active:cursor-grabbing border-b border-black/5"
       >
-        <div className="flex items-center gap-2 min-w-0">
+        <div className="flex items-center gap-2.5 min-w-0">
           <InlineEdit
             value={title}
             onSave={onRename}
-            className="font-semibold text-gray-700 text-sm truncate"
-            inputClassName="font-semibold text-gray-700 text-sm w-36"
+            className="font-bold text-gray-800 text-sm tracking-tight truncate hover:text-blue-600 transition-colors"
+            inputClassName="font-bold text-gray-800 text-sm w-40 bg-white/50 rounded px-1 focus:outline-none focus:ring-2 focus:ring-blue-500/20"
           />
-          <span className="bg-gray-200 text-gray-600 text-xs font-medium rounded-full px-1.5 py-0.5 shrink-0">
+          <span className="bg-gray-200/50 backdrop-blur-sm text-gray-600 text-[10px] font-bold rounded-md px-1.5 py-0.5 min-w-[20px] text-center shadow-sm border border-black/5 shrink-0">
             {cardCount}
           </span>
         </div>
+        
         <button
           onClick={e => { e.stopPropagation(); setConfirmOpen(true) }}
-          className="p-1 rounded text-gray-400 hover:text-red-500 hover:bg-red-50 transition-colors shrink-0"
+          className="p-1.5 rounded-lg text-gray-400 hover:text-red-600 hover:bg-red-50 transition-all opacity-0 group-hover:opacity-100 focus:opacity-100 shrink-0"
           aria-label={`Excluir coluna ${title}`}
         >
           <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">

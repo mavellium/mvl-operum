@@ -47,27 +47,39 @@ export default function Column({
           <div
             ref={provided.innerRef}
             {...provided.draggableProps}
-            className={`flex flex-col w-72 shrink-0 bg-gray-100 rounded-2xl transition-shadow
-              ${snapshot.isDragging ? 'shadow-2xl ring-2 ring-blue-300 rotate-1' : 'shadow-sm'}`}
+            /* Removi o h-full. 
+               O max-h-full faz ela parar de crescer no limite do board.
+               O overflow-hidden garante que a coluna não "vaze" o scroll pra fora dos cantos arredondados.
+            */
+            className={`flex flex-col w-72 sm:w-80 max-h-full shrink-0 bg-gray-100/90 backdrop-blur-sm rounded-2xl transition-shadow overflow-hidden
+              ${snapshot.isDragging ? 'shadow-2xl ring-2 ring-blue-300 rotate-1' : 'shadow-sm border border-black/5'}`}
           >
-            <ColumnHeader
-              title={column.title}
-              cardCount={cards.length}
-              dragHandleProps={provided.dragHandleProps}
-              onRename={title => onRenameColumn(column.id, title)}
-              onDelete={() => onDeleteColumn(column.id)}
-            />
+            <div {...provided.dragHandleProps}>
+              <ColumnHeader
+                title={column.title}
+                cardCount={cards.length}
+                onRename={title => onRenameColumn(column.id, title)}
+                onDelete={() => onDeleteColumn(column.id)} dragHandleProps={undefined} />
+            </div>
 
             <Droppable droppableId={column.id} type="CARD">
               {(dropProvided, dropSnapshot) => (
                 <div
                   ref={dropProvided.innerRef}
                   {...dropProvided.droppableProps}
-                  className={`px-2 pb-2 flex flex-col gap-2 min-h-[80px] rounded-b-2xl transition-colors
-                    ${dropSnapshot.isDraggingOver ? 'bg-blue-50' : ''}`}
+                  /* AQUI: 
+                     - overflow-y-auto: Só cria scroll se passar do max-h-full da div pai.
+                     - min-h-0: Permite o encolhimento se necessário.
+                  */
+                  className={`px-2 pb-2 flex flex-col gap-2 overflow-y-auto min-h-0 transition-colors
+                    [&::-webkit-scrollbar]:w-1.5 
+                    [&::-webkit-scrollbar-thumb]:bg-black/10 
+                    [&::-webkit-scrollbar-thumb]:rounded-full
+                    hover:[&::-webkit-scrollbar-thumb]:bg-black/20
+                    ${dropSnapshot.isDraggingOver ? 'bg-blue-50/50' : ''}`}
                 >
                   {cards.length === 0 && !dropSnapshot.isDraggingOver && (
-                    <div className="flex items-center justify-center h-16 border-2 border-dashed border-gray-300 rounded-xl text-xs text-gray-400">
+                    <div className="flex items-center justify-center h-16 border-2 border-dashed border-gray-300 rounded-xl text-xs text-gray-400 mx-2 mt-2">
                       Arraste cards aqui
                     </div>
                   )}
@@ -88,10 +100,10 @@ export default function Column({
               )}
             </Droppable>
 
-            <div className="p-2">
+            <div className="p-2 border-t border-black/5 bg-gray-100 rounded-b-2xl">
               <button
                 onClick={() => setAddCardOpen(true)}
-                className="w-full flex items-center gap-1.5 px-3 py-2 text-sm text-gray-500 hover:text-gray-700 hover:bg-white rounded-xl transition-colors"
+                className="w-full flex items-center gap-1.5 px-3 py-2 text-sm font-medium text-gray-500 hover:text-blue-600 hover:bg-white rounded-xl transition-all active:scale-[0.98]"
               >
                 <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
