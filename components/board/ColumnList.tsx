@@ -32,9 +32,12 @@ interface ColumnListProps {
   users?: User[]
   boardTags?: Tag[]
   boardId?: string
+  setAddingCardToColumn: (id: string | null) => void
+  setOpenCardId: (id: string | null) => void
 }
 
-export default function ColumnList({ state, dispatch, sprints, users, boardTags, boardId }: ColumnListProps) {
+export default function ColumnList({ state, dispatch, sprints, users, boardTags, boardId, setAddingCardToColumn,
+  setOpenCardId }: ColumnListProps) {
   const [addingList, setAddingList] = useState(false)
   const [newListTitle, setNewListTitle] = useState('')
 
@@ -89,11 +92,15 @@ export default function ColumnList({ state, dispatch, sprints, users, boardTags,
                   index={index}
                   onRenameColumn={handleRenameColumn}
                   onDeleteColumn={handleDeleteColumn}
-                  onAddCard={handleAddCard}
+                  // ALTERAÇÃO AQUI: Em vez de passar handleAddCard diretamente,
+                  // passamos uma função que apenas seta o ID da coluna no estado.
+                  onAddCard={(colId) => setAddingCardToColumn(colId)}
                   onUpdateCard={handleUpdateCard}
                   onDeleteCard={handleDeleteCard}
                   users={users}
                   boardTags={boardTags}
+                  // Certifique-se de passar também o clique do card para abrir o modal de edição
+                  onCardClick={(cardId) => setOpenCardId(cardId)}
                 />
               )
             })}
