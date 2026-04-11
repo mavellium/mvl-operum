@@ -22,7 +22,7 @@ export default function NovoProjetoPage() {
 
   useEffect(() => {
     listUsersAction().then(r => {
-      if ('users' in r) setUsuarios(r.users)
+      if ('users' in r && r.users) setUsuarios(r.users)
     })
   }, [])
 
