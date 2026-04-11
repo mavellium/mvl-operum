@@ -3,6 +3,7 @@
 import { useState, useEffect } from 'react'
 import { Card, CardColor, Attachment } from '@/types/kanban'
 import { assignTagToCardAction, removeTagFromCardAction } from '@/app/actions/tags'
+import { addManualTimeAction } from '@/app/actions/time'
 import CardTimer from './CardTimer'
 import UserAvatar from '@/components/user/UserAvatar'
 import { TagBadge } from '@/components/tag/TagBadge'
@@ -128,9 +129,12 @@ export default function CardModal({
     }
   }
 
-  const handleRegisterTime = () => {
-    console.log('Tempo registrado:', { horas: manualHours, minutos: manualMinutes, desc: manualDesc })
-    // Aqui você chama a action para salvar o tempo
+  const handleRegisterTime = async () => {
+    const h = parseInt(manualHours || '0', 10)
+    const m = parseInt(manualMinutes || '0', 10)
+    if (h === 0 && m === 0) return
+    if (!initialCard?.id) return
+    await addManualTimeAction(initialCard.id, h, m, manualDesc || undefined)
     setManualHours('')
     setManualMinutes('')
     setManualDesc('')
@@ -392,13 +396,6 @@ export default function CardModal({
                       </div>
                     ))}
                     
-                    {/* Log de Atividade Mock */}
-                    <div className="flex gap-3 items-center pt-2">
-                      <div className="w-8 h-8 rounded-full bg-[#22272B] border border-[#3B444C] flex items-center justify-center text-[#B6C2CF] font-bold text-sm shrink-0">M</div>
-                      <p className="text-sm text-[#B6C2CF] leading-snug">
-                        <span className="font-bold text-white">Mavellium</span> moveu este cartão para <span className="font-bold">A fazer</span>
-                      </p>
-                    </div>
                   </div>
                 </div>
               )}
@@ -410,13 +407,7 @@ export default function CardModal({
                   {/* Cronômetro */}
                   <div>
                     <h4 className="text-[11px] font-bold text-[#8C9BAB] uppercase mb-3 tracking-wide">Rastreador Automático</h4>
-                    <div className="bg-[#22272B] border border-[#3B444C] p-5 rounded-md text-center shadow-inner">
-                      <span className="font-mono text-4xl font-bold text-[#579DFF] block mb-4 tracking-wider">00:00:00</span>
-                      <button className="w-full flex items-center justify-center gap-2 bg-[#1F845A] hover:bg-[#25A16E] text-white font-bold py-2.5 rounded-sm transition-colors shadow-md">
-                        <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 20 20"><path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM9.555 7.168A1 1 0 008 8v4a1 1 0 001.555.832l3-2a1 1 0 000-1.664l-3-2z" clipRule="evenodd" /></svg>
-                        Iniciar Cronômetro
-                      </button>
-                    </div>
+                    {initialCard?.id && <CardTimer cardId={initialCard.id} />}
                   </div>
 
                   <hr className="border-[#3B444C]" />

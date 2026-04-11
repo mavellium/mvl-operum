@@ -26,7 +26,7 @@ interface Props {
   disponiveis: Usuario[]
   departamentosExistentes?: string[]
   funcoesExistentes?: string[]
-  currentUserRole: string // <--- NOVA PROP ADICIONADA
+  canManage: boolean
 }
 
 const ROLE_LABELS: Record<string, string> = {
@@ -153,13 +153,13 @@ function MultiCreatableSelect({
   )
 }
 
-export default function ProjetoMembrosClient({ 
-  projetoId, 
-  membros: initial, 
+export default function ProjetoMembrosClient({
+  projetoId,
+  membros: initial,
   disponiveis: initialDisp,
   departamentosExistentes = [],
   funcoesExistentes = [],
-  currentUserRole // <--- RECEBENDO A NOVA PROP
+  canManage,
 }: Props) {
   const [membros, setMembros] = useState(initial)
   const [disponiveis, setDisponiveis] = useState(initialDisp)
@@ -205,8 +205,8 @@ export default function ProjetoMembrosClient({
     setLoadingId(m.userId)
     startTransition(async () => {
       const result = await updateUsuarioProjetoAction(m.userId, projetoId, {
-        role: editForm.role,
-        cargos: editForm.cargos, 
+        projectRole: editForm.role,
+        cargos: editForm.cargos,
         departamentos: editForm.departamentos,
         valorHora: editForm.valorHora ? parseFloat(editForm.valorHora) : null,
       })
@@ -261,8 +261,7 @@ export default function ProjetoMembrosClient({
     })
   }
 
-  // Verifica se é admin para permitir adicionar/remover (Opcional: você pode bloquear o edit inteiro se quiser)
-  const isAdmin = currentUserRole === 'admin'
+  const isAdmin = canManage
 
   return (
     <div className="space-y-6">

@@ -76,7 +76,6 @@ export default function AdminUsersClient({ initialUsers }: Props) {
         >
           <option value="">Todos os papéis</option>
           <option value="admin">Admin</option>
-          <option value="gerente">Gerente</option>
           <option value="member">Membro</option>
         </select>
         <select

@@ -116,6 +116,9 @@ export async function toggleUserActive(userId: string, active: boolean) {
 }
 
 export async function setUserRole(userId: string, role: string) {
+  if (!['admin', 'member'].includes(role)) {
+    throw new Error('Role inválida. Permitidas globalmente: admin, member')
+  }
   const existing = await prisma.user.findUnique({ where: { id: userId, deletedAt: null } })
   if (!existing) throw new Error('Usuário não encontrado')
 

@@ -60,11 +60,15 @@ const HIDDEN_PATHS = ['/login', '/register', '/recuperar-senha', '/alterar-senha
 export default function BottomNav() {
   const pathname = usePathname()
   const [role, setRole] = useState<string | null>(null)
+  const [projectManagerIn, setProjectManagerIn] = useState<string[]>([])
 
   useEffect(() => {
     fetch('/api/me')
       .then(r => r.json())
-      .then(d => { if (d?.user?.role) setRole(d.user.role) })
+      .then(d => {
+        if (d?.user?.role) setRole(d.user.role)
+        if (d?.user?.projectManagerIn) setProjectManagerIn(d.user.projectManagerIn)
+      })
       .catch(() => {})
   }, [])
 
@@ -76,7 +80,7 @@ export default function BottomNav() {
   const projetoMatch = pathname.match(/^\/projetos\/([^/]+)/)
   const projetoId = projetoMatch?.[1] ?? null
   const gerenciarTab: Tab[] =
-    projetoId && (role === 'gerente' || role === 'admin')
+    projetoId && (role === 'admin' || projectManagerIn.includes(projetoId))
       ? [{ label: 'Gerenciar', href: `/projetos/${projetoId}/membros`, icon: <IconGerenciar /> }]
       : []
 

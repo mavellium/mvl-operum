@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server'
 import { decrypt } from '@/lib/session'
 import prisma from '@/lib/prisma'
+import { getProjectsWhereManager } from '@/services/projectRoleService'
 
 export async function GET(request: Request) {
   const cookieHeader = request.headers.get('cookie') ?? ''
@@ -28,7 +29,9 @@ export async function GET(request: Request) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
   }
 
+  const projectManagerIn = await getProjectsWhereManager(user.id)
+
   return NextResponse.json({
-    user: { id: user.id, name: user.name, email: user.email, role: user.role, avatarUrl: user.avatarUrl },
+    user: { id: user.id, name: user.name, email: user.email, role: user.role, avatarUrl: user.avatarUrl, projectManagerIn },
   })
 }

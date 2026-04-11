@@ -78,6 +78,9 @@ export async function toggleUserActiveAction(userId: string, active: boolean) {
 }
 
 export async function setUserRoleAction(userId: string, role: string) {
+  if (!['admin', 'member'].includes(role)) {
+    return { error: 'Role inválida. Apenas "admin" ou "member" são permitidas globalmente.' }
+  }
   try {
     await requireAdmin()
     const user = await setUserRole(userId, role)

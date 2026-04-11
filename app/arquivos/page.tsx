@@ -1,5 +1,6 @@
 import { verifySession } from '@/lib/dal'
 import { redirect } from 'next/navigation'
+import { getProjectsWhereManager } from '@/services/projectRoleService'
 import prisma from '@/lib/prisma'
 import ArquivosClient from '@/components/arquivos/ArquivosClient'
 import Link from 'next/link'
@@ -13,9 +14,10 @@ function formatBytes(bytes: number) {
 }
 
 export default async function ArquivosPage() {
-  const { role } = await verifySession()
-  if (role !== 'admin' && role !== 'gerente') {
-    redirect('/sprints')
+  const { role, userId } = await verifySession()
+  if (role !== 'admin') {
+    const manages = await getProjectsWhereManager(userId)
+    if (manages.length === 0) redirect('/sprints')
   }
 
   const attachments = await prisma.attachment.findMany({

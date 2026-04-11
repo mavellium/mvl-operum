@@ -1,15 +1,30 @@
 'use client'
 
-import { useState, useTransition } from 'react'
+import { useState, useTransition, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import { createProjetoAction } from '@/app/actions/projetos'
+import { listUsersAction } from '@/app/actions/admin'
 import Link from 'next/link'
+
+interface Usuario {
+  id: string
+  name: string
+  email: string
+}
 
 export default function NovoProjetoPage() {
   const router = useRouter()
   const [isPending, startTransition] = useTransition()
   const [form, setForm] = useState({ nome: '', descricao: '' })
+  const [initialMemberId, setInitialMemberId] = useState('')
+  const [usuarios, setUsuarios] = useState<Usuario[]>([])
   const [error, setError] = useState('')
+
+  useEffect(() => {
+    listUsersAction().then(r => {
+      if ('users' in r) setUsuarios(r.users)
+    })
+  }, [])
 
   function handleSubmit(e: React.FormEvent) {
     e.preventDefault()
@@ -19,10 +34,15 @@ export default function NovoProjetoPage() {
       setError('Nome é obrigatório.')
       return
     }
+    if (!initialMemberId) {
+      setError('Selecione um Gerente de Projeto.')
+      return
+    }
     startTransition(async () => {
       const result = await createProjetoAction(undefined, {
         nome,
         descricao: form.descricao.trim() || undefined,
+        initialMemberId,
       })
       if ('error' in result) {
         setError(result.error ?? 'Erro ao criar projeto')
@@ -68,6 +88,23 @@ export default function NovoProjetoPage() {
                 rows={3}
                 className="w-full px-3 py-2 border border-gray-200 rounded-xl text-sm text-gray-900 placeholder:text-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500 resize-none"
               />
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">
+                Gerente de Projeto <span className="text-red-500">*</span>
+              </label>
+              <select
+                value={initialMemberId}
+                onChange={e => setInitialMemberId(e.target.value)}
+                className="w-full px-3 py-2 border border-gray-200 rounded-xl text-sm text-gray-900 focus:outline-none focus:ring-2 focus:ring-blue-500"
+              >
+                <option value="">Selecione um gerente…</option>
+                {usuarios.map(u => (
+                  <option key={u.id} value={u.id}>
+                    {u.name} ({u.email})
+                  </option>
+                ))}
+              </select>
             </div>
             {error && <p className="text-sm text-red-600">{error}</p>}
             <div className="flex gap-3 pt-2">

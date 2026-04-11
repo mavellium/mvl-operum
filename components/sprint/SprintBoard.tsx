@@ -17,6 +17,8 @@ import {
   updateCardInSprintAction,
   deleteCardInSprintAction,
 } from '@/app/actions/sprintBoard'
+import { createCommentAction, getCommentsAction } from '@/app/actions/comentarios'
+import { deleteAttachmentAction, setCoverAction } from '@/app/actions/attachments'
 
 interface SprintCard {
   id: string
@@ -98,6 +100,7 @@ export default function SprintBoard({ sprint, columns: initialColumns, users, ta
   const [newColTitle, setNewColTitle] = useState('')
   const [addingCol, setAddingCol] = useState(false)
   const [openCardId, setOpenCardId] = useState<string | null>(initialCardId ?? null)
+  const [cardComments, setCardComments] = useState<{ id: string; user: { id: string; name: string; avatarUrl: string | null }; texto: string; createdAt: Date }[]>([])
   const [addingCardToColumn, setAddingCardToColumn] = useState<string | null>(null)
   const [boardBg, setBoardBg] = useState('bg-gradient-to-br from-slate-900 via-blue-950 to-slate-900')
   
@@ -107,6 +110,13 @@ export default function SprintBoard({ sprint, columns: initialColumns, users, ta
   const [scrollLeft, setScrollLeft] = useState(0)
 
   const isImageBg = boardBg.startsWith('url')
+
+  useEffect(() => {
+    if (!openCardId) { setCardComments([]); return }
+    getCommentsAction(openCardId).then(res => {
+      if (res.comments) setCardComments(res.comments)
+    })
+  }, [openCardId])
 
   const handleMouseDown = (e: React.MouseEvent) => {
     if (e.button !== 0) return 
@@ -347,17 +357,58 @@ export default function SprintBoard({ sprint, columns: initialColumns, users, ta
             // Repassando os anexos (o componente CardModal já mapeia eles)
             attachments={openCardType.attachments}
             
-            // Handlers de anexo mockados/iniciais (Implemente as APIs reais depois)
-            onAttachmentUpload={(file) => console.log('Upload:', file)}
-            onAttachmentDelete={(id) => console.log('Deletar Anexo:', id)}
-            onAttachmentSetCover={(id) => console.log('Setar Capa:', id)}
-            
-            // Handlers de comentário mockados/iniciais
-            onAddComment={(content) => {
-              console.log('Comentário Adicionado:', content)
-              // Aqui você chamaria a Action do servidor para salvar o comentário
+            onAttachmentUpload={async (file) => {
+              if (!openCardId) return
+              const form = new FormData()
+              form.append('cardId', openCardId)
+              form.append('file', file)
+              const res = await fetch('/api/uploads', { method: 'POST', body: form })
+              if (res.ok) {
+                const att = await res.json()
+                setColumns(prev => prev.map(col => ({
+                  ...col,
+                  cards: col.cards.map(c =>
+                    c.id === openCardId
+                      ? { ...c, attachments: [...(c.attachments ?? []), att] }
+                      : c
+                  ),
+                })))
+              }
             }}
-            comments={[]} // Aqui você passaria openCardRaw.comments se eles existissem na sua interface
+            onAttachmentDelete={async (attachmentId) => {
+              await deleteAttachmentAction(attachmentId)
+              setColumns(prev => prev.map(col => ({
+                ...col,
+                cards: col.cards.map(c =>
+                  c.id === openCardId
+                    ? { ...c, attachments: (c.attachments ?? []).filter(a => a.id !== attachmentId) }
+                    : c
+                ),
+              })))
+            }}
+            onAttachmentSetCover={async (attachmentId) => {
+              if (!openCardId) return
+              await setCoverAction(openCardId, attachmentId)
+              setColumns(prev => prev.map(col => ({
+                ...col,
+                cards: col.cards.map(c =>
+                  c.id === openCardId
+                    ? { ...c, attachments: (c.attachments ?? []).map(a => ({ ...a, isCover: a.id === attachmentId })) }
+                    : c
+                ),
+              })))
+            }}
+            onAddComment={async (content) => {
+              if (!openCardId) return
+              const res = await createCommentAction(openCardId, content)
+              if (res.comment) setCardComments(prev => [...prev, res.comment!])
+            }}
+            comments={cardComments.map(c => ({
+              id: c.id,
+              user: { id: c.user.id, name: c.user.name, email: '', avatarUrl: c.user.avatarUrl },
+              content: c.texto,
+              createdAt: new Date(c.createdAt),
+            }))}
           />
         )
       })()}

@@ -182,7 +182,6 @@ export default function AdminEditUserModal({ user, onClose, onUpdated }: Props) 
                 className="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
               >
                 <option value="member">Membro</option>
-                <option value="gerente">Gerente</option>
                 <option value="admin">Administrador</option>
               </select>
             </div>

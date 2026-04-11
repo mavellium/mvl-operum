@@ -1,6 +1,12 @@
 import prisma from '@/lib/prisma'
 import { CreateProjetoSchema, UpdateProjetoSchema } from '@/lib/validation/projetoSchemas'
 import type { CreateProjetoInput, UpdateProjetoInput } from '@/lib/validation/projetoSchemas'
+import {
+  setProjectManagerRole,
+  removeProjectRole,
+  isProjectManager,
+  countProjectManagers,
+} from './projectRoleService'
 
 export class ConflictError extends Error {
   constructor(message: string) {
@@ -106,6 +112,15 @@ export async function removeMember(projetoId: string, userId: string) {
     throw new NotFoundError('Membro não encontrado neste projeto')
   }
 
+  const isPm = await isProjectManager(userId, projetoId)
+  if (isPm) {
+    const count = await countProjectManagers(projetoId)
+    if (count <= 1) {
+      throw new Error('Não é possível remover o único Gerente de Projeto')
+    }
+    await removeProjectRole(userId, projetoId)
+  }
+
   return prisma.usuarioProjeto.update({
     where: { id: existing.id },
     data: { ativo: false, dataSaida: new Date() },
@@ -125,22 +140,49 @@ export async function getMembrosComDetalhes(projetoId: string) {
 export async function updateUsuarioProjeto(
   userId: string,
   projetoId: string,
-  data: { cargo?: string; departamento?: string; valorHora?: number | null; ativo?: boolean },
+  data: {
+    projectRole?: string;
+    cargos?: string[];
+    departamentos?: string[];
+    cargo?: string;
+    departamento?: string;
+    valorHora?: number | null;
+    ativo?: boolean;
+    tenantId?: string;
+  },
 ) {
   const existing = await prisma.usuarioProjeto.findUnique({
     where: { userId_projetoId: { userId, projetoId } },
   })
   if (!existing) throw new NotFoundError('Membro não encontrado')
 
-  return prisma.usuarioProjeto.update({
+  const cargoStr = data.cargos !== undefined
+    ? (data.cargos.length > 0 ? data.cargos.join(', ') : null)
+    : data.cargo !== undefined ? (data.cargo || null) : undefined
+
+  const departamentoStr = data.departamentos !== undefined
+    ? (data.departamentos.length > 0 ? data.departamentos.join(', ') : null)
+    : data.departamento !== undefined ? (data.departamento || null) : undefined
+
+  const result = await prisma.usuarioProjeto.update({
     where: { id: existing.id },
     data: {
-      ...(data.cargo !== undefined ? { cargo: data.cargo || null } : {}),
-      ...(data.departamento !== undefined ? { departamento: data.departamento || null } : {}),
+      ...(cargoStr !== undefined ? { cargo: cargoStr } : {}),
+      ...(departamentoStr !== undefined ? { departamento: departamentoStr } : {}),
       ...(data.valorHora !== undefined ? { valorHora: data.valorHora } : {}),
       ...(data.ativo !== undefined ? { ativo: data.ativo, dataSaida: data.ativo ? null : new Date() } : {}),
     },
   })
+
+  if (data.projectRole !== undefined && data.tenantId) {
+    if (data.projectRole === 'gerente') {
+      await setProjectManagerRole(userId, projetoId, data.tenantId)
+    } else {
+      await removeProjectRole(userId, projetoId)
+    }
+  }
+
+  return result
 }
 
 export async function getUserProjetosComDetalhes(userId: string) {

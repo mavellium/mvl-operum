@@ -1,6 +1,7 @@
 import { notFound } from 'next/navigation'
 import { verifySession } from '@/lib/dal'
 import { findById } from '@/services/projetoService'
+import { isProjectManager } from '@/services/projectRoleService'
 import ProjectSidebar from '@/components/layout/ProjectSidebar'
 
 export default async function ProjetoLayout({
@@ -11,12 +12,12 @@ export default async function ProjetoLayout({
   params: Promise<{ projetoId: string }>
 }) {
   const { projetoId } = await params
-  const { role } = await verifySession()
+  const { role, userId } = await verifySession()
   const projeto = await findById(projetoId)
 
   if (!projeto) notFound()
 
-  const canManageMembers = role === 'admin' || role === 'gerente'
+  const canManageMembers = role === 'admin' || await isProjectManager(userId, projetoId)
 
   return (
     <div className="flex flex-1">

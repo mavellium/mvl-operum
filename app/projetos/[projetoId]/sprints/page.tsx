@@ -1,6 +1,7 @@
 import { notFound } from 'next/navigation'
 import { verifySession } from '@/lib/dal'
 import { findById } from '@/services/projetoService'
+import { isProjectManager } from '@/services/projectRoleService'
 import { findAllByProjeto } from '@/services/sprintService'
 import { getSprintMetrics } from '@/services/dashboardService'
 import EmptyState from '@/components/ui/EmptyState'
@@ -52,8 +53,8 @@ export default async function ProjetoSprintsPage({
   params: Promise<{ projetoId: string }>
 }) {
   const { projetoId } = await params
-  const { role } = await verifySession()
-  const canEdit = role === 'admin' || role === 'gerente'
+  const { role, userId } = await verifySession()
+  const canEdit = role === 'admin' || await isProjectManager(userId, projetoId)
 
   const [projeto, sprints] = await Promise.all([
     findById(projetoId),

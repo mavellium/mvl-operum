@@ -1,6 +1,7 @@
 import { notFound } from 'next/navigation'
 import { verifySession } from '@/lib/dal'
 import { findById } from '@/services/projetoService'
+import { isProjectManager } from '@/services/projectRoleService'
 import prisma from '@/lib/prisma'
 import ProjetoFuncoesClient from '@/components/projetos/ProjetoFuncoesClient'
 
@@ -8,10 +9,9 @@ export const dynamic = 'force-dynamic'
 
 export default async function ProjetoFuncoesPage({ params }: { params: Promise<{ projetoId: string }> }) {
   const { projetoId } = await params
-  const { tenantId, role } = await verifySession()
+  const { tenantId, role, userId } = await verifySession()
 
-  // Bloqueio de acesso: Apenas admin e gerente
-  if (role !== 'admin' && role !== 'gerente') {
+  if (role !== 'admin' && !await isProjectManager(userId, projetoId)) {
     notFound()
   }
 
