@@ -9,7 +9,7 @@ export const SprintCreateSchema = z
     startDate: z.coerce.date().optional(),
     endDate: z.coerce.date().optional(),
     createdBy: z.string().optional(),
-    projetoId: z.string().optional(),
+    projectId: z.string().optional(),
   })
   .refine(
     (data) => {

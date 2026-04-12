@@ -1,19 +1,19 @@
 import { z } from 'zod'
 
-const NotificacaoTipoEnum = z.enum(['COMENTARIO', 'ATRIBUICAO', 'ATUALIZACAO', 'CONCLUSAO', 'MENCIONADO', 'CONVITE'])
-const NotificacaoStatusEnum = z.enum(['NAO_LIDA', 'LIDA', 'ARQUIVADA'])
+const NotificationTypeEnum = z.enum(['COMMENT', 'ASSIGNMENT', 'UPDATE', 'COMPLETION', 'MENTIONED', 'INVITATION'])
+const NotificationStatusEnum = z.enum(['UNREAD', 'READ', 'ARCHIVED'])
 
 export const CreateNotificacaoSchema = z.object({
-  userId: z.string().min(1, 'UserId é obrigatório'),
-  tipo: NotificacaoTipoEnum,
-  titulo: z.string().trim().min(1, 'Título é obrigatório'),
-  mensagem: z.string().trim().min(1, 'Mensagem é obrigatória'),
-  referencia: z.string().optional(),
-  referenciaTipo: z.string().optional(),
+  userId: z.string().min(1, 'UserId is required'),
+  type: NotificationTypeEnum,
+  title: z.string().trim().min(1, 'Title is required'),
+  message: z.string().trim().min(1, 'Message is required'),
+  reference: z.string().optional(),
+  referenceType: z.string().optional(),
 })
 
 export const UpdateNotificacaoSchema = z.object({
-  status: NotificacaoStatusEnum.optional(),
+  status: NotificationStatusEnum.optional(),
 })
 
 export type CreateNotificacaoInput = z.infer<typeof CreateNotificacaoSchema>

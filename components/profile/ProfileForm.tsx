@@ -1,7 +1,8 @@
 'use client'
 
-import { useActionState } from 'react'
+import { useState, useActionState } from 'react'
 import { updateProfileAction, type ProfileActionState } from '@/app/actions/profile'
+import AvatarUpload from '@/components/profile/AvatarUpload'
 import Button from '@/components/ui/Button'
 
 interface ProfileFormProps {
@@ -9,14 +10,25 @@ interface ProfileFormProps {
   email: string
   cargo?: string | null
   departamento?: string | null
-  valorHora: number
+  hourlyRate: number
+  phone?: string | null
+  address?: string | null
+  notes?: string | null
+  avatarUrl?: string | null
 }
 
-export default function ProfileForm({ name, email, cargo, departamento, valorHora }: ProfileFormProps) {
+export default function ProfileForm({ name, email, cargo, departamento, hourlyRate, phone, address, notes, avatarUrl: initialAvatarUrl }: ProfileFormProps) {
   const [state, action, isPending] = useActionState(updateProfileAction, {} as ProfileActionState)
+  const [avatarUrl, setAvatarUrl] = useState(initialAvatarUrl ?? '')
 
   return (
     <form action={action} className="space-y-4">
+      {/* Avatar — onChange atualiza o estado local; é enviado no submit via hidden input */}
+      <div className="flex justify-center pb-2">
+        <AvatarUpload name={name} avatarUrl={avatarUrl} onChange={setAvatarUrl} />
+      </div>
+      <input type="hidden" name="avatarUrl" value={avatarUrl} />
+
       <div>
         <label htmlFor="name" className="block text-sm font-medium text-gray-700 mb-1">Nome</label>
         <input
@@ -62,14 +74,14 @@ export default function ProfileForm({ name, email, cargo, departamento, valorHor
       </div>
 
       <div>
-        <label htmlFor="valorHora" className="block text-sm font-medium text-gray-700 mb-1">Valor/hora (R$)</label>
+        <label htmlFor="hourlyRate" className="block text-sm font-medium text-gray-700 mb-1">Valor/hora (R$)</label>
         <input
-          id="valorHora"
-          name="valorHora"
+          id="hourlyRate"
+          name="hourlyRate"
           type="number"
           min="0"
           step="0.01"
-          defaultValue={valorHora}
+          defaultValue={hourlyRate}
           className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm text-gray-900 placeholder:text-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500"
         />
       </div>

@@ -51,7 +51,7 @@ describe('verifySession', () => {
       role: 'admin',
       tenantId: 't1',
       isActive: true,
-      status: 'ativo',
+      status: 'active',
       tokenVersion: 2,
       deletedAt: null,
     })
@@ -82,7 +82,7 @@ describe('verifySession', () => {
       role: 'member',
       tenantId: 't1',
       isActive: true,
-      status: 'ativo',
+      status: 'active',
       tokenVersion: 3,
       deletedAt: null,
     })
@@ -93,14 +93,14 @@ describe('verifySession', () => {
     expect(mockRedirect).toHaveBeenCalledWith('/login')
   })
 
-  it('rejects user with status !== ativo', async () => {
+  it('rejects user with status !== active', async () => {
     mockDecrypt.mockResolvedValue({ userId: 'u1', role: 'member', tenantId: 't1', tokenVersion: 0 })
     mockUserFindUnique.mockResolvedValue({
       id: 'u1',
       role: 'member',
       tenantId: 't1',
       isActive: false,
-      status: 'inativo',
+      status: 'inactive',
       tokenVersion: 0,
       deletedAt: null,
     })
@@ -116,7 +116,7 @@ describe('verifySession', () => {
       role: 'member',
       tenantId: 't1',
       isActive: true,
-      status: 'ativo',
+      status: 'active',
       tokenVersion: 0,
       deletedAt: new Date(),
     })

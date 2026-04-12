@@ -24,7 +24,7 @@ async function getAdminDashboardData() {
     getSprintsWithMetrics(),
     getOverdueCards(),
     getUserMetrics(),
-    prisma.projeto.findMany({
+    prisma.project.findMany({
       where: { deletedAt: null },
       include: {
         sprints: {
@@ -67,8 +67,8 @@ async function getAdminDashboardData() {
 
       return {
         id: p.id,
-        nome: p.nome,
-        descricao: p.descricao,
+        name: p.name,
+        description: p.description,
         status: p.status,
         createdAt: p.createdAt,
         totalSprints: p._count.sprints,
@@ -82,17 +82,17 @@ async function getAdminDashboardData() {
     }),
   )
 
-  const activeProjetos = projetoMetrics.filter(p => p.status === 'ATIVO')
-  const concludedProjetos = projetoMetrics.filter(p => p.status === 'CONCLUIDO')
+  const activeProjetos = projetoMetrics.filter(p => p.status === 'ACTIVE')
+  const concludedProjetos = projetoMetrics.filter(p => p.status === 'COMPLETED')
 
   return { kpis, sprintMetrics, overdueCards, userMetrics, activeProjetos, concludedProjetos }
 }
 
 const STATUS_LABELS: Record<string, { label: string; cls: string }> = {
-  ATIVO:     { label: 'Ativo',     cls: 'bg-green-100 text-green-700' },
-  INATIVO:   { label: 'Inativo',   cls: 'bg-gray-100 text-gray-500' },
-  CONCLUIDO: { label: 'Concluído', cls: 'bg-blue-100 text-blue-700' },
-  ARQUIVADO: { label: 'Arquivado', cls: 'bg-amber-100 text-amber-700' },
+  ACTIVE:     { label: 'Ativo',     cls: 'bg-green-100 text-green-700' },
+  INACTIVE:   { label: 'Inactive',   cls: 'bg-gray-100 text-gray-500' },
+  COMPLETED: { label: 'Concluído', cls: 'bg-blue-100 text-blue-700' },
+  ARCHIVED:  { label: 'Arquivado', cls: 'bg-amber-100 text-amber-700' },
 }
 
 export default async function AdminDashboardPage() {
@@ -112,7 +112,7 @@ export default async function AdminDashboardPage() {
       <main className="max-w-6xl mx-auto px-4 py-8 space-y-8">
         {/* KPIs */}
         <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
-          <KPICard label="Projetos ativos" value={activeProjetos.length} color="blue" />
+          <KPICard label="Projetos actives" value={activeProjetos.length} color="blue" />
           <KPICard label="Sprints" value={kpis.totalSprints} color="purple" />
           <KPICard label="Horas totais" value={formatHours(kpis.horasTotais)} color="amber" />
           <KPICard label="Custo total" value={formatCurrency(kpis.custoTotal)} color="green" sub="baseado em valor/hora" />
@@ -141,7 +141,7 @@ export default async function AdminDashboardPage() {
             <Link href="/projetos" className="text-sm text-blue-600 hover:underline">Ver todos</Link>
           </div>
           {activeProjetos.length === 0 ? (
-            <p className="text-sm text-gray-400 py-4 text-center">Nenhum projeto ativo</p>
+            <p className="text-sm text-gray-400 py-4 text-center">Nenhum projeto active</p>
           ) : (
             <div className="overflow-x-auto">
               <table className="w-full text-sm">
@@ -159,9 +159,9 @@ export default async function AdminDashboardPage() {
                     <tr key={p.id} className="border-b border-gray-50 last:border-0">
                       <td className="py-3">
                         <Link href={`/projetos/${p.id}`} className="font-medium text-gray-900 hover:text-blue-600">
-                          {p.nome}
+                          {p.name}
                         </Link>
-                        {p.descricao && <p className="text-xs text-gray-400 truncate max-w-xs">{p.descricao}</p>}
+                        {p.description && <p className="text-xs text-gray-400 truncate max-w-xs">{p.description}</p>}
                       </td>
                       <td className="py-3 text-center">
                         <div className="flex items-center justify-center gap-2">
@@ -213,7 +213,7 @@ export default async function AdminDashboardPage() {
               {concludedProjetos.map(p => (
                 <div key={p.id} className="flex items-center justify-between py-2 border-b border-gray-50 last:border-0">
                   <Link href={`/projetos/${p.id}`} className="text-sm text-gray-700 hover:text-blue-600">
-                    {p.nome}
+                    {p.name}
                   </Link>
                   <div className="flex items-center gap-4 text-xs text-gray-400">
                     <span>{p.totalSprints} sprints</span>

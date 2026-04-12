@@ -40,7 +40,7 @@ const BASE_USER = {
   avatarUrl: null,
   cargo: null,
   departamento: null,
-  valorHora: 0,
+  hourlyRate: 0,
   tokenVersion: 0,
   createdAt: new Date(),
   updatedAt: new Date(),
@@ -84,7 +84,7 @@ describe('adminCreateUser', () => {
 })
 
 describe('adminUpdateUser', () => {
-  it('updates name email cargo departamento valorHora', async () => {
+  it('updates name email cargo departamento hourlyRate', async () => {
     const { adminUpdateUser } = await import('@/services/adminService')
     mockPrisma.user.findUnique.mockResolvedValue(BASE_USER)
     mockPrisma.user.update.mockResolvedValue({ ...BASE_USER, name: 'Alice Updated' })

@@ -1,103 +1,104 @@
+// @vitest-environment node
 import { describe, it, expect } from 'vitest'
 import { CreateRoleSchema, UpdateRoleSchema } from '@/lib/validation/roleSchemas'
 
 describe('roleSchemas', () => {
   describe('CreateRoleSchema', () => {
-    it('should accept valid role (nome, tenantId, escopo)', () => {
+    it('should accept valid role (name, tenantId, scope)', () => {
       const result = CreateRoleSchema.safeParse({
-        nome: 'Admin',
+        name: 'Admin',
         tenantId: 'tenant-1',
-        escopo: 'TENANT',
+        scope: 'TENANT',
       })
       expect(result.success).toBe(true)
     })
 
-    it('should accept TENANT escopo', () => {
+    it('should accept TENANT scope', () => {
       const result = CreateRoleSchema.safeParse({
-        nome: 'Member',
+        name: 'Member',
         tenantId: 'tenant-1',
-        escopo: 'TENANT',
-      })
-      expect(result.success).toBe(true)
-      if (result.success) {
-        expect(result.data.escopo).toBe('TENANT')
-      }
-    })
-
-    it('should accept PROJETO escopo', () => {
-      const result = CreateRoleSchema.safeParse({
-        nome: 'Project Admin',
-        tenantId: 'tenant-1',
-        escopo: 'PROJETO',
+        scope: 'TENANT',
       })
       expect(result.success).toBe(true)
       if (result.success) {
-        expect(result.data.escopo).toBe('PROJETO')
+        expect(result.data.scope).toBe('TENANT')
       }
     })
 
-    it('should accept optional descricao', () => {
+    it('should accept PROJETO scope', () => {
       const result = CreateRoleSchema.safeParse({
-        nome: 'Admin',
+        name: 'Project Admin',
         tenantId: 'tenant-1',
-        escopo: 'TENANT',
-        descricao: 'Administrator role',
+        scope: 'PROJETO',
       })
       expect(result.success).toBe(true)
       if (result.success) {
-        expect(result.data.descricao).toBe('Administrator role')
+        expect(result.data.scope).toBe('PROJETO')
       }
     })
 
-    it('should reject empty nome', () => {
+    it('should accept optional description', () => {
       const result = CreateRoleSchema.safeParse({
-        nome: '',
+        name: 'Admin',
         tenantId: 'tenant-1',
-        escopo: 'TENANT',
+        scope: 'TENANT',
+        description: 'Administrator role',
+      })
+      expect(result.success).toBe(true)
+      if (result.success) {
+        expect(result.data.description).toBe('Administrator role')
+      }
+    })
+
+    it('should reject empty name', () => {
+      const result = CreateRoleSchema.safeParse({
+        name: '',
+        tenantId: 'tenant-1',
+        scope: 'TENANT',
       })
       expect(result.success).toBe(false)
     })
 
-    it('should reject invalid escopo', () => {
+    it('should reject invalid scope', () => {
       const result = CreateRoleSchema.safeParse({
-        nome: 'Role',
+        name: 'Role',
         tenantId: 'tenant-1',
-        escopo: 'INVALIDO',
+        scope: 'INVALIDO',
       })
       expect(result.success).toBe(false)
     })
 
-    it('should trim nome', () => {
+    it('should trim name', () => {
       const result = CreateRoleSchema.safeParse({
-        nome: '  Admin  ',
+        name: '  Admin  ',
         tenantId: 'tenant-1',
-        escopo: 'TENANT',
+        scope: 'TENANT',
       })
       expect(result.success).toBe(true)
       if (result.success) {
-        expect(result.data.nome).toBe('Admin')
+        expect(result.data.name).toBe('Admin')
       }
     })
   })
 
   describe('UpdateRoleSchema', () => {
-    it('should accept nome update', () => {
+    it('should accept name update', () => {
       const result = UpdateRoleSchema.safeParse({
-        nome: 'Super Admin',
+        name: 'Super Admin',
       })
       expect(result.success).toBe(true)
     })
 
-    it('should accept descricao update', () => {
+    it('should accept description update', () => {
       const result = UpdateRoleSchema.safeParse({
-        descricao: 'Updated description',
+        description: 'Updated description',
       })
       expect(result.success).toBe(true)
     })
 
-    it('should reject empty nome on update', () => {
+    it('should reject empty name on update', () => {
       const result = UpdateRoleSchema.safeParse({
-        nome: '',
+        name: '',
       })
       expect(result.success).toBe(false)
     })

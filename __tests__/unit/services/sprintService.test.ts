@@ -83,30 +83,30 @@ describe('completeSprint', () => {
 })
 
 describe('sprintService (with projeto)', () => {
-  it('should create sprint with projetoId', async () => {
+  it('should create sprint with projectId', async () => {
     mockPrisma.sprint.create.mockResolvedValue({
       id: 's2',
       name: 'Sprint in Project',
-      projetoId: 'p1',
+      projectId: 'p1',
       status: 'PLANNED',
     })
-    const sprint = await createSprint({ name: 'Sprint in Project', projetoId: 'p1' })
-    expect(sprint.projetoId).toBe('p1')
+    const sprint = await createSprint({ name: 'Sprint in Project', projectId: 'p1' })
+    expect(sprint.projectId).toBe('p1')
     expect(mockPrisma.sprint.create).toHaveBeenCalledWith({
-      data: expect.objectContaining({ projetoId: 'p1' }),
+      data: expect.objectContaining({ projectId: 'p1' }),
     })
   })
 
   it('should return only sprints from given projeto in findAllByProjeto', async () => {
     mockPrisma.sprint.findMany.mockResolvedValue([
-      { id: 's1', name: 'Sprint 1', projetoId: 'p1' },
+      { id: 's1', name: 'Sprint 1', projectId: 'p1' },
     ])
 
     const sprints = await findAllByProjeto('p1')
     expect(sprints).toHaveLength(1)
     expect(mockPrisma.sprint.findMany).toHaveBeenCalledWith(
       expect.objectContaining({
-        where: expect.objectContaining({ projetoId: 'p1', deletedAt: null }),
+        where: expect.objectContaining({ projectId: 'p1', deletedAt: null }),
       }),
     )
   })

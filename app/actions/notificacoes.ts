@@ -5,17 +5,17 @@ import { findAllByUser, markAsRead, markAsArchived } from '@/services/notificaca
 import prisma from '@/lib/prisma'
 import { revalidatePath } from 'next/cache'
 
-export async function getNotificacoesAction(filters?: { status?: string; tipo?: string }) {
+export async function getNotificacoesAction(filters?: { status?: string; type?: string }) {
   try {
     const { userId } = await verifySession()
-    const notificacoes = await findAllByUser(userId, { limit: 100 })
-    if (filters?.tipo) {
-      return notificacoes.filter(n => n.tipo === filters.tipo)
+    const notifications = await findAllByUser(userId, { limit: 100 })
+    if (filters?.type) {
+      return notifications.filter(n => n.type === filters.type)
     }
     if (filters?.status) {
-      return notificacoes.filter(n => n.status === filters.status)
+      return notifications.filter(n => n.status === filters.status)
     }
-    return notificacoes
+    return notifications
   } catch {
     return []
   }
@@ -24,43 +24,43 @@ export async function getNotificacoesAction(filters?: { status?: string; tipo?: 
 export async function markNotificacaoAsReadAction(id: string) {
   try {
     const { userId } = await verifySession()
-    const notificacao = await prisma.notificacao.findUnique({ where: { id, deletedAt: null } })
-    if (!notificacao || notificacao.userId !== userId) {
-      return { error: 'Notificação não encontrada' }
+    const notification = await prisma.notification.findUnique({ where: { id, deletedAt: null } })
+    if (!notification || notification.userId !== userId) {
+      return { error: 'Notification not found' }
     }
     await markAsRead(id)
     revalidatePath('/notificacoes')
     return { success: true }
   } catch (err) {
-    return { error: err instanceof Error ? err.message : 'Erro ao marcar como lida' }
+    return { error: err instanceof Error ? err.message : 'Error marking as read' }
   }
 }
 
 export async function markAllAsReadAction() {
   try {
     const { userId } = await verifySession()
-    await prisma.notificacao.updateMany({
-      where: { userId, status: 'NAO_LIDA', deletedAt: null },
-      data: { status: 'LIDA', lido_em: new Date() },
+    await prisma.notification.updateMany({
+      where: { userId, status: 'UNREAD', deletedAt: null },
+      data: { status: 'READ', readAt: new Date() },
     })
     revalidatePath('/notificacoes')
     return { success: true }
   } catch (err) {
-    return { error: err instanceof Error ? err.message : 'Erro ao marcar todas como lidas' }
+    return { error: err instanceof Error ? err.message : 'Error marking all as read' }
   }
 }
 
 export async function archiveNotificacaoAction(id: string) {
   try {
     const { userId } = await verifySession()
-    const notificacao = await prisma.notificacao.findUnique({ where: { id, deletedAt: null } })
-    if (!notificacao || notificacao.userId !== userId) {
-      return { error: 'Notificação não encontrada' }
+    const notification = await prisma.notification.findUnique({ where: { id, deletedAt: null } })
+    if (!notification || notification.userId !== userId) {
+      return { error: 'Notification not found' }
     }
     await markAsArchived(id)
     revalidatePath('/notificacoes')
     return { success: true }
   } catch (err) {
-    return { error: err instanceof Error ? err.message : 'Erro ao arquivar notificação' }
+    return { error: err instanceof Error ? err.message : 'Error archiving notification' }
   }
 }

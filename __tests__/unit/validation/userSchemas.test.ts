@@ -8,35 +8,35 @@ describe('UserProfileSchema', () => {
       email: 'ana@example.com',
       cargo: 'Dev',
       departamento: 'TI',
-      valorHora: 50,
+      hourlyRate: 50,
     })
     expect(result.success).toBe(true)
   })
 
   it('rejects name shorter than 2 chars', () => {
-    const result = UserProfileSchema.safeParse({ name: 'A', email: 'a@b.com', valorHora: 0 })
+    const result = UserProfileSchema.safeParse({ name: 'A', email: 'a@b.com', hourlyRate: 0 })
     expect(result.success).toBe(false)
     expect(result.error?.issues[0].message).toMatch(/2 caracteres/)
   })
 
   it('rejects invalid email', () => {
-    const result = UserProfileSchema.safeParse({ name: 'Ana', email: 'not-email', valorHora: 0 })
+    const result = UserProfileSchema.safeParse({ name: 'Ana', email: 'not-email', hourlyRate: 0 })
     expect(result.success).toBe(false)
   })
 
-  it('rejects negative valorHora', () => {
-    const result = UserProfileSchema.safeParse({ name: 'Ana', email: 'a@b.com', valorHora: -1 })
+  it('rejects negative hourlyRate', () => {
+    const result = UserProfileSchema.safeParse({ name: 'Ana', email: 'a@b.com', hourlyRate: -1 })
     expect(result.success).toBe(false)
   })
 
-  it('coerces string valorHora to number', () => {
-    const result = UserProfileSchema.safeParse({ name: 'Ana', email: 'a@b.com', valorHora: '75.5' })
+  it('coerces string hourlyRate to number', () => {
+    const result = UserProfileSchema.safeParse({ name: 'Ana', email: 'a@b.com', hourlyRate: '75.5' })
     expect(result.success).toBe(true)
-    if (result.success) expect(result.data.valorHora).toBe(75.5)
+    if (result.success) expect(result.data.hourlyRate).toBe(75.5)
   })
 
   it('allows optional cargo and departamento', () => {
-    const result = UserProfileSchema.safeParse({ name: 'Ana', email: 'a@b.com', valorHora: 0 })
+    const result = UserProfileSchema.safeParse({ name: 'Ana', email: 'a@b.com', hourlyRate: 0 })
     expect(result.success).toBe(true)
   })
 })

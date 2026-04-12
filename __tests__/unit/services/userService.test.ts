@@ -45,7 +45,7 @@ const mockUser = {
   avatarUrl: null,
   cargo: null,
   departamento: null,
-  valorHora: 0,
+  hourlyRate: 0,
   createdAt: new Date(),
   updatedAt: new Date(),
 }
@@ -70,8 +70,8 @@ describe('getUserProfile', () => {
 
 describe('updateUserProfile', () => {
   it('validates and updates profile fields', async () => {
-    mockPrisma.user.update.mockResolvedValue({ ...mockUser, name: 'Nova Ana', valorHora: 80 })
-    const result = await updateUserProfile('u1', { name: 'Nova Ana', email: 'ana@x.com', valorHora: 80 })
+    mockPrisma.user.update.mockResolvedValue({ ...mockUser, name: 'Nova Ana', hourlyRate: 80 })
+    const result = await updateUserProfile('u1', { name: 'Nova Ana', email: 'ana@x.com', hourlyRate: 80 })
     expect(mockPrisma.user.update).toHaveBeenCalledWith(
       expect.objectContaining({ where: { id: 'u1' } })
     )
@@ -79,7 +79,7 @@ describe('updateUserProfile', () => {
   })
 
   it('throws if validation fails (name too short)', async () => {
-    await expect(updateUserProfile('u1', { name: 'A', email: 'a@b.com', valorHora: 0 })).rejects.toThrow()
+    await expect(updateUserProfile('u1', { name: 'A', email: 'a@b.com', hourlyRate: 0 })).rejects.toThrow()
   })
 })
 

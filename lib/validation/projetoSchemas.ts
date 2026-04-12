@@ -1,6 +1,6 @@
 import { z } from 'zod'
 
-const ProjetoStatusEnum = z.enum(['ATIVO', 'INATIVO', 'CONCLUIDO', 'ARQUIVADO'])
+const ProjetoStatusEnum = z.enum(['ACTIVE', 'INACTIVE', 'COMPLETED', 'ARCHIVED'])
 
 export const CreateProjetoSchema = z.object({
   nome: z.string().trim().min(1, 'Nome é obrigatório').max(100, 'Nome deve ter no máximo 100 caracteres'),

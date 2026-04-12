@@ -16,13 +16,13 @@ vi.mock('@/lib/prisma', () => ({
 import prisma from '@/lib/prisma'
 import {
   createTenant,
-  getTenantBySubdominio,
+  getTenantBySubdomain,
   getTenantById,
   getDefaultTenant,
   updateTenant,
 } from '@/services/tenantService'
 
-const mockPrisma = prisma as {
+const mockPrisma = prisma as unknown as {
   tenant: {
     findUnique: ReturnType<typeof vi.fn>
     findFirst: ReturnType<typeof vi.fn>
@@ -38,72 +38,72 @@ beforeEach(() => {
 
 describe('TenantService', () => {
   describe('createTenant', () => {
-    it('should create tenant with status ATIVO', async () => {
+    it('should create tenant with status ACTIVE', async () => {
       mockPrisma.tenant.findUnique.mockResolvedValue(null)
       mockPrisma.tenant.create.mockResolvedValue({
         id: 't1',
-        nome: 'ACME',
-        subdominio: 'acme',
-        status: 'ATIVO',
+        name: 'ACME',
+        subdomain: 'acme',
+        status: 'ACTIVE',
         config: null,
         deletedAt: null,
         createdAt: new Date(),
         updatedAt: new Date(),
       })
 
-      const tenant = await createTenant({ nome: 'ACME', subdominio: 'acme' })
-      expect(tenant.status).toBe('ATIVO')
-      expect(tenant.nome).toBe('ACME')
-      expect(tenant.subdominio).toBe('acme')
+      const tenant = await createTenant({ name: 'ACME', subdomain: 'acme' })
+      expect(tenant.status).toBe('ACTIVE')
+      expect(tenant.name).toBe('ACME')
+      expect(tenant.subdomain).toBe('acme')
     })
 
-    it('should reject duplicate subdominio', async () => {
+    it('should reject duplicate subdomain', async () => {
       mockPrisma.tenant.findUnique.mockResolvedValue({ id: 'existing' })
 
       await expect(
-        createTenant({ nome: 'ACME', subdominio: 'acme' }),
+        createTenant({ name: 'ACME', subdomain: 'acme' }),
       ).rejects.toThrow(/subdomínio/i)
     })
 
-    it('should reject invalid input (empty nome)', async () => {
+    it('should reject invalid input (empty name)', async () => {
       await expect(
-        createTenant({ nome: '', subdominio: 'acme' }),
+        createTenant({ name: '', subdomain: 'acme' }),
       ).rejects.toThrow()
     })
 
-    it('should reject invalid subdominio (too short)', async () => {
+    it('should reject invalid subdomain (too short)', async () => {
       await expect(
-        createTenant({ nome: 'ACME', subdominio: 'ab' }),
+        createTenant({ name: 'ACME', subdomain: 'ab' }),
       ).rejects.toThrow()
     })
   })
 
-  describe('getTenantBySubdominio', () => {
-    it('should return tenant by subdominio', async () => {
+  describe('getTenantBysubdomain', () => {
+    it('should return tenant by subdomain', async () => {
       const mockTenant = {
         id: 't1',
-        nome: 'ACME',
-        subdominio: 'acme',
-        status: 'ATIVO',
+        name: 'ACME',
+        subdomain: 'acme',
+        status: 'ACTIVE',
         deletedAt: null,
       }
       mockPrisma.tenant.findUnique.mockResolvedValue(mockTenant)
 
-      const tenant = await getTenantBySubdominio('acme')
-      expect(tenant).toMatchObject({ id: 't1', subdominio: 'acme' })
+      const tenant = await getTenantBySubdomain('acme')
+      expect(tenant).toMatchObject({ id: 't1', subdomain: 'acme' })
     })
 
-    it('should return null for non-existent subdominio', async () => {
+    it('should return null for non-existent subdomain', async () => {
       mockPrisma.tenant.findUnique.mockResolvedValue(null)
 
-      const tenant = await getTenantBySubdominio('nonexistent')
+      const tenant = await getTenantBySubdomain('nonexistent')
       expect(tenant).toBeNull()
     })
 
     it('should not return tenants with deletedAt set', async () => {
       mockPrisma.tenant.findUnique.mockResolvedValue(null) // query includes deletedAt: null
 
-      const tenant = await getTenantBySubdominio('deleted-tenant')
+      const tenant = await getTenantBySubdomain('deleted-tenant')
       expect(tenant).toBeNull()
       expect(mockPrisma.tenant.findUnique).toHaveBeenCalledWith(
         expect.objectContaining({
@@ -115,7 +115,7 @@ describe('TenantService', () => {
 
   describe('getTenantById', () => {
     it('should return tenant by id', async () => {
-      const mockTenant = { id: 't1', nome: 'ACME', subdominio: 'acme' }
+      const mockTenant = { id: 't1', name: 'ACME', subdomain: 'acme' }
       mockPrisma.tenant.findUnique.mockResolvedValue(mockTenant)
 
       const tenant = await getTenantById('t1')
@@ -131,12 +131,12 @@ describe('TenantService', () => {
   })
 
   describe('getDefaultTenant', () => {
-    it('should return the default tenant (subdominio = "default")', async () => {
-      const mockTenant = { id: 't-default', nome: 'Default', subdominio: 'default' }
+    it('should return the default tenant (subdomain = "default")', async () => {
+      const mockTenant = { id: 't-default', name: 'Default', subdomain: 'default' }
       mockPrisma.tenant.findUnique.mockResolvedValue(mockTenant)
 
       const tenant = await getDefaultTenant()
-      expect(tenant).toMatchObject({ subdominio: 'default' })
+      expect(tenant).toMatchObject({ subdomain: 'default' })
     })
 
     it('should return null when no default tenant exists', async () => {
@@ -148,33 +148,33 @@ describe('TenantService', () => {
   })
 
   describe('updateTenant', () => {
-    it('should update tenant nome', async () => {
+    it('should update tenant name', async () => {
       mockPrisma.tenant.update.mockResolvedValue({
         id: 't1',
-        nome: 'New Name',
-        subdominio: 'acme',
-        status: 'ATIVO',
+        name: 'New Name',
+        subdomain: 'acme',
+        status: 'ACTIVE',
       })
 
-      const tenant = await updateTenant('t1', { nome: 'New Name' })
-      expect(tenant.nome).toBe('New Name')
+      const tenant = await updateTenant('t1', { name: 'New Name' })
+      expect(tenant.name).toBe('New Name')
     })
 
     it('should update tenant status', async () => {
       mockPrisma.tenant.update.mockResolvedValue({
         id: 't1',
-        nome: 'ACME',
-        subdominio: 'acme',
-        status: 'INATIVO',
+        name: 'ACME',
+        subdomain: 'acme',
+        status: 'INACTIVE',
       })
 
-      const tenant = await updateTenant('t1', { status: 'INATIVO' })
-      expect(tenant.status).toBe('INATIVO')
+      const tenant = await updateTenant('t1', { status: 'INACTIVE' })
+      expect(tenant.status).toBe('INACTIVE')
     })
 
     it('should reject invalid status', async () => {
       await expect(
-        updateTenant('t1', { status: 'INVALID' as 'ATIVO' }),
+        updateTenant('t1', { status: 'INVALID' as 'ACTIVE' }),
       ).rejects.toThrow()
     })
   })

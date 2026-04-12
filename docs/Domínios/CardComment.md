@@ -66,7 +66,7 @@
 
 ### Criação de comentário
 
-- Dado um [[Usuário]] ativo e associado ao [[Projeto]] do [[Card]]
+- Dado um [[Usuário]] active e associado ao [[Projeto]] do [[Card]]
 - Quando criar um [[CardComment]]
 - Então o comentário deve ser registrado com timestamp
 - E notificações devem ser enviadas para os demais participantes
@@ -102,7 +102,7 @@
 
 ## 🔄 Estados do CardComment
 
-- ativo → comentário visível normalmente
+- active → comentário visível normalmente
 - editado → comentário atualizado, mantendo histórico
 - removido → soft delete, não visível no fluxo normal
 

@@ -1,6 +1,6 @@
 import { redirect } from 'next/navigation'
 import { verifySession } from '@/lib/dal'
-import { getUserActiveProjects } from '@/services/projetoService'
+import { getUserActiveProjects } from '@/services/projectService'
 
 export const dynamic = 'force-dynamic'
 
@@ -12,6 +12,6 @@ export default async function Home() {
   const projects = await getUserActiveProjects(userId, tenantId)
 
   if (projects.length === 0) redirect('/no-project')
-  if (projects.length === 1) redirect(`/projetos/${projects[0].projetoId}/dashboard`)
+  if (projects.length === 1) redirect(`/projetos/${projects[0].projectId}/dashboard`)
   redirect('/projetos')
 }

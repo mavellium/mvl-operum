@@ -1,6 +1,21 @@
 import prisma from '@/lib/prisma'
 import bcrypt from 'bcryptjs'
 
+export type AdminUserResult = {
+  id: string
+  name: string
+  email: string
+  cargo: string | null
+  departamento: string | null
+  hourlyRate: number
+  role: string
+  isActive: boolean
+  avatarUrl: string | null
+  phone: string | null
+  address: string | null
+  notes: string | null
+}
+
 export async function listAllUsers() {
   return prisma.user.findMany({
     where: { deletedAt: null },
@@ -10,7 +25,7 @@ export async function listAllUsers() {
       email: true,
       cargo: true,
       departamento: true,
-      valorHora: true,
+      hourlyRate: true,
       role: true,
       isActive: true,
       avatarUrl: true,
@@ -26,10 +41,14 @@ export async function adminCreateUser(data: {
   password: string
   isAdmin?: boolean
   forcePasswordChange?: boolean
+  avatarUrl?: string
+  phone?: string
+  address?: string
+  notes?: string
   tenantId: string
-}) {
+}): Promise<AdminUserResult> {
   const passwordHash = await bcrypt.hash(data.password, 10)
-  return prisma.user.create({
+  const user = await prisma.user.create({
     data: {
       name: data.name,
       email: data.email,
@@ -38,6 +57,10 @@ export async function adminCreateUser(data: {
       forcePasswordChange: data.forcePasswordChange ?? false,
       isActive: true,
       tenantId: data.tenantId,
+      ...(data.avatarUrl ? { avatarUrl: data.avatarUrl } : {}),
+      ...(data.phone !== undefined && { phone: data.phone }),
+      ...(data.address !== undefined && { address: data.address }),
+      ...(data.notes !== undefined && { notes: data.notes }),
     },
     select: {
       id: true,
@@ -45,12 +68,16 @@ export async function adminCreateUser(data: {
       email: true,
       cargo: true,
       departamento: true,
-      valorHora: true,
+      hourlyRate: true,
       role: true,
       isActive: true,
       avatarUrl: true,
+      phone: true,
+      address: true,
+      notes: true,
     },
   })
+  return user
 }
 
 export async function adminUpdateUser(
@@ -58,10 +85,14 @@ export async function adminUpdateUser(
   data: {
     name?: string
     email?: string
+    avatarUrl?: string
     password?: string
     cargo?: string
     departamento?: string
-    valorHora?: number
+    hourlyRate?: number
+    phone?: string
+    address?: string
+    notes?: string
   },
 ) {
   const existing = await prisma.user.findUnique({ where: { id: userId, deletedAt: null } })
@@ -70,9 +101,13 @@ export async function adminUpdateUser(
   const updateData: Record<string, unknown> = {}
   if (data.name !== undefined) updateData.name = data.name
   if (data.email !== undefined) updateData.email = data.email
+  if (data.avatarUrl !== undefined) updateData.avatarUrl = data.avatarUrl || null
   if (data.cargo !== undefined) updateData.cargo = data.cargo
   if (data.departamento !== undefined) updateData.departamento = data.departamento
-  if (data.valorHora !== undefined) updateData.valorHora = data.valorHora
+  if (data.hourlyRate !== undefined) updateData.hourlyRate = data.hourlyRate
+  if (data.phone !== undefined) updateData.phone = data.phone
+  if (data.address !== undefined) updateData.address = data.address
+  if (data.notes !== undefined) updateData.notes = data.notes
   if (data.password) updateData.passwordHash = await bcrypt.hash(data.password, 10)
 
   return prisma.user.update({
@@ -84,10 +119,13 @@ export async function adminUpdateUser(
       email: true,
       cargo: true,
       departamento: true,
-      valorHora: true,
+      hourlyRate: true,
       role: true,
       isActive: true,
       avatarUrl: true,
+      phone: true,
+      address: true,
+      notes: true,
     },
   })
 }

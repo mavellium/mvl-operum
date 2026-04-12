@@ -32,8 +32,8 @@ export default function AdminUsersClient({ initialUsers }: Props) {
         if (!u.name.toLowerCase().includes(q) && !u.email.toLowerCase().includes(q)) return false
       }
       if (filterRole && u.role !== filterRole) return false
-      if (filterStatus === 'ativo' && !u.isActive) return false
-      if (filterStatus === 'inativo' && u.isActive) return false
+      if (filterStatus === 'active' && !u.isActive) return false
+      if (filterStatus === 'inactive' && u.isActive) return false
       return true
     })
   }, [users, search, filterRole, filterStatus])
@@ -84,8 +84,8 @@ export default function AdminUsersClient({ initialUsers }: Props) {
           className="rounded-xl border border-gray-200 px-3 py-2 text-sm text-gray-700 focus:outline-none focus:ring-2 focus:ring-blue-500"
         >
           <option value="">Todos os status</option>
-          <option value="ativo">Ativo</option>
-          <option value="inativo">Inativo</option>
+          <option value="active">Ativo</option>
+          <option value="inactive">Inactive</option>
         </select>
         <button
           onClick={() => setShowCreate(true)}
@@ -138,11 +138,11 @@ export default function AdminUsersClient({ initialUsers }: Props) {
                     {user.departamento && <p className="text-xs text-gray-400">{user.departamento}</p>}
                   </td>
                   <td className="px-4 py-3 text-right text-gray-600 hidden lg:table-cell">
-                    {user.valorHora > 0 ? `R$ ${user.valorHora.toFixed(2)}` : '—'}
+                    {user.hourlyRate > 0 ? `R$ ${user.hourlyRate.toFixed(2)}` : '—'}
                   </td>
                   <td className="px-4 py-3 text-center">
                     <span className={`inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium ${user.isActive ? 'bg-green-100 text-green-700' : 'bg-gray-100 text-gray-500'}`}>
-                      {user.isActive ? 'Ativo' : 'Inativo'}
+                      {user.isActive ? 'Ativo' : 'Inactive'}
                     </span>
                   </td>
                   <td className="px-4 py-3 text-center">

@@ -1,11 +1,11 @@
 import { z } from 'zod'
 
 export const UserProfileSchema = z.object({
-  name: z.string().trim().min(2, 'Nome deve ter pelo menos 2 caracteres'),
-  email: z.string().trim().email('Email inválido'),
+  name: z.string().trim().min(2, 'Name must be at least 2 characters'),
+  email: z.string().trim().email('Invalid email'),
   cargo: z.string().trim().optional(),
   departamento: z.string().trim().optional(),
-  valorHora: z.coerce.number().min(0, 'Valor/hora não pode ser negativo'),
+  hourlyRate: z.coerce.number().min(0, 'Hourly rate cannot be negative'),
 })
 
 export const ChangePasswordSchema = z

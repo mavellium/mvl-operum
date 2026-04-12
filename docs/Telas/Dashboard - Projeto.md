@@ -20,7 +20,7 @@
 
 - **Horas Registradas:** total de horas lançadas por cada membro
 - **Custo Individual:** horas x valor/hora
-- **Cards Atribuídos:** ativos, concluídos, atrasados
+- **Cards Atribuídos:** actives, concluídos, atrasados
 - **Eficiência:** percentual de cards concluídos dentro do prazo
 - **Ranking de Usuários:** baseado em produtividade e eficiência
 - **Média de Qualidade e Dificuldade:** via [[SprintFeedback]]
@@ -84,14 +84,14 @@
 1. Carregar todas as sprints e cards do projeto
 2. Agregar métricas gerais, por sprint e por usuário
 3. Calcular ranking, custo, eficiência e alertas
-4. Gerar gráficos interativos e visuais de tendências
+4. Gerar gráficos interactives e visuais de tendências
 5. Permitir drill-down em cards, usuários ou sprints
 
 ---
 
 ### 🧠 Regras Implícitas
 
-- Métricas e gráficos calculados apenas com [[UsuarioProjeto]] ativo
+- Métricas e gráficos calculados apenas com [[UsuarioProjeto]] active
 - Cards removidos ou não atribuídos não entram em contagem de produtividade
 - Histórico de alterações auditado em [[Auditoria]]
 - Dashboard deve suportar grandes volumes de dados sem travar

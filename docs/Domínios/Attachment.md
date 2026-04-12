@@ -98,5 +98,5 @@
 
 ## 🔄 Estados
 
-- ativo → attachment disponível e associado ao card
+- active → attachment disponível e associado ao card
 - removido → soft delete, histórico mantido para auditoria

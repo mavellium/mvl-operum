@@ -6,7 +6,7 @@ export async function calcularParaSprintUsuario(sprintId: string, userId: string
       where: { userId, card: { sprintId, deletedAt: null }, deletedAt: null },
       select: { duration: true },
     }),
-    prisma.user.findUnique({ where: { id: userId }, select: { valorHora: true } }),
+    prisma.user.findUnique({ where: { id: userId }, select: { hourlyRate: true } }),
     prisma.card.findMany({
       where: { sprintId, deletedAt: null, responsibles: { some: { userId } } },
       select: { sprintColumn: { select: { title: true } } },
@@ -16,7 +16,7 @@ export async function calcularParaSprintUsuario(sprintId: string, userId: string
   if (!user) throw new Error('Usuário não encontrado')
 
   const horas = timeEntries.reduce((sum, e) => sum + e.duration / 3600, 0)
-  const custoTotal = horas * user.valorHora
+  const custoTotal = horas * user.hourlyRate
   const isDone = (title?: string | null) => /conclu/i.test(title ?? '')
   const tarefasPendentes = cards.filter(c => !isDone(c.sprintColumn?.title)).length
 

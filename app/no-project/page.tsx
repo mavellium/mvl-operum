@@ -19,7 +19,7 @@ export default async function NoProjectPage() {
         </div>
         <h1 className="text-xl font-bold text-gray-900">Sem acesso a projetos</h1>
         <p className="text-sm text-gray-500 mt-2 mb-6">
-          Você não está associado a nenhum projeto ativo. Entre em contato com o administrador.
+          Você não está associado a nenhum projeto active. Entre em contato com o administrador.
         </p>
         <form action={logoutAction}>
           <button

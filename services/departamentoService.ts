@@ -1,6 +1,8 @@
-import prisma from '@/lib/prisma'
-import { CreateDepartamentoSchema, UpdateDepartamentoSchema } from '@/lib/validation/departamentoSchemas'
-import type { CreateDepartamentoInput, UpdateDepartamentoInput } from '@/lib/validation/departamentoSchemas'
+import prisma from "@/lib/prisma"
+import { normalizeNome } from "@/lib/utils/normalize"
+import { CreateDepartmentInput, CreateDepartmentSchema, UpdateDepartmentInput, UpdateDepartmentSchema } from "@/lib/validation/departmentSchemas"
+
+const activeOnly = { deletedAt: null } as const
 
 export class ConflictError extends Error {
   constructor(message: string) {
@@ -16,95 +18,126 @@ export class NotFoundError extends Error {
   }
 }
 
-export async function createDepartamento(input: CreateDepartamentoInput) {
-  const parsed = CreateDepartamentoSchema.safeParse(input)
+export async function createdepartment(input: CreateDepartmentInput) {
+  const parsed = CreateDepartmentSchema.safeParse(input)
   if (!parsed.success) {
     throw new Error(parsed.error.issues[0].message)
   }
 
-  const { nome, tenantId, descricao, valorHora } = parsed.data
+  const { name, tenantId, description, hourlyRate } = parsed.data
 
-  const existing = await prisma.departamento.findFirst({
-    where: { nome, tenantId, deletedAt: null },
+  const existing = await prisma.department.findFirst({
+    where: { name: { equals: name, mode: 'insensitive' }, tenantId, ...activeOnly },
   })
   if (existing) {
-    throw new ConflictError('Departamento com este nome já existe neste tenant')
+    throw new ConflictError('department com este nome já existe neste tenant')
   }
 
-  return prisma.departamento.create({
-    data: { nome, tenantId, descricao: descricao ?? undefined, valorHora: valorHora ?? undefined },
+  return prisma.department.create({
+    data: { name, tenantId, description: description ?? undefined, hourlyRate: hourlyRate ?? undefined },
   })
 }
 
 export async function findAllByTenant(tenantId: string) {
-  return prisma.departamento.findMany({
-    where: { tenantId, deletedAt: null },
-    orderBy: { nome: 'asc' },
+  return prisma.department.findMany({
+    where: { tenantId, ...activeOnly },
+    orderBy: { name: 'asc' },
   })
 }
 
-export async function updateDepartamento(id: string, input: UpdateDepartamentoInput) {
-  const parsed = UpdateDepartamentoSchema.safeParse(input)
+export async function updatedepartment(id: string, input: UpdateDepartmentInput) {
+  const parsed = UpdateDepartmentSchema.safeParse(input)
   if (!parsed.success) {
     throw new Error(parsed.error.issues[0].message)
   }
 
-  const existing = await prisma.departamento.findUnique({
-    where: { id, deletedAt: null },
+  const existing = await prisma.department.findUnique({
+    where: { id, ...activeOnly },
   })
   if (!existing) {
-    throw new NotFoundError('Departamento não encontrado')
+    throw new NotFoundError('department não encontrado')
   }
 
-  return prisma.departamento.update({
+  return prisma.department.update({
     where: { id },
     data: parsed.data,
   })
 }
 
 export async function deactivate(id: string) {
-  const existing = await prisma.departamento.findUnique({
-    where: { id, deletedAt: null },
+  const existing = await prisma.department.findUnique({
+    where: { id, ...activeOnly },
   })
   if (!existing) {
-    throw new NotFoundError('Departamento não encontrado')
+    throw new NotFoundError('department não encontrado')
   }
 
-  const users = await prisma.usuarioDepartamento.findMany({
-    where: { departamentoId: id },
+  const users = await prisma.userDepartment.findMany({
+    where: { departmentId: id },
   })
   if (users.length > 0) {
-    throw new Error('Não é possível desativar departamento com usuários associados')
+    throw new Error('Não é possível desativar department com usuários associados')
   }
 
-  return prisma.departamento.update({
+  return prisma.department.update({
     where: { id },
-    data: { ativo: false },
+    data: { active: false },
   })
 }
 
-export async function associateUser(departamentoId: string, userId: string) {
-  const existing = await prisma.usuarioDepartamento.findUnique({
-    where: { userId_departamentoId: { userId, departamentoId } },
+export async function getOrCreatedepartment(nome: string, tenantId: string) {
+  const { nome: nomeTrimmed } = normalizeNome(nome)
+  const existing = await prisma.department.findFirst({
+    where: { name: { equals: nomeTrimmed, mode: 'insensitive' }, tenantId, ...activeOnly },
+  })
+  if (existing) return existing
+  return prisma.department.create({
+    data: { name: nomeTrimmed, tenantId },
+  })
+}
+
+export async function softDeletedepartment(id: string) {
+  try {
+    await prisma.userDepartment.deleteMany({
+      where: { departmentId: id }
+    })
+
+    const result = await prisma.department.update({
+      where: { id },
+      data: { deletedAt: new Date() }
+    })
+
+    console.log('department deletado:', result.id)
+
+    return result
+  } catch (err) {
+    console.error('ERRO AO DELETAR department:', err)
+    throw err
+  }
+}
+
+export async function associateUser(departmentId: string, userId: string) {
+  const existing = await prisma.userDepartment.findUnique({
+    where: { userId_departmentId: { userId, departmentId } },
   })
   if (existing) {
-    throw new ConflictError('Usuário já está associado a este departamento')
+    throw new ConflictError('Usuário já está associado a este department')
   }
 
-  return prisma.usuarioDepartamento.create({
-    data: { userId, departamentoId },
+  return prisma.userDepartment.create({
+    data: { userId, departmentId },
   })
 }
 
-export async function dissociateUser(departamentoId: string, userId: string) {
-  const existing = await prisma.usuarioDepartamento.findUnique({
-    where: { userId_departamentoId: { userId, departamentoId } },
+export async function dissociateUser(departmentId: string, userId: string) {
+  const existing = await prisma.userDepartment.findUnique({
+    where: { userId_departmentId: { userId, departmentId } },
   })
   if (!existing) {
     throw new NotFoundError('Associação não encontrada')
   }
 
-  return prisma.usuarioDepartamento.delete({
+  return prisma.userDepartment.delete({
     where: { id: existing.id },
   })
 }

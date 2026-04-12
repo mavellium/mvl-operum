@@ -27,12 +27,12 @@
             "state": {
               "type": "markdown",
               "state": {
-                "file": "Telas/Tela Painel Administrativo.md",
+                "file": "Telas/Tela Painel Administractive.md",
                 "mode": "source",
                 "source": false
               },
               "icon": "lucide-file",
-              "title": "Tela Painel Administrativo"
+              "title": "Tela Painel Administractive"
             }
           },
           {
@@ -278,7 +278,7 @@
   "lastOpenFiles": [
     "Telas/Tela Usuarios.md",
     "Telas/Sistema de Alertas e Feedbacks.md",
-    "Telas/Tela Painel Administrativo.md",
+    "Telas/Tela Painel Administractive.md",
     "Telas/Tela Projeto.md",
     "MVL Operum.md",
     "Telas/Upload - Download de Arquivos.md",

@@ -14,7 +14,7 @@ export interface AdminUser {
   email: string
   cargo: string | null
   departamento: string | null
-  valorHora: number
+  hourlyRate: number
   role: string
   isActive: boolean
   avatarUrl: string | null

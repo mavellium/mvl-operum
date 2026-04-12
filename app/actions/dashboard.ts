@@ -40,7 +40,7 @@ export async function getSprintDashboardAction(sprintId: string) {
     // user metrics for this sprint
     const timeEntries = await prisma.timeEntry.findMany({
       where: { card: { sprintId, deletedAt: null }, deletedAt: null },
-      select: { userId: true, duration: true, user: { select: { id: true, name: true, cargo: true, avatarUrl: true, valorHora: true } } },
+      select: { userId: true, duration: true, user: { select: { id: true, name: true, cargo: true, avatarUrl: true, hourlyRate: true } } },
     })
 
     const userMap = new Map<string, { id: string; name: string; cargo: string | null; avatarUrl: string | null; horas: number; custo: number }>()
@@ -49,7 +49,7 @@ export async function getSprintDashboardAction(sprintId: string) {
       const h = entry.duration / 3600
       if (existing) {
         existing.horas += h
-        existing.custo += h * entry.user.valorHora
+        existing.custo += h * entry.user.hourlyRate
       } else {
         userMap.set(entry.userId, {
           id: entry.user.id,
@@ -57,7 +57,7 @@ export async function getSprintDashboardAction(sprintId: string) {
           cargo: entry.user.cargo,
           avatarUrl: entry.user.avatarUrl,
           horas: h,
-          custo: h * entry.user.valorHora,
+          custo: h * entry.user.hourlyRate,
         })
       }
     }

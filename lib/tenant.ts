@@ -1,8 +1,8 @@
-import { getDefaultTenant, getTenantBySubdominio } from '@/services/tenantService'
+import { getDefaultTenant, getTenantBySubdomain } from '@/services/tenantService'
 
 export async function resolveTenantId(subdomain?: string): Promise<string> {
   if (subdomain) {
-    const tenant = await getTenantBySubdominio(subdomain)
+    const tenant = await getTenantBySubdomain(subdomain)
     if (!tenant) {
       throw new Error('Tenant não encontrado para o subdomínio informado')
     }

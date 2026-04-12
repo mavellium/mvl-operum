@@ -6,7 +6,7 @@
 
 - Nome
 - Descrição
-- Status (ativo | planejado | concluído | cancelado)
+- Status (active | planejado | concluído | cancelado)
 - Data de início
 - Data de término
 - Criado por ([[Usuário]])
@@ -43,7 +43,7 @@
 
 ### Estrutura
 
-- Um [[Sprint]] deve estar vinculado a um [[Projeto]] ativo
+- Um [[Sprint]] deve estar vinculado a um [[Projeto]] active
 - Datas de início e fim devem respeitar a sequência lógica (startDate < endDate)
 - Avaliações médias são calculadas com base nos [[Card]] finalizados
 
@@ -53,7 +53,7 @@
 
 - Um [[Sprint]] concluído não pode ter suas colunas ou cards alterados
 - Apenas [[Usuário]] com permissão de gerenciamento no projeto podem criar ou editar [[Sprint]]
-- O status só pode ser alterado seguindo o fluxo: planejado → ativo → concluído ou cancelado
+- O status só pode ser alterado seguindo o fluxo: planejado → active → concluído ou cancelado
 
 ---
 
@@ -87,14 +87,14 @@
 
 - Dado um [[Sprint]] planejado
 - Quando o [[Usuário]] iniciar o sprint
-- Então o status deve ser alterado para ativo
+- Então o status deve ser alterado para active
 - E colunas e cards ficam disponíveis para manipulação
 
 ---
 
 ### Conclusão de sprint
 
-- Dado um [[Sprint]] ativo
+- Dado um [[Sprint]] active
 - Quando o [[Usuário]] concluir o sprint
 - Então o status deve ser atualizado para concluído
 - E métricas finais devem ser calculadas automaticamente

@@ -29,7 +29,7 @@
     - Expiração curta (ex: 10–15 minutos)
     - Apenas código mais recente é válido
 3. **Validação do código**
-    - Confirma se código está correto, ativo e não expirou
+    - Confirma se código está correto, active e não expirou
     - Após 3 tentativas inválidas → bloqueio temporário 5 minutos
     - Próximo ciclo de 3 tentativas inválidas → bloqueio permanente
     - Bloqueio permanente só pode ser revertido por administrador
@@ -40,7 +40,7 @@
     - Todas sessões ativas do usuário são invalidadas automaticamente
 5. **Sessões e MFA**
     - Sessões expiradas ou invalidadas não podem ser reutilizadas
-    - MFA continua aplicável para usuários administrativos
+    - MFA continua aplicável para usuários administractives
 
 ---
 
@@ -59,7 +59,7 @@
 - Sistema verifica:
     - Correção do código
     - Validade (não expirado)
-    - Código ativo (último gerado)
+    - Código active (último gerado)
 - Em caso de sucesso, usuário autorizado a redefinir senha
 - Falha → contador de tentativas atualizado, bloqueio progressivo se necessário
 
@@ -107,8 +107,8 @@
 
 ## ⚙️ Estados da Tela
 
-- **Normal** → campos de email ativos
-- **Código enviado** → campos de validação do código ativos
+- **Normal** → campos de email actives
+- **Código enviado** → campos de validação do código actives
 - **Código inválido** → mensagens genéricas e contador atualizado
 - **Bloqueio temporário** → campos desativados até expiração
 - **Bloqueio permanente** → ação bloqueada, admin notificado

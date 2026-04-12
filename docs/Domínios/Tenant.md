@@ -6,7 +6,7 @@
 
 - Nome
 - Subdomínio
-- Status (ativo | inativo | suspenso | removido)
+- Status (active | inactive | suspenso | removido)
 - Data de Criação
 
 ---
@@ -66,8 +66,8 @@
 ### Ciclo de vida
 
 - Um [[Tenant]] pode possuir os estados:
-    - ativo → operação normal
-    - inativo → acesso bloqueado, dados preservados
+    - active → operação normal
+    - inactive → acesso bloqueado, dados preservados
     - suspenso → bloqueio por regra de negócio (ex: inadimplência)
     - removido → soft delete
 
@@ -75,7 +75,7 @@
 
 ### Governança
 
-- Um [[Tenant]] deve possuir ao menos um [[Usuário]] com papel administrativo global
+- Um [[Tenant]] deve possuir ao menos um [[Usuário]] com papel administractive global
 - A criação de um [[Tenant]] deve gerar:
     - usuário inicial (administrador)
     - papéis base do sistema
@@ -140,7 +140,7 @@
 
 ## 🔄 Estados
 
-- ativo
-- inativo
+- active
+- inactive
 - suspenso
 - removido

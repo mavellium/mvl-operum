@@ -7,7 +7,7 @@
 
 ### Projetos Ativos
 
-- Lista paginada ou filtrável de projetos ativos
+- Lista paginada ou filtrável de projetos actives
 - Indicadores por projeto:
     - Percentual de conclusão
     - Número de sprints ativas
@@ -27,12 +27,12 @@
 ### Alertas e Destaques
 
 - Projetos com sprints atrasadas
-- Projetos críticos (alto custo ou atrasos significativos)
+- Projetos críticos (alto custo ou atrasos significactives)
 - Usuários ou equipes com baixa performance
 
 ### Gráficos / KPIs
 
-- Total de projetos ativos vs concluídos
+- Total de projetos actives vs concluídos
 - Média de conclusão por sprint / projeto
 - Custo acumulado por projeto
 - Ranking de equipes ou usuários por produtividade
@@ -58,7 +58,7 @@
 
 ## 🧩 Fluxos
 
-1. Carregar projetos ativos e concluídos (paginados ou com lazy-load)
+1. Carregar projetos actives e concluídos (paginados ou com lazy-load)
 2. Calcular métricas globais e por projeto
 3. Gerar gráficos e alertas estratégicos
 4. Permitir drill-down em dashboards detalhadas de projeto e sprint

@@ -46,7 +46,7 @@
 
 ### Consistência
 
-- Um [[Papel]] não pode ser removido se houver [[UsuárioProjetoPapel]] ativos associados
+- Um [[Papel]] não pode ser removido se houver [[UsuárioProjetoPapel]] actives associados
 - Ao desativar um [[Papel]], todos os vínculos [[UsuárioProjetoPapel]] permanecem, mas não conferem permissões até reativação
 - Alterações devem gerar registro de auditoria
 
@@ -73,7 +73,7 @@
 
 ### Atribuição de permissão
 
-- Dado um [[Papel]] ativo
+- Dado um [[Papel]] active
 - Quando atribuir uma [[Permissão]]
 - Então o papel passa a conceder a permissão a todos os usuários vinculados
 
@@ -81,7 +81,7 @@
 
 ### Desativação
 
-- Dado um [[Papel]] ativo
+- Dado um [[Papel]] active
 - Quando desativá-lo
 - Então os usuários não recebem mais as permissões
 - E o vínculo permanece histórico
@@ -93,7 +93,7 @@
 - Dado um [[Papel]] com vínculos [[UsuárioProjetoPapel]]
 - Quando tentar removê-lo
 - Então o sistema deve impedir a operação
-- E informar os vínculos ativos
+- E informar os vínculos actives
 
 ---
 
@@ -108,6 +108,6 @@
 
 ## 🔄 Estados
 
-- ativo → papel disponível para atribuição
-- inativo → papel desativado temporariamente
+- active → papel disponível para atribuição
+- inactive → papel desativado temporariamente
 - removido → soft delete, histórico mantido

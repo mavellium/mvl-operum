@@ -1,10 +1,11 @@
 'use client'
 
 import { useState, useTransition } from 'react'
+import { getOrCreateDepartmentAction, updateDepartmentNameAction, deleteDepartmentAction } from '@/app/actions/departments'
 
 export interface Departamento {
   id: string
-  nome: string
+  name: string
 }
 
 interface Props {
@@ -24,11 +25,13 @@ export default function ProjetoDepartamentosClient({ projetoId, departamentosIni
   const [isPending, startTransition] = useTransition()
   const [loadingId, setLoadingId] = useState<string | null>(null)
 
-  const filteredDepartamentos = departamentos.filter(d => d.nome.toLowerCase().includes(search.toLowerCase()))
+const filteredDepartamentos = departamentos
+  .filter((d: any) => !d.deletedAt)
+  .filter(d => d.name.toLowerCase().includes(search.toLowerCase()))
 
   function handleStartEdit(d: Departamento) {
     setEditingId(d.id)
-    setEditNome(d.nome)
+    setEditNome(d.name)
   }
 
   function handleCancelEdit() {
@@ -39,13 +42,10 @@ export default function ProjetoDepartamentosClient({ projetoId, departamentosIni
   function handleSaveEdit(id: string) {
     if (!editNome.trim()) return
     setLoadingId(id)
-    
     startTransition(async () => {
-      // Substitua pela sua Server Action real:
-      // await updateDepartamentoAction(id, { nome: editNome })
-      
-      // Simulação de sucesso:
-      setDepartamentos(prev => prev.map(d => d.id === id ? { ...d, nome: editNome } : d))
+      const result = await updateDepartmentNameAction(id, editNome)
+      if ('error' in result) { setLoadingId(null); return }
+      setDepartamentos(prev => prev.map(d => d.id === id ? { ...d, name: result.department!.name } : d))
       setLoadingId(null)
       setEditingId(null)
     })
@@ -54,15 +54,10 @@ export default function ProjetoDepartamentosClient({ projetoId, departamentosIni
   function handleAdd() {
     if (!novoDepartamentoNome.trim()) return
     setLoadingId('new')
-    
     startTransition(async () => {
-      // Substitua pela sua Server Action real:
-      // const result = await createDepartamentoAction(projetoId, novoDepartamentoNome)
-      
-      // Simulação de sucesso com ID fake:
-      const result = { id: Math.random().toString(), nome: novoDepartamentoNome }
-      
-      setDepartamentos(prev => [...prev, result])
+      const result = await getOrCreateDepartmentAction(novoDepartamentoNome)
+      if ('error' in result) { setLoadingId(null); return }
+      setDepartamentos(prev => prev.some(d => d.id === result.department!.id) ? prev : [...prev, { id: result.department!.id, name: result.department!.name }])
       setNovoDepartamentoNome('')
       setShowAdd(false)
       setLoadingId(null)
@@ -72,9 +67,8 @@ export default function ProjetoDepartamentosClient({ projetoId, departamentosIni
   function handleRemove(id: string) {
     setLoadingId(id)
     startTransition(async () => {
-      // Substitua pela sua Server Action real:
-      // await deleteDepartamentoAction(id)
-      
+      const result = await deleteDepartmentAction(id)
+      if ('error' in result) { setLoadingId(null); return }
       setDepartamentos(prev => prev.filter(d => d.id !== id))
       setLoadingId(null)
     })
@@ -165,7 +159,7 @@ export default function ProjetoDepartamentosClient({ projetoId, departamentosIni
                         <div className="w-8 h-8 rounded-lg bg-blue-50 text-blue-600 flex items-center justify-center shrink-0">
                            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" /></svg>
                         </div>
-                        <p className="font-medium text-sm text-gray-900">{departamento.nome}</p>
+                        <p className="font-medium text-sm text-gray-900">{departamento.name}</p>
                       </div>
                       
                       <div className="flex items-center gap-2 opacity-0 group-hover:opacity-100 transition-opacity focus-within:opacity-100">

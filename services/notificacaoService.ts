@@ -15,16 +15,16 @@ export async function create(input: CreateNotificacaoInput) {
     throw new Error(parsed.error.issues[0].message)
   }
 
-  const { userId, tipo, titulo, mensagem, referencia, referenciaTipo } = parsed.data
+  const { userId, type, title, message, reference, referenceType } = parsed.data
 
-  return prisma.notificacao.create({
+  return prisma.notification.create({
     data: {
       userId,
-      tipo,
-      titulo,
-      mensagem,
-      referencia: referencia ?? undefined,
-      referenciaTipo: referenciaTipo ?? undefined,
+      type,
+      title,
+      message,
+      reference: reference ?? undefined,
+      referenceType: referenceType ?? undefined,
     },
   })
 }
@@ -40,64 +40,63 @@ export async function findAllByUser(userId: string, options?: FindAllByUserOptio
     where.status = options.status
   }
 
-  return prisma.notificacao.findMany({
+  return prisma.notification.findMany({
     where,
-    orderBy: { criadoEm: 'desc' },
+    orderBy: { createdAt: 'desc' },
     take: options?.limit ?? 50,
   })
 }
 
 export async function findById(id: string) {
-  return prisma.notificacao.findUnique({
+  return prisma.notification.findUnique({
     where: { id, deletedAt: null },
   })
 }
 
 export async function markAsRead(id: string) {
-  const existing = await prisma.notificacao.findUnique({
+  const existing = await prisma.notification.findUnique({
     where: { id, deletedAt: null },
   })
   if (!existing) {
-    throw new NotFoundError('Notificação não encontrada')
+    throw new NotFoundError('Notification not found')
   }
 
-  return prisma.notificacao.update({
+  return prisma.notification.update({
     where: { id },
-    data: { status: 'LIDA', lido_em: new Date() },
+    data: { status: 'READ', readAt: new Date() },
   })
 }
 
 export async function markAsArchived(id: string) {
-  const existing = await prisma.notificacao.findUnique({
+  const existing = await prisma.notification.findUnique({
     where: { id, deletedAt: null },
   })
   if (!existing) {
-    throw new NotFoundError('Notificação não encontrada')
+    throw new NotFoundError('Notification not found')
   }
 
-  return prisma.notificacao.update({
+  return prisma.notification.update({
     where: { id },
-    data: { status: 'ARQUIVADA' },
+    data: { status: 'ARCHIVED' },
   })
 }
 
 export async function deleteNotificacao(id: string) {
-  const existing = await prisma.notificacao.findUnique({
+  const existing = await prisma.notification.findUnique({
     where: { id, deletedAt: null },
   })
   if (!existing) {
-    throw new NotFoundError('Notificação não encontrada')
+    throw new NotFoundError('Notification not found')
   }
 
-  return prisma.notificacao.update({
+  return prisma.notification.update({
     where: { id },
     data: { deletedAt: new Date() },
   })
 }
 
 export async function countUnread(userId: string) {
-  const notificacoes = await prisma.notificacao.findMany({
-    where: { userId, status: 'NAO_LIDA', deletedAt: null },
+  return prisma.notification.count({
+    where: { userId, status: 'UNREAD', deletedAt: null },
   })
-  return notificacoes.length
 }

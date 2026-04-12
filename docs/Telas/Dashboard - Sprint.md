@@ -17,7 +17,7 @@
 
 - **Horas Registradas:** total de horas lançadas por cada usuário
 - **Custo Individual:** horas x valor/hora
-- **Cards Atribuídos:** quantidade de cards ativos e concluídos
+- **Cards Atribuídos:** quantidade de cards actives e concluídos
 - **Ranking de Usuários:** baseado em produtividade, tarefas concluídas e eficiência
 - **Média de Qualidade e Dificuldade:** extraído de [[SprintFeedback]]
 
@@ -32,7 +32,7 @@
 
 - Cards com **atraso crítico** (endDate + prioridade alta)
 - Cards bloqueados ou sem movimentação nos últimos X dias
-- Usuários com menos progresso relativo ao planejado
+- Usuários com menos progresso relactive ao planejado
 
 ---
 
@@ -66,8 +66,8 @@
 
 ## 🧠 Regras Implícitas
 
-- Métricas calculadas apenas com [[UsuarioProjeto]] ativo
-- Somente cards ativos ou concluídos contam para métricas
+- Métricas calculadas apenas com [[UsuarioProjeto]] active
+- Somente cards actives ou concluídos contam para métricas
 - Histórico de alterações auditado em [[Auditoria]]
 
 ---

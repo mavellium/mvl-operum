@@ -8,7 +8,7 @@
 
 - Nome
 - Descrição
-- Status (ativo | inativo | concluído | arquivado)
+- Status (active | inactive | concluído | arquivado)
 - CursoId (opcional, se for contexto acadêmico)
 - TurmaId (opcional, se for contexto acadêmico)
 - Data de Criação
@@ -50,8 +50,8 @@
 - Um [[Projeto]] é o container de trabalho dentro de um [[Tenant]]
 - Todo [[Projeto]] deve pertencer a um [[Tenant]]
 - Status define visibilidade e operação:
-    - ativo → operação normal
-    - inativo → não aceita novas alterações
+    - active → operação normal
+    - inactive → não aceita novas alterações
     - concluído → trabalho finalizado, apenas leitura
     - arquivado → histórico, somente leitura
 
@@ -59,7 +59,7 @@
 
 ### Associação de Usuários
 
-- Um [[Usuário]] só pode acessar o [[Projeto]] se existir um [[UsuárioProjeto]] ativo
+- Um [[Usuário]] só pode acessar o [[Projeto]] se existir um [[UsuárioProjeto]] active
 - Um [[Usuário]] pode possuir múltiplos [[Papel]] dentro do mesmo [[Projeto]]
 - Associação duplicada de [[Usuário]] ao mesmo [[Projeto]] não é permitida
 
@@ -90,10 +90,10 @@
 
 ## 🔐 Regras de Segurança
 
-- Usuários só podem acessar dados se houver vínculo ativo via [[UsuárioProjeto]]
+- Usuários só podem acessar dados se houver vínculo active via [[UsuárioProjeto]]
 - Operações críticas exigem auditoria
 - Apenas administradores do [[Tenant]] ou do [[Projeto]] podem modificar usuários e papéis
-- Projetos inativos ou arquivados não podem ter alterações de dados
+- Projetos inactives ou arquivados não podem ter alterações de dados
 
 ---
 
@@ -119,8 +119,8 @@
 
 ### Alteração de status
 
-- Dado um [[Projeto]] ativo
-- Quando alterar para inativo ou arquivado
+- Dado um [[Projeto]] active
+- Quando alterar para inactive ou arquivado
 - Então o sistema deve impedir alterações futuras de dados
 - E notificar usuários do projeto sobre a mudança de status
 
@@ -131,7 +131,7 @@
 - Dado um [[Usuário]] associado
 - Quando tentar acessar o [[Projeto]]
 - Então o sistema valida vínculo e papéis
-- Usuário sem vínculo ativo ou removido não consegue acessar
+- Usuário sem vínculo active ou removido não consegue acessar
 
 ---
 
@@ -146,7 +146,7 @@
 
 ## 🔄 Estados
 
-- ativo
-- inativo
+- active
+- inactive
 - concluído
 - arquivado

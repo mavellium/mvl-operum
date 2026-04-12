@@ -17,8 +17,10 @@ vi.mock('@/lib/prisma', () => ({
     },
     userProjectRole: {
       findUnique: vi.fn(),
+      findMany: vi.fn(),
       create: vi.fn(),
       update: vi.fn(),
+      updateMany: vi.fn(),
     },
   },
 }))
@@ -30,12 +32,13 @@ import {
   findById,
   updateRole,
   deleteRole,
+  softDeleteRole,
   assignPermission,
   removePermission,
   assignUserToProject,
 } from '@/services/roleService'
 
-const mockPrisma = prisma as {
+const mockPrisma = prisma as unknown as {
   role: {
     findUnique: ReturnType<typeof vi.fn>
     findFirst: ReturnType<typeof vi.fn>
@@ -50,8 +53,10 @@ const mockPrisma = prisma as {
   }
   userProjectRole: {
     findUnique: ReturnType<typeof vi.fn>
+    findMany: ReturnType<typeof vi.fn>
     create: ReturnType<typeof vi.fn>
     update: ReturnType<typeof vi.fn>
+    updateMany: ReturnType<typeof vi.fn>
   }
 }
 
@@ -65,39 +70,39 @@ describe('RoleService', () => {
       mockPrisma.role.findFirst.mockResolvedValue(null)
       mockPrisma.role.create.mockResolvedValue({
         id: 'r1',
-        nome: 'Admin',
+        name: 'Admin',
         tenantId: 'tenant-1',
-        escopo: 'TENANT',
-        descricao: null,
+        scope: 'TENANT',
+        description: null,
         deletedAt: null,
       })
 
       const role = await createRole({
-        nome: 'Admin',
+        name: 'Admin',
         tenantId: 'tenant-1',
-        escopo: 'TENANT',
+        scope: 'TENANT',
       })
-      expect(role.nome).toBe('Admin')
-      expect(role.escopo).toBe('TENANT')
+      expect(role.name).toBe('Admin')
+      expect(role.scope).toBe('TENANT')
     })
 
     it('should create role with PROJETO scope', async () => {
       mockPrisma.role.findFirst.mockResolvedValue(null)
       mockPrisma.role.create.mockResolvedValue({
         id: 'r2',
-        nome: 'Project Admin',
+        name: 'Project Admin',
         tenantId: 'tenant-1',
-        escopo: 'PROJETO',
-        descricao: null,
+        scope: 'PROJETO',
+        description: null,
         deletedAt: null,
       })
 
       const role = await createRole({
-        nome: 'Project Admin',
+        name: 'Project Admin',
         tenantId: 'tenant-1',
-        escopo: 'PROJETO',
+        scope: 'PROJETO',
       })
-      expect(role.escopo).toBe('PROJETO')
+      expect(role.scope).toBe('PROJETO')
     })
 
     it('should reject duplicate role name in tenant with same scope', async () => {
@@ -105,19 +110,39 @@ describe('RoleService', () => {
 
       await expect(
         createRole({
-          nome: 'Admin',
+          name: 'Admin',
           tenantId: 'tenant-1',
-          escopo: 'TENANT',
+          scope: 'TENANT',
         }),
-      ).rejects.toThrow(/já existe/i)
+      ).rejects.toThrow(/already exists/i)
+    })
+
+    it('should preserve original case in name and store lowercase in nameKey', async () => {
+      mockPrisma.role.findFirst.mockResolvedValue(null)
+      mockPrisma.role.create.mockResolvedValue({
+        id: 'r1',
+        name: 'TI',
+        nameKey: 'ti',
+        tenantId: 'tenant-1',
+        scope: 'PROJETO',
+        deletedAt: null,
+      })
+
+      await createRole({ name: 'TI', tenantId: 'tenant-1', scope: 'PROJETO' })
+
+      expect(mockPrisma.role.create).toHaveBeenCalledWith(
+        expect.objectContaining({
+          data: expect.objectContaining({ name: 'TI', nameKey: 'ti' }),
+        }),
+      )
     })
   })
 
   describe('findAllByTenant', () => {
     it('should return roles for tenant', async () => {
       mockPrisma.role.findMany.mockResolvedValue([
-        { id: 'r1', nome: 'Admin' },
-        { id: 'r2', nome: 'Member' },
+        { id: 'r1', name: 'Admin' },
+        { id: 'r2', name: 'Member' },
       ])
 
       const roles = await findAllByTenant('tenant-1')
@@ -135,7 +160,7 @@ describe('RoleService', () => {
       await findAllByTenant('tenant-1', { scope: 'TENANT' })
       expect(mockPrisma.role.findMany).toHaveBeenCalledWith(
         expect.objectContaining({
-          where: expect.objectContaining({ escopo: 'TENANT' }),
+          where: expect.objectContaining({ scope: 'TENANT' }),
         }),
       )
     })
@@ -145,12 +170,12 @@ describe('RoleService', () => {
     it('should return role with permissions', async () => {
       mockPrisma.role.findUnique.mockResolvedValue({
         id: 'r1',
-        nome: 'Admin',
-        permissoes: [{ permission: { nome: 'read_cards' } }],
+        name: 'Admin',
+        permissions: [{ permission: { name: 'read_cards' } }],
       })
 
       const role = await findById('r1')
-      expect(role?.nome).toBe('Admin')
+      expect(role?.name).toBe('Admin')
     })
 
     it('should return null for deleted role', async () => {
@@ -162,27 +187,27 @@ describe('RoleService', () => {
   })
 
   describe('updateRole', () => {
-    it('should update role nome', async () => {
+    it('should update role name', async () => {
       mockPrisma.role.findUnique.mockResolvedValue({
         id: 'r1',
-        nome: 'Old',
+        name: 'Old',
         deletedAt: null,
       })
       mockPrisma.role.update.mockResolvedValue({
         id: 'r1',
-        nome: 'New Name',
+        name: 'New Name',
       })
 
-      const role = await updateRole('r1', { nome: 'New Name' })
-      expect(role.nome).toBe('New Name')
+      const role = await updateRole('r1', { name: 'New Name' })
+      expect(role.name).toBe('New Name')
     })
 
     it('should throw if role not found', async () => {
       mockPrisma.role.findUnique.mockResolvedValue(null)
 
       await expect(
-        updateRole('nonexistent', { nome: 'Updated' }),
-      ).rejects.toThrow(/não encontrad/i)
+        updateRole('nonexistent', { name: 'Updated' }),
+      ).rejects.toThrow(/not found/i)
     })
   })
 
@@ -221,7 +246,7 @@ describe('RoleService', () => {
 
       await expect(
         assignPermission('r1', 'perm-1'),
-      ).rejects.toThrow(/já tem essa permissão/i)
+      ).rejects.toThrow(/already has/i)
     })
   })
 
@@ -243,43 +268,79 @@ describe('RoleService', () => {
 
       await expect(
         removePermission('r1', 'perm-1'),
-      ).rejects.toThrow(/não encontrad/i)
+      ).rejects.toThrow(/not found/i)
+    })
+  })
+
+  describe('softDeleteRole', () => {
+    it('should soft-delete linked UserProjectRole rows before soft-deleting the role', async () => {
+      mockPrisma.userProjectRole.updateMany.mockResolvedValue({ count: 2 })
+      mockPrisma.role.update.mockResolvedValue({ id: 'r1', deletedAt: new Date() })
+
+      await softDeleteRole('r1')
+
+      expect(mockPrisma.userProjectRole.updateMany).toHaveBeenCalledWith({
+        where: { roleId: 'r1', deletedAt: null },
+        data: { deletedAt: expect.any(Date) },
+      })
+      expect(mockPrisma.role.update).toHaveBeenCalledWith({
+        where: { id: 'r1' },
+        data: { deletedAt: expect.any(Date) },
+      })
+    })
+
+    it('should soft-delete the role even if no UserProjectRole rows exist', async () => {
+      mockPrisma.userProjectRole.updateMany.mockResolvedValue({ count: 0 })
+      mockPrisma.role.update.mockResolvedValue({ id: 'r2', deletedAt: new Date() })
+
+      await softDeleteRole('r2')
+
+      expect(mockPrisma.role.update).toHaveBeenCalledWith({
+        where: { id: 'r2' },
+        data: { deletedAt: expect.any(Date) },
+      })
     })
   })
 
   describe('assignUserToProject', () => {
-    it('should create UserProjectRole link', async () => {
+    it('should create UserProjectRole link using userId_projectId unique key', async () => {
       mockPrisma.userProjectRole.findUnique.mockResolvedValue(null)
       mockPrisma.userProjectRole.create.mockResolvedValue({
         id: 'upr1',
         userId: 'u1',
-        projetoId: 'p1',
+        projectId: 'p1',
         roleId: 'r1',
       })
 
       const link = await assignUserToProject('u1', 'p1', 'r1')
       expect(link.userId).toBe('u1')
       expect(link.roleId).toBe('r1')
+
+      expect(mockPrisma.userProjectRole.findUnique).toHaveBeenCalledWith(
+        expect.objectContaining({
+          where: { userId_projectId: { userId: 'u1', projectId: 'p1' } },
+        }),
+      )
     })
 
     it('should reject duplicate user-project assignment', async () => {
       mockPrisma.userProjectRole.findUnique.mockResolvedValue({
         id: 'existing',
         userId: 'u1',
-        projetoId: 'p1',
+        projectId: 'p1',
         deletedAt: null,
       })
 
       await expect(
         assignUserToProject('u1', 'p1', 'r2'),
-      ).rejects.toThrow(/já atribuído/i)
+      ).rejects.toThrow(/already assigned/i)
     })
 
     it('should reactivate deleted assignment', async () => {
       mockPrisma.userProjectRole.findUnique.mockResolvedValue({
         id: 'upr1',
         userId: 'u1',
-        projetoId: 'p1',
+        projectId: 'p1',
         deletedAt: new Date(),
       })
       mockPrisma.userProjectRole.update.mockResolvedValue({

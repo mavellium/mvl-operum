@@ -30,67 +30,67 @@ beforeEach(() => {
 
 describe('PermissionService', () => {
   describe('create', () => {
-    it('should create permission with recurso and acao', async () => {
+    it('should create permission with resource and action', async () => {
       mockPrisma.permission.findUnique.mockResolvedValue(null)
       mockPrisma.permission.create.mockResolvedValue({
         id: 'p1',
-        nome: 'cards:create',
-        recurso: 'cards',
-        acao: 'create',
-        descricao: null,
+        name: 'cards:create',
+        resource: 'cards',
+        action:'create',
+        description: null,
         deletedAt: null,
       })
 
       const perm = await create({
-        nome: 'cards:create',
-        recurso: 'cards',
-        acao: 'create',
+        name: 'cards:create',
+        resource: 'cards',
+        action:'create',
       })
-      expect(perm.recurso).toBe('cards')
-      expect(perm.acao).toBe('create')
+      expect(perm.resource).toBe('cards')
+      expect(perm.action).toBe('create')
     })
 
-    it('should accept optional descricao', async () => {
+    it('should accept optional description', async () => {
       mockPrisma.permission.findUnique.mockResolvedValue(null)
       mockPrisma.permission.create.mockResolvedValue({
         id: 'p1',
-        nome: 'cards:read',
-        recurso: 'cards',
-        acao: 'read',
-        descricao: 'Read cards',
+        name: 'cards:read',
+        resource: 'cards',
+        action:'read',
+        description: 'Read cards',
         deletedAt: null,
       })
 
       const perm = await create({
-        nome: 'cards:read',
-        recurso: 'cards',
-        acao: 'read',
-        descricao: 'Read cards',
+        name: 'cards:read',
+        resource: 'cards',
+        action:'read',
+        description: 'Read cards',
       })
-      expect(perm.descricao).toBe('Read cards')
+      expect(perm.description).toBe('Read cards')
     })
 
-    it('should reject duplicate permission (nome)', async () => {
+    it('should reject duplicate permission (name)', async () => {
       mockPrisma.permission.findUnique.mockResolvedValue({ id: 'existing' })
 
       await expect(
         create({
-          nome: 'cards:create',
-          recurso: 'cards',
-          acao: 'create',
+          name: 'cards:create',
+          resource: 'cards',
+          action:'create',
         }),
       ).rejects.toThrow(/já existe/i)
     })
 
-    it('should reject duplicate recurso:acao', async () => {
+    it('should reject duplicate resource:action', async () => {
       mockPrisma.permission.findUnique.mockResolvedValueOnce(null)
       mockPrisma.permission.findUnique.mockResolvedValueOnce({ id: 'existing' })
 
       await expect(
         create({
-          nome: 'cards:write',
-          recurso: 'cards',
-          acao: 'create',
+          name: 'cards:write',
+          resource: 'cards',
+          action:'create',
         }),
       ).rejects.toThrow(/já existe/i)
     })
@@ -99,8 +99,8 @@ describe('PermissionService', () => {
   describe('findAll', () => {
     it('should return all active permissions', async () => {
       mockPrisma.permission.findMany.mockResolvedValue([
-        { id: 'p1', nome: 'cards:read' },
-        { id: 'p2', nome: 'cards:create' },
+        { id: 'p1', name: 'cards:read' },
+        { id: 'p2', name: 'cards:create' },
       ])
 
       const perms = await findAll()
@@ -112,13 +112,13 @@ describe('PermissionService', () => {
       )
     })
 
-    it('should support filtering by recurso', async () => {
+    it('should support filtering by resource', async () => {
       mockPrisma.permission.findMany.mockResolvedValue([])
 
-      await findAll({ recurso: 'cards' })
+      await findAll({ resource: 'cards' })
       expect(mockPrisma.permission.findMany).toHaveBeenCalledWith(
         expect.objectContaining({
-          where: expect.objectContaining({ recurso: 'cards' }),
+          where: expect.objectContaining({ resource: 'cards' }),
         }),
       )
     })
@@ -128,13 +128,13 @@ describe('PermissionService', () => {
     it('should return permission by id', async () => {
       mockPrisma.permission.findUnique.mockResolvedValue({
         id: 'p1',
-        nome: 'cards:read',
-        recurso: 'cards',
-        acao: 'read',
+        name: 'cards:read',
+        resource: 'cards',
+        action:'read',
       })
 
       const perm = await findById('p1')
-      expect(perm?.nome).toBe('cards:read')
+      expect(perm?.name).toBe('cards:read')
     })
 
     it('should return null for non-existent id', async () => {
@@ -148,8 +148,8 @@ describe('PermissionService', () => {
   describe('findByRole', () => {
     it('should return permissions assigned to role', async () => {
       mockPrisma.permission.findMany.mockResolvedValue([
-        { id: 'p1', nome: 'cards:read' },
-        { id: 'p2', nome: 'cards:create' },
+        { id: 'p1', name: 'cards:read' },
+        { id: 'p2', name: 'cards:create' },
       ])
 
       const perms = await findByRole('r1')

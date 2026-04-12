@@ -3,28 +3,28 @@ import prisma from '@/lib/prisma'
 export async function registrarAcao(params: {
   tenantId: string
   userId?: string
-  acao: string
-  entidade: string
-  entidadeId?: string
-  detalhes?: Record<string, unknown>
+  action: string
+  entity: string
+  entityId?: string
+  details?: Record<string, unknown>
 }) {
-  return prisma.auditoria.create({
+  return prisma.auditLog.create({
     data: {
       tenantId: params.tenantId,
       userId: params.userId,
-      acao: params.acao,
-      entidade: params.entidade,
-      entidadeId: params.entidadeId,
-      detalhes: params.detalhes ? JSON.parse(JSON.stringify(params.detalhes)) : undefined,
+      action: params.action,
+      entity: params.entity,
+      entityId: params.entityId,
+      details: params.details ? JSON.parse(JSON.stringify(params.details)) : undefined,
     },
   })
 }
 
 export interface AuditoriaFilters {
   userId?: string
-  acao?: string
-  entidade?: string
-  entidadeId?: string
+  action?: string
+  entity?: string
+  entityId?: string
   desde?: Date
   ate?: Date
   skip?: number
@@ -35,9 +35,9 @@ export async function listarAuditorias(tenantId: string, filters: AuditoriaFilte
   const where: Record<string, unknown> = { tenantId }
 
   if (filters.userId) where.userId = filters.userId
-  if (filters.acao) where.acao = { contains: filters.acao, mode: 'insensitive' }
-  if (filters.entidade) where.entidade = filters.entidade
-  if (filters.entidadeId) where.entidadeId = filters.entidadeId
+  if (filters.action) where.action = { contains: filters.action, mode: 'insensitive' }
+  if (filters.entity) where.entity = filters.entity
+  if (filters.entityId) where.entityId = filters.entityId
   if (filters.desde || filters.ate) {
     where.timestamp = {
       ...(filters.desde ? { gte: filters.desde } : {}),
@@ -45,7 +45,7 @@ export async function listarAuditorias(tenantId: string, filters: AuditoriaFilte
     }
   }
 
-  return prisma.auditoria.findMany({
+  return prisma.auditLog.findMany({
     where,
     orderBy: { timestamp: 'desc' },
     skip: filters.skip ?? 0,
@@ -53,9 +53,9 @@ export async function listarAuditorias(tenantId: string, filters: AuditoriaFilte
   })
 }
 
-export async function buscarAuditoria(entidade: string, entidadeId: string) {
-  return prisma.auditoria.findMany({
-    where: { entidade, entidadeId },
+export async function buscarAuditoria(entity: string, entityId: string) {
+  return prisma.auditLog.findMany({
+    where: { entity, entityId },
     orderBy: { timestamp: 'desc' },
   })
 }
@@ -63,13 +63,13 @@ export async function buscarAuditoria(entidade: string, entidadeId: string) {
 export async function contarAuditorias(tenantId: string, filters: AuditoriaFilters = {}) {
   const where: Record<string, unknown> = { tenantId }
   if (filters.userId) where.userId = filters.userId
-  if (filters.acao) where.acao = { contains: filters.acao, mode: 'insensitive' }
-  if (filters.entidade) where.entidade = filters.entidade
+  if (filters.action) where.action = { contains: filters.action, mode: 'insensitive' }
+  if (filters.entity) where.entity = filters.entity
   if (filters.desde || filters.ate) {
     where.timestamp = {
       ...(filters.desde ? { gte: filters.desde } : {}),
       ...(filters.ate ? { lte: filters.ate } : {}),
     }
   }
-  return prisma.auditoria.count({ where })
+  return prisma.auditLog.count({ where })
 }

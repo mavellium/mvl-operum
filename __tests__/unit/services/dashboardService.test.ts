@@ -25,8 +25,8 @@ beforeEach(() => vi.clearAllMocks())
 describe('getSprintMetrics', () => {
   it('calculates cost and hours for a sprint', async () => {
     mockPrisma.timeEntry.findMany.mockResolvedValue([
-      { duration: 7200, user: { valorHora: 50 } }, // 2h × 50 = R$100
-      { duration: 3600, user: { valorHora: 80 } }, // 1h × 80 = R$80
+      { duration: 7200, user: { hourlyRate: 50 } }, // 2h × 50 = R$100
+      { duration: 3600, user: { hourlyRate: 80 } }, // 1h × 80 = R$80
     ])
     mockPrisma.card.findMany.mockResolvedValue([
       { id: 'c1', endDate: new Date('2024-01-01'), column: { title: 'Concluído' } },
@@ -42,7 +42,7 @@ describe('getSprintMetrics', () => {
 describe('getUserMetrics', () => {
   it('returns metrics per user', async () => {
     mockPrisma.user.findMany.mockResolvedValue([
-      { id: 'u1', name: 'Ana', valorHora: 50, timeEntries: [{ duration: 3600 }, { duration: 1800 }] },
+      { id: 'u1', name: 'Ana', hourlyRate: 50, timeEntries: [{ duration: 3600 }, { duration: 1800 }] },
     ])
     const metrics = await getUserMetrics('b1')
     expect(metrics).toHaveLength(1)
@@ -77,7 +77,7 @@ describe('getSprintDashboard', () => {
       dificuldade: 6,
     })
     mockPrisma.timeEntry.findMany.mockResolvedValue([
-      { duration: 7200, user: { valorHora: 50 } },
+      { duration: 7200, user: { hourlyRate: 50 } },
     ])
     mockPrisma.card.findMany.mockResolvedValue([
       { id: 'c1', endDate: null, column: { title: 'Concluído' } },
@@ -104,7 +104,7 @@ describe('getSprintsWithMetrics', () => {
       { id: 's2', name: 'Sprint 2', boardId: 'b1' },
     ])
     mockPrisma.timeEntry.findMany.mockResolvedValue([
-      { duration: 3600, user: { valorHora: 100 } },
+      { duration: 3600, user: { hourlyRate: 100 } },
     ])
     mockPrisma.card.findMany.mockResolvedValue([
       { id: 'c1', endDate: null, column: { title: 'Concluído' } },

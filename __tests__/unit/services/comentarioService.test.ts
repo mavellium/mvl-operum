@@ -3,7 +3,7 @@ import { describe, it, expect, vi, beforeEach } from 'vitest'
 
 vi.mock('@/lib/prisma', () => ({
   default: {
-    comentario: {
+    comment: {
       findUnique: vi.fn(),
       findMany: vi.fn(),
       create: vi.fn(),
@@ -16,7 +16,7 @@ import prisma from '@/lib/prisma'
 import { create, findAllByCard, findById, update, deleteComentario, addReacao } from '@/services/comentarioService'
 
 const mockPrisma = prisma as {
-  comentario: {
+  comment: {
     findUnique: ReturnType<typeof vi.fn>
     findMany: ReturnType<typeof vi.fn>
     create: ReturnType<typeof vi.fn>
@@ -30,14 +30,14 @@ beforeEach(() => {
 
 describe('ComentarioService', () => {
   describe('create', () => {
-    it('should create comentario with default tipo COMENTARIO', async () => {
-      mockPrisma.comentario.create.mockResolvedValue({
+    it('should create comment with default type COMMENT', async () => {
+      mockPrisma.comment.create.mockResolvedValue({
         id: 'co1',
         cardId: 'card-1',
         userId: 'user-1',
-        texto: 'Test comment',
-        tipo: 'COMENTARIO',
-        reacoes: null,
+        content: 'Test comment',
+        type: 'COMMENT',
+        reactions: null,
         deletedAt: null,
         createdAt: new Date(),
         updatedAt: new Date(),
@@ -46,66 +46,66 @@ describe('ComentarioService', () => {
       const comentario = await create({
         cardId: 'card-1',
         userId: 'user-1',
-        texto: 'Test comment',
+        content: 'Test comment',
       })
-      expect(comentario.texto).toBe('Test comment')
-      expect(comentario.tipo).toBe('COMENTARIO')
+      expect(comentario.content).toBe('Test comment')
+      expect(comentario.type).toBe('COMMENT')
     })
 
-    it('should create feedback tipo', async () => {
-      mockPrisma.comentario.create.mockResolvedValue({
+    it('should create FEEDBACK type', async () => {
+      mockPrisma.comment.create.mockResolvedValue({
         id: 'co1',
         cardId: 'card-1',
         userId: 'user-1',
-        texto: 'Test feedback',
-        tipo: 'FEEDBACK',
-        reacoes: null,
+        content: 'Test feedback',
+        type: 'FEEDBACK',
+        reactions: null,
         deletedAt: null,
       })
 
       const comentario = await create({
         cardId: 'card-1',
         userId: 'user-1',
-        texto: 'Test feedback',
-        tipo: 'FEEDBACK',
+        content: 'Test feedback',
+        type: 'FEEDBACK',
       })
-      expect(comentario.tipo).toBe('FEEDBACK')
+      expect(comentario.type).toBe('FEEDBACK')
     })
 
-    it('should reject empty texto', async () => {
+    it('should reject empty content', async () => {
       await expect(
-        create({ cardId: 'card-1', userId: 'user-1', texto: '' }),
+        create({ cardId: 'card-1', userId: 'user-1', content: '' }),
       ).rejects.toThrow()
     })
 
     it('should reject missing cardId', async () => {
       await expect(
-        create({ cardId: '', userId: 'user-1', texto: 'Comment' }),
+        create({ cardId: '', userId: 'user-1', content: 'Comment' }),
       ).rejects.toThrow()
     })
   })
 
   describe('findAllByCard', () => {
-    it('should return comentarios for given card', async () => {
-      mockPrisma.comentario.findMany.mockResolvedValue([
-        { id: 'co1', cardId: 'card-1', texto: 'Comment 1' },
-        { id: 'co2', cardId: 'card-1', texto: 'Comment 2' },
+    it('should return comments for given card', async () => {
+      mockPrisma.comment.findMany.mockResolvedValue([
+        { id: 'co1', cardId: 'card-1', content: 'Comment 1' },
+        { id: 'co2', cardId: 'card-1', content: 'Comment 2' },
       ])
 
       const comentarios = await findAllByCard('card-1')
       expect(comentarios).toHaveLength(2)
-      expect(mockPrisma.comentario.findMany).toHaveBeenCalledWith(
+      expect(mockPrisma.comment.findMany).toHaveBeenCalledWith(
         expect.objectContaining({
           where: expect.objectContaining({ cardId: 'card-1', deletedAt: null }),
         }),
       )
     })
 
-    it('should filter out deleted comentarios', async () => {
-      mockPrisma.comentario.findMany.mockResolvedValue([])
+    it('should filter out deleted comments', async () => {
+      mockPrisma.comment.findMany.mockResolvedValue([])
 
       await findAllByCard('card-1')
-      expect(mockPrisma.comentario.findMany).toHaveBeenCalledWith(
+      expect(mockPrisma.comment.findMany).toHaveBeenCalledWith(
         expect.objectContaining({
           where: expect.objectContaining({ deletedAt: null }),
         }),
@@ -113,10 +113,10 @@ describe('ComentarioService', () => {
     })
 
     it('should order by createdAt ascending', async () => {
-      mockPrisma.comentario.findMany.mockResolvedValue([])
+      mockPrisma.comment.findMany.mockResolvedValue([])
 
       await findAllByCard('card-1')
-      expect(mockPrisma.comentario.findMany).toHaveBeenCalledWith(
+      expect(mockPrisma.comment.findMany).toHaveBeenCalledWith(
         expect.objectContaining({
           orderBy: { createdAt: 'asc' },
         }),
@@ -125,10 +125,10 @@ describe('ComentarioService', () => {
   })
 
   describe('findById', () => {
-    it('should return comentario by id', async () => {
-      mockPrisma.comentario.findUnique.mockResolvedValue({
+    it('should return comment by id', async () => {
+      mockPrisma.comment.findUnique.mockResolvedValue({
         id: 'co1',
-        texto: 'Comment',
+        content: 'Comment',
         cardId: 'card-1',
         userId: 'user-1',
         deletedAt: null,
@@ -136,21 +136,21 @@ describe('ComentarioService', () => {
 
       const comentario = await findById('co1')
       expect(comentario?.id).toBe('co1')
-      expect(comentario?.texto).toBe('Comment')
+      expect(comentario?.content).toBe('Comment')
     })
 
     it('should return null for non-existent id', async () => {
-      mockPrisma.comentario.findUnique.mockResolvedValue(null)
+      mockPrisma.comment.findUnique.mockResolvedValue(null)
 
       const comentario = await findById('nonexistent')
       expect(comentario).toBeNull()
     })
 
-    it('should filter deleted comentarios', async () => {
-      mockPrisma.comentario.findUnique.mockResolvedValue(null)
+    it('should filter deleted comments', async () => {
+      mockPrisma.comment.findUnique.mockResolvedValue(null)
 
       await findById('co-deleted')
-      expect(mockPrisma.comentario.findUnique).toHaveBeenCalledWith(
+      expect(mockPrisma.comment.findUnique).toHaveBeenCalledWith(
         expect.objectContaining({
           where: expect.objectContaining({ deletedAt: null }),
         }),
@@ -159,81 +159,81 @@ describe('ComentarioService', () => {
   })
 
   describe('update', () => {
-    it('should update comentario texto', async () => {
-      mockPrisma.comentario.findUnique.mockResolvedValue({
+    it('should update comment content', async () => {
+      mockPrisma.comment.findUnique.mockResolvedValue({
         id: 'co1',
-        texto: 'Old',
+        content: 'Old',
         deletedAt: null,
       })
-      mockPrisma.comentario.update.mockResolvedValue({
+      mockPrisma.comment.update.mockResolvedValue({
         id: 'co1',
-        texto: 'Updated',
+        content: 'Updated',
       })
 
-      const comentario = await update('co1', { texto: 'Updated' })
-      expect(comentario.texto).toBe('Updated')
+      const comentario = await update('co1', { content: 'Updated' })
+      expect(comentario.content).toBe('Updated')
     })
 
-    it('should throw if comentario not found', async () => {
-      mockPrisma.comentario.findUnique.mockResolvedValue(null)
+    it('should throw if comment not found', async () => {
+      mockPrisma.comment.findUnique.mockResolvedValue(null)
 
       await expect(
-        update('nonexistent', { texto: 'Updated' }),
-      ).rejects.toThrow(/não encontrado/i)
+        update('nonexistent', { content: 'Updated' }),
+      ).rejects.toThrow(/not found/i)
     })
 
-    it('should reject invalid tipo', async () => {
+    it('should reject invalid type', async () => {
       await expect(
-        update('co1', { tipo: 'INVALID' as 'COMENTARIO' }),
+        update('co1', { type: 'INVALID' as 'COMMENT' }),
       ).rejects.toThrow()
     })
   })
 
   describe('deleteComentario', () => {
-    it('should soft delete comentario', async () => {
-      mockPrisma.comentario.findUnique.mockResolvedValue({
+    it('should soft delete comment', async () => {
+      mockPrisma.comment.findUnique.mockResolvedValue({
         id: 'co1',
         deletedAt: null,
       })
-      mockPrisma.comentario.update.mockResolvedValue({
+      mockPrisma.comment.update.mockResolvedValue({
         id: 'co1',
         deletedAt: expect.any(Date),
       })
 
       await deleteComentario('co1')
-      expect(mockPrisma.comentario.update).toHaveBeenCalledWith({
+      expect(mockPrisma.comment.update).toHaveBeenCalledWith({
         where: { id: 'co1' },
         data: { deletedAt: expect.any(Date) },
       })
     })
 
-    it('should throw if comentario not found', async () => {
-      mockPrisma.comentario.findUnique.mockResolvedValue(null)
+    it('should throw if comment not found', async () => {
+      mockPrisma.comment.findUnique.mockResolvedValue(null)
 
-      await expect(deleteComentario('nonexistent')).rejects.toThrow(/não encontrado/i)
+      await expect(deleteComentario('nonexistent')).rejects.toThrow(/not found/i)
     })
   })
 
   describe('addReacao', () => {
-    it('should add reaction to comentario', async () => {
-      mockPrisma.comentario.findUnique.mockResolvedValue({
+    it('should add reaction to comment', async () => {
+      mockPrisma.comment.findUnique.mockResolvedValue({
         id: 'co1',
-        reacoes: { thumbsUp: 1 },
+        reactions: { thumbsUp: 1 },
         deletedAt: null,
       })
-      mockPrisma.comentario.update.mockResolvedValue({
+      mockPrisma.comment.update.mockResolvedValue({
         id: 'co1',
-        reacoes: { thumbsUp: 2 },
+        reactions: { thumbsUp: 2 },
       })
 
       const comentario = await addReacao('co1', 'thumbsUp')
-      expect(comentario.reacoes).toBeDefined()
+      expect(comentario.reactions).toBeDefined()
     })
 
-    it('should throw if comentario not found', async () => {
-      mockPrisma.comentario.findUnique.mockResolvedValue(null)
+    it('should throw if comment not found', async () => {
+      mockPrisma.comment.findUnique.mockResolvedValue(null)
 
-      await expect(addReacao('nonexistent', 'thumbsUp')).rejects.toThrow(/não encontrado/i)
+      await expect(addReacao('nonexistent', 'thumbsUp')).rejects.toThrow(/not found/i)
     })
   })
 })

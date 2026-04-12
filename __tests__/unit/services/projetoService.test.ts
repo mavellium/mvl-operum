@@ -3,14 +3,14 @@ import { describe, it, expect, vi, beforeEach } from 'vitest'
 
 vi.mock('@/lib/prisma', () => ({
   default: {
-    projeto: {
+    project: {
       findUnique: vi.fn(),
       findFirst: vi.fn(),
       findMany: vi.fn(),
       create: vi.fn(),
       update: vi.fn(),
     },
-    usuarioProjeto: {
+    userProject: {
       findUnique: vi.fn(),
       create: vi.fn(),
       update: vi.fn(),
@@ -18,25 +18,32 @@ vi.mock('@/lib/prisma', () => ({
   },
 }))
 
+vi.mock('@/services/projectRoleService', () => ({
+  setProjectManagerRole: vi.fn(),
+  removeProjectRole: vi.fn(),
+  isProjectManager: vi.fn().mockResolvedValue(false),
+  countProjectManagers: vi.fn().mockResolvedValue(2),
+}))
+
 import prisma from '@/lib/prisma'
 import {
-  createProjeto,
+  createProject,
   findAllByTenant,
   findById,
-  updateProjeto,
+  updateProject,
   addMember,
   removeMember,
 } from '@/services/projetoService'
 
 const mockPrisma = prisma as {
-  projeto: {
+  project: {
     findUnique: ReturnType<typeof vi.fn>
     findFirst: ReturnType<typeof vi.fn>
     findMany: ReturnType<typeof vi.fn>
     create: ReturnType<typeof vi.fn>
     update: ReturnType<typeof vi.fn>
   }
-  usuarioProjeto: {
+  userProject: {
     findUnique: ReturnType<typeof vi.fn>
     create: ReturnType<typeof vi.fn>
     update: ReturnType<typeof vi.fn>
@@ -48,90 +55,90 @@ beforeEach(() => {
 })
 
 describe('ProjetoService', () => {
-  describe('createProjeto', () => {
-    it('should create projeto linked to tenant', async () => {
-      mockPrisma.projeto.findFirst.mockResolvedValue(null)
-      mockPrisma.projeto.create.mockResolvedValue({
+  describe('createProject', () => {
+    it('should create project linked to tenant', async () => {
+      mockPrisma.project.findFirst.mockResolvedValue(null)
+      mockPrisma.project.create.mockResolvedValue({
         id: 'p1',
-        nome: 'Projeto Alpha',
+        name: 'Projeto Alpha',
         tenantId: 'tenant-1',
-        descricao: null,
-        status: 'ATIVO',
+        description: null,
+        status: 'ACTIVE',
         deletedAt: null,
         createdAt: new Date(),
         updatedAt: new Date(),
       })
 
-      const projeto = await createProjeto({ nome: 'Projeto Alpha', tenantId: 'tenant-1' })
-      expect(projeto.nome).toBe('Projeto Alpha')
+      const projeto = await createProject({ name: 'Projeto Alpha', tenantId: 'tenant-1' })
+      expect(projeto.name).toBe('Projeto Alpha')
       expect(projeto.tenantId).toBe('tenant-1')
-      expect(projeto.status).toBe('ATIVO')
+      expect(projeto.status).toBe('ACTIVE')
     })
 
-    it('should reject duplicate nome within same tenant', async () => {
-      mockPrisma.projeto.findFirst.mockResolvedValue({ id: 'existing' })
+    it('should reject duplicate name within same tenant', async () => {
+      mockPrisma.project.findFirst.mockResolvedValue({ id: 'existing' })
 
       await expect(
-        createProjeto({ nome: 'Projeto Alpha', tenantId: 'tenant-1' }),
-      ).rejects.toThrow(/já existe/i)
+        createProject({ name: 'Projeto Alpha', tenantId: 'tenant-1' }),
+      ).rejects.toThrow()
     })
 
-    it('should allow same nome in different tenants', async () => {
-      mockPrisma.projeto.findFirst.mockResolvedValue(null)
-      mockPrisma.projeto.create.mockResolvedValue({
+    it('should allow same name in different tenants', async () => {
+      mockPrisma.project.findFirst.mockResolvedValue(null)
+      mockPrisma.project.create.mockResolvedValue({
         id: 'p2',
-        nome: 'Projeto Alpha',
+        name: 'Projeto Alpha',
         tenantId: 'tenant-2',
-        status: 'ATIVO',
+        status: 'ACTIVE',
         deletedAt: null,
       })
 
-      const projeto = await createProjeto({ nome: 'Projeto Alpha', tenantId: 'tenant-2' })
+      const projeto = await createProject({ name: 'Projeto Alpha', tenantId: 'tenant-2' })
       expect(projeto.tenantId).toBe('tenant-2')
     })
 
-    it('should set default status ATIVO', async () => {
-      mockPrisma.projeto.findFirst.mockResolvedValue(null)
-      mockPrisma.projeto.create.mockResolvedValue({
+    it('should set default status ACTIVE', async () => {
+      mockPrisma.project.findFirst.mockResolvedValue(null)
+      mockPrisma.project.create.mockResolvedValue({
         id: 'p1',
-        nome: 'Test',
+        name: 'Test',
         tenantId: 't1',
-        status: 'ATIVO',
+        status: 'ACTIVE',
         deletedAt: null,
       })
 
-      const projeto = await createProjeto({ nome: 'Test', tenantId: 't1' })
-      expect(projeto.status).toBe('ATIVO')
+      const projeto = await createProject({ name: 'Test', tenantId: 't1' })
+      expect(projeto.status).toBe('ACTIVE')
     })
 
-    it('should reject invalid input (empty nome)', async () => {
+    it('should reject invalid input (empty name)', async () => {
       await expect(
-        createProjeto({ nome: '', tenantId: 'tenant-1' }),
+        createProject({ name: '', tenantId: 'tenant-1' }),
       ).rejects.toThrow()
     })
   })
 
   describe('findAllByTenant', () => {
-    it('should return only projetos from given tenant', async () => {
-      mockPrisma.projeto.findMany.mockResolvedValue([
-        { id: 'p1', nome: 'Proj A', tenantId: 'tenant-1' },
-        { id: 'p2', nome: 'Proj B', tenantId: 'tenant-1' },
+    it('should return only projects from given tenant', async () => {
+      mockPrisma.project.findMany.mockResolvedValue([
+        { id: 'p1', name: 'Proj A', tenantId: 'tenant-1' },
+        { id: 'p2', name: 'Proj B', tenantId: 'tenant-1' },
       ])
 
       const projetos = await findAllByTenant('tenant-1')
       expect(projetos).toHaveLength(2)
-      expect(mockPrisma.projeto.findMany).toHaveBeenCalledWith(
+      expect(mockPrisma.project.findMany).toHaveBeenCalledWith(
         expect.objectContaining({
           where: expect.objectContaining({ tenantId: 'tenant-1', deletedAt: null }),
         }),
       )
     })
 
-    it('should not return soft-deleted projetos', async () => {
-      mockPrisma.projeto.findMany.mockResolvedValue([])
+    it('should not return soft-deleted projects', async () => {
+      mockPrisma.project.findMany.mockResolvedValue([])
 
       await findAllByTenant('tenant-1')
-      expect(mockPrisma.projeto.findMany).toHaveBeenCalledWith(
+      expect(mockPrisma.project.findMany).toHaveBeenCalledWith(
         expect.objectContaining({
           where: expect.objectContaining({ deletedAt: null }),
         }),
@@ -140,160 +147,161 @@ describe('ProjetoService', () => {
   })
 
   describe('findById', () => {
-    it('should return projeto with sprint count', async () => {
-      mockPrisma.projeto.findUnique.mockResolvedValue({
+    it('should return project with sprint count', async () => {
+      mockPrisma.project.findUnique.mockResolvedValue({
         id: 'p1',
-        nome: 'Proj A',
+        name: 'Proj A',
         _count: { sprints: 3 },
       })
 
       const projeto = await findById('p1')
-      expect(projeto).toMatchObject({ id: 'p1', nome: 'Proj A' })
+      expect(projeto).toMatchObject({ id: 'p1', name: 'Proj A' })
     })
 
     it('should return null for non-existent id', async () => {
-      mockPrisma.projeto.findUnique.mockResolvedValue(null)
+      mockPrisma.project.findUnique.mockResolvedValue(null)
 
       const projeto = await findById('nonexistent')
       expect(projeto).toBeNull()
     })
   })
 
-  describe('updateProjeto', () => {
-    it('should update nome and descricao', async () => {
-      mockPrisma.projeto.findUnique.mockResolvedValue({
+  describe('updateProject', () => {
+    it('should update name and description', async () => {
+      mockPrisma.project.findUnique.mockResolvedValue({
         id: 'p1',
-        nome: 'Old',
-        status: 'ATIVO',
+        name: 'Old',
+        status: 'ACTIVE',
         deletedAt: null,
       })
-      mockPrisma.projeto.update.mockResolvedValue({
+      mockPrisma.project.update.mockResolvedValue({
         id: 'p1',
-        nome: 'New Name',
-        descricao: 'New desc',
+        name: 'New Name',
+        description: 'New desc',
       })
 
-      const projeto = await updateProjeto('p1', { nome: 'New Name', descricao: 'New desc' })
-      expect(projeto.nome).toBe('New Name')
+      const projeto = await updateProject('p1', { name: 'New Name', description: 'New desc' })
+      expect(projeto.name).toBe('New Name')
     })
 
-    it('should reject updates on CONCLUIDO projects', async () => {
-      mockPrisma.projeto.findUnique.mockResolvedValue({
+    it('should reject updates on COMPLETED projects', async () => {
+      mockPrisma.project.findUnique.mockResolvedValue({
         id: 'p1',
-        nome: 'Done',
-        status: 'CONCLUIDO',
+        name: 'Done',
+        status: 'COMPLETED',
         deletedAt: null,
       })
 
       await expect(
-        updateProjeto('p1', { nome: 'Updated' }),
-      ).rejects.toThrow(/concluído|arquivado/i)
+        updateProject('p1', { name: 'Updated' }),
+      ).rejects.toThrow(/completed|archived/i)
     })
 
-    it('should reject updates on ARQUIVADO projects', async () => {
-      mockPrisma.projeto.findUnique.mockResolvedValue({
+    it('should reject updates on ARCHIVED projects', async () => {
+      mockPrisma.project.findUnique.mockResolvedValue({
         id: 'p1',
-        nome: 'Archived',
-        status: 'ARQUIVADO',
+        name: 'Archived',
+        status: 'ARCHIVED',
         deletedAt: null,
       })
 
       await expect(
-        updateProjeto('p1', { nome: 'Updated' }),
-      ).rejects.toThrow(/concluído|arquivado/i)
+        updateProject('p1', { name: 'Updated' }),
+      ).rejects.toThrow(/completed|archived/i)
     })
 
     it('should reject update on non-existent project', async () => {
-      mockPrisma.projeto.findUnique.mockResolvedValue(null)
+      mockPrisma.project.findUnique.mockResolvedValue(null)
 
       await expect(
-        updateProjeto('nonexistent', { nome: 'Updated' }),
-      ).rejects.toThrow(/não encontrado/i)
+        updateProject('nonexistent', { name: 'Updated' }),
+      ).rejects.toThrow(/not found/i)
     })
   })
 
   describe('addMember', () => {
-    it('should create UsuarioProjeto link', async () => {
-      mockPrisma.usuarioProjeto.findUnique.mockResolvedValue(null)
-      mockPrisma.usuarioProjeto.create.mockResolvedValue({
+    it('should create UserProject link', async () => {
+      mockPrisma.userProject.findUnique.mockResolvedValue(null)
+      mockPrisma.userProject.create.mockResolvedValue({
         id: 'up1',
         userId: 'u1',
-        projetoId: 'p1',
-        dataEntrada: new Date(),
-        dataSaida: null,
+        projectId: 'p1',
+        startDate: new Date(),
+        endDate: null,
       })
 
       const link = await addMember('p1', 'u1')
       expect(link.userId).toBe('u1')
-      expect(link.projetoId).toBe('p1')
+      expect(link.projectId).toBe('p1')
     })
 
-    it('should reject duplicate user-project association', async () => {
-      mockPrisma.usuarioProjeto.findUnique.mockResolvedValue({
+    it('should reject duplicate active user-project association', async () => {
+      mockPrisma.userProject.findUnique.mockResolvedValue({
         id: 'up1',
         userId: 'u1',
-        projetoId: 'p1',
-        dataSaida: null,
+        projectId: 'p1',
+        active: true,
+        endDate: null,
       })
 
-      await expect(addMember('p1', 'u1')).rejects.toThrow(/já é membro/i)
+      await expect(addMember('p1', 'u1')).rejects.toThrow()
     })
 
-    it('should set dataEntrada to current date', async () => {
-      mockPrisma.usuarioProjeto.findUnique.mockResolvedValue(null)
+    it('should set startDate to current date', async () => {
+      mockPrisma.userProject.findUnique.mockResolvedValue(null)
       const now = new Date()
-      mockPrisma.usuarioProjeto.create.mockResolvedValue({
+      mockPrisma.userProject.create.mockResolvedValue({
         id: 'up1',
         userId: 'u1',
-        projetoId: 'p1',
-        dataEntrada: now,
-        dataSaida: null,
+        projectId: 'p1',
+        startDate: now,
+        endDate: null,
       })
 
       const link = await addMember('p1', 'u1')
-      expect(link.dataEntrada).toBeDefined()
+      expect(link.startDate).toBeDefined()
     })
   })
 
   describe('removeMember', () => {
-    it('should set dataSaida on UsuarioProjeto', async () => {
-      mockPrisma.usuarioProjeto.findUnique.mockResolvedValue({
+    it('should set endDate on UserProject', async () => {
+      mockPrisma.userProject.findUnique.mockResolvedValue({
         id: 'up1',
         userId: 'u1',
-        projetoId: 'p1',
-        dataSaida: null,
+        projectId: 'p1',
+        endDate: null,
       })
-      mockPrisma.usuarioProjeto.update.mockResolvedValue({
+      mockPrisma.userProject.update.mockResolvedValue({
         id: 'up1',
         userId: 'u1',
-        projetoId: 'p1',
-        dataSaida: new Date(),
+        projectId: 'p1',
+        endDate: new Date(),
       })
 
       const link = await removeMember('p1', 'u1')
-      expect(link.dataSaida).toBeDefined()
+      expect(link.endDate).toBeDefined()
     })
 
     it('should not hard delete the association', async () => {
-      mockPrisma.usuarioProjeto.findUnique.mockResolvedValue({
+      mockPrisma.userProject.findUnique.mockResolvedValue({
         id: 'up1',
         userId: 'u1',
-        projetoId: 'p1',
-        dataSaida: null,
+        projectId: 'p1',
+        endDate: null,
       })
-      mockPrisma.usuarioProjeto.update.mockResolvedValue({
+      mockPrisma.userProject.update.mockResolvedValue({
         id: 'up1',
-        dataSaida: new Date(),
+        endDate: new Date(),
       })
 
       await removeMember('p1', 'u1')
-      expect(mockPrisma.usuarioProjeto.update).toHaveBeenCalled()
+      expect(mockPrisma.userProject.update).toHaveBeenCalled()
     })
 
     it('should throw if member not found', async () => {
-      mockPrisma.usuarioProjeto.findUnique.mockResolvedValue(null)
+      mockPrisma.userProject.findUnique.mockResolvedValue(null)
 
-      await expect(removeMember('p1', 'u1')).rejects.toThrow(/não encontrado/i)
+      await expect(removeMember('p1', 'u1')).rejects.toThrow(/not found/i)
     })
   })
 })

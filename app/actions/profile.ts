@@ -25,8 +25,12 @@ export async function updateProfileAction(prevState: ProfileActionState, formDat
       email: formData.get('email') as string,
       cargo: (formData.get('cargo') as string) || undefined,
       departamento: (formData.get('departamento') as string) || undefined,
-      valorHora: Number(formData.get('valorHora') ?? 0),
+      hourlyRate: Number(formData.get('hourlyRate') ?? 0),
     })
+    const avatarUrl = formData.get('avatarUrl') as string | null
+    if (avatarUrl) {
+      await updateAvatar(userId, avatarUrl)
+    }
     revalidatePath('/perfil')
     return { message: 'Perfil atualizado com sucesso' }
   } catch (err) {
@@ -48,6 +52,8 @@ export async function changePasswordAction(prevState: ProfileActionState, formDa
   }
 }
 
+// Apenas faz o upload para o Vercel Blob e retorna a URL.
+// NÃO salva no banco — quem chama é responsável por persistir a URL no contexto correto.
 export async function uploadAvatarAction(formData: FormData) {
   try {
     const { userId } = await verifySession()
@@ -55,10 +61,8 @@ export async function uploadAvatarAction(formData: FormData) {
     if (!file || file.size === 0) throw new Error('Arquivo inválido')
 
     const ext = file.name.split('.').pop()?.toLowerCase() ?? 'jpg'
-    const blob = await put(`avatars/${userId}/avatar.${ext}`, file, { access: 'public' })
+    const blob = await put(`avatars/${userId}/avatar.${ext}`, file, { access: 'public', addRandomSuffix: true })
 
-    await updateAvatar(userId, blob.url)
-    revalidatePath('/perfil')
     return { avatarUrl: blob.url }
   } catch (err) {
     return { error: err instanceof Error ? err.message : 'Erro ao fazer upload' }

@@ -3,17 +3,17 @@ import { CreateDepartamentoSchema, UpdateDepartamentoSchema } from '@/lib/valida
 
 describe('departamentoSchemas', () => {
   describe('CreateDepartamentoSchema', () => {
-    it('should accept valid departamento (nome, tenantId)', () => {
+    it('should accept valid departamento (name, tenantId)', () => {
       const result = CreateDepartamentoSchema.safeParse({
-        nome: 'Engenharia',
+        name: 'Engenharia',
         tenantId: 'tenant-1',
       })
       expect(result.success).toBe(true)
     })
 
-    it('should reject empty nome', () => {
+    it('should reject empty name', () => {
       const result = CreateDepartamentoSchema.safeParse({
-        nome: '',
+        name: '',
         tenantId: 'tenant-1',
       })
       expect(result.success).toBe(false)
@@ -21,74 +21,74 @@ describe('departamentoSchemas', () => {
 
     it('should reject missing tenantId', () => {
       const result = CreateDepartamentoSchema.safeParse({
-        nome: 'Engenharia',
+        name: 'Engenharia',
       })
       expect(result.success).toBe(false)
     })
 
-    it('should accept optional descricao', () => {
+    it('should accept optional description', () => {
       const result = CreateDepartamentoSchema.safeParse({
-        nome: 'Engenharia',
+        name: 'Engenharia',
         tenantId: 'tenant-1',
-        descricao: 'Departamento de engenharia',
+        description: 'Departamento de engenharia',
       })
       expect(result.success).toBe(true)
       if (result.success) {
-        expect(result.data.descricao).toBe('Departamento de engenharia')
+        expect(result.data.description).toBe('Departamento de engenharia')
       }
     })
 
-    it('should accept optional valorHora', () => {
+    it('should accept optional hourlyRate', () => {
       const result = CreateDepartamentoSchema.safeParse({
-        nome: 'Engenharia',
+        name: 'Engenharia',
         tenantId: 'tenant-1',
-        valorHora: 150.0,
+        hourlyRate: 150.0,
       })
       expect(result.success).toBe(true)
       if (result.success) {
-        expect(result.data.valorHora).toBe(150.0)
+        expect(result.data.hourlyRate).toBe(150.0)
       }
     })
 
-    it('should reject negative valorHora', () => {
+    it('should reject negative hourlyRate', () => {
       const result = CreateDepartamentoSchema.safeParse({
-        nome: 'Engenharia',
+        name: 'Engenharia',
         tenantId: 'tenant-1',
-        valorHora: -10,
+        hourlyRate: -10,
       })
       expect(result.success).toBe(false)
     })
 
-    it('should trim nome', () => {
+    it('should trim name', () => {
       const result = CreateDepartamentoSchema.safeParse({
-        nome: '  Engenharia  ',
+        name: '  Engenharia  ',
         tenantId: 'tenant-1',
       })
       expect(result.success).toBe(true)
       if (result.success) {
-        expect(result.data.nome).toBe('Engenharia')
+        expect(result.data.name).toBe('Engenharia')
       }
     })
   })
 
   describe('UpdateDepartamentoSchema', () => {
-    it('should accept partial updates (nome only)', () => {
-      const result = UpdateDepartamentoSchema.safeParse({ nome: 'Novo Nome' })
+    it('should accept partial updates (name only)', () => {
+      const result = UpdateDepartamentoSchema.safeParse({ name: 'Novo Nome' })
       expect(result.success).toBe(true)
     })
 
-    it('should accept ativo boolean', () => {
-      const result = UpdateDepartamentoSchema.safeParse({ ativo: false })
+    it('should accept active boolean', () => {
+      const result = UpdateDepartamentoSchema.safeParse({ active: false })
       expect(result.success).toBe(true)
     })
 
-    it('should accept valorHora update', () => {
-      const result = UpdateDepartamentoSchema.safeParse({ valorHora: 200 })
+    it('should accept hourlyRate update', () => {
+      const result = UpdateDepartamentoSchema.safeParse({ hourlyRate: 200 })
       expect(result.success).toBe(true)
     })
 
-    it('should reject negative valorHora', () => {
-      const result = UpdateDepartamentoSchema.safeParse({ valorHora: -5 })
+    it('should reject negative hourlyRate', () => {
+      const result = UpdateDepartamentoSchema.safeParse({ hourlyRate: -5 })
       expect(result.success).toBe(false)
     })
   })

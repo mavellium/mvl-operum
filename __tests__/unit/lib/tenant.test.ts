@@ -3,14 +3,14 @@ import { describe, it, expect, vi, beforeEach } from 'vitest'
 
 vi.mock('@/services/tenantService', () => ({
   getDefaultTenant: vi.fn(),
-  getTenantBySubdominio: vi.fn(),
+  getTenantBysubdomain: vi.fn(),
 }))
 
-import { getDefaultTenant, getTenantBySubdominio } from '@/services/tenantService'
+import { getDefaultTenant, getTenantBySubdomain } from '@/services/tenantService'
 import { resolveTenantId } from '@/lib/tenant'
 
 const mockGetDefault = getDefaultTenant as ReturnType<typeof vi.fn>
-const mockGetBySubdominio = getTenantBySubdominio as ReturnType<typeof vi.fn>
+const mockGetBysubdomain = getTenantBySubdomain as ReturnType<typeof vi.fn>
 
 beforeEach(() => {
   vi.clearAllMocks()
@@ -18,7 +18,7 @@ beforeEach(() => {
 
 describe('resolveTenantId', () => {
   it('should return default tenant id when no subdomain provided', async () => {
-    mockGetDefault.mockResolvedValue({ id: 't-default', subdominio: 'default' })
+    mockGetDefault.mockResolvedValue({ id: 't-default', subdomain: 'default' })
 
     const tenantId = await resolveTenantId()
     expect(tenantId).toBe('t-default')
@@ -26,15 +26,15 @@ describe('resolveTenantId', () => {
   })
 
   it('should resolve tenant from subdomain when provided', async () => {
-    mockGetBySubdominio.mockResolvedValue({ id: 't-acme', subdominio: 'acme' })
+    mockGetBysubdomain.mockResolvedValue({ id: 't-acme', subdomain: 'acme' })
 
     const tenantId = await resolveTenantId('acme')
     expect(tenantId).toBe('t-acme')
-    expect(mockGetBySubdominio).toHaveBeenCalledWith('acme')
+    expect(mockGetBysubdomain).toHaveBeenCalledWith('acme')
   })
 
   it('should throw when subdomain tenant not found', async () => {
-    mockGetBySubdominio.mockResolvedValue(null)
+    mockGetBysubdomain.mockResolvedValue(null)
 
     await expect(resolveTenantId('nonexistent')).rejects.toThrow(/tenant/i)
   })

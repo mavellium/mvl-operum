@@ -15,23 +15,23 @@ export async function createTenant(input: CreateTenantInput) {
     throw new Error(parsed.error.issues[0].message)
   }
 
-  const { nome, subdominio, config } = parsed.data
+  const { name, subdomain, config } = parsed.data
 
   const existing = await prisma.tenant.findUnique({
-    where: { subdominio },
+    where: { subdomain },
   })
   if (existing) {
     throw new ConflictError('Subdomínio já está em uso')
   }
 
   return prisma.tenant.create({
-    data: { nome, subdominio, config: config ?? undefined },
+    data: { name, subdomain, config: config ?? undefined },
   })
 }
 
-export async function getTenantBySubdominio(subdominio: string) {
+export async function getTenantBySubdomain(subdomain: string) {
   return prisma.tenant.findUnique({
-    where: { subdominio, deletedAt: null },
+    where: { subdomain, deletedAt: null },
   })
 }
 
@@ -43,7 +43,7 @@ export async function getTenantById(id: string) {
 
 export async function getDefaultTenant() {
   return prisma.tenant.findUnique({
-    where: { subdominio: 'default', deletedAt: null },
+    where: { subdomain: 'default', deletedAt: null },
   })
 }
 

@@ -44,7 +44,7 @@
 
 - Uma [[Tag]] só pode ser associada a [[Card]]s do mesmo [[Tenant]]
 - Não é permitido duplicar a mesma tag em um [[Card]]
-- Tags podem ser criadas apenas por [[Usuário]] ativo
+- Tags podem ser criadas apenas por [[Usuário]] active
 
 ---
 
@@ -57,7 +57,7 @@
 
 ## 🔐 Regras de Segurança
 
-- Apenas [[Usuário]] ativos podem criar, editar ou remover tags
+- Apenas [[Usuário]] actives podem criar, editar ou remover tags
 - Associar ou remover tags de [[Card]] deve respeitar permissões do [[Projeto]]
 - Todas as alterações devem ser auditadas
 
@@ -67,7 +67,7 @@
 
 ### Criação de tag
 
-- Dado um [[Usuário]] ativo
+- Dado um [[Usuário]] active
 - Quando criar uma [[Tag]]
 - Então a tag deve ser registrada com nome e cor
 - E vinculada ao [[Usuário]] criador

@@ -5,7 +5,7 @@ Gerenciar usuários do sistema, atribuir papéis, departamentos e permissões.
 ### 📄 Componentes
 
 - **Lista de Usuários**
-    - Nome, email, status (ativo/inativo/bloqueado), departamento, papel
+    - Nome, email, status (active/inactive/bloqueado), departamento, papel
     - Filtro por papel, departamento ou status
     - Pesquisa rápida por nome/email
 - **Detalhes do Usuário**

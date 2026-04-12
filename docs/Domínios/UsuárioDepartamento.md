@@ -9,7 +9,7 @@
 - [[Departamento]]
 - Data de Associação
 - Data de Saída (opcional)
-- Status (ativo | inativo | removido)
+- Status (active | inactive | removido)
 
 ---
 
@@ -46,7 +46,7 @@
 
 ### Consistência
 
-- Não pode existir duplicidade de vínculo ativo para o mesmo par:
+- Não pode existir duplicidade de vínculo active para o mesmo par:
     - ([[Usuário]], [[Departamento]])
 - Um [[UsuárioDepartamento]] deve pertencer ao mesmo [[Tenant]] do [[Usuário]] e do [[Departamento]]
 
@@ -55,12 +55,12 @@
 ### Ciclo de vida
 
 - Um [[UsuárioDepartamento]] pode possuir os estados:
-    - ativo
-    - inativo
+    - active
+    - inactive
     - removido
 - Um vínculo:
-    - ativo → válido para uso
-    - inativo → mantido para histórico, sem efeito operacional
+    - active → válido para uso
+    - inactive → mantido para histórico, sem efeito operacional
     - removido → apenas histórico, não reutilizável
 
 ---
@@ -68,8 +68,8 @@
 ### Integridade
 
 - Um [[UsuárioDepartamento]] não pode ser ativado se:
-    - o [[Usuário]] estiver inativo ou bloqueado
-    - o [[Departamento]] estiver inativo
+    - o [[Usuário]] estiver inactive ou bloqueado
+    - o [[Departamento]] estiver inactive
 
 ---
 
@@ -96,8 +96,8 @@
 
 ### Associação válida
 
-- Dado um [[Usuário]] ativo
-- E um [[Departamento]] ativo
+- Dado um [[Usuário]] active
+- E um [[Departamento]] active
 - Quando associar o usuário ao departamento
 - Então deve ser criado um [[UsuárioDepartamento]] válido
 
@@ -105,7 +105,7 @@
 
 ### Associação duplicada
 
-- Dado que já existe um vínculo ativo entre [[Usuário]] e [[Departamento]]
+- Dado que já existe um vínculo active entre [[Usuário]] e [[Departamento]]
 - Quando tentar criar um novo vínculo
 - Então o sistema deve impedir a operação
 
@@ -113,7 +113,7 @@
 
 ### Associação inválida
 
-- Dado um [[Departamento]] inativo
+- Dado um [[Departamento]] inactive
 - Quando tentar associar um [[Usuário]]
 - Então o sistema deve impedir a operação
 
@@ -121,7 +121,7 @@
 
 ### Remoção de vínculo
 
-- Dado um [[UsuárioDepartamento]] ativo
+- Dado um [[UsuárioDepartamento]] active
 - Quando for removido
 - Então o vínculo deve ser marcado como removido
 - E não deve ser reutilizado
@@ -139,6 +139,6 @@
 
 ## 🔄 Estados
 
-- ativo
-- inativo
+- active
+- inactive
 - removido

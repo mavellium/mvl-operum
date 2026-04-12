@@ -3,11 +3,12 @@ import { describe, it, expect, vi, beforeEach } from 'vitest'
 
 vi.mock('@/lib/prisma', () => ({
   default: {
-    notificacao: {
+    notification: {
       findUnique: vi.fn(),
       findMany: vi.fn(),
       create: vi.fn(),
       update: vi.fn(),
+      count: vi.fn(),
     },
   },
 }))
@@ -16,11 +17,12 @@ import prisma from '@/lib/prisma'
 import { create, findAllByUser, findById, markAsRead, markAsArchived, deleteNotificacao, countUnread } from '@/services/notificacaoService'
 
 const mockPrisma = prisma as {
-  notificacao: {
+  notification: {
     findUnique: ReturnType<typeof vi.fn>
     findMany: ReturnType<typeof vi.fn>
     create: ReturnType<typeof vi.fn>
     update: ReturnType<typeof vi.fn>
+    count: ReturnType<typeof vi.fn>
   }
 }
 
@@ -30,91 +32,91 @@ beforeEach(() => {
 
 describe('NotificacaoService', () => {
   describe('create', () => {
-    it('should create notificacao with default status NAO_LIDA', async () => {
-      mockPrisma.notificacao.create.mockResolvedValue({
+    it('should create notification with default status UNREAD', async () => {
+      mockPrisma.notification.create.mockResolvedValue({
         id: 'n1',
         userId: 'user-1',
-        tipo: 'COMENTARIO',
-        titulo: 'Novo comentário',
-        mensagem: 'Alguém comentou',
-        status: 'NAO_LIDA',
-        referencia: null,
-        referenciaTipo: null,
+        type: 'COMMENT',
+        title: 'Novo comentário',
+        message: 'Alguém comentou',
+        status: 'UNREAD',
+        reference: null,
+        referenceType: null,
         deletedAt: null,
-        criadoEm: new Date(),
-        lido_em: null,
+        createdAt: new Date(),
+        readAt: null,
         updatedAt: new Date(),
       })
 
       const notif = await create({
         userId: 'user-1',
-        tipo: 'COMENTARIO',
-        titulo: 'Novo comentário',
-        mensagem: 'Alguém comentou',
+        type: 'COMMENT',
+        title: 'Novo comentário',
+        message: 'Alguém comentou',
       })
-      expect(notif.status).toBe('NAO_LIDA')
-      expect(notif.tipo).toBe('COMENTARIO')
+      expect(notif.status).toBe('UNREAD')
+      expect(notif.type).toBe('COMMENT')
     })
 
-    it('should create with referencia and referenciaTipo', async () => {
-      mockPrisma.notificacao.create.mockResolvedValue({
+    it('should create with reference and referenceType', async () => {
+      mockPrisma.notification.create.mockResolvedValue({
         id: 'n1',
         userId: 'user-1',
-        tipo: 'ATRIBUICAO',
-        titulo: 'Card atribuído',
-        mensagem: 'Você foi atribuído',
-        referencia: 'card-123',
-        referenciaTipo: 'CARD',
-        status: 'NAO_LIDA',
+        type: 'ASSIGNMENT',
+        title: 'Card atribuído',
+        message: 'Você foi atribuído',
+        reference: 'card-123',
+        referenceType: 'CARD',
+        status: 'UNREAD',
         deletedAt: null,
       })
 
       const notif = await create({
         userId: 'user-1',
-        tipo: 'ATRIBUICAO',
-        titulo: 'Card atribuído',
-        mensagem: 'Você foi atribuído',
-        referencia: 'card-123',
-        referenciaTipo: 'CARD',
+        type: 'ASSIGNMENT',
+        title: 'Card atribuído',
+        message: 'Você foi atribuído',
+        reference: 'card-123',
+        referenceType: 'CARD',
       })
-      expect(notif.referencia).toBe('card-123')
-      expect(notif.referenciaTipo).toBe('CARD')
+      expect(notif.reference).toBe('card-123')
+      expect(notif.referenceType).toBe('CARD')
     })
 
-    it('should reject invalid tipo', async () => {
+    it('should reject invalid type', async () => {
       await expect(
         create({
           userId: 'user-1',
-          tipo: 'INVALIDO' as 'COMENTARIO',
-          titulo: 'Test',
-          mensagem: 'Test',
+          type: 'INVALIDO' as 'COMMENT',
+          title: 'Test',
+          message: 'Test',
         }),
       ).rejects.toThrow()
     })
   })
 
   describe('findAllByUser', () => {
-    it('should return notificacoes for user ordered by date desc', async () => {
-      mockPrisma.notificacao.findMany.mockResolvedValue([
-        { id: 'n1', userId: 'user-1', tipo: 'COMENTARIO', status: 'NAO_LIDA' },
-        { id: 'n2', userId: 'user-1', tipo: 'ATRIBUICAO', status: 'LIDA' },
+    it('should return notifications for user ordered by date desc', async () => {
+      mockPrisma.notification.findMany.mockResolvedValue([
+        { id: 'n1', userId: 'user-1', type: 'COMMENT', status: 'UNREAD' },
+        { id: 'n2', userId: 'user-1', type: 'ASSIGNMENT', status: 'READ' },
       ])
 
       const notifs = await findAllByUser('user-1')
       expect(notifs).toHaveLength(2)
-      expect(mockPrisma.notificacao.findMany).toHaveBeenCalledWith(
+      expect(mockPrisma.notification.findMany).toHaveBeenCalledWith(
         expect.objectContaining({
           where: expect.objectContaining({ userId: 'user-1', deletedAt: null }),
-          orderBy: { criadoEm: 'desc' },
+          orderBy: { createdAt: 'desc' },
         }),
       )
     })
 
-    it('should filter deleted notificacoes', async () => {
-      mockPrisma.notificacao.findMany.mockResolvedValue([])
+    it('should filter deleted notifications', async () => {
+      mockPrisma.notification.findMany.mockResolvedValue([])
 
       await findAllByUser('user-1')
-      expect(mockPrisma.notificacao.findMany).toHaveBeenCalledWith(
+      expect(mockPrisma.notification.findMany).toHaveBeenCalledWith(
         expect.objectContaining({
           where: expect.objectContaining({ deletedAt: null }),
         }),
@@ -122,23 +124,23 @@ describe('NotificacaoService', () => {
     })
 
     it('should support filtering by status', async () => {
-      mockPrisma.notificacao.findMany.mockResolvedValue([])
+      mockPrisma.notification.findMany.mockResolvedValue([])
 
-      await findAllByUser('user-1', { status: 'NAO_LIDA' })
-      expect(mockPrisma.notificacao.findMany).toHaveBeenCalledWith(
+      await findAllByUser('user-1', { status: 'UNREAD' })
+      expect(mockPrisma.notification.findMany).toHaveBeenCalledWith(
         expect.objectContaining({
-          where: expect.objectContaining({ status: 'NAO_LIDA' }),
+          where: expect.objectContaining({ status: 'UNREAD' }),
         }),
       )
     })
   })
 
   describe('findById', () => {
-    it('should return notificacao by id', async () => {
-      mockPrisma.notificacao.findUnique.mockResolvedValue({
+    it('should return notification by id', async () => {
+      mockPrisma.notification.findUnique.mockResolvedValue({
         id: 'n1',
-        titulo: 'Test',
-        status: 'NAO_LIDA',
+        title: 'Test',
+        status: 'UNREAD',
         deletedAt: null,
       })
 
@@ -147,7 +149,7 @@ describe('NotificacaoService', () => {
     })
 
     it('should return null for non-existent id', async () => {
-      mockPrisma.notificacao.findUnique.mockResolvedValue(null)
+      mockPrisma.notification.findUnique.mockResolvedValue(null)
 
       const notif = await findById('nonexistent')
       expect(notif).toBeNull()
@@ -155,91 +157,87 @@ describe('NotificacaoService', () => {
   })
 
   describe('markAsRead', () => {
-    it('should set status to LIDA and lido_em', async () => {
-      mockPrisma.notificacao.findUnique.mockResolvedValue({
+    it('should set status to READ and readAt', async () => {
+      mockPrisma.notification.findUnique.mockResolvedValue({
         id: 'n1',
-        status: 'NAO_LIDA',
+        status: 'UNREAD',
         deletedAt: null,
       })
-      mockPrisma.notificacao.update.mockResolvedValue({
+      mockPrisma.notification.update.mockResolvedValue({
         id: 'n1',
-        status: 'LIDA',
-        lido_em: new Date(),
+        status: 'READ',
+        readAt: new Date(),
       })
 
       const notif = await markAsRead('n1')
-      expect(notif.status).toBe('LIDA')
-      expect(notif.lido_em).toBeDefined()
+      expect(notif.status).toBe('READ')
+      expect(notif.readAt).toBeDefined()
     })
 
-    it('should throw if notificacao not found', async () => {
-      mockPrisma.notificacao.findUnique.mockResolvedValue(null)
+    it('should throw if notification not found', async () => {
+      mockPrisma.notification.findUnique.mockResolvedValue(null)
 
-      await expect(markAsRead('nonexistent')).rejects.toThrow(/não encontrad/i)
+      await expect(markAsRead('nonexistent')).rejects.toThrow(/not found/i)
     })
   })
 
   describe('markAsArchived', () => {
-    it('should set status to ARQUIVADA', async () => {
-      mockPrisma.notificacao.findUnique.mockResolvedValue({
+    it('should set status to ARCHIVED', async () => {
+      mockPrisma.notification.findUnique.mockResolvedValue({
         id: 'n1',
-        status: 'NAO_LIDA',
+        status: 'UNREAD',
         deletedAt: null,
       })
-      mockPrisma.notificacao.update.mockResolvedValue({
+      mockPrisma.notification.update.mockResolvedValue({
         id: 'n1',
-        status: 'ARQUIVADA',
+        status: 'ARCHIVED',
       })
 
       const notif = await markAsArchived('n1')
-      expect(notif.status).toBe('ARQUIVADA')
+      expect(notif.status).toBe('ARCHIVED')
     })
   })
 
   describe('deleteNotificacao', () => {
-    it('should soft delete notificacao', async () => {
-      mockPrisma.notificacao.findUnique.mockResolvedValue({
+    it('should soft delete notification', async () => {
+      mockPrisma.notification.findUnique.mockResolvedValue({
         id: 'n1',
         deletedAt: null,
       })
-      mockPrisma.notificacao.update.mockResolvedValue({
+      mockPrisma.notification.update.mockResolvedValue({
         id: 'n1',
         deletedAt: expect.any(Date),
       })
 
       await deleteNotificacao('n1')
-      expect(mockPrisma.notificacao.update).toHaveBeenCalledWith({
+      expect(mockPrisma.notification.update).toHaveBeenCalledWith({
         where: { id: 'n1' },
         data: { deletedAt: expect.any(Date) },
       })
     })
 
-    it('should throw if notificacao not found', async () => {
-      mockPrisma.notificacao.findUnique.mockResolvedValue(null)
+    it('should throw if notification not found', async () => {
+      mockPrisma.notification.findUnique.mockResolvedValue(null)
 
-      await expect(deleteNotificacao('nonexistent')).rejects.toThrow(/não encontrad/i)
+      await expect(deleteNotificacao('nonexistent')).rejects.toThrow(/not found/i)
     })
   })
 
   describe('countUnread', () => {
-    it('should count unread notificacoes for user', async () => {
-      mockPrisma.notificacao.findMany.mockResolvedValue([
-        { id: 'n1' },
-        { id: 'n2' },
-        { id: 'n3' },
-      ])
+    it('should count unread notifications for user', async () => {
+      mockPrisma.notification.count.mockResolvedValue(3)
 
       const count = await countUnread('user-1')
       expect(count).toBe(3)
-      expect(mockPrisma.notificacao.findMany).toHaveBeenCalledWith(
+      expect(mockPrisma.notification.count).toHaveBeenCalledWith(
         expect.objectContaining({
-          where: expect.objectContaining({ userId: 'user-1', status: 'NAO_LIDA', deletedAt: null }),
+          where: expect.objectContaining({ userId: 'user-1', status: 'UNREAD', deletedAt: null }),
         }),
       )
     })
 
     it('should return 0 for user with no unread', async () => {
-      mockPrisma.notificacao.findMany.mockResolvedValue([])
+      mockPrisma.notification.count.mockResolvedValue(0)
 
       const count = await countUnread('user-1')
       expect(count).toBe(0)

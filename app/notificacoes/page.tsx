@@ -7,20 +7,20 @@ export const dynamic = 'force-dynamic'
 
 export default async function NotificacoesPage() {
   const { userId } = await verifySession()
-  const notificacoes = await findAllByUser(userId, { limit: 100 })
+  const notifications = await findAllByUser(userId, { limit: 100 })
 
-  const unreadCount = notificacoes.filter(n => n.status === 'NAO_LIDA').length
+  const unreadCount = notifications.filter(n => n.status === 'UNREAD').length
 
-  const notificacoesData = notificacoes.map(n => ({
+  const notificacoesData = notifications.map(n => ({
     id: n.id,
-    tipo: n.tipo,
-    titulo: n.titulo,
-    mensagem: n.mensagem,
-    referencia: n.referencia ?? null,
-    referenciaTipo: n.referenciaTipo ?? null,
+    type: n.type,
+    title: n.title,
+    message: n.message,
+    reference: n.reference ?? null,
+    referenceType: n.referenceType ?? null,
     status: n.status,
-    criadoEm: n.criadoEm.toISOString(),
-    lido_em: n.lido_em?.toISOString() ?? null,
+    createdAt: n.createdAt.toISOString(),
+    readAt: n.readAt?.toISOString() ?? null,
   }))
 
   return (

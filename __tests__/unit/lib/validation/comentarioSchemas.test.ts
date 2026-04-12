@@ -3,51 +3,51 @@ import { CreateComentarioSchema, UpdateComentarioSchema } from '@/lib/validation
 
 describe('comentarioSchemas', () => {
   describe('CreateComentarioSchema', () => {
-    it('should accept valid comentario (texto, cardId, userId)', () => {
+    it('should accept valid comment (content, cardId, userId)', () => {
       const result = CreateComentarioSchema.safeParse({
-        texto: 'Este é um comentário de teste',
+        content: 'Este é um comentário de teste',
         cardId: 'card-1',
         userId: 'user-1',
       })
       expect(result.success).toBe(true)
     })
 
-    it('should accept optional tipo (COMENTARIO)', () => {
+    it('should accept optional type (COMMENT)', () => {
       const result = CreateComentarioSchema.safeParse({
-        texto: 'Comment',
+        content: 'Comment',
         cardId: 'card-1',
         userId: 'user-1',
-        tipo: 'COMENTARIO',
+        type: 'COMMENT',
       })
       expect(result.success).toBe(true)
       if (result.success) {
-        expect(result.data.tipo).toBe('COMENTARIO')
+        expect(result.data.type).toBe('COMMENT')
       }
     })
 
-    it('should accept FEEDBACK tipo', () => {
+    it('should accept FEEDBACK type', () => {
       const result = CreateComentarioSchema.safeParse({
-        texto: 'Feedback',
+        content: 'Feedback',
         cardId: 'card-1',
         userId: 'user-1',
-        tipo: 'FEEDBACK',
+        type: 'FEEDBACK',
       })
       expect(result.success).toBe(true)
     })
 
-    it('should reject invalid tipo', () => {
+    it('should reject invalid type', () => {
       const result = CreateComentarioSchema.safeParse({
-        texto: 'Comment',
+        content: 'Comment',
         cardId: 'card-1',
         userId: 'user-1',
-        tipo: 'INVALID',
+        type: 'INVALID',
       })
       expect(result.success).toBe(false)
     })
 
-    it('should reject empty texto', () => {
+    it('should reject empty content', () => {
       const result = CreateComentarioSchema.safeParse({
-        texto: '',
+        content: '',
         cardId: 'card-1',
         userId: 'user-1',
       })
@@ -56,7 +56,7 @@ describe('comentarioSchemas', () => {
 
     it('should reject missing cardId', () => {
       const result = CreateComentarioSchema.safeParse({
-        texto: 'Comment',
+        content: 'Comment',
         userId: 'user-1',
       })
       expect(result.success).toBe(false)
@@ -64,63 +64,63 @@ describe('comentarioSchemas', () => {
 
     it('should reject missing userId', () => {
       const result = CreateComentarioSchema.safeParse({
-        texto: 'Comment',
+        content: 'Comment',
         cardId: 'card-1',
       })
       expect(result.success).toBe(false)
     })
 
-    it('should trim texto', () => {
+    it('should trim content', () => {
       const result = CreateComentarioSchema.safeParse({
-        texto: '  comentário com espaços  ',
+        content: '  comentário com espaços  ',
         cardId: 'card-1',
         userId: 'user-1',
       })
       expect(result.success).toBe(true)
       if (result.success) {
-        expect(result.data.texto).toBe('comentário com espaços')
+        expect(result.data.content).toBe('comentário com espaços')
       }
     })
 
-    it('should accept optional reacoes (JSON)', () => {
+    it('should accept optional reactions (JSON)', () => {
       const result = CreateComentarioSchema.safeParse({
-        texto: 'Comment',
+        content: 'Comment',
         cardId: 'card-1',
         userId: 'user-1',
-        reacoes: { thumbsUp: 2, love: 1 },
+        reactions: { thumbsUp: 2, love: 1 },
       })
       expect(result.success).toBe(true)
       if (result.success) {
-        expect(result.data.reacoes).toBeDefined()
+        expect(result.data.reactions).toBeDefined()
       }
     })
   })
 
   describe('UpdateComentarioSchema', () => {
-    it('should accept texto update', () => {
+    it('should accept content update', () => {
       const result = UpdateComentarioSchema.safeParse({
-        texto: 'Updated comment',
+        content: 'Updated comment',
       })
       expect(result.success).toBe(true)
     })
 
-    it('should accept tipo update', () => {
+    it('should accept type update', () => {
       const result = UpdateComentarioSchema.safeParse({
-        tipo: 'FEEDBACK',
+        type: 'FEEDBACK',
       })
       expect(result.success).toBe(true)
     })
 
-    it('should accept reacoes update', () => {
+    it('should accept reactions update', () => {
       const result = UpdateComentarioSchema.safeParse({
-        reacoes: { thumbsUp: 3 },
+        reactions: { thumbsUp: 3 },
       })
       expect(result.success).toBe(true)
     })
 
-    it('should reject invalid tipo on update', () => {
+    it('should reject invalid type on update', () => {
       const result = UpdateComentarioSchema.safeParse({
-        tipo: 'INVALIDO',
+        type: 'INVALIDO',
       })
       expect(result.success).toBe(false)
     })
@@ -130,9 +130,9 @@ describe('comentarioSchemas', () => {
       expect(result.success).toBe(true)
     })
 
-    it('should reject empty texto on update', () => {
+    it('should reject empty content on update', () => {
       const result = UpdateComentarioSchema.safeParse({
-        texto: '',
+        content: '',
       })
       expect(result.success).toBe(false)
     })

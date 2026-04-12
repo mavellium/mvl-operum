@@ -4,7 +4,7 @@ import { cookies } from 'next/headers'
 import { redirect } from 'next/navigation'
 import { decrypt } from '@/lib/session'
 import prisma from '@/lib/prisma'
-import { getUserActiveProjects } from '@/services/projetoService'
+import { getUserActiveProjects } from '@/services/projectService'
 
 export const verifySession = cache(async () => {
   const cookieStore = await cookies()
@@ -39,7 +39,7 @@ export const verifySession = cache(async () => {
     redirect('/login')
   }
 
-  if (user.isActive === false || user.status !== 'ativo') {
+  if (user.isActive === false || user.status !== 'active') {
     cookieStore.delete('session')
     redirect('/login')
   }

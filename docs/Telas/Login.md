@@ -27,13 +27,13 @@
 
 1. **Validação básica**
     - Combinação de email + senha + contexto do tenant
-    - Email deve existir e usuário estar ativo
+    - Email deve existir e usuário estar active
     - Senhas armazenadas com hash seguro (ex: bcrypt, Argon2)
 2. **Tentativas e bloqueio**
     - 3 tentativas inválidas → bloqueio temporário 5 minutos
     - Próximo ciclo de 3 tentativas → bloqueio 1 hora
     - Próximo ciclo de 3 tentativas → bloqueio permanente
-    - Bloqueios progressivos e cumulativos
+    - Bloqueios progressivos e cumulactives
     - Reset de contador após login bem-sucedido
     - Tentativas são validadas por subdomínio (isolamento entre tenants)
 3. **Sessões**
@@ -43,7 +43,7 @@
     - Sessões vinculadas ao contexto do tenant
     - Sessões inválidas ou suspeitas são rejeitadas
 4. **MFA (Multi-Factor Authentication)**
-    - Obrigatório para usuários administrativos ou críticos
+    - Obrigatório para usuários administractives ou críticos
     - Verificação após credenciais válidas
 5. **Proteção anti-abuso**
     - Limita tentativas de login em curto período
@@ -64,7 +64,7 @@
     - Cria sessão vinculada ao tenant
     - Redireciona:
         - Usuário comum → dashboard do tenant
-        - Usuário administrativo → painel administrativo (`admin.operum.com.br`)
+        - Usuário administractive → painel administractive (`admin.operum.com.br`)
 
 ### 2. Login Inválido
 
@@ -114,7 +114,7 @@
 
 ## ⚙️ Estados da Tela/Login
 
-- **Normal** → campos ativos, pronto para autenticação
+- **Normal** → campos actives, pronto para autenticação
 - **Erro** → tentativas inválidas exibem mensagens genéricas
 - **Bloqueado Temporário** → campos desativados até expiração
 - **Bloqueado Permanente** → campos desativados, admin notificado

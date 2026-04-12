@@ -100,7 +100,7 @@ export default function SprintBoard({ sprint, columns: initialColumns, users, ta
   const [newColTitle, setNewColTitle] = useState('')
   const [addingCol, setAddingCol] = useState(false)
   const [openCardId, setOpenCardId] = useState<string | null>(initialCardId ?? null)
-  const [cardComments, setCardComments] = useState<{ id: string; user: { id: string; name: string; avatarUrl: string | null }; texto: string; createdAt: Date }[]>([])
+  const [cardComments, setCardComments] = useState<{ id: string; user: { id: string; name: string; avatarUrl: string | null }; content: string; createdAt: Date }[]>([])
   const [addingCardToColumn, setAddingCardToColumn] = useState<string | null>(null)
   const [boardBg, setBoardBg] = useState('bg-gradient-to-br from-slate-900 via-blue-950 to-slate-900')
   
@@ -406,7 +406,7 @@ export default function SprintBoard({ sprint, columns: initialColumns, users, ta
             comments={cardComments.map(c => ({
               id: c.id,
               user: { id: c.user.id, name: c.user.name, email: '', avatarUrl: c.user.avatarUrl },
-              content: c.texto,
+              content: c.content,
               createdAt: new Date(c.createdAt),
             }))}
           />

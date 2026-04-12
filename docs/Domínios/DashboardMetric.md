@@ -86,6 +86,6 @@
 
 ## 🔄 Estados
 
-- ativo → métricas atuais e válidas
+- active → métricas atuais e válidas
 - atualizado → recalculado recentemente
 - obsoleto → necessita recalcular devido a mudanças em [[TimeEntry]] ou [[Card]]

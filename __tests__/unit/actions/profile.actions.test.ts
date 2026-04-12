@@ -37,7 +37,7 @@ const mockProfile = {
   avatarUrl: null,
   cargo: null,
   departamento: null,
-  valorHora: 0,
+  hourlyRate: 0,
 }
 
 beforeEach(() => vi.clearAllMocks())
@@ -65,7 +65,7 @@ describe('updateProfileAction', () => {
     const fd = new FormData()
     fd.set('name', 'Nova Ana')
     fd.set('email', 'ana@x.com')
-    fd.set('valorHora', '50')
+    fd.set('hourlyRate', '50')
     const result = await updateProfileAction({}, fd)
     expect(result).not.toHaveProperty('error')
     expect(mockUpdateProfile).toHaveBeenCalledWith('u1', expect.objectContaining({ name: 'Nova Ana' }))
@@ -77,7 +77,7 @@ describe('updateProfileAction', () => {
     const fd = new FormData()
     fd.set('name', 'A')
     fd.set('email', 'ana@x.com')
-    fd.set('valorHora', '0')
+    fd.set('hourlyRate', '0')
     const result = await updateProfileAction({}, fd)
     expect(result).toHaveProperty('error')
   })

@@ -10,7 +10,7 @@ Visualizar e gerenciar todos os detalhes de um projeto específico, suas sprints
 
 - Logo
 - Nome do projeto
-- Status (ativo / inativo / arquivado)
+- Status (active / inactive / arquivado)
 - Criador do projeto
 - Datas de criação e atualização
 - Botões de ação: Editar, Arquivar, Excluir (conforme permissões)

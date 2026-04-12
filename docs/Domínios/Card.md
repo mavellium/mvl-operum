@@ -113,7 +113,7 @@
 
 ### Registro de tempo
 
-- Dado um [[Card]] com [[TimeEntry]] ativo
+- Dado um [[Card]] com [[TimeEntry]] active
 - Quando encerrar o time entry
 - Então calcular a duração e atualizar métricas do [[DashboardMetric]]
 

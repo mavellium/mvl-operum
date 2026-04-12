@@ -35,18 +35,21 @@ mvl-operum/
 │   │   ├── login/page.tsx
 │   │   ├── register/page.tsx
 │   │   └── recuperar-senha/page.tsx
-│   ├── actions/                  # Server Actions
+│   ├── actions.ts                # Server Actions de nível raiz (ex-board/column)
+│   ├── actions/                  # Server Actions por domínio
 │   │   ├── admin.ts              # CRUD de usuários pelo admin
 │   │   ├── alterarSenha.ts       # Troca de senha obrigatória
 │   │   ├── attachments.ts        # Upload/remoção de anexos
 │   │   ├── auth.ts               # Login, registro, logout
 │   │   ├── cardResponsible.ts    # Responsáveis por card
+│   │   ├── comentarios.ts        # Comentários em cards
 │   │   ├── dashboard.ts          # Métricas e analytics
-│   │   ├── departamentos.ts      # CRUD de departamentos
+│   │   ├── departments.ts        # CRUD de departamentos (renomeado de departamentos.ts)
 │   │   ├── migration.ts          # Migrações de dados
 │   │   ├── notificacoes.ts       # Leitura/arquivamento de notificações
 │   │   ├── profile.ts            # Edição de perfil
-│   │   ├── projetos.ts           # CRUD de projetos e membros
+│   │   ├── projects.ts           # CRUD de projetos (novo, en)
+│   │   ├── projetos.ts           # CRUD de projetos e membros (legado)
 │   │   ├── roles.ts              # CRUD de roles/permissões
 │   │   ├── sprintBoard.ts        # Ações do board (cards, colunas)
 │   │   ├── sprints.ts            # CRUD de sprints
@@ -61,27 +64,34 @@ mvl-operum/
 │   │   └── uploads/route.ts
 │   ├── admin/
 │   │   ├── layout.tsx
+│   │   ├── page.tsx              # Hub de navegação do admin
 │   │   ├── dashboard/page.tsx    # Métricas por projeto (admin)
-│   │   ├── hub/page.tsx          # Hub de navegação do admin
 │   │   └── users/page.tsx        # Gerenciamento de usuários
 │   ├── alterar-senha/page.tsx    # Troca de senha forçada
 │   ├── arquivos/page.tsx         # Galeria de anexos
 │   ├── dashboard/
 │   │   ├── page.tsx
 │   │   └── sprint/[sprintId]/page.tsx
+│   ├── no-project/page.tsx       # Tela para usuários sem projeto vinculado
 │   ├── notificacoes/page.tsx
 │   ├── perfil/page.tsx
 │   ├── projetos/
 │   │   ├── page.tsx              # Lista de projetos
 │   │   ├── novo/page.tsx         # Criar projeto
 │   │   └── [projetoId]/
+│   │       ├── layout.tsx
 │   │       ├── page.tsx          # Detalhe do projeto
 │   │       ├── dashboard/page.tsx
-│   │       └── membros/page.tsx  # Gerenciar membros
+│   │       ├── departamentos/page.tsx  # Departamentos do projeto
+│   │       ├── documentacao/page.tsx   # Documentação do projeto
+│   │       ├── funcoes/page.tsx        # Funções/papéis do projeto
+│   │       ├── membros/page.tsx        # Gerenciar membros
+│   │       └── sprints/
+│   │           ├── page.tsx            # Lista de sprints do projeto
+│   │           ├── nova/page.tsx       # Criar sprint no projeto
+│   │           └── [sprintId]/page.tsx # Board Kanban
 │   ├── sprints/
-│   │   ├── page.tsx
-│   │   ├── nova/page.tsx         # Criar sprint (com projeto pre-selecionável)
-│   │   └── [sprintId]/page.tsx   # Board Kanban
+│   │   └── [sprintId]/page.tsx   # Board Kanban (acesso global)
 │   ├── layout.tsx
 │   ├── page.tsx                  # Redireciona para /sprints
 │   └── globals.css
@@ -104,7 +114,7 @@ mvl-operum/
 │   └── user/                     # UserAvatar, UserSelector
 ├── lib/
 │   ├── generated/prisma/         # Cliente Prisma gerado (não editar)
-│   ├── validation/               # Schemas Zod por domínio
+│   ├── validation/               # Schemas Zod por domínio (pt + en em coexistência)
 │   ├── dal.ts                    # verifySession() — proteção de todas as rotas
 │   ├── defaultData.ts            # Colunas padrão do board
 │   ├── kanbanReducer.ts          # Reducer de drag-and-drop otimista
@@ -120,12 +130,15 @@ mvl-operum/
 │   ├── csvImportService.ts
 │   ├── dashboardMetricService.ts
 │   ├── dashboardService.ts
-│   ├── departamentoService.ts
+│   ├── departamentoService.ts    # legado
+│   ├── departmentService.ts      # renomeado (en)
 │   ├── fileUploadService.ts
 │   ├── migrationService.ts
 │   ├── notificacaoService.ts
 │   ├── permissionService.ts
-│   ├── projetoService.ts
+│   ├── projectRoleService.ts     # papéis por projeto (ex: getOrCreateGerenteProjetoRole)
+│   ├── projectService.ts         # CRUD de projetos (en)
+│   ├── projetoService.ts         # legado
 │   ├── roleService.ts
 │   ├── sprintColumnService.ts
 │   ├── sprintFeedbackService.ts
@@ -152,7 +165,7 @@ mvl-operum/
 
 Toda entidade do sistema está vinculada a um `Tenant`. O fluxo é:
 
-1. No login, o sistema busca o primeiro tenant ativo no banco e inclui o `tenantId` no JWT.
+1. No login, o sistema busca o primeiro tenant active no banco e inclui o `tenantId` no JWT.
 2. `verifySession()` em `lib/dal.ts` descriptografa o JWT e retorna `{ userId, tenantId, role, ... }`.
 3. Todas as Server Actions chamam `verifySession()` e passam o `tenantId` para isolar os dados.
 
@@ -200,7 +213,7 @@ Além do papel global, cada usuário pode ter um papel específico dentro de um 
 | id | CUID | Chave primária |
 | nome | String | Nome do tenant |
 | subdominio | String (único) | Identificador único |
-| status | Enum | `ATIVO`, `INATIVO`, `SUSPENSO`, `REMOVIDO` |
+| status | Enum | `ACTIVE`, `INACTIVE`, `SUSPENDED`, `REMOVED` |
 | config | Json? | Configurações customizáveis |
 
 ### User
@@ -231,7 +244,7 @@ Além do papel global, cada usuário pode ter um papel específico dentro de um 
 | tenantId | String | Tenant |
 | nome | String | Único por tenant `(nome, tenantId)` |
 | descricao | String? | Descrição |
-| status | Enum | `ATIVO`, `INATIVO`, `CONCLUIDO`, `ARQUIVADO` |
+| status | Enum | `ACTIVE`, `INACTIVE`, `CONCLUIDO`, `ARQUIVADO` |
 
 ### UsuarioProjeto
 
@@ -242,7 +255,7 @@ Tabela de junção entre User e Projeto. Armazena dados **contextuais ao projeto
 | id | CUID | Chave primária |
 | userId | String | Usuário |
 | projetoId | String | Projeto |
-| ativo | Boolean | Membro ativo no projeto |
+| active | Boolean | Membro active no projeto |
 | cargo | String? | Cargo neste projeto |
 | departamento | String? | Departamento neste projeto |
 | valorHora | Float? | Custo/hora neste projeto |
@@ -280,7 +293,7 @@ Estrutura do board Kanban (igual à versão anterior). Cards têm título, descr
 
 ### TimeEntry
 
-Entradas de tempo por usuário/card. Suporta timer ativo (`isRunning`) e entradas manuais (`isManual`).
+Entradas de tempo por usuário/card. Suporta timer active (`isRunning`) e entradas manuais (`isManual`).
 
 ### Comentario / Notificacao
 
@@ -382,17 +395,20 @@ A maioria das operações usa **Server Actions**, sem API REST. As rotas acima e
 
 ## Páginas e Funcionalidades
 
-### `/admin/hub`
+### `/admin`
 Hub central do admin com links para: gerenciamento de usuários, projetos, configurações e dashboard.
 
 ### `/admin/dashboard`
-Métricas por projeto: % conclusão de cards, horas acumuladas, custo estimado, sprints ativos. Dados calculados em tempo real via `getSprintMetrics`.
+Métricas por projeto: % conclusão de cards, horas acumuladas, custo estimado, sprints actives. Dados calculados em tempo real via `getSprintMetrics`.
 
 ### `/admin/users`
 Tabela de usuários com:
 - Criar usuário (nome, email, senha, isAdmin, forcePasswordChange)
 - Editar usuário: dados básicos (nome, email, senha, role global) + seção **Projetos** (ativar/desativar por projeto, editar cargo/departamento/valorHora por projeto, adicionar a novo projeto)
 - Ativar/desativar conta
+
+### `/no-project`
+Tela exibida quando o usuário autenticado não está vinculado a nenhum projeto ativo. Oferece opção de logout.
 
 ### `/projetos`
 Lista de projetos do tenant com status e contagem de sprints.
@@ -401,17 +417,29 @@ Lista de projetos do tenant com status e contagem de sprints.
 Formulário de criação de projeto (nome, descrição).
 
 ### `/projetos/:id`
-Detalhe do projeto: dados básicos, status, ações (dashboard, membros, sprints).
+Detalhe do projeto: dados básicos, status, ações (dashboard, membros, sprints, departamentos, funções).
 
 ### `/projetos/:id/membros`
 Gerenciamento de membros com dados **por projeto** (lidos de `UsuarioProjeto`):
 - Listagem: nome, email, role global, cargo, departamento, valorHora do projeto
 - Edição inline por membro: cargo, departamento, valorHora
 - Adicionar membro da lista de usuários disponíveis
-- Remover membro (seta `ativo=false` em `UsuarioProjeto`)
+- Remover membro (seta `active=false` em `UsuarioProjeto`)
 
-### `/sprints/nova`
-Formulário de criação de sprint com seleção de projeto (pre-selecionável via `?projetoId=`).
+### `/projetos/:id/departamentos`
+Departamentos vinculados ao projeto. Usa `departmentService` (en) e schemas `departmentSchemas`.
+
+### `/projetos/:id/funcoes`
+Papéis/funções do projeto (RBAC por projeto). Verifica se o usuário é gerente via `isProjectManager()` de `projectRoleService`.
+
+### `/projetos/:id/documentacao`
+Documentação colaborativa do projeto (lista de membros e contribuições).
+
+### `/projetos/:id/sprints`
+Lista de sprints do projeto com criação inline. Sprint individual abre o board Kanban em `/projetos/:id/sprints/:sprintId`.
+
+### `/sprints/:id`
+Board Kanban — acesso global, sem contexto de projeto na URL.
 
 ### `/dashboard/sprint/:id`
 Dashboard de sprint com:
@@ -440,12 +468,15 @@ Cada serviço é responsável por um domínio:
 |---------|-----------------|
 | `authService` | Login, registro, hash de senha |
 | `adminService` | CRUD de usuários pelo admin |
-| `projetoService` | CRUD de projetos, membros (UsuarioProjeto) |
+| `projectService` | CRUD de projetos, membros (UsuarioProjeto) — versão en |
+| `projetoService` | CRUD de projetos (legado) |
+| `projectRoleService` | Papéis por projeto; garante papel de gerente ao criar projeto |
 | `sprintService` | CRUD de sprints |
 | `sprintColumnService` | CRUD de colunas |
 | `dashboardService` | Métricas gerais e por sprint |
 | `dashboardMetricService` | Cache de métricas por sprint/usuário |
 | `sprintFeedbackService` | Feedbacks por sprint |
+| `comentarioService` | Comentários em cards |
 | `auditoriaService` | Registro de log de auditoria |
 | `notificacaoService` | CRUD de notificações |
 | `tagService` | CRUD de tags (requer tenantId) |
@@ -454,7 +485,8 @@ Cada serviço é responsável por um domínio:
 | `csvImportService` | Parse e importação de CSV |
 | `roleService` | CRUD de roles RBAC |
 | `permissionService` | CRUD de permissões |
-| `departamentoService` | CRUD de departamentos |
+| `departmentService` | CRUD de departamentos — versão en |
+| `departamentoService` | CRUD de departamentos (legado) |
 | `tenantService` | Lookup de tenant |
 | `userService` | Listagem de usuários por tenant |
 
@@ -468,11 +500,18 @@ Schemas em `lib/validation/`:
 |---------|---------|
 | `authSchemas.ts` | Login, registro, troca de senha |
 | `cardSchemas.ts` | Criação e edição de card |
+| `comentarioSchemas.ts` | Criação de comentário em card |
 | `csvSchemas.ts` | Estrutura de linha CSV |
+| `departamentoSchemas.ts` | Criação e edição de departamento (pt, legado) |
+| `departmentSchemas.ts` | Criação e edição de departamento (en) |
 | `fileSchemas.ts` | Tipo e tamanho de arquivo |
-| `projetoSchemas.ts` | Criação e edição de projeto |
+| `notificacaoSchemas.ts` | Notificações |
+| `projectSchemas.ts` | Criação e edição de projeto (en) |
+| `projetoSchemas.ts` | Criação e edição de projeto (pt, legado) |
+| `roleSchemas.ts` | Criação e edição de roles RBAC |
 | `sprintSchemas.ts` | Criação e edição de sprint |
 | `tagSchemas.ts` | Criação e edição de tag |
+| `tenantSchemas.ts` | Tenant |
 | `userSchemas.ts` | Edição de perfil e admin |
 
 ---
@@ -503,7 +542,7 @@ Schemas em `lib/validation/`:
 | `init` (2406) | Multi-tenant: Tenant, Projeto, UsuarioProjeto, RBAC, Comentario, Notificacao |
 | `add_auditoria_dashboardmetric_sprintfeedback` | Auditoria, DashboardMetric, SprintFeedback |
 | `add_force_password_change` | Campo `forcePasswordChange` em User |
-| `add_usuario_projeto_fields` | Campos `ativo`, `cargo`, `departamento`, `valorHora` em UsuarioProjeto |
+| `add_usuario_projeto_fields` | Campos `active`, `cargo`, `departamento`, `valorHora` em UsuarioProjeto |
 
 ---
 
@@ -535,7 +574,7 @@ npx prisma studio                 # GUI do banco
 
 2. **Services finas nas actions** — actions fazem apenas: `verifySession` + validação Zod + chamada de service + `revalidatePath`. Lógica de negócio fica nos services para testabilidade.
 
-3. **UsuarioProjeto como entidade central** — dados que variam por projeto (cargo, departamento, valorHora, ativo) ficam em `UsuarioProjeto`, não em `User`. Isso permite que o mesmo usuário tenha papéis e custos diferentes em cada projeto.
+3. **UsuarioProjeto como entidade central** — dados que variam por projeto (cargo, departamento, valorHora, active) ficam em `UsuarioProjeto`, não em `User`. Isso permite que o mesmo usuário tenha papéis e custos diferentes em cada projeto.
 
 4. **forcePasswordChange sem loop** — a action de `/alterar-senha` lê o cookie diretamente (sem chamar `verifySession`) para evitar redirect loop. Após trocar, incrementa `tokenVersion` e invalida a sessão.
 

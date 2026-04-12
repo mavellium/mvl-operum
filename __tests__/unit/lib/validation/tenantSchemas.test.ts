@@ -4,103 +4,103 @@ import { CreateTenantSchema, UpdateTenantSchema } from '@/lib/validation/tenantS
 describe('CreateTenantSchema', () => {
   it('accepts valid tenant data', () => {
     const result = CreateTenantSchema.safeParse({
-      nome: 'Empresa ACME',
-      subdominio: 'acme',
+      name: 'Empresa ACME',
+      subdomain: 'acme',
     })
     expect(result.success).toBe(true)
     if (result.success) {
-      expect(result.data).toMatchObject({ nome: 'Empresa ACME', subdominio: 'acme' })
+      expect(result.data).toMatchObject({ name: 'Empresa ACME', subdomain: 'acme' })
     }
   })
 
-  it('rejects empty nome', () => {
+  it('rejects empty name', () => {
     const result = CreateTenantSchema.safeParse({
-      nome: '',
-      subdominio: 'acme',
+      name: '',
+      subdomain: 'acme',
     })
     expect(result.success).toBe(false)
   })
 
-  it('rejects empty subdominio', () => {
+  it('rejects empty subdomain', () => {
     const result = CreateTenantSchema.safeParse({
-      nome: 'ACME',
-      subdominio: '',
+      name: 'ACME',
+      subdomain: '',
     })
     expect(result.success).toBe(false)
   })
 
-  it('rejects subdominio shorter than 3 chars', () => {
+  it('rejects subdomain shorter than 3 chars', () => {
     const result = CreateTenantSchema.safeParse({
-      nome: 'ACME',
-      subdominio: 'ab',
+      name: 'ACME',
+      subdomain: 'ab',
     })
     expect(result.success).toBe(false)
   })
 
-  it('rejects subdominio with special characters', () => {
+  it('rejects subdomain with special characters', () => {
     const result = CreateTenantSchema.safeParse({
-      nome: 'ACME',
-      subdominio: 'acme@corp',
+      name: 'ACME',
+      subdomain: 'acme@corp',
     })
     expect(result.success).toBe(false)
   })
 
-  it('rejects subdominio with spaces', () => {
+  it('rejects subdomain with spaces', () => {
     const result = CreateTenantSchema.safeParse({
-      nome: 'ACME',
-      subdominio: 'acme corp',
+      name: 'ACME',
+      subdomain: 'acme corp',
     })
     expect(result.success).toBe(false)
   })
 
-  it('accepts subdominio with hyphens', () => {
+  it('accepts subdomain with hyphens', () => {
     const result = CreateTenantSchema.safeParse({
-      nome: 'ACME Corp',
-      subdominio: 'acme-corp',
+      name: 'ACME Corp',
+      subdomain: 'acme-corp',
     })
     expect(result.success).toBe(true)
   })
 
-  it('normalizes subdominio to lowercase', () => {
+  it('normalizes subdomain to lowercase', () => {
     const result = CreateTenantSchema.safeParse({
-      nome: 'ACME',
-      subdominio: 'ACME',
+      name: 'ACME',
+      subdomain: 'ACME',
     })
     expect(result.success).toBe(true)
     if (result.success) {
-      expect(result.data.subdominio).toBe('acme')
+      expect(result.data.subdomain).toBe('acme')
     }
   })
 
   it('accepts optional config as JSON object', () => {
     const result = CreateTenantSchema.safeParse({
-      nome: 'ACME',
-      subdominio: 'acme',
+      name: 'ACME',
+      subdomain: 'acme',
       config: { theme: 'dark', maxUsers: 50 },
     })
     expect(result.success).toBe(true)
   })
 
-  it('trims nome whitespace', () => {
+  it('trims name whitespace', () => {
     const result = CreateTenantSchema.safeParse({
-      nome: '  ACME  ',
-      subdominio: 'acme',
+      name: '  ACME  ',
+      subdomain: 'acme',
     })
     expect(result.success).toBe(true)
     if (result.success) {
-      expect(result.data.nome).toBe('ACME')
+      expect(result.data.name).toBe('ACME')
     }
   })
 })
 
 describe('UpdateTenantSchema', () => {
-  it('accepts partial update with only nome', () => {
-    const result = UpdateTenantSchema.safeParse({ nome: 'New Name' })
+  it('accepts partial update with only name', () => {
+    const result = UpdateTenantSchema.safeParse({ name: 'New Name' })
     expect(result.success).toBe(true)
   })
 
   it('accepts status update', () => {
-    const result = UpdateTenantSchema.safeParse({ status: 'INATIVO' })
+    const result = UpdateTenantSchema.safeParse({ status: 'INACTIVE' })
     expect(result.success).toBe(true)
   })
 

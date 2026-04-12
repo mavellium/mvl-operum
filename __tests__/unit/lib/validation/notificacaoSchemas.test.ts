@@ -3,95 +3,95 @@ import { CreateNotificacaoSchema, UpdateNotificacaoSchema } from '@/lib/validati
 
 describe('notificacaoSchemas', () => {
   describe('CreateNotificacaoSchema', () => {
-    it('should accept valid notificacao (userId, tipo, titulo, mensagem)', () => {
+    it('should accept valid notification (userId, type, title, message)', () => {
       const result = CreateNotificacaoSchema.safeParse({
         userId: 'user-1',
-        tipo: 'COMENTARIO',
-        titulo: 'Novo comentário',
-        mensagem: 'Alguém comentou em seu card',
+        type: 'COMMENT',
+        title: 'Novo comentário',
+        message: 'Alguém comentou em seu card',
       })
       expect(result.success).toBe(true)
     })
 
-    it('should accept optional referencia', () => {
+    it('should accept optional reference', () => {
       const result = CreateNotificacaoSchema.safeParse({
         userId: 'user-1',
-        tipo: 'ATRIBUICAO',
-        titulo: 'Card atribuído',
-        mensagem: 'Você foi atribuído a um card',
-        referencia: 'card-123',
+        type: 'ASSIGNMENT',
+        title: 'Card atribuído',
+        message: 'Você foi atribuído a um card',
+        reference: 'card-123',
       })
       expect(result.success).toBe(true)
       if (result.success) {
-        expect(result.data.referencia).toBe('card-123')
+        expect(result.data.reference).toBe('card-123')
       }
     })
 
-    it('should accept optional referenciaTipo', () => {
+    it('should accept optional referenceType', () => {
       const result = CreateNotificacaoSchema.safeParse({
         userId: 'user-1',
-        tipo: 'ATUALIZACAO',
-        titulo: 'Card atualizado',
-        mensagem: 'Um card foi atualizado',
-        referenciaTipo: 'CARD',
+        type: 'UPDATE',
+        title: 'Card atualizado',
+        message: 'Um card foi atualizado',
+        referenceType: 'CARD',
       })
       expect(result.success).toBe(true)
     })
 
-    it('should accept all valid tipos', () => {
-      const tipos = ['COMENTARIO', 'ATRIBUICAO', 'ATUALIZACAO', 'CONCLUSAO', 'MENCIONADO', 'CONVITE']
-      tipos.forEach((tipo) => {
+    it('should accept all valid types', () => {
+      const types = ['COMMENT', 'ASSIGNMENT', 'UPDATE', 'COMPLETION', 'MENTIONED', 'INVITATION']
+      types.forEach((type) => {
         const result = CreateNotificacaoSchema.safeParse({
           userId: 'user-1',
-          tipo,
-          titulo: 'Test',
-          mensagem: 'Test message',
+          type,
+          title: 'Test',
+          message: 'Test message',
         })
         expect(result.success).toBe(true)
       })
     })
 
-    it('should reject invalid tipo', () => {
+    it('should reject invalid type', () => {
       const result = CreateNotificacaoSchema.safeParse({
         userId: 'user-1',
-        tipo: 'INVALIDO',
-        titulo: 'Test',
-        mensagem: 'Test',
+        type: 'INVALIDO',
+        title: 'Test',
+        message: 'Test',
       })
       expect(result.success).toBe(false)
     })
 
-    it('should reject empty titulo', () => {
+    it('should reject empty title', () => {
       const result = CreateNotificacaoSchema.safeParse({
         userId: 'user-1',
-        tipo: 'COMENTARIO',
-        titulo: '',
-        mensagem: 'Message',
+        type: 'COMMENT',
+        title: '',
+        message: 'Message',
       })
       expect(result.success).toBe(false)
     })
 
-    it('should reject empty mensagem', () => {
+    it('should reject empty message', () => {
       const result = CreateNotificacaoSchema.safeParse({
         userId: 'user-1',
-        tipo: 'COMENTARIO',
-        titulo: 'Title',
-        mensagem: '',
+        type: 'COMMENT',
+        title: 'Title',
+        message: '',
       })
       expect(result.success).toBe(false)
     })
 
-    it('should trim titulo and mensagem', () => {
+    it('should trim title and message', () => {
       const result = CreateNotificacaoSchema.safeParse({
         userId: 'user-1',
-        tipo: 'COMENTARIO',
-        titulo: '  Novo comentário  ',
-        mensagem: '  Alguém comentou  ',
+        type: 'COMMENT',
+        title: '  Novo comentário  ',
+        message: '  Alguém comentou  ',
       })
       expect(result.success).toBe(true)
       if (result.success) {
-        expect(result.data.titulo).toBe('Novo comentário')
-        expect(result.data.mensagem).toBe('Alguém comentou')
+        expect(result.data.title).toBe('Novo comentário')
+        expect(result.data.message).toBe('Alguém comentou')
       }
     })
   })
@@ -99,13 +99,13 @@ describe('notificacaoSchemas', () => {
   describe('UpdateNotificacaoSchema', () => {
     it('should accept status update', () => {
       const result = UpdateNotificacaoSchema.safeParse({
-        status: 'LIDA',
+        status: 'READ',
       })
       expect(result.success).toBe(true)
     })
 
     it('should accept all valid status values', () => {
-      const statuses = ['NAO_LIDA', 'LIDA', 'ARQUIVADA']
+      const statuses = ['UNREAD', 'READ', 'ARCHIVED']
       statuses.forEach((status) => {
         const result = UpdateNotificacaoSchema.safeParse({ status })
         expect(result.success).toBe(true)

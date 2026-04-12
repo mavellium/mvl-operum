@@ -6,8 +6,8 @@ Visualizar e gerenciar todas as operações administrativas do sistema.
 ### 📄 Componentes
 
 - **Painel de Projetos e Usuários**
-    - Projetos ativos e concluídos
-    - Usuários ativos, bloqueados e inativos
+    - Projetos actives e concluídos
+    - Usuários actives, bloqueados e inactives
 - **Logs e Auditoria**
     - Registro de alterações: criação/edição/exclusão de projetos, sprints, cards e usuários
     - Filtros: tipo de ação, usuário, data

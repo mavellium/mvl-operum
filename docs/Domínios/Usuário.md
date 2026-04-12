@@ -6,7 +6,7 @@
 
 - Nome
 - E-mail
-- Status (convidado | ativo | inativo | bloqueado | removido)
+- Status (convidado | active | inactive | bloqueado | removido)
 - [[Departamento]]
 - Valor/Hora (R$)
 - Custo Interno (opcional)
@@ -57,7 +57,7 @@
 - Um [[Usuário]] não pode ser removido de um [[Projeto]] se:
     - for o único com papel de gestão (Administrador ou equivalente)
 - Um [[Usuário]] com status:
-    - inativo ou bloqueado não pode autenticar
+    - inactive ou bloqueado não pode autenticar
     - convidado não pode acessar o sistema até aceitar convite
 - Um [[Usuário]] removido (soft delete):
     - não pode ser reativado diretamente
@@ -67,7 +67,7 @@
 
 ### Associação com Projeto
 
-- Um [[Usuário]] só pode acessar um [[Projeto]] se existir um [[UsuárioProjeto]] ativo
+- Um [[Usuário]] só pode acessar um [[Projeto]] se existir um [[UsuárioProjeto]] active
 - Ao associar um [[Usuário]] a um [[Projeto]]:
     - deve ser criado um [[UsuárioProjeto]]
     - deve possuir ao menos um [[Papel]]
@@ -94,7 +94,7 @@
 ## 🔐 Regras de Segurança
 
 - Senhas devem ser armazenadas com hash seguro
-- MFA obrigatório para usuários com papéis administrativos
+- MFA obrigatório para usuários com papéis administractives
 - Bloqueio automático após X tentativas de login
 - Sessões devem expirar após período de inatividade
 - Toda ação crítica deve ser auditada, incluindo:
@@ -109,7 +109,7 @@
 
 ### Autenticação com sucesso
 
-- Dado que o [[Usuário]] está ativo
+- Dado que o [[Usuário]] está active
 - E possui credenciais válidas
 - Quando tentar autenticar
 - Então o sistema deve permitir acesso
@@ -128,7 +128,7 @@
 
 ### Associação a projeto
 
-- Dado que o [[Usuário]] está ativo
+- Dado que o [[Usuário]] está active
 - Quando for associado a um [[Projeto]]
 - Então deve ser criado um [[UsuárioProjeto]]
 - E deve possuir ao menos um [[Papel]]
@@ -147,7 +147,7 @@
 
 - Dado um [[Usuário]]
 - Quando tentar acessar um [[Projeto]]
-- Então o sistema deve validar a existência de um [[UsuárioProjeto]] ativo
+- Então o sistema deve validar a existência de um [[UsuárioProjeto]] active
 
 ---
 
@@ -165,7 +165,7 @@
 ## 🔄 Estados do Usuário
 
 - convidado → criado via convite, sem acesso
-- ativo → acesso normal ao sistema
-- inativo → acesso bloqueado, mas pode ser reativado
+- active → acesso normal ao sistema
+- inactive → acesso bloqueado, mas pode ser reativado
 - bloqueado → bloqueio por segurança
 - removido → soft delete (apenas histórico)

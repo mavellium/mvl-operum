@@ -3,7 +3,17 @@
     "allow": [
       "Bash(npm install:*)",
       "Bash(ls -la /c/temp/ClaudeCode/kanban-board/middleware.*)",
-      "Bash(xargs grep:*)"
+      "Bash(xargs grep:*)",
+      "Bash(pnpm vitest:*)",
+      "Bash(pnpm test:run)",
+      "Bash(find . -path ./node_modules -prune -o -path ./.next -prune -o -path ./lib/generated -prune -o -name \"*.ts\" -type f -exec grep -l \"prisma\\\\.departamento\\\\|prisma\\\\.usuarioProjeto\\\\|prisma\\\\.usuarioDepartamento\\\\|prisma\\\\.projeto\" {} \\\\;)",
+      "Bash(find ./services -name \"*.ts\" -exec grep -l \"departamento\\\\|usuarioProjeto\\\\|usuarioDepartamento\\\\|projeto\" {} \\\\;)",
+      "Bash(grep -r \"prisma\\\\\\\\.usuarioProjeto\\\\|prisma\\\\\\\\.usuarioDepartamento\\\\|prisma\\\\\\\\.departamento\\\\|prisma\\\\\\\\.projeto\" . --include=\"*.ts\" --include=\"*.tsx\")",
+      "Bash(find ./__tests__ -name \"*.test.ts\" -exec grep -l \"Departamento\\\\|UsuarioProjeto\\\\|UsuarioDepartamento\\\\|Projeto\" {} \\\\;)",
+      "Bash(pnpm add:*)",
+      "Bash(pnpm build:*)",
+      "Bash(ls /c/temp/ClaudeCode/mvl-operum/app/projetos/[projetoId]/)",
+      "Bash(find /c/temp/ClaudeCode/mvl-operum/services -name \"adminService.ts\" -exec head -100 {} \\\\;)"
     ],
     "additionalDirectories": [
       "c:\\temp\\ClaudeCode\\kanban-board\\app\\dashboard\\sprint",

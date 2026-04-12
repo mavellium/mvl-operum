@@ -114,7 +114,7 @@ export default function Card({ card, index, columnId, onUpdate, onDelete, users,
               {/* RODAPÉ DO CARD */}
               <div className="flex items-center justify-between mt-3 pt-3 border-t border-gray-100 gap-2">
 
-                {/* Lado Esquerdo: Ícones Grandes e Timer Interativo */}
+                {/* Lado Esquerdo: Ícones Grandes e Timer Interactive */}
                 <div className="flex items-center gap-3.5 text-gray-500">
 
                   {(hasDescription || hasAttachments || hasComments) && (
@@ -138,7 +138,7 @@ export default function Card({ card, index, columnId, onUpdate, onDelete, users,
                     </div>
                   )}
 
-                  {/* Rastreador de Tempo Interativo */}
+                  {/* Rastreador de Tempo Interactive */}
                   <div
                     className={`flex items-center gap-1.5 px-2 py-1 -ml-2 rounded-md transition-colors ${isTimerRunning ? 'bg-green-50' : 'hover:bg-gray-100'}`}
                     onClick={handleTimerClick}

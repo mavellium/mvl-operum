@@ -13,7 +13,7 @@ async function getSprintIdFromCard(cardId: string) {
 export async function createCommentAction(cardId: string, texto: string) {
   try {
     const { userId } = await verifySession()
-    const comment = await comentarioService.create({ cardId, userId, texto })
+    const comment = await comentarioService.create({ cardId, userId, content: texto })
     const sprintId = await getSprintIdFromCard(cardId)
     if (sprintId) revalidatePath(`/sprints/${sprintId}`)
     return { comment }

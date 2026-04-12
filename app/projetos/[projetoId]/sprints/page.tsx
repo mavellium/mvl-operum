@@ -1,6 +1,6 @@
 import { notFound } from 'next/navigation'
 import { verifySession } from '@/lib/dal'
-import { findById } from '@/services/projetoService'
+import { findById } from '@/services/projectService'
 import { isProjectManager } from '@/services/projectRoleService'
 import { findAllByProjeto } from '@/services/sprintService'
 import { getSprintMetrics } from '@/services/dashboardService'
@@ -77,12 +77,12 @@ export default async function ProjetoSprintsPage({
           <div>
             <h1 className="text-2xl font-bold text-gray-900">Sprints</h1>
             <p className="text-sm text-gray-500 mt-0.5">
-              Projeto: {projeto.nome} • {sprintsWithMetrics.length} sprint{sprintsWithMetrics.length !== 1 ? 's' : ''}
+              Projeto: {projeto.name} • {sprintsWithMetrics.length} sprint{sprintsWithMetrics.length !== 1 ? 's' : ''}
             </p>
           </div>
           {canEdit && (
             <Link
-              href={`/sprints/nova?projetoId=${projetoId}`}
+              href={`/projetos/${projetoId}/sprints/nova`}
               className="flex items-center gap-2 bg-blue-600 text-white px-4 py-2 rounded-lg text-sm font-medium hover:bg-blue-700 transition-colors"
             >
               <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">

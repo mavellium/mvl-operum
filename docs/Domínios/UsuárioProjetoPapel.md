@@ -9,7 +9,7 @@
 - PapelId (referência ao [[Papel]])
 - Data de Atribuição
 - Data de Revogação (opcional)
-- Status (ativo | inativo | revogado)
+- Status (active | inactive | revogado)
 - Observações (opcional)
 - Criado em
 
@@ -40,22 +40,22 @@
 ### Estrutura
 
 - Cada [[UsuárioProjetoPapel]] define um papel específico de acesso do [[Usuário]] dentro de um [[Projeto]]
-- Um [[UsuárioProjeto]] deve possuir ao menos um [[Papel]] ativo para acesso ao [[Projeto]]
+- Um [[UsuárioProjeto]] deve possuir ao menos um [[Papel]] active para acesso ao [[Projeto]]
 - Data de atribuição deve ser registrada automaticamente
 
 ---
 
 ### Consistência
 
-- Não é permitido duplicar atribuição do mesmo [[Papel]] para o mesmo [[UsuárioProjeto]] ativo
-- Ao revogar o último [[Papel]] ativo de um [[UsuárioProjeto]], o acesso ao [[Projeto]] é automaticamente bloqueado
+- Não é permitido duplicar atribuição do mesmo [[Papel]] para o mesmo [[UsuárioProjeto]] active
+- Ao revogar o último [[Papel]] active de um [[UsuárioProjeto]], o acesso ao [[Projeto]] é automaticamente bloqueado
 - Status deve refletir imediatamente nas permissões do [[Usuário]]
 
 ---
 
 ### Segurança
 
-- Apenas [[Usuário]]s com papel administrativo no [[Projeto]] podem modificar papéis
+- Apenas [[Usuário]]s com papel administractive no [[Projeto]] podem modificar papéis
 - Todas as alterações devem ser auditadas
 - Papéis críticos (ex: Administrador de Projeto) exigem MFA ao serem atribuídos
 
@@ -65,7 +65,7 @@
 
 ### Atribuição de papel
 
-- Dado um [[UsuárioProjeto]] ativo
+- Dado um [[UsuárioProjeto]] active
 - Quando um [[Papel]] é atribuído
 - Então o [[UsuárioProjetoPapel]] é criado
 - E o acesso do [[Usuário]] é atualizado de acordo com o [[Papel]]
@@ -86,7 +86,7 @@
 - Dado um [[UsuárioProjeto]] e um [[Papel]] já atribuído
 - Quando tentar atribuir novamente
 - Então o sistema deve impedir a operação
-- E informar que o papel já está ativo
+- E informar que o papel já está active
 
 ---
 
@@ -101,6 +101,6 @@
 
 ## 🔄 Estados
 
-- ativo → papel válido e acesso permitido
-- inativo → papel suspenso, sem efeito sobre permissões
+- active → papel válido e acesso permitido
+- inactive → papel suspenso, sem efeito sobre permissões
 - revogado → soft delete, histórico mantido

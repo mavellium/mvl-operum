@@ -15,52 +15,52 @@ export class NotFoundError extends Error {
 }
 
 interface CreatePermissionInput {
-  nome: string
-  recurso: string
-  acao: string
-  descricao?: string
+  name: string
+  resource: string
+  action: string
+  description?: string
 }
 
 export async function create(input: CreatePermissionInput) {
-  const { nome, recurso, acao, descricao } = input
+  const { name, resource, action, description } = input
 
-  const byNome = await prisma.permission.findUnique({
-    where: { nome },
+  const byName = await prisma.permission.findUnique({
+    where: { name },
   })
-  if (byNome) {
-    throw new ConflictError('Permissão com este nome já existe')
+  if (byName) {
+    throw new ConflictError('Permission with this name already exists')
   }
 
   const byResourceAction = await prisma.permission.findUnique({
-    where: { recurso_acao: { recurso, acao } },
+    where: { resource_action: { resource, action } },
   })
   if (byResourceAction) {
-    throw new ConflictError('Permissão para este recurso e ação já existe')
+    throw new ConflictError('Permission for this resource and action already exists')
   }
 
   return prisma.permission.create({
     data: {
-      nome,
-      recurso,
-      acao,
-      descricao: descricao ?? undefined,
+      name,
+      resource,
+      action,
+      description: description ?? undefined,
     },
   })
 }
 
 interface FindAllOptions {
-  recurso?: string
+  resource?: string
 }
 
 export async function findAll(options?: FindAllOptions) {
   const where: any = { deletedAt: null }
-  if (options?.recurso) {
-    where.recurso = options.recurso
+  if (options?.resource) {
+    where.resource = options.resource
   }
 
   return prisma.permission.findMany({
     where,
-    orderBy: { recurso: 'asc' },
+    orderBy: { resource: 'asc' },
   })
 }
 
@@ -78,7 +78,7 @@ export async function findByRole(roleId: string) {
         some: { roleId },
       },
     },
-    orderBy: { recurso: 'asc' },
+    orderBy: { resource: 'asc' },
   })
 }
 
@@ -87,7 +87,7 @@ export async function deletePermission(id: string) {
     where: { id },
   })
   if (!existing) {
-    throw new NotFoundError('Permissão não encontrada')
+    throw new NotFoundError('Permission not found')
   }
 
   return prisma.permission.update({

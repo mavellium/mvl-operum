@@ -34,7 +34,7 @@
 
 - Não é permitido duplicar a mesma [[Tag]] em um [[Card]]
 - [[Card]] e [[Tag]] devem pertencer ao mesmo [[Tenant]]
-- Apenas [[Usuário]] ativos e com permissão de edição no [[Card]] podem associar ou remover [[Tag]]
+- Apenas [[Usuário]] actives e com permissão de edição no [[Card]] podem associar ou remover [[Tag]]
 
 ---
 
@@ -84,5 +84,5 @@
 
 ## 🔄 Estados
 
-- ativo → vínculo ativo entre [[Card]] e [[Tag]]
+- active → vínculo active entre [[Card]] e [[Tag]]
 - removido → soft delete, vínculo removido mas histórico mantido

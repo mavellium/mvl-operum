@@ -13,7 +13,7 @@ const defaultProps = {
   email: 'ana@x.com',
   cargo: 'Dev',
   departamento: 'TI',
-  valorHora: 75,
+  hourlyRate: 75,
 }
 
 describe('ProfileForm', () => {
@@ -32,7 +32,7 @@ describe('ProfileForm', () => {
   })
 
   it('handles null cargo and departamento', () => {
-    render(<ProfileForm name="Ana" email="ana@x.com" valorHora={0} cargo={null} departamento={null} />)
+    render(<ProfileForm name="Ana" email="ana@x.com" hourlyRate={0} cargo={null} departamento={null} />)
     expect(screen.getByLabelText(/cargo/i)).toHaveValue('')
     expect(screen.getByLabelText(/departamento/i)).toHaveValue('')
   })

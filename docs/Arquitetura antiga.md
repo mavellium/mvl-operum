@@ -480,7 +480,7 @@ Entrada de tempo rastreado (timer ou manual).
 
 | duration | Int | Duração em segundos |
 
-| isRunning | Boolean | Timer ativo |
+| isRunning | Boolean | Timer active |
 
 | isManual | Boolean | Entrada manual vs. timer |
 

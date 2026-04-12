@@ -45,7 +45,7 @@
 
 ### Consistência
 
-- Não é permitido remover uma [[Permissão]] enquanto houver [[Papel]]s ativos vinculados
+- Não é permitido remover uma [[Permissão]] enquanto houver [[Papel]]s actives vinculados
 - Ao desativar uma [[Permissão]], todos os [[Papel]]s vinculados perdem temporariamente o direito
 - Alterações devem ser auditadas
 
@@ -72,7 +72,7 @@
 
 ### Atribuição a papel
 
-- Dado um [[Papel]] ativo
+- Dado um [[Papel]] active
 - Quando vincular uma [[Permissão]]
 - Então todos os [[Usuário]]s com esse [[Papel]] passam a ter a [[Permissão]]
 
@@ -89,7 +89,7 @@
 
 ### Remoção inválida
 
-- Dado uma [[Permissão]] vinculada a [[Papel]]s ativos
+- Dado uma [[Permissão]] vinculada a [[Papel]]s actives
 - Quando tentar removê-la
 - Então o sistema deve impedir a operação
 - E informar os vínculos existentes
@@ -107,6 +107,6 @@
 
 ## 🔄 Estados
 
-- ativo → [[Permissão]] disponível
-- inativo → [[Permissão]] temporariamente desabilitada
+- active → [[Permissão]] disponível
+- inactive → [[Permissão]] temporariamente desabilitada
 - removido → soft delete, histórico mantido

@@ -1,10 +1,11 @@
 'use client'
 
 import { useState, useTransition } from 'react'
+import { getOrCreateRoleAction, updateRoleNameAction, deleteRoleAction } from '@/app/actions/roles'
 
 export interface Cargo {
   id: string
-  nome: string
+  name: string
 }
 
 interface Props {
@@ -24,11 +25,11 @@ export default function ProjetoFuncoesClient({ projetoId, cargosIniciais }: Prop
   const [isPending, startTransition] = useTransition()
   const [loadingId, setLoadingId] = useState<string | null>(null)
 
-  const filteredCargos = cargos.filter(c => c.nome.toLowerCase().includes(search.toLowerCase()))
+  const filteredCargos = cargos.filter(c => c.name.toLowerCase().includes(search.toLowerCase()))
 
   function handleStartEdit(c: Cargo) {
     setEditingId(c.id)
-    setEditNome(c.nome)
+    setEditNome(c.name)
   }
 
   function handleCancelEdit() {
@@ -39,13 +40,10 @@ export default function ProjetoFuncoesClient({ projetoId, cargosIniciais }: Prop
   function handleSaveEdit(id: string) {
     if (!editNome.trim()) return
     setLoadingId(id)
-    
     startTransition(async () => {
-      // Substitua pela sua Server Action real:
-      // await updateCargoAction(id, { nome: editNome })
-      
-      // Simulação de sucesso:
-      setCargos(prev => prev.map(c => c.id === id ? { ...c, nome: editNome } : c))
+      const result = await updateRoleNameAction(id, editNome)
+      if ('error' in result) { setLoadingId(null); return }
+      setCargos(prev => prev.map(c => c.id === id ? { ...c, name: result.role!.name } : c))
       setLoadingId(null)
       setEditingId(null)
     })
@@ -54,15 +52,10 @@ export default function ProjetoFuncoesClient({ projetoId, cargosIniciais }: Prop
   function handleAdd() {
     if (!novoCargoNome.trim()) return
     setLoadingId('new')
-    
     startTransition(async () => {
-      // Substitua pela sua Server Action real:
-      // const result = await createCargoAction(projetoId, novoCargoNome)
-      
-      // Simulação de sucesso com ID fake:
-      const result = { id: Math.random().toString(), nome: novoCargoNome }
-      
-      setCargos(prev => [...prev, result])
+      const result = await getOrCreateRoleAction(novoCargoNome)
+      if ('error' in result) { setLoadingId(null); return }
+      setCargos(prev => prev.some(c => c.id === result.role!.id) ? prev : [...prev, result.role!])
       setNovoCargoNome('')
       setShowAdd(false)
       setLoadingId(null)
@@ -72,9 +65,8 @@ export default function ProjetoFuncoesClient({ projetoId, cargosIniciais }: Prop
   function handleRemove(id: string) {
     setLoadingId(id)
     startTransition(async () => {
-      // Substitua pela sua Server Action real:
-      // await deleteCargoAction(id)
-      
+      const result = await deleteRoleAction(id)
+      if ('error' in result) { setLoadingId(null); return }
       setCargos(prev => prev.filter(c => c.id !== id))
       setLoadingId(null)
     })
@@ -165,7 +157,7 @@ export default function ProjetoFuncoesClient({ projetoId, cargosIniciais }: Prop
                         <div className="w-8 h-8 rounded-lg bg-blue-50 text-blue-600 flex items-center justify-center shrink-0">
                            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 13.255A23.931 23.931 0 0112 15c-3.183 0-6.22-.62-9-1.745M16 6V4a2 2 0 00-2-2h-4a2 2 0 00-2 2v2m4 6h.01M5 20h14a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" /></svg>
                         </div>
-                        <p className="font-medium text-sm text-gray-900">{cargo.nome}</p>
+                        <p className="font-medium text-sm text-gray-900">{cargo.name}</p>
                       </div>
                       
                       <div className="flex items-center gap-2 opacity-0 group-hover:opacity-100 transition-opacity focus-within:opacity-100">

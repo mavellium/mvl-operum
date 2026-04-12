@@ -58,7 +58,7 @@ export async function login(input: { email: string; password: string; tenantId: 
     throw new AuthError('Credenciais inválidas')
   }
 
-  if (user.status !== 'ativo' || !user.isActive) {
+  if (user.status !== 'active' || !user.isActive) {
     throw new AuthError('Conta inativa ou bloqueada')
   }
 

@@ -8,7 +8,7 @@ import Link from 'next/link'
 
 interface Projeto {
   id: string
-  nome: string
+  name: string
 }
 
 export default function NovaSprintPage() {
@@ -30,14 +30,14 @@ function NovaSprintForm() {
     name: '',
     startDate: '',
     endDate: '',
-    projetoId: presetProjetoId,
+    projectId: presetProjetoId,
   })
   const [error, setError] = useState('')
 
   useEffect(() => {
     getProjetosAction().then(result => {
       if (Array.isArray(result)) {
-        setProjetos(result.map(p => ({ id: p.id, nome: p.nome })))
+        setProjetos(result.map(p => ({ id: p.id, name: p.name })))
       }
     })
   }, [])
@@ -55,7 +55,7 @@ function NovaSprintForm() {
         name,
         startDate: form.startDate || undefined,
         endDate: form.endDate || undefined,
-        projetoId: form.projetoId || undefined,
+        projectId: form.projectId || undefined,
       })
       if ('error' in result) {
         setError(result.error ?? 'Erro ao criar sprint')
@@ -96,13 +96,13 @@ function NovaSprintForm() {
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-1">Projeto</label>
               <select
-                value={form.projetoId}
-                onChange={e => setForm(f => ({ ...f, projetoId: e.target.value }))}
+                value={form.projectId}
+                onChange={e => setForm(f => ({ ...f, projectId: e.target.value }))}
                 className="w-full px-3 py-2 border border-gray-200 rounded-xl text-sm text-gray-700 focus:outline-none focus:ring-2 focus:ring-blue-500"
               >
                 <option value="">Nenhum (sprint avulsa)</option>
                 {projetos.map(p => (
-                  <option key={p.id} value={p.id}>{p.nome}</option>
+                  <option key={p.id} value={p.id}>{p.name}</option>
                 ))}
               </select>
             </div>

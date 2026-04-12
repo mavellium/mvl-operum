@@ -52,7 +52,7 @@
 
 ### Segurança
 
-- Apenas [[Usuário]]s com papel administrativo podem criar ou remover [[PapelPermissão]]
+- Apenas [[Usuário]]s com papel administractive podem criar ou remover [[PapelPermissão]]
 - Todas as alterações em [[PapelPermissão]] devem ser registradas em [[Auditoria]]
 - Mudanças críticas exigem dupla validação
 
@@ -62,7 +62,7 @@
 
 ### Vinculação
 
-- Dado um [[Papel]] ativo
+- Dado um [[Papel]] active
 - Quando vincular uma [[Permissão]]
 - Então todos os [[Usuário]]s com esse [[Papel]] passam a ter a [[Permissão]]
 
@@ -97,6 +97,6 @@
 
 ## 🔄 Estados
 
-- ativo → vínculo válido e efetivo
-- inativo → vínculo suspenso temporariamente
+- active → vínculo válido e efetivo
+- inactive → vínculo suspenso temporariamente
 - removido → soft delete, histórico mantido

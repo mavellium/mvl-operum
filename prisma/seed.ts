@@ -1,41 +1,40 @@
 import 'dotenv/config'
-import prisma from '../lib/prisma'
+import prisma from '../lib/prisma' // 👈 Voltamos a usar a sua configuração pronta!
 import bcrypt from 'bcryptjs'
 
 async function main() {
-  console.log('🌱 Iniciando seed...')
+  console.log('🌱 Starting seed...')
 
-  // Verificação de segurança para a senha do banco
   if (!process.env.DATABASE_URL) {
-    throw new Error('DATABASE_URL não encontrada no .env')
+    throw new Error('DATABASE_URL not found in .env')
   }
 
   // 1. Tenant
   const tenant = await prisma.tenant.upsert({
-    where: { subdominio: 'mavellium' },
+    where: { subdomain: 'mavellium' },
     update: {},
     create: {
-      nome: 'MVL Operum',
-      subdominio: 'mavellium',
-      status: 'ATIVO',
+      name: 'MVL Operum',
+      subdomain: 'mavellium',
+      status: 'ACTIVE',
     },
   })
 
-  // 2. Senha
+  // 2. Password
   const password = 'senha123'
   const passwordHash = await bcrypt.hash(password, 10)
 
-  // 3. Usuário (Tudo dentro do main)
+  // 3. User
   const user = await prisma.user.upsert({
-    where: { 
-      email_tenantId: { 
-        email: 'vinicius.mota@mavellium.com.br', 
-        tenantId: tenant.id 
-      } 
+    where: {
+      email_tenantId: {
+        email: 'vinicius.mota@mavellium.com.br',
+        tenantId: tenant.id,
+      },
     },
     update: {
       passwordHash,
-      role: 'admin'
+      role: 'admin',
     },
     create: {
       name: 'Vinícius Tavares Mota',
@@ -44,18 +43,20 @@ async function main() {
       role: 'admin',
       tenantId: tenant.id,
       isActive: true,
-      status: 'ativo',
+      status: 'active',
     },
   })
 
-  console.log('✅ Seed completo!')
-  console.log({ email: user.email, tenant: tenant.nome })
+  console.log('✅ Seed completed!')
+  console.log({
+    email: user.email,
+    tenant: tenant.name,
+  })
 }
 
-// Execução segura sem await solto
 main()
   .catch((e) => {
-    console.error('❌ Erro no seed:', e)
+    console.error('❌ Seed error:', e)
     process.exit(1)
   })
   .finally(async () => {

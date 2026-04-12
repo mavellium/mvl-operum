@@ -2,8 +2,24 @@ import bcrypt from 'bcryptjs'
 import prisma from '@/lib/prisma'
 import { UserProfileSchema, ChangePasswordSchema } from '@/lib/validation/userSchemas'
 
-export async function getUserProfile(userId: string) {
-  const user = await prisma.user.findUnique({
+export type UserProfile = {
+  id: string
+  name: string
+  email: string
+  role: string
+  avatarUrl: string | null
+  cargo: string | null
+  departamento: string | null
+  hourlyRate: number
+  phone: string | null
+  address: string | null
+  notes: string | null
+  createdAt: Date
+  updatedAt: Date
+}
+
+export async function getUserProfile(userId: string): Promise<UserProfile | null> {
+  return prisma.user.findUnique({
     where: { id: userId, deletedAt: null },
     select: {
       id: true,
@@ -13,17 +29,19 @@ export async function getUserProfile(userId: string) {
       avatarUrl: true,
       cargo: true,
       departamento: true,
-      valorHora: true,
+      hourlyRate: true,
+      phone: true,
+      address: true,
+      notes: true,
       createdAt: true,
       updatedAt: true,
     },
   })
-  return user
 }
 
 export async function updateUserProfile(
   userId: string,
-  input: { name: string; email: string; cargo?: string; departamento?: string; valorHora: number },
+  input: { name: string; email: string; cargo?: string; departamento?: string; hourlyRate: number },
 ) {
   const parsed = UserProfileSchema.safeParse(input)
   if (!parsed.success) {
@@ -42,10 +60,10 @@ export async function changePassword(
   }
 
   const user = await prisma.user.findUnique({ where: { id: userId, deletedAt: null } })
-  if (!user) throw new Error('Usuário não encontrado')
+  if (!user) throw new Error('User not found')
 
   const valid = await bcrypt.compare(input.senhaAtual, user.passwordHash)
-  if (!valid) throw new Error('Senha atual incorreta')
+  if (!valid) throw new Error('Incorrect current password')
 
   const passwordHash = await bcrypt.hash(input.novaSenha, 12)
   await prisma.user.update({ where: { id: userId }, data: { passwordHash } })

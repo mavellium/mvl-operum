@@ -15,25 +15,25 @@ interface Props {
 interface UserProjeto {
   id: string
   userId: string
-  projetoId: string
-  ativo: boolean
+  projectId: string
+  active: boolean
   cargo: string | null
   departamento: string | null
-  valorHora: number | null
-  dataEntrada: string
-  projeto: { id: string; nome: string; status: string }
+  hourlyRate: number | null
+  startDate: string
+  project: { id: string; name: string; status: string }
 }
 
 interface Projeto {
   id: string
-  nome: string
+  name: string
 }
 
 const STATUS_LABELS: Record<string, string> = {
-  ATIVO: 'Ativo',
-  INATIVO: 'Inativo',
-  CONCLUIDO: 'Concluído',
-  ARQUIVADO: 'Arquivado',
+  ACTIVE: 'Ativo',
+  INACTIVE: 'Inativo',
+  COMPLETED: 'Concluído',
+  ARCHIVED: 'Arquivado',
 }
 
 export default function AdminEditUserModal({ user, onClose, onUpdated }: Props) {
@@ -53,7 +53,7 @@ export default function AdminEditUserModal({ user, onClose, onUpdated }: Props) 
   const [showAddProject, setShowAddProject] = useState(false)
   const [selectedProjetoId, setSelectedProjetoId] = useState('')
   const [editingProjetoId, setEditingProjetoId] = useState<string | null>(null)
-  const [editForm, setEditForm] = useState({ cargo: '', departamento: '', valorHora: '' })
+  const [editForm, setEditForm] = useState({ cargo: '', departamento: '', hourlyRate: '' })
 
   useEffect(() => {
     getUserProjetosAction(user.id).then(result => {
@@ -61,12 +61,12 @@ export default function AdminEditUserModal({ user, onClose, onUpdated }: Props) 
     })
     getProjetosAction().then(result => {
       if (Array.isArray(result)) {
-        setAllProjetos(result.map(p => ({ id: p.id, nome: p.nome })))
+        setAllProjetos(result.map(p => ({ id: p.id, name: p.name })))
       }
     })
   }, [user.id])
 
-  const projetosNaoMembro = allProjetos.filter(p => !userProjetos.some(up => up.projetoId === p.id))
+  const projetosNaoMembro = allProjetos.filter(p => !userProjetos.some(up => up.projectId === p.id))
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault()
@@ -104,35 +104,35 @@ export default function AdminEditUserModal({ user, onClose, onUpdated }: Props) 
 
   function handleToggleAtivo(up: UserProjeto) {
     startTransition(async () => {
-      const result = await updateUsuarioProjetoAction(user.id, up.projetoId, { ativo: !up.ativo })
+      const result = await updateUsuarioProjetoAction(user.id, up.projectId, { active: !up.active })
       if (!('error' in result)) {
-        setUserProjetos(prev => prev.map(p => p.projetoId === up.projetoId ? { ...p, ativo: !up.ativo } : p))
+        setUserProjetos(prev => prev.map(p => p.projectId === up.projectId ? { ...p, active: !up.active } : p))
       }
     })
   }
 
   function handleStartEdit(up: UserProjeto) {
-    setEditingProjetoId(up.projetoId)
+    setEditingProjetoId(up.projectId)
     setEditForm({
       cargo: up.cargo ?? '',
       departamento: up.departamento ?? '',
-      valorHora: up.valorHora?.toString() ?? '',
+      hourlyRate: up.hourlyRate?.toString() ?? '',
     })
   }
 
   function handleSaveEdit(up: UserProjeto) {
     startTransition(async () => {
-      const result = await updateUsuarioProjetoAction(user.id, up.projetoId, {
+      const result = await updateUsuarioProjetoAction(user.id, up.projectId, {
         cargos: editForm.cargo ? [editForm.cargo] : [],
         departamentos: editForm.departamento ? [editForm.departamento] : [],
-        valorHora: editForm.valorHora ? parseFloat(editForm.valorHora) : null,
+        hourlyRate: editForm.hourlyRate ? parseFloat(editForm.hourlyRate) : null,
       })
       if (!('error' in result)) {
-        setUserProjetos(prev => prev.map(p => p.projetoId === up.projetoId ? {
+        setUserProjetos(prev => prev.map(p => p.projectId === up.projectId ? {
           ...p,
           cargo: editForm.cargo || null,
           departamento: editForm.departamento || null,
-          valorHora: editForm.valorHora ? parseFloat(editForm.valorHora) : null,
+          hourlyRate: editForm.hourlyRate ? parseFloat(editForm.hourlyRate) : null,
         } : p))
         setEditingProjetoId(null)
       }
@@ -149,13 +149,13 @@ export default function AdminEditUserModal({ user, onClose, onUpdated }: Props) 
           const newUp: UserProjeto = {
             id: '',
             userId: user.id,
-            projetoId: selectedProjetoId,
-            ativo: true,
+            projectId: selectedProjetoId,
+            active: true,
             cargo: null,
             departamento: null,
-            valorHora: null,
-            dataEntrada: new Date().toISOString(),
-            projeto: { id: novoProjeto.id, nome: novoProjeto.nome, status: 'ATIVO' },
+            hourlyRate: null,
+            startDate: new Date().toISOString(),
+            project: { id: novoProjeto.id, name: novoProjeto.name, status: 'ACTIVE' },
           }
           setUserProjetos(prev => [...prev, newUp])
         }
@@ -201,7 +201,7 @@ export default function AdminEditUserModal({ user, onClose, onUpdated }: Props) 
         <div className="border-t border-gray-100 px-6 pb-6">
           <div className="flex items-center justify-between py-4">
             <h3 className="text-sm font-semibold text-gray-900">
-              Projetos ({userProjetos.filter(p => p.ativo).length} ativo{userProjetos.filter(p => p.ativo).length !== 1 ? 's' : ''})
+              Projetos ({userProjetos.filter(p => p.active).length} active{userProjetos.filter(p => p.active).length !== 1 ? 's' : ''})
             </h3>
             <button
               onClick={() => setShowAddProject(v => !v)}
@@ -220,7 +220,7 @@ export default function AdminEditUserModal({ user, onClose, onUpdated }: Props) 
               >
                 <option value="">Selecionar projeto…</option>
                 {projetosNaoMembro.map(p => (
-                  <option key={p.id} value={p.id}>{p.nome}</option>
+                  <option key={p.id} value={p.id}>{p.name}</option>
                 ))}
               </select>
               <button
@@ -238,16 +238,16 @@ export default function AdminEditUserModal({ user, onClose, onUpdated }: Props) 
           ) : (
             <div className="space-y-2">
               {userProjetos.map(up => (
-                <div key={up.projetoId} className={`rounded-xl border p-3 ${up.ativo ? 'border-gray-100' : 'border-gray-100 bg-gray-50 opacity-60'}`}>
+                <div key={up.projectId} className={`rounded-xl border p-3 ${up.active ? 'border-gray-100' : 'border-gray-100 bg-gray-50 opacity-60'}`}>
                   <div className="flex items-center justify-between">
                     <div className="flex items-center gap-2 min-w-0">
-                      <span className={`inline-flex items-center px-1.5 py-0.5 rounded text-xs font-medium ${up.ativo ? 'bg-green-100 text-green-700' : 'bg-gray-200 text-gray-500'}`}>
-                        {up.ativo ? 'Ativo' : 'Inativo'}
+                      <span className={`inline-flex items-center px-1.5 py-0.5 rounded text-xs font-medium ${up.active ? 'bg-green-100 text-green-700' : 'bg-gray-200 text-gray-500'}`}>
+                        {up.active ? 'Ativo' : 'Inactive'}
                       </span>
-                      <span className="text-sm font-medium text-gray-900 truncate">{up.projeto.nome}</span>
+                      <span className="text-sm font-medium text-gray-900 truncate">{up.project.name}</span>
                     </div>
                     <div className="flex items-center gap-2 shrink-0">
-                      {up.ativo && editingProjetoId !== up.projetoId && (
+                      {up.active && editingProjetoId !== up.projectId && (
                         <button
                           onClick={() => handleStartEdit(up)}
                           className="text-xs text-gray-500 hover:text-gray-700"
@@ -258,15 +258,15 @@ export default function AdminEditUserModal({ user, onClose, onUpdated }: Props) 
                       <button
                         onClick={() => handleToggleAtivo(up)}
                         disabled={isPending}
-                        className={`text-xs px-2 py-1 rounded-lg border disabled:opacity-50 ${up.ativo ? 'border-red-200 text-red-600 hover:bg-red-50' : 'border-green-200 text-green-600 hover:bg-green-50'}`}
+                        className={`text-xs px-2 py-1 rounded-lg border disabled:opacity-50 ${up.active ? 'border-red-200 text-red-600 hover:bg-red-50' : 'border-green-200 text-green-600 hover:bg-green-50'}`}
                       >
-                        {up.ativo ? 'Desativar' : 'Ativar'}
+                        {up.active ? 'Desativar' : 'Ativar'}
                       </button>
                     </div>
                   </div>
 
                   {/* Inline edit form */}
-                  {editingProjetoId === up.projetoId && (
+                  {editingProjetoId === up.projectId && (
                     <div className="mt-3 space-y-2">
                       <div className="grid grid-cols-2 gap-2">
                         <div>
@@ -296,8 +296,8 @@ export default function AdminEditUserModal({ user, onClose, onUpdated }: Props) 
                           type="number"
                           step="0.01"
                           min="0"
-                          value={editForm.valorHora}
-                          onChange={e => setEditForm(f => ({ ...f, valorHora: e.target.value }))}
+                          value={editForm.hourlyRate}
+                          onChange={e => setEditForm(f => ({ ...f, hourlyRate: e.target.value }))}
                           placeholder="0.00"
                           className="w-full px-2 py-1.5 border border-gray-200 rounded-lg text-xs focus:outline-none focus:ring-2 focus:ring-blue-500"
                         />
@@ -323,11 +323,11 @@ export default function AdminEditUserModal({ user, onClose, onUpdated }: Props) 
                   )}
 
                   {/* Show current values when not editing */}
-                  {editingProjetoId !== up.projetoId && (up.cargo || up.departamento || up.valorHora) && (
+                  {editingProjetoId !== up.projectId && (up.cargo || up.departamento || up.hourlyRate) && (
                     <div className="mt-1.5 flex flex-wrap gap-x-3 gap-y-0.5">
                       {up.cargo && <span className="text-xs text-gray-500">{up.cargo}</span>}
                       {up.departamento && <span className="text-xs text-gray-400">{up.departamento}</span>}
-                      {up.valorHora && <span className="text-xs text-gray-400">R$ {up.valorHora.toFixed(2)}/h</span>}
+                      {up.hourlyRate && <span className="text-xs text-gray-400">R$ {up.hourlyRate.toFixed(2)}/h</span>}
                     </div>
                   )}
                 </div>

@@ -1,5 +1,5 @@
 import { notFound } from 'next/navigation'
-import { findById } from '@/services/projetoService'
+import { findById } from '@/services/projectService'
 import { findAllByProjeto } from '@/services/sprintService'
 import { getSprintMetrics } from '@/services/dashboardService'
 import prisma from '@/lib/prisma'
@@ -45,9 +45,9 @@ async function getProjetoDashboardData(projetoId: string) {
   const totalAtrasados = sprintMetrics.reduce((sum, s) => sum + s.cardsAtrasados, 0)
 
   // User metrics for this project
-  const membros = await prisma.usuarioProjeto.findMany({
-    where: { projetoId, dataSaida: null },
-    include: { user: { select: { id: true, name: true, cargo: true, avatarUrl: true, valorHora: true } } },
+  const membros = await prisma.userProject.findMany({
+    where: { projectId: projetoId, active: true },
+    include: { user: { select: { id: true, name: true, cargo: true, avatarUrl: true, hourlyRate: true } } },
   })
 
   const userMetrics = await Promise.all(
@@ -61,7 +61,7 @@ async function getProjetoDashboardData(projetoId: string) {
         select: { duration: true },
       })
       const horasTotais = entries.reduce((sum, e) => sum + e.duration / 3600, 0)
-      const custoTotal = horasTotais * m.user.valorHora
+      const custoTotal = horasTotais * m.user.hourlyRate
       return {
         id: m.userId,
         name: m.user.name,

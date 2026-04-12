@@ -15,15 +15,15 @@ export async function create(input: CreateComentarioInput) {
     throw new Error(parsed.error.issues[0].message)
   }
 
-  const { cardId, userId, texto, tipo, reacoes } = parsed.data
+  const { cardId, userId, content, type, reactions } = parsed.data
 
-  return prisma.comentario.create({
+  return prisma.comment.create({
     data: {
       cardId,
       userId,
-      texto,
-      tipo: tipo ?? 'COMENTARIO',
-      reacoes: reacoes ?? undefined,
+      content,
+      type: type ?? 'COMMENT',
+      reactions: reactions ?? undefined,
     },
     include: {
       user: { select: { id: true, name: true, avatarUrl: true } },
@@ -32,7 +32,7 @@ export async function create(input: CreateComentarioInput) {
 }
 
 export async function findAllByCard(cardId: string) {
-  return prisma.comentario.findMany({
+  return prisma.comment.findMany({
     where: { cardId, deletedAt: null },
     orderBy: { createdAt: 'asc' },
     include: {
@@ -42,7 +42,7 @@ export async function findAllByCard(cardId: string) {
 }
 
 export async function findById(id: string) {
-  return prisma.comentario.findUnique({
+  return prisma.comment.findUnique({
     where: { id, deletedAt: null },
     include: {
       user: { select: { id: true, name: true, avatarUrl: true } },
@@ -56,14 +56,14 @@ export async function update(id: string, input: UpdateComentarioInput) {
     throw new Error(parsed.error.issues[0].message)
   }
 
-  const existing = await prisma.comentario.findUnique({
+  const existing = await prisma.comment.findUnique({
     where: { id, deletedAt: null },
   })
   if (!existing) {
-    throw new NotFoundError('Comentário não encontrado')
+    throw new NotFoundError('Comment not found')
   }
 
-  return prisma.comentario.update({
+  return prisma.comment.update({
     where: { id },
     data: parsed.data,
     include: {
@@ -73,32 +73,32 @@ export async function update(id: string, input: UpdateComentarioInput) {
 }
 
 export async function deleteComentario(id: string) {
-  const existing = await prisma.comentario.findUnique({
+  const existing = await prisma.comment.findUnique({
     where: { id, deletedAt: null },
   })
   if (!existing) {
-    throw new NotFoundError('Comentário não encontrado')
+    throw new NotFoundError('Comment not found')
   }
 
-  return prisma.comentario.update({
+  return prisma.comment.update({
     where: { id },
     data: { deletedAt: new Date() },
   })
 }
 
 export async function addReacao(id: string, reacao: string) {
-  const existing = await prisma.comentario.findUnique({
+  const existing = await prisma.comment.findUnique({
     where: { id, deletedAt: null },
   })
   if (!existing) {
-    throw new NotFoundError('Comentário não encontrado')
+    throw new NotFoundError('Comment not found')
   }
 
-  const reacoes = (existing.reacoes as Record<string, number>) || {}
-  reacoes[reacao] = (reacoes[reacao] || 0) + 1
+  const reactions = (existing.reactions as Record<string, number>) || {}
+  reactions[reacao] = (reactions[reacao] || 0) + 1
 
-  return prisma.comentario.update({
+  return prisma.comment.update({
     where: { id },
-    data: { reacoes },
+    data: { reactions },
   })
 }

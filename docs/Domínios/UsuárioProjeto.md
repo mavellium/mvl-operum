@@ -1,4 +1,4 @@
-> Representa a associação entre um [[Usuário]] e um [[Projeto]], definindo em quais projetos o [[Usuário]] está ativo e qual seu papel dentro desse contexto.
+> Representa a associação entre um [[Usuário]] e um [[Projeto]], definindo em quais projetos o [[Usuário]] está active e qual seu papel dentro desse contexto.
 
 ---
 
@@ -8,7 +8,7 @@
 - ProjetoId (referência ao [[Projeto]])
 - Data de Entrada
 - Data de Saída (opcional)
-- Status (ativo | inativo | removido)
+- Status (active | inactive | removido)
 - Observações (opcional)
 - Criado em
 
@@ -43,7 +43,7 @@
 ### Estrutura
 
 - Cada [[UsuárioProjeto]] representa um vínculo único entre [[Usuário]] e [[Projeto]]
-- Um [[Usuário]] não pode possuir mais de um vínculo ativo com o mesmo [[Projeto]]
+- Um [[Usuário]] não pode possuir mais de um vínculo active com o mesmo [[Projeto]]
 - O vínculo deve registrar a data de entrada automaticamente
 
 ---
@@ -51,14 +51,14 @@
 ### Papéis
 
 - Papéis são atribuídos exclusivamente via [[UsuárioProjetoPapel]]
-- Um [[UsuárioProjeto]] deve possuir ao menos um [[Papel]] ativo para que o [[Usuário]] tenha acesso ao [[Projeto]]
+- Um [[UsuárioProjeto]] deve possuir ao menos um [[Papel]] active para que o [[Usuário]] tenha acesso ao [[Projeto]]
 - Ao remover o último [[Papel]] de um [[UsuárioProjeto]], o acesso é automaticamente bloqueado
 
 ---
 
 ### Consistência
 
-- Não é permitido duplicar [[UsuárioProjeto]] ativo para o mesmo [[Usuário]] e [[Projeto]]
+- Não é permitido duplicar [[UsuárioProjeto]] active para o mesmo [[Usuário]] e [[Projeto]]
 - Alterações no status do vínculo devem refletir imediatamente no acesso do [[Usuário]]
 - A saída de um [[Usuário]] deve ser registrada com timestamp
 
@@ -66,9 +66,9 @@
 
 ### Segurança
 
-- Apenas [[Usuário]]s com papel administrativo no [[Projeto]] podem modificar vínculos
+- Apenas [[Usuário]]s com papel administractive no [[Projeto]] podem modificar vínculos
 - Todas as alterações devem ser auditadas
-- Um [[Usuário]] inativo ou removido não pode ser associado a projetos ativos
+- Um [[Usuário]] inactive ou removido não pode ser associado a projetos actives
 
 ---
 
@@ -76,7 +76,7 @@
 
 ### Associação
 
-- Dado um [[Usuário]] ativo
+- Dado um [[Usuário]] active
 - Quando for associado a um [[Projeto]]
 - Então um [[UsuárioProjeto]] é criado
 - E deve possuir ao menos um [[Papel]]
@@ -94,7 +94,7 @@
 
 ### Validação de duplicidade
 
-- Dado um [[Usuário]] e um [[Projeto]] com vínculo existente ativo
+- Dado um [[Usuário]] e um [[Projeto]] com vínculo existente active
 - Quando tentar criar novo vínculo
 - Então o sistema deve impedir a operação
 - E informar que o vínculo já existe
@@ -112,6 +112,6 @@
 
 ## 🔄 Estados
 
-- ativo → vínculo válido e acesso permitido
-- inativo → vínculo suspenso, sem acesso
+- active → vínculo válido e acesso permitido
+- inactive → vínculo suspenso, sem acesso
 - removido → soft delete, histórico mantido

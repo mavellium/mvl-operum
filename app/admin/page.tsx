@@ -8,9 +8,9 @@ async function getAdminStats(userId: string) {
   const [totalUsers, activeUsers, totalProjetos, activeProjetos, unreadAlerts] = await Promise.all([
     prisma.user.count({ where: { deletedAt: null } }),
     prisma.user.count({ where: { deletedAt: null, isActive: true } }),
-    prisma.projeto.count({ where: { deletedAt: null } }),
-    prisma.projeto.count({ where: { deletedAt: null, status: 'ATIVO' } }),
-    prisma.notificacao.count({ where: { userId, status: 'NAO_LIDA', deletedAt: null } }),
+    prisma.project.count({ where: { deletedAt: null } }),
+    prisma.project.count({ where: { deletedAt: null, status: 'ACTIVE' } }),
+    prisma.notification.count({ where: { userId, status: 'UNREAD', deletedAt: null } }),
   ])
   return { totalUsers, activeUsers, totalProjetos, activeProjetos, unreadAlerts }
 }
@@ -29,7 +29,7 @@ export default async function AdminPage() {
           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" />
         </svg>
       ),
-      stat: `${stats.activeUsers} ativos de ${stats.totalUsers}`,
+      stat: `${stats.activeUsers} actives de ${stats.totalUsers}`,
       color: 'bg-blue-50 text-blue-600',
     },
     {
@@ -41,7 +41,7 @@ export default async function AdminPage() {
           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
         </svg>
       ),
-      stat: `${stats.activeProjetos} projetos ativos`,
+      stat: `${stats.activeProjetos} projetos actives`,
       color: 'bg-purple-50 text-purple-600',
     },
     {
@@ -73,7 +73,7 @@ export default async function AdminPage() {
   return (
     <div className="min-h-screen bg-gray-50">
       <header className="bg-white border-b border-gray-200 px-6 py-4">
-        <h1 className="text-xl font-bold text-gray-900">Painel Administrativo</h1>
+        <h1 className="text-xl font-bold text-gray-900">Painel Administractive</h1>
         <p className="text-sm text-gray-500 mt-0.5">Gerencie usuários, projetos e configurações do sistema</p>
       </header>
 
@@ -82,11 +82,11 @@ export default async function AdminPage() {
         <div className="grid grid-cols-3 gap-4 mb-8">
           <div className="bg-white rounded-2xl border border-gray-100 p-4 text-center">
             <p className="text-2xl font-bold text-gray-900">{stats.activeUsers}</p>
-            <p className="text-xs text-gray-500 mt-1">Usuários ativos</p>
+            <p className="text-xs text-gray-500 mt-1">Usuários actives</p>
           </div>
           <div className="bg-white rounded-2xl border border-gray-100 p-4 text-center">
             <p className="text-2xl font-bold text-gray-900">{stats.activeProjetos}</p>
-            <p className="text-xs text-gray-500 mt-1">Projetos ativos</p>
+            <p className="text-xs text-gray-500 mt-1">Projetos actives</p>
           </div>
           <div className="bg-white rounded-2xl border border-gray-100 p-4 text-center">
             <p className="text-2xl font-bold text-gray-900">{stats.unreadAlerts}</p>

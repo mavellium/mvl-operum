@@ -69,7 +69,7 @@
 ### Autenticação
 
 - Login via [[Login]] com email e senha
-- [[MFA]] habilitado para papéis administrativos
+- [[MFA]] habilitado para papéis administractives
 - Tentativas de login registradas e bloqueio automático
 - Reset de senha seguro via token expirável
 
@@ -104,10 +104,10 @@
 
 ## 🔄 Estados Globais do Sistema
 
-- Sistema ativo → operação normal, tenants e usuários ativos
-- Sistema inativo → manutenção, acesso bloqueado
-- Tenant ativo / inativo / suspenso / removido → conforme política de lifecycle
-- Usuário ativo / inativo / bloqueado / removido → conforme regras de acesso
+- Sistema active → operação normal, tenants e usuários actives
+- Sistema inactive → manutenção, acesso bloqueado
+- Tenant active / inactive / suspenso / removido → conforme política de lifecycle
+- Usuário active / inactive / bloqueado / removido → conforme regras de acesso
 
 ---
 ## 🧪 Testes e Qualidade
@@ -138,7 +138,7 @@
 ### Testes de Performance
 
 - Avalia tempo de resposta de endpoints críticos
-- Simula múltiplos usuários ativos (stress test)
+- Simula múltiplos usuários actives (stress test)
 - Ferramentas: **[[k6]]** ou **[[JMeter]]**
 
 ---
@@ -181,7 +181,7 @@
 ### Métricas
 
 - [[Prometheus]] + [[Grafana]] para métricas de performance e disponibilidade
-- Métricas de uso de recursos, tempo de resposta, número de usuários ativos
+- Métricas de uso de recursos, tempo de resposta, número de usuários actives
 
 ### Monitoramento e Alertas
 
@@ -249,7 +249,7 @@
     - Redis para cache de sessões
     - RabbitMQ/Kafka para eventos assíncronos, notificações e jobs
 5. **Segurança**
-    - MFA obrigatória para papéis administrativos
+    - MFA obrigatória para papéis administractives
     - Hash de senha bcrypt
     - Proteções contra CSRF, XSS e SQL Injection
     - Auditoria completa de todas ações críticas
@@ -270,5 +270,5 @@
 
 - [[Login]]
   [[Tela Projeto]]
-- [[Tela Painel Administrativo]
+- [[Tela Painel Administractive]
 - [[Sistema de Alertas e Feedbacks]]

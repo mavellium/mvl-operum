@@ -6,13 +6,13 @@ import { createSprint, updateSprint, deleteSprint, completeSprint, getAllSprints
 
 export async function createSprintAction(
   _prevState: unknown,
-  input: { name: string; startDate?: string; endDate?: string; projetoId?: string },
+  input: { name: string; startDate?: string; endDate?: string; projectId?: string },
 ) {
   try {
     const { userId } = await verifySession()
     const sprint = await createSprint({ ...input, createdBy: userId })
     revalidatePath('/sprints')
-    if (input.projetoId) revalidatePath(`/projetos/${input.projetoId}`)
+    if (input.projectId) revalidatePath(`/projetos/${input.projectId}`)
     return { sprint }
   } catch (err) {
     return { error: err instanceof Error ? err.message : 'Erro ao criar sprint' }

@@ -46,7 +46,7 @@
 - Um [[Usuário]] pode estar associado a múltiplos [[Departamento]]
 - A associação é feita via entidade intermediária [[UsuárioDepartamento]]
 - Um [[Departamento]] pode existir sem usuários
-- Um [[Departamento]] inativo não pode receber novos usuários
+- Um [[Departamento]] inactive não pode receber novos usuários
 
 ---
 
@@ -110,9 +110,9 @@
 
 ---
 
-### Departamento inativo
+### Departamento inactive
 
-- Dado um [[Departamento]] inativo
+- Dado um [[Departamento]] inactive
 - Quando tentar associar um [[Usuário]]
 - Então o sistema deve impedir a operação
 
@@ -130,5 +130,5 @@
 
 ## 🔄 Estados
 
-- ativo
-- inativo
+- active
+- inactive

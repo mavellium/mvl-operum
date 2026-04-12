@@ -2,18 +2,18 @@ import prisma from '@/lib/prisma'
 
 export async function getOrCreateGerenteProjetoRole(tenantId: string) {
   const existing = await prisma.role.findFirst({
-    where: { tenantId, nome: 'gerente', escopo: 'PROJETO' },
+    where: { tenantId, nameKey: 'gerente', scope: 'PROJETO' },
   })
   if (existing) return existing
   return prisma.role.create({
-    data: { tenantId, nome: 'gerente', escopo: 'PROJETO' },
+    data: { tenantId, name: 'Gerente de Projeto', nameKey: 'gerente', scope: 'PROJETO' },
   })
 }
 
-export async function setProjectManagerRole(userId: string, projetoId: string, tenantId: string) {
+export async function setProjectManagerRole(userId: string, projectId: string, tenantId: string) {
   const role = await getOrCreateGerenteProjetoRole(tenantId)
   const existing = await prisma.userProjectRole.findUnique({
-    where: { userId_projetoId: { userId, projetoId } },
+    where: { userId_projectId: { userId, projectId } },
   })
   if (existing) {
     return prisma.userProjectRole.update({
@@ -22,13 +22,13 @@ export async function setProjectManagerRole(userId: string, projetoId: string, t
     })
   }
   return prisma.userProjectRole.create({
-    data: { userId, projetoId, roleId: role.id },
+    data: { userId, projectId, roleId: role.id },
   })
 }
 
-export async function removeProjectRole(userId: string, projetoId: string) {
+export async function removeProjectRole(userId: string, projectId: string) {
   const existing = await prisma.userProjectRole.findUnique({
-    where: { userId_projetoId: { userId, projetoId } },
+    where: { userId_projectId: { userId, projectId } },
   })
   if (existing) {
     await prisma.userProjectRole.update({
@@ -38,28 +38,38 @@ export async function removeProjectRole(userId: string, projetoId: string) {
   }
 }
 
-export async function isProjectManager(userId: string, projetoId: string): Promise<boolean> {
+export async function isProjectManager(userId: string, projectId: string): Promise<boolean> {
   const entry = await prisma.userProjectRole.findFirst({
-    where: { userId, projetoId, deletedAt: null, role: { nome: 'gerente', escopo: 'PROJETO' } },
+    where: {
+      userId,
+      projectId,
+      deletedAt: null,
+      role: {
+        is: {
+          nameKey: 'gerente',
+          scope: 'PROJETO',
+        },
+      },
+    },
   })
   return entry !== null
 }
 
-export async function countProjectManagers(projetoId: string): Promise<number> {
+export async function countProjectManagers(projectId: string): Promise<number> {
   return prisma.userProjectRole.count({
-    where: { projetoId, deletedAt: null, role: { nome: 'gerente', escopo: 'PROJETO' } },
+    where: { projectId, deletedAt: null, role: { nameKey: 'gerente', scope: 'PROJETO' } },
   })
 }
 
 export async function getProjectsWhereManager(userId: string): Promise<string[]> {
   const entries = await prisma.userProjectRole.findMany({
-    where: { userId, deletedAt: null, role: { nome: 'gerente', escopo: 'PROJETO' } },
-    select: { projetoId: true },
+    where: { userId, deletedAt: null, role: { nameKey: 'gerente', scope: 'PROJETO' } },
+    select: { projectId: true },
   })
-  return entries.map(e => e.projetoId)
+  return entries.map(e => e.projectId)
 }
 
-export async function getProjectRoleForMember(userId: string, projetoId: string): Promise<'gerente' | 'member'> {
-  const pm = await isProjectManager(userId, projetoId)
+export async function getProjectRoleForMember(userId: string, projectId: string): Promise<'gerente' | 'member'> {
+  const pm = await isProjectManager(userId, projectId)
   return pm ? 'gerente' : 'member'
 }

@@ -1,6 +1,6 @@
 import { notFound } from 'next/navigation'
 import { verifySession } from '@/lib/dal'
-import { findById } from '@/services/projetoService'
+import { findById } from '@/services/projectService'
 import { isProjectManager, getProjectRoleForMember } from '@/services/projectRoleService'
 import prisma from '@/lib/prisma'
 import ProjetoMembrosClient from '@/components/projetos/ProjetoMembrosClient'
@@ -11,91 +11,93 @@ export default async function ProjetoMembrosPage({ params }: { params: Promise<{
   const { projetoId } = await params
   const { tenantId, role, userId } = await verifySession()
 
-  const canManage = role === 'admin' || await isProjectManager(userId, projetoId)
-  if (!canManage) {
+  const isManager = role === 'admin' || await isProjectManager(userId, projetoId)
+  if (!isManager) {
     notFound()
   }
+  const userRole: 'admin' | 'gerente' = role === 'admin' ? 'admin' : 'gerente'
 
-  // Adicionamos as buscas de role (funções) e departamentos na mesma Promise para ser rápido
-  const [projeto, membros, todosUsuarios, funcoesDb, departamentosDb] = await Promise.all([
+  const [project, members, allUsers, rolesDb, departmentsDb] = await Promise.all([
     findById(projetoId),
-    prisma.usuarioProjeto.findMany({
-      where: { projetoId, ativo: true },
+    prisma.userProject.findMany({
+      where: { projectId: projetoId, active: true },
       include: {
-        user: { select: { id: true, name: true, email: true, avatarUrl: true, role: true } },
+        user: { select: { id: true, name: true, email: true, avatarUrl: true, role: true, phone: true, address: true, notes: true } },
+        department: { select: { name: true } },
       },
-      orderBy: { dataEntrada: 'asc' },
+      orderBy: { startDate: 'asc' },
     }),
     prisma.user.findMany({
       where: { tenantId, deletedAt: null, isActive: true },
       select: { id: true, name: true, email: true, avatarUrl: true, role: true },
       orderBy: { name: 'asc' },
     }),
-    // Busca as funções reais (tabela role)
     prisma.role.findMany({
       where: { tenantId },
-      select: { nome: true },
-      orderBy: { nome: 'asc' }
+      select: { name: true },
+      orderBy: { name: 'asc' },
     }),
-    // Busca os departamentos reais (Ajuste 'departamento' para o nome exato da sua tabela se precisar)
-    prisma.departamento.findMany({
-      where: { tenantId },
-      select: { nome: true },
-      orderBy: { nome: 'asc' }
-    })
+    prisma.department.findMany({
+      where: { tenantId, deletedAt: null },
+      select: { name: true },
+      orderBy: { name: 'asc' },
+    }),
   ])
 
-  if (!projeto) notFound()
+  if (!project) notFound()
 
-  const membroIds = new Set(membros.map(m => m.userId))
-  const disponiveis = todosUsuarios.filter(u => !membroIds.has(u.id))
+  const memberIds = new Set(members.map(m => m.userId))
+  const available = allUsers.filter(u => !memberIds.has(u.id))
 
-  const membrosData = await Promise.all(membros.map(async m => {
-    const cargosArray = m.cargo
-      ? m.cargo.split(',').map(s => s.trim()).filter(Boolean)
-      : []
+  const membersData = await Promise.all(
+    members.map(async m => {
+      const rolesArray = m.role
+        ? m.role.split(',').map((s: string) => s.trim()).filter(Boolean)
+        : []
 
-    const departamentosArray = m.departamento
-      ? m.departamento.split(',').map(s => s.trim()).filter(Boolean)
-      : []
+      const projectRole = await getProjectRoleForMember(m.userId, projetoId)
+      
 
-    return {
-      id: m.id,
-      userId: m.userId,
-      name: m.user.name,
-      email: m.user.email,
-      avatarUrl: m.user.avatarUrl,
-      role: await getProjectRoleForMember(m.userId, projetoId),
-      cargos: cargosArray,
-      departamentos: departamentosArray,
-      cargo: m.cargo,
-      departamento: m.departamento,
-      valorHora: m.valorHora,
-      dataEntrada: m.dataEntrada.toISOString(),
-    }
-  }))
+      return {
+        id: m.id,
+        userId: m.userId,
+        name: m.user.name,
+        email: m.user.email,
+        avatarUrl: m.user.avatarUrl,
+        phone: m.user.phone,
+        address: m.user.address,
+        notes: m.user.notes,
+        role: projectRole,
+        isGerente: projectRole === 'gerente',
+        cargos: rolesArray,
+        departamento: m.department?.name ? [m.department.name] : [],
+        hourlyRate: m.hourlyRate,
+        startDate: m.startDate.toISOString(),
+      }
+    }),
+  )
 
-  const disponiveisData = disponiveis.map(u => ({
+  const availableData = available.map(u => ({
     id: u.id,
     name: u.name,
     email: u.email,
     avatarUrl: u.avatarUrl,
-    role: u.role, // global role — used for display only in the add-member picker
+    role: u.role,
   }))
 
-  const funcoesExistentes = funcoesDb.map(f => f.nome)
-  const departamentosExistentes = departamentosDb.map(d => d.nome)
+  const existingRoles = rolesDb.map(f => f.name)
+  const existingDepartments = departmentsDb.map(d => d.name)
 
   return (
     <div className="min-h-screen bg-gray-50">
-      <main className="max-w-3xl mx-auto px-4 py-8">
+      <main className="max-w-7xl mx-auto px-4 py-8">
         <ProjetoMembrosClient
           projetoId={projetoId}
-          membros={membrosData}
-          disponiveis={disponiveisData}
-          funcoesExistentes={funcoesExistentes}
-          departamentosExistentes={departamentosExistentes}
-          canManage={canManage}
+          membros={membersData}
+          disponiveis={availableData}
+          funcoesExistentes={existingRoles}
+          departamentosExistentes={existingDepartments}
+          userRole={userRole}  
         />
       </main>
     </div>

@@ -1,4 +1,7 @@
+// @vitest-environment node
 import { describe, it, expect, vi, beforeEach } from 'vitest'
+
+vi.mock('next/cache', () => ({ revalidatePath: vi.fn() }))
 
 vi.mock('@/lib/dal', () => ({
   verifySession: vi.fn(),
@@ -10,16 +13,29 @@ vi.mock('@/services/roleService', () => ({
   updateRole: vi.fn(),
   assignPermission: vi.fn(),
   removePermission: vi.fn(),
+  getOrCreateRole: vi.fn(),
+  softDeleteRole: vi.fn(),
 }))
 
 import { verifySession } from '@/lib/dal'
-import { createRole, findAllByTenant, updateRole, assignPermission, removePermission } from '@/services/roleService'
+import {
+  createRole,
+  findAllByTenant,
+  updateRole,
+  assignPermission,
+  removePermission,
+  getOrCreateRole,
+  softDeleteRole,
+} from '@/services/roleService'
 import {
   createRoleAction,
   getRolesAction,
   updateRoleAction,
   assignPermissionAction,
   removePermissionAction,
+  getOrCreateRoleAction,
+  updateRoleNameAction,
+  deleteRoleAction,
 } from '@/app/actions/roles'
 
 beforeEach(() => {
@@ -33,14 +49,14 @@ describe('Role Actions', () => {
       ;(verifySession as any).mockResolvedValue(mockSession)
       ;(createRole as any).mockResolvedValue({
         id: 'r1',
-        nome: 'Admin',
+        name: 'Admin',
         tenantId: 't1',
-        escopo: 'TENANT',
+        scope: 'TENANT',
       })
 
-      const result = await createRoleAction({}, { nome: 'Admin', escopo: 'TENANT' })
+      const result = await createRoleAction({}, { name: 'Admin', scope: 'TENANT' })
       expect(result).toHaveProperty('role')
-      expect(result.role?.nome).toBe('Admin')
+      expect(result.role?.name).toBe('Admin')
     })
 
     it('should return error on validation failure', async () => {
@@ -48,7 +64,7 @@ describe('Role Actions', () => {
       ;(verifySession as any).mockResolvedValue(mockSession)
       ;(createRole as any).mockRejectedValue(new Error('Validation error'))
 
-      const result = await createRoleAction({}, { nome: '', escopo: 'TENANT' })
+      const result = await createRoleAction({}, { name: '', scope: 'TENANT' })
       expect(result).toHaveProperty('error')
     })
   })
@@ -58,8 +74,8 @@ describe('Role Actions', () => {
       const mockSession = { userId: 'u1', tenantId: 't1', role: 'member' }
       ;(verifySession as any).mockResolvedValue(mockSession)
       ;(findAllByTenant as any).mockResolvedValue([
-        { id: 'r1', nome: 'Admin' },
-        { id: 'r2', nome: 'Member' },
+        { id: 'r1', name: 'Admin' },
+        { id: 'r2', name: 'Member' },
       ])
 
       const result = await getRolesAction()
@@ -81,10 +97,10 @@ describe('Role Actions', () => {
       ;(verifySession as any).mockResolvedValue(mockSession)
       ;(updateRole as any).mockResolvedValue({
         id: 'r1',
-        nome: 'Super Admin',
+        name: 'Super Admin',
       })
 
-      const result = await updateRoleAction({}, 'r1', { nome: 'Super Admin' })
+      const result = await updateRoleAction({}, 'r1', { name: 'Super Admin' })
       expect(result).toHaveProperty('role')
     })
 
@@ -93,7 +109,7 @@ describe('Role Actions', () => {
       ;(verifySession as any).mockResolvedValue(mockSession)
       ;(updateRole as any).mockRejectedValue(new Error('Not found'))
 
-      const result = await updateRoleAction({}, 'nonexistent', { nome: 'Test' })
+      const result = await updateRoleAction({}, 'nonexistent', { name: 'Test' })
       expect(result).toHaveProperty('error')
     })
   })
@@ -139,6 +155,67 @@ describe('Role Actions', () => {
       ;(removePermission as any).mockRejectedValue(new Error('Not found'))
 
       const result = await removePermissionAction('r1', 'p1')
+      expect(result).toHaveProperty('error')
+    })
+  })
+
+  describe('getOrCreateRoleAction', () => {
+    it('should return role on success', async () => {
+      const mockSession = { userId: 'u1', tenantId: 't1', role: 'admin' }
+      ;(verifySession as any).mockResolvedValue(mockSession)
+      ;(getOrCreateRole as any).mockResolvedValue({ id: 'r1', name: 'TI', nameKey: 'ti' })
+
+      const result = await getOrCreateRoleAction('TI')
+      expect(result).toHaveProperty('role')
+      expect((result as any).role.name).toBe('TI')
+    })
+
+    it('should return error on failure', async () => {
+      ;(verifySession as any).mockRejectedValue(new Error('Auth error'))
+
+      const result = await getOrCreateRoleAction('TI')
+      expect(result).toHaveProperty('error')
+    })
+  })
+
+  describe('updateRoleNameAction', () => {
+    it('should update role name and return role', async () => {
+      const mockSession = { userId: 'u1', tenantId: 't1', role: 'admin' }
+      ;(verifySession as any).mockResolvedValue(mockSession)
+      ;(updateRole as any).mockResolvedValue({ id: 'r1', name: 'Technology', nameKey: 'technology' })
+
+      const result = await updateRoleNameAction('r1', 'Technology')
+      expect(result).toHaveProperty('role')
+      expect((result as any).role.name).toBe('Technology')
+    })
+
+    it('should return error on failure', async () => {
+      const mockSession = { userId: 'u1', tenantId: 't1', role: 'admin' }
+      ;(verifySession as any).mockResolvedValue(mockSession)
+      ;(updateRole as any).mockRejectedValue(new Error('Not found'))
+
+      const result = await updateRoleNameAction('nonexistent', 'X')
+      expect(result).toHaveProperty('error')
+    })
+  })
+
+  describe('deleteRoleAction', () => {
+    it('should soft-delete role and return success', async () => {
+      const mockSession = { userId: 'u1', tenantId: 't1', role: 'admin' }
+      ;(verifySession as any).mockResolvedValue(mockSession)
+      ;(softDeleteRole as any).mockResolvedValue({ id: 'r1', deletedAt: new Date() })
+
+      const result = await deleteRoleAction('r1')
+      expect(result).toHaveProperty('success')
+      expect((result as any).success).toBe(true)
+    })
+
+    it('should return error on failure', async () => {
+      const mockSession = { userId: 'u1', tenantId: 't1', role: 'admin' }
+      ;(verifySession as any).mockResolvedValue(mockSession)
+      ;(softDeleteRole as any).mockRejectedValue(new Error('Not found'))
+
+      const result = await deleteRoleAction('nonexistent')
       expect(result).toHaveProperty('error')
     })
   })

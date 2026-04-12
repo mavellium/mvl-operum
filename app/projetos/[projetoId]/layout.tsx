@@ -1,6 +1,6 @@
 import { notFound } from 'next/navigation'
 import { verifySession } from '@/lib/dal'
-import { findById } from '@/services/projetoService'
+import { findById } from '@/services/projectService'
 import { isProjectManager } from '@/services/projectRoleService'
 import ProjectSidebar from '@/components/layout/ProjectSidebar'
 
@@ -23,7 +23,7 @@ export default async function ProjetoLayout({
     <div className="flex flex-1">
       <ProjectSidebar
         projetoId={projetoId}
-        projetoNome={projeto.nome}
+        projetoNome={projeto.name}
         canManageMembers={canManageMembers}
       />
       <main className="flex-1 min-w-0">

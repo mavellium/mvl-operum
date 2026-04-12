@@ -34,6 +34,10 @@ export async function adminCreateUserAction(data: {
   password: string
   isAdmin?: boolean
   forcePasswordChange?: boolean
+  avatarUrl?: string
+  phone?: string
+  address?: string
+  notes?: string
 }) {
   try {
     const { tenantId } = await requireAdmin()
@@ -50,10 +54,14 @@ export async function adminUpdateUserAction(
   data: {
     name?: string
     email?: string
+    avatarUrl?: string
+    phone?: string
+    address?: string
+    notes?: string
     password?: string
     cargo?: string
     departamento?: string
-    valorHora?: number
+    hourlyRate?: number
   },
 ) {
   try {

@@ -1,10 +1,10 @@
 import { z } from 'zod'
 
-const TenantStatusEnum = z.enum(['ATIVO', 'INATIVO', 'SUSPENSO', 'REMOVIDO'])
+const TenantStatusEnum = z.enum(['ACTIVE', 'INACTIVE', 'SUSPENDED', 'REMOVED'])
 
 export const CreateTenantSchema = z.object({
-  nome: z.string().trim().min(1, 'Nome é obrigatório'),
-  subdominio: z
+  name: z.string().trim().min(1, 'Name is required'),
+  subdomain: z
     .string()
     .trim()
     .toLowerCase()
@@ -14,7 +14,7 @@ export const CreateTenantSchema = z.object({
 })
 
 export const UpdateTenantSchema = z.object({
-  nome: z.string().trim().min(1, 'Nome é obrigatório').optional(),
+  name: z.string().trim().min(1, 'Name is required').optional(),
   status: TenantStatusEnum.optional(),
   config: z.record(z.string(), z.any()).optional(),
 })

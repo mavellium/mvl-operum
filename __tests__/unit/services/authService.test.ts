@@ -15,7 +15,7 @@ vi.mock('@/lib/prisma', () => ({
 import prisma from '@/lib/prisma'
 import { register, login } from '@/services/authService'
 
-const mockPrisma = prisma as {
+const mockPrisma = prisma as unknown as {
   user: {
     findUnique: ReturnType<typeof vi.fn>
     findFirst: ReturnType<typeof vi.fn>
@@ -107,7 +107,7 @@ describe('login', () => {
       id: 'u1',
       passwordHash: '$2a$10$wronghash',
       tenantId: 't1',
-      status: 'ativo',
+      status: 'active',
       isActive: true,
       loginAttempts: 0,
     })
@@ -123,7 +123,7 @@ describe('login', () => {
       role: 'member',
       tenantId: 't1',
       passwordHash: hash,
-      status: 'ativo',
+      status: 'active',
       isActive: true,
       tokenVersion: 5,
       loginAttempts: 0,
@@ -134,7 +134,7 @@ describe('login', () => {
     expect(result).not.toHaveProperty('passwordHash')
   })
 
-  it('rejects user with status inativo', async () => {
+  it('rejects user with status inactive', async () => {
     const bcrypt = await import('bcryptjs')
     const hash = await bcrypt.hash('Test@1234', 10)
     mockPrisma.user.findFirst.mockResolvedValue({
@@ -143,7 +143,7 @@ describe('login', () => {
       role: 'member',
       tenantId: 't1',
       passwordHash: hash,
-      status: 'inativo',
+      status: 'inactive',
       isActive: false,
       tokenVersion: 0,
       loginAttempts: 0,
@@ -157,7 +157,7 @@ describe('login', () => {
       email: 'ana@example.com',
       passwordHash: '$2a$10$wronghash',
       tenantId: 't1',
-      status: 'ativo',
+      status: 'active',
       isActive: true,
       loginAttempts: 2,
       tokenVersion: 0,
@@ -182,7 +182,7 @@ describe('login', () => {
       role: 'member',
       tenantId: 't1',
       passwordHash: hash,
-      status: 'ativo',
+      status: 'active',
       isActive: true,
       tokenVersion: 0,
       loginAttempts: 0,

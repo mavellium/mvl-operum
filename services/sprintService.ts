@@ -55,7 +55,7 @@ export async function getAllSprints() {
 
 export async function findAllByProjeto(projetoId: string) {
   return prisma.sprint.findMany({
-    where: { projetoId, deletedAt: null },
+    where: { projectId: projetoId, deletedAt: null },
     orderBy: { createdAt: 'asc' },
   })
 }

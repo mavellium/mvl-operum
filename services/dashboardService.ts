@@ -11,7 +11,7 @@ export async function getSprintMetrics(sprintId: string) {
   const [timeEntries, cards] = await Promise.all([
     prisma.timeEntry.findMany({
       where: { card: { sprintId, deletedAt: null }, deletedAt: null },
-      include: { user: { select: { valorHora: true } } },
+      include: { user: { select: { hourlyRate: true } } },
     }),
     prisma.card.findMany({
       where: { sprintId, deletedAt: null },
@@ -20,7 +20,7 @@ export async function getSprintMetrics(sprintId: string) {
   ])
 
   const horasTotais = timeEntries.reduce((sum, e) => sum + e.duration / 3600, 0)
-  const custoTotal = timeEntries.reduce((sum, e) => sum + (e.duration / 3600) * e.user.valorHora, 0)
+  const custoTotal = timeEntries.reduce((sum, e) => sum + (e.duration / 3600) * e.user.hourlyRate, 0)
   const now = new Date()
   const isDone = (c: typeof cards[number]) => /conclu/i.test(c.sprintColumn?.title ?? '')
   const cardsConcluidos = cards.filter(isDone).length
@@ -43,7 +43,7 @@ export async function getUserMetrics() {
       name: true,
       cargo: true,
       avatarUrl: true,
-      valorHora: true,
+      hourlyRate: true,
       timeEntries: {
         where: { deletedAt: null },
         select: { duration: true },
@@ -53,7 +53,7 @@ export async function getUserMetrics() {
 
   return users.map(u => {
     const horasTotais = u.timeEntries.reduce((sum, e) => sum + e.duration / 3600, 0)
-    const custoTotal = horasTotais * u.valorHora
+    const custoTotal = horasTotais * u.hourlyRate
     return {
       id: u.id,
       name: u.name,
@@ -74,7 +74,7 @@ export async function getMemberCardMetrics() {
       name: true,
       cargo: true,
       avatarUrl: true,
-      valorHora: true,
+      hourlyRate: true,
       timeEntries: { where: { deletedAt: null }, select: { duration: true } },
       responsibleCards: {
         select: {
@@ -102,7 +102,7 @@ export async function getMemberCardMetrics() {
       cargo: u.cargo,
       avatarUrl: u.avatarUrl,
       horasTotais,
-      custoTotal: horasTotais * u.valorHora,
+      custoTotal: horasTotais * u.hourlyRate,
       cardsTotal: cards.length,
       cardsConcluidos: cards.filter(isDone).length,
       cardsAtrasados: cards.filter(c => c.endDate && c.endDate < now && !isDone(c)).length,
@@ -135,12 +135,12 @@ export async function getGlobalKPIs() {
     prisma.card.findMany({ where: { deletedAt: null } }),
     prisma.timeEntry.findMany({
       where: { deletedAt: null },
-      include: { user: { select: { valorHora: true } } },
+      include: { user: { select: { hourlyRate: true } } },
     }),
-    prisma.user.findMany({ where: { deletedAt: null }, select: { id: true, valorHora: true } }),
+    prisma.user.findMany({ where: { deletedAt: null }, select: { id: true, hourlyRate: true } }),
   ])
 
-  const custoTotal = timeEntries.reduce((sum, e) => sum + (e.duration / 3600) * e.user.valorHora, 0)
+  const custoTotal = timeEntries.reduce((sum, e) => sum + (e.duration / 3600) * e.user.hourlyRate, 0)
   const horasTotais = timeEntries.reduce((sum, e) => sum + e.duration / 3600, 0)
 
   return {
@@ -160,7 +160,7 @@ export async function getSprintsWithMetrics() {
 
 export async function getSprintDashboard(sprintId: string) {
   const sprint = await prisma.sprint.findUnique({ where: { id: sprintId, deletedAt: null } })
-  if (!sprint) throw new NotFoundError(`Sprint não encontrado: ${sprintId}`)
+  if (!sprint) throw new NotFoundError(`Sprint not found: ${sprintId}`)
 
   const metrics = await getSprintMetrics(sprintId)
 

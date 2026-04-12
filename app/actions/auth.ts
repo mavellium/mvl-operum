@@ -3,7 +3,7 @@
 import { cookies } from 'next/headers'
 import { redirect } from 'next/navigation'
 import { register, login, ConflictError, AuthError } from '@/services/authService'
-import { getUserActiveProjects } from '@/services/projetoService'
+import { getUserActiveProjects } from '@/services/projectService'
 import { encrypt } from '@/lib/session'
 import prisma from '@/lib/prisma'
 import bcrypt from 'bcryptjs'
@@ -17,7 +17,7 @@ export async function signupAction(prevState: FormState, formData: FormData): Pr
   const password = formData.get('password') as string
 
   try {
-    const tenant = await prisma.tenant.findFirst({ where: { status: 'ATIVO' } })
+    const tenant = await prisma.tenant.findFirst({ where: { status: 'ACTIVE' } })
     if (!tenant) return { message: 'Nenhum tenant disponível' }
     const user = await register({ name, email, password, tenantId: tenant.id })
     const expiresAt = new Date(Date.now() + SESSION_DURATION_MS)
@@ -47,7 +47,7 @@ export async function loginAction(prevState: FormState, formData: FormData): Pro
   let forcePasswordChange = false
   let projectRedirect = '/projetos'
   try {
-    const tenant = await prisma.tenant.findFirst({ where: { status: 'ATIVO' } })
+    const tenant = await prisma.tenant.findFirst({ where: { status: 'ACTIVE' } })
     if (!tenant) return { message: 'Nenhum tenant disponível' }
     const { userId, role, tenantId, tokenVersion, forcePasswordChange: fpc } = await login({ email, password, tenantId: tenant.id })
     forcePasswordChange = fpc
@@ -66,7 +66,7 @@ export async function loginAction(prevState: FormState, formData: FormData): Pro
       if (projects.length === 0) {
         projectRedirect = '/no-project'
       } else if (projects.length === 1) {
-        projectRedirect = `/projetos/${projects[0].projetoId}/dashboard`
+        projectRedirect = `/projetos/${projects[0].projectId}/dashboard`
       } else {
         projectRedirect = '/projetos'
       }
