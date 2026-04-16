@@ -26,6 +26,15 @@ export async function updateProfileAction(prevState: ProfileActionState, formDat
       cargo: (formData.get('cargo') as string) || undefined,
       departamento: (formData.get('departamento') as string) || undefined,
       hourlyRate: Number(formData.get('hourlyRate') ?? 0),
+      phone: (formData.get('phone') as string) || undefined,
+      cep: (formData.get('cep') as string) || undefined,
+      logradouro: (formData.get('logradouro') as string) || undefined,
+      numero: (formData.get('numero') as string) || undefined,
+      complemento: (formData.get('complemento') as string) || undefined,
+      bairro: (formData.get('bairro') as string) || undefined,
+      cidade: (formData.get('cidade') as string) || undefined,
+      estado: (formData.get('estado') as string) || undefined,
+      notes: (formData.get('notes') as string) || undefined,
     })
     const avatarUrl = formData.get('avatarUrl') as string | null
     if (avatarUrl) {

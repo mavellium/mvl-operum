@@ -12,7 +12,13 @@ export type AdminUserResult = {
   isActive: boolean
   avatarUrl: string | null
   phone: string | null
-  address: string | null
+  cep: string | null
+  logradouro: string | null
+  numero: string | null
+  complemento: string | null
+  bairro: string | null
+  cidade: string | null
+  estado: string | null
   notes: string | null
 }
 
@@ -43,7 +49,13 @@ export async function adminCreateUser(data: {
   forcePasswordChange?: boolean
   avatarUrl?: string
   phone?: string
-  address?: string
+  cep?: string
+  logradouro?: string
+  numero?: string
+  complemento?: string
+  bairro?: string
+  cidade?: string
+  estado?: string
   notes?: string
   tenantId: string
 }): Promise<AdminUserResult> {
@@ -59,7 +71,13 @@ export async function adminCreateUser(data: {
       tenantId: data.tenantId,
       ...(data.avatarUrl ? { avatarUrl: data.avatarUrl } : {}),
       ...(data.phone !== undefined && { phone: data.phone }),
-      ...(data.address !== undefined && { address: data.address }),
+      ...(data.cep !== undefined && { cep: data.cep }),
+      ...(data.logradouro !== undefined && { logradouro: data.logradouro }),
+      ...(data.numero !== undefined && { numero: data.numero }),
+      ...(data.complemento !== undefined && { complemento: data.complemento }),
+      ...(data.bairro !== undefined && { bairro: data.bairro }),
+      ...(data.cidade !== undefined && { cidade: data.cidade }),
+      ...(data.estado !== undefined && { estado: data.estado }),
       ...(data.notes !== undefined && { notes: data.notes }),
     },
     select: {
@@ -73,7 +91,13 @@ export async function adminCreateUser(data: {
       isActive: true,
       avatarUrl: true,
       phone: true,
-      address: true,
+      cep: true,
+      logradouro: true,
+      numero: true,
+      complemento: true,
+      bairro: true,
+      cidade: true,
+      estado: true,
       notes: true,
     },
   })
@@ -91,7 +115,13 @@ export async function adminUpdateUser(
     departamento?: string
     hourlyRate?: number
     phone?: string
-    address?: string
+    cep?: string
+    logradouro?: string
+    numero?: string
+    complemento?: string
+    bairro?: string
+    cidade?: string
+    estado?: string
     notes?: string
   },
 ) {
@@ -106,7 +136,13 @@ export async function adminUpdateUser(
   if (data.departamento !== undefined) updateData.departamento = data.departamento
   if (data.hourlyRate !== undefined) updateData.hourlyRate = data.hourlyRate
   if (data.phone !== undefined) updateData.phone = data.phone
-  if (data.address !== undefined) updateData.address = data.address
+  if (data.cep !== undefined) updateData.cep = data.cep
+  if (data.logradouro !== undefined) updateData.logradouro = data.logradouro
+  if (data.numero !== undefined) updateData.numero = data.numero
+  if (data.complemento !== undefined) updateData.complemento = data.complemento
+  if (data.bairro !== undefined) updateData.bairro = data.bairro
+  if (data.cidade !== undefined) updateData.cidade = data.cidade
+  if (data.estado !== undefined) updateData.estado = data.estado
   if (data.notes !== undefined) updateData.notes = data.notes
   if (data.password) updateData.passwordHash = await bcrypt.hash(data.password, 10)
 
@@ -124,7 +160,13 @@ export async function adminUpdateUser(
       isActive: true,
       avatarUrl: true,
       phone: true,
-      address: true,
+      cep: true,
+      logradouro: true,
+      numero: true,
+      complemento: true,
+      bairro: true,
+      cidade: true,
+      estado: true,
       notes: true,
     },
   })

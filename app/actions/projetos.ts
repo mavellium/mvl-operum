@@ -203,7 +203,13 @@ export async function updateProjetoMemberAction(
   projetoId: string,
   data: {
     phone?: string
-    address?: string
+    cep?: string
+    logradouro?: string
+    numero?: string
+    complemento?: string
+    bairro?: string
+    cidade?: string
+    estado?: string
     notes?: string
     hourlyRate?: number
     cargos?: string[]
@@ -219,7 +225,13 @@ export async function updateProjetoMemberAction(
       where: { id: userId },
       data: {
         ...(data.phone !== undefined && { phone: data.phone }),
-        ...(data.address !== undefined && { address: data.address }),
+        ...(data.cep !== undefined && { cep: data.cep }),
+        ...(data.logradouro !== undefined && { logradouro: data.logradouro }),
+        ...(data.numero !== undefined && { numero: data.numero }),
+        ...(data.complemento !== undefined && { complemento: data.complemento }),
+        ...(data.bairro !== undefined && { bairro: data.bairro }),
+        ...(data.cidade !== undefined && { cidade: data.cidade }),
+        ...(data.estado !== undefined && { estado: data.estado }),
         ...(data.notes !== undefined && { notes: data.notes }),
       },
     })

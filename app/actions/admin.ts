@@ -36,7 +36,13 @@ export async function adminCreateUserAction(data: {
   forcePasswordChange?: boolean
   avatarUrl?: string
   phone?: string
-  address?: string
+  cep?: string
+  logradouro?: string
+  numero?: string
+  complemento?: string
+  bairro?: string
+  cidade?: string
+  estado?: string
   notes?: string
 }) {
   try {
@@ -56,7 +62,13 @@ export async function adminUpdateUserAction(
     email?: string
     avatarUrl?: string
     phone?: string
-    address?: string
+    cep?: string
+    logradouro?: string
+    numero?: string
+    complemento?: string
+    bairro?: string
+    cidade?: string
+    estado?: string
     notes?: string
     password?: string
     cargo?: string

@@ -1,6 +1,6 @@
 import bcrypt from 'bcryptjs'
 import prisma from '@/lib/prisma'
-import { UserProfileSchema, ChangePasswordSchema } from '@/lib/validation/userSchemas'
+import { UserProfileSchema, ChangePasswordSchema, type UserProfileInput } from '@/lib/validation/userSchemas'
 
 export type UserProfile = {
   id: string
@@ -12,7 +12,13 @@ export type UserProfile = {
   departamento: string | null
   hourlyRate: number
   phone: string | null
-  address: string | null
+  cep: string | null
+  logradouro: string | null
+  numero: string | null
+  complemento: string | null
+  bairro: string | null
+  cidade: string | null
+  estado: string | null
   notes: string | null
   createdAt: Date
   updatedAt: Date
@@ -31,7 +37,13 @@ export async function getUserProfile(userId: string): Promise<UserProfile | null
       departamento: true,
       hourlyRate: true,
       phone: true,
-      address: true,
+      cep: true,
+      logradouro: true,
+      numero: true,
+      complemento: true,
+      bairro: true,
+      cidade: true,
+      estado: true,
       notes: true,
       createdAt: true,
       updatedAt: true,
@@ -41,7 +53,7 @@ export async function getUserProfile(userId: string): Promise<UserProfile | null
 
 export async function updateUserProfile(
   userId: string,
-  input: { name: string; email: string; cargo?: string; departamento?: string; hourlyRate: number },
+  input: UserProfileInput,
 ) {
   const parsed = UserProfileSchema.safeParse(input)
   if (!parsed.success) {

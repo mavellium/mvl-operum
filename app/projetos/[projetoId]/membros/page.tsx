@@ -22,7 +22,7 @@ export default async function ProjetoMembrosPage({ params }: { params: Promise<{
     prisma.userProject.findMany({
       where: { projectId: projetoId, active: true },
       include: {
-        user: { select: { id: true, name: true, email: true, avatarUrl: true, role: true, phone: true, address: true, notes: true } },
+        user: { select: { id: true, name: true, email: true, avatarUrl: true, role: true, phone: true, cep: true, logradouro: true, numero: true, complemento: true, bairro: true, cidade: true, estado: true, notes: true } },
         department: { select: { name: true } },
       },
       orderBy: { startDate: 'asc' },
@@ -65,7 +65,13 @@ export default async function ProjetoMembrosPage({ params }: { params: Promise<{
         email: m.user.email,
         avatarUrl: m.user.avatarUrl,
         phone: m.user.phone,
-        address: m.user.address,
+        cep: m.user.cep,
+        logradouro: m.user.logradouro,
+        numero: m.user.numero,
+        complemento: m.user.complemento,
+        bairro: m.user.bairro,
+        cidade: m.user.cidade,
+        estado: m.user.estado,
         notes: m.user.notes,
         role: projectRole,
         isGerente: projectRole === 'gerente',

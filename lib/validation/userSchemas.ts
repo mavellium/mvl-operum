@@ -6,6 +6,15 @@ export const UserProfileSchema = z.object({
   cargo: z.string().trim().optional(),
   departamento: z.string().trim().optional(),
   hourlyRate: z.coerce.number().min(0, 'Hourly rate cannot be negative'),
+  phone: z.string().trim().optional(),
+  cep: z.string().trim().optional(),
+  logradouro: z.string().trim().optional(),
+  numero: z.string().trim().optional(),
+  complemento: z.string().trim().optional(),
+  bairro: z.string().trim().optional(),
+  cidade: z.string().trim().optional(),
+  estado: z.string().trim().max(2).optional(),
+  notes: z.string().trim().optional(),
 })
 
 export const ChangePasswordSchema = z

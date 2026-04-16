@@ -54,12 +54,12 @@ export function LoginForm() {
         {pending ? 'Entrando...' : 'Entrar'}
       </button>
 
-      <p className="text-center text-sm text-gray-600">
+      {/* <p className="text-center text-sm text-gray-600">
         Não tem conta?{' '}
         <Link href="/register" className="text-blue-600 hover:underline">
           Criar conta
         </Link>
-      </p>
+      </p> */}
     </form>
   )
 }

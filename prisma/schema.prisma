@@ -32,6 +32,8 @@ model Tenant {
   departments  Department[]
   roles        Role[]
   auditLogs    AuditLog[]
+
+  stakeholders Stakeholder[]
 }
 
 // ── Projects ──────────────────────────────────────────────
@@ -73,6 +75,8 @@ model Project {
   members         UserProject[]
   usuariosRole    UserProjectRole[]
   macroFases      ProjectMacroFase[]
+
+  stakeholders    ProjectStakeholder[]
 
   @@unique([name, tenantId])
 }
@@ -226,9 +230,15 @@ model User {
   deletedAt     DateTime?
   createdAt     DateTime  @default(now())
   updatedAt     DateTime  @updatedAt
-  phone   String?
-  address String?
-  notes   String? @db.Text
+  phone        String?
+  cep          String?
+  logradouro   String?
+  numero       String?
+  complemento  String?
+  bairro       String?
+  cidade       String?
+  estado       String?
+  notes        String? @db.Text
 
   tags              Tag[]
   sprints           Sprint[]
@@ -473,4 +483,43 @@ model SprintFeedback {
   updatedAt         DateTime @updatedAt
 
   @@unique([sprintId, userId])
+}
+
+model Stakeholder {
+  id          String   @id @default(cuid())
+  tenantId    String
+  name        String   // Nome
+  logoUrl     String?  // Logo do Stakeholder
+  company     String?  // Empresa
+  competence  String?  // Competência
+  email       String?  // e-mail
+  phone        String?  // Telefone/Fax
+  cep          String?
+  logradouro   String?
+  numero       String?
+  complemento  String?
+  bairro       String?
+  cidade       String?
+  estado       String?
+  notes        String?  @db.Text // Observações
+  isActive    Boolean  @default(true)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  projects    ProjectStakeholder[]
+  
+  tenant      Tenant   @relation(fields: [tenantId], references: [id])
+}
+
+// Tabela de Vínculo (Projeto <-> Stakeholder)
+model ProjectStakeholder {
+  id            String   @id @default(cuid())
+  projectId     String
+  stakeholderId String
+  createdAt     DateTime @default(now())
+
+  project       Project     @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  stakeholder   Stakeholder @relation(fields: [stakeholderId], references: [id], onDelete: Cascade)
+
+  @@unique([projectId, stakeholderId])
 }

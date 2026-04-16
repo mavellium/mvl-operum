@@ -6,6 +6,7 @@ import { adminCreateUserAction, adminUpdateUserAction, toggleUserActiveAction } 
 import { updateProjetoMemberAction } from '@/app/actions/projetos'
 import UserAvatar from '@/components/user/UserAvatar'
 import AvatarUpload from '@/components/profile/AvatarUpload'
+import AddressFields, { type AddressValues, emptyAddress } from '@/components/ui/AddressFields'
 
 interface Usuario {
   id: string
@@ -14,7 +15,13 @@ interface Usuario {
   avatarUrl: string | null
   role: string
   phone?: string | null
-  address?: string | null
+  cep?: string | null
+  logradouro?: string | null
+  numero?: string | null
+  complemento?: string | null
+  bairro?: string | null
+  cidade?: string | null
+  estado?: string | null
   notes?: string | null
 }
 
@@ -33,7 +40,7 @@ type FormState = {
   password: string
   avatarUrl: string
   phone: string
-  address: string
+  address: AddressValues
   notes: string
   cargos: string[]
   departamento: string[]
@@ -58,7 +65,7 @@ const emptyForm: FormState = {
   password: '',
   avatarUrl: '',
   phone: '',
-  address: '',
+  address: emptyAddress,
   notes: '',
   cargos: [],
   departamento: [],
@@ -257,7 +264,15 @@ export default function ProjetoMembrosClient({
         password: '',
         avatarUrl: m.avatarUrl || '',
         phone: m.phone || '',
-        address: m.address || '',
+        address: {
+          cep: m.cep || '',
+          logradouro: m.logradouro || '',
+          numero: m.numero || '',
+          complemento: m.complemento || '',
+          bairro: m.bairro || '',
+          cidade: m.cidade || '',
+          estado: m.estado || '',
+        },
         notes: m.notes || '',
         cargos: m.cargos ?? [],
         departamento: Array.isArray(m.departamento) ? m.departamento : (m.departamento ? [m.departamento] : []),
@@ -273,7 +288,15 @@ export default function ProjetoMembrosClient({
         email: user.email,
         avatarUrl: user.avatarUrl || '',
         phone: user.phone || '',
-        address: user.address || '',
+        address: {
+          cep: user.cep || '',
+          logradouro: user.logradouro || '',
+          numero: user.numero || '',
+          complemento: user.complemento || '',
+          bairro: user.bairro || '',
+          cidade: user.cidade || '',
+          estado: user.estado || '',
+        },
         notes: user.notes || '',
         departamento: (user as any).departamento
           ? (Array.isArray((user as any).departamento) ? (user as any).departamento : [(user as any).departamento])
@@ -334,7 +357,7 @@ export default function ProjetoMembrosClient({
     setMembros(prev => prev.filter(m => m.userId !== membro.userId))
     setDisponiveis(prev => [
       ...prev,
-      { id: membro.userId, name: membro.name, email: membro.email, avatarUrl: membro.avatarUrl, role: membro.role, phone: membro.phone, address: membro.address, notes: membro.notes },
+      { id: membro.userId, name: membro.name, email: membro.email, avatarUrl: membro.avatarUrl, role: membro.role, phone: membro.phone, cep: membro.cep, logradouro: membro.logradouro, numero: membro.numero, complemento: membro.complemento, bairro: membro.bairro, cidade: membro.cidade, estado: membro.estado, notes: membro.notes },
     ])
     if (selectedUser && 'userId' in selectedUser && selectedUser.userId === membro.userId) {
       handleClearSelection()
@@ -366,7 +389,13 @@ export default function ProjetoMembrosClient({
         password: formState.password,
         avatarUrl: formState.avatarUrl,
         phone: formState.phone,
-        address: formState.address,
+        cep: formState.address.cep,
+        logradouro: formState.address.logradouro,
+        numero: formState.address.numero,
+        complemento: formState.address.complemento,
+        bairro: formState.address.bairro,
+        cidade: formState.address.cidade,
+        estado: formState.address.estado,
         notes: formState.notes,
         forcePasswordChange: formState.forcePasswordChange,
       })
@@ -382,7 +411,13 @@ export default function ProjetoMembrosClient({
         avatarUrl: result.user.avatarUrl,
         role: result.user.role,
         phone: result.user.phone,
-        address: result.user.address,
+        cep: result.user.cep,
+        logradouro: result.user.logradouro,
+        numero: result.user.numero,
+        complemento: result.user.complemento,
+        bairro: result.user.bairro,
+        cidade: result.user.cidade,
+        estado: result.user.estado,
         notes: result.user.notes,
       }
       setDisponiveis(prev => [...prev, newUser])
@@ -396,7 +431,13 @@ export default function ProjetoMembrosClient({
 
       const result = await updateProjetoMemberAction(m.userId, projetoId, {
         phone: formState.phone,
-        address: formState.address,
+        cep: formState.address.cep,
+        logradouro: formState.address.logradouro,
+        numero: formState.address.numero,
+        complemento: formState.address.complemento,
+        bairro: formState.address.bairro,
+        cidade: formState.address.cidade,
+        estado: formState.address.estado,
         notes: formState.notes,
         hourlyRate: isAdmin && formState.hourlyRate ? parseFloat(formState.hourlyRate) : undefined,
         cargos: formState.cargos,
@@ -416,7 +457,13 @@ export default function ProjetoMembrosClient({
             ? {
               ...existing,
               phone: formState.phone,
-              address: formState.address,
+              cep: formState.address.cep,
+              logradouro: formState.address.logradouro,
+              numero: formState.address.numero,
+              complemento: formState.address.complemento,
+              bairro: formState.address.bairro,
+              cidade: formState.address.cidade,
+              estado: formState.address.estado,
               notes: formState.notes,
               cargos: formState.cargos,
               departamento: formState.departamento,
@@ -441,7 +488,13 @@ export default function ProjetoMembrosClient({
           email: formState.email,
           avatarUrl: formState.avatarUrl,
           phone: formState.phone,
-          address: formState.address,
+          cep: formState.address.cep,
+          logradouro: formState.address.logradouro,
+          numero: formState.address.numero,
+          complemento: formState.address.complemento,
+          bairro: formState.address.bairro,
+          cidade: formState.address.cidade,
+          estado: formState.address.estado,
           notes: formState.notes,
           cargo: formState.cargos.join(', '),
           departamento: formState.departamento.join(', '),
@@ -457,7 +510,7 @@ export default function ProjetoMembrosClient({
       setDisponiveis(prev =>
         prev.map(existing =>
           existing.id === u.id
-            ? { ...existing, name: formState.name, email: formState.email, avatarUrl: formState.avatarUrl, phone: formState.phone, address: formState.address, notes: formState.notes }
+            ? { ...existing, name: formState.name, email: formState.email, avatarUrl: formState.avatarUrl, phone: formState.phone, cep: formState.address.cep, logradouro: formState.address.logradouro, numero: formState.address.numero, complemento: formState.address.complemento, bairro: formState.address.bairro, cidade: formState.address.cidade, estado: formState.address.estado, notes: formState.notes }
             : existing
         ),
       )
@@ -756,10 +809,11 @@ export default function ProjetoMembrosClient({
 
             </div>
 
-            <div>
-              <label className="block text-xs font-medium text-gray-600 mb-1">Endereço</label>
-              <input type="text" value={formState.address} onChange={e => setField('address', e.target.value)} disabled={!isAdmin} placeholder="Rua, Número, Cidade..." className={`${inputCls} ${disabledCls}`} />
-            </div>
+            <AddressFields
+              values={formState.address}
+              onChange={(field, value) => setFormState(f => ({ ...f, address: { ...f.address, [field]: value } }))}
+              disabled={!isAdmin}
+            />
 
             <hr className="border-gray-100 my-2" />
 

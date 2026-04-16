@@ -70,29 +70,29 @@ const sprintsWithMetrics = [
 
 describe('SprintListPage', () => {
   it('renders sprint names', () => {
-    render(<SprintListPage sprintsWithMetrics={sprintsWithMetrics} boardId="b1" />)
+    render(<SprintListPage sprintsWithMetrics={sprintsWithMetrics} />)
     expect(screen.getByText('Sprint 1')).toBeInTheDocument()
     expect(screen.getByText('Sprint 2')).toBeInTheDocument()
   })
 
   it('renders hours for each sprint', () => {
-    render(<SprintListPage sprintsWithMetrics={sprintsWithMetrics} boardId="b1" />)
+    render(<SprintListPage sprintsWithMetrics={sprintsWithMetrics} />)
     expect(screen.getByText(/24h/)).toBeInTheDocument()
   })
 
   it('renders progress percentage', () => {
-    render(<SprintListPage sprintsWithMetrics={sprintsWithMetrics} boardId="b1" />)
+    render(<SprintListPage sprintsWithMetrics={sprintsWithMetrics} />)
     const matches = screen.getAllByText(/70%/)
     expect(matches.length).toBeGreaterThanOrEqual(1)
   })
 
   it('renders quality when set', () => {
-    render(<SprintListPage sprintsWithMetrics={sprintsWithMetrics} boardId="b1" />)
+    render(<SprintListPage sprintsWithMetrics={sprintsWithMetrics} />)
     expect(screen.getByText(/8\/10/)).toBeInTheDocument()
   })
 
-  it('each sprint card links to its kanban board', () => {
-    render(<SprintListPage sprintsWithMetrics={sprintsWithMetrics} boardId="b1" />)
+  it('each sprint card links to its Mavellium Operum', () => {
+    render(<SprintListPage sprintsWithMetrics={sprintsWithMetrics} />)
     const links = screen.getAllByRole('link').filter(l => l.getAttribute('href')?.startsWith('/sprints/'))
     expect(links.length).toBeGreaterThanOrEqual(2)
     expect(links[0]).toHaveAttribute('href', '/sprints/s1')
@@ -100,34 +100,34 @@ describe('SprintListPage', () => {
   })
 
   it('shows "Nova Sprint" button', () => {
-    render(<SprintListPage sprintsWithMetrics={sprintsWithMetrics} boardId="b1" />)
+    render(<SprintListPage sprintsWithMetrics={sprintsWithMetrics} />)
     expect(screen.getByRole('button', { name: /nova sprint/i })).toBeInTheDocument()
   })
 
   it('shows empty state when no sprints', () => {
-    render(<SprintListPage sprintsWithMetrics={[]} boardId="b1" />)
+    render(<SprintListPage sprintsWithMetrics={[]} />)
     expect(screen.getByText(/nenhuma sprint/i)).toBeInTheDocument()
   })
 
   // Header features
   it('renders global search input', () => {
-    render(<SprintListPage sprintsWithMetrics={sprintsWithMetrics} boardId="b1" />)
+    render(<SprintListPage sprintsWithMetrics={sprintsWithMetrics}/>)
     expect(screen.getByRole('searchbox', { name: /busca global/i })).toBeInTheDocument()
   })
 
   it('renders board action menu button', () => {
-    render(<SprintListPage sprintsWithMetrics={sprintsWithMetrics} boardId="b1" />)
+    render(<SprintListPage sprintsWithMetrics={sprintsWithMetrics}  />)
     expect(screen.getByRole('button', { name: /board actions/i })).toBeInTheDocument()
   })
 
   it('renders user avatar and name when currentUser is passed', () => {
-    render(<SprintListPage sprintsWithMetrics={sprintsWithMetrics} boardId="b1" currentUser={currentUser} />)
+    render(<SprintListPage sprintsWithMetrics={sprintsWithMetrics}  currentUser={currentUser} />)
     expect(screen.getByText('Ana Lima')).toBeInTheDocument()
     expect(screen.getByRole('button', { name: /menu do usuário/i })).toBeInTheDocument()
   })
 
   it('opens CSV import modal when "Importar CSV" is clicked via action menu', () => {
-    render(<SprintListPage sprintsWithMetrics={sprintsWithMetrics} boardId="b1" />)
+    render(<SprintListPage sprintsWithMetrics={sprintsWithMetrics}  />)
     fireEvent.click(screen.getByRole('button', { name: /board actions/i }))
     fireEvent.click(screen.getByText(/importar csv/i))
     // Modal title "Importar CSV" should now appear in the modal header
@@ -135,7 +135,7 @@ describe('SprintListPage', () => {
   })
 
   it('opens tag manager modal when "Gerenciar Tags" is clicked via action menu', () => {
-    render(<SprintListPage sprintsWithMetrics={sprintsWithMetrics} boardId="b1" tags={tags} />)
+    render(<SprintListPage sprintsWithMetrics={sprintsWithMetrics}  tags={tags} />)
     fireEvent.click(screen.getByRole('button', { name: /board actions/i }))
     fireEvent.click(screen.getByText(/gerenciar tags/i))
     // TagManager heading "Tags" should appear after modal opens
@@ -144,7 +144,7 @@ describe('SprintListPage', () => {
   })
 
   it('does not render "Nova Coluna" button (sprint list, not board)', () => {
-    render(<SprintListPage sprintsWithMetrics={sprintsWithMetrics} boardId="b1" />)
+    render(<SprintListPage sprintsWithMetrics={sprintsWithMetrics}  />)
     expect(screen.queryByText(/nova coluna/i)).not.toBeInTheDocument()
   })
 })

@@ -54,10 +54,12 @@ export default async function PerfilPage() {
                     {profile.phone}
                   </p>
                 )}
-                {profile.address && (
+                {(profile.logradouro || profile.cidade) && (
                   <p className="text-sm text-gray-700 flex items-center gap-1.5 col-span-1 sm:col-span-2 mt-1">
                     <svg className="w-4 h-4 text-gray-400 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.243-4.243a8 8 0 1111.314 0z" /><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" /></svg>
-                    <span className="truncate">{profile.address}</span>
+                    <span className="truncate">
+                      {[profile.logradouro, profile.numero, profile.bairro, profile.cidade, profile.estado].filter(Boolean).join(', ')}
+                    </span>
                   </p>
                 )}
               </div>
@@ -89,7 +91,13 @@ export default async function PerfilPage() {
             departamento={profile.departamento}
             hourlyRate={profile.hourlyRate}
             phone={profile.phone}
-            address={profile.address}
+            cep={profile.cep}
+            logradouro={profile.logradouro}
+            numero={profile.numero}
+            complemento={profile.complemento}
+            bairro={profile.bairro}
+            cidade={profile.cidade}
+            estado={profile.estado}
             notes={profile.notes}
             avatarUrl={profile.avatarUrl}
           />
