@@ -2,10 +2,11 @@
 
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
-import { useEffect, useState, useRef } from 'react'
+import { useEffect, useState, useRef, useTransition } from 'react'
 import UserAvatar from '@/components/user/UserAvatar'
 import BoardActionMenu from '../board/BoardActionMenu'
 import GlobalSearch from '../search/GlobalSearch'
+import { logoutAction } from '@/app/actions/auth'
 
 const HIDDEN_PATHS = ['/login', '/register', '/recuperar-senha', '/alterar-senha', '/no-project']
 
@@ -164,6 +165,7 @@ export default function TopNav() {
   const [unreadCount, setUnreadCount] = useState(0)
   const [userMenuOpen, setUserMenuOpen] = useState(false)
   const userMenuRef = useRef<HTMLDivElement>(null)
+  const [isPending, startTransition] = useTransition()
 
   const [csvOpen, setCsvOpen] = useState(false)
   const [showCreate, setShowCreate] = useState(false)
@@ -278,9 +280,13 @@ export default function TopNav() {
               <div className="absolute right-0 top-full mt-2 w-48 bg-white rounded-xl shadow-lg border border-gray-100 py-1 z-50 animate-in fade-in slide-in-from-top-2">
                 <Link href="/perfil" className="flex items-center gap-2 px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 transition-colors" onClick={() => setUserMenuOpen(false)}>Meu Perfil</Link>
                 <Link href="/dashboard" className="flex items-center gap-2 px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 transition-colors" onClick={() => setUserMenuOpen(false)}>Dashboard</Link>
-                <form action="/api/logout" method="POST">
-                  <button type="submit" className="w-full text-left px-4 py-2 text-sm text-red-600 hover:bg-red-50 transition-colors font-medium">Sair</button>
-                </form>
+                <button
+                  onClick={() => startTransition(() => logoutAction())}
+                  disabled={isPending}
+                  className="w-full text-left px-4 py-2 text-sm text-red-600 hover:bg-red-50 transition-colors font-medium disabled:opacity-50"
+                >
+                  {isPending ? 'Saindo...' : 'Sair'}
+                </button>
               </div>
             )}
           </div>

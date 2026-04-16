@@ -13,7 +13,8 @@
       "Bash(pnpm add:*)",
       "Bash(pnpm build:*)",
       "Bash(ls /c/temp/ClaudeCode/mvl-operum/app/projetos/[projetoId]/)",
-      "Bash(find /c/temp/ClaudeCode/mvl-operum/services -name \"adminService.ts\" -exec head -100 {} \\\\;)"
+      "Bash(find /c/temp/ClaudeCode/mvl-operum/services -name \"adminService.ts\" -exec head -100 {} \\\\;)",
+      "Bash(grep -r \"logoutAction\\\\|sair\\\\|logout\" /c/temp/ClaudeCode/mvl-operum/app --include=\"*.tsx\" --include=\"*.ts\" ! -path \"*/node_modules/*\" ! -path \"*/.next/*\")"
     ],
     "additionalDirectories": [
       "c:\\temp\\ClaudeCode\\kanban-board\\app\\dashboard\\sprint",
