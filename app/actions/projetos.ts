@@ -217,7 +217,7 @@ export async function updateProjetoMemberAction(
     cidade?: string
     estado?: string
     notes?: string
-    hourlyRate?: number
+    hourlyRate?: number | string
     cargos?: string[]
     departamento?: string[]
     isGerente?: boolean
@@ -271,6 +271,17 @@ export async function updateProjetoMemberAction(
     })
     if (!existing) throw new Error('Membro não encontrado no projeto')
 
+    let parsedHourlyRate: number | undefined
+    if (data.hourlyRate !== undefined) {
+      if (typeof data.hourlyRate === 'string') {
+        const clean = data.hourlyRate.replace(/\./g, '').replace(',', '.')
+        const n = parseFloat(clean)
+        parsedHourlyRate = isNaN(n) ? undefined : n
+      } else {
+        parsedHourlyRate = data.hourlyRate
+      }
+    }
+
     await prisma.userProject.update({
       where: { id: existing.id },
       data: {
@@ -278,7 +289,7 @@ export async function updateProjetoMemberAction(
           role: data.cargos.length > 0 ? data.cargos.join(', ') : null,
         }),
         ...(departmentId !== undefined && { departmentId }),
-        ...(data.hourlyRate !== undefined && { hourlyRate: data.hourlyRate }),
+        ...(parsedHourlyRate !== undefined && { hourlyRate: parsedHourlyRate }),
       },
     })
 

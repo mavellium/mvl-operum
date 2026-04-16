@@ -130,6 +130,14 @@ const IconCrown = () => (
 const inputCls = 'w-full px-3 py-2 border border-gray-200 rounded-xl text-sm bg-white focus:outline-none focus:ring-2 focus:ring-blue-500 transition-shadow'
 const disabledCls = 'disabled:bg-gray-100 disabled:text-gray-400 cursor-not-allowed'
 
+/** Converte valor pt-BR ("1.234,56") para float JS (1234.56). Retorna null se vazio/inválido. */
+function parseBRLFloat(value: string): number | null {
+  if (!value || value.trim() === '') return null
+  const clean = value.replace(/\./g, '').replace(',', '.')
+  const parsed = parseFloat(clean)
+  return isNaN(parsed) ? null : parsed
+}
+
 // ==========================================
 // COMPONENTE MULTI-CREATABLE (Mantido)
 // ==========================================
@@ -439,7 +447,7 @@ export default function ProjetoMembrosClient({
         cidade: formState.address.cidade,
         estado: formState.address.estado,
         notes: formState.notes,
-        hourlyRate: isAdmin && formState.hourlyRate ? parseFloat(formState.hourlyRate) : undefined,
+        hourlyRate: isAdmin ? (parseBRLFloat(formState.hourlyRate) ?? undefined) : undefined,
         cargos: formState.cargos,
         departamento: formState.departamento,
         isGerente: formState.isGerente,
@@ -469,7 +477,7 @@ export default function ProjetoMembrosClient({
               departamento: formState.departamento,
               isGerente: formState.isGerente,
               role: formState.isGerente ? 'gerente' : 'member',
-              hourlyRate: isAdmin && formState.hourlyRate ? parseFloat(formState.hourlyRate) : existing.hourlyRate,
+              hourlyRate: isAdmin ? (parseBRLFloat(formState.hourlyRate) ?? existing.hourlyRate) : existing.hourlyRate,
             }
             : existing,
         ),
@@ -498,7 +506,7 @@ export default function ProjetoMembrosClient({
           notes: formState.notes,
           cargo: formState.cargos.join(', '),
           departamento: formState.departamento.join(', '),
-          ...(formState.hourlyRate ? { hourlyRate: parseFloat(formState.hourlyRate) } : {}),
+          ...(parseBRLFloat(formState.hourlyRate) !== null ? { hourlyRate: parseBRLFloat(formState.hourlyRate)! } : {}),
         }),
         toggleUserActiveAction(u.id, formState.isActive),
       ])
