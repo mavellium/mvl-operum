@@ -38,6 +38,8 @@ export async function createProjetoAction(
     premissas?: string;
     restricoes?: string;
     limitesAutoridade?: string;
+    semestre?: string;
+    ano?: string;
     macroFases?: Array<{ fase: string; dataLimite: string; custo: string }>;
   }
 ) {
@@ -45,12 +47,14 @@ export async function createProjetoAction(
     const { tenantId } = await verifySession()
 
     // Separamos o initialMemberId do restante dos dados que vão para a tabela Project
-    const { initialMemberId, ...projectData } = input
+    const { initialMemberId, ano: anoStr, ...projectData } = input
+    const ano = anoStr ? Number(anoStr) : undefined
 
     // Passamos todos os dados do projeto para o Service
     const projeto = await createProject({
       ...projectData,
-      tenantId
+      tenantId,
+      ano,
     })
 
     // Se o gerente foi selecionado na UI, fazemos a vinculação
@@ -91,11 +95,13 @@ export async function getProjetoAction(id: string) {
 export async function updateProjetoAction(
   _prevState: unknown,
   id: string,
-  data: UpdateProjectInput & { macroFases?: MacroFaseInput[] },
+  data: Omit<UpdateProjectInput, 'ano'> & { ano?: string | number } & { macroFases?: MacroFaseInput[] },
 ) {
   try {
     await verifySession()
-    const projeto = await updateProject(id, data)
+    const { ano: anoRaw, ...rest } = data
+    const ano = anoRaw !== undefined && anoRaw !== '' ? Number(anoRaw) : undefined
+    const projeto = await updateProject(id, { ...rest, ano })
     revalidatePath('/projetos')
     revalidatePath(`/projetos/${id}`)
     return { projeto }

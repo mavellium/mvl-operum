@@ -35,6 +35,7 @@ export async function createProject(input: CreateProjectInput) {
     logoUrl, slogan, location, startDate, endDate,
     justificativa, objetivos, metodologia, descricaoProduto,
     premissas, restricoes, limitesAutoridade,
+    semestre, ano,
     macroFases,
   } = parsed.data
 
@@ -62,6 +63,8 @@ export async function createProject(input: CreateProjectInput) {
       premissas:         premissas         ?? undefined,
       restricoes:        restricoes        ?? undefined,
       limitesAutoridade: limitesAutoridade ?? undefined,
+      semestre:          semestre          ?? undefined,
+      ano:               ano               ?? undefined,
       macroFases: {
         create: (macroFases ?? [])
           .filter(f => f.fase.trim() !== '')

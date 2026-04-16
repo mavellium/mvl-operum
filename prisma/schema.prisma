@@ -66,6 +66,9 @@ model Project {
   restricoes         String?  @db.Text
   limitesAutoridade  String?  @db.Text
 
+  semestre           String?
+  ano                Int?
+
   status      ProjectStatus @default(ACTIVE)
   deletedAt   DateTime?
   createdAt   DateTime      @default(now())

@@ -21,6 +21,8 @@ const tapFields = {
   premissas:         z.string().optional(),
   restricoes:        z.string().optional(),
   limitesAutoridade: z.string().optional(),
+  semestre:          z.string().optional(),
+  ano:               z.number().int().optional(),
 }
 
 export const CreateProjectSchema = z.object({

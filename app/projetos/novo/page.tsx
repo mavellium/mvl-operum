@@ -56,11 +56,15 @@ function ProjetoFormContent() {
   const [usuarios, setUsuarios] = useState<Usuario[]>([])
   const [error, setError] = useState('')
 
+  const currentYear = new Date().getFullYear()
+  const years = Array.from({ length: 10 }, (_, i) => currentYear - i)
+
   const [form, setForm] = useState({
     name: '', slogan: '', startDate: '', endDate: '', location: '',
     logoUrl: '', initialMemberId: '',
     justificativa: '', objetivos: '', metodologia: '', descricaoProduto: '',
-    premissas: '', restricoes: '', limitesAutoridade: ''
+    premissas: '', restricoes: '', limitesAutoridade: '',
+    semestre: '', ano: '',
   })
 
   const [macroFases, setMacroFases] = useState<MacroFase[]>([{ fase: '', dataLimite: '', custo: '' }])
@@ -97,6 +101,8 @@ function ProjetoFormContent() {
         premissas:         p.premissas         ?? '',
         restricoes:        p.restricoes        ?? '',
         limitesAutoridade: p.limitesAutoridade ?? '',
+        semestre:          p.semestre          ?? '',
+        ano:               p.ano ? String(p.ano) : '',
       })
       if (p.macroFases?.length) {
         setMacroFases(p.macroFases.map(f => ({
@@ -278,6 +284,30 @@ function ProjetoFormContent() {
                   <div>
                     <label className={labelClass}>Localização</label>
                     <input name="location" type="text" value={form.location} onChange={handleChange} placeholder="Sede, Filial, Cliente X..." className={inputClass} />
+                  </div>
+
+                  <div className="grid grid-cols-2 gap-5">
+                    <div>
+                      <label className={labelClass}>Semestre</label>
+                      <div className="relative">
+                        <select name="semestre" value={form.semestre} onChange={handleChange} className={`${inputClass} appearance-none cursor-pointer pr-10`}>
+                          <option value="">Selecione</option>
+                          <option value="1">1º Semestre</option>
+                          <option value="2">2º Semestre</option>
+                        </select>
+                        <svg className="absolute right-4 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400 pointer-events-none" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" /></svg>
+                      </div>
+                    </div>
+                    <div>
+                      <label className={labelClass}>Ano</label>
+                      <div className="relative">
+                        <select name="ano" value={form.ano} onChange={handleChange} className={`${inputClass} appearance-none cursor-pointer pr-10`}>
+                          <option value="">Selecione</option>
+                          {years.map(y => <option key={y} value={String(y)}>{y}</option>)}
+                        </select>
+                        <svg className="absolute right-4 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400 pointer-events-none" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" /></svg>
+                      </div>
+                    </div>
                   </div>
 
                   {!editId && (

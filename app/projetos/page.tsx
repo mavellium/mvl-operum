@@ -14,8 +14,8 @@ const IconUsers = () => (
 const IconEdit = () => (
   <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" /></svg>
 )
-const IconClock = () => (
-  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
+const IconCalendar = () => (
+  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" /></svg>
 )
 
 // Helper para Logo Fallback com Gradientes Premium
@@ -36,6 +36,12 @@ function getGradient(name: string) {
   let hash = 0
   for (let i = 0; i < name.length; i++) hash = name.charCodeAt(i) + ((hash << 5) - hash)
   return gradients[Math.abs(hash) % gradients.length]
+}
+
+// Helper para formatar data curta (ex: 12/Jan/2026)
+function formatDateShort(date?: Date | null) {
+  if (!date) return '--/--/----'
+  return date.toLocaleDateString('pt-BR', { day: '2-digit', month: 'short', year: 'numeric' }).replace(/ de /g, '/').replace('.', '')
 }
 
 export default async function ProjetosPage({ searchParams }: { searchParams: Promise<{ page?: string }> }) {
@@ -124,7 +130,7 @@ export default async function ProjetosPage({ searchParams }: { searchParams: Pro
                       </div>
                     </div>
 
-                    {/* RODAPÉ DO CARTÃO (Ancorado no fundo) */}
+                    {/* RODAPÉ DO CARTÃO (Datas de Início e Fim) */}
                     <div className="mt-auto bg-slate-50/50 border-t border-slate-100/80 px-6 py-4 flex items-center justify-between relative z-20 pointer-events-none">
                       <div className="flex items-center gap-2 text-sm font-semibold text-slate-700">
                         <div className="p-1.5 bg-white rounded-lg border border-slate-200 shadow-sm text-slate-400">
@@ -132,9 +138,14 @@ export default async function ProjetosPage({ searchParams }: { searchParams: Pro
                         </div>
                         <span>{qtdMembros} <span className="font-normal text-slate-500">{qtdMembros === 1 ? 'membro' : 'membros'}</span></span>
                       </div>
-                      <div className="flex items-center gap-1.5 text-xs text-slate-400 font-medium">
-                        <IconClock />
-                        {projeto.updatedAt.toLocaleDateString('pt-BR')}
+                      
+                      {/* --- NOVO BLOCO DE DATAS --- */}
+                      <div className="flex items-center gap-1.5 text-[11px] text-slate-500 font-medium">
+                        <IconCalendar />
+                        <div className="flex flex-col leading-tight">
+                          <span>{formatDateShort(projeto.startDate)}</span>
+                          <span className="text-slate-400 text-[10px]">até {formatDateShort(projeto.endDate)}</span>
+                        </div>
                       </div>
                     </div>
                   </div>
