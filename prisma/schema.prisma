@@ -68,6 +68,7 @@ model Project {
 
   semestre           String?
   ano                Int?
+  departamentos      String[]
 
   status      ProjectStatus @default(ACTIVE)
   deletedAt   DateTime?

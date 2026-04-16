@@ -40,6 +40,7 @@ export async function createProjetoAction(
     limitesAutoridade?: string;
     semestre?: string;
     ano?: string;
+    departamentos?: string[];
     macroFases?: Array<{ fase: string; dataLimite: string; custo: string }>;
   }
 ) {

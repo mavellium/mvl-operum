@@ -35,7 +35,7 @@ export async function createProject(input: CreateProjectInput) {
     logoUrl, slogan, location, startDate, endDate,
     justificativa, objetivos, metodologia, descricaoProduto,
     premissas, restricoes, limitesAutoridade,
-    semestre, ano,
+    semestre, ano, departamentos,
     macroFases,
   } = parsed.data
 
@@ -65,6 +65,7 @@ export async function createProject(input: CreateProjectInput) {
       limitesAutoridade: limitesAutoridade ?? undefined,
       semestre:          semestre          ?? undefined,
       ano:               ano               ?? undefined,
+      departamentos:     departamentos     ?? [],
       macroFases: {
         create: (macroFases ?? [])
           .filter(f => f.fase.trim() !== '')
@@ -112,15 +113,16 @@ export async function updateProject(
     throw new Error('Cannot modify a completed or archived project')
   }
 
-  const { startDate, endDate, ...rest } = parsed.data
+  const { startDate, endDate, departamentos, ...rest } = parsed.data
 
   return prisma.$transaction(async (tx) => {
     const updated = await tx.project.update({
       where: { id },
       data: {
         ...rest,
-        startDate: startDate ? new Date(startDate) : undefined,
-        endDate:   endDate   ? new Date(endDate)   : undefined,
+        startDate:     startDate     ? new Date(startDate) : undefined,
+        endDate:       endDate       ? new Date(endDate)   : undefined,
+        ...(departamentos !== undefined && { departamentos }),
       },
     })
 

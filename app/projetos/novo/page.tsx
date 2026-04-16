@@ -4,7 +4,9 @@ import { useState, useTransition, useEffect, Suspense } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
 import { createProjetoAction, updateProjetoAction, getProjetoAction } from '@/app/actions/projetos'
 import { listUsersAction } from '@/app/actions/admin'
+import { getDepartmentsAction } from '@/app/actions/departments'
 import AvatarUpload from '@/components/profile/AvatarUpload'
+import MultiCreatableSelect from '@/components/ui/MultiCreatableSelect'
 import Link from 'next/link'
 
 interface Usuario {
@@ -54,6 +56,7 @@ function ProjetoFormContent() {
   const [activeTab, setActiveTab] = useState<'basico' | 'estrategico' | 'fases'>('basico')
 
   const [usuarios, setUsuarios] = useState<Usuario[]>([])
+  const [departamentosExistentes, setDepartamentosExistentes] = useState<string[]>([])
   const [error, setError] = useState('')
 
   const currentYear = new Date().getFullYear()
@@ -65,6 +68,7 @@ function ProjetoFormContent() {
     justificativa: '', objetivos: '', metodologia: '', descricaoProduto: '',
     premissas: '', restricoes: '', limitesAutoridade: '',
     semestre: '', ano: '',
+    departamentos: [] as string[],
   })
 
   const [macroFases, setMacroFases] = useState<MacroFase[]>([{ fase: '', dataLimite: '', custo: '' }])
@@ -72,6 +76,11 @@ function ProjetoFormContent() {
   useEffect(() => {
     listUsersAction().then(r => {
       if ('users' in r && r.users) setUsuarios(r.users)
+    })
+    getDepartmentsAction().then(depts => {
+      if (Array.isArray(depts)) {
+        setDepartamentosExistentes(depts.map((d: { name: string }) => d.name))
+      }
     })
   }, [])
 
@@ -103,6 +112,7 @@ function ProjetoFormContent() {
         limitesAutoridade: p.limitesAutoridade ?? '',
         semestre:          p.semestre          ?? '',
         ano:               p.ano ? String(p.ano) : '',
+        departamentos:     p.departamentos     ?? [],
       })
       if (p.macroFases?.length) {
         setMacroFases(p.macroFases.map(f => ({
@@ -284,6 +294,17 @@ function ProjetoFormContent() {
                   <div>
                     <label className={labelClass}>Localização</label>
                     <input name="location" type="text" value={form.location} onChange={handleChange} placeholder="Sede, Filial, Cliente X..." className={inputClass} />
+                  </div>
+
+                  <div>
+                    <label className={labelClass}>Departamentos</label>
+                    <MultiCreatableSelect
+                      values={form.departamentos}
+                      onChange={(v) => setForm(f => ({ ...f, departamentos: v }))}
+                      options={departamentosExistentes}
+                      placeholder="Adicionar departamento..."
+                      disabled={isPending}
+                    />
                   </div>
 
                   <div className="grid grid-cols-2 gap-5">
