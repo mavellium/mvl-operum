@@ -11,6 +11,16 @@ services:
         reservations:
           memory: 512M
 
+    networks:
+      - traefik-public  
+
+    labels:
+      - "traefik.enable=true"
+      # O Traefik escuta quem digita o domínio de PRODUÇÃO
+      - "traefik.http.routers.mvl-prod.rule=Host(`operum.mavellium.com.br`)" 
+      - "traefik.http.routers.mvl-prod.entrypoints=websecure"
+      - "traefik.http.routers.mvl-prod.tls.certresolver=myresolver"
+
   postgres:
     volumes:
       - prod-pg-data:/var/lib/postgresql/data
