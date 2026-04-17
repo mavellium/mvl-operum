@@ -1,0 +1,28 @@
+http:
+  middlewares:
+    # Rate limiting — applied to the app router
+    app-ratelimit:
+      rateLimit:
+        average: 100
+        burst: 50
+        period: 1s
+
+    # Secure headers for all responses
+    secure-headers:
+      headers:
+        frameDeny: true
+        contentTypeNosniff: true
+        browserXssFilter: true
+        referrerPolicy: "strict-origin-when-cross-origin"
+        customResponseHeaders:
+          X-Powered-By: ""
+        stsSeconds: 31536000
+        stsIncludeSubdomains: true
+        stsPreload: true
+
+    # Basic auth for Traefik dashboard (restrict access)
+    # Generate password: echo $(htpasswd -nb admin yourpassword) | sed -e s/\\$/\\$\\$/g
+    dashboard-auth:
+      basicAuth:
+        users:
+          - "admin:$$apr1$$placeholder$$changeme"

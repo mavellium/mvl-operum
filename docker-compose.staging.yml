@@ -1,0 +1,30 @@
+# Staging environment overrides.
+# Usage: docker compose -f docker-compose.yml -f docker-compose.staging.yml up -d
+
+services:
+
+  app:
+    deploy:
+      resources:
+        limits:
+          memory: 512M
+
+  postgres:
+    volumes:
+      # Named volume scoped to staging
+      - staging-pg-data:/var/lib/postgresql/data
+
+  redis:
+    # Lighter memory limit for staging
+    command: redis-server --appendonly yes --maxmemory 128mb --maxmemory-policy allkeys-lru
+    volumes:
+      - staging-redis-data:/data
+
+  minio:
+    volumes:
+      - staging-minio-data:/data
+
+volumes:
+  staging-pg-data:
+  staging-redis-data:
+  staging-minio-data:

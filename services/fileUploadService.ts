@@ -1,6 +1,7 @@
-import { put, del } from '@vercel/blob'
+import { PutObjectCommand, DeleteObjectCommand } from '@aws-sdk/client-s3'
 import { v4 as uuidv4 } from 'uuid'
 import prisma from '@/lib/prisma'
+import { s3, BUCKET, publicUrl } from '@/lib/minio'
 import { FileUploadSchema } from '@/lib/validation/fileSchemas'
 
 export class ValidationError extends Error {
@@ -23,14 +24,23 @@ export async function saveUpload(file: File, cardId: string) {
 
   const ext = file.name.includes('.') ? `.${file.name.split('.').pop()!.toLowerCase()}` : ''
   const safeFileName = `${uuidv4()}${ext}`
-  const blob = await put(`uploads/${cardId}/${safeFileName}`, file, { access: 'public' })
+  const key = `uploads/${cardId}/${safeFileName}`
+
+  await s3.send(
+    new PutObjectCommand({
+      Bucket: BUCKET,
+      Key: key,
+      Body: Buffer.from(await file.arrayBuffer()),
+      ContentType: file.type,
+    }),
+  )
 
   const attachment = await prisma.attachment.create({
     data: {
       cardId,
       fileName: file.name,
       fileType: file.type,
-      filePath: blob.url,
+      filePath: publicUrl(key),
       fileSize: file.size,
     },
   })
@@ -52,10 +62,20 @@ export async function deleteUpload(attachmentId: string, userId?: string) {
     }
   }
 
-  try {
-    await del(attachment.filePath)
-  } catch {
-    // blob may already be gone
+  // Derive the MinIO object key from the stored URL.
+  // URL format: {MINIO_PUBLIC_URL}/{BUCKET}/{key}
+  const base = (process.env.MINIO_PUBLIC_URL ?? '').replace(/\/$/, '')
+  const prefix = `${base}/${BUCKET}/`
+  const key = attachment.filePath.startsWith(prefix)
+    ? attachment.filePath.slice(prefix.length)
+    : null
+
+  if (key) {
+    try {
+      await s3.send(new DeleteObjectCommand({ Bucket: BUCKET, Key: key }))
+    } catch {
+      // Object may already be gone — soft-delete the DB record regardless
+    }
   }
 
   await prisma.attachment.update({ where: { id: attachmentId }, data: { deletedAt: new Date() } })

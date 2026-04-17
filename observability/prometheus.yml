@@ -1,0 +1,26 @@
+global:
+  scrape_interval: 15s
+  evaluation_interval: 15s
+
+scrape_configs:
+  # Next.js monolith (Phase 0)
+  - job_name: app
+    static_configs:
+      - targets: ["app:3000"]
+    metrics_path: /api/metrics
+
+  # PostgreSQL exporter (optional — add postgres-exporter to compose if needed)
+  # - job_name: postgres
+  #   static_configs:
+  #     - targets: ["postgres-exporter:9187"]
+
+  # Redis exporter (optional — add redis-exporter to compose if needed)
+  # - job_name: redis
+  #   static_configs:
+  #     - targets: ["redis-exporter:9121"]
+
+  # MinIO
+  - job_name: minio
+    metrics_path: /minio/v2/metrics/cluster
+    static_configs:
+      - targets: ["minio:9000"]

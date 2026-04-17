@@ -1,0 +1,97 @@
+# Production environment overrides.
+# Usage: docker compose -f docker-compose.yml -f docker-compose.production.yml up -d
+
+services:
+
+  app:
+    deploy:
+      resources:
+        limits:
+          memory: 1G
+        reservations:
+          memory: 512M
+
+  postgres:
+    volumes:
+      - prod-pg-data:/var/lib/postgresql/data
+    deploy:
+      resources:
+        limits:
+          memory: 1G
+
+  redis:
+    command: redis-server --appendonly yes --maxmemory 256mb --maxmemory-policy allkeys-lru
+    volumes:
+      - prod-redis-data:/data
+
+  minio:
+    volumes:
+      - prod-minio-data:/data
+    deploy:
+      resources:
+        limits:
+          memory: 512M
+
+  # ── Observability (production only) ───────────────────────────────────────
+  prometheus:
+    image: prom/prometheus:v2.53.0
+    restart: always
+    volumes:
+      - ./observability/prometheus.yml:/etc/prometheus/prometheus.yml:ro
+      - prometheus-data:/prometheus
+    command:
+      - "--config.file=/etc/prometheus/prometheus.yml"
+      - "--storage.tsdb.retention.time=15d"
+      - "--storage.tsdb.retention.size=2GB"
+    networks:
+      - internal
+    deploy:
+      resources:
+        limits:
+          memory: 256M
+
+  loki:
+    image: grafana/loki:3.0.0
+    restart: always
+    volumes:
+      - loki-data:/loki
+    command: -config.file=/etc/loki/local-config.yaml
+    networks:
+      - internal
+    deploy:
+      resources:
+        limits:
+          memory: 256M
+
+  grafana:
+    image: grafana/grafana:11.0.0
+    restart: always
+    volumes:
+      - grafana-data:/var/lib/grafana
+    environment:
+      - GF_SECURITY_ADMIN_PASSWORD=${GRAFANA_PASSWORD}
+      - GF_SERVER_ROOT_URL=https://grafana.${BASE_DOMAIN}
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.grafana-${COMPOSE_PROJECT_NAME}.rule=Host(`grafana.${BASE_DOMAIN}`)"
+      - "traefik.http.routers.grafana-${COMPOSE_PROJECT_NAME}.entrypoints=websecure"
+      - "traefik.http.routers.grafana-${COMPOSE_PROJECT_NAME}.tls.certresolver=letsencrypt"
+      - "traefik.http.services.grafana-${COMPOSE_PROJECT_NAME}.loadbalancer.server.port=3000"
+    networks:
+      - proxy
+      - internal
+    depends_on:
+      - prometheus
+      - loki
+    deploy:
+      resources:
+        limits:
+          memory: 256M
+
+volumes:
+  prod-pg-data:
+  prod-redis-data:
+  prod-minio-data:
+  prometheus-data:
+  loki-data:
+  grafana-data:

@@ -1,9 +1,10 @@
 'use server'
 
-import { put } from '@vercel/blob'
+import { PutObjectCommand } from '@aws-sdk/client-s3'
 import { revalidatePath } from 'next/cache'
 import { verifySession } from '@/lib/dal'
 import { getUserProfile, updateUserProfile, changePassword, updateAvatar } from '@/services/userService'
+import { s3, BUCKET, publicUrl } from '@/lib/minio'
 
 export async function getUserProfileAction() {
   try {
@@ -61,8 +62,8 @@ export async function changePasswordAction(prevState: ProfileActionState, formDa
   }
 }
 
-// Apenas faz o upload para o Vercel Blob e retorna a URL.
-// NÃO salva no banco — quem chama é responsável por persistir a URL no contexto correto.
+// Faz upload do avatar para o MinIO e retorna a URL publica.
+// NAO salva no banco — quem chama e responsavel por persistir a URL no contexto correto.
 export async function uploadAvatarAction(formData: FormData) {
   try {
     const { userId } = await verifySession()
@@ -70,9 +71,19 @@ export async function uploadAvatarAction(formData: FormData) {
     if (!file || file.size === 0) throw new Error('Arquivo inválido')
 
     const ext = file.name.split('.').pop()?.toLowerCase() ?? 'jpg'
-    const blob = await put(`avatars/${userId}/avatar.${ext}`, file, { access: 'public', addRandomSuffix: true })
+    // Include a timestamp suffix to bust CDN/browser caches on re-upload
+    const key = `avatars/${userId}/avatar-${Date.now()}.${ext}`
 
-    return { avatarUrl: blob.url }
+    await s3.send(
+      new PutObjectCommand({
+        Bucket: BUCKET,
+        Key: key,
+        Body: Buffer.from(await file.arrayBuffer()),
+        ContentType: file.type,
+      }),
+    )
+
+    return { avatarUrl: publicUrl(key) }
   } catch (err) {
     return { error: err instanceof Error ? err.message : 'Erro ao fazer upload' }
   }

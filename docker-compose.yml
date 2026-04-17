@@ -1,0 +1,108 @@
+# Base Docker Compose — used by both staging and production.
+# Never use this file alone. Always combine with an environment overlay:
+#   docker compose -f docker-compose.yml -f docker-compose.staging.yml up -d
+#   docker compose -f docker-compose.yml -f docker-compose.production.yml up -d
+
+services:
+
+  # ── Monolith (Next.js) ─────────────────────────────────────────────────────
+  app:
+    image: mvloperum/app:${IMAGE_TAG:-latest}
+    restart: always
+    environment:
+      - NODE_ENV=${NODE_ENV}
+      - DATABASE_URL=${DATABASE_URL}
+      - SESSION_SECRET=${SESSION_SECRET}
+      - JWT_PRIVATE_KEY=${JWT_PRIVATE_KEY}
+      - JWT_PUBLIC_KEY=${JWT_PUBLIC_KEY}
+      - MINIO_ENDPOINT=minio
+      - MINIO_PORT=9000
+      - MINIO_ACCESS_KEY=${MINIO_ACCESS_KEY}
+      - MINIO_SECRET_KEY=${MINIO_SECRET_KEY}
+      - MINIO_BUCKET=${MINIO_BUCKET}
+      - MINIO_PUBLIC_URL=${MINIO_PUBLIC_URL}
+      - NEXT_PUBLIC_API_URL=${NEXT_PUBLIC_API_URL}
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.app-${COMPOSE_PROJECT_NAME}.rule=Host(`${APP_HOST}`)"
+      - "traefik.http.routers.app-${COMPOSE_PROJECT_NAME}.entrypoints=websecure"
+      - "traefik.http.routers.app-${COMPOSE_PROJECT_NAME}.tls.certresolver=letsencrypt"
+      - "traefik.http.services.app-${COMPOSE_PROJECT_NAME}.loadbalancer.server.port=3000"
+    networks:
+      - proxy
+      - internal
+    depends_on:
+      postgres:
+        condition: service_healthy
+      minio:
+        condition: service_healthy
+
+  # ── PostgreSQL ─────────────────────────────────────────────────────────────
+  postgres:
+    image: postgres:17-alpine
+    restart: always
+    volumes:
+      - pg-data:/var/lib/postgresql/data
+    environment:
+      - POSTGRES_USER=${DB_USER}
+      - POSTGRES_PASSWORD=${DB_PASSWORD}
+      - POSTGRES_DB=${DB_NAME}
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${DB_USER} -d ${DB_NAME}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - internal
+
+  # ── Redis ──────────────────────────────────────────────────────────────────
+  redis:
+    image: redis:7-alpine
+    restart: always
+    volumes:
+      - redis-data:/data
+    command: redis-server --appendonly yes --maxmemory 256mb --maxmemory-policy allkeys-lru
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - internal
+
+  # ── MinIO (S3-compatible Storage) ─────────────────────────────────────────
+  minio:
+    image: minio/minio:latest
+    restart: always
+    command: server /data --console-address ":9001"
+    volumes:
+      - minio-data:/data
+    environment:
+      - MINIO_ROOT_USER=${MINIO_ACCESS_KEY}
+      - MINIO_ROOT_PASSWORD=${MINIO_SECRET_KEY}
+    healthcheck:
+      test: ["CMD", "mc", "ready", "local"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    labels:
+      - "traefik.enable=true"
+      # Public API (bucket access)
+      - "traefik.http.routers.minio-${COMPOSE_PROJECT_NAME}.rule=Host(`${MINIO_HOST}`)"
+      - "traefik.http.routers.minio-${COMPOSE_PROJECT_NAME}.entrypoints=websecure"
+      - "traefik.http.routers.minio-${COMPOSE_PROJECT_NAME}.tls.certresolver=letsencrypt"
+      - "traefik.http.services.minio-${COMPOSE_PROJECT_NAME}.loadbalancer.server.port=9000"
+    networks:
+      - proxy
+      - internal
+
+volumes:
+  pg-data:
+  redis-data:
+  minio-data:
+
+networks:
+  proxy:
+    name: ${COMPOSE_PROJECT_NAME}_proxy
+  internal:
+    name: ${COMPOSE_PROJECT_NAME}_internal

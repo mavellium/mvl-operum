@@ -1,0 +1,31 @@
+# Shared Traefik instance — runs once, routes both staging and production.
+# Deploy on VPS before starting either environment:
+#   docker compose -f docker-compose.traefik.yml up -d
+#
+# This instance connects to the proxy networks of both environments
+# (which must already exist before starting Traefik).
+
+services:
+  traefik:
+    image: traefik:v3.2
+    restart: always
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock:ro
+      - ./traefik/traefik.yml:/etc/traefik/traefik.yml:ro
+      - ./traefik/dynamic:/etc/traefik/dynamic:ro
+      - traefik-certs:/letsencrypt
+    networks:
+      - mvloperum-staging_proxy
+      - mvloperum-prod_proxy
+
+volumes:
+  traefik-certs:
+
+networks:
+  mvloperum-staging_proxy:
+    external: true
+  mvloperum-prod_proxy:
+    external: true

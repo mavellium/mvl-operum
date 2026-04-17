@@ -4,6 +4,8 @@ export interface SessionPayload {
   tenantId: string
   expiresAt: Date
   tokenVersion?: number
+  /** JWT ID — used as Redis session key for instant revocation (RS256 sessions) */
+  jti?: string
 }
 
 export type FormState = {
