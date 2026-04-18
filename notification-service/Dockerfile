@@ -1,41 +1,36 @@
-# ── Stage 1: Deps ────────────────────────────────────────
-FROM node:22-alpine AS deps
-RUN npm install -g pnpm
+# ── Base: Node 22 Alpine + pnpm via corepack ──────────────────────────────────
+FROM node:22-alpine AS base
+RUN apk add --no-cache libc6-compat
+ENV PNPM_HOME="/pnpm"
+ENV PATH="$PNPM_HOME:$PATH"
+RUN corepack enable
+
+# ── Stage 1: Install dependencies ─────────────────────────────────────────────
+FROM base AS deps
 WORKDIR /app
-COPY package.json pnpm-lock.yaml* ./
-RUN pnpm install --no-frozen-lockfile
+COPY package.json pnpm-lock.yaml ./
+RUN pnpm install --frozen-lockfile --ignore-scripts
 
-# ── Stage 2: Builder ─────────────────────────────────────
-FROM node:22-alpine AS builder
-RUN npm install -g pnpm
+# ── Stage 2: Build ────────────────────────────────────────────────────────────
+FROM base AS builder
 WORKDIR /app
-
-# deps primeiro
-COPY package.json pnpm-lock.yaml* ./
-RUN pnpm install --frozen-lockfile
-
-# depois código
-COPY . .
-
-RUN find /app -name "prisma.config.*"
-
-# 3. Agora sim, traz as dependências limpas do Stage 1
 COPY --from=deps /app/node_modules ./node_modules
-
-# Garante permissão e segue o jogo
-RUN chmod +x ./node_modules/.bin/prisma
-RUN pnpm prisma generate
+COPY . .
+RUN pnpm exec prisma generate
 RUN pnpm build
 
-# ── Stage 3: Runner ──────────────────────────────────────
+# ── Stage 3: Runner ───────────────────────────────────────────────────────────
 FROM node:22-alpine AS runner
 WORKDIR /app
 ENV NODE_ENV=production
-RUN addgroup --system --gid 1001 nodejs && adduser --system --uid 1001 nestjs
+RUN apk add --no-cache libc6-compat
+RUN addgroup --system --gid 1001 nodejs \
+ && adduser  --system --uid 1001 nestjs
 
 COPY --from=builder /app/node_modules ./node_modules
 COPY --from=builder /app/dist ./dist
 COPY --from=builder /app/prisma ./prisma
+COPY --from=builder /app/lib/generated ./lib/generated
 
 USER nestjs
 EXPOSE 4004
