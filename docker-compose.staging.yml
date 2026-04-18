@@ -13,12 +13,14 @@ services:
       
     networks:
       - traefik-public 
-    # ─── 2. REGRAS DO DOMÍNIO ───
     labels:
       - "traefik.enable=true"
       - "traefik.http.routers.mvl-staging.rule=Host(`staging.operum.mavellium.com.br`)"
       - "traefik.http.routers.mvl-staging.entrypoints=websecure"
-      - "traefik.http.routers.mvl-staging.tls.certresolver=myresolver" # Gera o SSL (Cadeado Verde) automaticamente
+      - "traefik.http.routers.mvl-staging.tls.certresolver=myresolver"
+      # Link this router to the service that declares port 3000 (defined in docker-compose.yml).
+      # Without this, Traefik auto-discovers the service and may default to port 80 → 504.
+      - "traefik.http.routers.mvl-staging.service=app-${COMPOSE_PROJECT_NAME}"
 
   notification-service:
     deploy:

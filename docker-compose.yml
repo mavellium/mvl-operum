@@ -26,9 +26,8 @@ services:
       - REDIS_PORT=6379
     labels:
       - "traefik.enable=true"
-      - "traefik.http.routers.app-${COMPOSE_PROJECT_NAME}.rule=Host(`${APP_HOST}`)"
-      - "traefik.http.routers.app-${COMPOSE_PROJECT_NAME}.entrypoints=websecure"
-      - "traefik.http.routers.app-${COMPOSE_PROJECT_NAME}.tls.certresolver=myresolver"
+      # Port declared here so environment overlays can reference this service by name.
+      # Routers (host rules, TLS) are defined per-environment in the overlay files.
       - "traefik.http.services.app-${COMPOSE_PROJECT_NAME}.loadbalancer.server.port=3000"
     env_file:
       - .env

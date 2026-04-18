@@ -19,10 +19,10 @@ services:
 
     labels:
       - "traefik.enable=true"
-      # O Traefik escuta quem digita o domínio de PRODUÇÃO
-      - "traefik.http.routers.mvl-prod.rule=Host(`operum.mavellium.com.br`)" 
+      - "traefik.http.routers.mvl-prod.rule=Host(`operum.mavellium.com.br`)"
       - "traefik.http.routers.mvl-prod.entrypoints=websecure"
       - "traefik.http.routers.mvl-prod.tls.certresolver=myresolver"
+      - "traefik.http.routers.mvl-prod.service=app-${COMPOSE_PROJECT_NAME}"
 
   postgres:
     volumes:
