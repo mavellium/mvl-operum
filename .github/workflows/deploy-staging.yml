@@ -8,6 +8,7 @@ on:
 env:
   DEPLOY_PATH: /opt/mvloperum/staging
   IMAGE_NAME: mvloperum/app
+  NOTIFICATION_IMAGE: mvloperum/notification-service
 
 jobs:
   # ── 1. Run tests ─────────────────────────────────────────────────────────────
@@ -37,23 +38,29 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      - name: Build Docker image
+      - name: Build Docker images
         run: |
           docker build \
             -t ${{ env.IMAGE_NAME }}:${{ github.sha }} \
             -t ${{ env.IMAGE_NAME }}:staging \
             .
+          docker build \
+            -t ${{ env.NOTIFICATION_IMAGE }}:${{ github.sha }} \
+            -t ${{ env.NOTIFICATION_IMAGE }}:staging \
+            ./notification-service
 
-      - name: Save image to tarball
+      - name: Save images to tarballs
         run: |
-          docker save ${{ env.IMAGE_NAME }}:${{ github.sha }} \
-            | gzip > app.tar.gz
+          docker save ${{ env.IMAGE_NAME }}:${{ github.sha }} | gzip > app.tar.gz
+          docker save ${{ env.NOTIFICATION_IMAGE }}:${{ github.sha }} | gzip > notification-service.tar.gz
 
-      - name: Upload image artifact
+      - name: Upload image artifacts
         uses: actions/upload-artifact@v4
         with:
           name: docker-image
-          path: app.tar.gz
+          path: |
+            app.tar.gz
+            notification-service.tar.gz
           retention-days: 1
 
   # ── 3. Deploy to VPS ─────────────────────────────────────────────────────────
@@ -75,7 +82,7 @@ jobs:
           host: ${{ secrets.VPS_HOST }}
           username: ${{ secrets.VPS_USER }}
           key: ${{ secrets.VPS_SSH_KEY }}
-          source: "app.tar.gz,docker-compose.yml,docker-compose.staging.yml"
+          source: "app.tar.gz,notification-service.tar.gz,docker-compose.yml,docker-compose.staging.yml"
           target: /tmp/mvloperum-deploy
 
       - name: Deploy on VPS
@@ -105,12 +112,14 @@ jobs:
             echo "DEBUG DATABASE_URL:"
             cat .env | grep DATABASE_URL || (echo "❌ DATABASE_URL missing" && exit 1)
 
-            echo "Loading Docker image..."
+            echo "Loading Docker images..."
             docker load < /tmp/mvloperum-deploy/app.tar.gz
-            rm -f /tmp/mvloperum-deploy/app.tar.gz
+            docker load < /tmp/mvloperum-deploy/notification-service.tar.gz
+            rm -f /tmp/mvloperum-deploy/app.tar.gz /tmp/mvloperum-deploy/notification-service.tar.gz
 
-            echo "Tagging image..."
+            echo "Tagging images..."
             docker tag mvloperum/app:${{ github.sha }} mvloperum/app:staging
+            docker tag mvloperum/notification-service:${{ github.sha }} mvloperum/notification-service:staging
 
             echo "Running database migrations..."
             docker compose \
@@ -120,12 +129,12 @@ jobs:
               --profile migration \
               run --rm migrate
 
-            echo "Starting app service..."
+            echo "Starting services..."
             docker compose \
               --env-file .env \
               -f docker-compose.yml \
               -f docker-compose.staging.yml \
-              up -d app
+              up -d app notification-service
 
             echo "Pruning old images..."
             docker image prune -f

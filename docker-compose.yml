@@ -21,6 +21,9 @@ services:
       - MINIO_BUCKET=${MINIO_BUCKET}
       - MINIO_PUBLIC_URL=${MINIO_PUBLIC_URL}
       - NEXT_PUBLIC_API_URL=${NEXT_PUBLIC_API_URL}
+      - NOTIFICATION_SERVICE_URL=http://notification-service:4004
+      - REDIS_HOST=redis
+      - REDIS_PORT=6379
     labels:
       - "traefik.enable=true"
       - "traefik.http.routers.app-${COMPOSE_PROJECT_NAME}.rule=Host(`${APP_HOST}`)"
@@ -36,6 +39,28 @@ services:
       postgres:
         condition: service_healthy
       minio:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+      notification-service:
+        condition: service_started
+
+  # ── Notification Service (NestJS) ─────────────────────────────────────────
+  notification-service:
+    image: mvloperum/notification-service:${IMAGE_TAG}
+    restart: always
+    environment:
+      - NODE_ENV=${NODE_ENV}
+      - DATABASE_URL=${DATABASE_URL}
+      - REDIS_HOST=redis
+      - REDIS_PORT=6379
+      - PORT=4004
+    networks:
+      - internal
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
         condition: service_healthy
 
   # ── Prisma Migrations ─────────────────────────────────────────────────────
