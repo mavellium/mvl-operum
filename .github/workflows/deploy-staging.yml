@@ -87,8 +87,23 @@ jobs:
           script: |
             set -e
 
+            export IMAGE_TAG=staging
+
             mkdir -p ${{ env.DEPLOY_PATH }}
             cp /tmp/mvloperum-deploy/docker-compose*.yml ${{ env.DEPLOY_PATH }}/
+
+            cd ${{ env.DEPLOY_PATH }}
+
+            echo "Checking .env..."
+            if [ ! -f .env ]; then
+              echo "❌ .env NOT FOUND!"
+              exit 1
+            fi
+
+            chmod 644 .env
+
+            echo "DEBUG DATABASE_URL:"
+            cat .env | grep DATABASE_URL || (echo "❌ DATABASE_URL missing" && exit 1)
 
             echo "Loading Docker image..."
             docker load < /tmp/mvloperum-deploy/app.tar.gz
@@ -97,15 +112,7 @@ jobs:
             echo "Tagging image..."
             docker tag mvloperum/app:${{ github.sha }} mvloperum/app:staging
 
-            cd ${{ env.DEPLOY_PATH }}
-
-            echo "Starting app container..."
-            IMAGE_TAG=staging \
-              docker compose --env-file .env -f docker-compose.yml -f docker-compose.staging.yml \
-              up -d app
-
             echo "Running database migrations..."
-            IMAGE_TAG=staging \
             docker compose \
               --env-file .env \
               -f docker-compose.yml \
@@ -113,13 +120,12 @@ jobs:
               --profile migration \
               run --rm migrate
 
-            echo "Restarting app service..."
-            IMAGE_TAG=staging \
+            echo "Starting app service..."
             docker compose \
               --env-file .env \
               -f docker-compose.yml \
               -f docker-compose.staging.yml \
-              up -d app --no-deps
+              up -d app
 
             echo "Pruning old images..."
             docker image prune -f
