@@ -29,7 +29,7 @@ RUN addgroup --system --gid 1001 nodejs \
 
 # Install production deps fresh in runner — avoids broken pnpm symlinks from COPY.
 COPY package.json pnpm-lock.yaml pnpm-workspace.yaml ./
-RUN pnpm install --frozen-lockfile --prod --ignore-scripts
+RUN pnpm install --frozen-lockfile --prod
 
 # Built code + generated Prisma client
 COPY --from=builder --chown=nestjs:nodejs /app/dist ./dist
