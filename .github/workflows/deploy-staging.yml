@@ -68,7 +68,6 @@ jobs:
     name: Deploy
     needs: build
     runs-on: ubuntu-latest
-    # IMPORTANTE: Eu removi o "environment: staging" daqui para evitar bloqueios de permissão do GitHub
     steps:
       - uses: actions/checkout@v4
 
@@ -77,23 +76,28 @@ jobs:
         with:
           name: docker-image
 
-      # ATUALIZADO PARA @master
+      # 🔴 A MÁGICA ACONTECE AQUI: Recria a chave perfeitamente sem bugs de formatação
+      - name: Preparar Chave SSH (Modo Nuclear)
+        run: |
+          mkdir -p ~/.ssh
+          echo "${{ secrets.VPS_SSH_KEY_BASE64 }}" | base64 -d > ~/.ssh/deploy_key
+          chmod 600 ~/.ssh/deploy_key
+
       - name: Transfer image and compose files to VPS
-        uses: appleboy/scp-action@master 
+        uses: appleboy/scp-action@master
         with:
           host: ${{ secrets.VPS_HOST }}
           username: ${{ secrets.VPS_USER }}
-          key: ${{ secrets.VPS_SSH_KEY }}
+          key_path: ~/.ssh/deploy_key # Usando o arquivo puro agora
           source: "app.tar.gz,docker-compose.yml,docker-compose.staging.yml"
           target: /tmp/mvloperum-deploy
 
-      # ATUALIZADO PARA @master
       - name: Deploy on VPS
         uses: appleboy/ssh-action@master
         with:
           host: ${{ secrets.VPS_HOST }}
           username: ${{ secrets.VPS_USER }}
-          key: ${{ secrets.VPS_SSH_KEY }}
+          key_path: ~/.ssh/deploy_key # Usando o arquivo puro agora
           script: |
             set -e
             mkdir -p /opt/mvloperum/staging
