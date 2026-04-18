@@ -1,18 +1,22 @@
 FROM node:22-alpine AS deps
+# Instala o pnpm globalmente dentro do Docker
+RUN npm install -g pnpm
 WORKDIR /app
-COPY package.json package-lock.json* ./
-RUN npm install --ignore-scripts
+
+COPY package.json pnpm-lock.yaml* ./
+# Instala usando pnpm para manter os links simbólicos corretos
+RUN pnpm install --frozen-lockfile
 
 FROM node:22-alpine AS builder
+RUN npm install -g pnpm
 WORKDIR /app
+
 COPY --from=deps /app/node_modules ./node_modules
 COPY . .
 
-# CORREÇÃO: Garante permissão de execução para o binário do prisma
-RUN chmod +x ./node_modules/.bin/prisma
-RUN npx prisma generate
-
-RUN npm run build
+# Com pnpm, o prisma generate já sabe onde estão os arquivos reais
+RUN pnpm prisma generate
+RUN pnpm build
 
 FROM node:22-alpine AS runner
 WORKDIR /app
