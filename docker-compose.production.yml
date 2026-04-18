@@ -11,6 +11,9 @@ services:
         reservations:
           memory: 512M
 
+    env_file:
+      - .env
+      
     networks:
       - traefik-public  
 

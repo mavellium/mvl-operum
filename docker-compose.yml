@@ -28,6 +28,8 @@ services:
       - "traefik.http.routers.app-${COMPOSE_PROJECT_NAME}.entrypoints=websecure"
       - "traefik.http.routers.app-${COMPOSE_PROJECT_NAME}.tls.certresolver=letsencrypt"
       - "traefik.http.services.app-${COMPOSE_PROJECT_NAME}.loadbalancer.server.port=3000"
+    env_file:
+      - .env
     networks:
       - proxy
       - internal
