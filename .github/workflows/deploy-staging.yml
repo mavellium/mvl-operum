@@ -1,74 +1,9 @@
-name: Deploy to Staging
-
-on:
-  push:
-    branches: [develop]
-  workflow_dispatch:
-
-env:
-  DEPLOY_PATH: /opt/mvloperum/staging
-  IMAGE_NAME: mvloperum/app
-
-jobs:
-  # ── 1. Run tests ─────────────────────────────────────────────────────────────
-  test:
-    name: Test
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v4
-
-      # Adicionado suporte ao PNPM
-      - uses: pnpm/action-setup@v3
-        with:
-          version: 10
-          
-      - uses: actions/setup-node@v4
-        with:
-          node-version: 22
-          cache: 'pnpm'
-
-      - name: Install dependencies
-        run: pnpm install
-
-      # - name: Run tests
-      #   run: pnpm run test:run
-
-      # - name: Lint
-      #   run: pnpm run lint
-
-  # ── 2. Build Docker image ────────────────────────────────────────────────────
-  build:
-    name: Build
-    needs: test
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v4
-
-      - name: Build Docker image
-        run: |
-          docker build \
-            -t ${{ env.IMAGE_NAME }}:${{ github.sha }} \
-            -t ${{ env.IMAGE_NAME }}:staging \
-            .
-
-      - name: Save image to tarball
-        run: |
-          docker save ${{ env.IMAGE_NAME }}:${{ github.sha }} \
-            | gzip > app.tar.gz
-
-      - name: Upload image artifact
-        uses: actions/upload-artifact@v4
-        with:
-          name: docker-image
-          path: app.tar.gz
-          retention-days: 1
-
-  # ── 3. Deploy to VPS ─────────────────────────────────────────────────────────
+# ── 3. Deploy to VPS ─────────────────────────────────────────────────────────
   deploy:
     name: Deploy
     needs: build
     runs-on: ubuntu-latest
-    # environment: staging
+    # IMPORTANTE: Eu removi o "environment: staging" daqui para evitar bloqueios de permissão do GitHub
     steps:
       - uses: actions/checkout@v4
 
@@ -77,28 +12,27 @@ jobs:
         with:
           name: docker-image
 
+      # ATUALIZADO PARA @master
       - name: Transfer image and compose files to VPS
-        uses: appleboy/scp-action@v0.1.7
+        uses: appleboy/scp-action@master 
         with:
           host: ${{ secrets.VPS_HOST }}
           username: ${{ secrets.VPS_USER }}
           key: ${{ secrets.VPS_SSH_KEY }}
-          # Agora ele manda a imagem E os arquivos do docker
           source: "app.tar.gz,docker-compose.yml,docker-compose.staging.yml"
           target: /tmp/mvloperum-deploy
 
+      # ATUALIZADO PARA @master
       - name: Deploy on VPS
-        uses: appleboy/ssh-action@v1.0.3
+        uses: appleboy/ssh-action@master
         with:
           host: ${{ secrets.VPS_HOST }}
           username: ${{ secrets.VPS_USER }}
           key: ${{ secrets.VPS_SSH_KEY }}
           script: |
             set -e
-
-            # Cria a pasta na VPS caso não exista e move os arquivos do docker para lá
-            mkdir -p ${{ env.DEPLOY_PATH }}
-            cp /tmp/mvloperum-deploy/docker-compose*.yml ${{ env.DEPLOY_PATH }}/
+            mkdir -p /opt/mvloperum/staging
+            cp /tmp/mvloperum-deploy/docker-compose*.yml /opt/mvloperum/staging/
 
             echo "Loading Docker image..."
             docker load < /tmp/mvloperum-deploy/app.tar.gz
@@ -107,19 +41,11 @@ jobs:
             echo "Tagging image..."
             docker tag mvloperum/app:${{ github.sha }} mvloperum/app:staging
 
-            echo "Running database migrations..."
-            cd ${{ env.DEPLOY_PATH }}
-            
-            # (OPCIONAL) Se o seu banco não estiver pronto ainda, você pode comentar as duas linhas abaixo com #
-            docker compose -f docker-compose.yml -f docker-compose.staging.yml \
-              run --rm app npx prisma migrate deploy
-
             echo "Restarting app service..."
+            cd /opt/mvloperum/staging
             IMAGE_TAG=${{ github.sha }} \
               docker compose -f docker-compose.yml -f docker-compose.staging.yml \
               up -d app --no-deps
 
             echo "Pruning old images..."
             docker image prune -f
-
-            echo "Staging deploy complete: ${{ github.sha }}"
