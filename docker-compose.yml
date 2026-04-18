@@ -25,7 +25,7 @@ services:
       - "traefik.enable=true"
       - "traefik.http.routers.app-${COMPOSE_PROJECT_NAME}.rule=Host(`${APP_HOST}`)"
       - "traefik.http.routers.app-${COMPOSE_PROJECT_NAME}.entrypoints=websecure"
-      - "traefik.http.routers.app-${COMPOSE_PROJECT_NAME}.tls.certresolver=letsencrypt"
+      - "traefik.http.routers.app-${COMPOSE_PROJECT_NAME}.tls.certresolver=myresolver"
       - "traefik.http.services.app-${COMPOSE_PROJECT_NAME}.loadbalancer.server.port=3000"
     env_file:
       - .env
@@ -106,7 +106,7 @@ services:
       # Public API (bucket access)
       - "traefik.http.routers.minio-${COMPOSE_PROJECT_NAME}.rule=Host(`${MINIO_HOST}`)"
       - "traefik.http.routers.minio-${COMPOSE_PROJECT_NAME}.entrypoints=websecure"
-      - "traefik.http.routers.minio-${COMPOSE_PROJECT_NAME}.tls.certresolver=letsencrypt"
+      - "traefik.http.routers.minio-${COMPOSE_PROJECT_NAME}.tls.certresolver=myresolver"
       - "traefik.http.services.minio-${COMPOSE_PROJECT_NAME}.loadbalancer.server.port=9000"
     networks:
       - proxy

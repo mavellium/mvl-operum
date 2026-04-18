@@ -135,7 +135,7 @@ services:
       - /var/run/docker.sock:/var/run/docker.sock:ro
       - ./traefik/traefik.yml:/etc/traefik/traefik.yml:ro
       - ./traefik/dynamic:/etc/traefik/dynamic:ro
-      - traefik-certs:/letsencrypt
+      - traefik-certs:/myresolver
     networks:
       - proxy
 
@@ -151,7 +151,7 @@ services:
       - "traefik.enable=true"
       - "traefik.http.routers.frontend.rule=Host(`${FRONTEND_HOST}`)"
       - "traefik.http.routers.frontend.entrypoints=websecure"
-      - "traefik.http.routers.frontend.tls.certresolver=letsencrypt"
+      - "traefik.http.routers.frontend.tls.certresolver=myresolver"
       - "traefik.http.services.frontend.loadbalancer.server.port=3000"
     networks:
       - proxy
@@ -175,7 +175,7 @@ services:
       - "traefik.enable=true"
       - "traefik.http.routers.api.rule=Host(`${API_HOST}`)"
       - "traefik.http.routers.api.entrypoints=websecure"
-      - "traefik.http.routers.api.tls.certresolver=letsencrypt"
+      - "traefik.http.routers.api.tls.certresolver=myresolver"
       - "traefik.http.services.api.loadbalancer.server.port=4000"
       - "traefik.http.routers.api.middlewares=api-ratelimit@file,api-cors@file"
     networks:
@@ -332,7 +332,7 @@ services:
       - "traefik.enable=true"
       - "traefik.http.routers.minio-api.rule=Host(`${MINIO_HOST}`)"
       - "traefik.http.routers.minio-api.entrypoints=websecure"
-      - "traefik.http.routers.minio-api.tls.certresolver=letsencrypt"
+      - "traefik.http.routers.minio-api.tls.certresolver=myresolver"
       - "traefik.http.services.minio-api.loadbalancer.server.port=9000"
 
   # --- Prometheus ---
@@ -371,7 +371,7 @@ services:
       - "traefik.enable=true"
       - "traefik.http.routers.grafana.rule=Host(`grafana.${BASE_DOMAIN}`)"
       - "traefik.http.routers.grafana.entrypoints=websecure"
-      - "traefik.http.routers.grafana.tls.certresolver=letsencrypt"
+      - "traefik.http.routers.grafana.tls.certresolver=myresolver"
       - "traefik.http.services.grafana.loadbalancer.server.port=3000"
     networks:
       - proxy
@@ -421,10 +421,10 @@ providers:
     watch: true
 
 certificatesResolvers:
-  letsencrypt:
+  myresolver:
     acme:
       email: tegbe.projetoia@gmail.com
-      storage: /letsencrypt/acme.json
+      storage: /myresolver/acme.json
       httpChallenge:
         entryPoint: web
 
@@ -965,7 +965,7 @@ services:
       - /var/run/docker.sock:/var/run/docker.sock:ro
       - ./traefik/traefik.yml:/etc/traefik/traefik.yml:ro
       - ./traefik/dynamic:/etc/traefik/dynamic:ro
-      - traefik-certs:/letsencrypt
+      - traefik-certs:/myresolver
     networks:
       - mvloperum-staging_proxy
       - mvloperum-prod_proxy

@@ -25,10 +25,10 @@ providers:
     watch: true
 
 certificatesResolvers:
-  letsencrypt:
+  myresolver:
     acme:
       email: tegbe.projetoia@gmail.com
-      storage: /letsencrypt/acme.json
+      storage: /myresolver/acme.json
       httpChallenge:
         entryPoint: web
 

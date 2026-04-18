@@ -88,7 +88,7 @@ services:
       - "traefik.enable=true"
       - "traefik.http.routers.grafana-${COMPOSE_PROJECT_NAME}.rule=Host(`grafana.${BASE_DOMAIN}`)"
       - "traefik.http.routers.grafana-${COMPOSE_PROJECT_NAME}.entrypoints=websecure"
-      - "traefik.http.routers.grafana-${COMPOSE_PROJECT_NAME}.tls.certresolver=letsencrypt"
+      - "traefik.http.routers.grafana-${COMPOSE_PROJECT_NAME}.tls.certresolver=myresolver"
       - "traefik.http.services.grafana-${COMPOSE_PROJECT_NAME}.loadbalancer.server.port=3000"
     networks:
       - proxy
