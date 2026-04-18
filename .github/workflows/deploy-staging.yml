@@ -63,11 +63,12 @@ jobs:
           path: app.tar.gz
           retention-days: 1
 
- # ── 3. Deploy to VPS ─────────────────────────────────────────────────────────
+  # ── 3. Deploy to VPS ─────────────────────────────────────────────────────────
   deploy:
     name: Deploy
     needs: build
     runs-on: ubuntu-latest
+    # environment: staging
     steps:
       - uses: actions/checkout@v4
 
@@ -76,32 +77,28 @@ jobs:
         with:
           name: docker-image
 
-      # 🔴 A MÁGICA ACONTECE AQUI: Recria a chave perfeitamente sem bugs de formatação
-      - name: Preparar Chave SSH (Modo Nuclear)
-        run: |
-          mkdir -p ~/.ssh
-          echo "${{ secrets.VPS_SSH_KEY_BASE64 }}" | tr -d '\n\r ' | base64 -d > ~/.ssh/deploy_key
-          chmod 600 ~/.ssh/deploy_key
-
       - name: Transfer image and compose files to VPS
-        uses: appleboy/scp-action@master
+        uses: appleboy/scp-action@v0.1.7
         with:
           host: ${{ secrets.VPS_HOST }}
           username: ${{ secrets.VPS_USER }}
-          key_path: ~/.ssh/deploy_key # Usando o arquivo puro agora
+          key: ${{ secrets.VPS_SSH_KEY }}
+          # Agora ele manda a imagem E os arquivos do docker
           source: "app.tar.gz,docker-compose.yml,docker-compose.staging.yml"
           target: /tmp/mvloperum-deploy
 
       - name: Deploy on VPS
-        uses: appleboy/ssh-action@master
+        uses: appleboy/ssh-action@v1.0.3
         with:
           host: ${{ secrets.VPS_HOST }}
           username: ${{ secrets.VPS_USER }}
-          key_path: ~/.ssh/deploy_key # Usando o arquivo puro agora
+          key: ${{ secrets.VPS_SSH_KEY }}
           script: |
             set -e
-            mkdir -p /opt/mvloperum/staging
-            cp /tmp/mvloperum-deploy/docker-compose*.yml /opt/mvloperum/staging/
+
+            # Cria a pasta na VPS caso não exista e move os arquivos do docker para lá
+            mkdir -p ${{ env.DEPLOY_PATH }}
+            cp /tmp/mvloperum-deploy/docker-compose*.yml ${{ env.DEPLOY_PATH }}/
 
             echo "Loading Docker image..."
             docker load < /tmp/mvloperum-deploy/app.tar.gz
@@ -110,11 +107,19 @@ jobs:
             echo "Tagging image..."
             docker tag mvloperum/app:${{ github.sha }} mvloperum/app:staging
 
+            echo "Running database migrations..."
+            cd ${{ env.DEPLOY_PATH }}
+            
+            # (OPCIONAL) Se o seu banco não estiver pronto ainda, você pode comentar as duas linhas abaixo com #
+            docker compose -f docker-compose.yml -f docker-compose.staging.yml \
+              run --rm app npx prisma migrate deploy
+
             echo "Restarting app service..."
-            cd /opt/mvloperum/staging
             IMAGE_TAG=${{ github.sha }} \
               docker compose -f docker-compose.yml -f docker-compose.staging.yml \
               up -d app --no-deps
 
             echo "Pruning old images..."
             docker image prune -f
+
+            echo "Staging deploy complete: ${{ github.sha }}"
