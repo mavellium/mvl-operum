@@ -7,7 +7,7 @@ services:
 
   # ── Monolith (Next.js) ─────────────────────────────────────────────────────
   app:
-    image: mvloperum/app:${IMAGE_TAG:-latest}
+    image: mvloperum/app:${IMAGE_TAG}
     restart: always
     environment:
       - NODE_ENV=${NODE_ENV}
@@ -40,7 +40,7 @@ services:
 
   # ── Prisma Migrations ─────────────────────────────────────────────────────
   migrate:
-    image: mvloperum/app:${IMAGE_TAG:-latest}
+    image: mvloperum/app:${IMAGE_TAG}
     command: npx prisma migrate deploy
     env_file:
       - .env
