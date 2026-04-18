@@ -5,7 +5,7 @@ WORKDIR /app
 
 COPY package.json pnpm-lock.yaml* ./
 # Instala usando pnpm para manter os links simbólicos corretos
-RUN pnpm install --frozen-lockfile
+RUN pnpm install --no-frozen-lockfile
 
 FROM node:22-alpine AS builder
 RUN npm install -g pnpm
