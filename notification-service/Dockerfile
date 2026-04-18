@@ -10,11 +10,16 @@ FROM node:22-alpine AS builder
 RUN npm install -g pnpm
 WORKDIR /app
 
-# INVERTA AQUI: Primeiro o código, depois as dependências
+# 1. Copia o código primeiro
 COPY . . 
+
+# 2. REMOVE qualquer node_modules que possa ter vindo no COPY . .
+RUN rm -rf node_modules
+
+# 3. Agora sim, traz as dependências limpas do Stage 1
 COPY --from=deps /app/node_modules ./node_modules
 
-# Garante permissão e roda o resto
+# Garante permissão e segue o jogo
 RUN chmod +x ./node_modules/.bin/prisma
 RUN pnpm prisma generate
 RUN pnpm build
