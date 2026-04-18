@@ -17,19 +17,24 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
+      # Adicionado suporte ao PNPM
+      - uses: pnpm/action-setup@v3
+        with:
+          version: 9
+          
       - uses: actions/setup-node@v4
         with:
           node-version: 22
-          cache: npm
+          cache: 'pnpm'
 
       - name: Install dependencies
-        run: npm ci
+        run: pnpm install
 
       - name: Run tests
-        run: npm run test:run
+        run: pnpm run test:run
 
       - name: Lint
-        run: npm run lint
+        run: pnpm run lint
 
   # ── 2. Build Docker image ────────────────────────────────────────────────────
   build:
@@ -72,13 +77,14 @@ jobs:
         with:
           name: docker-image
 
-      - name: Transfer image to VPS
+      - name: Transfer image and compose files to VPS
         uses: appleboy/scp-action@v0.1.7
         with:
           host: ${{ secrets.VPS_HOST }}
           username: ${{ secrets.VPS_USER }}
           key: ${{ secrets.VPS_SSH_KEY }}
-          source: "app.tar.gz"
+          # Agora ele manda a imagem E os arquivos do docker
+          source: "app.tar.gz,docker-compose.yml,docker-compose.staging.yml"
           target: /tmp/mvloperum-deploy
 
       - name: Deploy on VPS
@@ -90,6 +96,10 @@ jobs:
           script: |
             set -e
 
+            # Cria a pasta na VPS caso não exista e move os arquivos do docker para lá
+            mkdir -p ${{ env.DEPLOY_PATH }}
+            cp /tmp/mvloperum-deploy/docker-compose*.yml ${{ env.DEPLOY_PATH }}/
+
             echo "Loading Docker image..."
             docker load < /tmp/mvloperum-deploy/app.tar.gz
             rm -f /tmp/mvloperum-deploy/app.tar.gz
@@ -99,6 +109,8 @@ jobs:
 
             echo "Running database migrations..."
             cd ${{ env.DEPLOY_PATH }}
+            
+            # (OPCIONAL) Se o seu banco não estiver pronto ainda, você pode comentar as duas linhas abaixo com #
             docker compose -f docker-compose.yml -f docker-compose.staging.yml \
               run --rm app npx prisma migrate deploy
 
