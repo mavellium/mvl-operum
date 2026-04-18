@@ -17,7 +17,6 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      # Adicionado suporte ao PNPM
       - uses: pnpm/action-setup@v3
         with:
           version: 10
@@ -68,7 +67,6 @@ jobs:
     name: Deploy
     needs: build
     runs-on: ubuntu-latest
-    # environment: staging
     steps:
       - uses: actions/checkout@v4
 
@@ -83,7 +81,6 @@ jobs:
           host: ${{ secrets.VPS_HOST }}
           username: ${{ secrets.VPS_USER }}
           key: ${{ secrets.VPS_SSH_KEY }}
-          # Agora ele manda a imagem E os arquivos do docker
           source: "app.tar.gz,docker-compose.yml,docker-compose.staging.yml"
           target: /tmp/mvloperum-deploy
 
@@ -96,7 +93,6 @@ jobs:
           script: |
             set -e
 
-            # Cria a pasta na VPS caso não exista e move os arquivos do docker para lá
             mkdir -p ${{ env.DEPLOY_PATH }}
             cp /tmp/mvloperum-deploy/docker-compose*.yml ${{ env.DEPLOY_PATH }}/
 
@@ -110,12 +106,12 @@ jobs:
             echo "Running database migrations..."
             cd ${{ env.DEPLOY_PATH }}
             
-            # (OPCIONAL) Se o seu banco não estiver pronto ainda, você pode comentar as duas linhas abaixo com #
-            docker compose -f docker-compose.yml -f docker-compose.staging.yml \
+            IMAGE_TAG=staging \
+              docker compose -f docker-compose.yml -f docker-compose.staging.yml \
               run --rm app npx prisma migrate deploy
 
             echo "Restarting app service..."
-            IMAGE_TAG=${{ github.sha }} \
+            IMAGE_TAG=staging \
               docker compose -f docker-compose.yml -f docker-compose.staging.yml \
               up -d app --no-deps
 
