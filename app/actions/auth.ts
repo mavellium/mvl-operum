@@ -72,6 +72,8 @@ export async function loginAction(prevState: FormState, formData: FormData): Pro
       }
     }
   } catch (err) {
+    console.error("🚨 ERRO GRAVE NO LOGIN:", err)
+    
     if (err instanceof AuthError) {
       return { message: err.message }
     }

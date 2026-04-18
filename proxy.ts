@@ -11,8 +11,10 @@ export async function proxy(request: NextRequest) {
   }
 
   // Full validation via /api/me: JWT + user exists in DB + tokenVersion
-  const meUrl = new URL('/api/me', request.url)
-  const res = await fetch(meUrl.toString(), {
+  // Use localhost to avoid HTTPS roundtrip through Traefik (ERR_SSL_PACKET_LENGTH_TOO_LONG)
+  const port = process.env.PORT ?? '3000'
+  const meUrl = `http://localhost:${port}/api/me`
+  const res = await fetch(meUrl, {
     headers: { cookie: `session=${token}` },
   })
 
