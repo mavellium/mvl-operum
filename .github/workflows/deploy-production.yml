@@ -116,12 +116,21 @@ jobs:
 
             echo "Running database migrations..."
             cd ${{ env.DEPLOY_PATH }}
-            docker compose -f docker-compose.yml -f docker-compose.production.yml \
-              run --rm app npx prisma migrate deploy
+
+            IMAGE_TAG=staging \
+            docker compose \
+              --env-file .env \
+              -f docker-compose.yml \
+              -f docker-compose.staging.yml \
+              --profile migration \
+              run --rm migrate
 
             echo "Restarting app service (zero-downtime)..."
-            IMAGE_TAG=${{ github.sha }} \
-              docker compose -f docker-compose.yml -f docker-compose.production.yml \
+            IMAGE_TAG=staging \
+            docker compose \
+              --env-file .env \
+              -f docker-compose.yml \
+              -f docker-compose.staging.yml \
               up -d app --no-deps
 
             echo "Pruning old images..."

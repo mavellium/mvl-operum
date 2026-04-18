@@ -105,6 +105,7 @@ jobs:
               up -d app
 
             echo "Running database migrations..."
+            IMAGE_TAG=staging \
             docker compose \
               --env-file .env \
               -f docker-compose.yml \
@@ -114,7 +115,10 @@ jobs:
 
             echo "Restarting app service..."
             IMAGE_TAG=staging \
-              docker compose --env-file .env -f docker-compose.yml -f docker-compose.staging.yml \
+            docker compose \
+              --env-file .env \
+              -f docker-compose.yml \
+              -f docker-compose.staging.yml \
               up -d app --no-deps
 
             echo "Pruning old images..."
