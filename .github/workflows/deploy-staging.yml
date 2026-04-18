@@ -80,7 +80,7 @@ jobs:
       - name: Preparar Chave SSH (Modo Nuclear)
         run: |
           mkdir -p ~/.ssh
-          echo "${{ secrets.VPS_SSH_KEY_BASE64 }}" | base64 -d > ~/.ssh/deploy_key
+          echo "${{ secrets.VPS_SSH_KEY_BASE64 }}" | tr -d '\n\r ' | base64 -d > ~/.ssh/deploy_key
           chmod 600 ~/.ssh/deploy_key
 
       - name: Transfer image and compose files to VPS
