@@ -29,12 +29,6 @@ jobs:
       - name: Install dependencies
         run: pnpm install
 
-      # - name: Run tests
-      #   run: pnpm run test:run
-
-      # - name: Lint
-      #   run: pnpm run lint
-
   # ── 2. Build Docker image ────────────────────────────────────────────────────
   build:
     name: Build
@@ -106,7 +100,7 @@ jobs:
             echo "Running database migrations..."
             cd ${{ env.DEPLOY_PATH }}
             
-            # Puxa a DATABASE_URL do arquivo .env e joga direto pro Prisma
+            # 🟢 A FORÇA BRUTA: Lendo do arquivo e jogando no Prisma!
             export $(grep -v '^#' .env | xargs)
             IMAGE_TAG=staging \
               docker compose -f docker-compose.yml -f docker-compose.staging.yml \
