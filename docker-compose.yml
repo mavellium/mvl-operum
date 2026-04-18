@@ -67,6 +67,7 @@ services:
   migrate:
     image: mvloperum/app:${IMAGE_TAG}
     command: prisma migrate deploy
+    user: "0"
     env_file:
       - .env
     networks:

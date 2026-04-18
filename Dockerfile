@@ -37,10 +37,12 @@ ENV NEXT_TELEMETRY_DISABLED=1
 RUN addgroup --system --gid 1001 nodejs \
  && adduser  --system --uid 1001 nextjs
 
-# Prisma CLI for the migrate service (runs as root in docker-compose).
-# Installed globally before USER switch so the binary is owned by root but world-executable.
-# Version pinned to match devDependency.
-RUN pnpm add --global prisma@7.7.0 --ignore-scripts
+# Prisma CLI for the migrate service.
+# --ignore-scripts is intentionally omitted: prisma's postinstall downloads
+# engine binaries so they are baked into the image (no network needed at deploy time).
+# chmod ensures the nextjs user can read the global store for any read-only access.
+RUN pnpm add --global prisma@7.7.0 \
+ && chmod -R 755 /pnpm
 
 # Next.js standalone output (includes a self-contained server.js + minimal node_modules).
 COPY --from=builder /app/public ./public
