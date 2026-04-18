@@ -10,11 +10,14 @@ FROM node:22-alpine AS builder
 RUN npm install -g pnpm
 WORKDIR /app
 
-# 1. Copia o código primeiro
-COPY . . 
+# deps primeiro
+COPY package.json pnpm-lock.yaml* ./
+RUN pnpm install --frozen-lockfile
 
-# 2. REMOVE qualquer node_modules que possa ter vindo no COPY . .
-RUN rm -rf node_modules
+# depois código
+COPY . .
+
+RUN find /app -name "prisma.config.*"
 
 # 3. Agora sim, traz as dependências limpas do Stage 1
 COPY --from=deps /app/node_modules ./node_modules

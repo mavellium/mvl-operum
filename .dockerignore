@@ -20,3 +20,5 @@ observability/
 scripts/
 deploy/
 notification-service/
+dist
+prisma.config.js
