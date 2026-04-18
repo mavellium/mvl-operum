@@ -105,13 +105,12 @@ jobs:
               up -d app
 
             echo "Running database migrations..."
-            URL_DO_BANCO=$(grep '^DATABASE_URL=' .env | cut -d '=' -f 2- | tr -d '\r' | tr -d '"' | tr -d "'")
-            
-            # 🟢 O SLEDGEHAMMER: Passando '-u root' para ter permissão absoluta no container
-            cat .env | docker compose exec -u root -T app sh -c "cat > .env"
-
-            # Rodando o Prisma como root com a variável injetada
-            docker compose exec -u root -T app sh -c "DATABASE_URL=\"$URL_DO_BANCO\" npx prisma migrate deploy"
+            docker compose \
+              --env-file .env \
+              -f docker-compose.yml \
+              -f docker-compose.staging.yml \
+              --profile migration \
+              run --rm migrate
 
             echo "Restarting app service..."
             IMAGE_TAG=staging \

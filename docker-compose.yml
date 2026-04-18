@@ -38,6 +38,21 @@ services:
       minio:
         condition: service_healthy
 
+  # ── Prisma Migrations ─────────────────────────────────────────────────────
+  migrate:
+    image: mvloperum/app:${IMAGE_TAG:-latest}
+    command: npx prisma migrate deploy
+    env_file:
+      - .env
+    networks:
+      - internal
+    depends_on:
+      postgres:
+        condition: service_healthy
+    restart: "no"
+    profiles:
+      - migration
+
   # ── PostgreSQL ─────────────────────────────────────────────────────────────
   postgres:
     image: postgres:17-alpine
