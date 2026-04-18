@@ -13,7 +13,8 @@ WORKDIR /app
 COPY --from=deps /app/node_modules ./node_modules
 COPY . .
 
-# Prisma client
+# CORREÇÃO AQUI: Garante permissão antes de rodar o generate
+RUN chmod +x ./node_modules/.bin/prisma
 RUN npx prisma generate
 
 ENV NEXT_TELEMETRY_DISABLED=1
@@ -30,8 +31,6 @@ ENV NEXT_TELEMETRY_DISABLED=1
 
 RUN addgroup --system --gid 1001 nodejs \
  && adduser  --system --uid 1001 nextjs
-
-# ⚠️ NÃO instalar prisma globalmente
 
 # App files
 COPY --from=builder /app/public ./public
