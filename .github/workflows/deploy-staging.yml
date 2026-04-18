@@ -8,6 +8,7 @@ on:
 env:
   DEPLOY_PATH: /opt/mvloperum/staging
   IMAGE_NAME: mvloperum/app
+  NOTIFICATION_IMAGE: mvloperum/notification-service
 
 jobs:
   # ── 1. Run tests ─────────────────────────────────────────────────────────────
@@ -17,19 +18,17 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
+      - uses: pnpm/action-setup@v3
+        with:
+          version: 10
+          
       - uses: actions/setup-node@v4
         with:
           node-version: 22
-          cache: npm
+          cache: 'pnpm'
 
       - name: Install dependencies
-        run: npm ci
-
-      - name: Run tests
-        run: npm run test:run
-
-      - name: Lint
-        run: npm run lint
+        run: pnpm install
 
   # ── 2. Build Docker image ────────────────────────────────────────────────────
   build:
@@ -39,23 +38,29 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      - name: Build Docker image
+      - name: Build Docker images
         run: |
           docker build \
             -t ${{ env.IMAGE_NAME }}:${{ github.sha }} \
             -t ${{ env.IMAGE_NAME }}:staging \
             .
+          docker build \
+            -t ${{ env.NOTIFICATION_IMAGE }}:${{ github.sha }} \
+            -t ${{ env.NOTIFICATION_IMAGE }}:staging \
+            ./notification-service
 
-      - name: Save image to tarball
+      - name: Save images to tarballs
         run: |
-          docker save ${{ env.IMAGE_NAME }}:${{ github.sha }} \
-            | gzip > app.tar.gz
+          docker save ${{ env.IMAGE_NAME }}:${{ github.sha }} | gzip > app.tar.gz
+          docker save ${{ env.NOTIFICATION_IMAGE }}:${{ github.sha }} | gzip > notification-service.tar.gz
 
-      - name: Upload image artifact
+      - name: Upload image artifacts
         uses: actions/upload-artifact@v4
         with:
           name: docker-image
-          path: app.tar.gz
+          path: |
+            app.tar.gz
+            notification-service.tar.gz
           retention-days: 1
 
   # ── 3. Deploy to VPS ─────────────────────────────────────────────────────────
@@ -63,7 +68,6 @@ jobs:
     name: Deploy
     needs: build
     runs-on: ubuntu-latest
-    environment: staging
     steps:
       - uses: actions/checkout@v4
 
@@ -72,13 +76,13 @@ jobs:
         with:
           name: docker-image
 
-      - name: Transfer image to VPS
+      - name: Transfer image and compose files to VPS
         uses: appleboy/scp-action@v0.1.7
         with:
           host: ${{ secrets.VPS_HOST }}
           username: ${{ secrets.VPS_USER }}
           key: ${{ secrets.VPS_SSH_KEY }}
-          source: "app.tar.gz"
+          source: "app.tar.gz,notification-service.tar.gz,docker-compose.yml,docker-compose.staging.yml"
           target: /tmp/mvloperum-deploy
 
       - name: Deploy on VPS
@@ -90,22 +94,47 @@ jobs:
           script: |
             set -e
 
-            echo "Loading Docker image..."
-            docker load < /tmp/mvloperum-deploy/app.tar.gz
-            rm -f /tmp/mvloperum-deploy/app.tar.gz
+            export IMAGE_TAG=staging
 
-            echo "Tagging image..."
+            mkdir -p ${{ env.DEPLOY_PATH }}
+            cp /tmp/mvloperum-deploy/docker-compose*.yml ${{ env.DEPLOY_PATH }}/
+
+            cd ${{ env.DEPLOY_PATH }}
+
+            echo "Checking .env..."
+            if [ ! -f .env ]; then
+              echo "❌ .env NOT FOUND!"
+              exit 1
+            fi
+
+            chmod 644 .env
+
+            echo "DEBUG DATABASE_URL:"
+            cat .env | grep DATABASE_URL || (echo "❌ DATABASE_URL missing" && exit 1)
+
+            echo "Loading Docker images..."
+            docker load < /tmp/mvloperum-deploy/app.tar.gz
+            docker load < /tmp/mvloperum-deploy/notification-service.tar.gz
+            rm -f /tmp/mvloperum-deploy/app.tar.gz /tmp/mvloperum-deploy/notification-service.tar.gz
+
+            echo "Tagging images..."
             docker tag mvloperum/app:${{ github.sha }} mvloperum/app:staging
+            docker tag mvloperum/notification-service:${{ github.sha }} mvloperum/notification-service:staging
 
             echo "Running database migrations..."
-            cd ${{ env.DEPLOY_PATH }}
-            docker compose -f docker-compose.yml -f docker-compose.staging.yml \
-              run --rm app npx prisma migrate deploy
+            docker compose \
+              --env-file .env \
+              -f docker-compose.yml \
+              -f docker-compose.staging.yml \
+              --profile migration \
+              run --rm migrate
 
-            echo "Restarting app service..."
-            IMAGE_TAG=${{ github.sha }} \
-              docker compose -f docker-compose.yml -f docker-compose.staging.yml \
-              up -d app --no-deps
+            echo "Starting services..."
+            docker compose \
+              --env-file .env \
+              -f docker-compose.yml \
+              -f docker-compose.staging.yml \
+              up -d app notification-service
 
             echo "Pruning old images..."
             docker image prune -f

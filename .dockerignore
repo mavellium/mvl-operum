@@ -1,21 +1,54 @@
+# Version control
 .git
 .gitignore
+
+# Build artifacts
 .next
+dist
+coverage
+
+# Dependencies (rebuilt inside Docker)
 node_modules
+
+# Lockfiles for the wrong package manager — project uses pnpm exclusively
+package-lock.json
+yarn.lock
+
+# Logs
 npm-debug.log*
+pnpm-debug.log*
+*.log
+
+# Environment files (secrets must never enter the build context)
 .env
 .env.*
 !.env.example
+
+# Docker config itself
 Dockerfile
 .dockerignore
+
+# Docs / IDE
 README.md
 *.md
-__tests__
-coverage
 .vscode
 .idea
+
+# CI / infra (not needed at runtime)
+.github
 docker-compose*.yml
 traefik/
 observability/
 scripts/
 deploy/
+
+# Tests
+__tests__
+
+# Separate service — built with its own Dockerfile
+notification-service/
+
+# Compiled prisma config artifact — prisma.config.ts is the source of truth.
+# If prisma.config.js exists locally (e.g. from a stray tsc run), excluding it
+# prevents it from shadowing prisma.config.ts inside the container.
+prisma.config.js

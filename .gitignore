@@ -1,7 +1,8 @@
 # See https://help.github.com/articles/ignoring-files/ for more about ignoring files.
 
 # dependencies
-/node_modules
+node_modules
+package-lock.json
 /.pnp
 .pnp.*
 .yarn/*
@@ -41,3 +42,5 @@ yarn-error.log*
 next-env.d.ts
 
 /lib/generated/prisma
+
+prisma.config.js

@@ -7,11 +7,10 @@ services:
 
   # ── Monolith (Next.js) ─────────────────────────────────────────────────────
   app:
-    image: mvloperum/app:${IMAGE_TAG:-latest}
+    image: mvloperum/app:${IMAGE_TAG}
     restart: always
     environment:
       - NODE_ENV=${NODE_ENV}
-      - DATABASE_URL=${DATABASE_URL}
       - SESSION_SECRET=${SESSION_SECRET}
       - JWT_PRIVATE_KEY=${JWT_PRIVATE_KEY}
       - JWT_PUBLIC_KEY=${JWT_PUBLIC_KEY}
@@ -22,12 +21,16 @@ services:
       - MINIO_BUCKET=${MINIO_BUCKET}
       - MINIO_PUBLIC_URL=${MINIO_PUBLIC_URL}
       - NEXT_PUBLIC_API_URL=${NEXT_PUBLIC_API_URL}
+      - NOTIFICATION_SERVICE_URL=http://notification-service:4004
+      - REDIS_HOST=redis
+      - REDIS_PORT=6379
     labels:
       - "traefik.enable=true"
-      - "traefik.http.routers.app-${COMPOSE_PROJECT_NAME}.rule=Host(`${APP_HOST}`)"
-      - "traefik.http.routers.app-${COMPOSE_PROJECT_NAME}.entrypoints=websecure"
-      - "traefik.http.routers.app-${COMPOSE_PROJECT_NAME}.tls.certresolver=letsencrypt"
+      # Port declared here so environment overlays can reference this service by name.
+      # Routers (host rules, TLS) are defined per-environment in the overlay files.
       - "traefik.http.services.app-${COMPOSE_PROJECT_NAME}.loadbalancer.server.port=3000"
+    env_file:
+      - .env
     networks:
       - proxy
       - internal
@@ -36,6 +39,44 @@ services:
         condition: service_healthy
       minio:
         condition: service_healthy
+      redis:
+        condition: service_healthy
+      notification-service:
+        condition: service_started
+
+  # ── Notification Service (NestJS) ─────────────────────────────────────────
+  notification-service:
+    image: mvloperum/notification-service:${IMAGE_TAG}
+    restart: always
+    environment:
+      - NODE_ENV=${NODE_ENV}
+      - DATABASE_URL=${DATABASE_URL}
+      - REDIS_HOST=redis
+      - REDIS_PORT=6379
+      - PORT=4004
+    networks:
+      - internal
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+
+  # ── Prisma Migrations ─────────────────────────────────────────────────────
+  migrate:
+    image: mvloperum/app:${IMAGE_TAG}
+    command: prisma migrate deploy
+    user: "0"
+    env_file:
+      - .env
+    networks:
+      - internal
+    depends_on:
+      postgres:
+        condition: service_healthy
+    restart: "no"
+    profiles:
+      - migration
 
   # ── PostgreSQL ─────────────────────────────────────────────────────────────
   postgres:
@@ -90,7 +131,7 @@ services:
       # Public API (bucket access)
       - "traefik.http.routers.minio-${COMPOSE_PROJECT_NAME}.rule=Host(`${MINIO_HOST}`)"
       - "traefik.http.routers.minio-${COMPOSE_PROJECT_NAME}.entrypoints=websecure"
-      - "traefik.http.routers.minio-${COMPOSE_PROJECT_NAME}.tls.certresolver=letsencrypt"
+      - "traefik.http.routers.minio-${COMPOSE_PROJECT_NAME}.tls.certresolver=myresolver"
       - "traefik.http.services.minio-${COMPOSE_PROJECT_NAME}.loadbalancer.server.port=9000"
     networks:
       - proxy
