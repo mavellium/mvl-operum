@@ -105,11 +105,15 @@ jobs:
               up -d app
 
             echo "Running database migrations..."
-            # 🟢 ATAQUE CIRÚRGICO: Pega apenas a URL limpa do arquivo .env
-            URL_DO_BANCO=$(grep '^DATABASE_URL=' .env | cut -d '=' -f 2-)
+            # 🟢 O EXORCISMO FINAL DO PRISMA
+            # 1. Pega a URL limpa (removendo qualquer aspas ou quebra de linha invisível)
+            URL_DO_BANCO=$(grep '^DATABASE_URL=' .env | cut -d '=' -f 2- | tr -d '\r' | tr -d '"' | tr -d "'")
             
-            # Injeta a variável à força dentro do container em execução (-T evita travamento no GitHub)
-            docker compose exec -T -e DATABASE_URL="$URL_DO_BANCO" app npx prisma migrate deploy
+            # 2. Copia o arquivo .env FISICAMENTE para dentro da pasta do app no container
+            cat .env | docker compose exec -T app sh -c "cat > .env"
+
+            # 3. Roda o Prisma forçando a variável direto no terminal interno do container
+            docker compose exec -T app sh -c "DATABASE_URL=\"$URL_DO_BANCO\" npx prisma migrate deploy"
 
             echo "Restarting app service..."
             IMAGE_TAG=staging \
