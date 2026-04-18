@@ -35,7 +35,7 @@ services:
       # Named volume scoped to staging
       - staging-pg-data:/var/lib/postgresql/data
     ports:
-      - "5432:5432"
+      - "5435:5432"
 
   redis:
     # Lighter memory limit for staging
