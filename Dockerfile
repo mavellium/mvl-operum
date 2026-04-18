@@ -43,6 +43,8 @@ COPY --from=builder /app/lib/generated ./lib/generated
 COPY --from=builder /app/prisma ./prisma
 COPY --from=builder /app/prisma.config.ts ./prisma.config.ts
 
+RUN npm install prisma
+
 USER nextjs
 
 EXPOSE 3000

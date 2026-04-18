@@ -41,7 +41,7 @@ services:
   # ── Prisma Migrations ─────────────────────────────────────────────────────
   migrate:
     image: mvloperum/app:${IMAGE_TAG}
-    command: prisma migrate deploy
+    command: npx prisma migrate deploy
     env_file:
       - .env
     networks:
