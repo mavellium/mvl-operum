@@ -19,3 +19,4 @@ traefik/
 observability/
 scripts/
 deploy/
+notification-service/
