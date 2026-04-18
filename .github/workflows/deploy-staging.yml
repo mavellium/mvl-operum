@@ -106,13 +106,13 @@ jobs:
             echo "Running database migrations..."
             cd ${{ env.DEPLOY_PATH }}
             
-            # 🟢 AQUI: Forçando a leitura do .env
+            # Puxa a DATABASE_URL do arquivo .env e joga direto pro Prisma
+            export $(grep -v '^#' .env | xargs)
             IMAGE_TAG=staging \
-              docker compose --env-file .env -f docker-compose.yml -f docker-compose.staging.yml \
-              run --rm app npx prisma migrate deploy
+              docker compose -f docker-compose.yml -f docker-compose.staging.yml \
+              run --rm -e DATABASE_URL="$DATABASE_URL" app npx prisma migrate deploy
 
             echo "Restarting app service..."
-            # 🟢 AQUI: Forçando a leitura do .env
             IMAGE_TAG=staging \
               docker compose --env-file .env -f docker-compose.yml -f docker-compose.staging.yml \
               up -d app --no-deps
