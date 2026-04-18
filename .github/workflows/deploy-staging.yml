@@ -97,19 +97,20 @@ jobs:
             echo "Tagging image..."
             docker tag mvloperum/app:${{ github.sha }} mvloperum/app:staging
 
-            echo "Running database migrations..."
             cd ${{ env.DEPLOY_PATH }}
-            
-            # 🟢 A FORÇA BRUTA: Lendo do arquivo e jogando no Prisma!
-            export $(grep -v '^#' .env | xargs)
-            IMAGE_TAG=staging \
-              docker compose -f docker-compose.yml -f docker-compose.staging.yml \
-              run --rm -e DATABASE_URL="$DATABASE_URL" app npx prisma migrate deploy
+
+            echo "Starting app container..."
+            IMAGE_TAG=${{ github.sha }} \
+            docker compose -f docker-compose.yml -f docker-compose.staging.yml \
+            up -d app
+
+            echo "Running database migrations..."
+            docker compose exec app npx prisma migrate deploy
 
             echo "Restarting app service..."
-            IMAGE_TAG=staging \
-              docker compose --env-file .env -f docker-compose.yml -f docker-compose.staging.yml \
-              up -d app --no-deps
+            IMAGE_TAG=${{ github.sha }} \
+            docker compose -f docker-compose.yml -f docker-compose.staging.yml \
+            up -d app --no-deps
 
             echo "Pruning old images..."
             docker image prune -f
