@@ -100,17 +100,21 @@ jobs:
             cd ${{ env.DEPLOY_PATH }}
 
             echo "Starting app container..."
-            IMAGE_TAG=${{ github.sha }} \
-            docker compose -f docker-compose.yml -f docker-compose.staging.yml \
-            up -d app
+            IMAGE_TAG=staging \
+              docker compose --env-file .env -f docker-compose.yml -f docker-compose.staging.yml \
+              up -d app
 
             echo "Running database migrations..."
-            docker compose exec app npx prisma migrate deploy
+            # 🟢 ATAQUE CIRÚRGICO: Pega apenas a URL limpa do arquivo .env
+            URL_DO_BANCO=$(grep '^DATABASE_URL=' .env | cut -d '=' -f 2-)
+            
+            # Injeta a variável à força dentro do container em execução (-T evita travamento no GitHub)
+            docker compose exec -T -e DATABASE_URL="$URL_DO_BANCO" app npx prisma migrate deploy
 
             echo "Restarting app service..."
-            IMAGE_TAG=${{ github.sha }} \
-            docker compose -f docker-compose.yml -f docker-compose.staging.yml \
-            up -d app --no-deps
+            IMAGE_TAG=staging \
+              docker compose --env-file .env -f docker-compose.yml -f docker-compose.staging.yml \
+              up -d app --no-deps
 
             echo "Pruning old images..."
             docker image prune -f
