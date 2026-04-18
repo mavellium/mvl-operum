@@ -3,7 +3,10 @@
     "allow": [
       "Bash(npx tsc:*)",
       "Bash(pnpm exec *)",
-      "Bash(grep -v \"//.*fetch\")"
+      "Bash(grep -v \"//.*fetch\")",
+      "Bash(git add *)",
+      "Bash(git commit -m ' *)",
+      "Bash(git push *)"
     ]
   }
 }
