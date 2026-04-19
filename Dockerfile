@@ -26,6 +26,14 @@ COPY . .
 # Set NODE_ENV before build so bundler tree-shakes dev code paths.
 ENV NODE_ENV=production
 ENV NEXT_TELEMETRY_DISABLED=1
+# @prisma/engines postinstall was skipped by --ignore-scripts in deps.
+# Rebuild it here to download the schema-engine binary for the current platform.
+RUN pnpm rebuild @prisma/engines
+# Stage the binary at a fixed path so the runner COPY doesn't depend on pnpm's
+# virtual-store layout (which changes with the package version).
+RUN find node_modules -name "schema-engine-linux-musl-openssl-3.0.x" -type f \
+  | head -1 \
+  | xargs cp -t /tmp/
 RUN pnpm exec prisma generate
 RUN pnpm build
 
@@ -49,7 +57,7 @@ RUN pnpm add --global prisma@7.7.0 \
 # The schema-engine binary (needed by `prisma migrate deploy`) is copied directly
 # from the builder stage where it was downloaded by `prisma generate`.
 # This sidesteps the flaky pnpm global postinstall download in the runner stage.
-COPY --from=builder /app/node_modules/@prisma/engines/schema-engine-linux-musl-openssl-3.0.x /usr/local/bin/prisma-schema-engine
+COPY --from=builder /tmp/schema-engine-linux-musl-openssl-3.0.x /usr/local/bin/prisma-schema-engine
 RUN chmod 750 /usr/local/bin/prisma-schema-engine \
  && chown nextjs:nodejs /usr/local/bin/prisma-schema-engine
 ENV PRISMA_SCHEMA_ENGINE_BINARY=/usr/local/bin/prisma-schema-engine
