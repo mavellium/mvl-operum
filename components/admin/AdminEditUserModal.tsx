@@ -29,6 +29,7 @@ interface Projeto {
   name: string
 }
 
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
 const STATUS_LABELS: Record<string, string> = {
   ACTIVE: 'Ativo',
   INACTIVE: 'Inativo',

@@ -295,8 +295,8 @@ export default function CardModal({
                     return (
                       <div key={att.id} className="flex h-24 bg-[#2C333A]/50 hover:bg-[#2C333A] rounded-md overflow-hidden cursor-pointer group transition-colors border border-[#3B444C]">
                         <div className="w-32 bg-[#111214] flex items-center justify-center shrink-0 border-r border-[#3B444C]">
+                          {/* eslint-disable-next-line @next/next/no-img-element */}
                           {isImg ? (
-                            {/* eslint-disable-next-line @next/next/no-img-element */}
                             <img src={att.filePath} alt={att.fileName} className="w-full h-full object-cover" />
                           ) : (
                             <span className="text-xs font-bold text-[#9FADBC] uppercase">{att.fileType.split('/')[1] || 'DOC'}</span>

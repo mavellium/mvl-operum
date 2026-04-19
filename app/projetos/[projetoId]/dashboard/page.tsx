@@ -109,7 +109,7 @@ export default async function ProjetoDashboardPage({ params }: { params: Promise
 
   if (!data) notFound()
 
-  const { projeto, sprintMetrics, totalHoras, totalCusto, totalCards, totalConcluidos, totalAtrasados, userMetrics, overdueFiltered } = data
+  const { sprintMetrics, totalHoras, totalCusto, totalCards, totalConcluidos, totalAtrasados, userMetrics, overdueFiltered } = data
   const percentConcluidos = totalCards > 0 ? Math.round((totalConcluidos / totalCards) * 100) : 0
 
   return (

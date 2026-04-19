@@ -31,7 +31,7 @@ interface CardProps {
   onClick: () => void
 }
 
-export default function Card({ card, index, columnId, onUpdate: _onUpdate, onDelete, users: _users, boardTags: _boardTags, onClick }: CardProps) {
+export default function Card({ card, index, columnId, onDelete, onClick }: CardProps) {
   const [confirmOpen, setConfirmOpen] = useState(false)
   const [isTimerRunning, setIsTimerRunning] = useState(false)
 

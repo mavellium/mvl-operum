@@ -1,7 +1,6 @@
 'use client'
 
 import { useState, useEffect, useRef } from 'react'
-import { useSearchParams, useRouter, usePathname } from 'next/navigation'
 import { DragDropContext, Droppable, DropResult } from '@hello-pangea/dnd'
 import SprintHeader from './SprintHeader'
 import ColumnComponent from '@/components/board/Column'
@@ -92,10 +91,6 @@ function toCardType(card: SprintCard, sprintId: string): CardType {
 }
 
 export default function SprintBoard({ sprint, columns: initialColumns, users, tags, currentUser, initialCardId }: SprintBoardProps) {
-  const searchParams = useSearchParams()
-  const router = useRouter()
-  const pathname = usePathname()
-  
   const [columns, setColumns] = useState(initialColumns)
   const [newColTitle, setNewColTitle] = useState('')
   const [addingCol, setAddingCol] = useState(false)
@@ -111,7 +106,6 @@ export default function SprintBoard({ sprint, columns: initialColumns, users, ta
 
   const isImageBg = boardBg.startsWith('url')
 
-  // eslint-disable-next-line react-hooks/set-state-in-effect
   useEffect(() => {
     if (!openCardId) { setCardComments([]); return }
     getCommentsAction(openCardId).then(res => {

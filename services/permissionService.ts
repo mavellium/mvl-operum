@@ -53,7 +53,7 @@ interface FindAllOptions {
 }
 
 export async function findAll(options?: FindAllOptions) {
-  const where: any = { deletedAt: null }
+  const where: { deletedAt: null; resource?: string } = { deletedAt: null }
   if (options?.resource) {
     where.resource = options.resource
   }

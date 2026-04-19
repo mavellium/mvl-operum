@@ -180,18 +180,18 @@ export default async function ProjetoSprintsPage({
                             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
                           </svg>
                           <span className="text-xs text-gray-500">Qualidade</span>
-                          {/* @ts-expect-error */}
+                          {/* @ts-expect-error -- qualidade not yet in Prisma Sprint type */}
                           <span className="text-xs font-bold text-gray-700">{sprint.qualidade}/10</span>
                         </div>
                       )}
-                      {/* @ts-expect-error */}
+                      {/* @ts-expect-error -- dificuldade not yet in Prisma Sprint type */}
                       {sprint.dificuldade != null && (
                         <div className="flex items-center gap-1.5">
                           <svg className="w-3.5 h-3.5 text-amber-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />
                           </svg>
                           <span className="text-xs text-gray-500">Dificuldade</span>
-                          {/* @ts-expect-error */}
+                          {/* @ts-expect-error -- dificuldade not yet in Prisma Sprint type */}
                           <span className="text-xs font-bold text-gray-700">{sprint.dificuldade}/10</span>
                         </div>
                       )}

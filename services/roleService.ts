@@ -43,7 +43,7 @@ interface FindAllByTenantOptions {
 }
 
 export async function findAllByTenant(tenantId: string, options?: FindAllByTenantOptions) {
-  const where: any = { tenantId, deletedAt: null }
+  const where: { tenantId: string; deletedAt: null; scope?: string } = { tenantId, deletedAt: null }
   if (options?.scope) {
     where.scope = options.scope
   }

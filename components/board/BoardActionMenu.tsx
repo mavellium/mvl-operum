@@ -9,7 +9,7 @@ interface BoardActionMenuProps {
   onChangeLayout?: () => void;
 }
 
-export default function BoardActionMenu({ onImportCsv, onCreateSprint: _onCreateSprint, onManageTags: _onManageTags, onChangeLayout }: BoardActionMenuProps) {
+export default function BoardActionMenu({ onImportCsv, onChangeLayout }: BoardActionMenuProps) {
   const [open, setOpen] = useState(false)
   const ref = useRef<HTMLDivElement>(null)
 

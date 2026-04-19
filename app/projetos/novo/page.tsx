@@ -85,7 +85,6 @@ function ProjetoFormContent() {
   }, [])
 
   // Prefill em modo edição
-  // eslint-disable-next-line react-hooks/set-state-in-effect
   useEffect(() => {
     if (!editId) return
     setIsLoadingEdit(true)

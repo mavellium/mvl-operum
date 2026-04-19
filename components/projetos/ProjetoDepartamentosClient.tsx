@@ -13,7 +13,7 @@ interface Props {
   departamentosIniciais: Departamento[]
 }
 
-export default function ProjetoDepartamentosClient({ projetoId, departamentosIniciais }: Props) {
+export default function ProjetoDepartamentosClient({ departamentosIniciais }: Props) {
   const [departamentos, setDepartamentos] = useState<Departamento[]>(departamentosIniciais)
   const [search, setSearch] = useState('')
   const [showAdd, setShowAdd] = useState(false)

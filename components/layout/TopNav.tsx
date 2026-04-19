@@ -199,7 +199,7 @@ export default function TopNav() {
 
   if (HIDDEN_PATHS.some(p => pathname.startsWith(p))) return null
 
-  const { title: _title, icon, showBoardActions, search, button } = getHeaderContext(pathname, user?.role, user?.projectManagerIn ?? [])
+  const { icon, showBoardActions, search, button } = getHeaderContext(pathname, user?.role, user?.projectManagerIn ?? [])
 
   return (
     <header className="sticky top-0 z-40 flex items-center justify-between px-6 h-16 bg-white backdrop-blur-sm border-b border-gray-100 transition-all duration-200">

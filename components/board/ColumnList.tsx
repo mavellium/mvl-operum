@@ -36,7 +36,7 @@ interface ColumnListProps {
   setOpenCardId: (id: string | null) => void
 }
 
-export default function ColumnList({ state, dispatch, sprints: _sprints, users, boardTags, boardId: _boardId, setAddingCardToColumn,
+export default function ColumnList({ state, dispatch, users, boardTags, setAddingCardToColumn,
   setOpenCardId }: ColumnListProps) {
   const [addingList, setAddingList] = useState(false)
   const [newListTitle, setNewListTitle] = useState('')
