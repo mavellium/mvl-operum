@@ -7,13 +7,22 @@ vi.mock('@/services/fileUploadService', () => ({
 vi.mock('@/lib/session', () => ({
   decrypt: vi.fn(),
 }))
+vi.mock('@/lib/prisma', () => ({
+  default: {
+    user: { findUnique: vi.fn() },
+    card: { findUnique: vi.fn() },
+  },
+}))
 
 import { POST } from '@/app/api/uploads/route'
 import { saveUpload } from '@/services/fileUploadService'
 import { decrypt } from '@/lib/session'
+import prisma from '@/lib/prisma'
 
 const mockSave = saveUpload as ReturnType<typeof vi.fn>
 const mockDecrypt = decrypt as ReturnType<typeof vi.fn>
+const mockPrisma = prisma as unknown as { user: { findUnique: ReturnType<typeof vi.fn> }; card: { findUnique: ReturnType<typeof vi.fn> } }
+const mockUserFindUnique = mockPrisma.user.findUnique
 
 function makeRequest(body: FormData, sessionToken?: string): Request {
   const headers: Record<string, string> = {}
@@ -27,6 +36,8 @@ function makeRequest(body: FormData, sessionToken?: string): Request {
 
 beforeEach(() => {
   vi.clearAllMocks()
+  mockDecrypt.mockResolvedValue({ userId: 'u1', tenantId: 't1' })
+  mockUserFindUnique.mockResolvedValue({ tokenVersion: 0, isActive: true, deletedAt: null })
 })
 
 describe('POST /api/uploads', () => {
@@ -56,6 +67,7 @@ describe('POST /api/uploads', () => {
 
   it('returns 201 with Attachment shape on success', async () => {
     mockDecrypt.mockResolvedValue({ userId: 'u1' })
+    mockPrisma.card.findUnique.mockResolvedValue({ sprint: null })
     mockSave.mockResolvedValue({
       id: 'att1',
       cardId: 'c1',

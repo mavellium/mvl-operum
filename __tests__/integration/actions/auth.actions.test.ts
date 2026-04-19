@@ -29,6 +29,19 @@ vi.mock('next/headers', () => ({
       get: vi.fn(),
     }),
   ),
+  headers: vi.fn(() =>
+    Promise.resolve({
+      get: vi.fn().mockReturnValue(null),
+    }),
+  ),
+}))
+vi.mock('@/lib/prisma', () => ({
+  default: {
+    tenant: { findFirst: vi.fn().mockResolvedValue({ id: 't1', status: 'ACTIVE' }) },
+  },
+}))
+vi.mock('@/services/projectService', () => ({
+  getUserActiveProjects: vi.fn().mockResolvedValue([{ projectId: 'p1' }, { projectId: 'p2' }]),
 }))
 vi.mock('next/navigation', () => ({
   redirect: vi.fn(),

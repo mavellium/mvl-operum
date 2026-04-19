@@ -15,6 +15,7 @@ vi.mock('@/services/fileUploadService', () => ({
 vi.mock('@/lib/prisma', () => ({
   default: {
     attachment: { findUnique: vi.fn() },
+    user: { findUnique: vi.fn() },
   },
 }))
 
@@ -25,7 +26,7 @@ import prisma from '@/lib/prisma'
 
 const mockDecrypt = decrypt as ReturnType<typeof vi.fn>
 const mockDeleteUpload = deleteUpload as ReturnType<typeof vi.fn>
-const mockPrisma = prisma as { attachment: { findUnique: ReturnType<typeof vi.fn> } }
+const mockPrisma = prisma as { attachment: { findUnique: ReturnType<typeof vi.fn> }; user: { findUnique: ReturnType<typeof vi.fn> } }
 
 function makeRequest(url: string, cookies = 'session=tok') {
   return new Request(url, {
@@ -36,6 +37,8 @@ function makeRequest(url: string, cookies = 'session=tok') {
 
 beforeEach(() => {
   vi.clearAllMocks()
+  mockDecrypt.mockResolvedValue({ userId: 'u1', tenantId: 't1' })
+  mockPrisma.user.findUnique.mockResolvedValue({ tokenVersion: 0, isActive: true, deletedAt: null })
 })
 
 describe('DELETE /api/uploads', () => {

@@ -28,14 +28,14 @@ export async function create(input: CreatePermissionInput) {
     where: { name },
   })
   if (byName) {
-    throw new ConflictError('Permission with this name already exists')
+    throw new ConflictError('Já existe uma permissão com este nome')
   }
 
   const byResourceAction = await prisma.permission.findUnique({
     where: { resource_action: { resource, action } },
   })
   if (byResourceAction) {
-    throw new ConflictError('Permission for this resource and action already exists')
+    throw new ConflictError('Já existe uma permissão para este recurso e ação')
   }
 
   return prisma.permission.create({
@@ -87,7 +87,7 @@ export async function deletePermission(id: string) {
     where: { id },
   })
   if (!existing) {
-    throw new NotFoundError('Permission not found')
+    throw new NotFoundError('Permissão não encontrada')
   }
 
   return prisma.permission.update({

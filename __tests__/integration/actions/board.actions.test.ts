@@ -33,9 +33,11 @@ describe('getUsersAction', () => {
 
     const result = await getUsersAction()
     expect(result).toEqual(users)
-    expect(mockUserFindMany).toHaveBeenCalledWith({
-      select: { id: true, name: true, email: true },
-    })
+    expect(mockUserFindMany).toHaveBeenCalledWith(
+      expect.objectContaining({
+        select: expect.objectContaining({ id: true, name: true, email: true }),
+      }),
+    )
   })
 
   it('calls verifySession before querying', async () => {

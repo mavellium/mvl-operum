@@ -69,7 +69,7 @@ describe('adminCreateUser', () => {
       email: 'bob@test.com',
       password: 'secret123',
     })
-    expect(bcrypt.hash).toHaveBeenCalledWith('secret123', 10)
+    expect(bcrypt.hash).toHaveBeenCalledWith('secret123', 12)
     expect(mockPrisma.user.create).toHaveBeenCalledWith(
       expect.objectContaining({
         data: expect.objectContaining({

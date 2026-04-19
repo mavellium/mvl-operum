@@ -1,5 +1,10 @@
 // @vitest-environment node
-import { describe, it, expect } from 'vitest'
+import { describe, it, expect, vi } from 'vitest'
+
+vi.hoisted(() => {
+  process.env.SESSION_SECRET = 'test-session-secret-32-chars-minimum!'
+})
+
 import { encrypt, decrypt } from '@/lib/session'
 
 describe('encrypt / decrypt', () => {

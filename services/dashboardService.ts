@@ -160,7 +160,7 @@ export async function getSprintsWithMetrics() {
 
 export async function getSprintDashboard(sprintId: string) {
   const sprint = await prisma.sprint.findUnique({ where: { id: sprintId, deletedAt: null } })
-  if (!sprint) throw new NotFoundError(`Sprint not found: ${sprintId}`)
+  if (!sprint) throw new NotFoundError(`Sprint não encontrado: ${sprintId}`)
 
   const metrics = await getSprintMetrics(sprintId)
 

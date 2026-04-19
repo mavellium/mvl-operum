@@ -8,6 +8,7 @@ vi.mock('@/lib/session', () => ({
 vi.mock('@/lib/prisma', () => ({
   default: {
     card: { findMany: vi.fn() },
+    user: { findUnique: vi.fn() },
   },
 }))
 
@@ -16,7 +17,7 @@ import prisma from '@/lib/prisma'
 import { GET } from '@/app/api/search/route'
 
 const mockDecrypt = decrypt as ReturnType<typeof vi.fn>
-const mockPrisma = prisma as { card: { findMany: ReturnType<typeof vi.fn> } }
+const mockPrisma = prisma as { card: { findMany: ReturnType<typeof vi.fn> }; user: { findUnique: ReturnType<typeof vi.fn> } }
 
 const makeRequest = (q: string, cookie = 'session=valid-token') =>
   new Request(`http://localhost/api/search?q=${encodeURIComponent(q)}`, {
@@ -25,7 +26,8 @@ const makeRequest = (q: string, cookie = 'session=valid-token') =>
 
 beforeEach(() => {
   vi.clearAllMocks()
-  mockDecrypt.mockResolvedValue({ userId: 'u1' })
+  mockDecrypt.mockResolvedValue({ userId: 'u1', tenantId: 't1' })
+  mockPrisma.user.findUnique.mockResolvedValue({ tokenVersion: 0, isActive: true, deletedAt: null })
 })
 
 describe('GET /api/search', () => {
