@@ -1,13 +1,11 @@
-import { decrypt } from '@/lib/session'
+import { verifyRouteSession } from '@/lib/routeAuth'
 import { importCsvRows } from '@/services/csvImportService'
 import prisma from '@/lib/prisma'
 
 const ALLOWED_CSV_TYPES = ['text/csv', 'text/plain']
 
 export async function POST(request: Request) {
-  const cookieHeader = request.headers.get('cookie') ?? ''
-  const sessionToken = cookieHeader.match(/session=([^;]+)/)?.[1]
-  const session = await decrypt(sessionToken)
+  const session = await verifyRouteSession(request)
   if (!session?.userId) {
     return Response.json({ error: 'Não autorizado' }, { status: 401 })
   }

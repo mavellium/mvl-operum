@@ -4,27 +4,64 @@
 #
 # This instance connects to the proxy networks of both environments
 # (which must already exist before starting Traefik).
+#
+# Security: Traefik does NOT mount the Docker socket directly.
+# Instead it talks to a docker-socket-proxy that whitelists only the
+# read-only API endpoints Traefik needs (containers, events, networks).
+# This eliminates the socket-as-root-escalation attack vector.
 
 services:
+
+  # ── Docker Socket Proxy ──────────────────────────────────────────────────
+  socket-proxy:
+    image: tecnativa/docker-socket-proxy:0.2.0
+    restart: always
+    environment:
+      # Whitelist only what Traefik requires — everything else defaults to 0 (denied).
+      CONTAINERS: 1
+      SERVICES: 1
+      NETWORKS: 1
+      EVENTS: 1
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock:ro
+    networks:
+      - socket-proxy
+    security_opt:
+      - no-new-privileges:true
+
+  # ── Traefik ───────────────────────────────────────────────────────────────
   traefik:
     image: traefik:v3.2
     restart: always
+    security_opt:
+      - no-new-privileges:true
     ports:
       - "80:80"
       - "443:443"
     volumes:
-      - /var/run/docker.sock:/var/run/docker.sock:ro
+      # No Docker socket mount here — traffic goes through socket-proxy instead.
       - ./traefik/traefik.yml:/etc/traefik/traefik.yml:ro
       - ./traefik/dynamic:/etc/traefik/dynamic:ro
       - traefik-certs:/myresolver
+    # Dashboard basic-auth hash lives only in the VPS .env — never in source.
+    # Generate: htpasswd -nb admin $(openssl rand -base64 24) | sed -e s/\\$/\\$\\$/g
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.middlewares.dashboard-auth.basicauth.users=${TRAEFIK_DASHBOARD_AUTH}"
     networks:
+      - socket-proxy
       - mvloperum-staging_proxy
       - mvloperum-prod_proxy
+    depends_on:
+      - socket-proxy
 
 volumes:
   traefik-certs:
 
 networks:
+  socket-proxy:
+    # Internal-only — socket-proxy never needs internet access.
+    internal: true
   mvloperum-staging_proxy:
     external: true
   mvloperum-prod_proxy:

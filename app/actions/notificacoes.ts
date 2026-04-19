@@ -7,20 +7,24 @@ function serviceUrl() {
   return process.env.NOTIFICATION_SERVICE_URL
 }
 
+function internalHeaders(): Record<string, string> {
+  return { 'x-internal-api-key': process.env.INTERNAL_API_KEY ?? '' }
+}
+
 async function serviceGet(path: string) {
-  const res = await fetch(`${serviceUrl()}${path}`, { cache: 'no-store' })
+  const res = await fetch(`${serviceUrl()}${path}`, { cache: 'no-store', headers: internalHeaders() })
   if (!res.ok) throw new Error(`notification-service error: ${res.status}`)
   return res.json()
 }
 
 async function servicePatch(path: string) {
-  const res = await fetch(`${serviceUrl()}${path}`, { method: 'PATCH' })
+  const res = await fetch(`${serviceUrl()}${path}`, { method: 'PATCH', headers: internalHeaders() })
   if (!res.ok) throw new Error(`notification-service error: ${res.status}`)
   return res.json()
 }
 
 async function serviceDelete(path: string) {
-  const res = await fetch(`${serviceUrl()}${path}`, { method: 'DELETE' })
+  const res = await fetch(`${serviceUrl()}${path}`, { method: 'DELETE', headers: internalHeaders() })
   if (!res.ok && res.status !== 204) throw new Error(`notification-service error: ${res.status}`)
 }
 

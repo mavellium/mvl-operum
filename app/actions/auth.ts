@@ -93,8 +93,9 @@ export async function logoutAction() {
 // ── Password Recovery ──────────────────────────────────────
 
 function generateCode(length = 8): string {
+  const { randomInt } = require('crypto') as typeof import('crypto')
   const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789'
-  return Array.from({ length }, () => chars[Math.floor(Math.random() * chars.length)]).join('')
+  return Array.from({ length }, () => chars[randomInt(0, chars.length)]).join('')
 }
 
 export async function requestPasswordResetAction(_prevState: unknown, formData: FormData) {
@@ -117,8 +118,9 @@ export async function requestPasswordResetAction(_prevState: unknown, formData: 
         where: { id: user.id },
         data: { resetToken: code, resetTokenExpiry: expiry },
       })
-      // In production: send email with code. Here we return it for dev/demo.
-      console.info(`[DEV] Reset code for ${email}: ${code}`)
+      if (process.env.NODE_ENV !== 'production') {
+        console.info(`[DEV] Reset code for ${email}: ${code}`)
+      }
     }
   } catch {
     // Swallow to avoid leaking

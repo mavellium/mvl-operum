@@ -6,9 +6,10 @@ import type { SessionPayload } from '@/types/auth'
 // Kept for backward compatibility during the RS256 transition period.
 // Existing HS256 sessions (max 7-day TTL) are still accepted by decrypt().
 // After 7 days all old sessions expire and this can be removed.
-const HS256_SECRET = new TextEncoder().encode(
-  process.env.SESSION_SECRET ?? 'kanban-dev-secret-key-change-in-production-32c',
-)
+if (!process.env.SESSION_SECRET && !process.env.JWT_PRIVATE_KEY) {
+  throw new Error('FATAL: Neither SESSION_SECRET nor JWT_PRIVATE_KEY is set.')
+}
+const HS256_SECRET = new TextEncoder().encode(process.env.SESSION_SECRET ?? '')
 
 // ── RS256 (new) ────────────────────────────────────────────────────────────────
 // Keys are PEM strings stored in JWT_PRIVATE_KEY / JWT_PUBLIC_KEY env vars.

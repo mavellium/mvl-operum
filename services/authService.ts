@@ -62,6 +62,11 @@ export async function login(input: { email: string; password: string; tenantId: 
     throw new AuthError('Conta inativa ou bloqueada')
   }
 
+  const MAX_LOGIN_ATTEMPTS = 10
+  if ((user.loginAttempts ?? 0) >= MAX_LOGIN_ATTEMPTS) {
+    throw new AuthError('Conta bloqueada por excesso de tentativas. Contate o suporte.')
+  }
+
   const match = await bcrypt.compare(password, user.passwordHash)
   if (!match) {
     await prisma.user.update({

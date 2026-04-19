@@ -23,6 +23,8 @@ pnpm-debug.log*
 .env
 .env.*
 !.env.example
+# Explicit guard: Next.js standalone output may copy .env during build
+.next/standalone/.env
 
 # Docker config itself
 Dockerfile

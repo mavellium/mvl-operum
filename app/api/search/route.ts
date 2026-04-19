@@ -1,10 +1,8 @@
-import { decrypt } from '@/lib/session'
+import { verifyRouteSession } from '@/lib/routeAuth'
 import prisma from '@/lib/prisma'
 
 export async function GET(request: Request) {
-  const cookieHeader = request.headers.get('cookie') ?? ''
-  const sessionToken = cookieHeader.match(/session=([^;]+)/)?.[1]
-  const session = await decrypt(sessionToken)
+  const session = await verifyRouteSession(request)
   if (!session?.userId) {
     return Response.json({ error: 'Não autorizado' }, { status: 401 })
   }
@@ -17,6 +15,7 @@ export async function GET(request: Request) {
 
   const cards = await prisma.card.findMany({
     where: {
+      sprint: { project: { tenantId: session.tenantId as string } },
       OR: [
         { title: { contains: q, mode: 'insensitive' } },
         { description: { contains: q, mode: 'insensitive' } },
