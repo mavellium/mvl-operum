@@ -12,7 +12,8 @@
       "Bash(git -C c:/temp/ClaudeCode/mvl-operum log --all --full-history -- private.pem)",
       "Bash(git -C c:/temp/ClaudeCode/mvl-operum log --all --full-history -- .env)",
       "Bash(git commit -m 'fix\\(uploads\\): use optional chaining for nullable sprint/project relations *)",
-      "Bash(git commit -m 'fix\\(session\\): defer missing-key guard to encrypt\\(\\) call time *)"
+      "Bash(git commit -m 'fix\\(session\\): defer missing-key guard to encrypt\\(\\) call time *)",
+      "Bash(git commit -m 'fix\\(notification-service\\): remove express type import — use inline type instead *)"
     ]
   },
   "hooks": {
