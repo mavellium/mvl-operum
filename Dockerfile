@@ -46,6 +46,14 @@ RUN pnpm add --global prisma@7.7.0 \
  && chown -R nextjs:nodejs /pnpm \
  && chmod -R 750 /pnpm
 
+# The schema-engine binary (needed by `prisma migrate deploy`) is copied directly
+# from the builder stage where it was downloaded by `prisma generate`.
+# This sidesteps the flaky pnpm global postinstall download in the runner stage.
+COPY --from=builder /app/node_modules/@prisma/engines/schema-engine-linux-musl-openssl-3.0.x /usr/local/bin/prisma-schema-engine
+RUN chmod 750 /usr/local/bin/prisma-schema-engine \
+ && chown nextjs:nodejs /usr/local/bin/prisma-schema-engine
+ENV PRISMA_SCHEMA_ENGINE_BINARY=/usr/local/bin/prisma-schema-engine
+
 # Next.js standalone output (includes a self-contained server.js + minimal node_modules).
 COPY --from=builder --chown=nextjs:nodejs /app/public ./public
 COPY --from=builder --chown=nextjs:nodejs /app/.next/standalone ./
