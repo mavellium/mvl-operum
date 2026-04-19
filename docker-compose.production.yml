@@ -49,7 +49,7 @@ services:
       - traefik-public
     labels:
       - "traefik.enable=true"
-      - "traefik.http.routers.minio-prod.rule=Host(`storage-prod.mavellium.com.br`)"
+      - "traefik.http.routers.minio-prod.rule=Host(`storage-prod.operum.mavellium.com.br`)"
       - "traefik.http.routers.minio-prod.entrypoints=websecure"
       - "traefik.http.routers.minio-prod.tls.certresolver=myresolver"
       - "traefik.http.services.minio-prod.loadbalancer.server.port=9000"

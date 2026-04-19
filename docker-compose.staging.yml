@@ -50,7 +50,7 @@ services:
       - traefik-public
     labels:
       - "traefik.enable=true"
-      - "traefik.http.routers.minio-staging.rule=Host(`storage.operum.mavellium.com.br`)"
+      - "traefik.http.routers.minio-staging.rule=Host(`storage-staging.operum.mavellium.com.br`)"
       - "traefik.http.routers.minio-staging.entrypoints=websecure"
       - "traefik.http.routers.minio-staging.tls.certresolver=myresolver"
       - "traefik.http.services.minio-staging.loadbalancer.server.port=9000"
