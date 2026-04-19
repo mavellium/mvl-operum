@@ -16,9 +16,10 @@ entryPoints:
 
 providers:
   docker:
+    # Talk to the socket proxy, not the raw Docker socket.
+    # socket-proxy exposes only the whitelisted read-only endpoints.
+    endpoint: "tcp://socket-proxy:2375"
     exposedByDefault: false
-    # Traefik watches the Docker socket — picks up containers from both
-    # staging and production networks automatically via labels.
     network: proxy
   file:
     directory: /etc/traefik/dynamic
@@ -27,7 +28,9 @@ providers:
 certificatesResolvers:
   myresolver:
     acme:
-      email: tegbe.projetoia@gmail.com
+      # Use a monitored team/ops mailbox — not a personal address.
+      # Certificate expiry warnings go here; losing access = silent HTTPS outage.
+      email: ops@mavellium.com.br
       storage: /myresolver/acme.json
       httpChallenge:
         entryPoint: web

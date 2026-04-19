@@ -16,6 +16,8 @@ FROM base AS builder
 WORKDIR /app
 COPY --from=deps /app/node_modules ./node_modules
 COPY . .
+# Set NODE_ENV before build so tree-shaking eliminates dev code paths.
+ENV NODE_ENV=production
 RUN pnpm exec prisma generate
 RUN pnpm build
 
@@ -29,13 +31,20 @@ RUN addgroup --system --gid 1001 nodejs \
 
 # Install production deps fresh in runner — avoids broken pnpm symlinks from COPY.
 COPY package.json pnpm-lock.yaml pnpm-workspace.yaml ./
-RUN pnpm install --frozen-lockfile --prod
+RUN pnpm install --frozen-lockfile --prod \
+ && chown -R nestjs:nodejs /pnpm \
+ && chmod -R 750 /pnpm
 
-# Built code + generated Prisma client
+# Built code + generated Prisma client — owned by nestjs, not root.
 COPY --from=builder --chown=nestjs:nodejs /app/dist ./dist
 COPY --from=builder --chown=nestjs:nodejs /app/lib/generated ./lib/generated
-COPY --from=builder /app/prisma ./prisma
+COPY --from=builder --chown=nestjs:nodejs /app/prisma ./prisma
 
 USER nestjs
+
 EXPOSE 4004
+
+HEALTHCHECK --interval=15s --timeout=5s --start-period=20s --retries=3 \
+  CMD wget -qO- http://localhost:4004/health || exit 1
+
 CMD ["node", "dist/main"]

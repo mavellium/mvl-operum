@@ -23,9 +23,10 @@ COPY --from=deps /app/node_modules ./node_modules
 COPY . .
 # Generate Prisma client into lib/generated/prisma (output defined in prisma.config.ts).
 # DATABASE_URL is not needed for generation — only the schema is read.
-RUN pnpm exec prisma generate
-ENV NEXT_TELEMETRY_DISABLED=1
+# Set NODE_ENV before build so bundler tree-shakes dev code paths.
 ENV NODE_ENV=production
+ENV NEXT_TELEMETRY_DISABLED=1
+RUN pnpm exec prisma generate
 RUN pnpm build
 
 # ── Stage 3: Runner ───────────────────────────────────────────────────────────
@@ -40,12 +41,13 @@ RUN addgroup --system --gid 1001 nodejs \
 # Prisma CLI for the migrate service.
 # --ignore-scripts is intentionally omitted: prisma's postinstall downloads
 # engine binaries so they are baked into the image (no network needed at deploy time).
-# chmod ensures the nextjs user can read the global store for any read-only access.
+# Ownership is scoped to nextjs:nodejs — world-execute removed (750 vs 755).
 RUN pnpm add --global prisma@7.7.0 \
- && chmod -R 755 /pnpm
+ && chown -R nextjs:nodejs /pnpm \
+ && chmod -R 750 /pnpm
 
 # Next.js standalone output (includes a self-contained server.js + minimal node_modules).
-COPY --from=builder /app/public ./public
+COPY --from=builder --chown=nextjs:nodejs /app/public ./public
 COPY --from=builder --chown=nextjs:nodejs /app/.next/standalone ./
 COPY --from=builder --chown=nextjs:nodejs /app/.next/static ./.next/static
 
@@ -53,11 +55,18 @@ COPY --from=builder --chown=nextjs:nodejs /app/.next/static ./.next/static
 COPY --from=builder --chown=nextjs:nodejs /app/lib/generated ./lib/generated
 
 # Prisma schema + config — required by the migrate service at deploy time.
-COPY --from=builder /app/prisma ./prisma
-COPY --from=builder /app/prisma.config.ts ./prisma.config.ts
+# chown so the nextjs user can read them without world-readable permissions.
+COPY --from=builder --chown=nextjs:nodejs /app/prisma ./prisma
+COPY --from=builder --chown=nextjs:nodejs /app/prisma.config.ts ./prisma.config.ts
 
 USER nextjs
+
+# Declare the listening port — informational only, does not publish the port.
 EXPOSE 3000
 ENV PORT=3000
 ENV HOSTNAME="0.0.0.0"
+
+HEALTHCHECK --interval=15s --timeout=5s --start-period=30s --retries=3 \
+  CMD wget -qO- http://localhost:3000/api/health || exit 1
+
 CMD ["node", "server.js"]
