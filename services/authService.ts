@@ -1,6 +1,7 @@
 import bcrypt from 'bcryptjs'
 import prisma from '@/lib/prisma'
 import { SignupSchema, LoginSchema } from '@/lib/validation/authSchemas'
+import { BCRYPT_ROUNDS } from '@/lib/crypto'
 
 export class ConflictError extends Error {
   constructor(message: string) {
@@ -32,7 +33,7 @@ export async function register(input: { name: string; email: string; password: s
     throw new ConflictError('Email já cadastrado')
   }
 
-  const passwordHash = await bcrypt.hash(password, 10)
+  const passwordHash = await bcrypt.hash(password, BCRYPT_ROUNDS)
   const user = await prisma.user.create({
     data: { name, email, passwordHash, tenantId },
   })

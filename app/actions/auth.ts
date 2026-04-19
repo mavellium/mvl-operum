@@ -105,6 +105,28 @@ export async function requestPasswordResetAction(_prevState: unknown, formData: 
     return { error: 'Email é obrigatório' }
   }
 
+  // Rate limit: max 3 requests per email per 15 minutes.
+  // Uses Redis incr+expire so the window resets after 15 min of inactivity.
+  try {
+    const { Redis } = await import('ioredis')
+    const redis = new Redis({
+      host: process.env.REDIS_HOST ?? 'redis',
+      port: Number(process.env.REDIS_PORT ?? 6379),
+      password: process.env.REDIS_PASSWORD,
+      lazyConnect: true,
+    })
+    await redis.connect()
+    const key = `reset_rate:${email}`
+    const attempts = await redis.incr(key)
+    if (attempts === 1) await redis.expire(key, 900) // 15 min TTL on first hit
+    await redis.quit()
+    if (attempts > 3) {
+      return { error: 'Muitas tentativas. Aguarde 15 minutos.' }
+    }
+  } catch {
+    // Redis unavailable — fail open to avoid blocking password recovery
+  }
+
   // Always return success to avoid user enumeration
   try {
     const user = await prisma.user.findFirst({
