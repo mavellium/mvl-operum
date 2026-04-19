@@ -51,7 +51,7 @@ const mockEncrypt = encrypt as ReturnType<typeof vi.fn>
 const mockCookies = cookies as ReturnType<typeof vi.fn>
 const mockHeaders = headers as ReturnType<typeof vi.fn>
 const mockRedirect = redirect as ReturnType<typeof vi.fn>
-const mockPrismaTenant = (prisma as any).tenant
+const mockPrismaTenant = (prisma as { tenant: { findFirst: ReturnType<typeof vi.fn> } }).tenant
 const mockGetProjects = getUserActiveProjects as ReturnType<typeof vi.fn>
 
 function makeFormData(data: Record<string, string>): FormData {
