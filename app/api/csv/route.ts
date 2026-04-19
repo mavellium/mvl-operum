@@ -26,9 +26,15 @@ export async function POST(request: Request) {
     return Response.json({ error: 'sprintId é obrigatório' }, { status: 400 })
   }
 
-  const sprint = await prisma.sprint.findUnique({ where: { id: sprintId } })
+  const sprint = await prisma.sprint.findUnique({
+    where: { id: sprintId },
+    select: { id: true, project: { select: { tenantId: true } } },
+  })
   if (!sprint) {
     return Response.json({ error: 'Sprint não encontrado' }, { status: 404 })
+  }
+  if (sprint.project.tenantId !== session.tenantId) {
+    return Response.json({ error: 'Acesso negado' }, { status: 403 })
   }
 
   const sprintColumns = await prisma.sprintColumn.findMany({

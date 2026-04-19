@@ -1,13 +1,15 @@
 import { z } from 'zod'
 
+export const PasswordSchema = z
+  .string()
+  .min(8, 'Senha deve ter pelo menos 8 caracteres')
+  .regex(/\d/, 'Senha deve conter pelo menos um número')
+  .regex(/[^a-zA-Z0-9]/, 'Senha deve conter pelo menos um caractere especial')
+
 export const SignupSchema = z.object({
   name: z.string().trim().min(1, 'Nome é obrigatório'),
   email: z.string().trim().email('Email inválido'),
-  password: z
-    .string()
-    .min(8, 'Senha deve ter pelo menos 8 caracteres')
-    .regex(/\d/, 'Senha deve conter pelo menos um número')
-    .regex(/[^a-zA-Z0-9]/, 'Senha deve conter pelo menos um caractere especial'),
+  password: PasswordSchema,
 })
 
 export const LoginSchema = z.object({

@@ -45,9 +45,15 @@ services:
       - traefik-certs:/myresolver
     # Dashboard basic-auth hash lives only in the VPS .env — never in source.
     # Generate: htpasswd -nb admin $(openssl rand -base64 24) | sed -e s/\\$/\\$\\$/g
+    # TRAEFIK_DASHBOARD_HOST example: traefik.operum.mavellium.com.br
     labels:
       - "traefik.enable=true"
       - "traefik.http.middlewares.dashboard-auth.basicauth.users=${TRAEFIK_DASHBOARD_AUTH}"
+      - "traefik.http.routers.traefik-dashboard.rule=Host(`${TRAEFIK_DASHBOARD_HOST}`)"
+      - "traefik.http.routers.traefik-dashboard.entrypoints=websecure"
+      - "traefik.http.routers.traefik-dashboard.tls.certresolver=myresolver"
+      - "traefik.http.routers.traefik-dashboard.service=api@internal"
+      - "traefik.http.routers.traefik-dashboard.middlewares=dashboard-auth"
     networks:
       - socket-proxy
       - mvloperum-staging_proxy

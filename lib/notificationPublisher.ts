@@ -11,6 +11,7 @@ export async function publishNotification(input: CreateNotificacaoInput): Promis
       connection: {
         host: process.env.REDIS_HOST ?? 'redis',
         port: Number(process.env.REDIS_PORT ?? 6379),
+        password: process.env.REDIS_PASSWORD,
       },
     })
     await queue.add('create', input)

@@ -23,9 +23,9 @@ export type AdminUserResult = {
   notes: string | null
 }
 
-export async function listAllUsers() {
+export async function listAllUsers(tenantId: string) {
   return prisma.user.findMany({
-    where: { deletedAt: null },
+    where: { deletedAt: null, tenantId },
     select: {
       id: true,
       name: true,

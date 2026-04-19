@@ -1,15 +1,40 @@
 'use server'
 
-import { cookies } from 'next/headers'
+import { cookies, headers } from 'next/headers'
 import { redirect } from 'next/navigation'
+import { createHash } from 'crypto'
 import { register, login, ConflictError, AuthError } from '@/services/authService'
 import { getUserActiveProjects } from '@/services/projectService'
 import { encrypt } from '@/lib/session'
 import prisma from '@/lib/prisma'
 import bcrypt from 'bcryptjs'
+import { PasswordSchema } from '@/lib/validation/authSchemas'
 import type { FormState } from '@/types/auth'
 
 const SESSION_DURATION_MS = 7 * 24 * 60 * 60 * 1000 // 7 days
+
+function hashResetToken(code: string): string {
+  return createHash('sha256').update(code).digest('hex')
+}
+
+async function redisRateLimit(key: string, limit: number, ttlSeconds: number): Promise<boolean> {
+  try {
+    const { Redis } = await import('ioredis')
+    const redis = new Redis({
+      host: process.env.REDIS_HOST ?? 'redis',
+      port: Number(process.env.REDIS_PORT ?? 6379),
+      password: process.env.REDIS_PASSWORD,
+      lazyConnect: true,
+    })
+    await redis.connect()
+    const attempts = await redis.incr(key)
+    if (attempts === 1) await redis.expire(key, ttlSeconds)
+    await redis.quit()
+    return attempts > limit
+  } catch {
+    return false // fail open — Redis unavailable
+  }
+}
 
 export async function signupAction(prevState: FormState, formData: FormData): Promise<FormState> {
   const name = formData.get('name') as string
@@ -44,6 +69,14 @@ export async function loginAction(prevState: FormState, formData: FormData): Pro
   const email = formData.get('email') as string
   const password = formData.get('password') as string
 
+  // Rate limit: max 10 login attempts per IP per 15 minutes.
+  const headerStore = await headers()
+  const ip = headerStore.get('x-forwarded-for')?.split(',')[0].trim() ?? 'unknown'
+  const rateLimited = await redisRateLimit(`login_rate:${ip}`, 10, 900)
+  if (rateLimited) {
+    return { message: 'Muitas tentativas de login. Aguarde 15 minutos.' }
+  }
+
   let forcePasswordChange = false
   let projectRedirect = '/projetos'
   try {
@@ -73,7 +106,7 @@ export async function loginAction(prevState: FormState, formData: FormData): Pro
     }
   } catch (err) {
     console.error("🚨 ERRO GRAVE NO LOGIN:", err)
-    
+
     if (err instanceof AuthError) {
       return { message: err.message }
     }
@@ -106,25 +139,9 @@ export async function requestPasswordResetAction(_prevState: unknown, formData: 
   }
 
   // Rate limit: max 3 requests per email per 15 minutes.
-  // Uses Redis incr+expire so the window resets after 15 min of inactivity.
-  try {
-    const { Redis } = await import('ioredis')
-    const redis = new Redis({
-      host: process.env.REDIS_HOST ?? 'redis',
-      port: Number(process.env.REDIS_PORT ?? 6379),
-      password: process.env.REDIS_PASSWORD,
-      lazyConnect: true,
-    })
-    await redis.connect()
-    const key = `reset_rate:${email}`
-    const attempts = await redis.incr(key)
-    if (attempts === 1) await redis.expire(key, 900) // 15 min TTL on first hit
-    await redis.quit()
-    if (attempts > 3) {
-      return { error: 'Muitas tentativas. Aguarde 15 minutos.' }
-    }
-  } catch {
-    // Redis unavailable — fail open to avoid blocking password recovery
+  const rateLimited = await redisRateLimit(`reset_rate:${email}`, 3, 900)
+  if (rateLimited) {
+    return { error: 'Muitas tentativas. Aguarde 15 minutos.' }
   }
 
   // Always return success to avoid user enumeration
@@ -138,7 +155,7 @@ export async function requestPasswordResetAction(_prevState: unknown, formData: 
       const expiry = new Date(Date.now() + 15 * 60 * 1000) // 15 min
       await prisma.user.update({
         where: { id: user.id },
-        data: { resetToken: code, resetTokenExpiry: expiry },
+        data: { resetToken: hashResetToken(code), resetTokenExpiry: expiry },
       })
       if (process.env.NODE_ENV !== 'production') {
         console.info(`[DEV] Reset code for ${email}: ${code}`)
@@ -163,7 +180,7 @@ export async function validateResetCodeAction(_prevState: unknown, formData: For
     where: {
       email,
       deletedAt: null,
-      resetToken: code,
+      resetToken: hashResetToken(code),
       resetTokenExpiry: { gt: new Date() },
     },
   })
@@ -181,8 +198,9 @@ export async function resetPasswordAction(_prevState: unknown, formData: FormDat
   const newPassword = formData.get('newPassword') as string
   const confirmPassword = formData.get('confirmPassword') as string
 
-  if (!newPassword || newPassword.length < 6) {
-    return { error: 'Senha deve ter pelo menos 6 caracteres' }
+  const passwordValidation = PasswordSchema.safeParse(newPassword)
+  if (!passwordValidation.success) {
+    return { error: passwordValidation.error.issues[0].message }
   }
 
   if (newPassword !== confirmPassword) {
@@ -193,7 +211,7 @@ export async function resetPasswordAction(_prevState: unknown, formData: FormDat
     where: {
       email,
       deletedAt: null,
-      resetToken: code,
+      resetToken: hashResetToken(code),
       resetTokenExpiry: { gt: new Date() },
     },
   })
