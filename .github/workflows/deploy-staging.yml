@@ -7,8 +7,8 @@ on:
 
 env:
   DEPLOY_PATH: /opt/mvloperum/staging
-  IMAGE_NAME: mvloperum/app
-  NOTIFICATION_IMAGE: mvloperum/notification-service
+  # ghcr.io owner must be lowercase
+  OWNER: ${{ github.repository_owner }}
 
 jobs:
   # ── 1. Run tests ─────────────────────────────────────────────────────────────
@@ -21,7 +21,7 @@ jobs:
       - uses: pnpm/action-setup@v3
         with:
           version: 10
-          
+
       - uses: actions/setup-node@v4
         with:
           node-version: 22
@@ -30,112 +30,55 @@ jobs:
       - name: Install dependencies
         run: pnpm install
 
-  # ── 2. Build Docker image ────────────────────────────────────────────────────
+  # ── 2. Build and push images to ghcr.io ──────────────────────────────────────
   build:
-    name: Build
+    name: Build & Push
     needs: test
     runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      packages: write
+    outputs:
+      owner: ${{ steps.meta.outputs.owner }}
     steps:
       - uses: actions/checkout@v4
 
-      - name: Build Docker images
-        run: |
-          docker build \
-            -t ${{ env.IMAGE_NAME }}:${{ github.sha }} \
-            -t ${{ env.IMAGE_NAME }}:staging \
-            .
-          docker build \
-            -t ${{ env.NOTIFICATION_IMAGE }}:${{ github.sha }} \
-            -t ${{ env.NOTIFICATION_IMAGE }}:staging \
-            ./notification-service
+      - name: Normalise owner to lowercase
+        id: meta
+        run: echo "owner=$(echo '${{ env.OWNER }}' | tr '[:upper:]' '[:lower:]')" >> $GITHUB_OUTPUT
 
-      - name: Save images to tarballs
-        run: |
-          docker save ${{ env.IMAGE_NAME }}:${{ github.sha }} | gzip > app.tar.gz
-          docker save ${{ env.NOTIFICATION_IMAGE }}:${{ github.sha }} | gzip > notification-service.tar.gz
-
-      - name: Upload image artifacts
-        uses: actions/upload-artifact@v4
+      - name: Log in to GitHub Container Registry
+        uses: docker/login-action@v3
         with:
-          name: docker-image
-          path: |
-            app.tar.gz
-            notification-service.tar.gz
-          retention-days: 1
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
 
-  # ── 3. Deploy to VPS ─────────────────────────────────────────────────────────
+      - name: Build and push app image
+        run: |
+          IMAGE=ghcr.io/${{ steps.meta.outputs.owner }}/app
+          docker build -t "$IMAGE:${{ github.sha }}" -t "$IMAGE:staging" .
+          docker push "$IMAGE:${{ github.sha }}"
+          docker push "$IMAGE:staging"
+
+      - name: Build and push notification-service image
+        run: |
+          IMAGE=ghcr.io/${{ steps.meta.outputs.owner }}/notification-service
+          docker build -t "$IMAGE:${{ github.sha }}" -t "$IMAGE:staging" ./notification-service
+          docker push "$IMAGE:${{ github.sha }}"
+          docker push "$IMAGE:staging"
+
+  # ── 3. Trigger deploy on VPS via webhook ──────────────────────────────────────
   deploy:
     name: Deploy
     needs: build
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
-
-      - name: Download image artifact
-        uses: actions/download-artifact@v4
-        with:
-          name: docker-image
-
-      - name: Transfer image and compose files to VPS
-        uses: appleboy/scp-action@v0.1.7
-        with:
-          host: ${{ secrets.VPS_HOST }}
-          username: ${{ secrets.VPS_USER }}
-          key: ${{ secrets.VPS_SSH_KEY }}
-          source: "app.tar.gz,notification-service.tar.gz,docker-compose.yml,docker-compose.staging.yml"
-          target: /tmp/mvloperum-deploy
-
-      - name: Deploy on VPS
-        uses: appleboy/ssh-action@v1.0.3
-        with:
-          host: ${{ secrets.VPS_HOST }}
-          username: ${{ secrets.VPS_USER }}
-          key: ${{ secrets.VPS_SSH_KEY }}
-          script: |
-            set -e
-
-            export IMAGE_TAG=staging
-
-            mkdir -p ${{ env.DEPLOY_PATH }}
-            cp /tmp/mvloperum-deploy/docker-compose*.yml ${{ env.DEPLOY_PATH }}/
-
-            cd ${{ env.DEPLOY_PATH }}
-
-            echo "Checking .env..."
-            if [ ! -f .env ]; then
-              echo "❌ .env NOT FOUND!"
-              exit 1
-            fi
-
-            chmod 600 .env
-
-            grep -q "^DATABASE_URL=" .env || (echo "❌ DATABASE_URL missing" && exit 1)
-
-            echo "Loading Docker images..."
-            docker load < /tmp/mvloperum-deploy/app.tar.gz
-            docker load < /tmp/mvloperum-deploy/notification-service.tar.gz
-            rm -f /tmp/mvloperum-deploy/app.tar.gz /tmp/mvloperum-deploy/notification-service.tar.gz
-
-            echo "Tagging images..."
-            docker tag mvloperum/app:${{ github.sha }} mvloperum/app:staging
-            docker tag mvloperum/notification-service:${{ github.sha }} mvloperum/notification-service:staging
-
-            echo "Running database migrations..."
-            docker compose \
-              --env-file .env \
-              -f docker-compose.yml \
-              -f docker-compose.staging.yml \
-              --profile migration \
-              run --rm migrate
-
-            echo "Starting services..."
-            docker compose \
-              --env-file .env \
-              -f docker-compose.yml \
-              -f docker-compose.staging.yml \
-              up -d app notification-service
-
-            echo "Pruning old images..."
-            docker image prune -f
-
-            echo "Staging deploy complete: ${{ github.sha }}"
+      - name: Trigger staging deploy
+        run: |
+          curl -sf --max-time 300 \
+            -X POST \
+            -H "Content-Type: application/json" \
+            -H "X-Deploy-Token: ${{ secrets.DEPLOY_WEBHOOK_SECRET }}" \
+            -d '{"sha":"${{ github.sha }}","env":"staging"}' \
+            "${{ secrets.STAGING_WEBHOOK_URL }}"
