@@ -11,7 +11,8 @@
       "Skill(update-config:*)",
       "Bash(git -C c:/temp/ClaudeCode/mvl-operum log --all --full-history -- private.pem)",
       "Bash(git -C c:/temp/ClaudeCode/mvl-operum log --all --full-history -- .env)",
-      "Bash(git commit -m 'fix\\(uploads\\): use optional chaining for nullable sprint/project relations *)"
+      "Bash(git commit -m 'fix\\(uploads\\): use optional chaining for nullable sprint/project relations *)",
+      "Bash(git commit -m 'fix\\(session\\): defer missing-key guard to encrypt\\(\\) call time *)"
     ]
   },
   "hooks": {
