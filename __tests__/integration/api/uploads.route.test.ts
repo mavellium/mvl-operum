@@ -1,6 +1,9 @@
 // @vitest-environment node
 import { describe, it, expect, vi, beforeEach } from 'vitest'
 
+vi.mock('@/lib/routeAuth', () => ({
+  verifyRouteSession: vi.fn(),
+}))
 vi.mock('@/services/fileUploadService', () => ({
   saveUpload: vi.fn(),
 }))
@@ -9,20 +12,18 @@ vi.mock('@/lib/session', () => ({
 }))
 vi.mock('@/lib/prisma', () => ({
   default: {
-    user: { findUnique: vi.fn() },
     card: { findUnique: vi.fn() },
   },
 }))
 
 import { POST } from '@/app/api/uploads/route'
 import { saveUpload } from '@/services/fileUploadService'
-import { decrypt } from '@/lib/session'
+import { verifyRouteSession } from '@/lib/routeAuth'
 import prisma from '@/lib/prisma'
 
 const mockSave = saveUpload as ReturnType<typeof vi.fn>
-const mockDecrypt = decrypt as ReturnType<typeof vi.fn>
-const mockPrisma = prisma as unknown as { user: { findUnique: ReturnType<typeof vi.fn> }; card: { findUnique: ReturnType<typeof vi.fn> } }
-const mockUserFindUnique = mockPrisma.user.findUnique
+const mockVerifyRoute = verifyRouteSession as ReturnType<typeof vi.fn>
+const mockPrisma = prisma as unknown as { card: { findUnique: ReturnType<typeof vi.fn> } }
 
 function makeRequest(body: FormData, sessionToken?: string): Request {
   const headers: Record<string, string> = {}
@@ -36,20 +37,18 @@ function makeRequest(body: FormData, sessionToken?: string): Request {
 
 beforeEach(() => {
   vi.clearAllMocks()
-  mockDecrypt.mockResolvedValue({ userId: 'u1', tenantId: 't1' })
-  mockUserFindUnique.mockResolvedValue({ tokenVersion: 0, isActive: true, deletedAt: null })
+  mockVerifyRoute.mockResolvedValue({ userId: 'u1', tenantId: 't1' })
 })
 
 describe('POST /api/uploads', () => {
   it('returns 401 without session', async () => {
-    mockDecrypt.mockResolvedValue(null)
+    mockVerifyRoute.mockResolvedValue(null)
     const form = new FormData()
     const res = await POST(makeRequest(form))
     expect(res.status).toBe(401)
   })
 
   it('returns 400 without cardId field', async () => {
-    mockDecrypt.mockResolvedValue({ userId: 'u1' })
     const form = new FormData()
     form.set('file', new File(['data'], 'img.png', { type: 'image/png' }))
     const res = await POST(makeRequest(form, 'valid-token'))
@@ -57,7 +56,6 @@ describe('POST /api/uploads', () => {
   })
 
   it('returns 400 for disallowed MIME type', async () => {
-    mockDecrypt.mockResolvedValue({ userId: 'u1' })
     const form = new FormData()
     form.set('cardId', 'c1')
     form.set('file', new File(['data'], 'doc.txt', { type: 'text/plain' }))
@@ -66,8 +64,7 @@ describe('POST /api/uploads', () => {
   })
 
   it('returns 201 with Attachment shape on success', async () => {
-    mockDecrypt.mockResolvedValue({ userId: 'u1' })
-    mockPrisma.card.findUnique.mockResolvedValue({ sprint: null })
+    mockPrisma.card.findUnique.mockResolvedValue({ sprint: { project: { tenantId: 't1' } } })
     mockSave.mockResolvedValue({
       id: 'att1',
       cardId: 'c1',

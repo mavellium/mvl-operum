@@ -1,29 +1,28 @@
 // @vitest-environment node
 import { describe, it, expect, vi, beforeEach } from 'vitest'
 
-
 vi.mock('@/lib/session', () => ({
   decrypt: vi.fn(),
 }))
 vi.mock('@/services/projectRoleService', () => ({
-  getProjectsWhereManager: vi.fn().mockResolvedValue([]),
+  getProjectsWhereManager: vi.fn(),
 }))
-
 vi.mock('@/lib/prisma', () => {
   const mockPrisma = {
     user: { findUnique: vi.fn() },
+    userProjectRole: { findMany: vi.fn() },
   }
   return { default: mockPrisma, prisma: mockPrisma }
 })
 
-
-
 import { decrypt } from '@/lib/session'
 import prisma from '@/lib/prisma'
+import { getProjectsWhereManager } from '@/services/projectRoleService'
 import { GET } from '@/app/api/me/route'
 
 const mockDecrypt = decrypt as ReturnType<typeof vi.fn>
-const mockUserFindUnique = (prisma as unknown as { user: { findUnique: ReturnType<typeof vi.fn> } }).user.findUnique;
+const mockGetProjectsWhereManager = getProjectsWhereManager as ReturnType<typeof vi.fn>
+const mockUserFindUnique = (prisma as unknown as { user: { findUnique: ReturnType<typeof vi.fn> } }).user.findUnique
 
 function makeRequest(cookie?: string) {
   return new Request('http://localhost/api/me', {
@@ -33,6 +32,7 @@ function makeRequest(cookie?: string) {
 
 beforeEach(() => {
   vi.clearAllMocks()
+  mockGetProjectsWhereManager.mockResolvedValue([])
 })
 
 describe('GET /api/me', () => {

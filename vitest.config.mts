@@ -8,11 +8,16 @@ export default defineConfig({
     environment: 'jsdom',
     globals: true,
     setupFiles: ['./vitest.setup.ts'],
+    server: {
+      deps: {
+        inline: ['@asamuzakjp/css-color'],
+      },
+    },
     coverage: {
       provider: 'v8',
       reporter: ['text', 'lcov'],
       exclude: ['node_modules', '.next', 'lib/generated'],
     },
-    exclude: ['node_modules', '.next'],
+    exclude: ['**/node_modules/**', '.next', 'notification-service/**'],
   },
 })

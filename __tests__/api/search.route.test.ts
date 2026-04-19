@@ -1,23 +1,26 @@
 // @vitest-environment node
 import { describe, it, expect, vi, beforeEach } from 'vitest'
 
+vi.mock('@/lib/routeAuth', () => ({
+  verifyRouteSession: vi.fn(),
+}))
 vi.mock('@/lib/session', () => ({
   decrypt: vi.fn(),
 }))
-
 vi.mock('@/lib/prisma', () => ({
   default: {
     card: { findMany: vi.fn() },
-    user: { findUnique: vi.fn() },
   },
 }))
 
 import { decrypt } from '@/lib/session'
 import prisma from '@/lib/prisma'
+import { verifyRouteSession } from '@/lib/routeAuth'
 import { GET } from '@/app/api/search/route'
 
 const mockDecrypt = decrypt as ReturnType<typeof vi.fn>
-const mockPrisma = prisma as { card: { findMany: ReturnType<typeof vi.fn> }; user: { findUnique: ReturnType<typeof vi.fn> } }
+const mockVerifyRoute = verifyRouteSession as ReturnType<typeof vi.fn>
+const mockPrisma = prisma as { card: { findMany: ReturnType<typeof vi.fn> } }
 
 const makeRequest = (q: string, cookie = 'session=valid-token') =>
   new Request(`http://localhost/api/search?q=${encodeURIComponent(q)}`, {
@@ -26,13 +29,13 @@ const makeRequest = (q: string, cookie = 'session=valid-token') =>
 
 beforeEach(() => {
   vi.clearAllMocks()
+  mockVerifyRoute.mockResolvedValue({ userId: 'u1', tenantId: 't1' })
   mockDecrypt.mockResolvedValue({ userId: 'u1', tenantId: 't1' })
-  mockPrisma.user.findUnique.mockResolvedValue({ tokenVersion: 0, isActive: true, deletedAt: null })
 })
 
 describe('GET /api/search', () => {
   it('returns 401 if not authenticated', async () => {
-    mockDecrypt.mockResolvedValue(null)
+    mockVerifyRoute.mockResolvedValue(null)
     const res = await GET(makeRequest('test'))
     expect(res.status).toBe(401)
   })

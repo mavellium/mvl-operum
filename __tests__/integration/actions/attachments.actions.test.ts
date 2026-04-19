@@ -2,6 +2,10 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest'
 
 vi.mock('next/cache', () => ({ revalidatePath: vi.fn() }))
+vi.mock('@/services/fileUploadService', () => ({
+  saveUpload: vi.fn(),
+  deleteUpload: vi.fn(),
+}))
 vi.mock('@/lib/dal', () => ({
   verifySession: vi.fn(),
 }))
