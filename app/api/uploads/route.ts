@@ -42,7 +42,7 @@ export async function POST(request: Request) {
     where: { id: cardId },
     select: { sprint: { select: { project: { select: { tenantId: true } } } } },
   })
-  if (!card || card.sprint.project.tenantId !== session.tenantId) {
+  if (!card || card.sprint?.project?.tenantId !== session.tenantId) {
     return Response.json({ error: 'Acesso negado' }, { status: 403 })
   }
 
