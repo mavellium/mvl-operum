@@ -51,7 +51,7 @@ function ProjetoFormContent() {
   const editId = searchParams.get('edit')
 
   const [isPending, startTransition] = useTransition()
-  const [isLoadingEdit, setIsLoadingEdit] = useState(false)
+  const [isLoadingEdit, setIsLoadingEdit] = useState(!!editId)
 
   const [activeTab, setActiveTab] = useState<'basico' | 'estrategico' | 'fases'>('basico')
 
@@ -87,7 +87,6 @@ function ProjetoFormContent() {
   // Prefill em modo edição
   useEffect(() => {
     if (!editId) return
-    setIsLoadingEdit(true)
     getProjetoAction(editId).then(result => {
       if ('error' in result || !result.projeto) {
         setError('Projeto não encontrado para edição.')

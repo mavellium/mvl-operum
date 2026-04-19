@@ -107,10 +107,11 @@ export default function SprintBoard({ sprint, columns: initialColumns, users, ta
   const isImageBg = boardBg.startsWith('url')
 
   useEffect(() => {
-    if (!openCardId) { setCardComments([]); return }
+    if (!openCardId) return
     getCommentsAction(openCardId).then(res => {
       if (res.comments) setCardComments(res.comments)
     })
+    return () => { setCardComments([]) }
   }, [openCardId])
 
   const handleMouseDown = (e: React.MouseEvent) => {

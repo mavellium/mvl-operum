@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, startTransition } from 'react'
 import { Card, CardColor, Attachment } from '@/types/kanban'
 import { assignTagToCardAction, removeTagFromCardAction } from '@/app/actions/tags'
 import { addManualTimeAction } from '@/app/actions/time'
@@ -37,7 +37,7 @@ type RightPanelMode = 'comments' | 'timer' | 'properties'
 
 export default function CardModal({
   isOpen, onClose, onSubmit, initialCard, users, boardTags, attachments = [],
-  onAttachmentUpload: _onAttachmentUpload, onAttachmentDelete: _onAttachmentDelete, onAttachmentSetCover: _onAttachmentSetCover, comments = [], onAddComment
+  comments = [], onAddComment
 }: CardModalProps) {
   
   // Estados Gerais de Dados (Auto-save on close)
@@ -69,26 +69,24 @@ export default function CardModal({
   const isEditing = !!initialCard
 
   // Setup Inicial e Bloqueio de Scroll
-  // eslint-disable-next-line react-hooks/set-state-in-effect
   useEffect(() => {
     if (isOpen) {
-      setTitle(initialCard?.title ?? '')
-      setSavedDescription(initialCard?.description ?? '')
-      setDraftDescription(initialCard?.description ?? '')
-      setColor(initialCard?.color ?? DEFAULT_COLOR)
-      setPriority(initialCard?.priority ?? 'media')
-      setSelectedTagIds(initialCard?.tags?.map(t => t.tagId) ?? [])
-      
-      setError('')
-      setIsEditingDesc(false)
-      setIsCommenting(false)
-      setRightPanelMode('comments')
-      
-      setManualHours('')
-      setManualMinutes('')
-      setManualDesc('')
-
-      document.body.style.overflow = 'hidden' 
+      startTransition(() => {
+        setTitle(initialCard?.title ?? '')
+        setSavedDescription(initialCard?.description ?? '')
+        setDraftDescription(initialCard?.description ?? '')
+        setColor(initialCard?.color ?? DEFAULT_COLOR)
+        setPriority(initialCard?.priority ?? 'media')
+        setSelectedTagIds(initialCard?.tags?.map(t => t.tagId) ?? [])
+        setError('')
+        setIsEditingDesc(false)
+        setIsCommenting(false)
+        setRightPanelMode('comments')
+        setManualHours('')
+        setManualMinutes('')
+        setManualDesc('')
+      })
+      document.body.style.overflow = 'hidden'
     } else {
       document.body.style.overflow = 'unset'
     }
@@ -295,8 +293,8 @@ export default function CardModal({
                     return (
                       <div key={att.id} className="flex h-24 bg-[#2C333A]/50 hover:bg-[#2C333A] rounded-md overflow-hidden cursor-pointer group transition-colors border border-[#3B444C]">
                         <div className="w-32 bg-[#111214] flex items-center justify-center shrink-0 border-r border-[#3B444C]">
-                          {/* eslint-disable-next-line @next/next/no-img-element */}
                           {isImg ? (
+                            // eslint-disable-next-line @next/next/no-img-element
                             <img src={att.filePath} alt={att.fileName} className="w-full h-full object-cover" />
                           ) : (
                             <span className="text-xs font-bold text-[#9FADBC] uppercase">{att.fileType.split('/')[1] || 'DOC'}</span>
