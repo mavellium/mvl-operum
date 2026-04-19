@@ -10,7 +10,8 @@
       "Skill(update-config)",
       "Skill(update-config:*)",
       "Bash(git -C c:/temp/ClaudeCode/mvl-operum log --all --full-history -- private.pem)",
-      "Bash(git -C c:/temp/ClaudeCode/mvl-operum log --all --full-history -- .env)"
+      "Bash(git -C c:/temp/ClaudeCode/mvl-operum log --all --full-history -- .env)",
+      "Bash(git commit -m 'fix\\(uploads\\): use optional chaining for nullable sprint/project relations *)"
     ]
   },
   "hooks": {
