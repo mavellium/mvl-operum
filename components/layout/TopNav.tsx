@@ -167,10 +167,6 @@ export default function TopNav() {
   const userMenuRef = useRef<HTMLDivElement>(null)
   const [isPending, startTransition] = useTransition()
 
-  const [csvOpen, setCsvOpen] = useState(false)
-  const [showCreate, setShowCreate] = useState(false)
-  const [tagOpen, setTagOpen] = useState(false)
-
   useEffect(() => {
     function handleClickOutside(event: MouseEvent) {
       if (userMenuRef.current && !userMenuRef.current.contains(event.target as Node)) {
@@ -203,7 +199,7 @@ export default function TopNav() {
 
   if (HIDDEN_PATHS.some(p => pathname.startsWith(p))) return null
 
-  const { title, icon, showBoardActions, search, button } = getHeaderContext(pathname, user?.role, user?.projectManagerIn ?? [])
+  const { title: _title, icon, showBoardActions, search, button } = getHeaderContext(pathname, user?.role, user?.projectManagerIn ?? [])
 
   return (
     <header className="sticky top-0 z-40 flex items-center justify-between px-6 h-16 bg-white backdrop-blur-sm border-b border-gray-100 transition-all duration-200">

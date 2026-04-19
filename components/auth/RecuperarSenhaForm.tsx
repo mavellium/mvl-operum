@@ -91,8 +91,8 @@ export function RecuperarSenhaForm() {
               placeholder="seu@email.com"
             />
           </div>
-          {(emailState as any)?.error && (
-            <p className="text-sm text-red-600">{(emailState as any).error}</p>
+          {(emailState as { error?: string } | undefined)?.error && (
+            <p className="text-sm text-red-600">{(emailState as { error?: string }).error}</p>
           )}
           <button
             type="submit"
@@ -127,8 +127,8 @@ export function RecuperarSenhaForm() {
               placeholder="XXXXXXXX"
             />
           </div>
-          {(codeState as any)?.error && (
-            <p className="text-sm text-red-600">{(codeState as any).error}</p>
+          {(codeState as { error?: string } | undefined)?.error && (
+            <p className="text-sm text-red-600">{(codeState as { error?: string }).error}</p>
           )}
           <button
             type="submit"
@@ -177,8 +177,8 @@ export function RecuperarSenhaForm() {
               placeholder="Repita a nova senha"
             />
           </div>
-          {(passState as any)?.error && (
-            <p className="text-sm text-red-600">{(passState as any).error}</p>
+          {(passState as { error?: string } | undefined)?.error && (
+            <p className="text-sm text-red-600">{(passState as { error?: string }).error}</p>
           )}
           <button
             type="submit"

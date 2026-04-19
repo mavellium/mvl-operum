@@ -26,9 +26,8 @@ export default function Modal({
   const [mounted, setMounted] = useState(false)
 
   // Previne erros de hidratação no Next.js ao usar createPortal
-  useEffect(() => {
-    setMounted(true)
-  }, [])
+  // eslint-disable-next-line react-hooks/set-state-in-effect
+  useEffect(() => { setMounted(true) }, [])
 
   useEffect(() => {
     if (!isOpen) {

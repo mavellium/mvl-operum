@@ -12,6 +12,9 @@ const eslintConfig = defineConfig([
     "out/**",
     "build/**",
     "next-env.d.ts",
+    // Prisma generated files — not hand-written, linting them is noise
+    "lib/generated/prisma/**",
+    "notification-service/lib/generated/prisma/**",
   ]),
 ]);
 

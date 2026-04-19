@@ -111,6 +111,7 @@ export default function SprintBoard({ sprint, columns: initialColumns, users, ta
 
   const isImageBg = boardBg.startsWith('url')
 
+  // eslint-disable-next-line react-hooks/set-state-in-effect
   useEffect(() => {
     if (!openCardId) { setCardComments([]); return }
     getCommentsAction(openCardId).then(res => {

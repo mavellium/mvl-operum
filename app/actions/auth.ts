@@ -2,7 +2,7 @@
 
 import { cookies, headers } from 'next/headers'
 import { redirect } from 'next/navigation'
-import { createHash } from 'crypto'
+import { createHash, randomInt } from 'crypto'
 import { register, login, ConflictError, AuthError } from '@/services/authService'
 import { getUserActiveProjects } from '@/services/projectService'
 import { encrypt } from '@/lib/session'
@@ -126,7 +126,6 @@ export async function logoutAction() {
 // ── Password Recovery ──────────────────────────────────────
 
 function generateCode(length = 8): string {
-  const { randomInt } = require('crypto') as typeof import('crypto')
   const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789'
   return Array.from({ length }, () => chars[randomInt(0, chars.length)]).join('')
 }

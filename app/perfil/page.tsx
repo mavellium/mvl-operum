@@ -67,7 +67,7 @@ export default async function PerfilPage() {
               {profile.notes && (
                 <div className="mt-4 p-3 bg-slate-50 rounded-lg border border-slate-100">
                   <p className="text-xs font-medium text-slate-500 uppercase tracking-wider mb-1">Observações</p>
-                  <p className="text-sm text-slate-700 italic">"{profile.notes}"</p>
+                  <p className="text-sm text-slate-700 italic">&quot;{profile.notes}&quot;</p>
                 </div>
               )}
 

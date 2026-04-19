@@ -26,7 +26,7 @@ export default function ProjetoDepartamentosClient({ projetoId, departamentosIni
   const [loadingId, setLoadingId] = useState<string | null>(null)
 
 const filteredDepartamentos = departamentos
-  .filter((d: any) => !d.deletedAt)
+  .filter(d => !d.deletedAt)
   .filter(d => d.name.toLowerCase().includes(search.toLowerCase()))
 
   function handleStartEdit(d: Departamento) {

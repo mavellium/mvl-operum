@@ -6,7 +6,6 @@ import { assignTagToCardAction, removeTagFromCardAction } from '@/app/actions/ta
 import { addManualTimeAction } from '@/app/actions/time'
 import CardTimer from './CardTimer'
 import UserAvatar from '@/components/user/UserAvatar'
-import { TagBadge } from '@/components/tag/TagBadge'
 import ColorPicker from './ColorPicker'
 import { TagSelector } from '../tag/TagSelector'
 import MultiUserSelector from './MultiUserSelector'
@@ -38,7 +37,7 @@ type RightPanelMode = 'comments' | 'timer' | 'properties'
 
 export default function CardModal({
   isOpen, onClose, onSubmit, initialCard, users, boardTags, attachments = [],
-  onAttachmentUpload, onAttachmentDelete, onAttachmentSetCover, comments = [], onAddComment
+  onAttachmentUpload: _onAttachmentUpload, onAttachmentDelete: _onAttachmentDelete, onAttachmentSetCover: _onAttachmentSetCover, comments = [], onAddComment
 }: CardModalProps) {
   
   // Estados Gerais de Dados (Auto-save on close)
@@ -57,7 +56,7 @@ export default function CardModal({
   const [isCommenting, setIsCommenting] = useState(false)
 
   // Estados de UI
-  const [coverIndex, setCoverIndex] = useState(0)
+  const [coverIndex] = useState(0)
   const [rightPanelMode, setRightPanelMode] = useState<RightPanelMode>('comments')
 
   // Estados para Registro Manual de Tempo
@@ -70,6 +69,7 @@ export default function CardModal({
   const isEditing = !!initialCard
 
   // Setup Inicial e Bloqueio de Scroll
+  // eslint-disable-next-line react-hooks/set-state-in-effect
   useEffect(() => {
     if (isOpen) {
       setTitle(initialCard?.title ?? '')
@@ -167,6 +167,7 @@ export default function CardModal({
         {/* CAPA FIXA NO TOPO */}
         {hasCover && (
           <div className="relative w-full h-48 sm:h-56 bg-[#111214] shrink-0 group flex items-center justify-center border-b border-[#3B444C]">
+            {/* eslint-disable-next-line @next/next/no-img-element */}
             <img src={imageAttachments[coverIndex].filePath} alt="Capa" className="w-full h-full object-cover opacity-90" />
             <button className="absolute bottom-4 right-4 flex items-center gap-2 px-3 py-1.5 bg-[#22272B]/80 hover:bg-[#2C333A] text-sm text-white font-medium rounded-md backdrop-blur-md border border-[#3B444C] transition-colors">
               <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12" /></svg>
@@ -295,6 +296,7 @@ export default function CardModal({
                       <div key={att.id} className="flex h-24 bg-[#2C333A]/50 hover:bg-[#2C333A] rounded-md overflow-hidden cursor-pointer group transition-colors border border-[#3B444C]">
                         <div className="w-32 bg-[#111214] flex items-center justify-center shrink-0 border-r border-[#3B444C]">
                           {isImg ? (
+                            {/* eslint-disable-next-line @next/next/no-img-element */}
                             <img src={att.filePath} alt={att.fileName} className="w-full h-full object-cover" />
                           ) : (
                             <span className="text-xs font-bold text-[#9FADBC] uppercase">{att.fileType.split('/')[1] || 'DOC'}</span>

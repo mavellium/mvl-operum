@@ -36,7 +36,7 @@ interface ColumnListProps {
   setOpenCardId: (id: string | null) => void
 }
 
-export default function ColumnList({ state, dispatch, sprints, users, boardTags, boardId, setAddingCardToColumn,
+export default function ColumnList({ state, dispatch, sprints: _sprints, users, boardTags, boardId: _boardId, setAddingCardToColumn,
   setOpenCardId }: ColumnListProps) {
   const [addingList, setAddingList] = useState(false)
   const [newListTitle, setNewListTitle] = useState('')
@@ -44,10 +44,6 @@ export default function ColumnList({ state, dispatch, sprints, users, boardTags,
   const handleDragEnd = (result: DropResult) => {
     const action = buildDragAction(result)
     if (action) dispatch(action)
-  }
-
-  const handleAddCard = (columnId: string, data: { title: string; description: string; color: CardColor }) => {
-    dispatch({ type: 'ADD_CARD', payload: { columnId, ...data } })
   }
 
   const handleUpdateCard = (cardId: string, data: { title: string; description: string; color: CardColor }) => {
