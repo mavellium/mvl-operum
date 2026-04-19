@@ -13,7 +13,11 @@
       "Bash(git -C c:/temp/ClaudeCode/mvl-operum log --all --full-history -- .env)",
       "Bash(git commit -m 'fix\\(uploads\\): use optional chaining for nullable sprint/project relations *)",
       "Bash(git commit -m 'fix\\(session\\): defer missing-key guard to encrypt\\(\\) call time *)",
-      "Bash(git commit -m 'fix\\(notification-service\\): remove express type import — use inline type instead *)"
+      "Bash(git commit -m 'fix\\(notification-service\\): remove express type import — use inline type instead *)",
+      "Bash(git -C c:/temp/ClaudeCode/mvl-operum diff)",
+      "Bash(git -C c:/temp/ClaudeCode/mvl-operum log --oneline -5)",
+      "Bash(git -C c:/temp/ClaudeCode/mvl-operum add Dockerfile prisma/schema.prisma)",
+      "Bash(git -C c:/temp/ClaudeCode/mvl-operum commit -m ' *)"
     ]
   },
   "hooks": {
