@@ -143,6 +143,11 @@ jobs:
     needs: deploy
     runs-on: ubuntu-latest
     steps:
+      - uses: actions/checkout@v4
+
+      - name: Fix workspace permissions for ZAP Docker container
+        run: chmod a+w ${{ github.workspace }}
+
       - name: OWASP ZAP Baseline Scan
         uses: zaproxy/action-baseline@v0.12.0
         with:
