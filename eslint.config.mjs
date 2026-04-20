@@ -17,6 +17,8 @@ const eslintConfig = defineConfig([
     "notification-service/lib/generated/prisma/**",
     // Key-generation script — not part of the app, already gitignored
     "gerar-chaves.js",
+    // Node.js helper scripts — CJS files that intentionally use require()
+    "scripts/**",
   ]),
 ]);
 
