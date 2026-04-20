@@ -19,6 +19,8 @@ const eslintConfig = defineConfig([
     "gerar-chaves.js",
     // Node.js helper scripts — CJS files that intentionally use require()
     "scripts/**",
+    // NestJS compiled output — generated CommonJS, not hand-written
+    "notification-service/dist/**",
   ]),
 ]);
 
