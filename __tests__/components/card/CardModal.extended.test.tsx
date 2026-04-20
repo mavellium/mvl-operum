@@ -61,13 +61,17 @@ beforeEach(() => {
 })
 
 describe('CardModal extended', () => {
-  it('renders MultiUserSelector when users prop provided for editing', () => {
+  it('renders MultiUserSelector when users prop provided for editing', async () => {
+    const user = userEvent.setup()
     render(<CardModal {...defaultProps} />)
+    await user.click(screen.getByRole('button', { name: 'Props' }))
     expect(screen.getByText(/responsáveis/i)).toBeInTheDocument()
   })
 
-  it('renders TagSelector with board tags when boardTags provided', () => {
+  it('renders TagSelector with board tags when boardTags provided', async () => {
+    const user = userEvent.setup()
     render(<CardModal {...defaultProps} />)
+    await user.click(screen.getByRole('button', { name: 'Props' }))
     expect(screen.getByText('Bug')).toBeInTheDocument()
     expect(screen.getByText('Feature')).toBeInTheDocument()
   })
@@ -108,8 +112,10 @@ describe('CardModal extended', () => {
     expect(screen.queryByText(/sprint 1/i)).not.toBeInTheDocument()
   })
 
-  it('shows priority select with options baixa, media, alta', () => {
+  it('shows priority select with options baixa, media, alta', async () => {
+    const user = userEvent.setup()
     render(<CardModal {...defaultProps} />)
+    await user.click(screen.getByRole('button', { name: 'Props' }))
     expect(screen.getByRole('combobox', { name: /prioridade/i })).toBeInTheDocument()
     expect(screen.getByRole('option', { name: /baixa/i })).toBeInTheDocument()
     expect(screen.getByRole('option', { name: /média|media/i })).toBeInTheDocument()

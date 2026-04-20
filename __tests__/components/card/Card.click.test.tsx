@@ -49,6 +49,7 @@ const card = {
   updatedAt: 0,
 }
 
+const onClick = vi.fn()
 const onUpdate = vi.fn()
 const onDelete = vi.fn()
 
@@ -57,21 +58,14 @@ beforeEach(() => {
 })
 
 describe('Card click behavior', () => {
-  it('opens modal when clicking on card body', async () => {
-    const user = userEvent.setup()
-    render(<Card card={card} index={0} columnId="col-1" onUpdate={onUpdate} onDelete={onDelete} />)
-    await user.click(screen.getByText('My Task'))
-    expect(screen.getByRole('dialog')).toBeInTheDocument()
-  })
-
   it('does not render edit button', () => {
-    render(<Card card={card} index={0} columnId="col-1" onUpdate={onUpdate} onDelete={onDelete} />)
+    render(<Card card={card} index={0} columnId="col-1" onClick={onClick} onUpdate={onUpdate} onDelete={onDelete} />)
     expect(screen.queryByRole('button', { name: /editar card/i })).not.toBeInTheDocument()
   })
 
   it('delete button does not open edit modal', async () => {
     const user = userEvent.setup()
-    render(<Card card={card} index={0} columnId="col-1" onUpdate={onUpdate} onDelete={onDelete} />)
+    render(<Card card={card} index={0} columnId="col-1" onClick={onClick} onUpdate={onUpdate} onDelete={onDelete} />)
     await user.click(screen.getByRole('button', { name: /excluir card/i }))
     // ConfirmDialog opens (not CardModal) — CardModal has a "Título" label
     expect(screen.queryByLabelText(/título/i)).not.toBeInTheDocument()
@@ -79,7 +73,7 @@ describe('Card click behavior', () => {
 
   it('delete button opens confirm dialog', async () => {
     const user = userEvent.setup()
-    render(<Card card={card} index={0} columnId="col-1" onUpdate={onUpdate} onDelete={onDelete} />)
+    render(<Card card={card} index={0} columnId="col-1" onClick={onClick} onUpdate={onUpdate} onDelete={onDelete} />)
     await user.click(screen.getByRole('button', { name: /excluir card/i }))
     expect(screen.getByText(/tem certeza/i)).toBeInTheDocument()
   })

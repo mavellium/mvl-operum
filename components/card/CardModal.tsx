@@ -148,14 +148,15 @@ export default function CardModal({
   if (!isOpen) return null
 
   return (
-    <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 sm:p-6 bg-black/75 backdrop-blur-sm animate-in fade-in duration-200">
-      
+    <div role="dialog" aria-modal="true" className="fixed inset-0 z-[100] flex items-center justify-center p-4 sm:p-6 bg-black/75 backdrop-blur-sm animate-in fade-in duration-200">
+
       <div className="absolute inset-0" onClick={handleCloseModal} aria-hidden="true" />
 
       {/* Container Principal do Modal */}
       <div className="relative w-full max-w-6xl h-[92vh] bg-[#22272B] text-[#B6C2CF] rounded-xl shadow-2xl font-sans flex flex-col overflow-hidden animate-in zoom-in-95 duration-200 border border-white/10">
-        
-        <button 
+
+        <button
+          aria-label="Salvar"
           onClick={handleCloseModal}
           className="absolute top-4 right-4 z-50 p-2 bg-black/40 hover:bg-black/70 text-white rounded-full transition-colors backdrop-blur-md border border-white/10"
         >
@@ -457,6 +458,7 @@ export default function CardModal({
                   <div>
                     <h4 className="text-[11px] font-bold text-[#8C9BAB] uppercase mb-3 tracking-wide">Prioridade</h4>
                     <select
+                      aria-label="Prioridade"
                       value={priority}
                       onChange={e => setPriority(e.target.value)}
                       className="w-full bg-[#22272B] border border-[#3B444C] text-white rounded-sm text-sm py-2 px-3 outline-none focus:border-[#579DFF]"

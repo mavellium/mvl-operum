@@ -5,7 +5,7 @@ describe('projetoSchemas', () => {
   describe('CreateProjetoSchema', () => {
     it('should accept valid projeto data (name, tenantId)', () => {
       const result = CreateProjetoSchema.safeParse({
-        name: 'Projeto Alpha',
+        nome: 'Projeto Alpha',
         tenantId: 'tenant-1',
       })
       expect(result.success).toBe(true)
@@ -13,19 +13,19 @@ describe('projetoSchemas', () => {
 
     it('should accept optional description', () => {
       const result = CreateProjetoSchema.safeParse({
-        name: 'Projeto Alpha',
+        nome: 'Projeto Alpha',
         tenantId: 'tenant-1',
-        description: 'Descrição do projeto',
+        descricao: 'Descrição do projeto',
       })
       expect(result.success).toBe(true)
       if (result.success) {
-        expect(result.data.description).toBe('Descrição do projeto')
+        expect(result.data.descricao).toBe('Descrição do projeto')
       }
     })
 
     it('should reject empty name', () => {
       const result = CreateProjetoSchema.safeParse({
-        name: '',
+        nome: '',
         tenantId: 'tenant-1',
       })
       expect(result.success).toBe(false)
@@ -33,7 +33,7 @@ describe('projetoSchemas', () => {
 
     it('should reject name longer than 100 chars', () => {
       const result = CreateProjetoSchema.safeParse({
-        name: 'a'.repeat(101),
+        nome: 'a'.repeat(101),
         tenantId: 'tenant-1',
       })
       expect(result.success).toBe(false)
@@ -41,31 +41,31 @@ describe('projetoSchemas', () => {
 
     it('should reject missing tenantId', () => {
       const result = CreateProjetoSchema.safeParse({
-        name: 'Projeto Alpha',
+        nome: 'Projeto Alpha',
       })
       expect(result.success).toBe(false)
     })
 
     it('should trim name', () => {
       const result = CreateProjetoSchema.safeParse({
-        name: '  Projeto Alpha  ',
+        nome: '  Projeto Alpha  ',
         tenantId: 'tenant-1',
       })
       expect(result.success).toBe(true)
       if (result.success) {
-        expect(result.data.name).toBe('Projeto Alpha')
+        expect(result.data.nome).toBe('Projeto Alpha')
       }
     })
   })
 
   describe('UpdateProjetoSchema', () => {
     it('should accept partial updates (name only)', () => {
-      const result = UpdateProjetoSchema.safeParse({ name: 'Novo Nome' })
+      const result = UpdateProjetoSchema.safeParse({ nome: 'Novo Nome' })
       expect(result.success).toBe(true)
     })
 
     it('should accept partial updates (description only)', () => {
-      const result = UpdateProjetoSchema.safeParse({ description: 'Nova desc' })
+      const result = UpdateProjetoSchema.safeParse({ descricao: 'Nova desc' })
       expect(result.success).toBe(true)
     })
 

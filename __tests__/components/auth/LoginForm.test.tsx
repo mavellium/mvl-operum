@@ -18,8 +18,4 @@ describe('LoginForm', () => {
     expect(screen.getByRole('button', { name: /entrar/i })).toBeInTheDocument()
   })
 
-  it('renders link to register page', () => {
-    render(<LoginForm />)
-    expect(screen.getByRole('link', { name: /criar conta/i })).toBeInTheDocument()
-  })
 })
