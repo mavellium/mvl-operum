@@ -1,6 +1,7 @@
 import prisma from '@/lib/prisma'
-import { CreateNotificacaoSchema, UpdateNotificacaoSchema } from '@/lib/validation/notificacaoSchemas'
-import type { CreateNotificacaoInput, UpdateNotificacaoInput } from '@/lib/validation/notificacaoSchemas'
+import type { Prisma } from '@/lib/generated/prisma'
+import { CreateNotificacaoSchema } from '@/lib/validation/notificacaoSchemas'
+import type { CreateNotificacaoInput } from '@/lib/validation/notificacaoSchemas'
 
 export class NotFoundError extends Error {
   constructor(message: string) {
@@ -35,9 +36,9 @@ interface FindAllByUserOptions {
 }
 
 export async function findAllByUser(userId: string, options?: FindAllByUserOptions) {
-  const where: any = { userId, deletedAt: null }
+  const where: Prisma.NotificationWhereInput = { userId, deletedAt: null }
   if (options?.status) {
-    where.status = options.status
+    where.status = options.status as Prisma.NotificationWhereInput['status']
   }
 
   return prisma.notification.findMany({

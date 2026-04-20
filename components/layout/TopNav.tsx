@@ -7,6 +7,7 @@ import UserAvatar from '@/components/user/UserAvatar'
 import BoardActionMenu from '../board/BoardActionMenu'
 import GlobalSearch from '../search/GlobalSearch'
 import { logoutAction } from '@/app/actions/auth'
+import { CsvImportModal } from '@/components/csv/CsvImportModal'
 
 const HIDDEN_PATHS = ['/login', '/register', '/recuperar-senha', '/alterar-senha', '/no-project']
 
@@ -166,10 +167,7 @@ export default function TopNav() {
   const [userMenuOpen, setUserMenuOpen] = useState(false)
   const userMenuRef = useRef<HTMLDivElement>(null)
   const [isPending, startTransition] = useTransition()
-
   const [csvOpen, setCsvOpen] = useState(false)
-  const [showCreate, setShowCreate] = useState(false)
-  const [tagOpen, setTagOpen] = useState(false)
 
   useEffect(() => {
     function handleClickOutside(event: MouseEvent) {
@@ -203,7 +201,7 @@ export default function TopNav() {
 
   if (HIDDEN_PATHS.some(p => pathname.startsWith(p))) return null
 
-  const { title, icon, showBoardActions, search, button } = getHeaderContext(pathname, user?.role, user?.projectManagerIn ?? [])
+  const { icon, showBoardActions, search, button } = getHeaderContext(pathname, user?.role, user?.projectManagerIn ?? [])
 
   return (
     <header className="sticky top-0 z-40 flex items-center justify-between px-6 h-16 bg-white backdrop-blur-sm border-b border-gray-100 transition-all duration-200">
@@ -294,10 +292,14 @@ export default function TopNav() {
 
         {showBoardActions && (
           <div className="">
-            <BoardActionMenu onImportCsv={() => setCsvOpen(true)} onCreateSprint={() => setShowCreate(true)} onManageTags={() => setTagOpen(true)} />
+            <BoardActionMenu onImportCsv={() => setCsvOpen(true)} onCreateSprint={() => {}} onManageTags={() => {}} />
           </div>
         )}
       </div>
+      {showBoardActions && csvOpen && (() => {
+        const sprintId = pathname.split('/').filter(Boolean)[1] ?? ''
+        return <CsvImportModal sprintId={sprintId} isOpen={csvOpen} onClose={() => setCsvOpen(false)} />
+      })()}
     </header>
   )
 }

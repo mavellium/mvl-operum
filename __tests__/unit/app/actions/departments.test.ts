@@ -43,8 +43,8 @@ describe('Department Actions', () => {
   describe('createDepartmentAction', () => {
     it('should create department and return success', async () => {
       const mockSession = { userId: 'u1', tenantId: 't1', role: 'admin' }
-      ;(verifySession as any).mockResolvedValue(mockSession)
-      ;(createDepartment as any).mockResolvedValue({
+      vi.mocked(verifySession).mockResolvedValue(mockSession)
+      vi.mocked(createDepartment).mockResolvedValue({
         id: 'd1',
         name: 'Engineering',
         tenantId: 't1',
@@ -57,8 +57,8 @@ describe('Department Actions', () => {
 
     it('should return error on validation failure', async () => {
       const mockSession = { userId: 'u1', tenantId: 't1', role: 'admin' }
-      ;(verifySession as any).mockResolvedValue(mockSession)
-      ;(createDepartment as any).mockRejectedValue(new Error('Validation error'))
+      vi.mocked(verifySession).mockResolvedValue(mockSession)
+      vi.mocked(createDepartment).mockRejectedValue(new Error('Validation error'))
 
       const result = await createDepartmentAction({}, { name: '' })
       expect(result).toHaveProperty('error')
@@ -68,8 +68,8 @@ describe('Department Actions', () => {
   describe('getDepartmentsAction', () => {
     it('should return list of departments for tenant', async () => {
       const mockSession = { userId: 'u1', tenantId: 't1', role: 'member' }
-      ;(verifySession as any).mockResolvedValue(mockSession)
-      ;(findAllByTenant as any).mockResolvedValue([
+      vi.mocked(verifySession).mockResolvedValue(mockSession)
+      vi.mocked(findAllByTenant).mockResolvedValue([
         { id: 'd1', name: 'Engineering' },
         { id: 'd2', name: 'Design' },
       ])
@@ -80,7 +80,7 @@ describe('Department Actions', () => {
     })
 
     it('should return empty array on error', async () => {
-      ;(verifySession as any).mockRejectedValue(new Error('Auth error'))
+      vi.mocked(verifySession).mockRejectedValue(new Error('Auth error'))
 
       const result = await getDepartmentsAction()
       expect(Array.isArray(result)).toBe(true)
@@ -90,8 +90,8 @@ describe('Department Actions', () => {
   describe('updateDepartmentAction', () => {
     it('should update department and return success', async () => {
       const mockSession = { userId: 'u1', tenantId: 't1', role: 'admin' }
-      ;(verifySession as any).mockResolvedValue(mockSession)
-      ;(updateDepartment as any).mockResolvedValue({
+      vi.mocked(verifySession).mockResolvedValue(mockSession)
+      vi.mocked(updateDepartment).mockResolvedValue({
         id: 'd1',
         name: 'Updated Dept',
       })
@@ -102,8 +102,8 @@ describe('Department Actions', () => {
 
     it('should return error on update failure', async () => {
       const mockSession = { userId: 'u1', tenantId: 't1', role: 'admin' }
-      ;(verifySession as any).mockResolvedValue(mockSession)
-      ;(updateDepartment as any).mockRejectedValue(new Error('Not found'))
+      vi.mocked(verifySession).mockResolvedValue(mockSession)
+      vi.mocked(updateDepartment).mockRejectedValue(new Error('Not found'))
 
       const result = await updateDepartmentAction({}, 'nonexistent', { name: 'Test' })
       expect(result).toHaveProperty('error')
@@ -113,8 +113,8 @@ describe('Department Actions', () => {
   describe('deactivateDepartmentAction', () => {
     it('should deactivate department and return success', async () => {
       const mockSession = { userId: 'u1', tenantId: 't1', role: 'admin' }
-      ;(verifySession as any).mockResolvedValue(mockSession)
-      ;(deactivate as any).mockResolvedValue({ id: 'd1', active: false })
+      vi.mocked(verifySession).mockResolvedValue(mockSession)
+      vi.mocked(deactivate).mockResolvedValue({ id: 'd1', active: false })
 
       const result = await deactivateDepartmentAction('d1')
       expect(result).toHaveProperty('success')
@@ -123,8 +123,8 @@ describe('Department Actions', () => {
 
     it('should return error if deactivation fails', async () => {
       const mockSession = { userId: 'u1', tenantId: 't1', role: 'admin' }
-      ;(verifySession as any).mockResolvedValue(mockSession)
-      ;(deactivate as any).mockRejectedValue(new Error('Has users'))
+      vi.mocked(verifySession).mockResolvedValue(mockSession)
+      vi.mocked(deactivate).mockRejectedValue(new Error('Has users'))
 
       const result = await deactivateDepartmentAction('d1')
       expect(result).toHaveProperty('error')
@@ -134,16 +134,16 @@ describe('Department Actions', () => {
   describe('getOrCreateDepartmentAction', () => {
     it('should return department preserving original case', async () => {
       const mockSession = { userId: 'u1', tenantId: 't1', role: 'admin' }
-      ;(verifySession as any).mockResolvedValue(mockSession)
-      ;(getOrCreateDepartment as any).mockResolvedValue({ id: 'd1', name: 'IT', tenantId: 't1' })
+      vi.mocked(verifySession).mockResolvedValue(mockSession)
+      vi.mocked(getOrCreateDepartment).mockResolvedValue({ id: 'd1', name: 'IT', tenantId: 't1' })
 
       const result = await getOrCreateDepartmentAction('IT')
       expect(result).toHaveProperty('department')
-      expect((result as any).department.name).toBe('IT')
+      expect((result as { department?: { name: string } }).department?.name).toBe('IT')
     })
 
     it('should return error on failure', async () => {
-      ;(verifySession as any).mockRejectedValue(new Error('Auth error'))
+      vi.mocked(verifySession).mockRejectedValue(new Error('Auth error'))
 
       const result = await getOrCreateDepartmentAction('IT')
       expect(result).toHaveProperty('error')
@@ -153,20 +153,20 @@ describe('Department Actions', () => {
   describe('updateDepartmentNameAction', () => {
     it('should call updateDepartment with trimmed name preserving case', async () => {
       const mockSession = { userId: 'u1', tenantId: 't1', role: 'admin' }
-      ;(verifySession as any).mockResolvedValue(mockSession)
-      ;(updateDepartment as any).mockResolvedValue({ id: 'd1', name: 'Technology' })
+      vi.mocked(verifySession).mockResolvedValue(mockSession)
+      vi.mocked(updateDepartment).mockResolvedValue({ id: 'd1', name: 'Technology' })
 
       const result = await updateDepartmentNameAction('d1', 'Technology')
       expect(result).toHaveProperty('department')
-      expect((result as any).department.name).toBe('Technology')
+      expect((result as { department?: { name: string } }).department?.name).toBe('Technology')
       // Must NOT downcase — should pass 'Technology', not 'technology'
       expect(updateDepartment).toHaveBeenCalledWith('d1', { name: 'Technology' })
     })
 
     it('should return error on failure', async () => {
       const mockSession = { userId: 'u1', tenantId: 't1', role: 'admin' }
-      ;(verifySession as any).mockResolvedValue(mockSession)
-      ;(updateDepartment as any).mockRejectedValue(new Error('Not found'))
+      vi.mocked(verifySession).mockResolvedValue(mockSession)
+      vi.mocked(updateDepartment).mockRejectedValue(new Error('Not found'))
 
       const result = await updateDepartmentNameAction('nonexistent', 'X')
       expect(result).toHaveProperty('error')
@@ -176,18 +176,18 @@ describe('Department Actions', () => {
   describe('deleteDepartmentAction', () => {
     it('should soft-delete department and return success', async () => {
       const mockSession = { userId: 'u1', tenantId: 't1', role: 'admin' }
-      ;(verifySession as any).mockResolvedValue(mockSession)
-      ;(softDeleteDepartment as any).mockResolvedValue({ id: 'd1', deletedAt: new Date() })
+      vi.mocked(verifySession).mockResolvedValue(mockSession)
+      vi.mocked(softDeleteDepartment).mockResolvedValue({ id: 'd1', deletedAt: new Date() })
 
       const result = await deleteDepartmentAction('d1')
       expect(result).toHaveProperty('success')
-      expect((result as any).success).toBe(true)
+      expect((result as { success?: boolean }).success).toBe(true)
     })
 
     it('should return error on failure', async () => {
       const mockSession = { userId: 'u1', tenantId: 't1', role: 'admin' }
-      ;(verifySession as any).mockResolvedValue(mockSession)
-      ;(softDeleteDepartment as any).mockRejectedValue(new Error('Not found'))
+      vi.mocked(verifySession).mockResolvedValue(mockSession)
+      vi.mocked(softDeleteDepartment).mockRejectedValue(new Error('Not found'))
 
       const result = await deleteDepartmentAction('nonexistent')
       expect(result).toHaveProperty('error')

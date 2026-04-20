@@ -44,6 +44,16 @@ vi.mock('@/app/actions/cardResponsible', () => ({
   getResponsiblesAction: vi.fn(),
 }))
 
+vi.mock('@/app/actions/comentarios', () => ({
+  createCommentAction: vi.fn(),
+  getCommentsAction: vi.fn().mockResolvedValue({ comments: [] }),
+}))
+
+vi.mock('@/app/actions/attachments', () => ({
+  deleteAttachmentAction: vi.fn(),
+  setCoverAction: vi.fn(),
+}))
+
 vi.mock('next/navigation', () => ({
   useRouter: vi.fn().mockReturnValue({ push: vi.fn(), replace: vi.fn() }),
   usePathname: vi.fn().mockReturnValue('/sprints/s1'),
@@ -135,22 +145,9 @@ describe('SprintBoard', () => {
     expect(titles.length).toBeGreaterThanOrEqual(1)
   })
 
-  // Header parity with SprintListPage
-  it('renders global search input', () => {
-    render(<SprintBoard sprint={sprint} columns={columns} />)
-    expect(screen.getByRole('searchbox', { name: /busca global/i })).toBeInTheDocument()
-  })
-
   it('renders board action menu button', () => {
     render(<SprintBoard sprint={sprint} columns={columns} />)
     expect(screen.getByRole('button', { name: /board actions/i })).toBeInTheDocument()
-  })
-
-  it('renders user avatar and name when currentUser is passed', () => {
-    const currentUser = { id: 'u1', name: 'Ana Lima', email: 'ana@example.com', avatarUrl: null }
-    render(<SprintBoard sprint={sprint} columns={columns} currentUser={currentUser} />)
-    expect(screen.getByRole('button', { name: /menu do usuário/i })).toBeInTheDocument()
-    expect(screen.getAllByText('Ana Lima').length).toBeGreaterThanOrEqual(1)
   })
 
   it('opens CSV import modal via action menu', () => {

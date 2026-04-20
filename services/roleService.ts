@@ -1,4 +1,5 @@
 import prisma from '@/lib/prisma'
+import type { Prisma, RoleScope } from '@/lib/generated/prisma'
 import { CreateRoleSchema, UpdateRoleSchema } from '@/lib/validation/roleSchemas'
 import type { CreateRoleInput, UpdateRoleInput } from '@/lib/validation/roleSchemas'
 import { normalizeNome } from '@/lib/utils/normalize'
@@ -43,9 +44,9 @@ interface FindAllByTenantOptions {
 }
 
 export async function findAllByTenant(tenantId: string, options?: FindAllByTenantOptions) {
-  const where: any = { tenantId, deletedAt: null }
+  const where: Prisma.RoleWhereInput = { tenantId, deletedAt: null }
   if (options?.scope) {
-    where.scope = options.scope
+    where.scope = options.scope as RoleScope
   }
 
   return prisma.role.findMany({

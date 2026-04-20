@@ -21,6 +21,7 @@ services:
       # Link this router to the service that declares port 3000 (defined in docker-compose.yml).
       # Without this, Traefik auto-discovers the service and may default to port 80 → 504.
       - "traefik.http.routers.mvl-staging.service=app-${COMPOSE_PROJECT_NAME}"
+      - "traefik.http.routers.mvl-staging.middlewares=app-ratelimit@file,secure-headers@file"
 
   notification-service:
     deploy:
@@ -34,12 +35,20 @@ services:
     volumes:
       # Named volume scoped to staging
       - staging-pg-data:/var/lib/postgresql/data
-    ports:
-      - "5435:5432"
+    # No ports: block — PostgreSQL must never be reachable from the public internet.
+    # For direct access use an SSH tunnel:
+    #   ssh -L 5435:127.0.0.1:5432 user@vps -N
+    #   then connect to localhost:5435
 
   redis:
-    # Lighter memory limit for staging
-    command: redis-server --appendonly yes --maxmemory 128mb --maxmemory-policy allkeys-lru
+    # Lighter memory limit for staging — must repeat --requirepass because
+    # compose command: overrides the base entirely (not appends).
+    command: >
+      redis-server
+      --appendonly yes
+      --maxmemory 128mb
+      --maxmemory-policy allkeys-lru
+      --requirepass ${REDIS_PASSWORD}
     volumes:
       - staging-redis-data:/data
 

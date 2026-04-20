@@ -36,7 +36,7 @@ async function main() {
   // --- Users ---
   try {
     // Lê direto do banco físico ignorando a validação do schema
-    const users: any[] = await prisma.$queryRaw`SELECT id, address FROM "User" WHERE address IS NOT NULL AND address != ''`
+    const users = await prisma.$queryRaw<{ id: string; address: string }[]>`SELECT id, address FROM "User" WHERE address IS NOT NULL AND address != ''`
     console.log(`Encontrados ${users.length} usuários com endereço antigo.`)
     
     let userUpdated = 0
@@ -49,14 +49,14 @@ async function main() {
       userUpdated++
     }
     console.log(`✅ ${userUpdated} usuários migrados.\n`)
-  } catch (e: any) {
+  } catch {
     console.log('⚠️ Coluna "address" de User já foi deletada fisicamente do banco.\n')
   }
 
   // --- Stakeholders ---
   try {
     // Lê direto do banco físico ignorando a validação do schema
-    const stakeholders: any[] = await prisma.$queryRaw`SELECT id, address FROM "Stakeholder" WHERE address IS NOT NULL AND address != ''`
+    const stakeholders = await prisma.$queryRaw<{ id: string; address: string }[]>`SELECT id, address FROM "Stakeholder" WHERE address IS NOT NULL AND address != ''`
     console.log(`Encontrados ${stakeholders.length} stakeholders com endereço antigo.`)
     
     let skUpdated = 0
@@ -69,7 +69,7 @@ async function main() {
       skUpdated++
     }
     console.log(`✅ ${skUpdated} stakeholders migrados.\n`)
-  } catch (e: any) {
+  } catch {
     console.log('⚠️ Coluna "address" de Stakeholder já foi deletada fisicamente do banco.\n')
   }
 

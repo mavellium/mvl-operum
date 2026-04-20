@@ -47,6 +47,7 @@ const makeCard = (overrides: Partial<CardType> = {}): CardType => ({
 const defaultProps = {
   index: 0,
   columnId: 'col1',
+  onClick: vi.fn(),
   onUpdate: vi.fn(),
   onDelete: vi.fn(),
   users: [{ id: 'u1', name: 'Alice', email: 'alice@test.com', avatarUrl: null }],
@@ -60,20 +61,20 @@ beforeEach(() => {
 describe('Card priority badge', () => {
   it('renders alta priority badge with red color class', () => {
     render(<Card {...defaultProps} card={makeCard({ priority: 'alta' })} />)
-    const badge = screen.getByText('alta')
-    expect(badge.className).toMatch(/red/)
+    const container = screen.getByText('alta').closest('div')
+    expect(container?.innerHTML).toMatch(/red/)
   })
 
-  it('renders media priority badge with yellow color class', () => {
+  it('renders media priority badge with amber color class', () => {
     render(<Card {...defaultProps} card={makeCard({ priority: 'media' })} />)
-    const badge = screen.getByText('media')
-    expect(badge.className).toMatch(/yellow/)
+    const container = screen.getByText('media').closest('div')
+    expect(container?.innerHTML).toMatch(/amber/)
   })
 
-  it('renders baixa priority badge with green color class', () => {
+  it('renders baixa priority badge with emerald color class', () => {
     render(<Card {...defaultProps} card={makeCard({ priority: 'baixa' })} />)
-    const badge = screen.getByText('baixa')
-    expect(badge.className).toMatch(/green/)
+    const container = screen.getByText('baixa').closest('div')
+    expect(container?.innerHTML).toMatch(/emerald/)
   })
 
   it('does not render priority badge when priority is not set', () => {

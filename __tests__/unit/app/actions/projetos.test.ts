@@ -4,17 +4,29 @@ vi.mock('@/lib/dal', () => ({
   verifySession: vi.fn(),
 }))
 
-vi.mock('@/services/projetoService', () => ({
+vi.mock('@/services/projectService', () => ({
   createProject: vi.fn(),
   findAllByTenant: vi.fn(),
   findById: vi.fn(),
   updateProject: vi.fn(),
   deleteProject: vi.fn(),
   addMember: vi.fn(),
+  removeMember: vi.fn(),
+  getMembersWithDetails: vi.fn(),
+  updateUserProject: vi.fn(),
+  getUserProjectsWithDetails: vi.fn(),
 }))
+
+vi.mock('@/lib/prisma', () => ({ default: {} }))
 
 vi.mock('@/services/projectRoleService', () => ({
   setProjectManagerRole: vi.fn(),
+  removeProjectRole: vi.fn(),
+  countProjectManagers: vi.fn(),
+}))
+
+vi.mock('@/services/roleService', () => ({
+  getOrCreateRole: vi.fn(),
 }))
 
 vi.mock('next/cache', () => ({
@@ -22,7 +34,7 @@ vi.mock('next/cache', () => ({
 }))
 
 import { verifySession } from '@/lib/dal'
-import { createProject, findAllByTenant, findById, updateProject, deleteProject } from '@/services/projetoService'
+import { createProject, findAllByTenant, findById, updateProject, deleteProject } from '@/services/projectService'
 import {
   createProjetoAction,
   getProjetosAction,
@@ -31,6 +43,8 @@ import {
   deleteProjetoAction,
 } from '@/app/actions/projetos'
 
+const mockSession = { isAuth: true, userId: 'u1', tenantId: 't1', role: 'admin' }
+
 beforeEach(() => {
   vi.clearAllMocks()
 })
@@ -38,29 +52,23 @@ beforeEach(() => {
 describe('Projeto Actions', () => {
   describe('createProjetoAction', () => {
     it('should create project and return success', async () => {
-      const mockSession = { userId: 'u1', tenantId: 't1', role: 'admin' }
-      ;(verifySession as any).mockResolvedValue(mockSession)
-      ;(createProject as any).mockResolvedValue({
-        id: 'p1',
-        name: 'Novo Projeto',
-        tenantId: 't1',
-      })
+      vi.mocked(verifySession).mockResolvedValue(mockSession)
+      vi.mocked(createProject).mockResolvedValue({ id: 'p1', name: 'Novo Projeto', tenantId: 't1' } as never)
 
       const result = await createProjetoAction({}, { name: 'Novo Projeto' })
       expect(result).toHaveProperty('projeto')
     })
 
     it('should return error on failure', async () => {
-      const mockSession = { userId: 'u1', tenantId: 't1', role: 'admin' }
-      ;(verifySession as any).mockResolvedValue(mockSession)
-      ;(createProject as any).mockRejectedValue(new Error('Validation error'))
+      vi.mocked(verifySession).mockResolvedValue(mockSession)
+      vi.mocked(createProject).mockRejectedValue(new Error('Validation error'))
 
       const result = await createProjetoAction({}, { name: '' })
       expect(result).toHaveProperty('error')
     })
 
     it('should return error if not authenticated', async () => {
-      ;(verifySession as any).mockRejectedValue(new Error('Not authenticated'))
+      vi.mocked(verifySession).mockRejectedValue(new Error('Not authenticated'))
 
       const result = await createProjetoAction({}, { name: 'Test' })
       expect(result).toHaveProperty('error')
@@ -69,12 +77,11 @@ describe('Projeto Actions', () => {
 
   describe('getProjetosAction', () => {
     it('should return list of projects for tenant', async () => {
-      const mockSession = { userId: 'u1', tenantId: 't1', role: 'member' }
-      ;(verifySession as any).mockResolvedValue(mockSession)
-      ;(findAllByTenant as any).mockResolvedValue([
+      vi.mocked(verifySession).mockResolvedValue(mockSession)
+      vi.mocked(findAllByTenant).mockResolvedValue([
         { id: 'p1', name: 'Projeto 1' },
         { id: 'p2', name: 'Projeto 2' },
-      ])
+      ] as never)
 
       const result = await getProjetosAction()
       expect(Array.isArray(result)).toBe(true)
@@ -82,7 +89,7 @@ describe('Projeto Actions', () => {
     })
 
     it('should return empty array on error', async () => {
-      ;(verifySession as any).mockRejectedValue(new Error('Auth error'))
+      vi.mocked(verifySession).mockRejectedValue(new Error('Auth error'))
 
       const result = await getProjetosAction()
       expect(Array.isArray(result)).toBe(true)
@@ -92,13 +99,8 @@ describe('Projeto Actions', () => {
 
   describe('getProjetoAction', () => {
     it('should return single project by id', async () => {
-      const mockSession = { userId: 'u1', tenantId: 't1', role: 'member' }
-      ;(verifySession as any).mockResolvedValue(mockSession)
-      ;(findById as any).mockResolvedValue({
-        id: 'p1',
-        name: 'Projeto 1',
-        description: 'Description',
-      })
+      vi.mocked(verifySession).mockResolvedValue(mockSession)
+      vi.mocked(findById).mockResolvedValue({ id: 'p1', name: 'Projeto 1', description: 'Description' } as never)
 
       const result = await getProjetoAction('p1')
       expect(result).toHaveProperty('projeto')
@@ -106,9 +108,8 @@ describe('Projeto Actions', () => {
     })
 
     it('should return error if project not found', async () => {
-      const mockSession = { userId: 'u1', tenantId: 't1', role: 'member' }
-      ;(verifySession as any).mockResolvedValue(mockSession)
-      ;(findById as any).mockResolvedValue(null)
+      vi.mocked(verifySession).mockResolvedValue(mockSession)
+      vi.mocked(findById).mockResolvedValue(null)
 
       const result = await getProjetoAction('nonexistent')
       expect(result).toHaveProperty('error')
@@ -117,21 +118,16 @@ describe('Projeto Actions', () => {
 
   describe('updateProjetoAction', () => {
     it('should update project and return success', async () => {
-      const mockSession = { userId: 'u1', tenantId: 't1', role: 'admin' }
-      ;(verifySession as any).mockResolvedValue(mockSession)
-      ;(updateProject as any).mockResolvedValue({
-        id: 'p1',
-        name: 'Updated Name',
-      })
+      vi.mocked(verifySession).mockResolvedValue(mockSession)
+      vi.mocked(updateProject).mockResolvedValue({ id: 'p1', name: 'Updated Name' } as never)
 
       const result = await updateProjetoAction({}, 'p1', { name: 'Updated Name' })
       expect(result).toHaveProperty('projeto')
     })
 
     it('should return error on update failure', async () => {
-      const mockSession = { userId: 'u1', tenantId: 't1', role: 'admin' }
-      ;(verifySession as any).mockResolvedValue(mockSession)
-      ;(updateProject as any).mockRejectedValue(new Error('Not found'))
+      vi.mocked(verifySession).mockResolvedValue(mockSession)
+      vi.mocked(updateProject).mockRejectedValue(new Error('Not found'))
 
       const result = await updateProjetoAction({}, 'nonexistent', { name: 'Test' })
       expect(result).toHaveProperty('error')
@@ -140,9 +136,8 @@ describe('Projeto Actions', () => {
 
   describe('deleteProjetoAction', () => {
     it('should delete project and return success', async () => {
-      const mockSession = { userId: 'u1', tenantId: 't1', role: 'admin' }
-      ;(verifySession as any).mockResolvedValue(mockSession)
-      ;(deleteProject as any).mockResolvedValue({ id: 'p1' })
+      vi.mocked(verifySession).mockResolvedValue(mockSession)
+      vi.mocked(deleteProject).mockResolvedValue({ id: 'p1' } as never)
 
       const result = await deleteProjetoAction('p1')
       expect(result).toHaveProperty('success')
@@ -150,9 +145,8 @@ describe('Projeto Actions', () => {
     })
 
     it('should return error on delete failure', async () => {
-      const mockSession = { userId: 'u1', tenantId: 't1', role: 'admin' }
-      ;(verifySession as any).mockResolvedValue(mockSession)
-      ;(deleteProject as any).mockRejectedValue(new Error('Not found'))
+      vi.mocked(verifySession).mockResolvedValue(mockSession)
+      vi.mocked(deleteProject).mockRejectedValue(new Error('Not found'))
 
       const result = await deleteProjetoAction('nonexistent')
       expect(result).toHaveProperty('error')

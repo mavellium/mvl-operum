@@ -297,6 +297,7 @@ export default function SprintHeader({ sprint, tags = [], onChangeBackground }: 
                     onClick={() => applyBackground(`url(${img})`)}
                     className="w-full h-24 rounded-xl shadow-sm overflow-hidden border border-black/5 hover:scale-[1.02] transition-transform relative"
                   >
+                    {/* eslint-disable-next-line @next/next/no-img-element */}
                     <img src={img} alt={`Fundo ${i}`} className="w-full h-full object-cover" />
                   </button>
                 ))}

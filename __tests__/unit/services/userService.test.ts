@@ -54,7 +54,8 @@ beforeEach(() => vi.clearAllMocks())
 
 describe('getUserProfile', () => {
   it('returns user without passwordHash', async () => {
-    const { passwordHash: _, ...userWithoutHash } = mockUser
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
+    const { passwordHash: _pw, ...userWithoutHash } = mockUser
     mockPrisma.user.findUnique.mockResolvedValue(userWithoutHash)
     const result = await getUserProfile('u1')
     expect(result).not.toHaveProperty('passwordHash')

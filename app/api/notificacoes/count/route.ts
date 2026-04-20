@@ -7,7 +7,10 @@ export async function GET() {
     const serviceUrl = process.env.NOTIFICATION_SERVICE_URL
 
     if (serviceUrl) {
-      const res = await fetch(`${serviceUrl}/notifications/count?userId=${userId}`, { cache: 'no-store' })
+      const res = await fetch(`${serviceUrl}/notifications/count?userId=${userId}`, {
+        cache: 'no-store',
+        headers: { 'x-internal-api-key': process.env.INTERNAL_API_KEY ?? '' },
+      })
       const data = await res.json()
       return NextResponse.json(data)
     }

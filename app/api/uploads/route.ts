@@ -1,5 +1,5 @@
 import { NextResponse } from 'next/server'
-import { decrypt } from '@/lib/session'
+import { verifyRouteSession } from '@/lib/routeAuth'
 import { saveUpload, deleteUpload, ValidationError } from '@/services/fileUploadService'
 import prisma from '@/lib/prisma'
 
@@ -14,10 +14,7 @@ const ALLOWED_TYPES = [
 ]
 
 export async function POST(request: Request) {
-  // Auth check
-  const cookieHeader = request.headers.get('cookie') ?? ''
-  const sessionToken = cookieHeader.match(/session=([^;]+)/)?.[1]
-  const session = await decrypt(sessionToken)
+  const session = await verifyRouteSession(request)
   if (!session?.userId) {
     return Response.json({ error: 'Não autorizado' }, { status: 401 })
   }
@@ -41,6 +38,14 @@ export async function POST(request: Request) {
     )
   }
 
+  const card = await prisma.card.findUnique({
+    where: { id: cardId },
+    select: { sprint: { select: { project: { select: { tenantId: true } } } } },
+  })
+  if (!card || card.sprint?.project?.tenantId !== session.tenantId) {
+    return Response.json({ error: 'Acesso negado' }, { status: 403 })
+  }
+
   try {
     const attachment = await saveUpload(file, cardId)
     return Response.json(attachment, { status: 201 })
@@ -53,9 +58,7 @@ export async function POST(request: Request) {
 }
 
 export async function DELETE(request: Request) {
-  const cookieHeader = request.headers.get('cookie') ?? ''
-  const sessionToken = cookieHeader.match(/session=([^;]+)/)?.[1]
-  const session = await decrypt(sessionToken)
+  const session = await verifyRouteSession(request)
   if (!session?.userId) {
     return NextResponse.json({ error: 'Não autorizado' }, { status: 401 })
   }

@@ -2,6 +2,7 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest'
 
 vi.mock('@/lib/dal', () => ({ verifySession: vi.fn() }))
+vi.mock('next/cache', () => ({ revalidatePath: vi.fn() }))
 vi.mock('@/services/sprintColumnService', () => ({
   getSprintColumns: vi.fn(),
   createSprintColumn: vi.fn(),

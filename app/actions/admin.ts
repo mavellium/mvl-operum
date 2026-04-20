@@ -20,8 +20,8 @@ async function requireAdmin() {
 
 export async function listUsersAction() {
   try {
-    await requireAdmin()
-    const users = await listAllUsers()
+    const { tenantId } = await requireAdmin()
+    const users = await listAllUsers(tenantId)
     return { users }
   } catch (err) {
     return { error: err instanceof Error ? err.message : 'Erro ao listar usuários' }

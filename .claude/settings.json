@@ -6,7 +6,99 @@
       "Bash(grep -v \"//.*fetch\")",
       "Bash(git add *)",
       "Bash(git commit -m ' *)",
-      "Bash(git push *)"
+      "Bash(git push *)",
+      "Skill(update-config)",
+      "Skill(update-config:*)",
+      "Bash(git -C c:/temp/ClaudeCode/mvl-operum log --all --full-history -- private.pem)",
+      "Bash(git -C c:/temp/ClaudeCode/mvl-operum log --all --full-history -- .env)",
+      "Bash(git commit -m 'fix\\(uploads\\): use optional chaining for nullable sprint/project relations *)",
+      "Bash(git commit -m 'fix\\(session\\): defer missing-key guard to encrypt\\(\\) call time *)",
+      "Bash(git commit -m 'fix\\(notification-service\\): remove express type import — use inline type instead *)",
+      "Bash(git -C c:/temp/ClaudeCode/mvl-operum diff)",
+      "Bash(git -C c:/temp/ClaudeCode/mvl-operum log --oneline -5)",
+      "Bash(git -C c:/temp/ClaudeCode/mvl-operum add Dockerfile prisma/schema.prisma)",
+      "Bash(git -C c:/temp/ClaudeCode/mvl-operum commit -m ' *)",
+      "Bash(git -C c:/temp/ClaudeCode/mvl-operum add Dockerfile)",
+      "Bash(git -C c:/temp/ClaudeCode/mvl-operum add .github/workflows/deploy-staging.yml .github/workflows/deploy-production.yml docker-compose.yml)",
+      "Bash(git -C c:/temp/ClaudeCode/mvl-operum add .github/workflows/deploy-staging.yml .github/workflows/deploy-production.yml next.config.ts app/actions/auth.ts lib/crypto.ts services/authService.ts services/adminService.ts prisma/seed.ts)",
+      "Bash(git -C /c/temp/ClaudeCode/mvl-operum log --all --full-history -- \"*.pem\" \"private.pem\" \".env\" \"gerar-chaves.js\")",
+      "Bash(git -C /c/temp/ClaudeCode/mvl-operum log --all --oneline -- \".env\" \"private.pem\" \"jwt_private.pem\")",
+      "Bash(git -C /c/temp/ClaudeCode/mvl-operum log --all --oneline --diff-filter=A -- \"private.pem\" \"jwt_private.pem\" \".env\")",
+      "Bash(git -C /c/temp/ClaudeCode/mvl-operum show --stat HEAD~5)",
+      "Bash(git -C /c/temp/ClaudeCode/mvl-operum log --all --oneline --diff-filter=A -- \"*.pem\")",
+      "Bash(git -C /c/temp/ClaudeCode/mvl-operum log --all --name-only --format=\"%H %s\" -- \"*.pem\")",
+      "Bash(git -C /c/temp/ClaudeCode/mvl-operum log --all --name-only --format=\"%H %s\")",
+      "Bash(git -C /c/temp/ClaudeCode/mvl-operum ls-files --others --ignored --exclude-standard)",
+      "Bash(git -C /c/temp/ClaudeCode/mvl-operum status --short)",
+      "Bash(git -C /c/temp/ClaudeCode/mvl-operum log --all --source --remotes --format=\"%H\")",
+      "Bash(xargs -I {} git -C /c/temp/ClaudeCode/mvl-operum ls-tree --name-only {})",
+      "Bash(xargs -I {} git -C /c/temp/ClaudeCode/mvl-operum diff-tree --no-commit-id -r --name-only {})",
+      "Bash(git -C c:/temp/ClaudeCode/mvl-operum ls-files private.pem jwt_private.pem gerar-chaves.js)",
+      "Bash(git -C c:/temp/ClaudeCode/mvl-operum rm --cached gerar-chaves.js)",
+      "Bash(git -C c:/temp/ClaudeCode/mvl-operum mv docker-compose.override.yml docker-compose.dev.yml)",
+      "Bash(git commit -m 'fix\\(ci\\): use trufflesecurity/trufflehog@main — no floating v3 tag exists *)",
+      "Bash(npx next *)",
+      "Bash(grep -v \"^$\")",
+      "Bash(grep -n 'updateProject\\\\|$transaction' c:/temp/ClaudeCode/mvl-operum/services/projetoService.ts)",
+      "Bash(pnpm lint *)",
+      "Bash(sed -n '185,195p' \"node_modules/.pnpm/jsdom@29.0.1/node_modules/jsdom/lib/jsdom/living/css/helpers/css-values.js\")",
+      "Bash(sed -n '520,575p' \"node_modules/.pnpm/jsdom@29.0.1/node_modules/jsdom/lib/jsdom/living/css/helpers/css-values.js\")",
+      "Bash(sed -n '565,580p' \"node_modules/.pnpm/jsdom@29.0.1/node_modules/jsdom/lib/jsdom/living/css/helpers/css-values.js\")",
+      "Bash(node -e \"const { fileURLToPath } = require\\('url'\\); const { resolve } = require\\('path'\\); const d = 'C:/temp/ClaudeCode/mvl-operum/'; console.log\\(resolve\\(d, 'scripts/vitest-jsdom-patch.cjs'\\)\\)\")",
+      "Bash(node --require \"c:/temp/ClaudeCode/mvl-operum/scripts/vitest-jsdom-patch.cjs\" -e \"const m = require\\('@asamuzakjp/css-color'\\); console.log\\('stub loaded:', typeof m.resolve\\)\")",
+      "Bash(node -e \"const v = require\\('c:/temp/ClaudeCode/mvl-operum/node_modules/vitest/dist/config.js'\\); const keys = Object.keys\\(v || {}\\); console.log\\(keys.slice\\(0,20\\)\\)\")",
+      "Bash(grep -B30 \"Pass additional arguments to \\\\`node\\\\`\" \"node_modules/.pnpm/vitest@4.1.2_@types+node@20_32bce630d250cb9a630046d40056fcb1/node_modules/vitest/dist/chunks/reporters.d.B0uk8id2.d.ts\")",
+      "Bash(pnpm audit *)",
+      "Bash(node -e \"const p = require\\('./package.json'\\); console.log\\('next:', p.dependencies.next\\)\")",
+      "Bash(curl -s \"https://api.github.com/repos/aquasecurity/trivy-action/releases/latest\")",
+      "Bash(pnpm why *)",
+      "Bash(node -e \"const {execSync}=require\\('child_process'\\);console.log\\(execSync\\('pnpm view prisma@7.7.0 dependencies --json 2>/dev/null || echo {}'\\).toString\\(\\)\\)\")",
+      "Read(//c//**)",
+      "Bash(rm -rf /tmp/prisma-check)",
+      "Read(//tmp/**)",
+      "Bash(pnpm view *)",
+      "Bash(python3 -c \"import sys,json; d=json.load\\(sys.stdin\\); print\\(json.dumps\\(d.get\\('dependencies',{}\\), indent=2\\)\\)\")",
+      "Bash(python3 -c \"import sys,json; d=json.load\\(sys.stdin\\); print\\(d.get\\('version'\\)\\); print\\(json.dumps\\(d.get\\('dependencies',{}\\), indent=2\\)\\)\")",
+      "Bash(curl -s \"https://registry.npmjs.org/picomatch/4.0.4\")",
+      "Bash(python3 -c \"import sys,json; d=json.load\\(sys.stdin\\); print\\(d['dist']['integrity']\\)\")",
+      "Bash(xargs python3 *)",
+      "Bash(curl -s \"https://registry.npmjs.org/chokidar/4.0.3\")",
+      "Bash(python3 -c \"import sys,json; d=json.load\\(sys.stdin\\); print\\('version:', d['version']\\); print\\('deps:', json.dumps\\(d.get\\('dependencies',{}\\)\\)\\)\")",
+      "Bash(xargs ls *)",
+      "Bash(curl -s \"https://registry.npmjs.org/chokidar\")",
+      "Bash(python3 -c \"import sys,json; d=json.load\\(sys.stdin\\); print\\('latest:', d['dist-tags']['latest']\\); vers=list\\(d['versions'].keys\\(\\)\\); print\\('recent:', vers[-5:]\\)\")",
+      "Bash(curl -s \"https://registry.npmjs.org/chokidar/5.0.0\")",
+      "Bash(python3 -c \"import sys,json; d=json.load\\(sys.stdin\\); print\\('deps:', json.dumps\\(d.get\\('dependencies',{}\\)\\)\\)\")",
+      "Bash(python3 -c ' *)",
+      "Bash(git -C c:/temp/ClaudeCode/mvl-operum ls-files notification-service/dist)"
+    ]
+  },
+  "hooks": {
+    "PreToolUse": [
+      {
+        "matcher": "Bash",
+        "hooks": [
+          {
+            "type": "agent",
+            "prompt": "You are the Security Automation Enforcer. Read stdin to get the bash command about to run. Extract the command from tool_input.command. If the command matches git push or docker compose up or docker-compose up (deploy commands), do the following security enforcement:\n\n1. Use Glob and Grep tools to scan the project for: hardcoded secrets or credentials in source files (not .env), containers running as root in Dockerfiles, JWT keys committed to repo, critical OWASP issues in app/actions/ and lib/\n2. Check if .github/workflows/ exists and has security scanning configured\n3. Issue a final APPROVED or BLOCKED decision\n\nIf BLOCKED, return JSON: {\"hookSpecificOutput\": {\"hookEventName\": \"PreToolUse\", \"permissionDecision\": \"deny\", \"permissionDecisionReason\": \"SECURITY GATE BLOCKED: [list specific findings with file:line]. Fix these before pushing.\"}}\n\nIf APPROVED, return JSON: {\"hookSpecificOutput\": {\"hookEventName\": \"PreToolUse\", \"permissionDecision\": \"allow\"}}\n\nIf the command is NOT a deploy/push command, return immediately: {\"hookSpecificOutput\": {\"hookEventName\": \"PreToolUse\", \"permissionDecision\": \"allow\"}}"
+          }
+        ]
+      }
+    ],
+    "PostToolUse": [
+      {
+        "matcher": "Edit|Write",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "jq -r '.tool_input.file_path // .tool_response.filePath // \"\"' | { read -r f; echo \"$f\" | grep -qE '(Dockerfile|docker-compose|\\.prisma|proxy\\.ts|notification-service/src|middleware\\.ts|traefik|observability|lib/session|lib/dal|app/actions/auth)' && echo '{\"systemMessage\": \"LEMBRETE: Esta alteração pode impactar a arquitetura. Verifique se docs/architecture.md precisa ser atualizado.\"}' || true; } 2>/dev/null || true"
+          },
+          {
+            "type": "agent",
+            "prompt": "You are a DevSecOps Security Agent. Read stdin to get the file that was just edited. Extract file_path from tool_input.file_path or tool_response.filePath.\n\nFirst, check if the file is security-sensitive by matching against: Dockerfile, docker-compose*.yml, proxy.ts, middleware.ts, lib/session.ts, lib/dal.ts, lib/auth*, app/actions/auth.ts, .github/workflows/*.yml, notification-service/src/**, prisma/schema.prisma, *.env.example\n\nIf NOT security-sensitive: return {\"hookSpecificOutput\": {\"hookEventName\": \"PostToolUse\", \"additionalContext\": \"\"}} and stop immediately.\n\nIf security-sensitive, run the full DevSecOps audit flow:\n\n**Step 1 - DevSecOps Auditor**: Read the modified file. Check for: hardcoded secrets, insecure patterns, OWASP Top 10 violations, missing auth checks, exposed ports, running as root, weak base images.\n\n**Step 2 - IaC Security Specialist** (only for Dockerfile/docker-compose): Check for root user, unnecessary capabilities, exposed sensitive ports, missing health checks.\n\n**Step 3 - AppSec Hardening** (only for .ts/.js files): Check for missing input validation, broken auth, SQL injection via raw Prisma queries, XSS vectors, CSRF risks.\n\n**Step 4 - Security Automation Enforcer**: Consolidate findings. Issue APPROVED or BLOCKED.\n\nReturn: {\"hookSpecificOutput\": {\"hookEventName\": \"PostToolUse\", \"additionalContext\": \"[DEVSECOPS AUDIT - file: <path>]\\nDecision: APPROVED/BLOCKED\\n\\nFindings:\\n<severity>: <issue> at <file>:<line>\\n\\nRequired fixes:\\n<fixes if BLOCKED>\"}}"
+          }
+        ]
+      }
     ]
   }
 }

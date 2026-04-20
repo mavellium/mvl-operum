@@ -13,7 +13,7 @@ interface Props {
   cargosIniciais: Cargo[]
 }
 
-export default function ProjetoFuncoesClient({ projetoId, cargosIniciais }: Props) {
+export default function ProjetoFuncoesClient({ cargosIniciais }: Props) {
   const [cargos, setCargos] = useState<Cargo[]>(cargosIniciais)
   const [search, setSearch] = useState('')
   const [showAdd, setShowAdd] = useState(false)

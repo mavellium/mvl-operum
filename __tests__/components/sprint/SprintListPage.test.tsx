@@ -27,7 +27,6 @@ vi.mock('@/app/actions/tags', () => ({
 }))
 
 const currentUser = { id: 'u1', name: 'Ana Lima', email: 'ana@example.com', avatarUrl: null }
-const tags = [{ id: 't1', name: 'Bug', color: '#ef4444' }]
 
 const sprintsWithMetrics = [
   {
@@ -132,15 +131,6 @@ describe('SprintListPage', () => {
     fireEvent.click(screen.getByText(/importar csv/i))
     // Modal title "Importar CSV" should now appear in the modal header
     expect(screen.getAllByText(/importar csv/i).length).toBeGreaterThanOrEqual(1)
-  })
-
-  it('opens tag manager modal when "Gerenciar Tags" is clicked via action menu', () => {
-    render(<SprintListPage sprintsWithMetrics={sprintsWithMetrics}  tags={tags} />)
-    fireEvent.click(screen.getByRole('button', { name: /board actions/i }))
-    fireEvent.click(screen.getByText(/gerenciar tags/i))
-    // TagManager heading "Tags" should appear after modal opens
-    const tagHeadings = screen.getAllByText(/^tags$/i)
-    expect(tagHeadings.length).toBeGreaterThanOrEqual(1)
   })
 
   it('does not render "Nova Coluna" button (sprint list, not board)', () => {

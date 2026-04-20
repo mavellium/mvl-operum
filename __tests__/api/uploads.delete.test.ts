@@ -1,30 +1,31 @@
 // @vitest-environment node
 import { describe, it, expect, vi, beforeEach } from 'vitest'
 
-vi.mock('@/lib/session', () => ({
-  decrypt: vi.fn(),
+vi.mock('@/lib/routeAuth', () => ({
+  verifyRouteSession: vi.fn(),
 }))
-
 vi.mock('@/services/fileUploadService', () => ({
   deleteUpload: vi.fn(),
   ValidationError: class ValidationError extends Error {
     constructor(message: string) { super(message); this.name = 'ValidationError' }
   },
 }))
-
 vi.mock('@/lib/prisma', () => ({
   default: {
     attachment: { findUnique: vi.fn() },
   },
 }))
+vi.mock('@/lib/session', () => ({
+  decrypt: vi.fn(),
+}))
 
 import { DELETE } from '@/app/api/uploads/route'
-import { decrypt } from '@/lib/session'
 import { deleteUpload } from '@/services/fileUploadService'
+import { verifyRouteSession } from '@/lib/routeAuth'
 import prisma from '@/lib/prisma'
 
-const mockDecrypt = decrypt as ReturnType<typeof vi.fn>
 const mockDeleteUpload = deleteUpload as ReturnType<typeof vi.fn>
+const mockVerifyRoute = verifyRouteSession as ReturnType<typeof vi.fn>
 const mockPrisma = prisma as { attachment: { findUnique: ReturnType<typeof vi.fn> } }
 
 function makeRequest(url: string, cookies = 'session=tok') {
@@ -36,30 +37,28 @@ function makeRequest(url: string, cookies = 'session=tok') {
 
 beforeEach(() => {
   vi.clearAllMocks()
+  mockVerifyRoute.mockResolvedValue({ userId: 'u1', tenantId: 't1' })
 })
 
 describe('DELETE /api/uploads', () => {
   it('returns 401 when not authenticated', async () => {
-    mockDecrypt.mockResolvedValue(null)
+    mockVerifyRoute.mockResolvedValue(null)
     const res = await DELETE(makeRequest('http://localhost/api/uploads?id=a1'))
     expect(res.status).toBe(401)
   })
 
   it('returns 400 when attachment id is missing', async () => {
-    mockDecrypt.mockResolvedValue({ userId: 'u1' })
     const res = await DELETE(makeRequest('http://localhost/api/uploads'))
     expect(res.status).toBe(400)
   })
 
   it('returns 404 when attachment not found', async () => {
-    mockDecrypt.mockResolvedValue({ userId: 'u1' })
     mockPrisma.attachment.findUnique.mockResolvedValue(null)
     const res = await DELETE(makeRequest('http://localhost/api/uploads?id=missing'))
     expect(res.status).toBe(404)
   })
 
   it('returns 403 when user is not the card owner', async () => {
-    mockDecrypt.mockResolvedValue({ userId: 'u1' })
     mockPrisma.attachment.findUnique.mockResolvedValue({
       id: 'a1',
       cardId: 'c1',
@@ -71,7 +70,6 @@ describe('DELETE /api/uploads', () => {
   })
 
   it('returns 204 and removes attachment when owner', async () => {
-    mockDecrypt.mockResolvedValue({ userId: 'u1' })
     mockPrisma.attachment.findUnique.mockResolvedValue({
       id: 'a1',
       cardId: 'c1',

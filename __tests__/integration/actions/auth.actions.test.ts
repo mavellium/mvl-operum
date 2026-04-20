@@ -22,13 +22,16 @@ vi.mock('@/lib/session', () => ({
   decrypt: vi.fn(),
 }))
 vi.mock('next/headers', () => ({
-  cookies: vi.fn(() =>
-    Promise.resolve({
-      set: vi.fn(),
-      delete: vi.fn(),
-      get: vi.fn(),
-    }),
-  ),
+  cookies: vi.fn(),
+  headers: vi.fn(),
+}))
+vi.mock('@/lib/prisma', () => ({
+  default: {
+    tenant: { findFirst: vi.fn() },
+  },
+}))
+vi.mock('@/services/projectService', () => ({
+  getUserActiveProjects: vi.fn(),
 }))
 vi.mock('next/navigation', () => ({
   redirect: vi.fn(),
@@ -37,14 +40,19 @@ vi.mock('next/navigation', () => ({
 import { signupAction, loginAction, logoutAction } from '@/app/actions/auth'
 import { register, login } from '@/services/authService'
 import { encrypt } from '@/lib/session'
-import { cookies } from 'next/headers'
+import { cookies, headers } from 'next/headers'
 import { redirect } from 'next/navigation'
+import prisma from '@/lib/prisma'
+import { getUserActiveProjects } from '@/services/projectService'
 
 const mockRegister = register as ReturnType<typeof vi.fn>
 const mockLogin = login as ReturnType<typeof vi.fn>
 const mockEncrypt = encrypt as ReturnType<typeof vi.fn>
 const mockCookies = cookies as ReturnType<typeof vi.fn>
+const mockHeaders = headers as ReturnType<typeof vi.fn>
 const mockRedirect = redirect as ReturnType<typeof vi.fn>
+const mockPrismaTenant = (prisma as { tenant: { findFirst: ReturnType<typeof vi.fn> } }).tenant
+const mockGetProjects = getUserActiveProjects as ReturnType<typeof vi.fn>
 
 function makeFormData(data: Record<string, string>): FormData {
   const fd = new FormData()
@@ -54,6 +62,9 @@ function makeFormData(data: Record<string, string>): FormData {
 
 beforeEach(() => {
   vi.clearAllMocks()
+  mockPrismaTenant.findFirst.mockResolvedValue({ id: 't1', status: 'ACTIVE' })
+  mockHeaders.mockResolvedValue({ get: vi.fn().mockReturnValue(null) })
+  mockGetProjects.mockResolvedValue([{ projectId: 'p1' }, { projectId: 'p2' }])
 })
 
 describe('signupAction', () => {
@@ -65,7 +76,7 @@ describe('signupAction', () => {
   })
 
   it('sets session cookie and redirects on success', async () => {
-    mockRegister.mockResolvedValue({ id: 'u1', name: 'Ana', email: 'ana@x.com', role: 'member' })
+    mockRegister.mockResolvedValue({ id: 'u1', name: 'Ana', email: 'ana@x.com', role: 'member', tenantId: 't1', tokenVersion: 0 })
     mockEncrypt.mockResolvedValue('jwt-token')
     const cookieStore = { set: vi.fn(), delete: vi.fn(), get: vi.fn() }
     mockCookies.mockResolvedValue(cookieStore)
@@ -88,7 +99,7 @@ describe('loginAction', () => {
   })
 
   it('sets session cookie on valid login', async () => {
-    mockLogin.mockResolvedValue({ userId: 'u1', role: 'member' })
+    mockLogin.mockResolvedValue({ userId: 'u1', role: 'member', tenantId: 't1', tokenVersion: 0 })
     mockEncrypt.mockResolvedValue('jwt-token')
     const cookieStore = { set: vi.fn(), delete: vi.fn(), get: vi.fn() }
     mockCookies.mockResolvedValue(cookieStore)

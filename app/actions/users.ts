@@ -4,8 +4,11 @@ import { verifySession } from '@/lib/dal'
 import { prisma } from '@/lib/prisma'
 
 export async function getUsersAction() {
-  await verifySession()
-  return prisma.user.findMany({ select: { id: true, name: true, email: true } })
+  const { tenantId } = await verifySession()
+  return prisma.user.findMany({
+    where: { tenantId, deletedAt: null },
+    select: { id: true, name: true, email: true, avatarUrl: true },
+  })
 }
 
 export async function getCurrentUserAction() {

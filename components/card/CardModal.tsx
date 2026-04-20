@@ -1,12 +1,11 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, startTransition } from 'react'
 import { Card, CardColor, Attachment } from '@/types/kanban'
 import { assignTagToCardAction, removeTagFromCardAction } from '@/app/actions/tags'
 import { addManualTimeAction } from '@/app/actions/time'
 import CardTimer from './CardTimer'
 import UserAvatar from '@/components/user/UserAvatar'
-import { TagBadge } from '@/components/tag/TagBadge'
 import ColorPicker from './ColorPicker'
 import { TagSelector } from '../tag/TagSelector'
 import MultiUserSelector from './MultiUserSelector'
@@ -38,7 +37,7 @@ type RightPanelMode = 'comments' | 'timer' | 'properties'
 
 export default function CardModal({
   isOpen, onClose, onSubmit, initialCard, users, boardTags, attachments = [],
-  onAttachmentUpload, onAttachmentDelete, onAttachmentSetCover, comments = [], onAddComment
+  comments = [], onAddComment
 }: CardModalProps) {
   
   // Estados Gerais de Dados (Auto-save on close)
@@ -57,7 +56,7 @@ export default function CardModal({
   const [isCommenting, setIsCommenting] = useState(false)
 
   // Estados de UI
-  const [coverIndex, setCoverIndex] = useState(0)
+  const [coverIndex] = useState(0)
   const [rightPanelMode, setRightPanelMode] = useState<RightPanelMode>('comments')
 
   // Estados para Registro Manual de Tempo
@@ -72,23 +71,22 @@ export default function CardModal({
   // Setup Inicial e Bloqueio de Scroll
   useEffect(() => {
     if (isOpen) {
-      setTitle(initialCard?.title ?? '')
-      setSavedDescription(initialCard?.description ?? '')
-      setDraftDescription(initialCard?.description ?? '')
-      setColor(initialCard?.color ?? DEFAULT_COLOR)
-      setPriority(initialCard?.priority ?? 'media')
-      setSelectedTagIds(initialCard?.tags?.map(t => t.tagId) ?? [])
-      
-      setError('')
-      setIsEditingDesc(false)
-      setIsCommenting(false)
-      setRightPanelMode('comments')
-      
-      setManualHours('')
-      setManualMinutes('')
-      setManualDesc('')
-
-      document.body.style.overflow = 'hidden' 
+      startTransition(() => {
+        setTitle(initialCard?.title ?? '')
+        setSavedDescription(initialCard?.description ?? '')
+        setDraftDescription(initialCard?.description ?? '')
+        setColor(initialCard?.color ?? DEFAULT_COLOR)
+        setPriority(initialCard?.priority ?? 'media')
+        setSelectedTagIds(initialCard?.tags?.map(t => t.tagId) ?? [])
+        setError('')
+        setIsEditingDesc(false)
+        setIsCommenting(false)
+        setRightPanelMode('comments')
+        setManualHours('')
+        setManualMinutes('')
+        setManualDesc('')
+      })
+      document.body.style.overflow = 'hidden'
     } else {
       document.body.style.overflow = 'unset'
     }
@@ -150,14 +148,15 @@ export default function CardModal({
   if (!isOpen) return null
 
   return (
-    <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 sm:p-6 bg-black/75 backdrop-blur-sm animate-in fade-in duration-200">
-      
+    <div role="dialog" aria-modal="true" className="fixed inset-0 z-[100] flex items-center justify-center p-4 sm:p-6 bg-black/75 backdrop-blur-sm animate-in fade-in duration-200">
+
       <div className="absolute inset-0" onClick={handleCloseModal} aria-hidden="true" />
 
       {/* Container Principal do Modal */}
       <div className="relative w-full max-w-6xl h-[92vh] bg-[#22272B] text-[#B6C2CF] rounded-xl shadow-2xl font-sans flex flex-col overflow-hidden animate-in zoom-in-95 duration-200 border border-white/10">
-        
-        <button 
+
+        <button
+          aria-label="Salvar"
           onClick={handleCloseModal}
           className="absolute top-4 right-4 z-50 p-2 bg-black/40 hover:bg-black/70 text-white rounded-full transition-colors backdrop-blur-md border border-white/10"
         >
@@ -167,6 +166,7 @@ export default function CardModal({
         {/* CAPA FIXA NO TOPO */}
         {hasCover && (
           <div className="relative w-full h-48 sm:h-56 bg-[#111214] shrink-0 group flex items-center justify-center border-b border-[#3B444C]">
+            {/* eslint-disable-next-line @next/next/no-img-element */}
             <img src={imageAttachments[coverIndex].filePath} alt="Capa" className="w-full h-full object-cover opacity-90" />
             <button className="absolute bottom-4 right-4 flex items-center gap-2 px-3 py-1.5 bg-[#22272B]/80 hover:bg-[#2C333A] text-sm text-white font-medium rounded-md backdrop-blur-md border border-[#3B444C] transition-colors">
               <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12" /></svg>
@@ -295,6 +295,7 @@ export default function CardModal({
                       <div key={att.id} className="flex h-24 bg-[#2C333A]/50 hover:bg-[#2C333A] rounded-md overflow-hidden cursor-pointer group transition-colors border border-[#3B444C]">
                         <div className="w-32 bg-[#111214] flex items-center justify-center shrink-0 border-r border-[#3B444C]">
                           {isImg ? (
+                            // eslint-disable-next-line @next/next/no-img-element
                             <img src={att.filePath} alt={att.fileName} className="w-full h-full object-cover" />
                           ) : (
                             <span className="text-xs font-bold text-[#9FADBC] uppercase">{att.fileType.split('/')[1] || 'DOC'}</span>
@@ -457,6 +458,7 @@ export default function CardModal({
                   <div>
                     <h4 className="text-[11px] font-bold text-[#8C9BAB] uppercase mb-3 tracking-wide">Prioridade</h4>
                     <select
+                      aria-label="Prioridade"
                       value={priority}
                       onChange={e => setPriority(e.target.value)}
                       className="w-full bg-[#22272B] border border-[#3B444C] text-white rounded-sm text-sm py-2 px-3 outline-none focus:border-[#579DFF]"

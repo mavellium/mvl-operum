@@ -20,7 +20,14 @@ async function getSprintIdFromAttachment(attachmentId: string) {
 
 export async function setCoverAction(cardId: string, attachmentId: string) {
   try {
-    await verifySession()
+    const { tenantId } = await verifySession()
+    const card = await prisma.card.findUnique({
+      where: { id: cardId },
+      select: { sprint: { select: { project: { select: { tenantId: true } } } } },
+    })
+    if (!card || card.sprint?.project?.tenantId !== tenantId) {
+      return { error: 'Acesso negado' }
+    }
     await prisma.$transaction(async tx => {
       await tx.attachment.updateMany({
         where: { cardId },

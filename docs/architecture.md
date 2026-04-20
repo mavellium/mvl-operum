@@ -8,21 +8,98 @@ Plataforma de gerenciamento de projetos multi-tenant com board Kanban por sprint
 
 ## Stack Tecnológica
 
+### Monolito (Next.js)
+
 | Camada | Tecnologia |
 |--------|------------|
 | Framework | Next.js 16.2.1 (App Router) |
 | UI | React 19.2.4 |
 | Linguagem | TypeScript 5 |
-| Banco de dados | PostgreSQL |
-| ORM | Prisma 7.5.0 com `@prisma/adapter-pg` |
+| Banco de dados | PostgreSQL 17 |
+| ORM | Prisma 7 (`prisma.config.ts`, gera em `lib/generated/prisma`) |
 | Estilização | Tailwind CSS 4 + PostCSS |
 | Drag & Drop | @hello-pangea/dnd 18.0.1 |
-| Autenticação | JWT via `jose` 6.2.2 + `bcryptjs` 3.0.3 |
-| Armazenamento de arquivos | Vercel Blob 2.3.2 |
+| Autenticação | JWT RS256 via `jose` + `bcryptjs` (HS256 fallback em dev) |
+| Armazenamento | MinIO (S3-compatible) via `@aws-sdk/client-s3` |
+| Filas | BullMQ (publisher) via Redis |
 | Validação | Zod 4.3.6 |
 | Gráficos | Recharts 3.8.1 |
 | CSV | papaparse 5.5.3 |
 | Testes | Vitest 4.1.2, Testing Library, MSW, JSDOM |
+
+### Infraestrutura
+
+| Componente | Tecnologia |
+|------------|------------|
+| Containerização | Docker + Docker Compose |
+| Reverse proxy / TLS | Traefik v2.11 (Let's Encrypt automático) |
+| Gerenciador de pacotes | pnpm 10 via corepack |
+| CI/CD | GitHub Actions (SSH deploy para VPS) |
+| Servidor | VPS Hostinger (8 GB RAM, Ubuntu) |
+| Cache / Fila | Redis 7 |
+| Object storage | MinIO (S3-compatible) |
+| Observabilidade (prod) | Prometheus + Loki + Grafana |
+
+### Microserviços
+
+| Serviço | Framework | Porta |
+|---------|-----------|-------|
+| notification-service | NestJS 11 + Prisma 7 + BullMQ (consumer) | 4004 |
+
+---
+
+## Ambientes de Deploy
+
+### URLs de Acesso
+
+| Ambiente | Aplicação | MinIO (storage) |
+|----------|-----------|-----------------|
+| **Staging** | https://staging.operum.mavellium.com.br | https://storage-staging.operum.mavellium.com.br |
+| **Produção** | https://operum.mavellium.com.br | https://storage-prod.operum.mavellium.com.br |
+
+### Bancos de Dados (VPS `187.77.236.241`)
+
+| Ambiente | Host interno (Docker) | Porta externa | Nome do banco |
+|----------|----------------------|---------------|---------------|
+| Staging | `postgres:5432` | `5435` | `mvloperum` |
+| Produção | `postgres:5432` | não exposta | `mvloperum_prod` |
+
+> Para acessar o banco de produção localmente via Prisma Studio, use SSH tunnel:
+> ```bash
+> # 1. Obter IP do container (no VPS)
+> docker inspect mvloperum-prod-postgres-1 --format '{{range .NetworkSettings.Networks}}{{.IPAddress}}{{end}}'
+> # 2. Alternativa: expor via socat
+> docker run --rm -it --network mvloperum-prod_internal -p 15432:5432 alpine/socat TCP-LISTEN:5432,fork,reuseaddr TCP:postgres:5432
+> # 3. Tunnel SSH (local)
+> ssh -L 15433:localhost:15432 root@187.77.236.241 -N
+> # DATABASE_URL para Studio:
+> # postgresql://mvluser:<SENHA>@localhost:15433/mvloperum_prod
+> ```
+
+### Layout no VPS
+
+```
+/opt/mvloperum/
+├── shared/          # traefik (docker-compose.traefik.yml)
+├── staging/         # docker-compose.yml + docker-compose.staging.yml + .env
+└── prod/            # docker-compose.yml + docker-compose.production.yml + .env
+```
+
+### Variáveis de Ambiente por Ambiente
+
+| Variável | Staging | Produção |
+|----------|---------|----------|
+| `COMPOSE_PROJECT_NAME` | `staging` (default pelo dir) | `mvloperum-prod` |
+| `IMAGE_TAG` | `staging` | `prod` |
+| `DATABASE_URL` | `postgresql://...@postgres:5432/mvloperum` | `postgresql://...@postgres:5432/mvloperum_prod` |
+| `MINIO_BUCKET` | `mvloperum` | `mvloperum-prod` |
+| `MINIO_PUBLIC_URL` | `https://storage-staging.operum.mavellium.com.br` | `https://storage-prod.operum.mavellium.com.br` |
+| `JWT_PRIVATE_KEY` | Chave RS256 exclusiva | Chave RS256 exclusiva |
+| `JWT_PUBLIC_KEY` | Chave RS256 exclusiva | Chave RS256 exclusiva |
+
+### Traefik Compartilhado
+
+Traefik roda em `/opt/mvloperum/shared` conectado à rede externa `traefik-public`. Ambos os ambientes se conectam a essa rede via `networks: traefik-public: external: true`. A configuração crítica é `--providers.docker.network=traefik-public` para que o Traefik descubra os containers corretos.
 
 ---
 
@@ -315,7 +392,7 @@ Avaliação por usuário ao encerrar um sprint: `qualidade` e `dificuldade` (1�
 ### Tag / Attachment
 
 - `Tag` — etiqueta por usuário, vinculada a cards via `CardTag`
-- `Attachment` — arquivo anexado a card (Vercel Blob), pode ser capa do card
+- `Attachment` — arquivo anexado a card (MinIO), pode ser capa do card
 
 ---
 
@@ -386,7 +463,7 @@ Admin cria usuário com forcePasswordChange=true
 | `GET` | `/api/search?q=query` | Busca global em cards e sprints |
 | `GET` | `/api/notificacoes/count` | Contagem de notificações não lidas |
 | `POST` | `/api/csv` | Importação de cards via CSV (multipart) |
-| `POST` | `/api/uploads` | Upload de arquivo (Vercel Blob) |
+| `POST` | `/api/uploads` | Upload de arquivo (MinIO) |
 | `DELETE` | `/api/uploads?id=attachmentId` | Remove arquivo e registro |
 
 A maioria das operações usa **Server Actions**, sem API REST. As rotas acima existem para `FormData` (uploads, CSV) ou polling de baixo custo (contagem de notificações).
@@ -481,7 +558,7 @@ Cada serviço é responsável por um domínio:
 | `notificacaoService` | CRUD de notificações |
 | `tagService` | CRUD de tags (requer tenantId) |
 | `timeService` | Timer e entradas manuais de tempo |
-| `fileUploadService` | Upload/delete no Vercel Blob |
+| `fileUploadService` | Upload/delete no MinIO |
 | `csvImportService` | Parse e importação de CSV |
 | `roleService` | CRUD de roles RBAC |
 | `permissionService` | CRUD de permissões |
@@ -521,13 +598,15 @@ Schemas em `lib/validation/`:
 | Mecanismo | Implementação |
 |-----------|---------------|
 | Senha | bcrypt rounds 10–12 |
-| Sessão | JWT httpOnly cookie, `SameSite=strict`, 7 dias |
+| Sessão | JWT RS256 httpOnly cookie, `SameSite=strict`, 7 dias |
+| Algoritmo JWT | RS256 em staging/produção; HS256 fallback em dev local (sem chaves configuradas) |
 | Invalidação de sessão | `tokenVersion` — incrementar invalida todas as sessões |
 | Bloqueio de conta | `isActive=false` verificado em cada request |
 | Troca de senha forçada | `forcePasswordChange` verificado no login e em `verifySession` |
 | Isolamento de dados | Toda query usa `tenantId` da sessão |
 | Validação de input | Zod em todas as actions e API routes |
 | Auditoria | `Auditoria` registra ações críticas com userId, entidade e detalhes |
+| Middleware de auth | `proxy.ts` valida sessão via `http://localhost:PORT/api/me` antes de cada rota protegida |
 
 ---
 
@@ -548,23 +627,133 @@ Schemas em `lib/validation/`:
 
 ## Configuração e Ambiente
 
-**Variáveis de ambiente:**
+**Variáveis de ambiente (monolito):**
 
 | Variável | Uso |
 |----------|-----|
 | `DATABASE_URL` | Connection string do PostgreSQL |
-| `SESSION_SECRET` | Chave de assinatura dos JWTs |
-| `BLOB_READ_WRITE_TOKEN` | Token do Vercel Blob |
+| `SESSION_SECRET` | Chave HS256 (fallback dev — sem `JWT_PRIVATE_KEY`) |
+| `JWT_PRIVATE_KEY` | Chave privada RS256 PEM (newlines como `\n` literal) |
+| `JWT_PUBLIC_KEY` | Chave pública RS256 PEM (newlines como `\n` literal) |
+| `REDIS_HOST` | Host do Redis (default: `redis`) |
+| `REDIS_PORT` | Porta do Redis (default: `6379`) |
+| `MINIO_ENDPOINT` | Hostname do MinIO (default: `localhost`) |
+| `MINIO_PORT` | Porta do MinIO (default: `9000`) |
+| `MINIO_USE_SSL` | `true` para HTTPS no cliente S3 |
+| `MINIO_ACCESS_KEY` | Access key do MinIO |
+| `MINIO_SECRET_KEY` | Secret key do MinIO |
+| `MINIO_BUCKET` | Nome do bucket |
+| `MINIO_PUBLIC_URL` | URL pública base para links de arquivos |
+| `NOTIFICATION_SERVICE_URL` | URL do notification-service (ex: `http://notification-service:4004`). Se não definido, usa banco direto. |
+| `NODE_ENV` | `development` ou `production` |
+| `PORT` | Porta do servidor Next.js (default: `3000`) |
+
+**Variáveis de ambiente (notification-service):**
+
+| Variável | Uso |
+|----------|-----|
+| `DATABASE_URL` | Connection string do PostgreSQL |
+| `REDIS_HOST` | Host do Redis |
+| `REDIS_PORT` | Porta do Redis |
 
 **Comandos úteis:**
 
 ```bash
 pnpm dev                          # servidor de desenvolvimento
 pnpm build                        # build de produção
-npx prisma migrate dev            # aplicar migrações
+npx prisma migrate dev            # aplicar migrações (dev)
 npx prisma generate               # regenerar cliente Prisma
 npx prisma studio                 # GUI do banco
+
+# Deploy manual (staging)
+IMAGE_TAG=staging docker compose -f docker-compose.yml -f docker-compose.staging.yml --env-file .env up -d
+
+# Migrations manual (staging)
+IMAGE_TAG=staging docker compose -f docker-compose.yml -f docker-compose.staging.yml --env-file .env --profile migration run --rm migrate
 ```
+
+---
+
+## Roadmap de Migração (Strangler Fig)
+
+### Fase 0 — Infraestrutura VPS (concluída)
+
+Objetivo: sair do Vercel/Neon e hospedar tudo em VPS Hostinger com Docker.
+
+**O que foi feito:**
+
+1. **Dockerização do monolito** — `Dockerfile` multi-stage (base → deps → builder → runner) usando Node 22 Alpine + pnpm via corepack. Output `standalone` do Next.js.
+
+2. **Docker Compose** — `docker-compose.yml` (base) + overrides `docker-compose.staging.yml` e `docker-compose.production.yml`. Serviços: `app`, `notification-service`, `postgres`, `redis`, `minio`, `migrate` (profile), observabilidade (prod).
+
+3. **Traefik como reverse proxy** — TLS automático via Let's Encrypt (ACME), HTTP→HTTPS redirect, roteamento por `Host()`. Roda separado em `/opt/mvloperum/shared`. Label crítica: `traefik.http.routers.<router>.service=app-${COMPOSE_PROJECT_NAME}` para evitar 504 (Traefik default porta 80).
+
+4. **Dois ambientes isolados** — staging e produção com `COMPOSE_PROJECT_NAME` distintos, bancos separados (`mvloperum` e `mvloperum_prod`), buckets MinIO separados, chaves JWT separadas.
+
+5. **Migração de MinIO → MinIO** — `fileUploadService.ts` e `minio.ts` substituem `@vercel/blob` por `@aws-sdk/client-s3` apontando para MinIO. Buckets públicos para avatars/logos.
+
+6. **JWT HS256 → RS256** — `lib/session.ts` suporta RS256 (chaves `JWT_PRIVATE_KEY`/`JWT_PUBLIC_KEY`) com fallback HS256 para desenvolvimento local sem chaves configuradas. Sessões existentes HS256 continuam válidas durante transição (dual-verify).
+
+7. **CI/CD via GitHub Actions**:
+   - `develop` → deploy staging automático
+   - `main` → deploy produção (automático no push)
+   - Pipeline: checkout → install → build imagens Docker → save tarballs → SCP para VPS → SSH: docker load + migrate + compose up
+
+8. **Fix middleware** — `proxy.ts` faz fetch interno para `/api/me`. Com Traefik (X-Forwarded-Proto: https), `request.url` fica com `https://`. Solução: usar `http://localhost:${PORT}/api/me` para evitar `ERR_SSL_PACKET_LENGTH_TOO_LONG`.
+
+9. **Prisma 7** — schema sem `url` no datasource (movido para `prisma.config.ts`). Gera cliente em `lib/generated/prisma` (não em `node_modules/@prisma/client`).
+
+**Problemas resolvidos:**
+- pnpm symlinks quebram ao copiar `node_modules` entre stages Docker → `pnpm install --prod` no runner (sem `--ignore-scripts` para Prisma baixar engines)
+- `pnpm-workspace.yaml` com `packages: []` em `notification-service` para ancorar lockfile do subdiretório
+- Container `migrate` precisa de `user: "0"` para escrever binários Prisma em `/pnpm`
+
+---
+
+### Fase 1 — Notification Service (concluída)
+
+Objetivo: extrair o primeiro microserviço usando o padrão Strangler Fig.
+
+**Por que notificações primeiro:** zero dependências inbound, CRUD puro, bounded context perfeito.
+
+**Arquitetura:**
+
+```
+Monolito (Next.js)
+  └─ publishNotification()          ← lib/notificationPublisher.ts
+       ├─ se NOTIFICATION_SERVICE_URL definido → BullMQ Queue "notifications"
+       └─ senão → notificacaoService (DB direto, fallback)
+
+notification-service (NestJS :4004)
+  ├─ NotificationController          REST: GET/POST/PATCH/DELETE /notifications
+  ├─ NotificationService             Prisma → tabela Notification
+  └─ NotificationProcessor           BullMQ Worker "notifications" → cria via service
+
+Redis "notifications" queue ←→ BullMQ
+```
+
+**Feature flag:** `NOTIFICATION_SERVICE_URL` no `.env`.
+- **Não definido** → comportamento antigo (DB direto via `notificacaoService.ts`)
+- **Definido** → criações via BullMQ (async), leituras/mutações via HTTP REST
+
+**notification-service:**
+- NestJS 11 + Prisma 7 (schema próprio, só model `Notification`)
+- `prisma.config.ts` com try/catch no dotenv (Docker injeta `DATABASE_URL` diretamente)
+- Porta 4004, healthcheck `/health`
+- Dockerfile independente com `pnpm-workspace.yaml` próprio
+
+**API REST do notification-service:**
+
+| Método | Rota | Descrição |
+|--------|------|-----------|
+| `GET` | `/notifications?userId=&limit=&status=&type=` | Listar notificações |
+| `GET` | `/notifications/count?userId=` | Contagem não lidas |
+| `GET` | `/notifications/:id` | Buscar por ID |
+| `POST` | `/notifications` | Criar notificação |
+| `PATCH` | `/notifications/:id/read` | Marcar como lida |
+| `PATCH` | `/notifications/:id/archive` | Arquivar |
+| `DELETE` | `/notifications/:id` | Soft delete |
+| `GET` | `/health` | Health check |
 
 ---
 

@@ -52,8 +52,8 @@ export default function AlterarSenhaPage() {
               className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm text-gray-900 placeholder:text-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500"
             />
           </div>
-          {(state as any)?.error && (
-            <p className="text-sm text-red-600">{(state as any).error}</p>
+          {(state as { error?: string } | undefined)?.error && (
+            <p className="text-sm text-red-600">{(state as { error?: string }).error}</p>
           )}
           <button
             type="submit"

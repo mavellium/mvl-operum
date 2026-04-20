@@ -21,8 +21,9 @@ async function main() {
   })
 
   // 2. Password
-  const password = 'senha123'
-  const passwordHash = await bcrypt.hash(password, 10)
+  const password = process.env.SEED_ADMIN_PASSWORD
+    ?? (() => { throw new Error('SEED_ADMIN_PASSWORD env var is required') })()
+  const passwordHash = await bcrypt.hash(password, 12)
 
   // 3. User
   const user = await prisma.user.upsert({

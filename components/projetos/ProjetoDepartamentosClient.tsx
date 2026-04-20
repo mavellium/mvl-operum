@@ -6,6 +6,7 @@ import { getOrCreateDepartmentAction, updateDepartmentNameAction, deleteDepartme
 export interface Departamento {
   id: string
   name: string
+  deletedAt?: Date | string | null
 }
 
 interface Props {
@@ -13,7 +14,7 @@ interface Props {
   departamentosIniciais: Departamento[]
 }
 
-export default function ProjetoDepartamentosClient({ projetoId, departamentosIniciais }: Props) {
+export default function ProjetoDepartamentosClient({ departamentosIniciais }: Props) {
   const [departamentos, setDepartamentos] = useState<Departamento[]>(departamentosIniciais)
   const [search, setSearch] = useState('')
   const [showAdd, setShowAdd] = useState(false)
@@ -26,7 +27,7 @@ export default function ProjetoDepartamentosClient({ projetoId, departamentosIni
   const [loadingId, setLoadingId] = useState<string | null>(null)
 
 const filteredDepartamentos = departamentos
-  .filter((d: any) => !d.deletedAt)
+  .filter(d => !d.deletedAt)
   .filter(d => d.name.toLowerCase().includes(search.toLowerCase()))
 
   function handleStartEdit(d: Departamento) {

@@ -1,0 +1,7 @@
+# CVE-2026-33671: picomatch ReDoS via extglob patterns
+# False positive — actual installed version is 4.0.4 (patched).
+# pnpm.overrides forces picomatch>=4.0.4 in both package.json files.
+# pnpm audit confirms no vulnerable version is installed.
+# Trivy misidentifies chokidar@4.0.3 as picomatch@4.0.3 when parsing
+# the pnpm lockfile.
+CVE-2026-33671

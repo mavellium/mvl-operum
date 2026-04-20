@@ -10,9 +10,7 @@ on:
         required: true
 
 env:
-  DEPLOY_PATH: /opt/mvloperum/prod
-  IMAGE_NAME: mvloperum/app
-  NOTIFICATION_IMAGE: mvloperum/notification-service
+  OWNER: ${{ github.repository_owner }}
 
 jobs:
   # ── 0. Manual confirmation guard ─────────────────────────────────────────────
@@ -28,7 +26,34 @@ jobs:
             exit 1
           fi
 
-  # ── 1. Run tests ─────────────────────────────────────────────────────────────
+  # ── Security scan (CodeQL + secrets) ─────────────────────────────────────────
+  security-scan:
+    name: Security Scan
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      security-events: write
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Scan for secrets (TruffleHog)
+        uses: trufflesecurity/trufflehog@main
+        with:
+          path: ./
+          base: ${{ github.event.repository.default_branch }}
+          head: HEAD
+
+      - name: Initialize CodeQL
+        uses: github/codeql-action/init@v3
+        with:
+          languages: javascript-typescript
+
+      - name: Perform CodeQL Analysis
+        uses: github/codeql-action/analyze@v3
+
+  # ── Tests, lint, dependency audit ────────────────────────────────────────────
   test:
     name: Test
     runs-on: ubuntu-latest
@@ -47,114 +72,85 @@ jobs:
       - name: Install dependencies
         run: pnpm install
 
-  # ── 2. Build Docker images ────────────────────────────────────────────────────
+      - name: Lint
+        run: pnpm lint
+
+      - name: Run tests
+        run: pnpm test:run
+
+      - name: Dependency audit
+        run: pnpm audit --audit-level=high
+
+  # ── Build, push to ghcr.io, scan image ───────────────────────────────────────
   build:
-    name: Build
-    needs: test
+    name: Build & Push
+    needs: [security-scan, test]
     runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      packages: write
+    outputs:
+      owner: ${{ steps.meta.outputs.owner }}
     steps:
       - uses: actions/checkout@v4
 
-      - name: Build Docker images
-        run: |
-          docker build \
-            -t ${{ env.IMAGE_NAME }}:${{ github.sha }} \
-            -t ${{ env.IMAGE_NAME }}:prod \
-            .
-          docker build \
-            -t ${{ env.NOTIFICATION_IMAGE }}:${{ github.sha }} \
-            -t ${{ env.NOTIFICATION_IMAGE }}:prod \
-            ./notification-service
+      - name: Normalise owner to lowercase
+        id: meta
+        run: echo "owner=$(echo '${{ env.OWNER }}' | tr '[:upper:]' '[:lower:]')" >> $GITHUB_OUTPUT
 
-      - name: Save images to tarballs
-        run: |
-          docker save ${{ env.IMAGE_NAME }}:${{ github.sha }} | gzip > app.tar.gz
-          docker save ${{ env.NOTIFICATION_IMAGE }}:${{ github.sha }} | gzip > notification-service.tar.gz
-
-      - name: Upload image artifacts
-        uses: actions/upload-artifact@v4
+      - name: Log in to GitHub Container Registry
+        uses: docker/login-action@v3
         with:
-          name: docker-image
-          path: |
-            app.tar.gz
-            notification-service.tar.gz
-          retention-days: 1
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
 
-  # ── 3. Deploy to VPS ─────────────────────────────────────────────────────────
+      - name: Build and push app image
+        run: |
+          IMAGE=ghcr.io/${{ steps.meta.outputs.owner }}/app
+          docker build -t "$IMAGE:${{ github.sha }}" -t "$IMAGE:prod" .
+          docker push "$IMAGE:${{ github.sha }}"
+          docker push "$IMAGE:prod"
+
+      - name: Build and push notification-service image
+        run: |
+          IMAGE=ghcr.io/${{ steps.meta.outputs.owner }}/notification-service
+          docker build -t "$IMAGE:${{ github.sha }}" -t "$IMAGE:prod" ./notification-service
+          docker push "$IMAGE:${{ github.sha }}"
+          docker push "$IMAGE:prod"
+
+      - uses: actions/checkout@v4
+
+      - name: Scan app image for vulnerabilities (Trivy)
+        uses: aquasecurity/trivy-action@v0.35.0
+        with:
+          image-ref: ghcr.io/${{ steps.meta.outputs.owner }}/app:${{ github.sha }}
+          format: table
+          exit-code: '1'
+          severity: CRITICAL,HIGH
+          trivyignores: .trivyignore
+
+      - name: Scan notification-service image (Trivy)
+        uses: aquasecurity/trivy-action@v0.35.0
+        with:
+          image-ref: ghcr.io/${{ steps.meta.outputs.owner }}/notification-service:${{ github.sha }}
+          format: table
+          exit-code: '1'
+          severity: CRITICAL,HIGH
+          trivyignores: .trivyignore
+
+  # ── Trigger deploy on VPS ─────────────────────────────────────────────────────
   deploy:
     name: Deploy
     needs: build
     runs-on: ubuntu-latest
     environment: production
     steps:
-      - uses: actions/checkout@v4
-
-      - name: Download image artifacts
-        uses: actions/download-artifact@v4
-        with:
-          name: docker-image
-
-      - name: Transfer images and compose files to VPS
-        uses: appleboy/scp-action@v0.1.7
-        with:
-          host: ${{ secrets.VPS_HOST }}
-          username: ${{ secrets.VPS_USER }}
-          key: ${{ secrets.VPS_SSH_KEY }}
-          source: "app.tar.gz,notification-service.tar.gz,docker-compose.yml,docker-compose.production.yml"
-          target: /tmp/mvloperum-deploy
-
-      - name: Deploy on VPS
-        uses: appleboy/ssh-action@v1.0.3
-        with:
-          host: ${{ secrets.VPS_HOST }}
-          username: ${{ secrets.VPS_USER }}
-          key: ${{ secrets.VPS_SSH_KEY }}
-          script: |
-            set -e
-
-            export IMAGE_TAG=prod
-
-            mkdir -p ${{ env.DEPLOY_PATH }}
-            cp /tmp/mvloperum-deploy/docker-compose*.yml ${{ env.DEPLOY_PATH }}/
-
-            cd ${{ env.DEPLOY_PATH }}
-
-            echo "Checking .env..."
-            if [ ! -f .env ]; then
-              echo "❌ .env NOT FOUND at ${{ env.DEPLOY_PATH }}/.env"
-              exit 1
-            fi
-
-            chmod 644 .env
-
-            echo "DEBUG DATABASE_URL:"
-            cat .env | grep DATABASE_URL || (echo "❌ DATABASE_URL missing" && exit 1)
-
-            echo "Loading Docker images..."
-            docker load < /tmp/mvloperum-deploy/app.tar.gz
-            docker load < /tmp/mvloperum-deploy/notification-service.tar.gz
-            rm -f /tmp/mvloperum-deploy/app.tar.gz /tmp/mvloperum-deploy/notification-service.tar.gz
-
-            echo "Tagging images..."
-            docker tag mvloperum/app:${{ github.sha }} mvloperum/app:prod
-            docker tag mvloperum/notification-service:${{ github.sha }} mvloperum/notification-service:prod
-
-            echo "Running database migrations..."
-            docker compose \
-              --env-file .env \
-              -f docker-compose.yml \
-              -f docker-compose.production.yml \
-              --profile migration \
-              run --rm migrate
-
-            echo "Starting services..."
-            docker compose \
-              --env-file .env \
-              -f docker-compose.yml \
-              -f docker-compose.production.yml \
-              up -d app notification-service
-
-            echo "Pruning old images..."
-            docker image prune -f
-
-            echo "✅ Production deploy complete: ${{ github.sha }}"
+      - name: Trigger production deploy
+        run: |
+          curl -sf --max-time 300 \
+            -X POST \
+            -H "Content-Type: application/json" \
+            -H "X-Deploy-Token: ${{ secrets.DEPLOY_WEBHOOK_SECRET }}" \
+            -d '{"sha":"${{ github.sha }}","env":"production"}' \
+            "${{ secrets.PRODUCTION_WEBHOOK_URL }}"

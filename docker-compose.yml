@@ -7,8 +7,10 @@ services:
 
   # ── Monolith (Next.js) ─────────────────────────────────────────────────────
   app:
-    image: mvloperum/app:${IMAGE_TAG}
+    image: ghcr.io/${GHCR_OWNER}/app:${IMAGE_TAG}
     restart: always
+    security_opt:
+      - no-new-privileges:true
     environment:
       - NODE_ENV=${NODE_ENV}
       - SESSION_SECRET=${SESSION_SECRET}
@@ -22,8 +24,10 @@ services:
       - MINIO_PUBLIC_URL=${MINIO_PUBLIC_URL}
       - NEXT_PUBLIC_API_URL=${NEXT_PUBLIC_API_URL}
       - NOTIFICATION_SERVICE_URL=http://notification-service:4004
+      - INTERNAL_API_KEY=${INTERNAL_API_KEY}
       - REDIS_HOST=redis
       - REDIS_PORT=6379
+      - REDIS_PASSWORD=${REDIS_PASSWORD}
     labels:
       - "traefik.enable=true"
       # Port declared here so environment overlays can reference this service by name.
@@ -31,6 +35,12 @@ services:
       - "traefik.http.services.app-${COMPOSE_PROJECT_NAME}.loadbalancer.server.port=3000"
     env_file:
       - .env
+    healthcheck:
+      test: ["CMD-SHELL", "wget -qO- http://localhost:3000/api/health || exit 1"]
+      interval: 15s
+      timeout: 5s
+      retries: 3
+      start_period: 30s
     networks:
       - proxy
       - internal
@@ -42,18 +52,28 @@ services:
       redis:
         condition: service_healthy
       notification-service:
-        condition: service_started
+        condition: service_healthy
 
   # ── Notification Service (NestJS) ─────────────────────────────────────────
   notification-service:
-    image: mvloperum/notification-service:${IMAGE_TAG}
+    image: ghcr.io/${GHCR_OWNER}/notification-service:${IMAGE_TAG}
     restart: always
+    security_opt:
+      - no-new-privileges:true
     environment:
       - NODE_ENV=${NODE_ENV}
       - DATABASE_URL=${DATABASE_URL}
+      - INTERNAL_API_KEY=${INTERNAL_API_KEY}
       - REDIS_HOST=redis
       - REDIS_PORT=6379
+      - REDIS_PASSWORD=${REDIS_PASSWORD}
       - PORT=4004
+    healthcheck:
+      test: ["CMD-SHELL", "wget -qO- http://localhost:4004/health || exit 1"]
+      interval: 15s
+      timeout: 5s
+      retries: 3
+      start_period: 20s
     networks:
       - internal
     depends_on:
@@ -64,9 +84,15 @@ services:
 
   # ── Prisma Migrations ─────────────────────────────────────────────────────
   migrate:
-    image: mvloperum/app:${IMAGE_TAG}
+    image: ghcr.io/${GHCR_OWNER}/app:${IMAGE_TAG}
     command: prisma migrate deploy
-    user: "0"
+    # No user: "0" — inherits USER nextjs (uid 1001) from the image.
+    # Prisma does not need root to run migrations.
+    read_only: true
+    tmpfs:
+      - /tmp
+    security_opt:
+      - no-new-privileges:true
     env_file:
       - .env
     networks:
@@ -82,6 +108,8 @@ services:
   postgres:
     image: postgres:17-alpine
     restart: always
+    security_opt:
+      - no-new-privileges:true
     volumes:
       - pg-data:/var/lib/postgresql/data
     environment:
@@ -100,11 +128,18 @@ services:
   redis:
     image: redis:7-alpine
     restart: always
+    security_opt:
+      - no-new-privileges:true
     volumes:
       - redis-data:/data
-    command: redis-server --appendonly yes --maxmemory 256mb --maxmemory-policy allkeys-lru
+    command: >
+      redis-server
+      --appendonly yes
+      --maxmemory 256mb
+      --maxmemory-policy allkeys-lru
+      --requirepass ${REDIS_PASSWORD}
     healthcheck:
-      test: ["CMD", "redis-cli", "ping"]
+      test: ["CMD", "redis-cli", "-a", "${REDIS_PASSWORD}", "ping"]
       interval: 10s
       timeout: 5s
       retries: 5
@@ -113,9 +148,15 @@ services:
 
   # ── MinIO (S3-compatible Storage) ─────────────────────────────────────────
   minio:
-    image: minio/minio:latest
+    # Pin to a specific release — never use :latest in any environment.
+    # Check https://github.com/minio/minio/releases and update periodically.
+    image: minio/minio:RELEASE.2025-04-08T15-41-24Z
     restart: always
-    command: server /data --console-address ":9001"
+    security_opt:
+      - no-new-privileges:true
+    # Bind console to loopback only — prevents accidental public exposure.
+    # Remove --console-address entirely in production to fully disable the console.
+    command: server /data --console-address "127.0.0.1:9001"
     volumes:
       - minio-data:/data
     environment:

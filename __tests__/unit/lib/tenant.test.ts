@@ -3,7 +3,7 @@ import { describe, it, expect, vi, beforeEach } from 'vitest'
 
 vi.mock('@/services/tenantService', () => ({
   getDefaultTenant: vi.fn(),
-  getTenantBysubdomain: vi.fn(),
+  getTenantBySubdomain: vi.fn(),
 }))
 
 import { getDefaultTenant, getTenantBySubdomain } from '@/services/tenantService'

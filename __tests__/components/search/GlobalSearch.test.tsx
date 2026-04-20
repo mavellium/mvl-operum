@@ -73,7 +73,7 @@ describe('GlobalSearch', () => {
       ok: true,
       json: async () => ({
         results: [
-          { id: 'c1', title: 'Fix bug', description: '', color: '#3b82f6', sprintId: 's1', sprint: 'Sprint 1', sprintColumn: 'A Fazer', tags: [] },
+          { id: 'c1', title: 'Fix bug', type: 'card', description: '', color: '#3b82f6', sprintId: 's1', sprint: 'Sprint 1', sprintColumn: 'A Fazer', tags: [] },
         ],
       }),
     }))

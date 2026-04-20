@@ -4,8 +4,25 @@ import { revalidatePath } from 'next/cache'
 import prisma from '@/lib/prisma'
 import { verifySession } from '@/lib/dal'
 
+interface StakeholderInput {
+  name: string
+  company?: string
+  competence?: string
+  email?: string
+  phone?: string
+  cep?: string
+  logradouro?: string
+  numero?: string
+  complemento?: string
+  bairro?: string
+  cidade?: string
+  estado?: string
+  notes?: string
+  logoUrl?: string
+}
+
 // 1. Criar novo Stakeholder Global (e opcionalmente já vincular ao projeto)
-export async function createStakeholderAction(data: any, projectId?: string) {
+export async function createStakeholderAction(data: StakeholderInput, projectId?: string) {
   const { tenantId, role } = await verifySession()
   
   if (role !== 'admin') {
@@ -50,7 +67,7 @@ export async function createStakeholderAction(data: any, projectId?: string) {
 }
 
 // 2. Atualizar dados globais de um Stakeholder
-export async function updateStakeholderAction(stakeholderId: string, data: any, projectId: string) {
+export async function updateStakeholderAction(stakeholderId: string, data: StakeholderInput, projectId: string) {
   const { role } = await verifySession()
   
   if (role !== 'admin') {

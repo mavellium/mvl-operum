@@ -20,6 +20,7 @@ services:
       - "traefik.http.routers.mvl-prod.entrypoints=websecure"
       - "traefik.http.routers.mvl-prod.tls.certresolver=myresolver"
       - "traefik.http.routers.mvl-prod.service=app-${COMPOSE_PROJECT_NAME}"
+      - "traefik.http.routers.mvl-prod.middlewares=app-ratelimit@file,secure-headers@file"
 
   notification-service:
     deploy:
@@ -38,13 +39,23 @@ services:
           memory: 1G
 
   redis:
-    command: redis-server --appendonly yes --maxmemory 256mb --maxmemory-policy allkeys-lru
+    # Must repeat --requirepass because compose command: is a full override.
+    command: >
+      redis-server
+      --appendonly yes
+      --maxmemory 256mb
+      --maxmemory-policy allkeys-lru
+      --requirepass ${REDIS_PASSWORD}
     volumes:
       - prod-redis-data:/data
 
   minio:
     volumes:
       - prod-minio-data:/data
+    # Console disabled in production — omit --console-address entirely.
+    # The base docker-compose.yml binds it to 127.0.0.1:9001; override here
+    # to remove it completely for the production profile.
+    command: server /data
     networks:
       - traefik-public
     labels:
@@ -63,6 +74,13 @@ services:
   prometheus:
     image: prom/prometheus:v2.53.0
     restart: always
+    # Run as nobody (65534) — Prometheus official image supports this.
+    user: "65534:65534"
+    security_opt:
+      - no-new-privileges:true
+    read_only: true
+    tmpfs:
+      - /tmp
     volumes:
       - ./observability/prometheus.yml:/etc/prometheus/prometheus.yml:ro
       - prometheus-data:/prometheus
@@ -80,6 +98,10 @@ services:
   loki:
     image: grafana/loki:3.0.0
     restart: always
+    # loki's default uid in the official image
+    user: "10001:10001"
+    security_opt:
+      - no-new-privileges:true
     volumes:
       - loki-data:/loki
     command: -config.file=/etc/loki/local-config.yaml
@@ -93,17 +115,25 @@ services:
   grafana:
     image: grafana/grafana:11.0.0
     restart: always
+    # grafana's default uid in the official image
+    user: "472:472"
+    security_opt:
+      - no-new-privileges:true
     volumes:
       - grafana-data:/var/lib/grafana
     environment:
       - GF_SECURITY_ADMIN_PASSWORD=${GRAFANA_PASSWORD}
       - GF_SERVER_ROOT_URL=https://grafana.${BASE_DOMAIN}
+      # Disable Grafana's built-in user signup (only admin should exist)
+      - GF_USERS_ALLOW_SIGN_UP=false
+      - GF_AUTH_ANONYMOUS_ENABLED=false
     labels:
       - "traefik.enable=true"
       - "traefik.http.routers.grafana-${COMPOSE_PROJECT_NAME}.rule=Host(`grafana.${BASE_DOMAIN}`)"
       - "traefik.http.routers.grafana-${COMPOSE_PROJECT_NAME}.entrypoints=websecure"
       - "traefik.http.routers.grafana-${COMPOSE_PROJECT_NAME}.tls.certresolver=myresolver"
       - "traefik.http.services.grafana-${COMPOSE_PROJECT_NAME}.loadbalancer.server.port=3000"
+      - "traefik.http.routers.grafana-${COMPOSE_PROJECT_NAME}.middlewares=secure-headers@file"
     networks:
       - traefik-public
       - internal

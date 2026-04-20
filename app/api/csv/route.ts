@@ -1,13 +1,11 @@
-import { decrypt } from '@/lib/session'
+import { verifyRouteSession } from '@/lib/routeAuth'
 import { importCsvRows } from '@/services/csvImportService'
 import prisma from '@/lib/prisma'
 
 const ALLOWED_CSV_TYPES = ['text/csv', 'text/plain']
 
 export async function POST(request: Request) {
-  const cookieHeader = request.headers.get('cookie') ?? ''
-  const sessionToken = cookieHeader.match(/session=([^;]+)/)?.[1]
-  const session = await decrypt(sessionToken)
+  const session = await verifyRouteSession(request)
   if (!session?.userId) {
     return Response.json({ error: 'Não autorizado' }, { status: 401 })
   }
@@ -28,9 +26,15 @@ export async function POST(request: Request) {
     return Response.json({ error: 'sprintId é obrigatório' }, { status: 400 })
   }
 
-  const sprint = await prisma.sprint.findUnique({ where: { id: sprintId } })
+  const sprint = await prisma.sprint.findUnique({
+    where: { id: sprintId },
+    select: { id: true, project: { select: { tenantId: true } } },
+  })
   if (!sprint) {
     return Response.json({ error: 'Sprint não encontrado' }, { status: 404 })
+  }
+  if (sprint.project?.tenantId !== session.tenantId) {
+    return Response.json({ error: 'Acesso negado' }, { status: 403 })
   }
 
   const sprintColumns = await prisma.sprintColumn.findMany({

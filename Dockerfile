@@ -6,6 +6,18 @@ ENV PNPM_HOME="/pnpm"
 ENV PATH="$PNPM_HOME:$PATH"
 RUN corepack enable
 
+# ── Stage: Download Prisma schema-engine ──────────────────────────────────────
+# Plain Alpine Node (no corepack shims) so npm runs unmodified.
+# npm writes to /usr/local/lib — always writable, unlike pnpm's content store.
+# The @prisma/engines postinstall downloads the musl binary here.
+# test -f at the end makes the build fail loudly if the download was skipped.
+FROM node:22-alpine AS engine-dl
+RUN npm install -g prisma@7.7.0 \
+ && find /usr/local/lib/node_modules -name "schema-engine-linux-musl-openssl-3.0.x" -type f \
+    | head -1 \
+    | xargs cp -t /tmp/ \
+ && test -f /tmp/schema-engine-linux-musl-openssl-3.0.x
+
 # ── Stage 1: Install dependencies ─────────────────────────────────────────────
 FROM base AS deps
 WORKDIR /app
@@ -23,9 +35,10 @@ COPY --from=deps /app/node_modules ./node_modules
 COPY . .
 # Generate Prisma client into lib/generated/prisma (output defined in prisma.config.ts).
 # DATABASE_URL is not needed for generation — only the schema is read.
-RUN pnpm exec prisma generate
-ENV NEXT_TELEMETRY_DISABLED=1
+# Set NODE_ENV before build so bundler tree-shakes dev code paths.
 ENV NODE_ENV=production
+ENV NEXT_TELEMETRY_DISABLED=1
+RUN pnpm exec prisma generate
 RUN pnpm build
 
 # ── Stage 3: Runner ───────────────────────────────────────────────────────────
@@ -38,14 +51,21 @@ RUN addgroup --system --gid 1001 nodejs \
  && adduser  --system --uid 1001 nextjs
 
 # Prisma CLI for the migrate service.
-# --ignore-scripts is intentionally omitted: prisma's postinstall downloads
-# engine binaries so they are baked into the image (no network needed at deploy time).
-# chmod ensures the nextjs user can read the global store for any read-only access.
+# Ownership is scoped to nextjs:nodejs — world-execute removed (750 vs 755).
 RUN pnpm add --global prisma@7.7.0 \
- && chmod -R 755 /pnpm
+ && chown -R nextjs:nodejs /pnpm \
+ && chmod -R 750 /pnpm
+
+# Schema-engine binary baked in from the engine-dl stage (npm install to a
+# writable dir). PRISMA_SCHEMA_ENGINE_BINARY overrides the default search paths
+# so the global prisma CLI uses this binary instead of looking in /pnpm/global.
+COPY --from=engine-dl /tmp/schema-engine-linux-musl-openssl-3.0.x /usr/local/bin/prisma-schema-engine
+RUN chmod 750 /usr/local/bin/prisma-schema-engine \
+ && chown nextjs:nodejs /usr/local/bin/prisma-schema-engine
+ENV PRISMA_SCHEMA_ENGINE_BINARY=/usr/local/bin/prisma-schema-engine
 
 # Next.js standalone output (includes a self-contained server.js + minimal node_modules).
-COPY --from=builder /app/public ./public
+COPY --from=builder --chown=nextjs:nodejs /app/public ./public
 COPY --from=builder --chown=nextjs:nodejs /app/.next/standalone ./
 COPY --from=builder --chown=nextjs:nodejs /app/.next/static ./.next/static
 
@@ -53,11 +73,18 @@ COPY --from=builder --chown=nextjs:nodejs /app/.next/static ./.next/static
 COPY --from=builder --chown=nextjs:nodejs /app/lib/generated ./lib/generated
 
 # Prisma schema + config — required by the migrate service at deploy time.
-COPY --from=builder /app/prisma ./prisma
-COPY --from=builder /app/prisma.config.ts ./prisma.config.ts
+# chown so the nextjs user can read them without world-readable permissions.
+COPY --from=builder --chown=nextjs:nodejs /app/prisma ./prisma
+COPY --from=builder --chown=nextjs:nodejs /app/prisma.config.ts ./prisma.config.ts
 
 USER nextjs
+
+# Declare the listening port — informational only, does not publish the port.
 EXPOSE 3000
 ENV PORT=3000
 ENV HOSTNAME="0.0.0.0"
+
+HEALTHCHECK --interval=15s --timeout=5s --start-period=30s --retries=3 \
+  CMD wget -qO- http://localhost:3000/api/health || exit 1
+
 CMD ["node", "server.js"]

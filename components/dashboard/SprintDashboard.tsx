@@ -55,7 +55,7 @@ interface SprintDashboardProps {
   metrics: SprintMetrics
   userMetrics?: UserMetric[]
   cardsByColumn?: CardsByColumn[]
-  overdueCards?: any[]
+  overdueCards?: { id: string; title: string; color: string; endDate: Date | string | null; sprint: { id: string; name: string } | null; sprintColumn: { title: string } | null; responsibles: { user: { id: string; name: string; avatarUrl: string | null } }[] }[]
   feedbacks?: Feedback[]
   avgQualidade?: number | null
   avgDificuldade?: number | null

@@ -123,6 +123,7 @@ function StakeholderAvatar({
 
   if (logoUrl) {
     return (
+      // eslint-disable-next-line @next/next/no-img-element
       <img
         src={logoUrl}
         alt={name}
@@ -291,23 +292,22 @@ export default function ProjetoStakeholdersClient({
 
       const formData = {
         name: formState.name.trim(),
-        logoUrl: formState.logoUrl || null,
-        company: formState.company || null,
-        competence: formState.competence || null,
-        email: formState.email || null,
-        phone: formState.phone || null,
-        cep: formState.address.cep || null,
-        logradouro: formState.address.logradouro || null,
-        numero: formState.address.numero || null,
-        complemento: formState.address.complemento || null,
-        bairro: formState.address.bairro || null,
-        cidade: formState.address.cidade || null,
-        estado: formState.address.estado || null,
-        notes: formState.notes || null,
+        logoUrl: formState.logoUrl || undefined,
+        company: formState.company || undefined,
+        competence: formState.competence || undefined,
+        email: formState.email || undefined,
+        phone: formState.phone || undefined,
+        cep: formState.address.cep || undefined,
+        logradouro: formState.address.logradouro || undefined,
+        numero: formState.address.numero || undefined,
+        complemento: formState.address.complemento || undefined,
+        bairro: formState.address.bairro || undefined,
+        cidade: formState.address.cidade || undefined,
+        estado: formState.address.estado || undefined,
+        notes: formState.notes || undefined,
       }
 
       setLoadingId('form')
-      // Passa projetoId para que a action já vincule automaticamente ao criar
       const result = await createStakeholderAction(formData, projetoId)
       setLoadingId(null)
 
@@ -345,7 +345,7 @@ export default function ProjetoStakeholdersClient({
       }
 
       setLoadingId('form')
-      const result = await updateStakeholderAction(selected.id, updated, projetoId)
+      const result = await updateStakeholderAction(selected.id, updated as never, projetoId)
       setLoadingId(null)
 
       if (result.error) {

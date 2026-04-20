@@ -20,9 +20,5 @@ http:
         stsIncludeSubdomains: true
         stsPreload: true
 
-    # Basic auth for Traefik dashboard (restrict access)
-    # Generate password: echo $(htpasswd -nb admin yourpassword) | sed -e s/\\$/\\$\\$/g
-    dashboard-auth:
-      basicAuth:
-        users:
-          - "admin:$$apr1$$placeholder$$changeme"
+    # dashboard-auth is defined via Docker label on the traefik service
+    # using ${TRAEFIK_DASHBOARD_AUTH} from the VPS .env — not stored here.

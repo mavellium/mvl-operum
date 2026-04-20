@@ -1,10 +1,12 @@
 // @vitest-environment node
 import { describe, it, expect, vi, beforeEach } from 'vitest'
 
+vi.mock('@/lib/routeAuth', () => ({
+  verifyRouteSession: vi.fn(),
+}))
 vi.mock('@/lib/session', () => ({
   decrypt: vi.fn(),
 }))
-
 vi.mock('@/lib/prisma', () => ({
   default: {
     card: { findMany: vi.fn() },
@@ -13,9 +15,11 @@ vi.mock('@/lib/prisma', () => ({
 
 import { decrypt } from '@/lib/session'
 import prisma from '@/lib/prisma'
+import { verifyRouteSession } from '@/lib/routeAuth'
 import { GET } from '@/app/api/search/route'
 
 const mockDecrypt = decrypt as ReturnType<typeof vi.fn>
+const mockVerifyRoute = verifyRouteSession as ReturnType<typeof vi.fn>
 const mockPrisma = prisma as { card: { findMany: ReturnType<typeof vi.fn> } }
 
 const makeRequest = (q: string, cookie = 'session=valid-token') =>
@@ -25,12 +29,13 @@ const makeRequest = (q: string, cookie = 'session=valid-token') =>
 
 beforeEach(() => {
   vi.clearAllMocks()
-  mockDecrypt.mockResolvedValue({ userId: 'u1' })
+  mockVerifyRoute.mockResolvedValue({ userId: 'u1', tenantId: 't1' })
+  mockDecrypt.mockResolvedValue({ userId: 'u1', tenantId: 't1' })
 })
 
 describe('GET /api/search', () => {
   it('returns 401 if not authenticated', async () => {
-    mockDecrypt.mockResolvedValue(null)
+    mockVerifyRoute.mockResolvedValue(null)
     const res = await GET(makeRequest('test'))
     expect(res.status).toBe(401)
   })

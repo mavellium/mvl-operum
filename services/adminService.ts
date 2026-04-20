@@ -1,5 +1,6 @@
 import prisma from '@/lib/prisma'
 import bcrypt from 'bcryptjs'
+import { BCRYPT_ROUNDS } from '@/lib/crypto'
 
 export type AdminUserResult = {
   id: string
@@ -22,9 +23,9 @@ export type AdminUserResult = {
   notes: string | null
 }
 
-export async function listAllUsers() {
+export async function listAllUsers(tenantId: string) {
   return prisma.user.findMany({
-    where: { deletedAt: null },
+    where: { deletedAt: null, tenantId },
     select: {
       id: true,
       name: true,
@@ -59,7 +60,7 @@ export async function adminCreateUser(data: {
   notes?: string
   tenantId: string
 }): Promise<AdminUserResult> {
-  const passwordHash = await bcrypt.hash(data.password, 10)
+  const passwordHash = await bcrypt.hash(data.password, BCRYPT_ROUNDS)
   const user = await prisma.user.create({
     data: {
       name: data.name,
@@ -144,7 +145,7 @@ export async function adminUpdateUser(
   if (data.cidade !== undefined) updateData.cidade = data.cidade
   if (data.estado !== undefined) updateData.estado = data.estado
   if (data.notes !== undefined) updateData.notes = data.notes
-  if (data.password) updateData.passwordHash = await bcrypt.hash(data.password, 10)
+  if (data.password) updateData.passwordHash = await bcrypt.hash(data.password, BCRYPT_ROUNDS)
 
   return prisma.user.update({
     where: { id: userId },

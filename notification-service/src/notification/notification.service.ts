@@ -1,5 +1,5 @@
 import { Injectable, NotFoundException } from '@nestjs/common'
-import { PrismaClient } from '../../lib/generated/prisma'
+import { PrismaClient, Prisma, NotificationStatus } from '../../lib/generated/prisma'
 import { CreateNotificationDto } from './dto/create-notification.dto'
 
 @Injectable()
@@ -20,8 +20,8 @@ export class NotificationService {
   }
 
   async findAllByUser(userId: string, status?: string, limit = 50) {
-    const where: any = { userId, deletedAt: null }
-    if (status) where.status = status
+    const where: Prisma.NotificationWhereInput = { userId, deletedAt: null }
+    if (status) where.status = status as NotificationStatus
 
     return this.prisma.notification.findMany({
       where,

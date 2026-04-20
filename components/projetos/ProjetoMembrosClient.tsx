@@ -23,6 +23,9 @@ interface Usuario {
   cidade?: string | null
   estado?: string | null
   notes?: string | null
+  cargo?: string | null
+  departamento?: string | string[] | null
+  hourlyRate?: number | null
 }
 
 interface Membro extends Usuario {
@@ -103,30 +106,13 @@ const IconPhone = () => (
 const IconWallet = () => (
   <svg className="w-3.5 h-3.5 text-emerald-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 12V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2h14a2 2 0 002-2v-5m-9 1v2m-3-11v2m6-2v2M7 7h10" /></svg>
 )
-const IconStar = () => (
-  <svg className="w-3 h-3" fill="currentColor" viewBox="0 0 20 20"><path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" /></svg>
-)
-
 // Novos Ícones Decorativos
 const IconBriefcase = () => (
   <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 13.255A23.931 23.931 0 0112 15c-3.183 0-6.22-.62-9-1.745M16 6V4a2 2 0 00-2-2h-4a2 2 0 00-2 2v2m4 6h.01M5 20h14a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" /></svg>
 )
-const IconBuilding = () => (
-  <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" /></svg>
-)
 const IconMail = () => (
   <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" /></svg>
 )
-const IconShield = () => (
-  <svg className="w-3.5 h-3.5 text-amber-500" fill="currentColor" viewBox="0 0 20 20"><path fillRule="evenodd" d="M10 1.944A11.954 11.954 0 012.166 5C2.056 5.642 2 6.319 2 7.04c0 5.225 3.364 10.048 8 11.666 4.636-1.618 8-6.441 8-11.666A11.946 11.946 0 0110 1.944zM10 14a1 1 0 100-2 1 1 0 000 2zm0-7a1 1 0 011 1v3a1 1 0 11-2 0V8a1 1 0 011-1z" clipRule="evenodd" /></svg>
-)
-
-const IconCrown = () => (
-  <svg className="w-3.5 h-3.5 text-amber-500" fill="currentColor" viewBox="0 0 24 24">
-    <path d="M12 2l2.4 7.2h7.6l-6 4.8 2.4 7.2-6-4.8-6 4.8 2.4-7.2-6-4.8h7.6z" />
-  </svg>
-)
-
 const inputCls = 'w-full px-3 py-2 border border-gray-200 rounded-xl text-sm bg-white focus:outline-none focus:ring-2 focus:ring-blue-500 transition-shadow'
 const disabledCls = 'disabled:bg-gray-100 disabled:text-gray-400 cursor-not-allowed'
 
@@ -196,7 +182,7 @@ function MultiCreatableSelect({ values = [], onChange, options, placeholder, dis
           ))}
           {showCreateOption && (
             <button onClick={() => handleSelect(search.trim())} className="w-full flex items-center gap-2 px-4 py-2.5 text-sm text-blue-700 font-medium bg-blue-50/50 hover:bg-blue-50 transition-colors border-t border-gray-50">
-              <IconPlus /> Criar tag "{search.trim()}"
+              <IconPlus /> Criar tag {'"'}{search.trim()}{'"'}
             </button>
           )}
           {filteredOptions.length === 0 && !showCreateOption && (
@@ -306,8 +292,8 @@ export default function ProjetoMembrosClient({
           estado: user.estado || '',
         },
         notes: user.notes || '',
-        departamento: (user as any).departamento
-          ? (Array.isArray((user as any).departamento) ? (user as any).departamento : [(user as any).departamento])
+        departamento: user.departamento
+          ? (Array.isArray(user.departamento) ? user.departamento : [user.departamento])
           : [],
       })
     }
@@ -333,7 +319,7 @@ export default function ProjetoMembrosClient({
   function handleAddMember(user: Usuario) {
     if (!isAdmin) return
 
-    const u = user as any;
+    const u = user
     const novoMembro: Membro = {
       ...user,
       userId: user.id,
@@ -553,7 +539,7 @@ export default function ProjetoMembrosClient({
 
   // Máscara de Dinheiro (RTL): 00,00
   const handleCurrencyChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    let value = e.target.value.replace(/\D/g, "")
+    const value = e.target.value.replace(/\D/g, "")
 
     if (!value) {
       setField('hourlyRate', "")

@@ -1,11 +1,13 @@
 import { listAllUsers } from '@/services/adminService'
 import AdminUsersClient from '@/components/admin/AdminUsersClient'
+import { verifySession } from '@/lib/dal'
 import Link from 'next/link'
 
 export const dynamic = 'force-dynamic'
 
 export default async function AdminUsersPage() {
-  const users = await listAllUsers()
+  const { tenantId } = await verifySession()
+  const users = await listAllUsers(tenantId)
 
   return (
     <div className="min-h-screen bg-gray-50">

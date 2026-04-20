@@ -1,6 +1,11 @@
 // @vitest-environment node
 import { describe, it, expect, vi, beforeEach } from 'vitest'
 
+vi.mock('next/cache', () => ({ revalidatePath: vi.fn() }))
+vi.mock('@/services/fileUploadService', () => ({
+  saveUpload: vi.fn(),
+  deleteUpload: vi.fn(),
+}))
 vi.mock('@/lib/dal', () => ({
   verifySession: vi.fn(),
 }))
@@ -10,6 +15,9 @@ vi.mock('@/lib/prisma', () => ({
     attachment: {
       updateMany: vi.fn(),
       update: vi.fn(),
+    },
+    card: {
+      findUnique: vi.fn(),
     },
     $transaction: vi.fn(),
   },
@@ -25,6 +33,7 @@ const mockPrisma = prisma as {
     updateMany: ReturnType<typeof vi.fn>
     update: ReturnType<typeof vi.fn>
   }
+  card: { findUnique: ReturnType<typeof vi.fn> }
   $transaction: ReturnType<typeof vi.fn>
 }
 
@@ -34,7 +43,8 @@ beforeEach(() => {
 
 describe('setCoverAction', () => {
   it('sets isCover true on target and false on all other card attachments', async () => {
-    mockVerify.mockResolvedValue({ userId: 'u1', role: 'member' })
+    mockVerify.mockResolvedValue({ userId: 'u1', role: 'member', tenantId: 't1' })
+    mockPrisma.card.findUnique.mockResolvedValue({ sprint: { project: { tenantId: 't1' } }, sprintId: 's1' })
     mockPrisma.$transaction.mockImplementation(async (fn: (tx: typeof prisma) => Promise<unknown>) => {
       return fn(prisma)
     })

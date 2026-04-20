@@ -1,8 +1,8 @@
 // @vitest-environment node
 import { describe, it, expect, vi, beforeEach } from 'vitest'
 
-vi.mock('@/lib/prisma', () => ({
-  default: {
+vi.mock('@/lib/prisma', () => {
+  const mockPrismaInner = {
     project: {
       findUnique: vi.fn(),
       findFirst: vi.fn(),
@@ -15,8 +15,10 @@ vi.mock('@/lib/prisma', () => ({
       create: vi.fn(),
       update: vi.fn(),
     },
-  },
-}))
+    $transaction: vi.fn().mockImplementation((cb: (tx: unknown) => unknown) => cb(mockPrismaInner)),
+  }
+  return { default: mockPrismaInner }
+})
 
 vi.mock('@/services/projectRoleService', () => ({
   setProjectManagerRole: vi.fn(),
