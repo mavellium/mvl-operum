@@ -20,6 +20,11 @@
     "rxjs": "^7.8.1",
     "zod": "^4.3.6"
   },
+  "pnpm": {
+    "overrides": {
+      "picomatch": ">=4.0.4"
+    }
+  },
   "devDependencies": {
     "@nestjs/cli": "^11.0.0",
     "@nestjs/testing": "^11.0.0",
