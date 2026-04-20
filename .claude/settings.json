@@ -47,7 +47,11 @@
       "Bash(node -e \"const { fileURLToPath } = require\\('url'\\); const { resolve } = require\\('path'\\); const d = 'C:/temp/ClaudeCode/mvl-operum/'; console.log\\(resolve\\(d, 'scripts/vitest-jsdom-patch.cjs'\\)\\)\")",
       "Bash(node --require \"c:/temp/ClaudeCode/mvl-operum/scripts/vitest-jsdom-patch.cjs\" -e \"const m = require\\('@asamuzakjp/css-color'\\); console.log\\('stub loaded:', typeof m.resolve\\)\")",
       "Bash(node -e \"const v = require\\('c:/temp/ClaudeCode/mvl-operum/node_modules/vitest/dist/config.js'\\); const keys = Object.keys\\(v || {}\\); console.log\\(keys.slice\\(0,20\\)\\)\")",
-      "Bash(grep -B30 \"Pass additional arguments to \\\\`node\\\\`\" \"node_modules/.pnpm/vitest@4.1.2_@types+node@20_32bce630d250cb9a630046d40056fcb1/node_modules/vitest/dist/chunks/reporters.d.B0uk8id2.d.ts\")"
+      "Bash(grep -B30 \"Pass additional arguments to \\\\`node\\\\`\" \"node_modules/.pnpm/vitest@4.1.2_@types+node@20_32bce630d250cb9a630046d40056fcb1/node_modules/vitest/dist/chunks/reporters.d.B0uk8id2.d.ts\")",
+      "Bash(pnpm audit *)",
+      "Bash(node -e \"const p = require\\('./package.json'\\); console.log\\('next:', p.dependencies.next\\)\")",
+      "Bash(curl -s \"https://api.github.com/repos/aquasecurity/trivy-action/releases/latest\")",
+      "Bash(pnpm why *)"
     ]
   },
   "hooks": {
