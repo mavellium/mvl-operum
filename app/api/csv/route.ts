@@ -33,7 +33,7 @@ export async function POST(request: Request) {
   if (!sprint) {
     return Response.json({ error: 'Sprint não encontrado' }, { status: 404 })
   }
-  if (sprint.project.tenantId !== session.tenantId) {
+  if (sprint.project?.tenantId !== session.tenantId) {
     return Response.json({ error: 'Acesso negado' }, { status: 403 })
   }
 

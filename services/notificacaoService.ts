@@ -1,4 +1,5 @@
 import prisma from '@/lib/prisma'
+import type { Prisma } from '@/lib/generated/prisma'
 import { CreateNotificacaoSchema } from '@/lib/validation/notificacaoSchemas'
 import type { CreateNotificacaoInput } from '@/lib/validation/notificacaoSchemas'
 
@@ -35,9 +36,9 @@ interface FindAllByUserOptions {
 }
 
 export async function findAllByUser(userId: string, options?: FindAllByUserOptions) {
-  const where: { userId: string; deletedAt: null; status?: string } = { userId, deletedAt: null }
+  const where: Prisma.NotificationWhereInput = { userId, deletedAt: null }
   if (options?.status) {
-    where.status = options.status
+    where.status = options.status as Prisma.NotificationWhereInput['status']
   }
 
   return prisma.notification.findMany({

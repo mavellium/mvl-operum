@@ -25,6 +25,7 @@ interface Usuario {
   notes?: string | null
   cargo?: string | null
   departamento?: string | string[] | null
+  hourlyRate?: number | null
 }
 
 interface Membro extends Usuario {

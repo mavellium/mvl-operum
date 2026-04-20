@@ -7,6 +7,7 @@ import UserAvatar from '@/components/user/UserAvatar'
 import BoardActionMenu from '../board/BoardActionMenu'
 import GlobalSearch from '../search/GlobalSearch'
 import { logoutAction } from '@/app/actions/auth'
+import { CsvImportModal } from '@/components/csv/CsvImportModal'
 
 const HIDDEN_PATHS = ['/login', '/register', '/recuperar-senha', '/alterar-senha', '/no-project']
 
@@ -166,6 +167,7 @@ export default function TopNav() {
   const [userMenuOpen, setUserMenuOpen] = useState(false)
   const userMenuRef = useRef<HTMLDivElement>(null)
   const [isPending, startTransition] = useTransition()
+  const [csvOpen, setCsvOpen] = useState(false)
 
   useEffect(() => {
     function handleClickOutside(event: MouseEvent) {
@@ -290,10 +292,14 @@ export default function TopNav() {
 
         {showBoardActions && (
           <div className="">
-            <BoardActionMenu onImportCsv={() => setCsvOpen(true)} onCreateSprint={() => setShowCreate(true)} onManageTags={() => setTagOpen(true)} />
+            <BoardActionMenu onImportCsv={() => setCsvOpen(true)} onCreateSprint={() => {}} onManageTags={() => {}} />
           </div>
         )}
       </div>
+      {showBoardActions && csvOpen && (() => {
+        const sprintId = pathname.split('/').filter(Boolean)[1] ?? ''
+        return <CsvImportModal sprintId={sprintId} isOpen={csvOpen} onClose={() => setCsvOpen(false)} />
+      })()}
     </header>
   )
 }

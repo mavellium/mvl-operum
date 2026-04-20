@@ -6,6 +6,7 @@ import { getOrCreateDepartmentAction, updateDepartmentNameAction, deleteDepartme
 export interface Departamento {
   id: string
   name: string
+  deletedAt?: Date | string | null
 }
 
 interface Props {
