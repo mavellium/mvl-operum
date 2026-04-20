@@ -120,7 +120,7 @@ jobs:
           docker push "$IMAGE:prod"
 
       - name: Scan app image for vulnerabilities (Trivy)
-        uses: aquasecurity/trivy-action@0.28.0
+        uses: aquasecurity/trivy-action@v0.35.0
         with:
           image-ref: ghcr.io/${{ steps.meta.outputs.owner }}/app:${{ github.sha }}
           format: table
@@ -128,7 +128,7 @@ jobs:
           severity: CRITICAL,HIGH
 
       - name: Scan notification-service image (Trivy)
-        uses: aquasecurity/trivy-action@0.28.0
+        uses: aquasecurity/trivy-action@v0.35.0
         with:
           image-ref: ghcr.io/${{ steps.meta.outputs.owner }}/notification-service:${{ github.sha }}
           format: table
