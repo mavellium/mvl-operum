@@ -170,3 +170,4 @@ jobs:
           target: 'https://staging.operum.mavellium.com.br'
           fail_action: false
           issue_title: 'ZAP Baseline Scan — Staging'
+          artifact_name: 'zap-baseline-report'
