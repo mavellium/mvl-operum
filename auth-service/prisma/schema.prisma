@@ -47,6 +47,15 @@ model User {
   cargo               String?
   departamento        String?
   hourlyRate          Float     @default(0)
+  phone               String?
+  cep                 String?
+  logradouro          String?
+  numero              String?
+  complemento         String?
+  bairro              String?
+  cidade              String?
+  estado              String?
+  notes               String?
   isActive            Boolean   @default(true)
   status              String    @default("active")
   mfaEnabled          Boolean   @default(false)
