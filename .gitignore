@@ -46,3 +46,8 @@ next-env.d.ts
 /lib/generated/prisma
 
 prisma.config.js
+
+# Microservice compiled outputs and generated clients
+auth-service/dist/
+auth-service/lib/
+api-gateway/dist/
