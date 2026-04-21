@@ -1,29 +1,25 @@
 // @vitest-environment node
-import { describe, it, expect, vi, beforeEach } from 'vitest'
+import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest'
+
+vi.hoisted(() => {
+  process.env.FILE_SERVICE_URL = 'http://file-service'
+})
 
 vi.mock('@/lib/routeAuth', () => ({
   verifyRouteSession: vi.fn(),
 }))
-vi.mock('@/services/fileUploadService', () => ({
-  saveUpload: vi.fn(),
-}))
-vi.mock('@/lib/session', () => ({
-  decrypt: vi.fn(),
-}))
-vi.mock('@/lib/prisma', () => ({
-  default: {
-    card: { findUnique: vi.fn() },
+vi.mock('@/lib/api-client', () => ({
+  cardsApi: {
+    get: vi.fn(),
   },
 }))
 
 import { POST } from '@/app/api/uploads/route'
-import { saveUpload } from '@/services/fileUploadService'
 import { verifyRouteSession } from '@/lib/routeAuth'
-import prisma from '@/lib/prisma'
+import { cardsApi } from '@/lib/api-client'
 
-const mockSave = saveUpload as ReturnType<typeof vi.fn>
 const mockVerifyRoute = verifyRouteSession as ReturnType<typeof vi.fn>
-const mockPrisma = prisma as unknown as { card: { findUnique: ReturnType<typeof vi.fn> } }
+const originalFetch = global.fetch
 
 function makeRequest(body: FormData, sessionToken?: string): Request {
   const headers: Record<string, string> = {}
@@ -38,6 +34,10 @@ function makeRequest(body: FormData, sessionToken?: string): Request {
 beforeEach(() => {
   vi.clearAllMocks()
   mockVerifyRoute.mockResolvedValue({ userId: 'u1', tenantId: 't1' })
+})
+
+afterEach(() => {
+  global.fetch = originalFetch
 })
 
 describe('POST /api/uploads', () => {
@@ -64,16 +64,20 @@ describe('POST /api/uploads', () => {
   })
 
   it('returns 201 with Attachment shape on success', async () => {
-    mockPrisma.card.findUnique.mockResolvedValue({ sprint: { project: { tenantId: 't1' } } })
-    mockSave.mockResolvedValue({
+    vi.mocked(cardsApi.get).mockResolvedValue({ id: 'c1', title: 'Card', description: '', color: '#fff' } as never)
+    const attachment = {
       id: 'att1',
       cardId: 'c1',
       fileName: 'photo.jpg',
       fileType: 'image/jpeg',
       filePath: '/uploads/c1/uuid.jpg',
       fileSize: 500,
-      uploadedAt: new Date(),
-    })
+      uploadedAt: new Date().toISOString(),
+    }
+    global.fetch = vi.fn().mockResolvedValue(
+      new Response(JSON.stringify(attachment), { status: 201, headers: { 'Content-Type': 'application/json' } }),
+    )
+
     const form = new FormData()
     form.set('cardId', 'c1')
     form.set('file', new File(['data'], 'photo.jpg', { type: 'image/jpeg' }))

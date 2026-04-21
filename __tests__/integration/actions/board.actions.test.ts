@@ -5,20 +5,19 @@ vi.mock('@/lib/dal', () => ({
   verifySession: vi.fn(),
 }))
 
-vi.mock('@/lib/prisma', () => {
-  const mockPrisma = {
-    user: { findMany: vi.fn(), findUnique: vi.fn() },
-    card: { update: vi.fn() },
-  }
-  return { default: mockPrisma, prisma: mockPrisma }
-})
+vi.mock('@/lib/api-client', () => ({
+  adminApi: {
+    listAllUsers: vi.fn(),
+  },
+  authApi: {
+    me: vi.fn(),
+  },
+}))
 
 import { verifySession } from '@/lib/dal'
-import { prisma } from '@/lib/prisma'
+import { adminApi, authApi } from '@/lib/api-client'
 
 const mockVerifySession = verifySession as ReturnType<typeof vi.fn>
-const mockUserFindMany = prisma.user.findMany as ReturnType<typeof vi.fn>
-const mockUserFindUnique = prisma.user.findUnique as ReturnType<typeof vi.fn>
 
 beforeEach(() => {
   vi.clearAllMocks()
@@ -28,21 +27,17 @@ beforeEach(() => {
 describe('getUsersAction', () => {
   it('returns users without passwordHash', async () => {
     const { getUsersAction } = await import('@/app/actions/users')
-    const users = [{ id: 'u1', name: 'Ana', email: 'ana@x.com' }]
-    mockUserFindMany.mockResolvedValue(users)
+    const users = [{ id: 'u1', name: 'Ana', email: 'ana@x.com', role: 'member', isActive: true }]
+    vi.mocked(adminApi.listAllUsers).mockResolvedValue(users)
 
     const result = await getUsersAction()
     expect(result).toEqual(users)
-    expect(mockUserFindMany).toHaveBeenCalledWith(
-      expect.objectContaining({
-        select: expect.objectContaining({ id: true, name: true, email: true }),
-      }),
-    )
+    expect(adminApi.listAllUsers).toHaveBeenCalledOnce()
   })
 
   it('calls verifySession before querying', async () => {
     const { getUsersAction } = await import('@/app/actions/users')
-    mockUserFindMany.mockResolvedValue([])
+    vi.mocked(adminApi.listAllUsers).mockResolvedValue([])
 
     await getUsersAction()
     expect(mockVerifySession).toHaveBeenCalled()
@@ -52,14 +47,11 @@ describe('getUsersAction', () => {
 describe('getCurrentUserAction', () => {
   it('returns current user based on session userId', async () => {
     const { getCurrentUserAction } = await import('@/app/actions/users')
-    const user = { id: 'u1', name: 'Ana', email: 'ana@x.com' }
-    mockUserFindUnique.mockResolvedValue(user)
+    const user = { id: 'u1', name: 'Ana', email: 'ana@x.com', role: 'member', avatarUrl: null, isActive: true, forcePasswordChange: false }
+    vi.mocked(authApi.me).mockResolvedValue(user)
 
     const result = await getCurrentUserAction()
-    expect(result).toEqual(user)
-    expect(mockUserFindUnique).toHaveBeenCalledWith({
-      where: { id: 'u1' },
-      select: { id: true, name: true, email: true, avatarUrl: true },
-    })
+    expect(result).toMatchObject({ id: 'u1', name: 'Ana' })
+    expect(authApi.me).toHaveBeenCalledOnce()
   })
 })
