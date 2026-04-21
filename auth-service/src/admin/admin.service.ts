@@ -74,7 +74,7 @@ export class AdminService {
         ...rest,
         tenantId,
         passwordHash,
-        role: isAdmin ? 'admin' : 'member',
+        role: _isAdmin ? 'admin' : 'member',
         forcePasswordChange: data.forcePasswordChange ?? false,
       },
     })
