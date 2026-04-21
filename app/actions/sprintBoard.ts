@@ -2,34 +2,17 @@
 
 import { verifySession } from '@/lib/dal'
 import { revalidatePath } from 'next/cache'
-import prisma from '@/lib/prisma'
-import {
-  getSprintColumns,
-  createSprintColumn,
-  initSprintColumns,
-  moveCardInSprint,
-  renameSprintColumn,
-  deleteSprintColumn,
-  reorderSprintColumns,
-} from '@/services/sprintColumnService'
+import { sprintsApi, cardsApi, tagsApi, adminApi } from '@/lib/api-client'
 
 export async function getSprintBoardAction(sprintId: string) {
   try {
-    const { userId } = await verifySession()
-    const sprint = await prisma.sprint.findUnique({ where: { id: sprintId } })
-    if (!sprint) return { error: 'Sprint não encontrado' }
-
-    let columns = await getSprintColumns(sprintId)
-    if (columns.length === 0) {
-      await initSprintColumns(sprintId)
-      columns = await getSprintColumns(sprintId)
-    }
-
-    const [users, tags] = await Promise.all([
-      prisma.user.findMany({ select: { id: true, name: true, email: true, avatarUrl: true } }),
-      prisma.tag.findMany({ where: { userId } }),
+    await verifySession()
+    const [sprint, columns, users, tags] = await Promise.all([
+      sprintsApi.get(sprintId),
+      sprintsApi.listColumns(sprintId),
+      adminApi.listAllUsers(),
+      tagsApi.list(),
     ])
-
     return { sprint, columns, users, tags }
   } catch (err) {
     return { error: err instanceof Error ? err.message : 'Erro ao carregar sprint board' }
@@ -39,9 +22,8 @@ export async function getSprintBoardAction(sprintId: string) {
 export async function addSprintColumnAction(sprintId: string, title: string) {
   try {
     await verifySession()
-    const existing = await getSprintColumns(sprintId)
-    const position = existing.length
-    const column = await createSprintColumn(sprintId, title, position)
+    const existing = await sprintsApi.listColumns(sprintId) as unknown[]
+    const column = await sprintsApi.createColumn(sprintId, { title, position: existing.length })
     revalidatePath(`/sprints/${sprintId}`)
     return { column }
   } catch (err) {
@@ -52,7 +34,7 @@ export async function addSprintColumnAction(sprintId: string, title: string) {
 export async function moveCardInSprintAction(cardId: string, sprintColumnId: string, sprintPosition: number) {
   try {
     await verifySession()
-    await moveCardInSprint(cardId, sprintColumnId, sprintPosition)
+    await cardsApi.update(cardId, { sprintColumnId, sprintPosition })
     return { success: true }
   } catch (err) {
     return { error: err instanceof Error ? err.message : 'Erro ao mover card' }
@@ -69,22 +51,13 @@ export async function createCardInSprintAction(input: {
 }) {
   try {
     await verifySession()
-
-    const existingCards = await prisma.card.count({
-      where: { sprintColumnId: input.sprintColumnId },
-    })
-
-    const card = await prisma.card.create({
-      data: {
-        title: input.title,
-        description: input.description ?? '',
-        color: input.color ?? '#3b82f6',
-        priority: input.priority ?? 'media',
-        position: existingCards,
-        sprintId: input.sprintId,
-        sprintColumnId: input.sprintColumnId,
-        sprintPosition: existingCards,
-      },
+    const card = await cardsApi.create({
+      title: input.title,
+      description: input.description ?? '',
+      color: input.color ?? '#3b82f6',
+      priority: input.priority ?? 'media',
+      sprintId: input.sprintId,
+      sprintColumnId: input.sprintColumnId,
     })
     revalidatePath(`/sprints/${input.sprintId}`)
     return { card }
@@ -93,33 +66,32 @@ export async function createCardInSprintAction(input: {
   }
 }
 
-export async function renameSprintColumnAction(columnId: string, title: string) {
+export async function renameSprintColumnAction(sprintId: string, columnId: string, title: string) {
   try {
     await verifySession()
-    const column = await renameSprintColumn(columnId, title)
-    revalidatePath(`/sprints/${column.sprintId}`)
+    const column = await sprintsApi.updateColumn(sprintId, columnId, { title })
+    revalidatePath(`/sprints/${sprintId}`)
     return { column }
   } catch (err) {
     return { error: err instanceof Error ? err.message : 'Erro ao renomear coluna' }
   }
 }
 
-export async function deleteSprintColumnAction(columnId: string) {
+export async function deleteSprintColumnAction(sprintId: string, columnId: string) {
   try {
     await verifySession()
-    const col = await prisma.sprintColumn.findUnique({ where: { id: columnId }, select: { sprintId: true } })
-    await deleteSprintColumn(columnId)
-    if (col) revalidatePath(`/sprints/${col.sprintId}`)
+    await sprintsApi.deleteColumn(sprintId, columnId)
+    revalidatePath(`/sprints/${sprintId}`)
     return { success: true }
   } catch (err) {
     return { error: err instanceof Error ? err.message : 'Erro ao excluir coluna' }
   }
 }
 
-export async function reorderSprintColumnsAction(columnIds: string[]) {
+export async function reorderSprintColumnsAction(sprintId: string, columnIds: string[]) {
   try {
     await verifySession()
-    await reorderSprintColumns(columnIds)
+    await sprintsApi.reorderColumns(sprintId, columnIds)
     return { success: true }
   } catch (err) {
     return { error: err instanceof Error ? err.message : 'Erro ao reordenar colunas' }
@@ -127,30 +99,25 @@ export async function reorderSprintColumnsAction(columnIds: string[]) {
 }
 
 export async function updateCardInSprintAction(
+  sprintId: string,
   cardId: string,
-  data: {
-    title: string
-    description: string
-    color: string
-    priority?: string
-  },
+  data: { title: string; description: string; color: string; priority?: string },
 ) {
   try {
     await verifySession()
-    const card = await prisma.card.update({ where: { id: cardId }, data })
-    revalidatePath(`/sprints/${card.sprintId}`)
+    const card = await cardsApi.update(cardId, data as Record<string, unknown>)
+    revalidatePath(`/sprints/${sprintId}`)
     return { card }
   } catch (err) {
     return { error: err instanceof Error ? err.message : 'Erro ao atualizar card' }
   }
 }
 
-export async function deleteCardInSprintAction(cardId: string) {
+export async function deleteCardInSprintAction(sprintId: string, cardId: string) {
   try {
     await verifySession()
-    const card = await prisma.card.findUnique({ where: { id: cardId }, select: { sprintId: true } })
-    await prisma.card.update({ where: { id: cardId }, data: { deletedAt: new Date() } })
-    if (card) revalidatePath(`/sprints/${card.sprintId}`)
+    await cardsApi.delete(cardId)
+    revalidatePath(`/sprints/${sprintId}`)
     return { success: true }
   } catch (err) {
     return { error: err instanceof Error ? err.message : 'Erro ao excluir card' }
@@ -163,7 +130,7 @@ export async function updateSprintMetaAction(
 ) {
   try {
     await verifySession()
-    const sprint = await prisma.sprint.update({ where: { id: sprintId }, data })
+    const sprint = await sprintsApi.update(sprintId, data as Record<string, unknown>)
     revalidatePath(`/sprints/${sprintId}`)
     revalidatePath('/sprints')
     return { sprint }

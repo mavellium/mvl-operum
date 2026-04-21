@@ -2,41 +2,12 @@
 
 import { verifySession } from '@/lib/dal'
 import { revalidatePath } from 'next/cache'
-
-function serviceUrl() {
-  return process.env.NOTIFICATION_SERVICE_URL
-}
-
-function internalHeaders(): Record<string, string> {
-  return { 'x-internal-api-key': process.env.INTERNAL_API_KEY ?? '' }
-}
-
-async function serviceGet(path: string) {
-  const res = await fetch(`${serviceUrl()}${path}`, { cache: 'no-store', headers: internalHeaders() })
-  if (!res.ok) throw new Error(`notification-service error: ${res.status}`)
-  return res.json()
-}
-
-async function servicePatch(path: string) {
-  const res = await fetch(`${serviceUrl()}${path}`, { method: 'PATCH', headers: internalHeaders() })
-  if (!res.ok) throw new Error(`notification-service error: ${res.status}`)
-  return res.json()
-}
+import { notificationsApi } from '@/lib/api-client'
 
 export async function getNotificacoesAction(filters?: { status?: string; type?: string }) {
   try {
     const { userId } = await verifySession()
-
-    if (serviceUrl()) {
-      const params = new URLSearchParams({ userId, limit: '100' })
-      const notifications = (await serviceGet(`/notifications?${params}`)) as Array<{ id: string; type: string; status: string }>
-      if (filters?.type) return notifications.filter(n => n.type === filters.type)
-      if (filters?.status) return notifications.filter(n => n.status === filters.status)
-      return notifications
-    }
-
-    const { findAllByUser } = await import('@/services/notificacaoService')
-    const notifications = await findAllByUser(userId, { limit: 100 })
+    const notifications = await notificationsApi.list(userId) as Array<{ type: string; status: string }>
     if (filters?.type) return notifications.filter(n => n.type === filters.type)
     if (filters?.status) return notifications.filter(n => n.status === filters.status)
     return notifications
@@ -47,20 +18,8 @@ export async function getNotificacoesAction(filters?: { status?: string; type?: 
 
 export async function markNotificacaoAsReadAction(id: string) {
   try {
-    const { userId } = await verifySession()
-
-    if (serviceUrl()) {
-      const notification = await serviceGet(`/notifications/${id}`)
-      if (notification.userId !== userId) return { error: 'Notification not found' }
-      await servicePatch(`/notifications/${id}/read`)
-    } else {
-      const prisma = (await import('@/lib/prisma')).default
-      const notification = await prisma.notification.findUnique({ where: { id, deletedAt: null } })
-      if (!notification || notification.userId !== userId) return { error: 'Notification not found' }
-      const { markAsRead } = await import('@/services/notificacaoService')
-      await markAsRead(id)
-    }
-
+    await verifySession()
+    await notificationsApi.markRead(id)
     revalidatePath('/notificacoes')
     return { success: true }
   } catch (err) {
@@ -71,18 +30,7 @@ export async function markNotificacaoAsReadAction(id: string) {
 export async function markAllAsReadAction() {
   try {
     const { userId } = await verifySession()
-
-    if (serviceUrl()) {
-      const notifications = (await serviceGet(`/notifications?userId=${userId}&status=UNREAD&limit=500`)) as Array<{ id: string }>
-      await Promise.all(notifications.map(n => servicePatch(`/notifications/${n.id}/read`)))
-    } else {
-      const prisma = (await import('@/lib/prisma')).default
-      await prisma.notification.updateMany({
-        where: { userId, status: 'UNREAD', deletedAt: null },
-        data: { status: 'READ', readAt: new Date() },
-      })
-    }
-
+    await notificationsApi.markAllRead(userId)
     revalidatePath('/notificacoes')
     return { success: true }
   } catch (err) {
@@ -92,20 +40,8 @@ export async function markAllAsReadAction() {
 
 export async function archiveNotificacaoAction(id: string) {
   try {
-    const { userId } = await verifySession()
-
-    if (serviceUrl()) {
-      const notification = await serviceGet(`/notifications/${id}`)
-      if (notification.userId !== userId) return { error: 'Notification not found' }
-      await servicePatch(`/notifications/${id}/archive`)
-    } else {
-      const prisma = (await import('@/lib/prisma')).default
-      const notification = await prisma.notification.findUnique({ where: { id, deletedAt: null } })
-      if (!notification || notification.userId !== userId) return { error: 'Notification not found' }
-      const { markAsArchived } = await import('@/services/notificacaoService')
-      await markAsArchived(id)
-    }
-
+    await verifySession()
+    await notificationsApi.archive(id)
     revalidatePath('/notificacoes')
     return { success: true }
   } catch (err) {

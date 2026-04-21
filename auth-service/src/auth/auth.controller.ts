@@ -2,6 +2,7 @@ import {
   Controller,
   Post,
   Get,
+  Patch,
   Body,
   Headers,
   HttpCode,
@@ -102,6 +103,15 @@ export class AuthController {
     if (!userId) throw new UnauthorizedException()
     const dto = ChangePasswordSchema.parse(body)
     await this.authService.changePassword(userId, dto)
+  }
+
+  @Patch('me')
+  async updateProfile(
+    @Headers('x-user-id') userId: string,
+    @Body() body: Record<string, unknown>,
+  ) {
+    if (!userId) throw new UnauthorizedException()
+    return this.authService.updateProfile(userId, body as Parameters<AuthService['updateProfile']>[1])
   }
 
   // Endpoint for forced password change (forcePasswordChange flow)

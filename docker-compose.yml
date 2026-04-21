@@ -23,10 +23,12 @@ services:
       - MINIO_BUCKET=${MINIO_BUCKET}
       - MINIO_PUBLIC_URL=${MINIO_PUBLIC_URL}
       - NEXT_PUBLIC_API_URL=${NEXT_PUBLIC_API_URL}
+      - API_GATEWAY_INTERNAL_URL=http://api-gateway:4000
       - NOTIFICATION_SERVICE_URL=http://notification-service:4004
       - AUTH_SERVICE_URL=http://auth-service:4001
       - FILE_SERVICE_URL=http://file-service:4005
       - INTERNAL_API_KEY=${INTERNAL_API_KEY}
+      - DEFAULT_TENANT_ID=${DEFAULT_TENANT_ID}
       - REDIS_HOST=redis
       - REDIS_PORT=6379
       - REDIS_PASSWORD=${REDIS_PASSWORD}
@@ -54,6 +56,8 @@ services:
       redis:
         condition: service_healthy
       notification-service:
+        condition: service_healthy
+      api-gateway:
         condition: service_healthy
 
   # ── API Gateway (Express) ─────────────────────────────────────────────────

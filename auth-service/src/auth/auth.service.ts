@@ -232,6 +232,37 @@ export class AuthService {
     return { valid: true }
   }
 
+  async updateProfile(userId: string, data: {
+    name?: string
+    email?: string
+    cargo?: string
+    departamento?: string
+    hourlyRate?: number
+    phone?: string
+    cep?: string
+    logradouro?: string
+    numero?: string
+    complemento?: string
+    bairro?: string
+    cidade?: string
+    estado?: string
+    notes?: string
+    avatarUrl?: string
+  }) {
+    const user = await prisma.user.findUnique({ where: { id: userId } })
+    if (!user) throw new NotFoundException('Usuário não encontrado')
+    return prisma.user.update({
+      where: { id: userId },
+      data,
+      select: {
+        id: true, name: true, email: true, role: true, tenantId: true, avatarUrl: true,
+        cargo: true, departamento: true, hourlyRate: true, isActive: true, forcePasswordChange: true,
+        phone: true, cep: true, logradouro: true, numero: true, complemento: true,
+        bairro: true, cidade: true, estado: true, notes: true,
+      },
+    })
+  }
+
   async resetPassword(dto: ResetPasswordDto) {
     const user = await prisma.user.findFirst({
       where: {

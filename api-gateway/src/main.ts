@@ -67,10 +67,27 @@ const SPRINT_SERVICE_URL = process.env.SPRINT_SERVICE_URL ?? 'http://sprint-serv
 const NOTIFICATION_SERVICE_URL = process.env.NOTIFICATION_SERVICE_URL ?? 'http://notification-service:4004'
 const FILE_SERVICE_URL = process.env.FILE_SERVICE_URL ?? 'http://file-service:4005'
 
+// Auth service
 app.use('/auth', proxyTo(AUTH_SERVICE_URL))
+
+// Project service
 app.use('/projects', proxyTo(PROJECT_SERVICE_URL))
+app.use('/departments', proxyTo(PROJECT_SERVICE_URL))
+app.use('/roles', proxyTo(PROJECT_SERVICE_URL))
+app.use('/permissions', proxyTo(PROJECT_SERVICE_URL))
+app.use('/stakeholders', proxyTo(PROJECT_SERVICE_URL))
+
+// Sprint service
 app.use('/sprints', proxyTo(SPRINT_SERVICE_URL))
+app.use('/cards', proxyTo(SPRINT_SERVICE_URL))
+app.use('/tags', proxyTo(SPRINT_SERVICE_URL))
+app.use('/time-entries', proxyTo(SPRINT_SERVICE_URL))
+app.use('/audit', proxyTo(SPRINT_SERVICE_URL))
+
+// Notification service
 app.use('/notifications', proxyTo(NOTIFICATION_SERVICE_URL))
+
+// File service
 app.use('/files', proxyTo(FILE_SERVICE_URL))
 
 const PORT = Number(process.env.PORT ?? 4000)

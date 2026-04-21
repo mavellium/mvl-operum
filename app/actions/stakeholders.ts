@@ -1,8 +1,8 @@
 'use server'
 
 import { revalidatePath } from 'next/cache'
-import prisma from '@/lib/prisma'
 import { verifySession } from '@/lib/dal'
+import { stakeholdersApi } from '@/lib/api-client'
 
 interface StakeholderInput {
   name: string
@@ -21,128 +21,49 @@ interface StakeholderInput {
   logoUrl?: string
 }
 
-// 1. Criar novo Stakeholder Global (e opcionalmente já vincular ao projeto)
 export async function createStakeholderAction(data: StakeholderInput, projectId?: string) {
-  const { tenantId, role } = await verifySession()
-  
-  if (role !== 'admin') {
-    return { error: 'Apenas administradores podem criar novos stakeholders.' }
-  }
-
   try {
-    const stakeholder = await prisma.stakeholder.create({
-      data: {
-        tenantId,
-        name: data.name,
-        company: data.company,
-        competence: data.competence,
-        email: data.email,
-        phone: data.phone,
-        cep: data.cep,
-        logradouro: data.logradouro,
-        numero: data.numero,
-        complemento: data.complemento,
-        bairro: data.bairro,
-        cidade: data.cidade,
-        estado: data.estado,
-        notes: data.notes,
-        logoUrl: data.logoUrl,
-        isActive: true,
-      }
-    })
-
-    // Se a criação foi feita dentro da tela de um projeto, já faz o vínculo automático
+    await verifySession()
+    const stakeholder = await stakeholdersApi.create(data as Record<string, unknown>)
     if (projectId) {
-      await prisma.projectStakeholder.create({
-        data: { projectId, stakeholderId: stakeholder.id }
-      })
+      await stakeholdersApi.linkProject((stakeholder as { id: string }).id, projectId)
       revalidatePath(`/projetos/${projectId}/stakeholders`)
     }
-
     return { success: true, stakeholder }
-  } catch (error) {
-    console.error(error)
-    return { error: 'Erro ao criar stakeholder.' }
+  } catch (err) {
+    return { error: err instanceof Error ? err.message : 'Erro ao criar stakeholder.' }
   }
 }
 
-// 2. Atualizar dados globais de um Stakeholder
 export async function updateStakeholderAction(stakeholderId: string, data: StakeholderInput, projectId: string) {
-  const { role } = await verifySession()
-  
-  if (role !== 'admin') {
-    return { error: 'Apenas administradores podem editar stakeholders.' }
-  }
-
   try {
-    const stakeholder = await prisma.stakeholder.update({
-      where: { id: stakeholderId },
-      data: {
-        name: data.name,
-        company: data.company,
-        competence: data.competence,
-        email: data.email,
-        phone: data.phone,
-        cep: data.cep,
-        logradouro: data.logradouro,
-        numero: data.numero,
-        complemento: data.complemento,
-        bairro: data.bairro,
-        cidade: data.cidade,
-        estado: data.estado,
-        notes: data.notes,
-        logoUrl: data.logoUrl,
-      }
-    })
-
+    await verifySession()
+    const stakeholder = await stakeholdersApi.update(stakeholderId, data as Record<string, unknown>)
     revalidatePath(`/projetos/${projectId}/stakeholders`)
     return { success: true, stakeholder }
-  } catch (error) {
-    console.error(error)
-    return { error: 'Erro ao atualizar stakeholder.' }
+  } catch (err) {
+    return { error: err instanceof Error ? err.message : 'Erro ao atualizar stakeholder.' }
   }
 }
 
-// 3. Vincular um Stakeholder existente ao Projeto
 export async function bindStakeholderAction(projectId: string, stakeholderId: string) {
-  const { role } = await verifySession()
-  
-  if (role !== 'admin') {
-    return { error: 'Apenas administradores podem vincular stakeholders.' }
-  }
-
   try {
-    await prisma.projectStakeholder.create({
-      data: { projectId, stakeholderId }
-    })
-
+    await verifySession()
+    await stakeholdersApi.linkProject(stakeholderId, projectId)
     revalidatePath(`/projetos/${projectId}/stakeholders`)
     return { success: true }
-  } catch (error) {
-    console.error(error)
-    return { error: 'Erro ao vincular stakeholder ao projeto.' }
+  } catch (err) {
+    return { error: err instanceof Error ? err.message : 'Erro ao vincular stakeholder ao projeto.' }
   }
 }
 
-// 4. Desvincular um Stakeholder do Projeto
 export async function unbindStakeholderAction(projectId: string, stakeholderId: string) {
-  const { role } = await verifySession()
-  
-  if (role !== 'admin') {
-    return { error: 'Apenas administradores podem remover stakeholders do projeto.' }
-  }
-
   try {
-    await prisma.projectStakeholder.delete({
-      where: {
-        projectId_stakeholderId: { projectId, stakeholderId }
-      }
-    })
-
+    await verifySession()
+    await stakeholdersApi.unlinkProject(stakeholderId, projectId)
     revalidatePath(`/projetos/${projectId}/stakeholders`)
     return { success: true }
-  } catch (error) {
-    console.error(error)
-    return { error: 'Erro ao remover stakeholder do projeto.' }
+  } catch (err) {
+    return { error: err instanceof Error ? err.message : 'Erro ao remover stakeholder do projeto.' }
   }
 }
