@@ -1,18 +1,23 @@
 generator client {
-  provider      = "prisma-client-js"
-  output        = "../lib/generated/prisma"
-  binaryTargets = ["native", "linux-musl-openssl-3.0.x"]
+  provider        = "prisma-client-js"
+  output          = "../lib/generated/prisma"
+  binaryTargets   = ["native", "linux-musl-openssl-3.0.x"]
+  previewFeatures = ["multiSchema"]
 }
 
 datasource db {
   provider = "postgresql"
+  schemas  = ["auth"]
 }
+
 
 enum TenantStatus {
   ACTIVE
   INACTIVE
   SUSPENDED
   REMOVED
+
+  @@schema("auth")
 }
 
 model Tenant {
@@ -26,6 +31,8 @@ model Tenant {
   updatedAt DateTime     @updatedAt
 
   users User[]
+
+  @@schema("auth")
 }
 
 model User {
@@ -55,4 +62,5 @@ model User {
   updatedAt           DateTime  @updatedAt
 
   @@unique([email, tenantId])
+  @@schema("auth")
 }
