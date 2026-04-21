@@ -1,7 +1,6 @@
 import { NextResponse } from 'next/server'
 import { verifyRouteSession } from '@/lib/routeAuth'
-import { saveUpload, deleteUpload, ValidationError } from '@/services/fileUploadService'
-import prisma from '@/lib/prisma'
+import { cardsApi } from '@/lib/api-client'
 
 const ALLOWED_TYPES = [
   'image/png',
@@ -26,56 +25,33 @@ export async function POST(request: Request) {
   const cardId = formData.get('cardId') as string | null
   const file = formData.get('file') as File | null
 
-  if (!cardId) {
-    return Response.json({ error: 'cardId é obrigatório' }, { status: 400 })
-  }
-
-  if (!file) {
-    return Response.json({ error: 'Arquivo é obrigatório' }, { status: 400 })
-  }
-
+  if (!cardId) return Response.json({ error: 'cardId é obrigatório' }, { status: 400 })
+  if (!file) return Response.json({ error: 'Arquivo é obrigatório' }, { status: 400 })
   if (!ALLOWED_TYPES.includes(file.type)) {
-    return Response.json(
-      { error: `Tipo de arquivo não permitido. Use: ${ALLOWED_TYPES.join(', ')}` },
-      { status: 400 },
-    )
+    return Response.json({ error: `Tipo de arquivo não permitido. Use: ${ALLOWED_TYPES.join(', ')}` }, { status: 400 })
   }
 
-  // Verify card belongs to the user's tenant
-  const card = await prisma.card.findUnique({
-    where: { id: cardId },
-    select: { sprint: { select: { project: { select: { tenantId: true } } } } },
+  // Verify card exists and is accessible
+  const card = await cardsApi.get(cardId).catch(() => null)
+  if (!card) return Response.json({ error: 'Acesso negado' }, { status: 403 })
+
+  if (!FILE_SERVICE_URL) {
+    return Response.json({ error: 'Serviço de arquivos não configurado' }, { status: 503 })
+  }
+
+  const upstream = new FormData()
+  upstream.append('file', file)
+  const res = await fetch(`${FILE_SERVICE_URL}/files/upload?cardId=${encodeURIComponent(cardId)}`, {
+    method: 'POST',
+    headers: {
+      'X-Internal-Api-Key': INTERNAL_API_KEY,
+      'X-User-Id': session.userId as string,
+      'X-Tenant-Id': session.tenantId as string,
+    },
+    body: upstream,
   })
-  if (!card || card.sprint?.project?.tenantId !== session.tenantId) {
-    return Response.json({ error: 'Acesso negado' }, { status: 403 })
-  }
-
-  // Proxy to file-service when configured
-  if (FILE_SERVICE_URL) {
-    const upstream = new FormData()
-    upstream.append('file', file)
-    const res = await fetch(`${FILE_SERVICE_URL}/files/upload?cardId=${encodeURIComponent(cardId)}`, {
-      method: 'POST',
-      headers: {
-        'X-Internal-Api-Key': INTERNAL_API_KEY,
-        'X-User-Id': session.userId as string,
-        'X-Tenant-Id': session.tenantId as string,
-      },
-      body: upstream,
-    })
-    const body = await res.json().catch(() => ({}))
-    return Response.json(body, { status: res.ok ? 201 : res.status })
-  }
-
-  try {
-    const attachment = await saveUpload(file, cardId)
-    return Response.json(attachment, { status: 201 })
-  } catch (err) {
-    if (err instanceof ValidationError) {
-      return Response.json({ error: err.message }, { status: 400 })
-    }
-    throw err
-  }
+  const body = await res.json().catch(() => ({}))
+  return Response.json(body, { status: res.ok ? 201 : res.status })
 }
 
 export async function DELETE(request: Request) {
@@ -90,35 +66,18 @@ export async function DELETE(request: Request) {
     return NextResponse.json({ error: 'id é obrigatório' }, { status: 400 })
   }
 
-  // Proxy to file-service when configured
-  if (FILE_SERVICE_URL) {
-    const res = await fetch(`${FILE_SERVICE_URL}/files/${encodeURIComponent(attachmentId)}`, {
-      method: 'DELETE',
-      headers: {
-        'X-Internal-Api-Key': INTERNAL_API_KEY,
-        'X-User-Id': session.userId as string,
-      },
-    })
-    if (res.status === 204) return new Response(null, { status: 204 })
-    const body = await res.json().catch(() => ({}))
-    return NextResponse.json(body, { status: res.status })
+  if (!FILE_SERVICE_URL) {
+    return NextResponse.json({ error: 'Serviço de arquivos não configurado' }, { status: 503 })
   }
 
-  const attachment = await prisma.attachment.findUnique({ where: { id: attachmentId } })
-  if (!attachment) {
-    return NextResponse.json({ error: 'Anexo não encontrado' }, { status: 404 })
-  }
-
-  try {
-    await deleteUpload(attachmentId, session.userId as string)
-    return new Response(null, { status: 204 })
-  } catch (err) {
-    if (err instanceof Error) {
-      const statusCode = (err as Error & { status?: number }).status
-      if (statusCode === 403 || err.message.includes('permiss') || err.message.toLowerCase().includes('forbid')) {
-        return NextResponse.json({ error: err.message }, { status: 403 })
-      }
-    }
-    throw err
-  }
+  const res = await fetch(`${FILE_SERVICE_URL}/files/${encodeURIComponent(attachmentId)}`, {
+    method: 'DELETE',
+    headers: {
+      'X-Internal-Api-Key': INTERNAL_API_KEY,
+      'X-User-Id': session.userId as string,
+    },
+  })
+  if (res.status === 204) return new Response(null, { status: 204 })
+  const body = await res.json().catch(() => ({}))
+  return NextResponse.json(body, { status: res.status })
 }

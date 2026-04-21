@@ -287,6 +287,9 @@ export const cardsApi = {
 
   createManualEntry: (cardId: string, data: Record<string, unknown>) =>
     request(`/cards/${cardId}/time-entries/manual`, { method: 'POST', body: JSON.stringify(data) }),
+
+  search: (q: string) =>
+    request<unknown[]>(`/cards/search?q=${encodeURIComponent(q)}`),
 }
 
 // ── Tags ──────────────────────────────────────────────────
