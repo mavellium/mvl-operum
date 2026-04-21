@@ -68,7 +68,7 @@ export class AdminService {
     if (existing) throw new ConflictException('Email já cadastrado')
 
     const passwordHash = await bcrypt.hash(data.password, BCRYPT_ROUNDS)
-    const { password, isAdmin, ...rest } = data
+    const { password: _password, isAdmin: _isAdmin, ...rest } = data
     return prisma.user.create({
       data: {
         ...rest,

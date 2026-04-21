@@ -48,7 +48,7 @@ export async function POST(request: Request) {
   })
 
   const results = await Promise.allSettled(
-    validRows.map(({ tagsImport: _tags, ...card }) => cardsApi.create(card as Record<string, unknown>)),
+    validRows.map(({ tagsImport: _tagsImport, ...card }) => cardsApi.create(card as Record<string, unknown>)),
   )
 
   const failed = results.filter(r => r.status === 'rejected').length

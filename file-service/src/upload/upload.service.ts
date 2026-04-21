@@ -1,4 +1,4 @@
-import { Injectable, NotFoundException, ForbiddenException, BadRequestException } from '@nestjs/common'
+import { Injectable, NotFoundException, BadRequestException } from '@nestjs/common'
 import { PrismaClient } from '../../lib/generated/prisma'
 import { v4 as uuidv4 } from 'uuid'
 import { MinioService } from '../minio/minio.service'
@@ -43,7 +43,7 @@ export class UploadService {
     })
   }
 
-  async delete(attachmentId: string, userId?: string) {
+  async delete(attachmentId: string, _userId?: string) {
     const attachment = await this.prisma.attachment.findUnique({
       where: { id: attachmentId, deletedAt: null },
     })

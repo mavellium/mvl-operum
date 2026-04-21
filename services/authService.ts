@@ -38,7 +38,7 @@ export async function register(input: { name: string; email: string; password: s
     data: { name, email, passwordHash, tenantId },
   })
 
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+   
   const { passwordHash: _, ...safeUser } = user
   return safeUser
 }

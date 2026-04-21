@@ -6,7 +6,6 @@ import {
   Delete,
   Param,
   Body,
-  Query,
   Headers,
   HttpCode,
   HttpStatus,

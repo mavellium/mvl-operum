@@ -3,6 +3,7 @@
 import { cookies, headers } from 'next/headers'
 import { redirect } from 'next/navigation'
 import { randomInt } from 'crypto'
+import Redis from 'ioredis'
 import { encrypt } from '@/lib/session'
 import { PasswordSchema } from '@/lib/validation/authSchemas'
 import type { FormState } from '@/types/auth'
@@ -18,12 +19,11 @@ import { projectsApi } from '@/lib/api-client'
 
 const SESSION_DURATION_MS = 7 * 24 * 60 * 60 * 1000 // 7 days
 
-let _rateLimitRedis: import('ioredis').Redis | null = null
+let _rateLimitRedis: Redis | null = null
 
-function getRateLimitRedis(): import('ioredis').Redis | null {
+function getRateLimitRedis(): Redis | null {
   if (_rateLimitRedis) return _rateLimitRedis
   try {
-    const { Redis } = require('ioredis') as typeof import('ioredis')
     _rateLimitRedis = new Redis({
       host: process.env.REDIS_HOST ?? 'redis',
       port: Number(process.env.REDIS_PORT ?? 6379),

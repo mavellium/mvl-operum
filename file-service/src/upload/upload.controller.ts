@@ -27,7 +27,7 @@ export class UploadController {
   async upload(
     @UploadedFile() file: Express.Multer.File,
     @Query('cardId') cardId: string,
-    @Headers('x-user-id') userId: string,
+    @Headers('x-user-id') _userId: string,
   ) {
     if (!file) throw new BadRequestException('Arquivo é obrigatório')
     if (!cardId) throw new BadRequestException('cardId é obrigatório')
