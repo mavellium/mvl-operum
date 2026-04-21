@@ -24,7 +24,7 @@ interface StakeholderInput {
 export async function createStakeholderAction(data: StakeholderInput, projectId?: string) {
   try {
     await verifySession()
-    const stakeholder = await stakeholdersApi.create(data as Record<string, unknown>)
+    const stakeholder = await stakeholdersApi.create(data as unknown as Record<string, unknown>)
     if (projectId) {
       await stakeholdersApi.linkProject((stakeholder as { id: string }).id, projectId)
       revalidatePath(`/projetos/${projectId}/stakeholders`)
@@ -38,7 +38,7 @@ export async function createStakeholderAction(data: StakeholderInput, projectId?
 export async function updateStakeholderAction(stakeholderId: string, data: StakeholderInput, projectId: string) {
   try {
     await verifySession()
-    const stakeholder = await stakeholdersApi.update(stakeholderId, data as Record<string, unknown>)
+    const stakeholder = await stakeholdersApi.update(stakeholderId, data as unknown as Record<string, unknown>)
     revalidatePath(`/projetos/${projectId}/stakeholders`)
     return { success: true, stakeholder }
   } catch (err) {

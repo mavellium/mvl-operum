@@ -402,7 +402,7 @@ export default function ProjetoMembrosClient({
         id: result.user.id,
         name: result.user.name,
         email: result.user.email,
-        avatarUrl: result.user.avatarUrl,
+        avatarUrl: result.user.avatarUrl ?? null,
         role: result.user.role,
         phone: result.user.phone,
         cep: result.user.cep,

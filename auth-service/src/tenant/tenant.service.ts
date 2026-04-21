@@ -1,9 +1,9 @@
 import { Injectable, NotFoundException } from '@nestjs/common'
-import { PrismaClient } from '../../lib/generated/prisma'
+import { prisma } from '../prisma'
 
 @Injectable()
 export class TenantService {
-  private readonly prisma = new PrismaClient()
+  private readonly prisma = prisma
 
   async findBySubdomain(subdomain: string) {
     const tenant = await this.prisma.tenant.findFirst({

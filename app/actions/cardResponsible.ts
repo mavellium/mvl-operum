@@ -26,7 +26,7 @@ export async function removeResponsibleAction(cardId: string, userId: string) {
 export async function getResponsiblesAction(cardId: string) {
   try {
     await verifySession()
-    const card = await cardsApi.get(cardId) as { responsibles?: unknown[] }
+    const card = await cardsApi.get(cardId) as { responsibles?: { userId: string; user: { id: string; name: string; cargo: string | null; avatarUrl: string | null } }[] }
     return { responsibles: card.responsibles ?? [] }
   } catch (err) {
     return { error: err instanceof Error ? err.message : 'Erro ao buscar responsáveis' }

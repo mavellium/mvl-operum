@@ -50,7 +50,7 @@ export async function createProjetoAction(
   }
 }
 
-export async function getProjetosAction() {
+export async function getProjetosAction(): Promise<{ id: string; name: string }[]> {
   try {
     const result = await projectsApi.list()
     return result.items

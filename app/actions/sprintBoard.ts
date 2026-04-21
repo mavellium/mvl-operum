@@ -4,7 +4,14 @@ import { verifySession } from '@/lib/dal'
 import { revalidatePath } from 'next/cache'
 import { sprintsApi, cardsApi, tagsApi, adminApi } from '@/lib/api-client'
 
-export async function getSprintBoardAction(sprintId: string) {
+type SprintBoardData = {
+  sprint: { id: string; name: string; status: string; startDate: Date | string | null; endDate: Date | string | null; description?: string | null; qualidade?: number | null; dificuldade?: number | null }
+  columns: { id: string; title: string; position: number; cards: { id: string; title: string; description: string; color: string; priority?: string | null; sprintPosition?: number | null; tags?: { tagId: string; tag: { id?: string; name: string; color: string } }[]; attachments?: { id: string; fileName: string; fileType: string; filePath: string; fileSize: number; isCover?: boolean; uploadedAt: string | Date }[]; timeEntries?: { duration: number }[]; responsibles?: { user: { id: string; name: string; avatarUrl: string | null } }[] }[] }[]
+  users: { id: string; name: string; email: string; avatarUrl?: string | null }[]
+  tags: { id: string; name: string; color: string }[]
+}
+
+export async function getSprintBoardAction(sprintId: string): Promise<SprintBoardData | { error: string }> {
   try {
     await verifySession()
     const [sprint, columns, users, tags] = await Promise.all([
@@ -13,7 +20,7 @@ export async function getSprintBoardAction(sprintId: string) {
       adminApi.listAllUsers(),
       tagsApi.list(),
     ])
-    return { sprint, columns, users, tags }
+    return { sprint, columns, users, tags } as unknown as SprintBoardData
   } catch (err) {
     return { error: err instanceof Error ? err.message : 'Erro ao carregar sprint board' }
   }

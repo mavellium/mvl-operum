@@ -47,13 +47,15 @@ app.use(authMiddleware())
 
 const INTERNAL_API_KEY = process.env.INTERNAL_API_KEY ?? ''
 
-function proxyTo(target: string) {
+// prefix: the path segment Express strips — we rewrite it back so downstream services
+// receive the full original path (e.g. /auth/me, not just /me)
+function proxyTo(target: string, prefix: string) {
   return createProxyMiddleware({
     target,
     changeOrigin: true,
+    pathRewrite: (path) => `${prefix}${path}`,
     on: {
       proxyReq: (proxyReq) => {
-        // Forward internal API key to downstream services
         proxyReq.setHeader('X-Internal-Api-Key', INTERNAL_API_KEY)
       },
     },
@@ -68,27 +70,27 @@ const NOTIFICATION_SERVICE_URL = process.env.NOTIFICATION_SERVICE_URL ?? 'http:/
 const FILE_SERVICE_URL = process.env.FILE_SERVICE_URL ?? 'http://file-service:4005'
 
 // Auth service
-app.use('/auth', proxyTo(AUTH_SERVICE_URL))
+app.use('/auth', proxyTo(AUTH_SERVICE_URL, '/auth'))
 
 // Project service
-app.use('/projects', proxyTo(PROJECT_SERVICE_URL))
-app.use('/departments', proxyTo(PROJECT_SERVICE_URL))
-app.use('/roles', proxyTo(PROJECT_SERVICE_URL))
-app.use('/permissions', proxyTo(PROJECT_SERVICE_URL))
-app.use('/stakeholders', proxyTo(PROJECT_SERVICE_URL))
+app.use('/projects', proxyTo(PROJECT_SERVICE_URL, '/projects'))
+app.use('/departments', proxyTo(PROJECT_SERVICE_URL, '/departments'))
+app.use('/roles', proxyTo(PROJECT_SERVICE_URL, '/roles'))
+app.use('/permissions', proxyTo(PROJECT_SERVICE_URL, '/permissions'))
+app.use('/stakeholders', proxyTo(PROJECT_SERVICE_URL, '/stakeholders'))
 
 // Sprint service
-app.use('/sprints', proxyTo(SPRINT_SERVICE_URL))
-app.use('/cards', proxyTo(SPRINT_SERVICE_URL))
-app.use('/tags', proxyTo(SPRINT_SERVICE_URL))
-app.use('/time-entries', proxyTo(SPRINT_SERVICE_URL))
-app.use('/audit', proxyTo(SPRINT_SERVICE_URL))
+app.use('/sprints', proxyTo(SPRINT_SERVICE_URL, '/sprints'))
+app.use('/cards', proxyTo(SPRINT_SERVICE_URL, '/cards'))
+app.use('/tags', proxyTo(SPRINT_SERVICE_URL, '/tags'))
+app.use('/time-entries', proxyTo(SPRINT_SERVICE_URL, '/time-entries'))
+app.use('/audit', proxyTo(SPRINT_SERVICE_URL, '/audit'))
 
 // Notification service
-app.use('/notifications', proxyTo(NOTIFICATION_SERVICE_URL))
+app.use('/notifications', proxyTo(NOTIFICATION_SERVICE_URL, '/notifications'))
 
 // File service
-app.use('/files', proxyTo(FILE_SERVICE_URL))
+app.use('/files', proxyTo(FILE_SERVICE_URL, '/files'))
 
 const PORT = Number(process.env.PORT ?? 4000)
 app.listen(PORT, () => {

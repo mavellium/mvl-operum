@@ -38,7 +38,7 @@ async function request<T>(path: string, init: RequestInit = {}): Promise<T> {
 // ── Auth ──────────────────────────────────────────────────
 
 export const authApi = {
-  me: () => request<{ id: string; name: string; email: string; role: string; tenantId: string; avatarUrl?: string; cargo?: string; departamento?: string; hourlyRate?: number; isActive: boolean; forcePasswordChange: boolean }>('/auth/me'),
+  me: () => request<{ id: string; name: string; email: string; role: string; tenantId: string; avatarUrl?: string; cargo?: string; departamento?: string; hourlyRate?: number; isActive: boolean; forcePasswordChange: boolean; phone?: string; cep?: string; logradouro?: string; numero?: string; complemento?: string; bairro?: string; cidade?: string; estado?: string; notes?: string }>('/auth/me'),
 
   updateProfile: (data: Record<string, unknown>) =>
     request('/auth/me', { method: 'PATCH', body: JSON.stringify(data) }),
@@ -50,20 +50,22 @@ export const authApi = {
     request('/auth/password/alterar', { method: 'POST', body: JSON.stringify({ password }) }),
 }
 
+type AdminUser = { id: string; name: string; email: string; role: string; avatarUrl?: string | null; isActive?: boolean; phone?: string; cep?: string; logradouro?: string; numero?: string; complemento?: string; bairro?: string; cidade?: string; estado?: string; notes?: string }
+
 // ── Admin ─────────────────────────────────────────────────
 
 export const adminApi = {
   listUsers: () =>
-    request<unknown[]>('/auth/users'),
+    request<AdminUser[]>('/auth/users'),
 
   listAllUsers: () =>
-    request<unknown[]>('/auth/all-users'),
+    request<AdminUser[]>('/auth/all-users'),
 
   createUser: (data: Record<string, unknown>) =>
-    request('/auth/admin/users', { method: 'POST', body: JSON.stringify(data) }),
+    request<AdminUser>('/auth/admin/users', { method: 'POST', body: JSON.stringify(data) }),
 
   updateUser: (userId: string, data: Record<string, unknown>) =>
-    request(`/auth/admin/users/${userId}`, { method: 'PATCH', body: JSON.stringify(data) }),
+    request<AdminUser>(`/auth/admin/users/${userId}`, { method: 'PATCH', body: JSON.stringify(data) }),
 
   toggleActive: (userId: string, active: boolean) =>
     request(`/auth/admin/users/${userId}/active`, { method: 'PATCH', body: JSON.stringify({ active }) }),
@@ -72,21 +74,23 @@ export const adminApi = {
     request(`/auth/admin/users/${userId}/role`, { method: 'PATCH', body: JSON.stringify({ role }) }),
 }
 
+type Project = { id: string; name: string; description?: string | null; tenantId?: string; status?: string; slogan?: string | null; startDate?: string | null; endDate?: string | null; location?: string | null; logoUrl?: string | null; justificativa?: string | null; objetivos?: string | null; metodologia?: string | null; descricaoProduto?: string | null; premissas?: string | null; restricoes?: string | null; limitesAutoridade?: string | null; semestre?: string | null; ano?: number | null; departamentos?: string[] | null; macroFases?: { fase: string; dataLimite?: string | null; custo?: string | null }[] | null }
+
 // ── Projects ──────────────────────────────────────────────
 
 export const projectsApi = {
   list: (page = 1, limit = 50) =>
-    request<{ items: unknown[]; total: number }>(`/projects?page=${page}&limit=${limit}`),
+    request<{ items: Project[]; total: number }>(`/projects?page=${page}&limit=${limit}`),
 
-  get: (id: string) => request<Record<string, unknown>>(`/projects/${id}`),
+  get: (id: string) => request<Project>(`/projects/${id}`),
 
   getUserProjects: (userId: string) => request<unknown[]>(`/projects/user/${userId}`),
 
   create: (data: Record<string, unknown>) =>
-    request('/projects', { method: 'POST', body: JSON.stringify(data) }),
+    request<Project>('/projects', { method: 'POST', body: JSON.stringify(data) }),
 
   update: (id: string, data: Record<string, unknown>) =>
-    request(`/projects/${id}`, { method: 'PATCH', body: JSON.stringify(data) }),
+    request<Project>(`/projects/${id}`, { method: 'PATCH', body: JSON.stringify(data) }),
 
   delete: (id: string) =>
     request(`/projects/${id}`, { method: 'DELETE' }),
@@ -113,18 +117,20 @@ export const projectsApi = {
     request(`/projects/${projectId}/roles/${userId}`, { method: 'DELETE' }),
 }
 
+type Department = { id: string; name: string }
+
 // ── Departments ───────────────────────────────────────────
 
 export const departmentsApi = {
-  list: () => request<unknown[]>('/departments'),
+  list: () => request<Department[]>('/departments'),
 
-  get: (id: string) => request<Record<string, unknown>>(`/departments/${id}`),
+  get: (id: string) => request<Department>(`/departments/${id}`),
 
   create: (data: Record<string, unknown>) =>
-    request('/departments', { method: 'POST', body: JSON.stringify(data) }),
+    request<Department>('/departments', { method: 'POST', body: JSON.stringify(data) }),
 
   update: (id: string, data: Record<string, unknown>) =>
-    request(`/departments/${id}`, { method: 'PATCH', body: JSON.stringify(data) }),
+    request<Department>(`/departments/${id}`, { method: 'PATCH', body: JSON.stringify(data) }),
 
   delete: (id: string) =>
     request(`/departments/${id}`, { method: 'DELETE' }),
@@ -136,18 +142,20 @@ export const departmentsApi = {
     request(`/departments/${departmentId}/users/${userId}`, { method: 'DELETE' }),
 }
 
+type Role = { id: string; name: string; scope?: string }
+
 // ── Roles & Permissions ───────────────────────────────────
 
 export const rolesApi = {
-  list: () => request<unknown[]>('/roles'),
+  list: () => request<Role[]>('/roles'),
 
-  get: (id: string) => request<Record<string, unknown>>(`/roles/${id}`),
+  get: (id: string) => request<Role>(`/roles/${id}`),
 
   create: (data: Record<string, unknown>) =>
-    request('/roles', { method: 'POST', body: JSON.stringify(data) }),
+    request<Role>('/roles', { method: 'POST', body: JSON.stringify(data) }),
 
   update: (id: string, data: Record<string, unknown>) =>
-    request(`/roles/${id}`, { method: 'PATCH', body: JSON.stringify(data) }),
+    request<Role>(`/roles/${id}`, { method: 'PATCH', body: JSON.stringify(data) }),
 
   delete: (id: string) =>
     request(`/roles/${id}`, { method: 'DELETE' }),
@@ -198,10 +206,10 @@ export const sprintsApi = {
   get: (id: string) => request<Record<string, unknown>>(`/sprints/${id}`),
 
   create: (data: Record<string, unknown>) =>
-    request('/sprints', { method: 'POST', body: JSON.stringify(data) }),
+    request<{ id: string; name: string; status: string }>('/sprints', { method: 'POST', body: JSON.stringify(data) }),
 
   update: (id: string, data: Record<string, unknown>) =>
-    request(`/sprints/${id}`, { method: 'PATCH', body: JSON.stringify(data) }),
+    request<{ id: string; name: string; status: string; startDate: Date | string | null; endDate: Date | string | null; qualidade?: number | null; dificuldade?: number | null }>(`/sprints/${id}`, { method: 'PATCH', body: JSON.stringify(data) }),
 
   delete: (id: string) =>
     request(`/sprints/${id}`, { method: 'DELETE' }),
@@ -209,7 +217,7 @@ export const sprintsApi = {
   listColumns: (sprintId: string) => request<unknown[]>(`/sprints/${sprintId}/columns`),
 
   createColumn: (sprintId: string, data: Record<string, unknown>) =>
-    request(`/sprints/${sprintId}/columns`, { method: 'POST', body: JSON.stringify(data) }),
+    request<{ id: string; title: string; position: number }>(`/sprints/${sprintId}/columns`, { method: 'POST', body: JSON.stringify(data) }),
 
   updateColumn: (sprintId: string, columnId: string, data: Record<string, unknown>) =>
     request(`/sprints/${sprintId}/columns/${columnId}`, { method: 'PATCH', body: JSON.stringify(data) }),
@@ -240,7 +248,7 @@ export const cardsApi = {
   get: (id: string) => request<Record<string, unknown>>(`/cards/${id}`),
 
   create: (data: Record<string, unknown>) =>
-    request('/cards', { method: 'POST', body: JSON.stringify(data) }),
+    request<{ id: string; title: string; description: string; color: string; priority?: string | null }>('/cards', { method: 'POST', body: JSON.stringify(data) }),
 
   update: (id: string, data: Record<string, unknown>) =>
     request(`/cards/${id}`, { method: 'PATCH', body: JSON.stringify(data) }),
@@ -260,10 +268,10 @@ export const cardsApi = {
   removeResponsible: (cardId: string, userId: string) =>
     request(`/cards/${cardId}/responsibles/${userId}`, { method: 'DELETE' }),
 
-  listComments: (cardId: string) => request<unknown[]>(`/cards/${cardId}/comments`),
+  listComments: (cardId: string) => request<{ id: string; user: { id: string; name: string; avatarUrl: string | null }; content: string; createdAt: Date }[]>(`/cards/${cardId}/comments`),
 
   createComment: (cardId: string, content: string, type?: string) =>
-    request(`/cards/${cardId}/comments`, { method: 'POST', body: JSON.stringify({ content, type }) }),
+    request<{ id: string; user: { id: string; name: string; avatarUrl: string | null }; content: string; createdAt: Date }>(`/cards/${cardId}/comments`, { method: 'POST', body: JSON.stringify({ content, type }) }),
 
   updateComment: (cardId: string, commentId: string, content: string) =>
     request(`/cards/${cardId}/comments/${commentId}`, { method: 'PATCH', body: JSON.stringify({ content }) }),
@@ -274,7 +282,7 @@ export const cardsApi = {
   listTimeEntries: (cardId: string) => request<unknown[]>(`/cards/${cardId}/time-entries`),
 
   getActiveTimer: (cardId: string) =>
-    request<Record<string, unknown> | null>(`/cards/${cardId}/time-entries/active`),
+    request<{ id: string; isRunning: boolean; startedAt: string | Date; duration: number | null } | null>(`/cards/${cardId}/time-entries/active`),
 
   getTimeTotal: (cardId: string) =>
     request<{ seconds: number }>(`/cards/${cardId}/time-entries/total`),

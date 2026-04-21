@@ -145,7 +145,7 @@ export default function SprintBoard({ sprint, columns: initialColumns, users, ta
       const [moved] = newOrder.splice(source.index, 1)
       newOrder.splice(destination.index, 0, moved)
       setColumns(newOrder)
-      await reorderSprintColumnsAction(newOrder.map(c => c.id))
+      await reorderSprintColumnsAction(sprint.id, newOrder.map(c => c.id))
       return
     }
 
@@ -173,12 +173,12 @@ export default function SprintBoard({ sprint, columns: initialColumns, users, ta
 
   async function handleRenameColumn(columnId: string, title: string) {
     setColumns(cols => cols.map(c => c.id === columnId ? { ...c, title } : c))
-    await renameSprintColumnAction(columnId, title)
+    await renameSprintColumnAction(sprint.id, columnId, title)
   }
 
   async function handleDeleteColumn(columnId: string) {
     setColumns(cols => cols.filter(c => c.id !== columnId))
-    await deleteSprintColumnAction(columnId)
+    await deleteSprintColumnAction(sprint.id, columnId)
   }
 
   async function handleAddCard(columnId: string, data: { title: string; description: string; color: CardColor; priority?: string }) {
@@ -214,7 +214,7 @@ export default function SprintBoard({ sprint, columns: initialColumns, users, ta
       ...col,
       cards: col.cards.map(c => c.id === cardId ? { ...c, ...data } : c),
     })))
-    await updateCardInSprintAction(cardId, {
+    await updateCardInSprintAction(sprint.id, cardId, {
       title: data.title,
       description: data.description,
       color: data.color,
@@ -227,7 +227,7 @@ export default function SprintBoard({ sprint, columns: initialColumns, users, ta
       ...col,
       cards: col.cards.filter(c => c.id !== cardId),
     })))
-    await deleteCardInSprintAction(cardId)
+    await deleteCardInSprintAction(sprint.id, cardId)
   }
 
   return (

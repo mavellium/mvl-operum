@@ -109,7 +109,7 @@ export default function SprintDashboard({
         dificuldade: dificuldade ? Number(dificuldade) : undefined,
       })
       if ('sprint' in result && result.sprint) {
-        setSprint(s => ({ ...s, qualidade: result.sprint.qualidade, dificuldade: result.sprint.dificuldade }))
+        setSprint(s => ({ ...s, qualidade: result.sprint.qualidade ?? null, dificuldade: result.sprint.dificuldade ?? null }))
       }
     })
   }
