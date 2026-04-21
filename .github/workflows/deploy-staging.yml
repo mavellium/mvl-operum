@@ -123,6 +123,20 @@ jobs:
           docker push "$IMAGE:${{ github.sha }}"
           docker push "$IMAGE:staging"
 
+      - name: Build and push project-service image
+        run: |
+          IMAGE=ghcr.io/${{ steps.meta.outputs.owner }}/project-service
+          docker build -t "$IMAGE:${{ github.sha }}" -t "$IMAGE:staging" ./project-service
+          docker push "$IMAGE:${{ github.sha }}"
+          docker push "$IMAGE:staging"
+
+      - name: Build and push sprint-service image
+        run: |
+          IMAGE=ghcr.io/${{ steps.meta.outputs.owner }}/sprint-service
+          docker build -t "$IMAGE:${{ github.sha }}" -t "$IMAGE:staging" ./sprint-service
+          docker push "$IMAGE:${{ github.sha }}"
+          docker push "$IMAGE:staging"
+
       - uses: actions/checkout@v4
 
       - name: Scan app image for vulnerabilities (Trivy)
@@ -165,6 +179,24 @@ jobs:
         uses: aquasecurity/trivy-action@v0.35.0
         with:
           image-ref: ghcr.io/${{ steps.meta.outputs.owner }}/file-service:${{ github.sha }}
+          format: table
+          exit-code: '1'
+          severity: CRITICAL,HIGH
+          trivyignores: .trivyignore
+
+      - name: Scan project-service image (Trivy)
+        uses: aquasecurity/trivy-action@v0.35.0
+        with:
+          image-ref: ghcr.io/${{ steps.meta.outputs.owner }}/project-service:${{ github.sha }}
+          format: table
+          exit-code: '1'
+          severity: CRITICAL,HIGH
+          trivyignores: .trivyignore
+
+      - name: Scan sprint-service image (Trivy)
+        uses: aquasecurity/trivy-action@v0.35.0
+        with:
+          image-ref: ghcr.io/${{ steps.meta.outputs.owner }}/sprint-service:${{ github.sha }}
           format: table
           exit-code: '1'
           severity: CRITICAL,HIGH
