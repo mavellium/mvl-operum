@@ -5,7 +5,7 @@ import {
   NotFoundException,
   ForbiddenException,
 } from '@nestjs/common'
-import { PrismaClient } from '../../lib/generated/prisma'
+import { prisma } from '../prisma'
 import bcrypt from 'bcryptjs'
 import { createHash, randomInt } from 'crypto'
 import { JwtService } from './jwt.service'
@@ -29,21 +29,19 @@ function generateCode(length = 8): string {
 
 @Injectable()
 export class AuthService {
-  private readonly prisma = new PrismaClient()
-
   constructor(
     private readonly jwtService: JwtService,
     private readonly redis: RedisService,
   ) {}
 
   async login(dto: LoginDto, subdomain?: string) {
-    const tenant = subdomain
-      ? await this.prisma.tenant.findFirst({ where: { subdomain, status: 'ACTIVE' } })
-      : await this.prisma.tenant.findFirst({ where: { status: 'ACTIVE' } })
+    const tenant = await prisma.tenant.findFirst({
+      where: { ...(subdomain ? { subdomain } : {}), status: 'ACTIVE' },
+    })
 
     if (!tenant) throw new UnauthorizedException('Tenant não encontrado')
 
-    const user = await this.prisma.user.findFirst({
+    const user = await prisma.user.findFirst({
       where: { email: dto.email, tenantId: tenant.id, deletedAt: null },
     })
 
@@ -59,14 +57,14 @@ export class AuthService {
 
     const match = await bcrypt.compare(dto.password, user.passwordHash)
     if (!match) {
-      await this.prisma.user.update({
+      await prisma.user.update({
         where: { id: user.id },
         data: { loginAttempts: (user.loginAttempts ?? 0) + 1 },
       })
       throw new UnauthorizedException('Credenciais inválidas')
     }
 
-    await this.prisma.user.update({
+    await prisma.user.update({
       where: { id: user.id },
       data: { lastLogin: new Date(), loginAttempts: 0 },
     })
@@ -100,13 +98,13 @@ export class AuthService {
   }
 
   async register(dto: RegisterDto) {
-    const existing = await this.prisma.user.findFirst({
+    const existing = await prisma.user.findFirst({
       where: { email: dto.email, tenantId: dto.tenantId, deletedAt: null },
     })
     if (existing) throw new ConflictException('Email já cadastrado')
 
     const passwordHash = await bcrypt.hash(dto.password, BCRYPT_ROUNDS)
-    const user = await this.prisma.user.create({
+    const user = await prisma.user.create({
       data: {
         name: dto.name,
         email: dto.email,
@@ -126,7 +124,7 @@ export class AuthService {
   }
 
   async me(userId: string) {
-    const user = await this.prisma.user.findUnique({
+    const user = await prisma.user.findUnique({
       where: { id: userId },
       select: {
         id: true,
@@ -156,7 +154,7 @@ export class AuthService {
       if (!session) throw new UnauthorizedException('Sessão inválida ou expirada')
     }
 
-    const user = await this.prisma.user.findUnique({
+    const user = await prisma.user.findUnique({
       where: { id: payload.userId },
       select: { id: true, tokenVersion: true, isActive: true, status: true, deletedAt: true },
     })
@@ -173,14 +171,14 @@ export class AuthService {
   }
 
   async changePassword(userId: string, dto: ChangePasswordDto) {
-    const user = await this.prisma.user.findUnique({ where: { id: userId } })
+    const user = await prisma.user.findUnique({ where: { id: userId } })
     if (!user) throw new NotFoundException('Usuário não encontrado')
 
     const match = await bcrypt.compare(dto.currentPassword, user.passwordHash)
     if (!match) throw new ForbiddenException('Senha atual incorreta')
 
     const passwordHash = await bcrypt.hash(dto.newPassword, BCRYPT_ROUNDS)
-    await this.prisma.user.update({
+    await prisma.user.update({
       where: { id: userId },
       data: { passwordHash, tokenVersion: { increment: 1 } },
     })
@@ -188,7 +186,7 @@ export class AuthService {
 
   async alterarSenha(userId: string, newPassword: string) {
     const passwordHash = await bcrypt.hash(newPassword, BCRYPT_ROUNDS)
-    await this.prisma.user.update({
+    await prisma.user.update({
       where: { id: userId },
       data: {
         passwordHash,
@@ -201,13 +199,13 @@ export class AuthService {
   async requestPasswordReset(dto: RequestResetDto) {
     // Always return success to avoid user enumeration
     try {
-      const user = await this.prisma.user.findFirst({
+      const user = await prisma.user.findFirst({
         where: { email: dto.email, deletedAt: null },
       })
       if (user) {
         const code = generateCode()
         const expiry = new Date(Date.now() + RESET_CODE_TTL_MS)
-        await this.prisma.user.update({
+        await prisma.user.update({
           where: { id: user.id },
           data: { resetToken: hashResetToken(code), resetTokenExpiry: expiry },
         })
@@ -222,7 +220,7 @@ export class AuthService {
   }
 
   async validateResetCode(dto: ValidateCodeDto) {
-    const user = await this.prisma.user.findFirst({
+    const user = await prisma.user.findFirst({
       where: {
         email: dto.email,
         deletedAt: null,
@@ -235,7 +233,7 @@ export class AuthService {
   }
 
   async resetPassword(dto: ResetPasswordDto) {
-    const user = await this.prisma.user.findFirst({
+    const user = await prisma.user.findFirst({
       where: {
         email: dto.email,
         deletedAt: null,
@@ -246,7 +244,7 @@ export class AuthService {
     if (!user) throw new UnauthorizedException('Código inválido ou expirado')
 
     const passwordHash = await bcrypt.hash(dto.newPassword, BCRYPT_ROUNDS)
-    await this.prisma.user.update({
+    await prisma.user.update({
       where: { id: user.id },
       data: {
         passwordHash,

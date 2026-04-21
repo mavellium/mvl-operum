@@ -26,22 +26,32 @@ function hashResetToken(code: string): string {
   return createHash('sha256').update(code).digest('hex')
 }
 
-async function redisRateLimit(key: string, limit: number, ttlSeconds: number): Promise<boolean> {
+let _rateLimitRedis: import('ioredis').Redis | null = null
+
+function getRateLimitRedis(): import('ioredis').Redis | null {
+  if (_rateLimitRedis) return _rateLimitRedis
   try {
-    const { Redis } = await import('ioredis')
-    const redis = new Redis({
+    const { Redis } = require('ioredis') as typeof import('ioredis')
+    _rateLimitRedis = new Redis({
       host: process.env.REDIS_HOST ?? 'redis',
       port: Number(process.env.REDIS_PORT ?? 6379),
       password: process.env.REDIS_PASSWORD,
-      lazyConnect: true,
       enableOfflineQueue: false,
+      maxRetriesPerRequest: 1,
     })
-    // Prevent unhandled error events from crashing the process when Redis is unavailable
-    redis.on('error', () => {})
-    await redis.connect()
+    _rateLimitRedis.on('error', () => {})
+    return _rateLimitRedis
+  } catch {
+    return null
+  }
+}
+
+async function redisRateLimit(key: string, limit: number, ttlSeconds: number): Promise<boolean> {
+  try {
+    const redis = getRateLimitRedis()
+    if (!redis) return false
     const attempts = await redis.incr(key)
     if (attempts === 1) await redis.expire(key, ttlSeconds)
-    await redis.quit()
     return attempts > limit
   } catch {
     return false // fail open — Redis unavailable

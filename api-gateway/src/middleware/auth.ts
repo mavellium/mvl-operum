@@ -57,9 +57,8 @@ async function verifyToken(token: string): Promise<JwtPayload | null> {
   const secret = process.env.SESSION_SECRET
   if (secret) {
     try {
-      const { jwtVerify: verify } = await import('jose')
       const secretKey = new TextEncoder().encode(secret)
-      const { payload } = await verify(token, secretKey, { algorithms: ['HS256'] })
+      const { payload } = await jwtVerify(token, secretKey, { algorithms: ['HS256'] })
       return payload as unknown as JwtPayload
     } catch {
       return null
