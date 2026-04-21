@@ -13,6 +13,9 @@ const ALLOWED_TYPES = [
   'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
 ]
 
+const FILE_SERVICE_URL = (process.env.FILE_SERVICE_URL ?? '').replace(/\/$/, '')
+const INTERNAL_API_KEY = process.env.INTERNAL_API_KEY ?? ''
+
 export async function POST(request: Request) {
   const session = await verifyRouteSession(request)
   if (!session?.userId) {
@@ -38,12 +41,30 @@ export async function POST(request: Request) {
     )
   }
 
+  // Verify card belongs to the user's tenant
   const card = await prisma.card.findUnique({
     where: { id: cardId },
     select: { sprint: { select: { project: { select: { tenantId: true } } } } },
   })
   if (!card || card.sprint?.project?.tenantId !== session.tenantId) {
     return Response.json({ error: 'Acesso negado' }, { status: 403 })
+  }
+
+  // Proxy to file-service when configured
+  if (FILE_SERVICE_URL) {
+    const upstream = new FormData()
+    upstream.append('file', file)
+    const res = await fetch(`${FILE_SERVICE_URL}/files/upload?cardId=${encodeURIComponent(cardId)}`, {
+      method: 'POST',
+      headers: {
+        'X-Internal-Api-Key': INTERNAL_API_KEY,
+        'X-User-Id': session.userId as string,
+        'X-Tenant-Id': session.tenantId as string,
+      },
+      body: upstream,
+    })
+    const body = await res.json().catch(() => ({}))
+    return Response.json(body, { status: res.ok ? 201 : res.status })
   }
 
   try {
@@ -67,6 +88,20 @@ export async function DELETE(request: Request) {
   const attachmentId = url.searchParams.get('id')
   if (!attachmentId) {
     return NextResponse.json({ error: 'id é obrigatório' }, { status: 400 })
+  }
+
+  // Proxy to file-service when configured
+  if (FILE_SERVICE_URL) {
+    const res = await fetch(`${FILE_SERVICE_URL}/files/${encodeURIComponent(attachmentId)}`, {
+      method: 'DELETE',
+      headers: {
+        'X-Internal-Api-Key': INTERNAL_API_KEY,
+        'X-User-Id': session.userId as string,
+      },
+    })
+    if (res.status === 204) return new Response(null, { status: 204 })
+    const body = await res.json().catch(() => ({}))
+    return NextResponse.json(body, { status: res.status })
   }
 
   const attachment = await prisma.attachment.findUnique({ where: { id: attachmentId } })

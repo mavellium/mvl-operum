@@ -24,6 +24,8 @@ services:
       - MINIO_PUBLIC_URL=${MINIO_PUBLIC_URL}
       - NEXT_PUBLIC_API_URL=${NEXT_PUBLIC_API_URL}
       - NOTIFICATION_SERVICE_URL=http://notification-service:4004
+      - AUTH_SERVICE_URL=http://auth-service:4001
+      - FILE_SERVICE_URL=http://file-service:4005
       - INTERNAL_API_KEY=${INTERNAL_API_KEY}
       - REDIS_HOST=redis
       - REDIS_PORT=6379
@@ -52,6 +54,108 @@ services:
       redis:
         condition: service_healthy
       notification-service:
+        condition: service_healthy
+
+  # ── API Gateway (Express) ─────────────────────────────────────────────────
+  api-gateway:
+    image: ghcr.io/${GHCR_OWNER}/api-gateway:${IMAGE_TAG}
+    restart: always
+    security_opt:
+      - no-new-privileges:true
+    environment:
+      - NODE_ENV=${NODE_ENV}
+      - JWT_PUBLIC_KEY=${JWT_PUBLIC_KEY}
+      - SESSION_SECRET=${SESSION_SECRET}
+      - INTERNAL_API_KEY=${INTERNAL_API_KEY}
+      - REDIS_HOST=redis
+      - REDIS_PORT=6379
+      - REDIS_PASSWORD=${REDIS_PASSWORD}
+      - AUTH_SERVICE_URL=http://auth-service:4001
+      - PROJECT_SERVICE_URL=http://project-service:4002
+      - SPRINT_SERVICE_URL=http://sprint-service:4003
+      - NOTIFICATION_SERVICE_URL=http://notification-service:4004
+      - FILE_SERVICE_URL=http://file-service:4005
+      - ALLOWED_ORIGINS=${ALLOWED_ORIGINS}
+      - PORT=4000
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.services.api-gateway-${COMPOSE_PROJECT_NAME}.loadbalancer.server.port=4000"
+    healthcheck:
+      test: ["CMD-SHELL", "wget -qO- http://localhost:4000/health || exit 1"]
+      interval: 15s
+      timeout: 5s
+      retries: 3
+      start_period: 15s
+    networks:
+      - proxy
+      - internal
+    depends_on:
+      redis:
+        condition: service_healthy
+      auth-service:
+        condition: service_healthy
+
+  # ── Auth Service (NestJS) ──────────────────────────────────────────────────
+  auth-service:
+    image: ghcr.io/${GHCR_OWNER}/auth-service:${IMAGE_TAG}
+    restart: always
+    security_opt:
+      - no-new-privileges:true
+    environment:
+      - NODE_ENV=${NODE_ENV}
+      - DATABASE_URL=${DATABASE_URL}
+      - JWT_PRIVATE_KEY=${JWT_PRIVATE_KEY}
+      - JWT_PUBLIC_KEY=${JWT_PUBLIC_KEY}
+      - SESSION_SECRET=${SESSION_SECRET}
+      - INTERNAL_API_KEY=${INTERNAL_API_KEY}
+      - REDIS_HOST=redis
+      - REDIS_PORT=6379
+      - REDIS_PASSWORD=${REDIS_PASSWORD}
+      - PORT=4001
+    healthcheck:
+      test: ["CMD-SHELL", "wget -qO- http://localhost:4001/health || exit 1"]
+      interval: 15s
+      timeout: 5s
+      retries: 3
+      start_period: 20s
+    networks:
+      - internal
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+
+  # ── File Service (NestJS) ──────────────────────────────────────────────────
+  file-service:
+    image: ghcr.io/${GHCR_OWNER}/file-service:${IMAGE_TAG}
+    restart: always
+    security_opt:
+      - no-new-privileges:true
+    environment:
+      - NODE_ENV=${NODE_ENV}
+      - DATABASE_URL=${DATABASE_URL}
+      - INTERNAL_API_KEY=${INTERNAL_API_KEY}
+      - MINIO_ENDPOINT=minio
+      - MINIO_PORT=9000
+      - MINIO_USE_SSL=false
+      - MINIO_ACCESS_KEY=${MINIO_ACCESS_KEY}
+      - MINIO_SECRET_KEY=${MINIO_SECRET_KEY}
+      - MINIO_BUCKET=${MINIO_BUCKET}
+      - MINIO_PUBLIC_URL=${MINIO_PUBLIC_URL}
+      - PORT=4005
+    healthcheck:
+      test: ["CMD-SHELL", "wget -qO- http://localhost:4005/health || exit 1"]
+      interval: 15s
+      timeout: 5s
+      retries: 3
+      start_period: 20s
+    networks:
+      - internal
+    depends_on:
+      postgres:
+        condition: service_healthy
+      minio:
         condition: service_healthy
 
   # ── Notification Service (NestJS) ─────────────────────────────────────────

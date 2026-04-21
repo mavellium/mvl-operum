@@ -1,0 +1,58 @@
+generator client {
+  provider      = "prisma-client-js"
+  output        = "../lib/generated/prisma"
+  binaryTargets = ["native", "linux-musl-openssl-3.0.x"]
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+enum TenantStatus {
+  ACTIVE
+  INACTIVE
+  SUSPENDED
+  REMOVED
+}
+
+model Tenant {
+  id        String       @id @default(cuid())
+  name      String
+  subdomain String       @unique
+  status    TenantStatus @default(ACTIVE)
+  config    Json?
+  deletedAt DateTime?
+  createdAt DateTime     @default(now())
+  updatedAt DateTime     @updatedAt
+
+  users User[]
+}
+
+model User {
+  id                  String    @id @default(cuid())
+  tenantId            String
+  tenant              Tenant    @relation(fields: [tenantId], references: [id])
+  name                String
+  email               String
+  passwordHash        String
+  role                String    @default("member")
+  avatarUrl           String?
+  cargo               String?
+  departamento        String?
+  hourlyRate          Float     @default(0)
+  isActive            Boolean   @default(true)
+  status              String    @default("active")
+  mfaEnabled          Boolean   @default(false)
+  mfaSecret           String?
+  loginAttempts       Int       @default(0)
+  forcePasswordChange Boolean   @default(false)
+  lastLogin           DateTime?
+  tokenVersion        Int       @default(0)
+  resetToken          String?
+  resetTokenExpiry    DateTime?
+  deletedAt           DateTime?
+  createdAt           DateTime  @default(now())
+  updatedAt           DateTime  @updatedAt
+
+  @@unique([email, tenantId])
+}

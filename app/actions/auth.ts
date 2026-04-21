@@ -10,6 +10,15 @@ import prisma from '@/lib/prisma'
 import bcrypt from 'bcryptjs'
 import { PasswordSchema } from '@/lib/validation/authSchemas'
 import type { FormState } from '@/types/auth'
+import {
+  authServiceLogin,
+  authServiceLogout,
+  authServiceRequestReset,
+  authServiceValidateCode,
+  authServiceResetPassword,
+} from '@/lib/authClient'
+
+const USE_AUTH_SERVICE = Boolean(process.env.AUTH_SERVICE_URL)
 
 const SESSION_DURATION_MS = 7 * 24 * 60 * 60 * 1000 // 7 days
 
@@ -25,7 +34,10 @@ async function redisRateLimit(key: string, limit: number, ttlSeconds: number): P
       port: Number(process.env.REDIS_PORT ?? 6379),
       password: process.env.REDIS_PASSWORD,
       lazyConnect: true,
+      enableOfflineQueue: false,
     })
+    // Prevent unhandled error events from crashing the process when Redis is unavailable
+    redis.on('error', () => {})
     await redis.connect()
     const attempts = await redis.incr(key)
     if (attempts === 1) await redis.expire(key, ttlSeconds)
@@ -79,6 +91,34 @@ export async function loginAction(prevState: FormState, formData: FormData): Pro
 
   let forcePasswordChange = false
   let projectRedirect = '/projetos'
+
+  if (USE_AUTH_SERVICE) {
+    try {
+      const result = await authServiceLogin(email, password)
+      forcePasswordChange = result.forcePasswordChange
+      const expiresAt = new Date(Date.now() + SESSION_DURATION_MS)
+      const cookieStore = await cookies()
+      cookieStore.set('session', result.token, {
+        httpOnly: true,
+        secure: process.env.NODE_ENV === 'production',
+        sameSite: 'strict',
+        expires: expiresAt,
+        path: '/',
+      })
+      const { role, id: userId, tenantId } = result.user
+      if (role !== 'admin') {
+        const projects = await getUserActiveProjects(userId, tenantId)
+        if (projects.length === 0) projectRedirect = '/no-project'
+        else if (projects.length === 1) projectRedirect = `/projetos/${projects[0].projectId}/dashboard`
+      }
+    } catch (err) {
+      if (err instanceof Error) return { message: err.message }
+      return { message: 'Erro ao fazer login. Tente novamente.' }
+    }
+    if (forcePasswordChange) redirect('/alterar-senha')
+    redirect(projectRedirect)
+  }
+
   try {
     const tenant = await prisma.tenant.findFirst({ where: { status: 'ACTIVE' } })
     if (!tenant) return { message: 'Nenhum tenant disponível' }
@@ -119,6 +159,10 @@ export async function loginAction(prevState: FormState, formData: FormData): Pro
 
 export async function logoutAction() {
   const cookieStore = await cookies()
+  if (USE_AUTH_SERVICE) {
+    const token = cookieStore.get('session')?.value
+    if (token) await authServiceLogout(token)
+  }
   cookieStore.delete('session')
   redirect('/login')
 }
@@ -141,6 +185,10 @@ export async function requestPasswordResetAction(_prevState: unknown, formData: 
   const rateLimited = await redisRateLimit(`reset_rate:${email}`, 3, 900)
   if (rateLimited) {
     return { error: 'Muitas tentativas. Aguarde 15 minutos.' }
+  }
+
+  if (USE_AUTH_SERVICE) {
+    return authServiceRequestReset(email)
   }
 
   // Always return success to avoid user enumeration
@@ -175,6 +223,14 @@ export async function validateResetCodeAction(_prevState: unknown, formData: For
     return { error: 'Email e código são obrigatórios' }
   }
 
+  if (USE_AUTH_SERVICE) {
+    try {
+      return await authServiceValidateCode(email, code)
+    } catch (err) {
+      return { error: err instanceof Error ? err.message : 'Código inválido ou expirado' }
+    }
+  }
+
   const user = await prisma.user.findFirst({
     where: {
       email,
@@ -204,6 +260,14 @@ export async function resetPasswordAction(_prevState: unknown, formData: FormDat
 
   if (newPassword !== confirmPassword) {
     return { error: 'Senhas não coincidem' }
+  }
+
+  if (USE_AUTH_SERVICE) {
+    try {
+      return await authServiceResetPassword(email, code, newPassword)
+    } catch (err) {
+      return { error: err instanceof Error ? err.message : 'Código inválido ou expirado' }
+    }
   }
 
   const user = await prisma.user.findFirst({

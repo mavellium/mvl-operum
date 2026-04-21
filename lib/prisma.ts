@@ -1,8 +1,17 @@
 import { PrismaClient } from './generated/prisma/client'
 import { PrismaPg } from '@prisma/adapter-pg'
+import { Pool } from 'pg'
 
 function createClient() {
-  const adapter = new PrismaPg({ connectionString: process.env.DATABASE_URL! })
+  const pool = new Pool({
+    connectionString: process.env.DATABASE_URL!,
+    connectionTimeoutMillis: 30_000,
+    idleTimeoutMillis: 10_000,
+    max: 10,
+    keepAlive: true,
+    keepAliveInitialDelayMillis: 10_000,
+  })
+  const adapter = new PrismaPg(pool)
   return new PrismaClient({ adapter })
 }
 

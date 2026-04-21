@@ -23,6 +23,38 @@ services:
       - "traefik.http.routers.mvl-staging.service=app-${COMPOSE_PROJECT_NAME}"
       - "traefik.http.routers.mvl-staging.middlewares=app-ratelimit@file,secure-headers@file"
 
+  api-gateway:
+    deploy:
+      resources:
+        limits:
+          memory: 128M
+    env_file:
+      - .env
+    networks:
+      - traefik-public
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.api-staging.rule=Host(`api-staging.operum.mavellium.com.br`)"
+      - "traefik.http.routers.api-staging.entrypoints=websecure"
+      - "traefik.http.routers.api-staging.tls.certresolver=myresolver"
+      - "traefik.http.routers.api-staging.service=api-gateway-${COMPOSE_PROJECT_NAME}"
+
+  auth-service:
+    deploy:
+      resources:
+        limits:
+          memory: 256M
+    env_file:
+      - .env
+
+  file-service:
+    deploy:
+      resources:
+        limits:
+          memory: 128M
+    env_file:
+      - .env
+
   notification-service:
     deploy:
       resources:
