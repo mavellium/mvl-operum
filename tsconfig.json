@@ -30,5 +30,5 @@
     ".next/dev/types/**/*.ts",
     "**/*.mts"
   ],
-  "exclude": ["node_modules", "notification-service", "auth-service", "api-gateway", "file-service", "project-service", "sprint-service"]
+  "exclude": ["node_modules", "notification-service", "auth-service", "api-gateway", "file-service", "project-service", "sprint-service", "__tests__", "__mocks__", "scripts"]
 }

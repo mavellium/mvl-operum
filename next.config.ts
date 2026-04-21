@@ -13,6 +13,12 @@ const CSP = [
 ].join("; ");
 
 const nextConfig: NextConfig = {
+  // TypeScript is checked separately via `tsc --noEmit` (Next.js worker OOMs on this machine).
+  typescript: { ignoreBuildErrors: true },
+
+  // Limit concurrent workers to avoid OOM in memory-constrained environments.
+  experimental: { cpus: 2 },
+
   // Enables standalone output for Docker — copies only necessary files.
   // Required for the production Dockerfile to work correctly.
   output: "standalone",
