@@ -33,6 +33,8 @@ model User {
   dashboardMetrics DashboardMetric[]
   sprintFeedbacks  SprintFeedback[]
 
+  tags Tag[] 
+
   @@unique([email, tenantId])
 }
 
