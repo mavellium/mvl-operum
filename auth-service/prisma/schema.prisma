@@ -70,8 +70,6 @@ model User {
   createdAt           DateTime  @default(now())
   updatedAt           DateTime  @updatedAt
 
-  tags Tag[] 
-
   @@unique([email, tenantId])
   @@schema("auth")
 }
