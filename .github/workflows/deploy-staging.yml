@@ -81,6 +81,9 @@ jobs:
         id: meta
         run: echo "owner=$(echo '${{ env.OWNER }}' | tr '[:upper:]' '[:lower:]')" >> $GITHUB_OUTPUT
 
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
       - name: Log in to GitHub Container Registry
         uses: docker/login-action@v3
         with:
@@ -89,53 +92,81 @@ jobs:
           password: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Build and push app image
-        run: |
-          IMAGE=ghcr.io/${{ steps.meta.outputs.owner }}/app
-          docker build -t "$IMAGE:${{ github.sha }}" -t "$IMAGE:staging" .
-          docker push "$IMAGE:${{ github.sha }}"
-          docker push "$IMAGE:staging"
+        uses: docker/build-push-action@v6
+        with:
+          context: .
+          push: true
+          tags: |
+            ghcr.io/${{ steps.meta.outputs.owner }}/app:${{ github.sha }}
+            ghcr.io/${{ steps.meta.outputs.owner }}/app:staging
+          cache-from: type=registry,ref=ghcr.io/${{ steps.meta.outputs.owner }}/app:staging
+          cache-to: type=inline
 
       - name: Build and push notification-service image
-        run: |
-          IMAGE=ghcr.io/${{ steps.meta.outputs.owner }}/notification-service
-          docker build -t "$IMAGE:${{ github.sha }}" -t "$IMAGE:staging" ./notification-service
-          docker push "$IMAGE:${{ github.sha }}"
-          docker push "$IMAGE:staging"
+        uses: docker/build-push-action@v6
+        with:
+          context: ./notification-service
+          push: true
+          tags: |
+            ghcr.io/${{ steps.meta.outputs.owner }}/notification-service:${{ github.sha }}
+            ghcr.io/${{ steps.meta.outputs.owner }}/notification-service:staging
+          cache-from: type=registry,ref=ghcr.io/${{ steps.meta.outputs.owner }}/notification-service:staging
+          cache-to: type=inline
 
       - name: Build and push auth-service image
-        run: |
-          IMAGE=ghcr.io/${{ steps.meta.outputs.owner }}/auth-service
-          docker build -t "$IMAGE:${{ github.sha }}" -t "$IMAGE:staging" ./auth-service
-          docker push "$IMAGE:${{ github.sha }}"
-          docker push "$IMAGE:staging"
+        uses: docker/build-push-action@v6
+        with:
+          context: ./auth-service
+          push: true
+          tags: |
+            ghcr.io/${{ steps.meta.outputs.owner }}/auth-service:${{ github.sha }}
+            ghcr.io/${{ steps.meta.outputs.owner }}/auth-service:staging
+          cache-from: type=registry,ref=ghcr.io/${{ steps.meta.outputs.owner }}/auth-service:staging
+          cache-to: type=inline
 
       - name: Build and push api-gateway image
-        run: |
-          IMAGE=ghcr.io/${{ steps.meta.outputs.owner }}/api-gateway
-          docker build -t "$IMAGE:${{ github.sha }}" -t "$IMAGE:staging" ./api-gateway
-          docker push "$IMAGE:${{ github.sha }}"
-          docker push "$IMAGE:staging"
+        uses: docker/build-push-action@v6
+        with:
+          context: ./api-gateway
+          push: true
+          tags: |
+            ghcr.io/${{ steps.meta.outputs.owner }}/api-gateway:${{ github.sha }}
+            ghcr.io/${{ steps.meta.outputs.owner }}/api-gateway:staging
+          cache-from: type=registry,ref=ghcr.io/${{ steps.meta.outputs.owner }}/api-gateway:staging
+          cache-to: type=inline
 
       - name: Build and push file-service image
-        run: |
-          IMAGE=ghcr.io/${{ steps.meta.outputs.owner }}/file-service
-          docker build -t "$IMAGE:${{ github.sha }}" -t "$IMAGE:staging" ./file-service
-          docker push "$IMAGE:${{ github.sha }}"
-          docker push "$IMAGE:staging"
+        uses: docker/build-push-action@v6
+        with:
+          context: ./file-service
+          push: true
+          tags: |
+            ghcr.io/${{ steps.meta.outputs.owner }}/file-service:${{ github.sha }}
+            ghcr.io/${{ steps.meta.outputs.owner }}/file-service:staging
+          cache-from: type=registry,ref=ghcr.io/${{ steps.meta.outputs.owner }}/file-service:staging
+          cache-to: type=inline
 
       - name: Build and push project-service image
-        run: |
-          IMAGE=ghcr.io/${{ steps.meta.outputs.owner }}/project-service
-          docker build -t "$IMAGE:${{ github.sha }}" -t "$IMAGE:staging" ./project-service
-          docker push "$IMAGE:${{ github.sha }}"
-          docker push "$IMAGE:staging"
+        uses: docker/build-push-action@v6
+        with:
+          context: ./project-service
+          push: true
+          tags: |
+            ghcr.io/${{ steps.meta.outputs.owner }}/project-service:${{ github.sha }}
+            ghcr.io/${{ steps.meta.outputs.owner }}/project-service:staging
+          cache-from: type=registry,ref=ghcr.io/${{ steps.meta.outputs.owner }}/project-service:staging
+          cache-to: type=inline
 
       - name: Build and push sprint-service image
-        run: |
-          IMAGE=ghcr.io/${{ steps.meta.outputs.owner }}/sprint-service
-          docker build -t "$IMAGE:${{ github.sha }}" -t "$IMAGE:staging" ./sprint-service
-          docker push "$IMAGE:${{ github.sha }}"
-          docker push "$IMAGE:staging"
+        uses: docker/build-push-action@v6
+        with:
+          context: ./sprint-service
+          push: true
+          tags: |
+            ghcr.io/${{ steps.meta.outputs.owner }}/sprint-service:${{ github.sha }}
+            ghcr.io/${{ steps.meta.outputs.owner }}/sprint-service:staging
+          cache-from: type=registry,ref=ghcr.io/${{ steps.meta.outputs.owner }}/sprint-service:staging
+          cache-to: type=inline
 
       - uses: actions/checkout@v4
 
