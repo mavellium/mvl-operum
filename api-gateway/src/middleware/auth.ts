@@ -89,8 +89,8 @@ export function authMiddleware() {
       return res.status(401).json({ error: 'Token inválido' })
     }
 
-    // Verify session in Redis (if jti present)
-    if (payload.jti) {
+    // Verify session in Redis only in production (dev uses JWT signature only)
+    if (payload.jti && process.env.NODE_ENV === 'production') {
       try {
         const redis = getRedis()
         const session = await redis.get(`session:${payload.jti}`)

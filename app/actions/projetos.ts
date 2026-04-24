@@ -30,10 +30,17 @@ export async function createProjetoAction(
 ) {
   try {
     const { tenantId } = await verifySession()
-    const { initialMemberId, ano: anoStr, macroFases, ...projectData } = input
+    const { initialMemberId, ano: anoStr, macroFases, startDate, endDate, ...rest } = input
     const ano = anoStr ? Number(anoStr) : undefined
+    const toISO = (d?: string) => d ? new Date(d).toISOString() : undefined
 
-    const projeto = await projectsApi.create({ ...projectData, tenantId, ano }) as Record<string, unknown>
+    const projeto = await projectsApi.create({
+      ...rest,
+      tenantId,
+      ano,
+      startDate: toISO(startDate),
+      endDate: toISO(endDate),
+    }) as Record<string, unknown>
 
     if (initialMemberId) {
       await projectsApi.addMember(projeto.id as string, { userId: initialMemberId })
@@ -77,9 +84,15 @@ export async function updateProjetoAction(
 ) {
   try {
     await verifySession()
-    const { ano: anoRaw, macroFases, ...rest } = data
+    const { ano: anoRaw, macroFases, startDate, endDate, ...rest } = data
     const ano = anoRaw !== undefined && anoRaw !== '' ? Number(anoRaw) : undefined
-    const projeto = await projectsApi.update(id, { ...rest, ...(ano !== undefined && { ano }) })
+    const toISO = (d: unknown) => (typeof d === 'string' && d) ? new Date(d).toISOString() : undefined
+    const projeto = await projectsApi.update(id, {
+      ...rest,
+      ...(ano !== undefined && { ano }),
+      ...(startDate !== undefined && { startDate: toISO(startDate) }),
+      ...(endDate !== undefined && { endDate: toISO(endDate) }),
+    })
 
     if (macroFases) {
       await projectsApi.upsertMacroFases(id, macroFases)

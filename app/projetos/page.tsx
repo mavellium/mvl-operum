@@ -1,5 +1,5 @@
 import { verifySession } from '@/lib/dal'
-import { getProjectPaginated } from '@/services/projectService'
+import { projectsApi } from '@/lib/api-client'
 import { STATUS_CONFIG } from '@/lib/statusConfig'
 import EmptyState from '@/components/ui/EmptyState'
 import Link from 'next/link'
@@ -39,19 +39,20 @@ function getGradient(name: string) {
 }
 
 // Helper para formatar data curta (ex: 12/Jan/2026)
-function formatDateShort(date?: Date | null) {
+function formatDateShort(date?: Date | string | null) {
   if (!date) return '--/--/----'
-  return date.toLocaleDateString('pt-BR', { day: '2-digit', month: 'short', year: 'numeric' }).replace(/ de /g, '/').replace('.', '')
+  return new Date(date).toLocaleDateString('pt-BR', { day: '2-digit', month: 'short', year: 'numeric' }).replace(/ de /g, '/').replace('.', '')
 }
 
 export default async function ProjetosPage({ searchParams }: { searchParams: Promise<{ page?: string }> }) {
-  const { tenantId } = await verifySession()
-  
+  await verifySession()
+
   const params = await searchParams
   const currentPage = Number(params?.page) || 1
   const limit = 9 // Grid 3x3 perfeito
 
-  const { projetos, totalPages } = await getProjectPaginated(tenantId, currentPage, limit)
+  const { items: projetos, total } = await projectsApi.list(currentPage, limit)
+  const totalPages = Math.ceil(total / limit)
 
   return (
     <div className="min-h-screen bg-[#F8FAFC] relative overflow-hidden">
@@ -72,8 +73,8 @@ export default async function ProjetosPage({ searchParams }: { searchParams: Pro
             {/* GRID DE PROJETOS */}
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
               {projetos.map(projeto => {
-                const s = STATUS_CONFIG[projeto.status] ?? STATUS_CONFIG.ACTIVE
-                const qtdMembros = projeto._count?.members || 0
+                const s = STATUS_CONFIG[projeto.status ?? 'ACTIVE'] ?? STATUS_CONFIG.ACTIVE
+                const qtdMembros = (projeto as { _count?: { members?: number } })._count?.members ?? 0
 
                 return (
                   <div 

@@ -6,9 +6,6 @@ import { authMiddleware } from './middleware/auth'
 
 const app = express()
 
-// Parse JSON bodies (needed before proxy for routes that need body inspection)
-app.use(express.json())
-
 // Rate limiting: 100 req/s per IP, burst 200
 app.use(
   rateLimit({

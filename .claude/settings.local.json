@@ -33,7 +33,11 @@
       "PowerShell(Stop-Process -Id 11664 -Force -ErrorAction SilentlyContinue)",
       "PowerShell(Test-NetConnection -ComputerName localhost -Port 4001 -InformationLevel Quiet 2>$null)",
       "Bash(echo \"PID: $!\" sleep 5 curl -s http://localhost:4001/health)",
-      "Bash(node -e ' *)"
+      "Bash(node -e ' *)",
+      "Bash(docker exec *)",
+      "PowerShell(docker exec mvl-operum-postgres-1 cat /var/lib/postgresql/data/pg_hba.conf)",
+      "PowerShell(Get-NetTCPConnection -LocalPort 5432 | Select-Object LocalAddress, LocalPort, OwningProcess | ForEach-Object { $proc = Get-Process -Id $_.OwningProcess -ErrorAction SilentlyContinue; [PSCustomObject]@{Address=$_.LocalAddress; Port=$_.LocalPort; PID=$_.OwningProcess; Process=$proc.Name} })",
+      "PowerShell(netstat -ano)"
     ],
     "additionalDirectories": [
       "c:\\temp\\ClaudeCode\\kanban-board\\app\\dashboard\\sprint",

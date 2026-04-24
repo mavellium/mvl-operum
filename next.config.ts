@@ -1,8 +1,11 @@
 import type { NextConfig } from "next";
 
+const isDev = process.env.NODE_ENV === 'development'
+
 const CSP = [
   "default-src 'self'",
-  "script-src 'self' 'unsafe-inline'",   // unsafe-inline required by Next.js hydration
+  // unsafe-eval required by React dev tools (reconstructing callstacks); never used in production
+  `script-src 'self' 'unsafe-inline'${isDev ? " 'unsafe-eval'" : ""}`,
   "style-src 'self' 'unsafe-inline'",
   "img-src 'self' data: blob: https://*.mavellium.com.br",
   "font-src 'self'",

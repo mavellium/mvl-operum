@@ -1,10 +1,11 @@
 import { Injectable, NotFoundException } from '@nestjs/common'
-import { PrismaClient, Prisma, NotificationStatus } from '../../lib/generated/prisma'
+import { Prisma, NotificationStatus } from '../../lib/generated/prisma'
+import { prisma } from '../prisma'
 import { CreateNotificationDto } from './dto/create-notification.dto'
 
 @Injectable()
 export class NotificationService {
-  private readonly prisma = new PrismaClient()
+  private readonly prisma = prisma
 
   async create(dto: CreateNotificationDto) {
     return this.prisma.notification.create({

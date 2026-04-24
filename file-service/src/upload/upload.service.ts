@@ -1,5 +1,5 @@
 import { Injectable, NotFoundException, BadRequestException } from '@nestjs/common'
-import { PrismaClient } from '../../lib/generated/prisma'
+import { prisma } from '../prisma'
 import { v4 as uuidv4 } from 'uuid'
 import { MinioService } from '../minio/minio.service'
 
@@ -15,7 +15,7 @@ const ALLOWED_TYPES = [
 
 @Injectable()
 export class UploadService {
-  private readonly prisma = new PrismaClient()
+  private readonly prisma = prisma
 
   constructor(private readonly minio: MinioService) {}
 

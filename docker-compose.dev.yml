@@ -2,7 +2,7 @@ version: "3.9"
 services:
   postgres:
     ports:
-      - "5432:5432"   # Local dev
+      - "5435:5432"   # Local dev (5432/5433 used by native PostgreSQL on Windows)
     environment:
       POSTGRES_PASSWORD: dev_senha
       POSTGRES_USER: postgres
