@@ -24,17 +24,19 @@ const eslintConfig = defineConfig([
     "next-env.d.ts",
     // Prisma generated files — not hand-written, linting them is noise
     "lib/generated/prisma/**",
-    "notification-service/lib/generated/prisma/**",
     // Key-generation script — not part of the app, already gitignored
     "gerar-chaves.js",
     // Node.js helper scripts — CJS files that intentionally use require()
     "scripts/**",
-    // NestJS compiled output — generated CommonJS, not hand-written
-    "notification-service/dist/**",
-    "auth-service/dist/**",
-    "auth-service/lib/**",
-    "auth-service/scripts/**",
-    "api-gateway/dist/**",
+    // Microserviços têm seus próprios linters (eslint src) e tsconfigs separados.
+    // O tsconfig.json raiz os exclui; tentar lintá-los aqui causa erros de parser.
+    "auth-service/**",
+    "api-gateway/**",
+    "notification-service/**",
+    "file-service/**",
+    "project-service/**",
+    "sprint-service/**",
+    "prisma/**",
   ]),
 ]);
 
