@@ -8,6 +8,9 @@ importers:
 
   .:
     dependencies:
+      dotenv:
+        specifier: ^17.4.1
+        version: 17.4.2
       express:
         specifier: ^4.21.2
         version: 4.22.1
@@ -30,9 +33,6 @@ importers:
       '@types/node':
         specifier: ^20
         version: 20.19.39
-      dotenv:
-        specifier: ^17.4.1
-        version: 17.4.2
       ts-node:
         specifier: ^10.9.2
         version: 10.9.2(@types/node@20.19.39)(typescript@5.9.3)
