@@ -112,6 +112,7 @@ export async function loginAction(prevState: FormState, formData: FormData): Pro
     }
   } catch (err) {
     if (err instanceof Error) return { message: err.message }
+    console.error('[loginAction] non-Error thrown:', err)
     return { message: 'Erro ao fazer login. Tente novamente.' }
   }
 
