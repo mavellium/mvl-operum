@@ -2,7 +2,9 @@
 
 import { verifySession } from '@/lib/dal'
 import { revalidatePath } from 'next/cache'
-import { projectsApi, adminApi } from '@/lib/api-client'
+import { projectsApi } from '@/lib/api-client'
+import prisma from '@/lib/prisma'
+import { isProjectManager, setProjectManagerRole, removeProjectRole } from '@/services/projectRoleService'
 
 export async function createProjetoAction(
   _prevState: unknown,
@@ -177,6 +179,8 @@ export async function updateProjetoMemberAction(
   userId: string,
   projetoId: string,
   data: {
+    name?: string
+    email?: string
     phone?: string
     cep?: string
     logradouro?: string
@@ -193,8 +197,12 @@ export async function updateProjetoMemberAction(
   },
 ) {
   try {
-    await verifySession()
-    const { isGerente, cargos, departamento, hourlyRate: rawRate, ...profileData } = data
+    const { role, tenantId, userId: sessionUserId } = await verifySession()
+    const isAdmin = role === 'admin'
+    const canManage = isAdmin || await isProjectManager(sessionUserId, projetoId)
+    if (!canManage) throw new Error('Acesso não autorizado')
+
+    const { isGerente: makeGerente, cargos, departamento, hourlyRate: rawRate, name, email, ...profileData } = data
 
     let hourlyRate: number | undefined
     if (rawRate !== undefined) {
@@ -204,28 +212,86 @@ export async function updateProjetoMemberAction(
       if (!isNaN(n)) hourlyRate = n
     }
 
-    // Update user global profile
-    await adminApi.updateUser(userId, {
-      ...profileData,
-      ...(hourlyRate !== undefined && { hourlyRate }),
-      ...(cargos !== undefined && { cargo: cargos.join(', ') }),
-      ...(departamento !== undefined && { departamento: departamento[0] ?? null }),
+    // 1. Update User profile via Prisma (name/email only for admin)
+    const userUpdateData: Record<string, unknown> = { ...profileData }
+    if (isAdmin) {
+      if (name?.trim()) userUpdateData.name = name.trim()
+      if (email?.trim()) userUpdateData.email = email.trim()
+    }
+    if (hourlyRate !== undefined) userUpdateData.hourlyRate = hourlyRate
+
+    await prisma.user.update({
+      where: { id: userId, tenantId, deletedAt: null },
+      data: userUpdateData,
     })
 
-    // Update project membership
-    await projectsApi.addMember(projetoId, {
-      userId,
-      ...(cargos !== undefined && { roles: cargos }),
-      ...(departamento !== undefined && { departamento: departamento[0] }),
-      ...(hourlyRate !== undefined && { hourlyRate }),
-    })
-
-    if (isGerente === true) {
-      await projectsApi.assignProjectRole(projetoId, userId, 'GERENTE')
-    } else if (isGerente === false) {
-      await projectsApi.removeProjectRole(projetoId, userId).catch(() => {})
+    // 2a. Upsert cargos — case-insensitive name search across all scopes to avoid duplicates
+    if (cargos !== undefined && cargos.length > 0) {
+      await Promise.all(cargos.map(async (cargoName) => {
+        const name = cargoName.trim()
+        if (!name) return
+        const exists = await prisma.role.findFirst({
+          where: {
+            tenantId,
+            deletedAt: null,
+            name: { equals: name, mode: 'insensitive' },
+          },
+        })
+        if (!exists) {
+          const nameKey = name.toLowerCase().replace(/\s+/g, '-').replace(/[^a-z0-9-]/g, '')
+          await prisma.role.create({
+            data: { tenantId, name, nameKey, scope: 'TENANT' },
+          })
+        }
+      }))
     }
 
+    // 2b. Upsert department — case-insensitive name search, resolve id
+    let deptId: string | null | undefined
+    if (departamento !== undefined) {
+      if (departamento.length > 0) {
+        const deptName = departamento[0].trim()
+        let dept = await prisma.department.findFirst({
+          where: {
+            tenantId,
+            deletedAt: null,
+            name: { equals: deptName, mode: 'insensitive' },
+          },
+          select: { id: true },
+        })
+        if (!dept) {
+          dept = await prisma.department.create({
+            data: { name: deptName, tenantId },
+            select: { id: true },
+          })
+        }
+        deptId = dept.id
+      } else {
+        deptId = null
+      }
+    }
+
+    // 2c. Update UserProject
+    const userProjectData: Record<string, unknown> = {}
+    if (cargos !== undefined) userProjectData.role = cargos.join(', ')
+    if (hourlyRate !== undefined) userProjectData.hourlyRate = hourlyRate
+    if (deptId !== undefined) userProjectData.departmentId = deptId
+
+    if (Object.keys(userProjectData).length > 0) {
+      await prisma.userProject.update({
+        where: { userId_projectId: { userId, projectId: projetoId } },
+        data: userProjectData,
+      })
+    }
+
+    // 3. Handle gerente role via projectRoleService (uses correct role cuid)
+    if (makeGerente === true) {
+      await setProjectManagerRole(userId, projetoId, tenantId)
+    } else if (makeGerente === false) {
+      await removeProjectRole(userId, projetoId)
+    }
+
+    revalidatePath(`/projetos/${projetoId}/stakeholders`)
     revalidatePath(`/projetos/${projetoId}/membros`)
     revalidatePath(`/projetos/${projetoId}`)
     return { success: true }

@@ -64,7 +64,7 @@ export async function getOrCreateRoleAction(name: string) {
     const roles = await rolesApi.list() as Array<{ id: string; name: string }>
     const existing = roles.find(r => r.name.toLowerCase() === name.toLowerCase())
     if (existing) return { role: existing }
-    const role = await rolesApi.create({ name, scope: 'PROJETO', nameKey: name.toLowerCase().replace(/\s+/g, '_') })
+    const role = await rolesApi.create({ name, scope: 'TENANT', nameKey: name.toLowerCase().trim().replace(/\s+/g, '-').replace(/[^a-z0-9-]/g, '') })
     revalidatePath('/projetos')
     return { role }
   } catch (err) {

@@ -63,7 +63,6 @@ export default function ProjectSidebar({ projetoId, projetoNome, canManageMember
     { href: `/projetos/${projetoId}/documentacao`, label: 'Documentação', Icon: DocumentosIcon },
     ...(canManageMembers
       ? [
-          { href: `/projetos/${projetoId}/membros`, label: 'Membros', Icon: MembrosIcon },
           { href: `/projetos/${projetoId}/stakeholders`, label: 'Stakeholders', Icon: StakeholdersIcon },
           { href: `/projetos/${projetoId}/funcoes`, label: 'Funções', Icon: CargosIcon },
           { href: `/projetos/${projetoId}/departamentos`, label: 'Departamentos', Icon: DepartamentosIcon }
