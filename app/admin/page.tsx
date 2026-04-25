@@ -1,17 +1,20 @@
 import { verifySession } from '@/lib/dal'
-import prisma from '@/lib/prisma'
+import { adminApi, projectsApi, notificationsApi } from '@/lib/api-client'
 import Link from 'next/link'
 
 export const dynamic = 'force-dynamic'
 
 async function getAdminStats(userId: string) {
-  const [totalUsers, activeUsers, totalProjetos, activeProjetos, unreadAlerts] = await Promise.all([
-    prisma.user.count({ where: { deletedAt: null } }),
-    prisma.user.count({ where: { deletedAt: null, isActive: true } }),
-    prisma.project.count({ where: { deletedAt: null } }),
-    prisma.project.count({ where: { deletedAt: null, status: 'ACTIVE' } }),
-    prisma.notification.count({ where: { userId, status: 'UNREAD', deletedAt: null } }),
+  const [users, projects, notifications] = await Promise.all([
+    adminApi.listAllUsers().catch(() => []),
+    projectsApi.list(1, 1000).catch(() => ({ items: [], total: 0 })),
+    notificationsApi.list(userId, { status: 'UNREAD', limit: '1000' }).catch(() => []),
   ])
+  const totalUsers = users.length
+  const activeUsers = users.filter((u: { isActive?: boolean }) => u.isActive).length
+  const totalProjetos = projects.total
+  const activeProjetos = projects.items.filter((p: { status?: string }) => p.status === 'ACTIVE').length
+  const unreadAlerts = notifications.length
   return { totalUsers, activeUsers, totalProjetos, activeProjetos, unreadAlerts }
 }
 
