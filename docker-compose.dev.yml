@@ -4,10 +4,35 @@ services:
     ports:
       - "5435:5432"   # Local dev (5432/5433 used by native PostgreSQL on Windows)
     environment:
-      POSTGRES_PASSWORD: dev_senha
-      POSTGRES_USER: postgres
-      POSTGRES_DB: mvl_operum_dev
+      POSTGRES_PASSWORD: ${DB_PASSWORD:-M4v3ll1um}
+      POSTGRES_USER: ${DB_USER:-mvluser}
+      POSTGRES_DB: ${DB_NAME:-mvloperum}
 
   redis:
     ports:
       - "6379:6379"
+    command: redis-server --appendonly yes
+
+  api-gateway:
+    ports:
+      - "4000:4000"
+
+  auth-service:
+    ports:
+      - "4001:4001"
+
+  project-service:
+    ports:
+      - "4002:4002"
+
+  sprint-service:
+    ports:
+      - "4003:4003"
+
+  notification-service:
+    ports:
+      - "4004:4004"
+
+  file-service:
+    ports:
+      - "4005:4005"
