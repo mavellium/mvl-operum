@@ -20,19 +20,29 @@ services:
   auth-service:
     ports:
       - "4001:4001"
+    environment:
+      - DATABASE_URL=postgresql://${DB_USER:-mvluser}:${DB_PASSWORD:-M4v3ll1um}@postgres:5432/${DB_NAME:-mvloperum}?schema=public
 
   project-service:
     ports:
       - "4002:4002"
+    environment:
+      - DATABASE_URL=postgresql://${DB_USER:-mvluser}:${DB_PASSWORD:-M4v3ll1um}@postgres:5432/${DB_NAME:-mvloperum}?schema=public
 
   sprint-service:
     ports:
       - "4003:4003"
+    environment:
+      - DATABASE_URL=postgresql://${DB_USER:-mvluser}:${DB_PASSWORD:-M4v3ll1um}@postgres:5432/${DB_NAME:-mvloperum}?schema=public
 
   notification-service:
     ports:
       - "4004:4004"
+    environment:
+      - DATABASE_URL=postgresql://${DB_USER:-mvluser}:${DB_PASSWORD:-M4v3ll1um}@postgres:5432/${DB_NAME:-mvloperum}?schema=public
 
   file-service:
     ports:
       - "4005:4005"
+    environment:
+      - DATABASE_URL=postgresql://${DB_USER:-mvluser}:${DB_PASSWORD:-M4v3ll1um}@postgres:5432/${DB_NAME:-mvloperum}?schema=public
