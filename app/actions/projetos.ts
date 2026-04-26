@@ -225,25 +225,28 @@ export async function updateProjetoMemberAction(
       data: userUpdateData,
     })
 
-    // 2a. Upsert cargos — case-insensitive name search across all scopes to avoid duplicates
+    // 2a. Upsert cargos — sequential to avoid race conditions; upsert handles soft-deleted records
     if (cargos !== undefined && cargos.length > 0) {
-      await Promise.all(cargos.map(async (cargoName) => {
+      for (const cargoName of cargos) {
         const name = cargoName.trim()
-        if (!name) return
-        const exists = await prisma.role.findFirst({
-          where: {
-            tenantId,
-            deletedAt: null,
-            name: { equals: name, mode: 'insensitive' },
-          },
+        if (!name) continue
+        const byName = await prisma.role.findFirst({
+          where: { tenantId, name: { equals: name, mode: 'insensitive' } },
+          select: { id: true, deletedAt: true },
         })
-        if (!exists) {
+        if (byName) {
+          if (byName.deletedAt !== null) {
+            await prisma.role.update({ where: { id: byName.id }, data: { deletedAt: null } })
+          }
+        } else {
           const nameKey = name.toLowerCase().replace(/\s+/g, '-').replace(/[^a-z0-9-]/g, '')
-          await prisma.role.create({
-            data: { tenantId, name, nameKey, scope: 'TENANT' },
+          await prisma.role.upsert({
+            where: { nameKey_tenantId_scope: { nameKey, tenantId, scope: 'TENANT' } },
+            create: { tenantId, name, nameKey, scope: 'TENANT' },
+            update: { name, deletedAt: null },
           })
         }
-      }))
+      }
     }
 
     // 2b. Upsert department — case-insensitive name search, resolve id
@@ -251,21 +254,22 @@ export async function updateProjetoMemberAction(
     if (departamento !== undefined) {
       if (departamento.length > 0) {
         const deptName = departamento[0].trim()
-        let dept = await prisma.department.findFirst({
-          where: {
-            tenantId,
-            deletedAt: null,
-            name: { equals: deptName, mode: 'insensitive' },
-          },
-          select: { id: true },
+        const byName = await prisma.department.findFirst({
+          where: { tenantId, name: { equals: deptName, mode: 'insensitive' } },
+          select: { id: true, deletedAt: true },
         })
-        if (!dept) {
-          dept = await prisma.department.create({
+        if (byName) {
+          if (byName.deletedAt !== null) {
+            await prisma.department.update({ where: { id: byName.id }, data: { deletedAt: null } })
+          }
+          deptId = byName.id
+        } else {
+          const created = await prisma.department.create({
             data: { name: deptName, tenantId },
             select: { id: true },
           })
+          deptId = created.id
         }
-        deptId = dept.id
       } else {
         deptId = null
       }
