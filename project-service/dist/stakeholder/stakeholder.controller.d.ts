@@ -1,0 +1,158 @@
+import { StakeholderService } from './stakeholder.service';
+export declare class StakeholderController {
+    private readonly stakeholderService;
+    constructor(stakeholderService: StakeholderService);
+    list(tenantId: string): Promise<{
+        name: string;
+        id: string;
+        createdAt: Date;
+        updatedAt: Date;
+        tenantId: string;
+        logoUrl: string | null;
+        company: string | null;
+        competence: string | null;
+        email: string | null;
+        phone: string | null;
+        cep: string | null;
+        logradouro: string | null;
+        numero: string | null;
+        complemento: string | null;
+        bairro: string | null;
+        cidade: string | null;
+        estado: string | null;
+        notes: string | null;
+        isActive: boolean;
+    }[]>;
+    findOne(id: string, tenantId: string): Promise<{
+        projects: ({
+            project: {
+                name: string;
+                id: string;
+                status: import("../../lib/generated/prisma").$Enums.ProjectStatus;
+                deletedAt: Date | null;
+                createdAt: Date;
+                updatedAt: Date;
+                tenantId: string;
+                description: string | null;
+                logoUrl: string | null;
+                slogan: string | null;
+                location: string | null;
+                startDate: Date | null;
+                endDate: Date | null;
+                justificativa: string | null;
+                objetivos: string | null;
+                metodologia: string | null;
+                descricaoProduto: string | null;
+                premissas: string | null;
+                restricoes: string | null;
+                limitesAutoridade: string | null;
+                semestre: string | null;
+                ano: number | null;
+                departamentos: string[];
+            };
+        } & {
+            id: string;
+            createdAt: Date;
+            projectId: string;
+            stakeholderId: string;
+        })[];
+    } & {
+        name: string;
+        id: string;
+        createdAt: Date;
+        updatedAt: Date;
+        tenantId: string;
+        logoUrl: string | null;
+        company: string | null;
+        competence: string | null;
+        email: string | null;
+        phone: string | null;
+        cep: string | null;
+        logradouro: string | null;
+        numero: string | null;
+        complemento: string | null;
+        bairro: string | null;
+        cidade: string | null;
+        estado: string | null;
+        notes: string | null;
+        isActive: boolean;
+    }>;
+    create(body: unknown, tenantId: string): Promise<{
+        name: string;
+        id: string;
+        createdAt: Date;
+        updatedAt: Date;
+        tenantId: string;
+        logoUrl: string | null;
+        company: string | null;
+        competence: string | null;
+        email: string | null;
+        phone: string | null;
+        cep: string | null;
+        logradouro: string | null;
+        numero: string | null;
+        complemento: string | null;
+        bairro: string | null;
+        cidade: string | null;
+        estado: string | null;
+        notes: string | null;
+        isActive: boolean;
+    }>;
+    update(id: string, tenantId: string, body: unknown): Promise<{
+        name: string;
+        id: string;
+        createdAt: Date;
+        updatedAt: Date;
+        tenantId: string;
+        logoUrl: string | null;
+        company: string | null;
+        competence: string | null;
+        email: string | null;
+        phone: string | null;
+        cep: string | null;
+        logradouro: string | null;
+        numero: string | null;
+        complemento: string | null;
+        bairro: string | null;
+        cidade: string | null;
+        estado: string | null;
+        notes: string | null;
+        isActive: boolean;
+    }>;
+    remove(id: string, tenantId: string): Promise<void>;
+    listByProject(projectId: string): Promise<({
+        stakeholder: {
+            name: string;
+            id: string;
+            createdAt: Date;
+            updatedAt: Date;
+            tenantId: string;
+            logoUrl: string | null;
+            company: string | null;
+            competence: string | null;
+            email: string | null;
+            phone: string | null;
+            cep: string | null;
+            logradouro: string | null;
+            numero: string | null;
+            complemento: string | null;
+            bairro: string | null;
+            cidade: string | null;
+            estado: string | null;
+            notes: string | null;
+            isActive: boolean;
+        };
+    } & {
+        id: string;
+        createdAt: Date;
+        projectId: string;
+        stakeholderId: string;
+    })[]>;
+    linkProject(stakeholderId: string, projectId: string, tenantId: string): Promise<{
+        id: string;
+        createdAt: Date;
+        projectId: string;
+        stakeholderId: string;
+    }>;
+    unlinkProject(stakeholderId: string, projectId: string, tenantId: string): Promise<void>;
+}

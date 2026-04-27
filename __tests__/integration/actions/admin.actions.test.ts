@@ -2,19 +2,23 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest'
 
 vi.mock('next/cache', () => ({ revalidatePath: vi.fn() }))
-vi.mock('@/services/adminService', () => ({
-  listAllUsers: vi.fn(),
-  adminCreateUser: vi.fn(),
-  adminUpdateUser: vi.fn(),
-  toggleUserActive: vi.fn(),
-  setUserRole: vi.fn(),
-}))
 
 vi.mock('@/lib/dal', () => ({
   verifySession: vi.fn(),
 }))
 
+vi.mock('@/lib/api-client', () => ({
+  adminApi: {
+    listUsers: vi.fn(),
+    createUser: vi.fn(),
+    updateUser: vi.fn(),
+    toggleActive: vi.fn(),
+    setRole: vi.fn(),
+  },
+}))
+
 import { verifySession } from '@/lib/dal'
+import { adminApi } from '@/lib/api-client'
 import {
   listUsersAction,
   adminCreateUserAction,
@@ -22,21 +26,8 @@ import {
   toggleUserActiveAction,
   setUserRoleAction,
 } from '@/app/actions/admin'
-import {
-  listAllUsers,
-  adminCreateUser,
-  adminUpdateUser,
-  toggleUserActive,
-  setUserRole,
-} from '@/services/adminService'
 
 const mockVerify = verifySession as ReturnType<typeof vi.fn>
-const mockList = listAllUsers as ReturnType<typeof vi.fn>
-const mockCreate = adminCreateUser as ReturnType<typeof vi.fn>
-const mockUpdate = adminUpdateUser as ReturnType<typeof vi.fn>
-const mockToggle = toggleUserActive as ReturnType<typeof vi.fn>
-const mockSetRole = setUserRole as ReturnType<typeof vi.fn>
-
 const ADMIN_SESSION = { userId: 'u1', role: 'admin' }
 const MEMBER_SESSION = { userId: 'u2', role: 'member' }
 
@@ -49,7 +40,7 @@ describe('admin guard', () => {
     mockVerify.mockResolvedValue(MEMBER_SESSION)
     const result = await listUsersAction()
     expect(result).toMatchObject({ error: expect.stringMatching(/acesso|permiss|admin/i) })
-    expect(mockList).not.toHaveBeenCalled()
+    expect(adminApi.listUsers).not.toHaveBeenCalled()
   })
 
   it('returns unauthorized when not authenticated', async () => {
@@ -62,9 +53,9 @@ describe('admin guard', () => {
 describe('listUsersAction', () => {
   it('calls listAllUsers and returns users for admin', async () => {
     mockVerify.mockResolvedValue(ADMIN_SESSION)
-    mockList.mockResolvedValue([{ id: 'u1', name: 'Alice' }])
+    vi.mocked(adminApi.listUsers).mockResolvedValue([{ id: 'u1', name: 'Alice', email: 'alice@x.com', role: 'member', isActive: true }])
     const result = await listUsersAction()
-    expect(mockList).toHaveBeenCalledOnce()
+    expect(adminApi.listUsers).toHaveBeenCalledOnce()
     expect(result).toMatchObject({ users: [{ id: 'u1' }] })
   })
 })
@@ -72,9 +63,9 @@ describe('listUsersAction', () => {
 describe('toggleUserActiveAction', () => {
   it('calls service with correct userId and active flag', async () => {
     mockVerify.mockResolvedValue(ADMIN_SESSION)
-    mockToggle.mockResolvedValue({ id: 'u2', isActive: false })
+    vi.mocked(adminApi.toggleActive).mockResolvedValue({ id: 'u2', name: 'Bob', email: 'bob@x.com', role: 'member', isActive: false })
     const result = await toggleUserActiveAction('u2', false)
-    expect(mockToggle).toHaveBeenCalledWith('u2', false)
+    expect(adminApi.toggleActive).toHaveBeenCalledWith('u2', false)
     expect(result).toMatchObject({ user: { isActive: false } })
   })
 })
@@ -82,9 +73,9 @@ describe('toggleUserActiveAction', () => {
 describe('setUserRoleAction', () => {
   it('calls setUserRole with userId and role', async () => {
     mockVerify.mockResolvedValue(ADMIN_SESSION)
-    mockSetRole.mockResolvedValue({ id: 'u2', role: 'admin' })
+    vi.mocked(adminApi.setRole).mockResolvedValue({ id: 'u2', name: 'Bob', email: 'bob@x.com', role: 'admin' })
     const result = await setUserRoleAction('u2', 'admin')
-    expect(mockSetRole).toHaveBeenCalledWith('u2', 'admin')
+    expect(adminApi.setRole).toHaveBeenCalledWith('u2', 'admin')
     expect(result).toMatchObject({ user: { role: 'admin' } })
   })
 })
@@ -92,13 +83,13 @@ describe('setUserRoleAction', () => {
 describe('adminCreateUserAction', () => {
   it('calls adminCreateUser and returns new user', async () => {
     mockVerify.mockResolvedValue(ADMIN_SESSION)
-    mockCreate.mockResolvedValue({ id: 'u3', name: 'Bob', email: 'bob@test.com' })
+    vi.mocked(adminApi.createUser).mockResolvedValue({ id: 'u3', name: 'Bob', email: 'bob@test.com', role: 'member' })
     const result = await adminCreateUserAction({
       name: 'Bob',
       email: 'bob@test.com',
       password: 'secret123',
     })
-    expect(mockCreate).toHaveBeenCalledOnce()
+    expect(adminApi.createUser).toHaveBeenCalledOnce()
     expect(result).toMatchObject({ user: { id: 'u3' } })
   })
 })
@@ -106,9 +97,9 @@ describe('adminCreateUserAction', () => {
 describe('adminUpdateUserAction', () => {
   it('calls adminUpdateUser with userId and data', async () => {
     mockVerify.mockResolvedValue(ADMIN_SESSION)
-    mockUpdate.mockResolvedValue({ id: 'u1', name: 'Alice Updated' })
+    vi.mocked(adminApi.updateUser).mockResolvedValue({ id: 'u1', name: 'Alice Updated', email: 'alice@x.com', role: 'member' })
     const result = await adminUpdateUserAction('u1', { name: 'Alice Updated' })
-    expect(mockUpdate).toHaveBeenCalledWith('u1', { name: 'Alice Updated' })
+    expect(adminApi.updateUser).toHaveBeenCalledWith('u1', { name: 'Alice Updated' })
     expect(result).toMatchObject({ user: { id: 'u1' } })
   })
 })

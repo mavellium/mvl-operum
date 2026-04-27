@@ -2,15 +2,17 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest'
 
 vi.mock('@/lib/dal', () => ({ verifySession: vi.fn() }))
-vi.mock('@/services/timeService', () => ({
-  startTimer: vi.fn(),
-  pauseTimer: vi.fn(),
-  getActiveTimer: vi.fn(),
-  getTotalDuration: vi.fn(),
+vi.mock('@/lib/api-client', () => ({
+  cardsApi: {
+    startTimer: vi.fn(),
+    stopTimer: vi.fn(),
+    getActiveTimer: vi.fn(),
+    getTimeTotal: vi.fn(),
+  },
 }))
 
 import { verifySession } from '@/lib/dal'
-import { startTimer, pauseTimer, getActiveTimer, getTotalDuration } from '@/services/timeService'
+import { cardsApi } from '@/lib/api-client'
 import {
   startTimerAction,
   pauseTimerAction,
@@ -19,19 +21,15 @@ import {
 } from '@/app/actions/time'
 
 const mockVerify = verifySession as ReturnType<typeof vi.fn>
-const mockStart = startTimer as ReturnType<typeof vi.fn>
-const mockPause = pauseTimer as ReturnType<typeof vi.fn>
-const mockActive = getActiveTimer as ReturnType<typeof vi.fn>
-const mockTotal = getTotalDuration as ReturnType<typeof vi.fn>
 
 beforeEach(() => vi.clearAllMocks())
 
 describe('startTimerAction', () => {
-  it('calls startTimer with userId from session', async () => {
+  it('calls startTimer with cardId from session', async () => {
     mockVerify.mockResolvedValue({ userId: 'u1' })
-    mockStart.mockResolvedValue({ id: 't1', isRunning: true })
+    vi.mocked(cardsApi.startTimer).mockResolvedValue({ id: 't1', isRunning: true })
     const result = await startTimerAction('c1')
-    expect(mockStart).toHaveBeenCalledWith('u1', 'c1')
+    expect(cardsApi.startTimer).toHaveBeenCalledWith('c1')
     expect(result).toHaveProperty('entry')
   })
 
@@ -43,19 +41,19 @@ describe('startTimerAction', () => {
 })
 
 describe('pauseTimerAction', () => {
-  it('calls pauseTimer with userId from session', async () => {
+  it('calls stopTimer with cardId', async () => {
     mockVerify.mockResolvedValue({ userId: 'u1' })
-    mockPause.mockResolvedValue({ id: 't1', isRunning: false })
+    vi.mocked(cardsApi.stopTimer).mockResolvedValue({ id: 't1', isRunning: false })
     const result = await pauseTimerAction('c1')
-    expect(mockPause).toHaveBeenCalledWith('u1', 'c1')
+    expect(cardsApi.stopTimer).toHaveBeenCalledWith('c1')
     expect(result).toHaveProperty('entry')
   })
 })
 
 describe('getCardTimeAction', () => {
-  it('returns total seconds for user on card', async () => {
+  it('returns total seconds for card', async () => {
     mockVerify.mockResolvedValue({ userId: 'u1' })
-    mockTotal.mockResolvedValue(360)
+    vi.mocked(cardsApi.getTimeTotal).mockResolvedValue({ seconds: 360 })
     const result = await getCardTimeAction('c1')
     expect(result).toHaveProperty('seconds', 360)
   })
@@ -64,14 +62,14 @@ describe('getCardTimeAction', () => {
 describe('getActiveTimerAction', () => {
   it('returns active timer if running', async () => {
     mockVerify.mockResolvedValue({ userId: 'u1' })
-    mockActive.mockResolvedValue({ id: 't1', isRunning: true, startedAt: new Date(), duration: 0 })
+    vi.mocked(cardsApi.getActiveTimer).mockResolvedValue({ id: 't1', isRunning: true, startedAt: new Date(), duration: 0 })
     const result = await getActiveTimerAction('c1')
     expect(result).toHaveProperty('entry')
   })
 
   it('returns null entry if no active timer', async () => {
     mockVerify.mockResolvedValue({ userId: 'u1' })
-    mockActive.mockResolvedValue(null)
+    vi.mocked(cardsApi.getActiveTimer).mockResolvedValue(null)
     const result = await getActiveTimerAction('c1')
     expect(result.entry).toBeNull()
   })

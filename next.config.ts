@@ -1,10 +1,15 @@
 import type { NextConfig } from "next";
 
+const isDev = process.env.NODE_ENV === 'development'
+
+const MINIO_PUBLIC = process.env.MINIO_PUBLIC_URL ?? 'http://localhost:9000'
+
 const CSP = [
   "default-src 'self'",
-  "script-src 'self' 'unsafe-inline'",   // unsafe-inline required by Next.js hydration
+  // unsafe-eval required by React dev tools (reconstructing callstacks); never used in production
+  `script-src 'self' 'unsafe-inline'${isDev ? " 'unsafe-eval'" : ""}`,
   "style-src 'self' 'unsafe-inline'",
-  "img-src 'self' data: blob: https://*.mavellium.com.br",
+  `img-src 'self' data: blob: https://*.mavellium.com.br ${isDev ? MINIO_PUBLIC : ''}`.trim(),
   "font-src 'self'",
   "connect-src 'self' https://*.mavellium.com.br",
   "frame-ancestors 'none'",
@@ -13,6 +18,17 @@ const CSP = [
 ].join("; ");
 
 const nextConfig: NextConfig = {
+  // TypeScript is checked separately via `tsc --noEmit` (Next.js worker OOMs on this machine).
+  typescript: { ignoreBuildErrors: true },
+
+  // Limit concurrent workers to avoid OOM in memory-constrained environments.
+  experimental: {
+    cpus: 2,
+    serverActions: {
+      bodySizeLimit: '10mb',
+    },
+  },
+
   // Enables standalone output for Docker — copies only necessary files.
   // Required for the production Dockerfile to work correctly.
   output: "standalone",

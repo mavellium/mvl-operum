@@ -3,8 +3,7 @@
 import { cookies } from 'next/headers'
 import { redirect } from 'next/navigation'
 import { decrypt } from '@/lib/session'
-import prisma from '@/lib/prisma'
-import bcrypt from 'bcryptjs'
+import { authApi } from '@/lib/api-client'
 
 export async function alterarSenhaObrigatoriaAction(_prevState: unknown, formData: FormData) {
   const novaSenha = formData.get('novaSenha') as string
@@ -25,17 +24,12 @@ export async function alterarSenhaObrigatoriaAction(_prevState: unknown, formDat
     redirect('/login')
   }
 
-  const hash = await bcrypt.hash(novaSenha, 12)
-  await prisma.user.update({
-    where: { id: session.userId as string },
-    data: {
-      passwordHash: hash,
-      forcePasswordChange: false,
-      tokenVersion: { increment: 1 },
-    },
-  })
+  try {
+    await authApi.alterarSenha(novaSenha)
+  } catch (err) {
+    return { error: err instanceof Error ? err.message : 'Erro ao alterar senha' }
+  }
 
-  // Clear session so user logs in fresh with new password
   cookieStore.delete('session')
   redirect('/login?changed=1')
 }

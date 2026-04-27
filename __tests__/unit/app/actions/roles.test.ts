@@ -7,26 +7,19 @@ vi.mock('@/lib/dal', () => ({
   verifySession: vi.fn(),
 }))
 
-vi.mock('@/services/roleService', () => ({
-  createRole: vi.fn(),
-  findAllByTenant: vi.fn(),
-  updateRole: vi.fn(),
-  assignPermission: vi.fn(),
-  removePermission: vi.fn(),
-  getOrCreateRole: vi.fn(),
-  softDeleteRole: vi.fn(),
+vi.mock('@/lib/api-client', () => ({
+  rolesApi: {
+    create: vi.fn(),
+    list: vi.fn(),
+    update: vi.fn(),
+    delete: vi.fn(),
+    assignPermission: vi.fn(),
+    removePermission: vi.fn(),
+  },
 }))
 
 import { verifySession } from '@/lib/dal'
-import {
-  createRole,
-  findAllByTenant,
-  updateRole,
-  assignPermission,
-  removePermission,
-  getOrCreateRole,
-  softDeleteRole,
-} from '@/services/roleService'
+import { rolesApi } from '@/lib/api-client'
 import {
   createRoleAction,
   getRolesAction,
@@ -47,12 +40,7 @@ describe('Role Actions', () => {
     it('should create role and return success', async () => {
       const mockSession = { userId: 'u1', tenantId: 't1', role: 'admin' }
       vi.mocked(verifySession).mockResolvedValue(mockSession)
-      vi.mocked(createRole).mockResolvedValue({
-        id: 'r1',
-        name: 'Admin',
-        tenantId: 't1',
-        scope: 'TENANT',
-      })
+      vi.mocked(rolesApi.create).mockResolvedValue({ id: 'r1', name: 'Admin', scope: 'TENANT' })
 
       const result = await createRoleAction({}, { name: 'Admin', scope: 'TENANT' })
       expect(result).toHaveProperty('role')
@@ -62,7 +50,7 @@ describe('Role Actions', () => {
     it('should return error on validation failure', async () => {
       const mockSession = { userId: 'u1', tenantId: 't1', role: 'admin' }
       vi.mocked(verifySession).mockResolvedValue(mockSession)
-      vi.mocked(createRole).mockRejectedValue(new Error('Validation error'))
+      vi.mocked(rolesApi.create).mockRejectedValue(new Error('Validation error'))
 
       const result = await createRoleAction({}, { name: '', scope: 'TENANT' })
       expect(result).toHaveProperty('error')
@@ -73,7 +61,7 @@ describe('Role Actions', () => {
     it('should return list of roles for tenant', async () => {
       const mockSession = { userId: 'u1', tenantId: 't1', role: 'member' }
       vi.mocked(verifySession).mockResolvedValue(mockSession)
-      vi.mocked(findAllByTenant).mockResolvedValue([
+      vi.mocked(rolesApi.list).mockResolvedValue([
         { id: 'r1', name: 'Admin' },
         { id: 'r2', name: 'Member' },
       ])
@@ -95,10 +83,7 @@ describe('Role Actions', () => {
     it('should update role and return success', async () => {
       const mockSession = { userId: 'u1', tenantId: 't1', role: 'admin' }
       vi.mocked(verifySession).mockResolvedValue(mockSession)
-      vi.mocked(updateRole).mockResolvedValue({
-        id: 'r1',
-        name: 'Super Admin',
-      })
+      vi.mocked(rolesApi.update).mockResolvedValue({ id: 'r1', name: 'Super Admin' })
 
       const result = await updateRoleAction({}, 'r1', { name: 'Super Admin' })
       expect(result).toHaveProperty('role')
@@ -107,7 +92,7 @@ describe('Role Actions', () => {
     it('should return error on update failure', async () => {
       const mockSession = { userId: 'u1', tenantId: 't1', role: 'admin' }
       vi.mocked(verifySession).mockResolvedValue(mockSession)
-      vi.mocked(updateRole).mockRejectedValue(new Error('Not found'))
+      vi.mocked(rolesApi.update).mockRejectedValue(new Error('Not found'))
 
       const result = await updateRoleAction({}, 'nonexistent', { name: 'Test' })
       expect(result).toHaveProperty('error')
@@ -118,10 +103,7 @@ describe('Role Actions', () => {
     it('should assign permission and return success', async () => {
       const mockSession = { userId: 'u1', tenantId: 't1', role: 'admin' }
       vi.mocked(verifySession).mockResolvedValue(mockSession)
-      vi.mocked(assignPermission).mockResolvedValue({
-        roleId: 'r1',
-        permissionId: 'p1',
-      })
+      vi.mocked(rolesApi.assignPermission).mockResolvedValue(undefined)
 
       const result = await assignPermissionAction('r1', 'p1')
       expect(result).toHaveProperty('success')
@@ -131,7 +113,7 @@ describe('Role Actions', () => {
     it('should return error if already assigned', async () => {
       const mockSession = { userId: 'u1', tenantId: 't1', role: 'admin' }
       vi.mocked(verifySession).mockResolvedValue(mockSession)
-      vi.mocked(assignPermission).mockRejectedValue(new Error('Already assigned'))
+      vi.mocked(rolesApi.assignPermission).mockRejectedValue(new Error('Already assigned'))
 
       const result = await assignPermissionAction('r1', 'p1')
       expect(result).toHaveProperty('error')
@@ -142,7 +124,7 @@ describe('Role Actions', () => {
     it('should remove permission and return success', async () => {
       const mockSession = { userId: 'u1', tenantId: 't1', role: 'admin' }
       vi.mocked(verifySession).mockResolvedValue(mockSession)
-      vi.mocked(removePermission).mockResolvedValue({ id: 'rp1' })
+      vi.mocked(rolesApi.removePermission).mockResolvedValue(undefined)
 
       const result = await removePermissionAction('r1', 'p1')
       expect(result).toHaveProperty('success')
@@ -152,7 +134,7 @@ describe('Role Actions', () => {
     it('should return error if not found', async () => {
       const mockSession = { userId: 'u1', tenantId: 't1', role: 'admin' }
       vi.mocked(verifySession).mockResolvedValue(mockSession)
-      vi.mocked(removePermission).mockRejectedValue(new Error('Not found'))
+      vi.mocked(rolesApi.removePermission).mockRejectedValue(new Error('Not found'))
 
       const result = await removePermissionAction('r1', 'p1')
       expect(result).toHaveProperty('error')
@@ -163,7 +145,8 @@ describe('Role Actions', () => {
     it('should return role on success', async () => {
       const mockSession = { userId: 'u1', tenantId: 't1', role: 'admin' }
       vi.mocked(verifySession).mockResolvedValue(mockSession)
-      vi.mocked(getOrCreateRole).mockResolvedValue({ id: 'r1', name: 'TI', nameKey: 'ti' })
+      vi.mocked(rolesApi.list).mockResolvedValue([])
+      vi.mocked(rolesApi.create).mockResolvedValue({ id: 'r1', name: 'TI' })
 
       const result = await getOrCreateRoleAction('TI')
       expect(result).toHaveProperty('role')
@@ -182,7 +165,7 @@ describe('Role Actions', () => {
     it('should update role name and return role', async () => {
       const mockSession = { userId: 'u1', tenantId: 't1', role: 'admin' }
       vi.mocked(verifySession).mockResolvedValue(mockSession)
-      vi.mocked(updateRole).mockResolvedValue({ id: 'r1', name: 'Technology', nameKey: 'technology' })
+      vi.mocked(rolesApi.update).mockResolvedValue({ id: 'r1', name: 'Technology' })
 
       const result = await updateRoleNameAction('r1', 'Technology')
       expect(result).toHaveProperty('role')
@@ -192,7 +175,7 @@ describe('Role Actions', () => {
     it('should return error on failure', async () => {
       const mockSession = { userId: 'u1', tenantId: 't1', role: 'admin' }
       vi.mocked(verifySession).mockResolvedValue(mockSession)
-      vi.mocked(updateRole).mockRejectedValue(new Error('Not found'))
+      vi.mocked(rolesApi.update).mockRejectedValue(new Error('Not found'))
 
       const result = await updateRoleNameAction('nonexistent', 'X')
       expect(result).toHaveProperty('error')
@@ -203,7 +186,7 @@ describe('Role Actions', () => {
     it('should soft-delete role and return success', async () => {
       const mockSession = { userId: 'u1', tenantId: 't1', role: 'admin' }
       vi.mocked(verifySession).mockResolvedValue(mockSession)
-      vi.mocked(softDeleteRole).mockResolvedValue({ id: 'r1', deletedAt: new Date() })
+      vi.mocked(rolesApi.delete).mockResolvedValue(undefined)
 
       const result = await deleteRoleAction('r1')
       expect(result).toHaveProperty('success')
@@ -213,7 +196,7 @@ describe('Role Actions', () => {
     it('should return error on failure', async () => {
       const mockSession = { userId: 'u1', tenantId: 't1', role: 'admin' }
       vi.mocked(verifySession).mockResolvedValue(mockSession)
-      vi.mocked(softDeleteRole).mockRejectedValue(new Error('Not found'))
+      vi.mocked(rolesApi.delete).mockRejectedValue(new Error('Not found'))
 
       const result = await deleteRoleAction('nonexistent')
       expect(result).toHaveProperty('error')

@@ -8,10 +8,10 @@ var __decorate = (this && this.__decorate) || function (decorators, target, key,
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.NotificationService = void 0;
 const common_1 = require("@nestjs/common");
-const prisma_1 = require("../../lib/generated/prisma");
+const prisma_1 = require("../prisma");
 let NotificationService = class NotificationService {
     constructor() {
-        this.prisma = new prisma_1.PrismaClient();
+        this.prisma = prisma_1.prisma;
     }
     async create(dto) {
         return this.prisma.notification.create({

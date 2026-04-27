@@ -99,7 +99,7 @@ export default async function ProjetoSprintsPage({
               heading="Nenhuma sprint neste projeto"
               subtext="Crie a primeira sprint para começar a organizar o trabalho"
               size="md"
-              action={canEdit ? { label: 'Criar sprint', href: `/sprints/nova?projetoId=${projetoId}` } : undefined}
+              action={canEdit ? { label: 'Criar sprint', href: `/projetos/${projetoId}/sprints/nova` } : undefined}
             />
           </div>
         ) : (

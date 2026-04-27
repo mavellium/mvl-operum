@@ -109,7 +109,7 @@ export default function SprintDashboard({
         dificuldade: dificuldade ? Number(dificuldade) : undefined,
       })
       if ('sprint' in result && result.sprint) {
-        setSprint(s => ({ ...s, qualidade: result.sprint.qualidade, dificuldade: result.sprint.dificuldade }))
+        setSprint(s => ({ ...s, qualidade: result.sprint.qualidade ?? null, dificuldade: result.sprint.dificuldade ?? null }))
       }
     })
   }
@@ -119,7 +119,7 @@ export default function SprintDashboard({
       <header className="bg-white border-b border-gray-200 px-6 py-4">
         <div className="max-w-6xl mx-auto">
           <div className="flex items-center gap-3 mb-1">
-            <Link href="/sprints" className="text-gray-400 hover:text-gray-600 transition-colors">
+            <Link href="/projetos" className="text-gray-400 hover:text-gray-600 transition-colors">
               <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
               </svg>

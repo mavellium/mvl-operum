@@ -2,7 +2,7 @@
 
 import { verifySession } from '@/lib/dal'
 import { revalidatePath } from 'next/cache'
-import { createSprint, updateSprint, deleteSprint, completeSprint, getAllSprints } from '@/services/sprintService'
+import { sprintsApi } from '@/lib/api-client'
 
 export async function createSprintAction(
   _prevState: unknown,
@@ -10,7 +10,7 @@ export async function createSprintAction(
 ) {
   try {
     const { userId } = await verifySession()
-    const sprint = await createSprint({ ...input, createdBy: userId })
+    const sprint = await sprintsApi.create({ ...input, createdBy: userId })
     revalidatePath('/sprints')
     if (input.projectId) revalidatePath(`/projetos/${input.projectId}`)
     return { sprint }
@@ -22,7 +22,7 @@ export async function createSprintAction(
 export async function updateSprintAction(_prevState: unknown, id: string, data: Record<string, unknown>) {
   try {
     await verifySession()
-    const sprint = await updateSprint(id, data)
+    const sprint = await sprintsApi.update(id, data)
     revalidatePath('/sprints')
     revalidatePath(`/sprints/${id}`)
     return { sprint }
@@ -34,7 +34,7 @@ export async function updateSprintAction(_prevState: unknown, id: string, data: 
 export async function deleteSprintAction(id: string) {
   try {
     await verifySession()
-    await deleteSprint(id)
+    await sprintsApi.delete(id)
     revalidatePath('/sprints')
     return { success: true }
   } catch (err) {
@@ -45,7 +45,7 @@ export async function deleteSprintAction(id: string) {
 export async function completeSprintAction(id: string) {
   try {
     await verifySession()
-    const sprint = await completeSprint(id)
+    const sprint = await sprintsApi.update(id, { status: 'COMPLETED' })
     revalidatePath('/sprints')
     revalidatePath(`/sprints/${id}`)
     return { sprint }
@@ -57,7 +57,7 @@ export async function completeSprintAction(id: string) {
 export async function getSprintsAction() {
   try {
     await verifySession()
-    return await getAllSprints()
+    return await sprintsApi.list()
   } catch {
     return []
   }

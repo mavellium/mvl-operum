@@ -132,7 +132,7 @@ export default function ProjetoFuncoesClient({ cargosIniciais }: Props) {
       {/* Lista Principal */}
       <div className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
         <div className="px-6 py-4 border-b border-gray-100 bg-gray-50/50">
-          <h2 className="text-base font-semibold text-gray-900">Funções do Projeto</h2>
+          <h2 className="text-base font-semibold text-gray-900">Funções da Organização</h2>
           <p className="text-xs text-gray-500 mt-0.5">{filteredCargos.length} cadastrados</p>
         </div>
 

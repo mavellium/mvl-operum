@@ -17,7 +17,7 @@ export default async function ArquivosPage() {
   const { role, userId } = await verifySession()
   if (role !== 'admin') {
     const manages = await getProjectsWhereManager(userId)
-    if (manages.length === 0) redirect('/sprints')
+    if (manages.length === 0) redirect('/projetos')
   }
 
   const attachments = await prisma.attachment.findMany({
@@ -60,7 +60,7 @@ export default async function ArquivosPage() {
     <div className="min-h-screen bg-gray-50">
       <header className="bg-white border-b border-gray-200 px-6 py-4 flex items-center justify-between">
         <div className="flex items-center gap-4">
-          <Link href={role === 'admin' ? '/admin' : '/sprints'} className="text-gray-400 hover:text-gray-600 transition-colors">
+          <Link href={role === 'admin' ? '/admin' : '/projetos'} className="text-gray-400 hover:text-gray-600 transition-colors">
             <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
             </svg>

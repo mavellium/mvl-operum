@@ -1,6 +1,7 @@
 import { verifyRouteSession } from '@/lib/routeAuth'
-import { importCsvRows } from '@/services/csvImportService'
-import prisma from '@/lib/prisma'
+import { parseCsvBuffer, mapRowToCardData } from '@/services/csvImportService'
+import { sprintsApi, cardsApi } from '@/lib/api-client'
+import { CsvRowSchema } from '@/lib/validation/csvSchemas'
 
 const ALLOWED_CSV_TYPES = ['text/csv', 'text/plain']
 
@@ -14,41 +15,46 @@ export async function POST(request: Request) {
   const sprintId = formData.get('sprintId') as string | null
   const file = formData.get('file') as File | null
 
-  if (!file) {
-    return Response.json({ error: 'Arquivo CSV é obrigatório' }, { status: 400 })
-  }
-
+  if (!file) return Response.json({ error: 'Arquivo CSV é obrigatório' }, { status: 400 })
   if (!ALLOWED_CSV_TYPES.includes(file.type)) {
     return Response.json({ error: 'Tipo de arquivo inválido. Use um arquivo .csv' }, { status: 400 })
   }
+  if (!sprintId) return Response.json({ error: 'sprintId é obrigatório' }, { status: 400 })
 
-  if (!sprintId) {
-    return Response.json({ error: 'sprintId é obrigatório' }, { status: 400 })
-  }
+  const [sprint, sprintColumns] = await Promise.all([
+    sprintsApi.get(sprintId).catch(() => null),
+    sprintsApi.listColumns(sprintId).catch(() => []) as Promise<Array<{ id: string; title: string }>>,
+  ])
 
-  const sprint = await prisma.sprint.findUnique({
-    where: { id: sprintId },
-    select: { id: true, project: { select: { tenantId: true } } },
-  })
-  if (!sprint) {
-    return Response.json({ error: 'Sprint não encontrado' }, { status: 404 })
-  }
-  if (sprint.project?.tenantId !== session.tenantId) {
-    return Response.json({ error: 'Acesso negado' }, { status: 403 })
-  }
-
-  const sprintColumns = await prisma.sprintColumn.findMany({
-    where: { sprintId },
-    select: { id: true, title: true },
-    orderBy: { position: 'asc' },
-  })
-
-  if (sprintColumns.length === 0) {
+  if (!sprint) return Response.json({ error: 'Sprint não encontrado' }, { status: 404 })
+  if ((sprintColumns as unknown[]).length === 0) {
     return Response.json({ error: 'Sprint não tem colunas. Abra a sprint antes de importar.' }, { status: 400 })
   }
 
   const csvText = await file.text()
-  const result = await importCsvRows(csvText, sprintId, sprintColumns)
+  const rows = parseCsvBuffer(csvText)
+  if (rows.length === 0) return Response.json({ imported: 0, errors: [] })
 
-  return Response.json(result, { status: 200 })
+  const errors: { row: number; message: string }[] = []
+  const validRows: ReturnType<typeof mapRowToCardData>[] = []
+
+  rows.forEach((row, i) => {
+    const parsed = CsvRowSchema.safeParse(row)
+    if (!parsed.success) {
+      errors.push({ row: i + 1, message: parsed.error.issues[0].message })
+      return
+    }
+    validRows.push(mapRowToCardData(row, sprintId, sprintColumns, validRows.length, 0))
+  })
+
+  const results = await Promise.allSettled(
+    validRows.map(({ tagsImport: _tagsImport, ...card }) => cardsApi.create(card as Record<string, unknown>)),
+  )
+
+  const failed = results.filter(r => r.status === 'rejected').length
+  if (failed > 0) {
+    errors.push({ row: -1, message: `${failed} card(s) falharam ao ser criados no servidor` })
+  }
+
+  return Response.json({ imported: results.length - failed, errors })
 }

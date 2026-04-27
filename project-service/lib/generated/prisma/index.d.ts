@@ -1,0 +1,25086 @@
+
+/**
+ * Client
+**/
+
+import * as runtime from './runtime/client.js';
+import $Types = runtime.Types // general types
+import $Public = runtime.Types.Public
+import $Utils = runtime.Types.Utils
+import $Extensions = runtime.Types.Extensions
+import $Result = runtime.Types.Result
+
+export type PrismaPromise<T> = $Public.PrismaPromise<T>
+
+
+/**
+ * Model Tenant
+ * 
+ */
+export type Tenant = $Result.DefaultSelection<Prisma.$TenantPayload>
+/**
+ * Model User
+ * 
+ */
+export type User = $Result.DefaultSelection<Prisma.$UserPayload>
+/**
+ * Model Project
+ * 
+ */
+export type Project = $Result.DefaultSelection<Prisma.$ProjectPayload>
+/**
+ * Model ProjectMacroFase
+ * 
+ */
+export type ProjectMacroFase = $Result.DefaultSelection<Prisma.$ProjectMacroFasePayload>
+/**
+ * Model Department
+ * 
+ */
+export type Department = $Result.DefaultSelection<Prisma.$DepartmentPayload>
+/**
+ * Model UserDepartment
+ * 
+ */
+export type UserDepartment = $Result.DefaultSelection<Prisma.$UserDepartmentPayload>
+/**
+ * Model UserProject
+ * 
+ */
+export type UserProject = $Result.DefaultSelection<Prisma.$UserProjectPayload>
+/**
+ * Model Role
+ * 
+ */
+export type Role = $Result.DefaultSelection<Prisma.$RolePayload>
+/**
+ * Model Permission
+ * 
+ */
+export type Permission = $Result.DefaultSelection<Prisma.$PermissionPayload>
+/**
+ * Model RolePermission
+ * 
+ */
+export type RolePermission = $Result.DefaultSelection<Prisma.$RolePermissionPayload>
+/**
+ * Model UserProjectRole
+ * 
+ */
+export type UserProjectRole = $Result.DefaultSelection<Prisma.$UserProjectRolePayload>
+/**
+ * Model Stakeholder
+ * 
+ */
+export type Stakeholder = $Result.DefaultSelection<Prisma.$StakeholderPayload>
+/**
+ * Model ProjectStakeholder
+ * 
+ */
+export type ProjectStakeholder = $Result.DefaultSelection<Prisma.$ProjectStakeholderPayload>
+
+/**
+ * Enums
+ */
+export namespace $Enums {
+  export const TenantStatus: {
+  ACTIVE: 'ACTIVE',
+  INACTIVE: 'INACTIVE',
+  SUSPENDED: 'SUSPENDED',
+  REMOVED: 'REMOVED'
+};
+
+export type TenantStatus = (typeof TenantStatus)[keyof typeof TenantStatus]
+
+
+export const ProjectStatus: {
+  ACTIVE: 'ACTIVE',
+  INACTIVE: 'INACTIVE',
+  COMPLETED: 'COMPLETED',
+  ARCHIVED: 'ARCHIVED'
+};
+
+export type ProjectStatus = (typeof ProjectStatus)[keyof typeof ProjectStatus]
+
+
+export const RoleScope: {
+  TENANT: 'TENANT',
+  PROJETO: 'PROJETO'
+};
+
+export type RoleScope = (typeof RoleScope)[keyof typeof RoleScope]
+
+}
+
+export type TenantStatus = $Enums.TenantStatus
+
+export const TenantStatus: typeof $Enums.TenantStatus
+
+export type ProjectStatus = $Enums.ProjectStatus
+
+export const ProjectStatus: typeof $Enums.ProjectStatus
+
+export type RoleScope = $Enums.RoleScope
+
+export const RoleScope: typeof $Enums.RoleScope
+
+/**
+ * ##  Prisma Client ʲˢ
+ *
+ * Type-safe database client for TypeScript & Node.js
+ * @example
+ * ```
+ * const prisma = new PrismaClient({
+ *   adapter: new PrismaPg({ connectionString: process.env.DATABASE_URL })
+ * })
+ * // Fetch zero or more Tenants
+ * const tenants = await prisma.tenant.findMany()
+ * ```
+ *
+ *
+ * Read more in our [docs](https://pris.ly/d/client).
+ */
+export class PrismaClient<
+  ClientOptions extends Prisma.PrismaClientOptions = Prisma.PrismaClientOptions,
+  const U = 'log' extends keyof ClientOptions ? ClientOptions['log'] extends Array<Prisma.LogLevel | Prisma.LogDefinition> ? Prisma.GetEvents<ClientOptions['log']> : never : never,
+  ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs
+> {
+  [K: symbol]: { types: Prisma.TypeMap<ExtArgs>['other'] }
+
+    /**
+   * ##  Prisma Client ʲˢ
+   *
+   * Type-safe database client for TypeScript & Node.js
+   * @example
+   * ```
+   * const prisma = new PrismaClient({
+   *   adapter: new PrismaPg({ connectionString: process.env.DATABASE_URL })
+   * })
+   * // Fetch zero or more Tenants
+   * const tenants = await prisma.tenant.findMany()
+   * ```
+   *
+   *
+   * Read more in our [docs](https://pris.ly/d/client).
+   */
+
+  constructor(optionsArg ?: Prisma.Subset<ClientOptions, Prisma.PrismaClientOptions>);
+  $on<V extends U>(eventType: V, callback: (event: V extends 'query' ? Prisma.QueryEvent : Prisma.LogEvent) => void): PrismaClient;
+
+  /**
+   * Connect with the database
+   */
+  $connect(): $Utils.JsPromise<void>;
+
+  /**
+   * Disconnect from the database
+   */
+  $disconnect(): $Utils.JsPromise<void>;
+
+/**
+   * Executes a prepared raw query and returns the number of affected rows.
+   * @example
+   * ```
+   * const result = await prisma.$executeRaw`UPDATE User SET cool = ${true} WHERE email = ${'user@email.com'};`
+   * ```
+   *
+   * Read more in our [docs](https://pris.ly/d/raw-queries).
+   */
+  $executeRaw<T = unknown>(query: TemplateStringsArray | Prisma.Sql, ...values: any[]): Prisma.PrismaPromise<number>;
+
+  /**
+   * Executes a raw query and returns the number of affected rows.
+   * Susceptible to SQL injections, see documentation.
+   * @example
+   * ```
+   * const result = await prisma.$executeRawUnsafe('UPDATE User SET cool = $1 WHERE email = $2 ;', true, 'user@email.com')
+   * ```
+   *
+   * Read more in our [docs](https://pris.ly/d/raw-queries).
+   */
+  $executeRawUnsafe<T = unknown>(query: string, ...values: any[]): Prisma.PrismaPromise<number>;
+
+  /**
+   * Performs a prepared raw query and returns the `SELECT` data.
+   * @example
+   * ```
+   * const result = await prisma.$queryRaw`SELECT * FROM User WHERE id = ${1} OR email = ${'user@email.com'};`
+   * ```
+   *
+   * Read more in our [docs](https://pris.ly/d/raw-queries).
+   */
+  $queryRaw<T = unknown>(query: TemplateStringsArray | Prisma.Sql, ...values: any[]): Prisma.PrismaPromise<T>;
+
+  /**
+   * Performs a raw query and returns the `SELECT` data.
+   * Susceptible to SQL injections, see documentation.
+   * @example
+   * ```
+   * const result = await prisma.$queryRawUnsafe('SELECT * FROM User WHERE id = $1 OR email = $2;', 1, 'user@email.com')
+   * ```
+   *
+   * Read more in our [docs](https://pris.ly/d/raw-queries).
+   */
+  $queryRawUnsafe<T = unknown>(query: string, ...values: any[]): Prisma.PrismaPromise<T>;
+
+
+  /**
+   * Allows the running of a sequence of read/write operations that are guaranteed to either succeed or fail as a whole.
+   * @example
+   * ```
+   * const [george, bob, alice] = await prisma.$transaction([
+   *   prisma.user.create({ data: { name: 'George' } }),
+   *   prisma.user.create({ data: { name: 'Bob' } }),
+   *   prisma.user.create({ data: { name: 'Alice' } }),
+   * ])
+   * ```
+   * 
+   * Read more in our [docs](https://www.prisma.io/docs/orm/prisma-client/queries/transactions).
+   */
+  $transaction<P extends Prisma.PrismaPromise<any>[]>(arg: [...P], options?: { isolationLevel?: Prisma.TransactionIsolationLevel }): $Utils.JsPromise<runtime.Types.Utils.UnwrapTuple<P>>
+
+  $transaction<R>(fn: (prisma: Omit<PrismaClient, runtime.ITXClientDenyList>) => $Utils.JsPromise<R>, options?: { maxWait?: number, timeout?: number, isolationLevel?: Prisma.TransactionIsolationLevel }): $Utils.JsPromise<R>
+
+  $extends: $Extensions.ExtendsHook<"extends", Prisma.TypeMapCb<ClientOptions>, ExtArgs, $Utils.Call<Prisma.TypeMapCb<ClientOptions>, {
+    extArgs: ExtArgs
+  }>>
+
+      /**
+   * `prisma.tenant`: Exposes CRUD operations for the **Tenant** model.
+    * Example usage:
+    * ```ts
+    * // Fetch zero or more Tenants
+    * const tenants = await prisma.tenant.findMany()
+    * ```
+    */
+  get tenant(): Prisma.TenantDelegate<ExtArgs, ClientOptions>;
+
+  /**
+   * `prisma.user`: Exposes CRUD operations for the **User** model.
+    * Example usage:
+    * ```ts
+    * // Fetch zero or more Users
+    * const users = await prisma.user.findMany()
+    * ```
+    */
+  get user(): Prisma.UserDelegate<ExtArgs, ClientOptions>;
+
+  /**
+   * `prisma.project`: Exposes CRUD operations for the **Project** model.
+    * Example usage:
+    * ```ts
+    * // Fetch zero or more Projects
+    * const projects = await prisma.project.findMany()
+    * ```
+    */
+  get project(): Prisma.ProjectDelegate<ExtArgs, ClientOptions>;
+
+  /**
+   * `prisma.projectMacroFase`: Exposes CRUD operations for the **ProjectMacroFase** model.
+    * Example usage:
+    * ```ts
+    * // Fetch zero or more ProjectMacroFases
+    * const projectMacroFases = await prisma.projectMacroFase.findMany()
+    * ```
+    */
+  get projectMacroFase(): Prisma.ProjectMacroFaseDelegate<ExtArgs, ClientOptions>;
+
+  /**
+   * `prisma.department`: Exposes CRUD operations for the **Department** model.
+    * Example usage:
+    * ```ts
+    * // Fetch zero or more Departments
+    * const departments = await prisma.department.findMany()
+    * ```
+    */
+  get department(): Prisma.DepartmentDelegate<ExtArgs, ClientOptions>;
+
+  /**
+   * `prisma.userDepartment`: Exposes CRUD operations for the **UserDepartment** model.
+    * Example usage:
+    * ```ts
+    * // Fetch zero or more UserDepartments
+    * const userDepartments = await prisma.userDepartment.findMany()
+    * ```
+    */
+  get userDepartment(): Prisma.UserDepartmentDelegate<ExtArgs, ClientOptions>;
+
+  /**
+   * `prisma.userProject`: Exposes CRUD operations for the **UserProject** model.
+    * Example usage:
+    * ```ts
+    * // Fetch zero or more UserProjects
+    * const userProjects = await prisma.userProject.findMany()
+    * ```
+    */
+  get userProject(): Prisma.UserProjectDelegate<ExtArgs, ClientOptions>;
+
+  /**
+   * `prisma.role`: Exposes CRUD operations for the **Role** model.
+    * Example usage:
+    * ```ts
+    * // Fetch zero or more Roles
+    * const roles = await prisma.role.findMany()
+    * ```
+    */
+  get role(): Prisma.RoleDelegate<ExtArgs, ClientOptions>;
+
+  /**
+   * `prisma.permission`: Exposes CRUD operations for the **Permission** model.
+    * Example usage:
+    * ```ts
+    * // Fetch zero or more Permissions
+    * const permissions = await prisma.permission.findMany()
+    * ```
+    */
+  get permission(): Prisma.PermissionDelegate<ExtArgs, ClientOptions>;
+
+  /**
+   * `prisma.rolePermission`: Exposes CRUD operations for the **RolePermission** model.
+    * Example usage:
+    * ```ts
+    * // Fetch zero or more RolePermissions
+    * const rolePermissions = await prisma.rolePermission.findMany()
+    * ```
+    */
+  get rolePermission(): Prisma.RolePermissionDelegate<ExtArgs, ClientOptions>;
+
+  /**
+   * `prisma.userProjectRole`: Exposes CRUD operations for the **UserProjectRole** model.
+    * Example usage:
+    * ```ts
+    * // Fetch zero or more UserProjectRoles
+    * const userProjectRoles = await prisma.userProjectRole.findMany()
+    * ```
+    */
+  get userProjectRole(): Prisma.UserProjectRoleDelegate<ExtArgs, ClientOptions>;
+
+  /**
+   * `prisma.stakeholder`: Exposes CRUD operations for the **Stakeholder** model.
+    * Example usage:
+    * ```ts
+    * // Fetch zero or more Stakeholders
+    * const stakeholders = await prisma.stakeholder.findMany()
+    * ```
+    */
+  get stakeholder(): Prisma.StakeholderDelegate<ExtArgs, ClientOptions>;
+
+  /**
+   * `prisma.projectStakeholder`: Exposes CRUD operations for the **ProjectStakeholder** model.
+    * Example usage:
+    * ```ts
+    * // Fetch zero or more ProjectStakeholders
+    * const projectStakeholders = await prisma.projectStakeholder.findMany()
+    * ```
+    */
+  get projectStakeholder(): Prisma.ProjectStakeholderDelegate<ExtArgs, ClientOptions>;
+}
+
+export namespace Prisma {
+  export import DMMF = runtime.DMMF
+
+  export type PrismaPromise<T> = $Public.PrismaPromise<T>
+
+  /**
+   * Validator
+   */
+  export import validator = runtime.Public.validator
+
+  /**
+   * Prisma Errors
+   */
+  export import PrismaClientKnownRequestError = runtime.PrismaClientKnownRequestError
+  export import PrismaClientUnknownRequestError = runtime.PrismaClientUnknownRequestError
+  export import PrismaClientRustPanicError = runtime.PrismaClientRustPanicError
+  export import PrismaClientInitializationError = runtime.PrismaClientInitializationError
+  export import PrismaClientValidationError = runtime.PrismaClientValidationError
+
+  /**
+   * Re-export of sql-template-tag
+   */
+  export import sql = runtime.sqltag
+  export import empty = runtime.empty
+  export import join = runtime.join
+  export import raw = runtime.raw
+  export import Sql = runtime.Sql
+
+
+
+  /**
+   * Decimal.js
+   */
+  export import Decimal = runtime.Decimal
+
+  export type DecimalJsLike = runtime.DecimalJsLike
+
+  /**
+  * Extensions
+  */
+  export import Extension = $Extensions.UserArgs
+  export import getExtensionContext = runtime.Extensions.getExtensionContext
+  export import Args = $Public.Args
+  export import Payload = $Public.Payload
+  export import Result = $Public.Result
+  export import Exact = $Public.Exact
+
+  /**
+   * Prisma Client JS version: 7.7.0
+   * Query Engine version: 75cbdc1eb7150937890ad5465d861175c6624711
+   */
+  export type PrismaVersion = {
+    client: string
+    engine: string
+  }
+
+  export const prismaVersion: PrismaVersion
+
+  /**
+   * Utility Types
+   */
+
+
+  export import Bytes = runtime.Bytes
+  export import JsonObject = runtime.JsonObject
+  export import JsonArray = runtime.JsonArray
+  export import JsonValue = runtime.JsonValue
+  export import InputJsonObject = runtime.InputJsonObject
+  export import InputJsonArray = runtime.InputJsonArray
+  export import InputJsonValue = runtime.InputJsonValue
+
+  /**
+   * Types of the values used to represent different kinds of `null` values when working with JSON fields.
+   *
+   * @see https://www.prisma.io/docs/concepts/components/prisma-client/working-with-fields/working-with-json-fields#filtering-on-a-json-field
+   */
+  namespace NullTypes {
+    /**
+    * Type of `Prisma.DbNull`.
+    *
+    * You cannot use other instances of this class. Please use the `Prisma.DbNull` value.
+    *
+    * @see https://www.prisma.io/docs/concepts/components/prisma-client/working-with-fields/working-with-json-fields#filtering-on-a-json-field
+    */
+    class DbNull {
+      private DbNull: never
+      private constructor()
+    }
+
+    /**
+    * Type of `Prisma.JsonNull`.
+    *
+    * You cannot use other instances of this class. Please use the `Prisma.JsonNull` value.
+    *
+    * @see https://www.prisma.io/docs/concepts/components/prisma-client/working-with-fields/working-with-json-fields#filtering-on-a-json-field
+    */
+    class JsonNull {
+      private JsonNull: never
+      private constructor()
+    }
+
+    /**
+    * Type of `Prisma.AnyNull`.
+    *
+    * You cannot use other instances of this class. Please use the `Prisma.AnyNull` value.
+    *
+    * @see https://www.prisma.io/docs/concepts/components/prisma-client/working-with-fields/working-with-json-fields#filtering-on-a-json-field
+    */
+    class AnyNull {
+      private AnyNull: never
+      private constructor()
+    }
+  }
+
+  /**
+   * Helper for filtering JSON entries that have `null` on the database (empty on the db)
+   *
+   * @see https://www.prisma.io/docs/concepts/components/prisma-client/working-with-fields/working-with-json-fields#filtering-on-a-json-field
+   */
+  export const DbNull: NullTypes.DbNull
+
+  /**
+   * Helper for filtering JSON entries that have JSON `null` values (not empty on the db)
+   *
+   * @see https://www.prisma.io/docs/concepts/components/prisma-client/working-with-fields/working-with-json-fields#filtering-on-a-json-field
+   */
+  export const JsonNull: NullTypes.JsonNull
+
+  /**
+   * Helper for filtering JSON entries that are `Prisma.DbNull` or `Prisma.JsonNull`
+   *
+   * @see https://www.prisma.io/docs/concepts/components/prisma-client/working-with-fields/working-with-json-fields#filtering-on-a-json-field
+   */
+  export const AnyNull: NullTypes.AnyNull
+
+  type SelectAndInclude = {
+    select: any
+    include: any
+  }
+
+  type SelectAndOmit = {
+    select: any
+    omit: any
+  }
+
+  /**
+   * Get the type of the value, that the Promise holds.
+   */
+  export type PromiseType<T extends PromiseLike<any>> = T extends PromiseLike<infer U> ? U : T;
+
+  /**
+   * Get the return type of a function which returns a Promise.
+   */
+  export type PromiseReturnType<T extends (...args: any) => $Utils.JsPromise<any>> = PromiseType<ReturnType<T>>
+
+  /**
+   * From T, pick a set of properties whose keys are in the union K
+   */
+  type Prisma__Pick<T, K extends keyof T> = {
+      [P in K]: T[P];
+  };
+
+
+  export type Enumerable<T> = T | Array<T>;
+
+  export type RequiredKeys<T> = {
+    [K in keyof T]-?: {} extends Prisma__Pick<T, K> ? never : K
+  }[keyof T]
+
+  export type TruthyKeys<T> = keyof {
+    [K in keyof T as T[K] extends false | undefined | null ? never : K]: K
+  }
+
+  export type TrueKeys<T> = TruthyKeys<Prisma__Pick<T, RequiredKeys<T>>>
+
+  /**
+   * Subset
+   * @desc From `T` pick properties that exist in `U`. Simple version of Intersection
+   */
+  export type Subset<T, U> = {
+    [key in keyof T]: key extends keyof U ? T[key] : never;
+  };
+
+  /**
+   * SelectSubset
+   * @desc From `T` pick properties that exist in `U`. Simple version of Intersection.
+   * Additionally, it validates, if both select and include are present. If the case, it errors.
+   */
+  export type SelectSubset<T, U> = {
+    [key in keyof T]: key extends keyof U ? T[key] : never
+  } &
+    (T extends SelectAndInclude
+      ? 'Please either choose `select` or `include`.'
+      : T extends SelectAndOmit
+        ? 'Please either choose `select` or `omit`.'
+        : {})
+
+  /**
+   * Subset + Intersection
+   * @desc From `T` pick properties that exist in `U` and intersect `K`
+   */
+  export type SubsetIntersection<T, U, K> = {
+    [key in keyof T]: key extends keyof U ? T[key] : never
+  } &
+    K
+
+  type Without<T, U> = { [P in Exclude<keyof T, keyof U>]?: never };
+
+  /**
+   * XOR is needed to have a real mutually exclusive union type
+   * https://stackoverflow.com/questions/42123407/does-typescript-support-mutually-exclusive-types
+   */
+  type XOR<T, U> =
+    T extends object ?
+    U extends object ?
+      (Without<T, U> & U) | (Without<U, T> & T)
+    : U : T
+
+
+  /**
+   * Is T a Record?
+   */
+  type IsObject<T extends any> = T extends Array<any>
+  ? False
+  : T extends Date
+  ? False
+  : T extends Uint8Array
+  ? False
+  : T extends BigInt
+  ? False
+  : T extends object
+  ? True
+  : False
+
+
+  /**
+   * If it's T[], return T
+   */
+  export type UnEnumerate<T extends unknown> = T extends Array<infer U> ? U : T
+
+  /**
+   * From ts-toolbelt
+   */
+
+  type __Either<O extends object, K extends Key> = Omit<O, K> &
+    {
+      // Merge all but K
+      [P in K]: Prisma__Pick<O, P & keyof O> // With K possibilities
+    }[K]
+
+  type EitherStrict<O extends object, K extends Key> = Strict<__Either<O, K>>
+
+  type EitherLoose<O extends object, K extends Key> = ComputeRaw<__Either<O, K>>
+
+  type _Either<
+    O extends object,
+    K extends Key,
+    strict extends Boolean
+  > = {
+    1: EitherStrict<O, K>
+    0: EitherLoose<O, K>
+  }[strict]
+
+  type Either<
+    O extends object,
+    K extends Key,
+    strict extends Boolean = 1
+  > = O extends unknown ? _Either<O, K, strict> : never
+
+  export type Union = any
+
+  type PatchUndefined<O extends object, O1 extends object> = {
+    [K in keyof O]: O[K] extends undefined ? At<O1, K> : O[K]
+  } & {}
+
+  /** Helper Types for "Merge" **/
+  export type IntersectOf<U extends Union> = (
+    U extends unknown ? (k: U) => void : never
+  ) extends (k: infer I) => void
+    ? I
+    : never
+
+  export type Overwrite<O extends object, O1 extends object> = {
+      [K in keyof O]: K extends keyof O1 ? O1[K] : O[K];
+  } & {};
+
+  type _Merge<U extends object> = IntersectOf<Overwrite<U, {
+      [K in keyof U]-?: At<U, K>;
+  }>>;
+
+  type Key = string | number | symbol;
+  type AtBasic<O extends object, K extends Key> = K extends keyof O ? O[K] : never;
+  type AtStrict<O extends object, K extends Key> = O[K & keyof O];
+  type AtLoose<O extends object, K extends Key> = O extends unknown ? AtStrict<O, K> : never;
+  export type At<O extends object, K extends Key, strict extends Boolean = 1> = {
+      1: AtStrict<O, K>;
+      0: AtLoose<O, K>;
+  }[strict];
+
+  export type ComputeRaw<A extends any> = A extends Function ? A : {
+    [K in keyof A]: A[K];
+  } & {};
+
+  export type OptionalFlat<O> = {
+    [K in keyof O]?: O[K];
+  } & {};
+
+  type _Record<K extends keyof any, T> = {
+    [P in K]: T;
+  };
+
+  // cause typescript not to expand types and preserve names
+  type NoExpand<T> = T extends unknown ? T : never;
+
+  // this type assumes the passed object is entirely optional
+  type AtLeast<O extends object, K extends string> = NoExpand<
+    O extends unknown
+    ? | (K extends keyof O ? { [P in K]: O[P] } & O : O)
+      | {[P in keyof O as P extends K ? P : never]-?: O[P]} & O
+    : never>;
+
+  type _Strict<U, _U = U> = U extends unknown ? U & OptionalFlat<_Record<Exclude<Keys<_U>, keyof U>, never>> : never;
+
+  export type Strict<U extends object> = ComputeRaw<_Strict<U>>;
+  /** End Helper Types for "Merge" **/
+
+  export type Merge<U extends object> = ComputeRaw<_Merge<Strict<U>>>;
+
+  /**
+  A [[Boolean]]
+  */
+  export type Boolean = True | False
+
+  // /**
+  // 1
+  // */
+  export type True = 1
+
+  /**
+  0
+  */
+  export type False = 0
+
+  export type Not<B extends Boolean> = {
+    0: 1
+    1: 0
+  }[B]
+
+  export type Extends<A1 extends any, A2 extends any> = [A1] extends [never]
+    ? 0 // anything `never` is false
+    : A1 extends A2
+    ? 1
+    : 0
+
+  export type Has<U extends Union, U1 extends Union> = Not<
+    Extends<Exclude<U1, U>, U1>
+  >
+
+  export type Or<B1 extends Boolean, B2 extends Boolean> = {
+    0: {
+      0: 0
+      1: 1
+    }
+    1: {
+      0: 1
+      1: 1
+    }
+  }[B1][B2]
+
+  export type Keys<U extends Union> = U extends unknown ? keyof U : never
+
+  type Cast<A, B> = A extends B ? A : B;
+
+  export const type: unique symbol;
+
+
+
+  /**
+   * Used by group by
+   */
+
+  export type GetScalarType<T, O> = O extends object ? {
+    [P in keyof T]: P extends keyof O
+      ? O[P]
+      : never
+  } : never
+
+  type FieldPaths<
+    T,
+    U = Omit<T, '_avg' | '_sum' | '_count' | '_min' | '_max'>
+  > = IsObject<T> extends True ? U : T
+
+  type GetHavingFields<T> = {
+    [K in keyof T]: Or<
+      Or<Extends<'OR', K>, Extends<'AND', K>>,
+      Extends<'NOT', K>
+    > extends True
+      ? // infer is only needed to not hit TS limit
+        // based on the brilliant idea of Pierre-Antoine Mills
+        // https://github.com/microsoft/TypeScript/issues/30188#issuecomment-478938437
+        T[K] extends infer TK
+        ? GetHavingFields<UnEnumerate<TK> extends object ? Merge<UnEnumerate<TK>> : never>
+        : never
+      : {} extends FieldPaths<T[K]>
+      ? never
+      : K
+  }[keyof T]
+
+  /**
+   * Convert tuple to union
+   */
+  type _TupleToUnion<T> = T extends (infer E)[] ? E : never
+  type TupleToUnion<K extends readonly any[]> = _TupleToUnion<K>
+  type MaybeTupleToUnion<T> = T extends any[] ? TupleToUnion<T> : T
+
+  /**
+   * Like `Pick`, but additionally can also accept an array of keys
+   */
+  type PickEnumerable<T, K extends Enumerable<keyof T> | keyof T> = Prisma__Pick<T, MaybeTupleToUnion<K>>
+
+  /**
+   * Exclude all keys with underscores
+   */
+  type ExcludeUnderscoreKeys<T extends string> = T extends `_${string}` ? never : T
+
+
+  export type FieldRef<Model, FieldType> = runtime.FieldRef<Model, FieldType>
+
+  type FieldRefInputType<Model, FieldType> = Model extends never ? never : FieldRef<Model, FieldType>
+
+
+  export const ModelName: {
+    Tenant: 'Tenant',
+    User: 'User',
+    Project: 'Project',
+    ProjectMacroFase: 'ProjectMacroFase',
+    Department: 'Department',
+    UserDepartment: 'UserDepartment',
+    UserProject: 'UserProject',
+    Role: 'Role',
+    Permission: 'Permission',
+    RolePermission: 'RolePermission',
+    UserProjectRole: 'UserProjectRole',
+    Stakeholder: 'Stakeholder',
+    ProjectStakeholder: 'ProjectStakeholder'
+  };
+
+  export type ModelName = (typeof ModelName)[keyof typeof ModelName]
+
+
+
+  interface TypeMapCb<ClientOptions = {}> extends $Utils.Fn<{extArgs: $Extensions.InternalArgs }, $Utils.Record<string, any>> {
+    returns: Prisma.TypeMap<this['params']['extArgs'], ClientOptions extends { omit: infer OmitOptions } ? OmitOptions : {}>
+  }
+
+  export type TypeMap<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs, GlobalOmitOptions = {}> = {
+    globalOmitOptions: {
+      omit: GlobalOmitOptions
+    }
+    meta: {
+      modelProps: "tenant" | "user" | "project" | "projectMacroFase" | "department" | "userDepartment" | "userProject" | "role" | "permission" | "rolePermission" | "userProjectRole" | "stakeholder" | "projectStakeholder"
+      txIsolationLevel: Prisma.TransactionIsolationLevel
+    }
+    model: {
+      Tenant: {
+        payload: Prisma.$TenantPayload<ExtArgs>
+        fields: Prisma.TenantFieldRefs
+        operations: {
+          findUnique: {
+            args: Prisma.TenantFindUniqueArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$TenantPayload> | null
+          }
+          findUniqueOrThrow: {
+            args: Prisma.TenantFindUniqueOrThrowArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$TenantPayload>
+          }
+          findFirst: {
+            args: Prisma.TenantFindFirstArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$TenantPayload> | null
+          }
+          findFirstOrThrow: {
+            args: Prisma.TenantFindFirstOrThrowArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$TenantPayload>
+          }
+          findMany: {
+            args: Prisma.TenantFindManyArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$TenantPayload>[]
+          }
+          create: {
+            args: Prisma.TenantCreateArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$TenantPayload>
+          }
+          createMany: {
+            args: Prisma.TenantCreateManyArgs<ExtArgs>
+            result: BatchPayload
+          }
+          createManyAndReturn: {
+            args: Prisma.TenantCreateManyAndReturnArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$TenantPayload>[]
+          }
+          delete: {
+            args: Prisma.TenantDeleteArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$TenantPayload>
+          }
+          update: {
+            args: Prisma.TenantUpdateArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$TenantPayload>
+          }
+          deleteMany: {
+            args: Prisma.TenantDeleteManyArgs<ExtArgs>
+            result: BatchPayload
+          }
+          updateMany: {
+            args: Prisma.TenantUpdateManyArgs<ExtArgs>
+            result: BatchPayload
+          }
+          updateManyAndReturn: {
+            args: Prisma.TenantUpdateManyAndReturnArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$TenantPayload>[]
+          }
+          upsert: {
+            args: Prisma.TenantUpsertArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$TenantPayload>
+          }
+          aggregate: {
+            args: Prisma.TenantAggregateArgs<ExtArgs>
+            result: $Utils.Optional<AggregateTenant>
+          }
+          groupBy: {
+            args: Prisma.TenantGroupByArgs<ExtArgs>
+            result: $Utils.Optional<TenantGroupByOutputType>[]
+          }
+          count: {
+            args: Prisma.TenantCountArgs<ExtArgs>
+            result: $Utils.Optional<TenantCountAggregateOutputType> | number
+          }
+        }
+      }
+      User: {
+        payload: Prisma.$UserPayload<ExtArgs>
+        fields: Prisma.UserFieldRefs
+        operations: {
+          findUnique: {
+            args: Prisma.UserFindUniqueArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$UserPayload> | null
+          }
+          findUniqueOrThrow: {
+            args: Prisma.UserFindUniqueOrThrowArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$UserPayload>
+          }
+          findFirst: {
+            args: Prisma.UserFindFirstArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$UserPayload> | null
+          }
+          findFirstOrThrow: {
+            args: Prisma.UserFindFirstOrThrowArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$UserPayload>
+          }
+          findMany: {
+            args: Prisma.UserFindManyArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$UserPayload>[]
+          }
+          create: {
+            args: Prisma.UserCreateArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$UserPayload>
+          }
+          createMany: {
+            args: Prisma.UserCreateManyArgs<ExtArgs>
+            result: BatchPayload
+          }
+          createManyAndReturn: {
+            args: Prisma.UserCreateManyAndReturnArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$UserPayload>[]
+          }
+          delete: {
+            args: Prisma.UserDeleteArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$UserPayload>
+          }
+          update: {
+            args: Prisma.UserUpdateArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$UserPayload>
+          }
+          deleteMany: {
+            args: Prisma.UserDeleteManyArgs<ExtArgs>
+            result: BatchPayload
+          }
+          updateMany: {
+            args: Prisma.UserUpdateManyArgs<ExtArgs>
+            result: BatchPayload
+          }
+          updateManyAndReturn: {
+            args: Prisma.UserUpdateManyAndReturnArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$UserPayload>[]
+          }
+          upsert: {
+            args: Prisma.UserUpsertArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$UserPayload>
+          }
+          aggregate: {
+            args: Prisma.UserAggregateArgs<ExtArgs>
+            result: $Utils.Optional<AggregateUser>
+          }
+          groupBy: {
+            args: Prisma.UserGroupByArgs<ExtArgs>
+            result: $Utils.Optional<UserGroupByOutputType>[]
+          }
+          count: {
+            args: Prisma.UserCountArgs<ExtArgs>
+            result: $Utils.Optional<UserCountAggregateOutputType> | number
+          }
+        }
+      }
+      Project: {
+        payload: Prisma.$ProjectPayload<ExtArgs>
+        fields: Prisma.ProjectFieldRefs
+        operations: {
+          findUnique: {
+            args: Prisma.ProjectFindUniqueArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$ProjectPayload> | null
+          }
+          findUniqueOrThrow: {
+            args: Prisma.ProjectFindUniqueOrThrowArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$ProjectPayload>
+          }
+          findFirst: {
+            args: Prisma.ProjectFindFirstArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$ProjectPayload> | null
+          }
+          findFirstOrThrow: {
+            args: Prisma.ProjectFindFirstOrThrowArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$ProjectPayload>
+          }
+          findMany: {
+            args: Prisma.ProjectFindManyArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$ProjectPayload>[]
+          }
+          create: {
+            args: Prisma.ProjectCreateArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$ProjectPayload>
+          }
+          createMany: {
+            args: Prisma.ProjectCreateManyArgs<ExtArgs>
+            result: BatchPayload
+          }
+          createManyAndReturn: {
+            args: Prisma.ProjectCreateManyAndReturnArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$ProjectPayload>[]
+          }
+          delete: {
+            args: Prisma.ProjectDeleteArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$ProjectPayload>
+          }
+          update: {
+            args: Prisma.ProjectUpdateArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$ProjectPayload>
+          }
+          deleteMany: {
+            args: Prisma.ProjectDeleteManyArgs<ExtArgs>
+            result: BatchPayload
+          }
+          updateMany: {
+            args: Prisma.ProjectUpdateManyArgs<ExtArgs>
+            result: BatchPayload
+          }
+          updateManyAndReturn: {
+            args: Prisma.ProjectUpdateManyAndReturnArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$ProjectPayload>[]
+          }
+          upsert: {
+            args: Prisma.ProjectUpsertArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$ProjectPayload>
+          }
+          aggregate: {
+            args: Prisma.ProjectAggregateArgs<ExtArgs>
+            result: $Utils.Optional<AggregateProject>
+          }
+          groupBy: {
+            args: Prisma.ProjectGroupByArgs<ExtArgs>
+            result: $Utils.Optional<ProjectGroupByOutputType>[]
+          }
+          count: {
+            args: Prisma.ProjectCountArgs<ExtArgs>
+            result: $Utils.Optional<ProjectCountAggregateOutputType> | number
+          }
+        }
+      }
+      ProjectMacroFase: {
+        payload: Prisma.$ProjectMacroFasePayload<ExtArgs>
+        fields: Prisma.ProjectMacroFaseFieldRefs
+        operations: {
+          findUnique: {
+            args: Prisma.ProjectMacroFaseFindUniqueArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$ProjectMacroFasePayload> | null
+          }
+          findUniqueOrThrow: {
+            args: Prisma.ProjectMacroFaseFindUniqueOrThrowArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$ProjectMacroFasePayload>
+          }
+          findFirst: {
+            args: Prisma.ProjectMacroFaseFindFirstArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$ProjectMacroFasePayload> | null
+          }
+          findFirstOrThrow: {
+            args: Prisma.ProjectMacroFaseFindFirstOrThrowArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$ProjectMacroFasePayload>
+          }
+          findMany: {
+            args: Prisma.ProjectMacroFaseFindManyArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$ProjectMacroFasePayload>[]
+          }
+          create: {
+            args: Prisma.ProjectMacroFaseCreateArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$ProjectMacroFasePayload>
+          }
+          createMany: {
+            args: Prisma.ProjectMacroFaseCreateManyArgs<ExtArgs>
+            result: BatchPayload
+          }
+          createManyAndReturn: {
+            args: Prisma.ProjectMacroFaseCreateManyAndReturnArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$ProjectMacroFasePayload>[]
+          }
+          delete: {
+            args: Prisma.ProjectMacroFaseDeleteArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$ProjectMacroFasePayload>
+          }
+          update: {
+            args: Prisma.ProjectMacroFaseUpdateArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$ProjectMacroFasePayload>
+          }
+          deleteMany: {
+            args: Prisma.ProjectMacroFaseDeleteManyArgs<ExtArgs>
+            result: BatchPayload
+          }
+          updateMany: {
+            args: Prisma.ProjectMacroFaseUpdateManyArgs<ExtArgs>
+            result: BatchPayload
+          }
+          updateManyAndReturn: {
+            args: Prisma.ProjectMacroFaseUpdateManyAndReturnArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$ProjectMacroFasePayload>[]
+          }
+          upsert: {
+            args: Prisma.ProjectMacroFaseUpsertArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$ProjectMacroFasePayload>
+          }
+          aggregate: {
+            args: Prisma.ProjectMacroFaseAggregateArgs<ExtArgs>
+            result: $Utils.Optional<AggregateProjectMacroFase>
+          }
+          groupBy: {
+            args: Prisma.ProjectMacroFaseGroupByArgs<ExtArgs>
+            result: $Utils.Optional<ProjectMacroFaseGroupByOutputType>[]
+          }
+          count: {
+            args: Prisma.ProjectMacroFaseCountArgs<ExtArgs>
+            result: $Utils.Optional<ProjectMacroFaseCountAggregateOutputType> | number
+          }
+        }
+      }
+      Department: {
+        payload: Prisma.$DepartmentPayload<ExtArgs>
+        fields: Prisma.DepartmentFieldRefs
+        operations: {
+          findUnique: {
+            args: Prisma.DepartmentFindUniqueArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$DepartmentPayload> | null
+          }
+          findUniqueOrThrow: {
+            args: Prisma.DepartmentFindUniqueOrThrowArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$DepartmentPayload>
+          }
+          findFirst: {
+            args: Prisma.DepartmentFindFirstArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$DepartmentPayload> | null
+          }
+          findFirstOrThrow: {
+            args: Prisma.DepartmentFindFirstOrThrowArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$DepartmentPayload>
+          }
+          findMany: {
+            args: Prisma.DepartmentFindManyArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$DepartmentPayload>[]
+          }
+          create: {
+            args: Prisma.DepartmentCreateArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$DepartmentPayload>
+          }
+          createMany: {
+            args: Prisma.DepartmentCreateManyArgs<ExtArgs>
+            result: BatchPayload
+          }
+          createManyAndReturn: {
+            args: Prisma.DepartmentCreateManyAndReturnArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$DepartmentPayload>[]
+          }
+          delete: {
+            args: Prisma.DepartmentDeleteArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$DepartmentPayload>
+          }
+          update: {
+            args: Prisma.DepartmentUpdateArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$DepartmentPayload>
+          }
+          deleteMany: {
+            args: Prisma.DepartmentDeleteManyArgs<ExtArgs>
+            result: BatchPayload
+          }
+          updateMany: {
+            args: Prisma.DepartmentUpdateManyArgs<ExtArgs>
+            result: BatchPayload
+          }
+          updateManyAndReturn: {
+            args: Prisma.DepartmentUpdateManyAndReturnArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$DepartmentPayload>[]
+          }
+          upsert: {
+            args: Prisma.DepartmentUpsertArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$DepartmentPayload>
+          }
+          aggregate: {
+            args: Prisma.DepartmentAggregateArgs<ExtArgs>
+            result: $Utils.Optional<AggregateDepartment>
+          }
+          groupBy: {
+            args: Prisma.DepartmentGroupByArgs<ExtArgs>
+            result: $Utils.Optional<DepartmentGroupByOutputType>[]
+          }
+          count: {
+            args: Prisma.DepartmentCountArgs<ExtArgs>
+            result: $Utils.Optional<DepartmentCountAggregateOutputType> | number
+          }
+        }
+      }
+      UserDepartment: {
+        payload: Prisma.$UserDepartmentPayload<ExtArgs>
+        fields: Prisma.UserDepartmentFieldRefs
+        operations: {
+          findUnique: {
+            args: Prisma.UserDepartmentFindUniqueArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$UserDepartmentPayload> | null
+          }
+          findUniqueOrThrow: {
+            args: Prisma.UserDepartmentFindUniqueOrThrowArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$UserDepartmentPayload>
+          }
+          findFirst: {
+            args: Prisma.UserDepartmentFindFirstArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$UserDepartmentPayload> | null
+          }
+          findFirstOrThrow: {
+            args: Prisma.UserDepartmentFindFirstOrThrowArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$UserDepartmentPayload>
+          }
+          findMany: {
+            args: Prisma.UserDepartmentFindManyArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$UserDepartmentPayload>[]
+          }
+          create: {
+            args: Prisma.UserDepartmentCreateArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$UserDepartmentPayload>
+          }
+          createMany: {
+            args: Prisma.UserDepartmentCreateManyArgs<ExtArgs>
+            result: BatchPayload
+          }
+          createManyAndReturn: {
+            args: Prisma.UserDepartmentCreateManyAndReturnArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$UserDepartmentPayload>[]
+          }
+          delete: {
+            args: Prisma.UserDepartmentDeleteArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$UserDepartmentPayload>
+          }
+          update: {
+            args: Prisma.UserDepartmentUpdateArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$UserDepartmentPayload>
+          }
+          deleteMany: {
+            args: Prisma.UserDepartmentDeleteManyArgs<ExtArgs>
+            result: BatchPayload
+          }
+          updateMany: {
+            args: Prisma.UserDepartmentUpdateManyArgs<ExtArgs>
+            result: BatchPayload
+          }
+          updateManyAndReturn: {
+            args: Prisma.UserDepartmentUpdateManyAndReturnArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$UserDepartmentPayload>[]
+          }
+          upsert: {
+            args: Prisma.UserDepartmentUpsertArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$UserDepartmentPayload>
+          }
+          aggregate: {
+            args: Prisma.UserDepartmentAggregateArgs<ExtArgs>
+            result: $Utils.Optional<AggregateUserDepartment>
+          }
+          groupBy: {
+            args: Prisma.UserDepartmentGroupByArgs<ExtArgs>
+            result: $Utils.Optional<UserDepartmentGroupByOutputType>[]
+          }
+          count: {
+            args: Prisma.UserDepartmentCountArgs<ExtArgs>
+            result: $Utils.Optional<UserDepartmentCountAggregateOutputType> | number
+          }
+        }
+      }
+      UserProject: {
+        payload: Prisma.$UserProjectPayload<ExtArgs>
+        fields: Prisma.UserProjectFieldRefs
+        operations: {
+          findUnique: {
+            args: Prisma.UserProjectFindUniqueArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$UserProjectPayload> | null
+          }
+          findUniqueOrThrow: {
+            args: Prisma.UserProjectFindUniqueOrThrowArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$UserProjectPayload>
+          }
+          findFirst: {
+            args: Prisma.UserProjectFindFirstArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$UserProjectPayload> | null
+          }
+          findFirstOrThrow: {
+            args: Prisma.UserProjectFindFirstOrThrowArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$UserProjectPayload>
+          }
+          findMany: {
+            args: Prisma.UserProjectFindManyArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$UserProjectPayload>[]
+          }
+          create: {
+            args: Prisma.UserProjectCreateArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$UserProjectPayload>
+          }
+          createMany: {
+            args: Prisma.UserProjectCreateManyArgs<ExtArgs>
+            result: BatchPayload
+          }
+          createManyAndReturn: {
+            args: Prisma.UserProjectCreateManyAndReturnArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$UserProjectPayload>[]
+          }
+          delete: {
+            args: Prisma.UserProjectDeleteArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$UserProjectPayload>
+          }
+          update: {
+            args: Prisma.UserProjectUpdateArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$UserProjectPayload>
+          }
+          deleteMany: {
+            args: Prisma.UserProjectDeleteManyArgs<ExtArgs>
+            result: BatchPayload
+          }
+          updateMany: {
+            args: Prisma.UserProjectUpdateManyArgs<ExtArgs>
+            result: BatchPayload
+          }
+          updateManyAndReturn: {
+            args: Prisma.UserProjectUpdateManyAndReturnArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$UserProjectPayload>[]
+          }
+          upsert: {
+            args: Prisma.UserProjectUpsertArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$UserProjectPayload>
+          }
+          aggregate: {
+            args: Prisma.UserProjectAggregateArgs<ExtArgs>
+            result: $Utils.Optional<AggregateUserProject>
+          }
+          groupBy: {
+            args: Prisma.UserProjectGroupByArgs<ExtArgs>
+            result: $Utils.Optional<UserProjectGroupByOutputType>[]
+          }
+          count: {
+            args: Prisma.UserProjectCountArgs<ExtArgs>
+            result: $Utils.Optional<UserProjectCountAggregateOutputType> | number
+          }
+        }
+      }
+      Role: {
+        payload: Prisma.$RolePayload<ExtArgs>
+        fields: Prisma.RoleFieldRefs
+        operations: {
+          findUnique: {
+            args: Prisma.RoleFindUniqueArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$RolePayload> | null
+          }
+          findUniqueOrThrow: {
+            args: Prisma.RoleFindUniqueOrThrowArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$RolePayload>
+          }
+          findFirst: {
+            args: Prisma.RoleFindFirstArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$RolePayload> | null
+          }
+          findFirstOrThrow: {
+            args: Prisma.RoleFindFirstOrThrowArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$RolePayload>
+          }
+          findMany: {
+            args: Prisma.RoleFindManyArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$RolePayload>[]
+          }
+          create: {
+            args: Prisma.RoleCreateArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$RolePayload>
+          }
+          createMany: {
+            args: Prisma.RoleCreateManyArgs<ExtArgs>
+            result: BatchPayload
+          }
+          createManyAndReturn: {
+            args: Prisma.RoleCreateManyAndReturnArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$RolePayload>[]
+          }
+          delete: {
+            args: Prisma.RoleDeleteArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$RolePayload>
+          }
+          update: {
+            args: Prisma.RoleUpdateArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$RolePayload>
+          }
+          deleteMany: {
+            args: Prisma.RoleDeleteManyArgs<ExtArgs>
+            result: BatchPayload
+          }
+          updateMany: {
+            args: Prisma.RoleUpdateManyArgs<ExtArgs>
+            result: BatchPayload
+          }
+          updateManyAndReturn: {
+            args: Prisma.RoleUpdateManyAndReturnArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$RolePayload>[]
+          }
+          upsert: {
+            args: Prisma.RoleUpsertArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$RolePayload>
+          }
+          aggregate: {
+            args: Prisma.RoleAggregateArgs<ExtArgs>
+            result: $Utils.Optional<AggregateRole>
+          }
+          groupBy: {
+            args: Prisma.RoleGroupByArgs<ExtArgs>
+            result: $Utils.Optional<RoleGroupByOutputType>[]
+          }
+          count: {
+            args: Prisma.RoleCountArgs<ExtArgs>
+            result: $Utils.Optional<RoleCountAggregateOutputType> | number
+          }
+        }
+      }
+      Permission: {
+        payload: Prisma.$PermissionPayload<ExtArgs>
+        fields: Prisma.PermissionFieldRefs
+        operations: {
+          findUnique: {
+            args: Prisma.PermissionFindUniqueArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$PermissionPayload> | null
+          }
+          findUniqueOrThrow: {
+            args: Prisma.PermissionFindUniqueOrThrowArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$PermissionPayload>
+          }
+          findFirst: {
+            args: Prisma.PermissionFindFirstArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$PermissionPayload> | null
+          }
+          findFirstOrThrow: {
+            args: Prisma.PermissionFindFirstOrThrowArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$PermissionPayload>
+          }
+          findMany: {
+            args: Prisma.PermissionFindManyArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$PermissionPayload>[]
+          }
+          create: {
+            args: Prisma.PermissionCreateArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$PermissionPayload>
+          }
+          createMany: {
+            args: Prisma.PermissionCreateManyArgs<ExtArgs>
+            result: BatchPayload
+          }
+          createManyAndReturn: {
+            args: Prisma.PermissionCreateManyAndReturnArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$PermissionPayload>[]
+          }
+          delete: {
+            args: Prisma.PermissionDeleteArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$PermissionPayload>
+          }
+          update: {
+            args: Prisma.PermissionUpdateArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$PermissionPayload>
+          }
+          deleteMany: {
+            args: Prisma.PermissionDeleteManyArgs<ExtArgs>
+            result: BatchPayload
+          }
+          updateMany: {
+            args: Prisma.PermissionUpdateManyArgs<ExtArgs>
+            result: BatchPayload
+          }
+          updateManyAndReturn: {
+            args: Prisma.PermissionUpdateManyAndReturnArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$PermissionPayload>[]
+          }
+          upsert: {
+            args: Prisma.PermissionUpsertArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$PermissionPayload>
+          }
+          aggregate: {
+            args: Prisma.PermissionAggregateArgs<ExtArgs>
+            result: $Utils.Optional<AggregatePermission>
+          }
+          groupBy: {
+            args: Prisma.PermissionGroupByArgs<ExtArgs>
+            result: $Utils.Optional<PermissionGroupByOutputType>[]
+          }
+          count: {
+            args: Prisma.PermissionCountArgs<ExtArgs>
+            result: $Utils.Optional<PermissionCountAggregateOutputType> | number
+          }
+        }
+      }
+      RolePermission: {
+        payload: Prisma.$RolePermissionPayload<ExtArgs>
+        fields: Prisma.RolePermissionFieldRefs
+        operations: {
+          findUnique: {
+            args: Prisma.RolePermissionFindUniqueArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$RolePermissionPayload> | null
+          }
+          findUniqueOrThrow: {
+            args: Prisma.RolePermissionFindUniqueOrThrowArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$RolePermissionPayload>
+          }
+          findFirst: {
+            args: Prisma.RolePermissionFindFirstArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$RolePermissionPayload> | null
+          }
+          findFirstOrThrow: {
+            args: Prisma.RolePermissionFindFirstOrThrowArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$RolePermissionPayload>
+          }
+          findMany: {
+            args: Prisma.RolePermissionFindManyArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$RolePermissionPayload>[]
+          }
+          create: {
+            args: Prisma.RolePermissionCreateArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$RolePermissionPayload>
+          }
+          createMany: {
+            args: Prisma.RolePermissionCreateManyArgs<ExtArgs>
+            result: BatchPayload
+          }
+          createManyAndReturn: {
+            args: Prisma.RolePermissionCreateManyAndReturnArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$RolePermissionPayload>[]
+          }
+          delete: {
+            args: Prisma.RolePermissionDeleteArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$RolePermissionPayload>
+          }
+          update: {
+            args: Prisma.RolePermissionUpdateArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$RolePermissionPayload>
+          }
+          deleteMany: {
+            args: Prisma.RolePermissionDeleteManyArgs<ExtArgs>
+            result: BatchPayload
+          }
+          updateMany: {
+            args: Prisma.RolePermissionUpdateManyArgs<ExtArgs>
+            result: BatchPayload
+          }
+          updateManyAndReturn: {
+            args: Prisma.RolePermissionUpdateManyAndReturnArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$RolePermissionPayload>[]
+          }
+          upsert: {
+            args: Prisma.RolePermissionUpsertArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$RolePermissionPayload>
+          }
+          aggregate: {
+            args: Prisma.RolePermissionAggregateArgs<ExtArgs>
+            result: $Utils.Optional<AggregateRolePermission>
+          }
+          groupBy: {
+            args: Prisma.RolePermissionGroupByArgs<ExtArgs>
+            result: $Utils.Optional<RolePermissionGroupByOutputType>[]
+          }
+          count: {
+            args: Prisma.RolePermissionCountArgs<ExtArgs>
+            result: $Utils.Optional<RolePermissionCountAggregateOutputType> | number
+          }
+        }
+      }
+      UserProjectRole: {
+        payload: Prisma.$UserProjectRolePayload<ExtArgs>
+        fields: Prisma.UserProjectRoleFieldRefs
+        operations: {
+          findUnique: {
+            args: Prisma.UserProjectRoleFindUniqueArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$UserProjectRolePayload> | null
+          }
+          findUniqueOrThrow: {
+            args: Prisma.UserProjectRoleFindUniqueOrThrowArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$UserProjectRolePayload>
+          }
+          findFirst: {
+            args: Prisma.UserProjectRoleFindFirstArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$UserProjectRolePayload> | null
+          }
+          findFirstOrThrow: {
+            args: Prisma.UserProjectRoleFindFirstOrThrowArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$UserProjectRolePayload>
+          }
+          findMany: {
+            args: Prisma.UserProjectRoleFindManyArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$UserProjectRolePayload>[]
+          }
+          create: {
+            args: Prisma.UserProjectRoleCreateArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$UserProjectRolePayload>
+          }
+          createMany: {
+            args: Prisma.UserProjectRoleCreateManyArgs<ExtArgs>
+            result: BatchPayload
+          }
+          createManyAndReturn: {
+            args: Prisma.UserProjectRoleCreateManyAndReturnArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$UserProjectRolePayload>[]
+          }
+          delete: {
+            args: Prisma.UserProjectRoleDeleteArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$UserProjectRolePayload>
+          }
+          update: {
+            args: Prisma.UserProjectRoleUpdateArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$UserProjectRolePayload>
+          }
+          deleteMany: {
+            args: Prisma.UserProjectRoleDeleteManyArgs<ExtArgs>
+            result: BatchPayload
+          }
+          updateMany: {
+            args: Prisma.UserProjectRoleUpdateManyArgs<ExtArgs>
+            result: BatchPayload
+          }
+          updateManyAndReturn: {
+            args: Prisma.UserProjectRoleUpdateManyAndReturnArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$UserProjectRolePayload>[]
+          }
+          upsert: {
+            args: Prisma.UserProjectRoleUpsertArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$UserProjectRolePayload>
+          }
+          aggregate: {
+            args: Prisma.UserProjectRoleAggregateArgs<ExtArgs>
+            result: $Utils.Optional<AggregateUserProjectRole>
+          }
+          groupBy: {
+            args: Prisma.UserProjectRoleGroupByArgs<ExtArgs>
+            result: $Utils.Optional<UserProjectRoleGroupByOutputType>[]
+          }
+          count: {
+            args: Prisma.UserProjectRoleCountArgs<ExtArgs>
+            result: $Utils.Optional<UserProjectRoleCountAggregateOutputType> | number
+          }
+        }
+      }
+      Stakeholder: {
+        payload: Prisma.$StakeholderPayload<ExtArgs>
+        fields: Prisma.StakeholderFieldRefs
+        operations: {
+          findUnique: {
+            args: Prisma.StakeholderFindUniqueArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$StakeholderPayload> | null
+          }
+          findUniqueOrThrow: {
+            args: Prisma.StakeholderFindUniqueOrThrowArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$StakeholderPayload>
+          }
+          findFirst: {
+            args: Prisma.StakeholderFindFirstArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$StakeholderPayload> | null
+          }
+          findFirstOrThrow: {
+            args: Prisma.StakeholderFindFirstOrThrowArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$StakeholderPayload>
+          }
+          findMany: {
+            args: Prisma.StakeholderFindManyArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$StakeholderPayload>[]
+          }
+          create: {
+            args: Prisma.StakeholderCreateArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$StakeholderPayload>
+          }
+          createMany: {
+            args: Prisma.StakeholderCreateManyArgs<ExtArgs>
+            result: BatchPayload
+          }
+          createManyAndReturn: {
+            args: Prisma.StakeholderCreateManyAndReturnArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$StakeholderPayload>[]
+          }
+          delete: {
+            args: Prisma.StakeholderDeleteArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$StakeholderPayload>
+          }
+          update: {
+            args: Prisma.StakeholderUpdateArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$StakeholderPayload>
+          }
+          deleteMany: {
+            args: Prisma.StakeholderDeleteManyArgs<ExtArgs>
+            result: BatchPayload
+          }
+          updateMany: {
+            args: Prisma.StakeholderUpdateManyArgs<ExtArgs>
+            result: BatchPayload
+          }
+          updateManyAndReturn: {
+            args: Prisma.StakeholderUpdateManyAndReturnArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$StakeholderPayload>[]
+          }
+          upsert: {
+            args: Prisma.StakeholderUpsertArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$StakeholderPayload>
+          }
+          aggregate: {
+            args: Prisma.StakeholderAggregateArgs<ExtArgs>
+            result: $Utils.Optional<AggregateStakeholder>
+          }
+          groupBy: {
+            args: Prisma.StakeholderGroupByArgs<ExtArgs>
+            result: $Utils.Optional<StakeholderGroupByOutputType>[]
+          }
+          count: {
+            args: Prisma.StakeholderCountArgs<ExtArgs>
+            result: $Utils.Optional<StakeholderCountAggregateOutputType> | number
+          }
+        }
+      }
+      ProjectStakeholder: {
+        payload: Prisma.$ProjectStakeholderPayload<ExtArgs>
+        fields: Prisma.ProjectStakeholderFieldRefs
+        operations: {
+          findUnique: {
+            args: Prisma.ProjectStakeholderFindUniqueArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$ProjectStakeholderPayload> | null
+          }
+          findUniqueOrThrow: {
+            args: Prisma.ProjectStakeholderFindUniqueOrThrowArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$ProjectStakeholderPayload>
+          }
+          findFirst: {
+            args: Prisma.ProjectStakeholderFindFirstArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$ProjectStakeholderPayload> | null
+          }
+          findFirstOrThrow: {
+            args: Prisma.ProjectStakeholderFindFirstOrThrowArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$ProjectStakeholderPayload>
+          }
+          findMany: {
+            args: Prisma.ProjectStakeholderFindManyArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$ProjectStakeholderPayload>[]
+          }
+          create: {
+            args: Prisma.ProjectStakeholderCreateArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$ProjectStakeholderPayload>
+          }
+          createMany: {
+            args: Prisma.ProjectStakeholderCreateManyArgs<ExtArgs>
+            result: BatchPayload
+          }
+          createManyAndReturn: {
+            args: Prisma.ProjectStakeholderCreateManyAndReturnArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$ProjectStakeholderPayload>[]
+          }
+          delete: {
+            args: Prisma.ProjectStakeholderDeleteArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$ProjectStakeholderPayload>
+          }
+          update: {
+            args: Prisma.ProjectStakeholderUpdateArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$ProjectStakeholderPayload>
+          }
+          deleteMany: {
+            args: Prisma.ProjectStakeholderDeleteManyArgs<ExtArgs>
+            result: BatchPayload
+          }
+          updateMany: {
+            args: Prisma.ProjectStakeholderUpdateManyArgs<ExtArgs>
+            result: BatchPayload
+          }
+          updateManyAndReturn: {
+            args: Prisma.ProjectStakeholderUpdateManyAndReturnArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$ProjectStakeholderPayload>[]
+          }
+          upsert: {
+            args: Prisma.ProjectStakeholderUpsertArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$ProjectStakeholderPayload>
+          }
+          aggregate: {
+            args: Prisma.ProjectStakeholderAggregateArgs<ExtArgs>
+            result: $Utils.Optional<AggregateProjectStakeholder>
+          }
+          groupBy: {
+            args: Prisma.ProjectStakeholderGroupByArgs<ExtArgs>
+            result: $Utils.Optional<ProjectStakeholderGroupByOutputType>[]
+          }
+          count: {
+            args: Prisma.ProjectStakeholderCountArgs<ExtArgs>
+            result: $Utils.Optional<ProjectStakeholderCountAggregateOutputType> | number
+          }
+        }
+      }
+    }
+  } & {
+    other: {
+      payload: any
+      operations: {
+        $executeRaw: {
+          args: [query: TemplateStringsArray | Prisma.Sql, ...values: any[]],
+          result: any
+        }
+        $executeRawUnsafe: {
+          args: [query: string, ...values: any[]],
+          result: any
+        }
+        $queryRaw: {
+          args: [query: TemplateStringsArray | Prisma.Sql, ...values: any[]],
+          result: any
+        }
+        $queryRawUnsafe: {
+          args: [query: string, ...values: any[]],
+          result: any
+        }
+      }
+    }
+  }
+  export const defineExtension: $Extensions.ExtendsHook<"define", Prisma.TypeMapCb, $Extensions.DefaultArgs>
+  export type DefaultPrismaClient = PrismaClient
+  export type ErrorFormat = 'pretty' | 'colorless' | 'minimal'
+  export interface PrismaClientOptions {
+    /**
+     * @default "colorless"
+     */
+    errorFormat?: ErrorFormat
+    /**
+     * @example
+     * ```
+     * // Shorthand for `emit: 'stdout'`
+     * log: ['query', 'info', 'warn', 'error']
+     * 
+     * // Emit as events only
+     * log: [
+     *   { emit: 'event', level: 'query' },
+     *   { emit: 'event', level: 'info' },
+     *   { emit: 'event', level: 'warn' }
+     *   { emit: 'event', level: 'error' }
+     * ]
+     * 
+     * / Emit as events and log to stdout
+     * og: [
+     *  { emit: 'stdout', level: 'query' },
+     *  { emit: 'stdout', level: 'info' },
+     *  { emit: 'stdout', level: 'warn' }
+     *  { emit: 'stdout', level: 'error' }
+     * 
+     * ```
+     * Read more in our [docs](https://pris.ly/d/logging).
+     */
+    log?: (LogLevel | LogDefinition)[]
+    /**
+     * The default values for transactionOptions
+     * maxWait ?= 2000
+     * timeout ?= 5000
+     */
+    transactionOptions?: {
+      maxWait?: number
+      timeout?: number
+      isolationLevel?: Prisma.TransactionIsolationLevel
+    }
+    /**
+     * Instance of a Driver Adapter, e.g., like one provided by `@prisma/adapter-planetscale`
+     */
+    adapter?: runtime.SqlDriverAdapterFactory
+    /**
+     * Prisma Accelerate URL allowing the client to connect through Accelerate instead of a direct database.
+     */
+    accelerateUrl?: string
+    /**
+     * Global configuration for omitting model fields by default.
+     * 
+     * @example
+     * ```
+     * const prisma = new PrismaClient({
+     *   omit: {
+     *     user: {
+     *       password: true
+     *     }
+     *   }
+     * })
+     * ```
+     */
+    omit?: Prisma.GlobalOmitConfig
+    /**
+     * SQL commenter plugins that add metadata to SQL queries as comments.
+     * Comments follow the sqlcommenter format: https://google.github.io/sqlcommenter/
+     * 
+     * @example
+     * ```
+     * const prisma = new PrismaClient({
+     *   adapter,
+     *   comments: [
+     *     traceContext(),
+     *     queryInsights(),
+     *   ],
+     * })
+     * ```
+     */
+    comments?: runtime.SqlCommenterPlugin[]
+  }
+  export type GlobalOmitConfig = {
+    tenant?: TenantOmit
+    user?: UserOmit
+    project?: ProjectOmit
+    projectMacroFase?: ProjectMacroFaseOmit
+    department?: DepartmentOmit
+    userDepartment?: UserDepartmentOmit
+    userProject?: UserProjectOmit
+    role?: RoleOmit
+    permission?: PermissionOmit
+    rolePermission?: RolePermissionOmit
+    userProjectRole?: UserProjectRoleOmit
+    stakeholder?: StakeholderOmit
+    projectStakeholder?: ProjectStakeholderOmit
+  }
+
+  /* Types for Logging */
+  export type LogLevel = 'info' | 'query' | 'warn' | 'error'
+  export type LogDefinition = {
+    level: LogLevel
+    emit: 'stdout' | 'event'
+  }
+
+  export type CheckIsLogLevel<T> = T extends LogLevel ? T : never;
+
+  export type GetLogType<T> = CheckIsLogLevel<
+    T extends LogDefinition ? T['level'] : T
+  >;
+
+  export type GetEvents<T extends any[]> = T extends Array<LogLevel | LogDefinition>
+    ? GetLogType<T[number]>
+    : never;
+
+  export type QueryEvent = {
+    timestamp: Date
+    query: string
+    params: string
+    duration: number
+    target: string
+  }
+
+  export type LogEvent = {
+    timestamp: Date
+    message: string
+    target: string
+  }
+  /* End Types for Logging */
+
+
+  export type PrismaAction =
+    | 'findUnique'
+    | 'findUniqueOrThrow'
+    | 'findMany'
+    | 'findFirst'
+    | 'findFirstOrThrow'
+    | 'create'
+    | 'createMany'
+    | 'createManyAndReturn'
+    | 'update'
+    | 'updateMany'
+    | 'updateManyAndReturn'
+    | 'upsert'
+    | 'delete'
+    | 'deleteMany'
+    | 'executeRaw'
+    | 'queryRaw'
+    | 'aggregate'
+    | 'count'
+    | 'runCommandRaw'
+    | 'findRaw'
+    | 'groupBy'
+
+  // tested in getLogLevel.test.ts
+  export function getLogLevel(log: Array<LogLevel | LogDefinition>): LogLevel | undefined;
+
+  /**
+   * `PrismaClient` proxy available in interactive transactions.
+   */
+  export type TransactionClient = Omit<Prisma.DefaultPrismaClient, runtime.ITXClientDenyList>
+
+  export type Datasource = {
+    url?: string
+  }
+
+  /**
+   * Count Types
+   */
+
+
+  /**
+   * Count Type TenantCountOutputType
+   */
+
+  export type TenantCountOutputType = {
+    projects: number
+    departments: number
+    roles: number
+    stakeholders: number
+  }
+
+  export type TenantCountOutputTypeSelect<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    projects?: boolean | TenantCountOutputTypeCountProjectsArgs
+    departments?: boolean | TenantCountOutputTypeCountDepartmentsArgs
+    roles?: boolean | TenantCountOutputTypeCountRolesArgs
+    stakeholders?: boolean | TenantCountOutputTypeCountStakeholdersArgs
+  }
+
+  // Custom InputTypes
+  /**
+   * TenantCountOutputType without action
+   */
+  export type TenantCountOutputTypeDefaultArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the TenantCountOutputType
+     */
+    select?: TenantCountOutputTypeSelect<ExtArgs> | null
+  }
+
+  /**
+   * TenantCountOutputType without action
+   */
+  export type TenantCountOutputTypeCountProjectsArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    where?: ProjectWhereInput
+  }
+
+  /**
+   * TenantCountOutputType without action
+   */
+  export type TenantCountOutputTypeCountDepartmentsArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    where?: DepartmentWhereInput
+  }
+
+  /**
+   * TenantCountOutputType without action
+   */
+  export type TenantCountOutputTypeCountRolesArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    where?: RoleWhereInput
+  }
+
+  /**
+   * TenantCountOutputType without action
+   */
+  export type TenantCountOutputTypeCountStakeholdersArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    where?: StakeholderWhereInput
+  }
+
+
+  /**
+   * Count Type UserCountOutputType
+   */
+
+  export type UserCountOutputType = {
+    projects: number
+    departments: number
+    userProjectRoles: number
+  }
+
+  export type UserCountOutputTypeSelect<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    projects?: boolean | UserCountOutputTypeCountProjectsArgs
+    departments?: boolean | UserCountOutputTypeCountDepartmentsArgs
+    userProjectRoles?: boolean | UserCountOutputTypeCountUserProjectRolesArgs
+  }
+
+  // Custom InputTypes
+  /**
+   * UserCountOutputType without action
+   */
+  export type UserCountOutputTypeDefaultArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the UserCountOutputType
+     */
+    select?: UserCountOutputTypeSelect<ExtArgs> | null
+  }
+
+  /**
+   * UserCountOutputType without action
+   */
+  export type UserCountOutputTypeCountProjectsArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    where?: UserProjectWhereInput
+  }
+
+  /**
+   * UserCountOutputType without action
+   */
+  export type UserCountOutputTypeCountDepartmentsArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    where?: UserDepartmentWhereInput
+  }
+
+  /**
+   * UserCountOutputType without action
+   */
+  export type UserCountOutputTypeCountUserProjectRolesArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    where?: UserProjectRoleWhereInput
+  }
+
+
+  /**
+   * Count Type ProjectCountOutputType
+   */
+
+  export type ProjectCountOutputType = {
+    members: number
+    usuariosRole: number
+    macroFases: number
+    stakeholders: number
+  }
+
+  export type ProjectCountOutputTypeSelect<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    members?: boolean | ProjectCountOutputTypeCountMembersArgs
+    usuariosRole?: boolean | ProjectCountOutputTypeCountUsuariosRoleArgs
+    macroFases?: boolean | ProjectCountOutputTypeCountMacroFasesArgs
+    stakeholders?: boolean | ProjectCountOutputTypeCountStakeholdersArgs
+  }
+
+  // Custom InputTypes
+  /**
+   * ProjectCountOutputType without action
+   */
+  export type ProjectCountOutputTypeDefaultArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the ProjectCountOutputType
+     */
+    select?: ProjectCountOutputTypeSelect<ExtArgs> | null
+  }
+
+  /**
+   * ProjectCountOutputType without action
+   */
+  export type ProjectCountOutputTypeCountMembersArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    where?: UserProjectWhereInput
+  }
+
+  /**
+   * ProjectCountOutputType without action
+   */
+  export type ProjectCountOutputTypeCountUsuariosRoleArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    where?: UserProjectRoleWhereInput
+  }
+
+  /**
+   * ProjectCountOutputType without action
+   */
+  export type ProjectCountOutputTypeCountMacroFasesArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    where?: ProjectMacroFaseWhereInput
+  }
+
+  /**
+   * ProjectCountOutputType without action
+   */
+  export type ProjectCountOutputTypeCountStakeholdersArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    where?: ProjectStakeholderWhereInput
+  }
+
+
+  /**
+   * Count Type DepartmentCountOutputType
+   */
+
+  export type DepartmentCountOutputType = {
+    users: number
+    userProjects: number
+  }
+
+  export type DepartmentCountOutputTypeSelect<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    users?: boolean | DepartmentCountOutputTypeCountUsersArgs
+    userProjects?: boolean | DepartmentCountOutputTypeCountUserProjectsArgs
+  }
+
+  // Custom InputTypes
+  /**
+   * DepartmentCountOutputType without action
+   */
+  export type DepartmentCountOutputTypeDefaultArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the DepartmentCountOutputType
+     */
+    select?: DepartmentCountOutputTypeSelect<ExtArgs> | null
+  }
+
+  /**
+   * DepartmentCountOutputType without action
+   */
+  export type DepartmentCountOutputTypeCountUsersArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    where?: UserDepartmentWhereInput
+  }
+
+  /**
+   * DepartmentCountOutputType without action
+   */
+  export type DepartmentCountOutputTypeCountUserProjectsArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    where?: UserProjectWhereInput
+  }
+
+
+  /**
+   * Count Type RoleCountOutputType
+   */
+
+  export type RoleCountOutputType = {
+    permissions: number
+    userProjectRoles: number
+  }
+
+  export type RoleCountOutputTypeSelect<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    permissions?: boolean | RoleCountOutputTypeCountPermissionsArgs
+    userProjectRoles?: boolean | RoleCountOutputTypeCountUserProjectRolesArgs
+  }
+
+  // Custom InputTypes
+  /**
+   * RoleCountOutputType without action
+   */
+  export type RoleCountOutputTypeDefaultArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the RoleCountOutputType
+     */
+    select?: RoleCountOutputTypeSelect<ExtArgs> | null
+  }
+
+  /**
+   * RoleCountOutputType without action
+   */
+  export type RoleCountOutputTypeCountPermissionsArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    where?: RolePermissionWhereInput
+  }
+
+  /**
+   * RoleCountOutputType without action
+   */
+  export type RoleCountOutputTypeCountUserProjectRolesArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    where?: UserProjectRoleWhereInput
+  }
+
+
+  /**
+   * Count Type PermissionCountOutputType
+   */
+
+  export type PermissionCountOutputType = {
+    roles: number
+  }
+
+  export type PermissionCountOutputTypeSelect<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    roles?: boolean | PermissionCountOutputTypeCountRolesArgs
+  }
+
+  // Custom InputTypes
+  /**
+   * PermissionCountOutputType without action
+   */
+  export type PermissionCountOutputTypeDefaultArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the PermissionCountOutputType
+     */
+    select?: PermissionCountOutputTypeSelect<ExtArgs> | null
+  }
+
+  /**
+   * PermissionCountOutputType without action
+   */
+  export type PermissionCountOutputTypeCountRolesArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    where?: RolePermissionWhereInput
+  }
+
+
+  /**
+   * Count Type StakeholderCountOutputType
+   */
+
+  export type StakeholderCountOutputType = {
+    projects: number
+  }
+
+  export type StakeholderCountOutputTypeSelect<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    projects?: boolean | StakeholderCountOutputTypeCountProjectsArgs
+  }
+
+  // Custom InputTypes
+  /**
+   * StakeholderCountOutputType without action
+   */
+  export type StakeholderCountOutputTypeDefaultArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the StakeholderCountOutputType
+     */
+    select?: StakeholderCountOutputTypeSelect<ExtArgs> | null
+  }
+
+  /**
+   * StakeholderCountOutputType without action
+   */
+  export type StakeholderCountOutputTypeCountProjectsArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    where?: ProjectStakeholderWhereInput
+  }
+
+
+  /**
+   * Models
+   */
+
+  /**
+   * Model Tenant
+   */
+
+  export type AggregateTenant = {
+    _count: TenantCountAggregateOutputType | null
+    _min: TenantMinAggregateOutputType | null
+    _max: TenantMaxAggregateOutputType | null
+  }
+
+  export type TenantMinAggregateOutputType = {
+    id: string | null
+    name: string | null
+    subdomain: string | null
+    status: $Enums.TenantStatus | null
+    deletedAt: Date | null
+    createdAt: Date | null
+    updatedAt: Date | null
+  }
+
+  export type TenantMaxAggregateOutputType = {
+    id: string | null
+    name: string | null
+    subdomain: string | null
+    status: $Enums.TenantStatus | null
+    deletedAt: Date | null
+    createdAt: Date | null
+    updatedAt: Date | null
+  }
+
+  export type TenantCountAggregateOutputType = {
+    id: number
+    name: number
+    subdomain: number
+    status: number
+    deletedAt: number
+    createdAt: number
+    updatedAt: number
+    _all: number
+  }
+
+
+  export type TenantMinAggregateInputType = {
+    id?: true
+    name?: true
+    subdomain?: true
+    status?: true
+    deletedAt?: true
+    createdAt?: true
+    updatedAt?: true
+  }
+
+  export type TenantMaxAggregateInputType = {
+    id?: true
+    name?: true
+    subdomain?: true
+    status?: true
+    deletedAt?: true
+    createdAt?: true
+    updatedAt?: true
+  }
+
+  export type TenantCountAggregateInputType = {
+    id?: true
+    name?: true
+    subdomain?: true
+    status?: true
+    deletedAt?: true
+    createdAt?: true
+    updatedAt?: true
+    _all?: true
+  }
+
+  export type TenantAggregateArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Filter which Tenant to aggregate.
+     */
+    where?: TenantWhereInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+     * 
+     * Determine the order of Tenants to fetch.
+     */
+    orderBy?: TenantOrderByWithRelationInput | TenantOrderByWithRelationInput[]
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+     * 
+     * Sets the start position
+     */
+    cursor?: TenantWhereUniqueInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Take `±n` Tenants from the position of the cursor.
+     */
+    take?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Skip the first `n` Tenants.
+     */
+    skip?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Count returned Tenants
+    **/
+    _count?: true | TenantCountAggregateInputType
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Select which fields to find the minimum value
+    **/
+    _min?: TenantMinAggregateInputType
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Select which fields to find the maximum value
+    **/
+    _max?: TenantMaxAggregateInputType
+  }
+
+  export type GetTenantAggregateType<T extends TenantAggregateArgs> = {
+        [P in keyof T & keyof AggregateTenant]: P extends '_count' | 'count'
+      ? T[P] extends true
+        ? number
+        : GetScalarType<T[P], AggregateTenant[P]>
+      : GetScalarType<T[P], AggregateTenant[P]>
+  }
+
+
+
+
+  export type TenantGroupByArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    where?: TenantWhereInput
+    orderBy?: TenantOrderByWithAggregationInput | TenantOrderByWithAggregationInput[]
+    by: TenantScalarFieldEnum[] | TenantScalarFieldEnum
+    having?: TenantScalarWhereWithAggregatesInput
+    take?: number
+    skip?: number
+    _count?: TenantCountAggregateInputType | true
+    _min?: TenantMinAggregateInputType
+    _max?: TenantMaxAggregateInputType
+  }
+
+  export type TenantGroupByOutputType = {
+    id: string
+    name: string
+    subdomain: string
+    status: $Enums.TenantStatus
+    deletedAt: Date | null
+    createdAt: Date
+    updatedAt: Date
+    _count: TenantCountAggregateOutputType | null
+    _min: TenantMinAggregateOutputType | null
+    _max: TenantMaxAggregateOutputType | null
+  }
+
+  type GetTenantGroupByPayload<T extends TenantGroupByArgs> = Prisma.PrismaPromise<
+    Array<
+      PickEnumerable<TenantGroupByOutputType, T['by']> &
+        {
+          [P in ((keyof T) & (keyof TenantGroupByOutputType))]: P extends '_count'
+            ? T[P] extends boolean
+              ? number
+              : GetScalarType<T[P], TenantGroupByOutputType[P]>
+            : GetScalarType<T[P], TenantGroupByOutputType[P]>
+        }
+      >
+    >
+
+
+  export type TenantSelect<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetSelect<{
+    id?: boolean
+    name?: boolean
+    subdomain?: boolean
+    status?: boolean
+    deletedAt?: boolean
+    createdAt?: boolean
+    updatedAt?: boolean
+    projects?: boolean | Tenant$projectsArgs<ExtArgs>
+    departments?: boolean | Tenant$departmentsArgs<ExtArgs>
+    roles?: boolean | Tenant$rolesArgs<ExtArgs>
+    stakeholders?: boolean | Tenant$stakeholdersArgs<ExtArgs>
+    _count?: boolean | TenantCountOutputTypeDefaultArgs<ExtArgs>
+  }, ExtArgs["result"]["tenant"]>
+
+  export type TenantSelectCreateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetSelect<{
+    id?: boolean
+    name?: boolean
+    subdomain?: boolean
+    status?: boolean
+    deletedAt?: boolean
+    createdAt?: boolean
+    updatedAt?: boolean
+  }, ExtArgs["result"]["tenant"]>
+
+  export type TenantSelectUpdateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetSelect<{
+    id?: boolean
+    name?: boolean
+    subdomain?: boolean
+    status?: boolean
+    deletedAt?: boolean
+    createdAt?: boolean
+    updatedAt?: boolean
+  }, ExtArgs["result"]["tenant"]>
+
+  export type TenantSelectScalar = {
+    id?: boolean
+    name?: boolean
+    subdomain?: boolean
+    status?: boolean
+    deletedAt?: boolean
+    createdAt?: boolean
+    updatedAt?: boolean
+  }
+
+  export type TenantOmit<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetOmit<"id" | "name" | "subdomain" | "status" | "deletedAt" | "createdAt" | "updatedAt", ExtArgs["result"]["tenant"]>
+  export type TenantInclude<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    projects?: boolean | Tenant$projectsArgs<ExtArgs>
+    departments?: boolean | Tenant$departmentsArgs<ExtArgs>
+    roles?: boolean | Tenant$rolesArgs<ExtArgs>
+    stakeholders?: boolean | Tenant$stakeholdersArgs<ExtArgs>
+    _count?: boolean | TenantCountOutputTypeDefaultArgs<ExtArgs>
+  }
+  export type TenantIncludeCreateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {}
+  export type TenantIncludeUpdateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {}
+
+  export type $TenantPayload<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    name: "Tenant"
+    objects: {
+      projects: Prisma.$ProjectPayload<ExtArgs>[]
+      departments: Prisma.$DepartmentPayload<ExtArgs>[]
+      roles: Prisma.$RolePayload<ExtArgs>[]
+      stakeholders: Prisma.$StakeholderPayload<ExtArgs>[]
+    }
+    scalars: $Extensions.GetPayloadResult<{
+      id: string
+      name: string
+      subdomain: string
+      status: $Enums.TenantStatus
+      deletedAt: Date | null
+      createdAt: Date
+      updatedAt: Date
+    }, ExtArgs["result"]["tenant"]>
+    composites: {}
+  }
+
+  type TenantGetPayload<S extends boolean | null | undefined | TenantDefaultArgs> = $Result.GetResult<Prisma.$TenantPayload, S>
+
+  type TenantCountArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> =
+    Omit<TenantFindManyArgs, 'select' | 'include' | 'distinct' | 'omit'> & {
+      select?: TenantCountAggregateInputType | true
+    }
+
+  export interface TenantDelegate<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs, GlobalOmitOptions = {}> {
+    [K: symbol]: { types: Prisma.TypeMap<ExtArgs>['model']['Tenant'], meta: { name: 'Tenant' } }
+    /**
+     * Find zero or one Tenant that matches the filter.
+     * @param {TenantFindUniqueArgs} args - Arguments to find a Tenant
+     * @example
+     * // Get one Tenant
+     * const tenant = await prisma.tenant.findUnique({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     */
+    findUnique<T extends TenantFindUniqueArgs>(args: SelectSubset<T, TenantFindUniqueArgs<ExtArgs>>): Prisma__TenantClient<$Result.GetResult<Prisma.$TenantPayload<ExtArgs>, T, "findUnique", GlobalOmitOptions> | null, null, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Find one Tenant that matches the filter or throw an error with `error.code='P2025'`
+     * if no matches were found.
+     * @param {TenantFindUniqueOrThrowArgs} args - Arguments to find a Tenant
+     * @example
+     * // Get one Tenant
+     * const tenant = await prisma.tenant.findUniqueOrThrow({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     */
+    findUniqueOrThrow<T extends TenantFindUniqueOrThrowArgs>(args: SelectSubset<T, TenantFindUniqueOrThrowArgs<ExtArgs>>): Prisma__TenantClient<$Result.GetResult<Prisma.$TenantPayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Find the first Tenant that matches the filter.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {TenantFindFirstArgs} args - Arguments to find a Tenant
+     * @example
+     * // Get one Tenant
+     * const tenant = await prisma.tenant.findFirst({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     */
+    findFirst<T extends TenantFindFirstArgs>(args?: SelectSubset<T, TenantFindFirstArgs<ExtArgs>>): Prisma__TenantClient<$Result.GetResult<Prisma.$TenantPayload<ExtArgs>, T, "findFirst", GlobalOmitOptions> | null, null, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Find the first Tenant that matches the filter or
+     * throw `PrismaKnownClientError` with `P2025` code if no matches were found.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {TenantFindFirstOrThrowArgs} args - Arguments to find a Tenant
+     * @example
+     * // Get one Tenant
+     * const tenant = await prisma.tenant.findFirstOrThrow({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     */
+    findFirstOrThrow<T extends TenantFindFirstOrThrowArgs>(args?: SelectSubset<T, TenantFindFirstOrThrowArgs<ExtArgs>>): Prisma__TenantClient<$Result.GetResult<Prisma.$TenantPayload<ExtArgs>, T, "findFirstOrThrow", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Find zero or more Tenants that matches the filter.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {TenantFindManyArgs} args - Arguments to filter and select certain fields only.
+     * @example
+     * // Get all Tenants
+     * const tenants = await prisma.tenant.findMany()
+     * 
+     * // Get first 10 Tenants
+     * const tenants = await prisma.tenant.findMany({ take: 10 })
+     * 
+     * // Only select the `id`
+     * const tenantWithIdOnly = await prisma.tenant.findMany({ select: { id: true } })
+     * 
+     */
+    findMany<T extends TenantFindManyArgs>(args?: SelectSubset<T, TenantFindManyArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$TenantPayload<ExtArgs>, T, "findMany", GlobalOmitOptions>>
+
+    /**
+     * Create a Tenant.
+     * @param {TenantCreateArgs} args - Arguments to create a Tenant.
+     * @example
+     * // Create one Tenant
+     * const Tenant = await prisma.tenant.create({
+     *   data: {
+     *     // ... data to create a Tenant
+     *   }
+     * })
+     * 
+     */
+    create<T extends TenantCreateArgs>(args: SelectSubset<T, TenantCreateArgs<ExtArgs>>): Prisma__TenantClient<$Result.GetResult<Prisma.$TenantPayload<ExtArgs>, T, "create", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Create many Tenants.
+     * @param {TenantCreateManyArgs} args - Arguments to create many Tenants.
+     * @example
+     * // Create many Tenants
+     * const tenant = await prisma.tenant.createMany({
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     *     
+     */
+    createMany<T extends TenantCreateManyArgs>(args?: SelectSubset<T, TenantCreateManyArgs<ExtArgs>>): Prisma.PrismaPromise<BatchPayload>
+
+    /**
+     * Create many Tenants and returns the data saved in the database.
+     * @param {TenantCreateManyAndReturnArgs} args - Arguments to create many Tenants.
+     * @example
+     * // Create many Tenants
+     * const tenant = await prisma.tenant.createManyAndReturn({
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     * 
+     * // Create many Tenants and only return the `id`
+     * const tenantWithIdOnly = await prisma.tenant.createManyAndReturn({
+     *   select: { id: true },
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * 
+     */
+    createManyAndReturn<T extends TenantCreateManyAndReturnArgs>(args?: SelectSubset<T, TenantCreateManyAndReturnArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$TenantPayload<ExtArgs>, T, "createManyAndReturn", GlobalOmitOptions>>
+
+    /**
+     * Delete a Tenant.
+     * @param {TenantDeleteArgs} args - Arguments to delete one Tenant.
+     * @example
+     * // Delete one Tenant
+     * const Tenant = await prisma.tenant.delete({
+     *   where: {
+     *     // ... filter to delete one Tenant
+     *   }
+     * })
+     * 
+     */
+    delete<T extends TenantDeleteArgs>(args: SelectSubset<T, TenantDeleteArgs<ExtArgs>>): Prisma__TenantClient<$Result.GetResult<Prisma.$TenantPayload<ExtArgs>, T, "delete", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Update one Tenant.
+     * @param {TenantUpdateArgs} args - Arguments to update one Tenant.
+     * @example
+     * // Update one Tenant
+     * const tenant = await prisma.tenant.update({
+     *   where: {
+     *     // ... provide filter here
+     *   },
+     *   data: {
+     *     // ... provide data here
+     *   }
+     * })
+     * 
+     */
+    update<T extends TenantUpdateArgs>(args: SelectSubset<T, TenantUpdateArgs<ExtArgs>>): Prisma__TenantClient<$Result.GetResult<Prisma.$TenantPayload<ExtArgs>, T, "update", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Delete zero or more Tenants.
+     * @param {TenantDeleteManyArgs} args - Arguments to filter Tenants to delete.
+     * @example
+     * // Delete a few Tenants
+     * const { count } = await prisma.tenant.deleteMany({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     * 
+     */
+    deleteMany<T extends TenantDeleteManyArgs>(args?: SelectSubset<T, TenantDeleteManyArgs<ExtArgs>>): Prisma.PrismaPromise<BatchPayload>
+
+    /**
+     * Update zero or more Tenants.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {TenantUpdateManyArgs} args - Arguments to update one or more rows.
+     * @example
+     * // Update many Tenants
+     * const tenant = await prisma.tenant.updateMany({
+     *   where: {
+     *     // ... provide filter here
+     *   },
+     *   data: {
+     *     // ... provide data here
+     *   }
+     * })
+     * 
+     */
+    updateMany<T extends TenantUpdateManyArgs>(args: SelectSubset<T, TenantUpdateManyArgs<ExtArgs>>): Prisma.PrismaPromise<BatchPayload>
+
+    /**
+     * Update zero or more Tenants and returns the data updated in the database.
+     * @param {TenantUpdateManyAndReturnArgs} args - Arguments to update many Tenants.
+     * @example
+     * // Update many Tenants
+     * const tenant = await prisma.tenant.updateManyAndReturn({
+     *   where: {
+     *     // ... provide filter here
+     *   },
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     * 
+     * // Update zero or more Tenants and only return the `id`
+     * const tenantWithIdOnly = await prisma.tenant.updateManyAndReturn({
+     *   select: { id: true },
+     *   where: {
+     *     // ... provide filter here
+     *   },
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * 
+     */
+    updateManyAndReturn<T extends TenantUpdateManyAndReturnArgs>(args: SelectSubset<T, TenantUpdateManyAndReturnArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$TenantPayload<ExtArgs>, T, "updateManyAndReturn", GlobalOmitOptions>>
+
+    /**
+     * Create or update one Tenant.
+     * @param {TenantUpsertArgs} args - Arguments to update or create a Tenant.
+     * @example
+     * // Update or create a Tenant
+     * const tenant = await prisma.tenant.upsert({
+     *   create: {
+     *     // ... data to create a Tenant
+     *   },
+     *   update: {
+     *     // ... in case it already exists, update
+     *   },
+     *   where: {
+     *     // ... the filter for the Tenant we want to update
+     *   }
+     * })
+     */
+    upsert<T extends TenantUpsertArgs>(args: SelectSubset<T, TenantUpsertArgs<ExtArgs>>): Prisma__TenantClient<$Result.GetResult<Prisma.$TenantPayload<ExtArgs>, T, "upsert", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+
+    /**
+     * Count the number of Tenants.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {TenantCountArgs} args - Arguments to filter Tenants to count.
+     * @example
+     * // Count the number of Tenants
+     * const count = await prisma.tenant.count({
+     *   where: {
+     *     // ... the filter for the Tenants we want to count
+     *   }
+     * })
+    **/
+    count<T extends TenantCountArgs>(
+      args?: Subset<T, TenantCountArgs>,
+    ): Prisma.PrismaPromise<
+      T extends $Utils.Record<'select', any>
+        ? T['select'] extends true
+          ? number
+          : GetScalarType<T['select'], TenantCountAggregateOutputType>
+        : number
+    >
+
+    /**
+     * Allows you to perform aggregations operations on a Tenant.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {TenantAggregateArgs} args - Select which aggregations you would like to apply and on what fields.
+     * @example
+     * // Ordered by age ascending
+     * // Where email contains prisma.io
+     * // Limited to the 10 users
+     * const aggregations = await prisma.user.aggregate({
+     *   _avg: {
+     *     age: true,
+     *   },
+     *   where: {
+     *     email: {
+     *       contains: "prisma.io",
+     *     },
+     *   },
+     *   orderBy: {
+     *     age: "asc",
+     *   },
+     *   take: 10,
+     * })
+    **/
+    aggregate<T extends TenantAggregateArgs>(args: Subset<T, TenantAggregateArgs>): Prisma.PrismaPromise<GetTenantAggregateType<T>>
+
+    /**
+     * Group by Tenant.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {TenantGroupByArgs} args - Group by arguments.
+     * @example
+     * // Group by city, order by createdAt, get count
+     * const result = await prisma.user.groupBy({
+     *   by: ['city', 'createdAt'],
+     *   orderBy: {
+     *     createdAt: true
+     *   },
+     *   _count: {
+     *     _all: true
+     *   },
+     * })
+     * 
+    **/
+    groupBy<
+      T extends TenantGroupByArgs,
+      HasSelectOrTake extends Or<
+        Extends<'skip', Keys<T>>,
+        Extends<'take', Keys<T>>
+      >,
+      OrderByArg extends True extends HasSelectOrTake
+        ? { orderBy: TenantGroupByArgs['orderBy'] }
+        : { orderBy?: TenantGroupByArgs['orderBy'] },
+      OrderFields extends ExcludeUnderscoreKeys<Keys<MaybeTupleToUnion<T['orderBy']>>>,
+      ByFields extends MaybeTupleToUnion<T['by']>,
+      ByValid extends Has<ByFields, OrderFields>,
+      HavingFields extends GetHavingFields<T['having']>,
+      HavingValid extends Has<ByFields, HavingFields>,
+      ByEmpty extends T['by'] extends never[] ? True : False,
+      InputErrors extends ByEmpty extends True
+      ? `Error: "by" must not be empty.`
+      : HavingValid extends False
+      ? {
+          [P in HavingFields]: P extends ByFields
+            ? never
+            : P extends string
+            ? `Error: Field "${P}" used in "having" needs to be provided in "by".`
+            : [
+                Error,
+                'Field ',
+                P,
+                ` in "having" needs to be provided in "by"`,
+              ]
+        }[HavingFields]
+      : 'take' extends Keys<T>
+      ? 'orderBy' extends Keys<T>
+        ? ByValid extends True
+          ? {}
+          : {
+              [P in OrderFields]: P extends ByFields
+                ? never
+                : `Error: Field "${P}" in "orderBy" needs to be provided in "by"`
+            }[OrderFields]
+        : 'Error: If you provide "take", you also need to provide "orderBy"'
+      : 'skip' extends Keys<T>
+      ? 'orderBy' extends Keys<T>
+        ? ByValid extends True
+          ? {}
+          : {
+              [P in OrderFields]: P extends ByFields
+                ? never
+                : `Error: Field "${P}" in "orderBy" needs to be provided in "by"`
+            }[OrderFields]
+        : 'Error: If you provide "skip", you also need to provide "orderBy"'
+      : ByValid extends True
+      ? {}
+      : {
+          [P in OrderFields]: P extends ByFields
+            ? never
+            : `Error: Field "${P}" in "orderBy" needs to be provided in "by"`
+        }[OrderFields]
+    >(args: SubsetIntersection<T, TenantGroupByArgs, OrderByArg> & InputErrors): {} extends InputErrors ? GetTenantGroupByPayload<T> : Prisma.PrismaPromise<InputErrors>
+  /**
+   * Fields of the Tenant model
+   */
+  readonly fields: TenantFieldRefs;
+  }
+
+  /**
+   * The delegate class that acts as a "Promise-like" for Tenant.
+   * Why is this prefixed with `Prisma__`?
+   * Because we want to prevent naming conflicts as mentioned in
+   * https://github.com/prisma/prisma-client-js/issues/707
+   */
+  export interface Prisma__TenantClient<T, Null = never, ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs, GlobalOmitOptions = {}> extends Prisma.PrismaPromise<T> {
+    readonly [Symbol.toStringTag]: "PrismaPromise"
+    projects<T extends Tenant$projectsArgs<ExtArgs> = {}>(args?: Subset<T, Tenant$projectsArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$ProjectPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
+    departments<T extends Tenant$departmentsArgs<ExtArgs> = {}>(args?: Subset<T, Tenant$departmentsArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$DepartmentPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
+    roles<T extends Tenant$rolesArgs<ExtArgs> = {}>(args?: Subset<T, Tenant$rolesArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$RolePayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
+    stakeholders<T extends Tenant$stakeholdersArgs<ExtArgs> = {}>(args?: Subset<T, Tenant$stakeholdersArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$StakeholderPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
+    /**
+     * Attaches callbacks for the resolution and/or rejection of the Promise.
+     * @param onfulfilled The callback to execute when the Promise is resolved.
+     * @param onrejected The callback to execute when the Promise is rejected.
+     * @returns A Promise for the completion of which ever callback is executed.
+     */
+    then<TResult1 = T, TResult2 = never>(onfulfilled?: ((value: T) => TResult1 | PromiseLike<TResult1>) | undefined | null, onrejected?: ((reason: any) => TResult2 | PromiseLike<TResult2>) | undefined | null): $Utils.JsPromise<TResult1 | TResult2>
+    /**
+     * Attaches a callback for only the rejection of the Promise.
+     * @param onrejected The callback to execute when the Promise is rejected.
+     * @returns A Promise for the completion of the callback.
+     */
+    catch<TResult = never>(onrejected?: ((reason: any) => TResult | PromiseLike<TResult>) | undefined | null): $Utils.JsPromise<T | TResult>
+    /**
+     * Attaches a callback that is invoked when the Promise is settled (fulfilled or rejected). The
+     * resolved value cannot be modified from the callback.
+     * @param onfinally The callback to execute when the Promise is settled (fulfilled or rejected).
+     * @returns A Promise for the completion of the callback.
+     */
+    finally(onfinally?: (() => void) | undefined | null): $Utils.JsPromise<T>
+  }
+
+
+
+
+  /**
+   * Fields of the Tenant model
+   */
+  interface TenantFieldRefs {
+    readonly id: FieldRef<"Tenant", 'String'>
+    readonly name: FieldRef<"Tenant", 'String'>
+    readonly subdomain: FieldRef<"Tenant", 'String'>
+    readonly status: FieldRef<"Tenant", 'TenantStatus'>
+    readonly deletedAt: FieldRef<"Tenant", 'DateTime'>
+    readonly createdAt: FieldRef<"Tenant", 'DateTime'>
+    readonly updatedAt: FieldRef<"Tenant", 'DateTime'>
+  }
+    
+
+  // Custom InputTypes
+  /**
+   * Tenant findUnique
+   */
+  export type TenantFindUniqueArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the Tenant
+     */
+    select?: TenantSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the Tenant
+     */
+    omit?: TenantOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: TenantInclude<ExtArgs> | null
+    /**
+     * Filter, which Tenant to fetch.
+     */
+    where: TenantWhereUniqueInput
+  }
+
+  /**
+   * Tenant findUniqueOrThrow
+   */
+  export type TenantFindUniqueOrThrowArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the Tenant
+     */
+    select?: TenantSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the Tenant
+     */
+    omit?: TenantOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: TenantInclude<ExtArgs> | null
+    /**
+     * Filter, which Tenant to fetch.
+     */
+    where: TenantWhereUniqueInput
+  }
+
+  /**
+   * Tenant findFirst
+   */
+  export type TenantFindFirstArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the Tenant
+     */
+    select?: TenantSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the Tenant
+     */
+    omit?: TenantOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: TenantInclude<ExtArgs> | null
+    /**
+     * Filter, which Tenant to fetch.
+     */
+    where?: TenantWhereInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+     * 
+     * Determine the order of Tenants to fetch.
+     */
+    orderBy?: TenantOrderByWithRelationInput | TenantOrderByWithRelationInput[]
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+     * 
+     * Sets the position for searching for Tenants.
+     */
+    cursor?: TenantWhereUniqueInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Take `±n` Tenants from the position of the cursor.
+     */
+    take?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Skip the first `n` Tenants.
+     */
+    skip?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/distinct Distinct Docs}
+     * 
+     * Filter by unique combinations of Tenants.
+     */
+    distinct?: TenantScalarFieldEnum | TenantScalarFieldEnum[]
+  }
+
+  /**
+   * Tenant findFirstOrThrow
+   */
+  export type TenantFindFirstOrThrowArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the Tenant
+     */
+    select?: TenantSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the Tenant
+     */
+    omit?: TenantOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: TenantInclude<ExtArgs> | null
+    /**
+     * Filter, which Tenant to fetch.
+     */
+    where?: TenantWhereInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+     * 
+     * Determine the order of Tenants to fetch.
+     */
+    orderBy?: TenantOrderByWithRelationInput | TenantOrderByWithRelationInput[]
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+     * 
+     * Sets the position for searching for Tenants.
+     */
+    cursor?: TenantWhereUniqueInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Take `±n` Tenants from the position of the cursor.
+     */
+    take?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Skip the first `n` Tenants.
+     */
+    skip?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/distinct Distinct Docs}
+     * 
+     * Filter by unique combinations of Tenants.
+     */
+    distinct?: TenantScalarFieldEnum | TenantScalarFieldEnum[]
+  }
+
+  /**
+   * Tenant findMany
+   */
+  export type TenantFindManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the Tenant
+     */
+    select?: TenantSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the Tenant
+     */
+    omit?: TenantOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: TenantInclude<ExtArgs> | null
+    /**
+     * Filter, which Tenants to fetch.
+     */
+    where?: TenantWhereInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+     * 
+     * Determine the order of Tenants to fetch.
+     */
+    orderBy?: TenantOrderByWithRelationInput | TenantOrderByWithRelationInput[]
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+     * 
+     * Sets the position for listing Tenants.
+     */
+    cursor?: TenantWhereUniqueInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Take `±n` Tenants from the position of the cursor.
+     */
+    take?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Skip the first `n` Tenants.
+     */
+    skip?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/distinct Distinct Docs}
+     * 
+     * Filter by unique combinations of Tenants.
+     */
+    distinct?: TenantScalarFieldEnum | TenantScalarFieldEnum[]
+  }
+
+  /**
+   * Tenant create
+   */
+  export type TenantCreateArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the Tenant
+     */
+    select?: TenantSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the Tenant
+     */
+    omit?: TenantOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: TenantInclude<ExtArgs> | null
+    /**
+     * The data needed to create a Tenant.
+     */
+    data: XOR<TenantCreateInput, TenantUncheckedCreateInput>
+  }
+
+  /**
+   * Tenant createMany
+   */
+  export type TenantCreateManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * The data used to create many Tenants.
+     */
+    data: TenantCreateManyInput | TenantCreateManyInput[]
+    skipDuplicates?: boolean
+  }
+
+  /**
+   * Tenant createManyAndReturn
+   */
+  export type TenantCreateManyAndReturnArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the Tenant
+     */
+    select?: TenantSelectCreateManyAndReturn<ExtArgs> | null
+    /**
+     * Omit specific fields from the Tenant
+     */
+    omit?: TenantOmit<ExtArgs> | null
+    /**
+     * The data used to create many Tenants.
+     */
+    data: TenantCreateManyInput | TenantCreateManyInput[]
+    skipDuplicates?: boolean
+  }
+
+  /**
+   * Tenant update
+   */
+  export type TenantUpdateArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the Tenant
+     */
+    select?: TenantSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the Tenant
+     */
+    omit?: TenantOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: TenantInclude<ExtArgs> | null
+    /**
+     * The data needed to update a Tenant.
+     */
+    data: XOR<TenantUpdateInput, TenantUncheckedUpdateInput>
+    /**
+     * Choose, which Tenant to update.
+     */
+    where: TenantWhereUniqueInput
+  }
+
+  /**
+   * Tenant updateMany
+   */
+  export type TenantUpdateManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * The data used to update Tenants.
+     */
+    data: XOR<TenantUpdateManyMutationInput, TenantUncheckedUpdateManyInput>
+    /**
+     * Filter which Tenants to update
+     */
+    where?: TenantWhereInput
+    /**
+     * Limit how many Tenants to update.
+     */
+    limit?: number
+  }
+
+  /**
+   * Tenant updateManyAndReturn
+   */
+  export type TenantUpdateManyAndReturnArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the Tenant
+     */
+    select?: TenantSelectUpdateManyAndReturn<ExtArgs> | null
+    /**
+     * Omit specific fields from the Tenant
+     */
+    omit?: TenantOmit<ExtArgs> | null
+    /**
+     * The data used to update Tenants.
+     */
+    data: XOR<TenantUpdateManyMutationInput, TenantUncheckedUpdateManyInput>
+    /**
+     * Filter which Tenants to update
+     */
+    where?: TenantWhereInput
+    /**
+     * Limit how many Tenants to update.
+     */
+    limit?: number
+  }
+
+  /**
+   * Tenant upsert
+   */
+  export type TenantUpsertArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the Tenant
+     */
+    select?: TenantSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the Tenant
+     */
+    omit?: TenantOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: TenantInclude<ExtArgs> | null
+    /**
+     * The filter to search for the Tenant to update in case it exists.
+     */
+    where: TenantWhereUniqueInput
+    /**
+     * In case the Tenant found by the `where` argument doesn't exist, create a new Tenant with this data.
+     */
+    create: XOR<TenantCreateInput, TenantUncheckedCreateInput>
+    /**
+     * In case the Tenant was found with the provided `where` argument, update it with this data.
+     */
+    update: XOR<TenantUpdateInput, TenantUncheckedUpdateInput>
+  }
+
+  /**
+   * Tenant delete
+   */
+  export type TenantDeleteArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the Tenant
+     */
+    select?: TenantSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the Tenant
+     */
+    omit?: TenantOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: TenantInclude<ExtArgs> | null
+    /**
+     * Filter which Tenant to delete.
+     */
+    where: TenantWhereUniqueInput
+  }
+
+  /**
+   * Tenant deleteMany
+   */
+  export type TenantDeleteManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Filter which Tenants to delete
+     */
+    where?: TenantWhereInput
+    /**
+     * Limit how many Tenants to delete.
+     */
+    limit?: number
+  }
+
+  /**
+   * Tenant.projects
+   */
+  export type Tenant$projectsArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the Project
+     */
+    select?: ProjectSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the Project
+     */
+    omit?: ProjectOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: ProjectInclude<ExtArgs> | null
+    where?: ProjectWhereInput
+    orderBy?: ProjectOrderByWithRelationInput | ProjectOrderByWithRelationInput[]
+    cursor?: ProjectWhereUniqueInput
+    take?: number
+    skip?: number
+    distinct?: ProjectScalarFieldEnum | ProjectScalarFieldEnum[]
+  }
+
+  /**
+   * Tenant.departments
+   */
+  export type Tenant$departmentsArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the Department
+     */
+    select?: DepartmentSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the Department
+     */
+    omit?: DepartmentOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: DepartmentInclude<ExtArgs> | null
+    where?: DepartmentWhereInput
+    orderBy?: DepartmentOrderByWithRelationInput | DepartmentOrderByWithRelationInput[]
+    cursor?: DepartmentWhereUniqueInput
+    take?: number
+    skip?: number
+    distinct?: DepartmentScalarFieldEnum | DepartmentScalarFieldEnum[]
+  }
+
+  /**
+   * Tenant.roles
+   */
+  export type Tenant$rolesArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the Role
+     */
+    select?: RoleSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the Role
+     */
+    omit?: RoleOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: RoleInclude<ExtArgs> | null
+    where?: RoleWhereInput
+    orderBy?: RoleOrderByWithRelationInput | RoleOrderByWithRelationInput[]
+    cursor?: RoleWhereUniqueInput
+    take?: number
+    skip?: number
+    distinct?: RoleScalarFieldEnum | RoleScalarFieldEnum[]
+  }
+
+  /**
+   * Tenant.stakeholders
+   */
+  export type Tenant$stakeholdersArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the Stakeholder
+     */
+    select?: StakeholderSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the Stakeholder
+     */
+    omit?: StakeholderOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: StakeholderInclude<ExtArgs> | null
+    where?: StakeholderWhereInput
+    orderBy?: StakeholderOrderByWithRelationInput | StakeholderOrderByWithRelationInput[]
+    cursor?: StakeholderWhereUniqueInput
+    take?: number
+    skip?: number
+    distinct?: StakeholderScalarFieldEnum | StakeholderScalarFieldEnum[]
+  }
+
+  /**
+   * Tenant without action
+   */
+  export type TenantDefaultArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the Tenant
+     */
+    select?: TenantSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the Tenant
+     */
+    omit?: TenantOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: TenantInclude<ExtArgs> | null
+  }
+
+
+  /**
+   * Model User
+   */
+
+  export type AggregateUser = {
+    _count: UserCountAggregateOutputType | null
+    _min: UserMinAggregateOutputType | null
+    _max: UserMaxAggregateOutputType | null
+  }
+
+  export type UserMinAggregateOutputType = {
+    id: string | null
+    tenantId: string | null
+    name: string | null
+    email: string | null
+    role: string | null
+  }
+
+  export type UserMaxAggregateOutputType = {
+    id: string | null
+    tenantId: string | null
+    name: string | null
+    email: string | null
+    role: string | null
+  }
+
+  export type UserCountAggregateOutputType = {
+    id: number
+    tenantId: number
+    name: number
+    email: number
+    role: number
+    _all: number
+  }
+
+
+  export type UserMinAggregateInputType = {
+    id?: true
+    tenantId?: true
+    name?: true
+    email?: true
+    role?: true
+  }
+
+  export type UserMaxAggregateInputType = {
+    id?: true
+    tenantId?: true
+    name?: true
+    email?: true
+    role?: true
+  }
+
+  export type UserCountAggregateInputType = {
+    id?: true
+    tenantId?: true
+    name?: true
+    email?: true
+    role?: true
+    _all?: true
+  }
+
+  export type UserAggregateArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Filter which User to aggregate.
+     */
+    where?: UserWhereInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+     * 
+     * Determine the order of Users to fetch.
+     */
+    orderBy?: UserOrderByWithRelationInput | UserOrderByWithRelationInput[]
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+     * 
+     * Sets the start position
+     */
+    cursor?: UserWhereUniqueInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Take `±n` Users from the position of the cursor.
+     */
+    take?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Skip the first `n` Users.
+     */
+    skip?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Count returned Users
+    **/
+    _count?: true | UserCountAggregateInputType
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Select which fields to find the minimum value
+    **/
+    _min?: UserMinAggregateInputType
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Select which fields to find the maximum value
+    **/
+    _max?: UserMaxAggregateInputType
+  }
+
+  export type GetUserAggregateType<T extends UserAggregateArgs> = {
+        [P in keyof T & keyof AggregateUser]: P extends '_count' | 'count'
+      ? T[P] extends true
+        ? number
+        : GetScalarType<T[P], AggregateUser[P]>
+      : GetScalarType<T[P], AggregateUser[P]>
+  }
+
+
+
+
+  export type UserGroupByArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    where?: UserWhereInput
+    orderBy?: UserOrderByWithAggregationInput | UserOrderByWithAggregationInput[]
+    by: UserScalarFieldEnum[] | UserScalarFieldEnum
+    having?: UserScalarWhereWithAggregatesInput
+    take?: number
+    skip?: number
+    _count?: UserCountAggregateInputType | true
+    _min?: UserMinAggregateInputType
+    _max?: UserMaxAggregateInputType
+  }
+
+  export type UserGroupByOutputType = {
+    id: string
+    tenantId: string
+    name: string
+    email: string
+    role: string
+    _count: UserCountAggregateOutputType | null
+    _min: UserMinAggregateOutputType | null
+    _max: UserMaxAggregateOutputType | null
+  }
+
+  type GetUserGroupByPayload<T extends UserGroupByArgs> = Prisma.PrismaPromise<
+    Array<
+      PickEnumerable<UserGroupByOutputType, T['by']> &
+        {
+          [P in ((keyof T) & (keyof UserGroupByOutputType))]: P extends '_count'
+            ? T[P] extends boolean
+              ? number
+              : GetScalarType<T[P], UserGroupByOutputType[P]>
+            : GetScalarType<T[P], UserGroupByOutputType[P]>
+        }
+      >
+    >
+
+
+  export type UserSelect<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetSelect<{
+    id?: boolean
+    tenantId?: boolean
+    name?: boolean
+    email?: boolean
+    role?: boolean
+    projects?: boolean | User$projectsArgs<ExtArgs>
+    departments?: boolean | User$departmentsArgs<ExtArgs>
+    userProjectRoles?: boolean | User$userProjectRolesArgs<ExtArgs>
+    _count?: boolean | UserCountOutputTypeDefaultArgs<ExtArgs>
+  }, ExtArgs["result"]["user"]>
+
+  export type UserSelectCreateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetSelect<{
+    id?: boolean
+    tenantId?: boolean
+    name?: boolean
+    email?: boolean
+    role?: boolean
+  }, ExtArgs["result"]["user"]>
+
+  export type UserSelectUpdateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetSelect<{
+    id?: boolean
+    tenantId?: boolean
+    name?: boolean
+    email?: boolean
+    role?: boolean
+  }, ExtArgs["result"]["user"]>
+
+  export type UserSelectScalar = {
+    id?: boolean
+    tenantId?: boolean
+    name?: boolean
+    email?: boolean
+    role?: boolean
+  }
+
+  export type UserOmit<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetOmit<"id" | "tenantId" | "name" | "email" | "role", ExtArgs["result"]["user"]>
+  export type UserInclude<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    projects?: boolean | User$projectsArgs<ExtArgs>
+    departments?: boolean | User$departmentsArgs<ExtArgs>
+    userProjectRoles?: boolean | User$userProjectRolesArgs<ExtArgs>
+    _count?: boolean | UserCountOutputTypeDefaultArgs<ExtArgs>
+  }
+  export type UserIncludeCreateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {}
+  export type UserIncludeUpdateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {}
+
+  export type $UserPayload<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    name: "User"
+    objects: {
+      projects: Prisma.$UserProjectPayload<ExtArgs>[]
+      departments: Prisma.$UserDepartmentPayload<ExtArgs>[]
+      userProjectRoles: Prisma.$UserProjectRolePayload<ExtArgs>[]
+    }
+    scalars: $Extensions.GetPayloadResult<{
+      id: string
+      tenantId: string
+      name: string
+      email: string
+      role: string
+    }, ExtArgs["result"]["user"]>
+    composites: {}
+  }
+
+  type UserGetPayload<S extends boolean | null | undefined | UserDefaultArgs> = $Result.GetResult<Prisma.$UserPayload, S>
+
+  type UserCountArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> =
+    Omit<UserFindManyArgs, 'select' | 'include' | 'distinct' | 'omit'> & {
+      select?: UserCountAggregateInputType | true
+    }
+
+  export interface UserDelegate<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs, GlobalOmitOptions = {}> {
+    [K: symbol]: { types: Prisma.TypeMap<ExtArgs>['model']['User'], meta: { name: 'User' } }
+    /**
+     * Find zero or one User that matches the filter.
+     * @param {UserFindUniqueArgs} args - Arguments to find a User
+     * @example
+     * // Get one User
+     * const user = await prisma.user.findUnique({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     */
+    findUnique<T extends UserFindUniqueArgs>(args: SelectSubset<T, UserFindUniqueArgs<ExtArgs>>): Prisma__UserClient<$Result.GetResult<Prisma.$UserPayload<ExtArgs>, T, "findUnique", GlobalOmitOptions> | null, null, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Find one User that matches the filter or throw an error with `error.code='P2025'`
+     * if no matches were found.
+     * @param {UserFindUniqueOrThrowArgs} args - Arguments to find a User
+     * @example
+     * // Get one User
+     * const user = await prisma.user.findUniqueOrThrow({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     */
+    findUniqueOrThrow<T extends UserFindUniqueOrThrowArgs>(args: SelectSubset<T, UserFindUniqueOrThrowArgs<ExtArgs>>): Prisma__UserClient<$Result.GetResult<Prisma.$UserPayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Find the first User that matches the filter.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {UserFindFirstArgs} args - Arguments to find a User
+     * @example
+     * // Get one User
+     * const user = await prisma.user.findFirst({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     */
+    findFirst<T extends UserFindFirstArgs>(args?: SelectSubset<T, UserFindFirstArgs<ExtArgs>>): Prisma__UserClient<$Result.GetResult<Prisma.$UserPayload<ExtArgs>, T, "findFirst", GlobalOmitOptions> | null, null, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Find the first User that matches the filter or
+     * throw `PrismaKnownClientError` with `P2025` code if no matches were found.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {UserFindFirstOrThrowArgs} args - Arguments to find a User
+     * @example
+     * // Get one User
+     * const user = await prisma.user.findFirstOrThrow({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     */
+    findFirstOrThrow<T extends UserFindFirstOrThrowArgs>(args?: SelectSubset<T, UserFindFirstOrThrowArgs<ExtArgs>>): Prisma__UserClient<$Result.GetResult<Prisma.$UserPayload<ExtArgs>, T, "findFirstOrThrow", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Find zero or more Users that matches the filter.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {UserFindManyArgs} args - Arguments to filter and select certain fields only.
+     * @example
+     * // Get all Users
+     * const users = await prisma.user.findMany()
+     * 
+     * // Get first 10 Users
+     * const users = await prisma.user.findMany({ take: 10 })
+     * 
+     * // Only select the `id`
+     * const userWithIdOnly = await prisma.user.findMany({ select: { id: true } })
+     * 
+     */
+    findMany<T extends UserFindManyArgs>(args?: SelectSubset<T, UserFindManyArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$UserPayload<ExtArgs>, T, "findMany", GlobalOmitOptions>>
+
+    /**
+     * Create a User.
+     * @param {UserCreateArgs} args - Arguments to create a User.
+     * @example
+     * // Create one User
+     * const User = await prisma.user.create({
+     *   data: {
+     *     // ... data to create a User
+     *   }
+     * })
+     * 
+     */
+    create<T extends UserCreateArgs>(args: SelectSubset<T, UserCreateArgs<ExtArgs>>): Prisma__UserClient<$Result.GetResult<Prisma.$UserPayload<ExtArgs>, T, "create", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Create many Users.
+     * @param {UserCreateManyArgs} args - Arguments to create many Users.
+     * @example
+     * // Create many Users
+     * const user = await prisma.user.createMany({
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     *     
+     */
+    createMany<T extends UserCreateManyArgs>(args?: SelectSubset<T, UserCreateManyArgs<ExtArgs>>): Prisma.PrismaPromise<BatchPayload>
+
+    /**
+     * Create many Users and returns the data saved in the database.
+     * @param {UserCreateManyAndReturnArgs} args - Arguments to create many Users.
+     * @example
+     * // Create many Users
+     * const user = await prisma.user.createManyAndReturn({
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     * 
+     * // Create many Users and only return the `id`
+     * const userWithIdOnly = await prisma.user.createManyAndReturn({
+     *   select: { id: true },
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * 
+     */
+    createManyAndReturn<T extends UserCreateManyAndReturnArgs>(args?: SelectSubset<T, UserCreateManyAndReturnArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$UserPayload<ExtArgs>, T, "createManyAndReturn", GlobalOmitOptions>>
+
+    /**
+     * Delete a User.
+     * @param {UserDeleteArgs} args - Arguments to delete one User.
+     * @example
+     * // Delete one User
+     * const User = await prisma.user.delete({
+     *   where: {
+     *     // ... filter to delete one User
+     *   }
+     * })
+     * 
+     */
+    delete<T extends UserDeleteArgs>(args: SelectSubset<T, UserDeleteArgs<ExtArgs>>): Prisma__UserClient<$Result.GetResult<Prisma.$UserPayload<ExtArgs>, T, "delete", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Update one User.
+     * @param {UserUpdateArgs} args - Arguments to update one User.
+     * @example
+     * // Update one User
+     * const user = await prisma.user.update({
+     *   where: {
+     *     // ... provide filter here
+     *   },
+     *   data: {
+     *     // ... provide data here
+     *   }
+     * })
+     * 
+     */
+    update<T extends UserUpdateArgs>(args: SelectSubset<T, UserUpdateArgs<ExtArgs>>): Prisma__UserClient<$Result.GetResult<Prisma.$UserPayload<ExtArgs>, T, "update", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Delete zero or more Users.
+     * @param {UserDeleteManyArgs} args - Arguments to filter Users to delete.
+     * @example
+     * // Delete a few Users
+     * const { count } = await prisma.user.deleteMany({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     * 
+     */
+    deleteMany<T extends UserDeleteManyArgs>(args?: SelectSubset<T, UserDeleteManyArgs<ExtArgs>>): Prisma.PrismaPromise<BatchPayload>
+
+    /**
+     * Update zero or more Users.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {UserUpdateManyArgs} args - Arguments to update one or more rows.
+     * @example
+     * // Update many Users
+     * const user = await prisma.user.updateMany({
+     *   where: {
+     *     // ... provide filter here
+     *   },
+     *   data: {
+     *     // ... provide data here
+     *   }
+     * })
+     * 
+     */
+    updateMany<T extends UserUpdateManyArgs>(args: SelectSubset<T, UserUpdateManyArgs<ExtArgs>>): Prisma.PrismaPromise<BatchPayload>
+
+    /**
+     * Update zero or more Users and returns the data updated in the database.
+     * @param {UserUpdateManyAndReturnArgs} args - Arguments to update many Users.
+     * @example
+     * // Update many Users
+     * const user = await prisma.user.updateManyAndReturn({
+     *   where: {
+     *     // ... provide filter here
+     *   },
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     * 
+     * // Update zero or more Users and only return the `id`
+     * const userWithIdOnly = await prisma.user.updateManyAndReturn({
+     *   select: { id: true },
+     *   where: {
+     *     // ... provide filter here
+     *   },
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * 
+     */
+    updateManyAndReturn<T extends UserUpdateManyAndReturnArgs>(args: SelectSubset<T, UserUpdateManyAndReturnArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$UserPayload<ExtArgs>, T, "updateManyAndReturn", GlobalOmitOptions>>
+
+    /**
+     * Create or update one User.
+     * @param {UserUpsertArgs} args - Arguments to update or create a User.
+     * @example
+     * // Update or create a User
+     * const user = await prisma.user.upsert({
+     *   create: {
+     *     // ... data to create a User
+     *   },
+     *   update: {
+     *     // ... in case it already exists, update
+     *   },
+     *   where: {
+     *     // ... the filter for the User we want to update
+     *   }
+     * })
+     */
+    upsert<T extends UserUpsertArgs>(args: SelectSubset<T, UserUpsertArgs<ExtArgs>>): Prisma__UserClient<$Result.GetResult<Prisma.$UserPayload<ExtArgs>, T, "upsert", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+
+    /**
+     * Count the number of Users.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {UserCountArgs} args - Arguments to filter Users to count.
+     * @example
+     * // Count the number of Users
+     * const count = await prisma.user.count({
+     *   where: {
+     *     // ... the filter for the Users we want to count
+     *   }
+     * })
+    **/
+    count<T extends UserCountArgs>(
+      args?: Subset<T, UserCountArgs>,
+    ): Prisma.PrismaPromise<
+      T extends $Utils.Record<'select', any>
+        ? T['select'] extends true
+          ? number
+          : GetScalarType<T['select'], UserCountAggregateOutputType>
+        : number
+    >
+
+    /**
+     * Allows you to perform aggregations operations on a User.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {UserAggregateArgs} args - Select which aggregations you would like to apply and on what fields.
+     * @example
+     * // Ordered by age ascending
+     * // Where email contains prisma.io
+     * // Limited to the 10 users
+     * const aggregations = await prisma.user.aggregate({
+     *   _avg: {
+     *     age: true,
+     *   },
+     *   where: {
+     *     email: {
+     *       contains: "prisma.io",
+     *     },
+     *   },
+     *   orderBy: {
+     *     age: "asc",
+     *   },
+     *   take: 10,
+     * })
+    **/
+    aggregate<T extends UserAggregateArgs>(args: Subset<T, UserAggregateArgs>): Prisma.PrismaPromise<GetUserAggregateType<T>>
+
+    /**
+     * Group by User.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {UserGroupByArgs} args - Group by arguments.
+     * @example
+     * // Group by city, order by createdAt, get count
+     * const result = await prisma.user.groupBy({
+     *   by: ['city', 'createdAt'],
+     *   orderBy: {
+     *     createdAt: true
+     *   },
+     *   _count: {
+     *     _all: true
+     *   },
+     * })
+     * 
+    **/
+    groupBy<
+      T extends UserGroupByArgs,
+      HasSelectOrTake extends Or<
+        Extends<'skip', Keys<T>>,
+        Extends<'take', Keys<T>>
+      >,
+      OrderByArg extends True extends HasSelectOrTake
+        ? { orderBy: UserGroupByArgs['orderBy'] }
+        : { orderBy?: UserGroupByArgs['orderBy'] },
+      OrderFields extends ExcludeUnderscoreKeys<Keys<MaybeTupleToUnion<T['orderBy']>>>,
+      ByFields extends MaybeTupleToUnion<T['by']>,
+      ByValid extends Has<ByFields, OrderFields>,
+      HavingFields extends GetHavingFields<T['having']>,
+      HavingValid extends Has<ByFields, HavingFields>,
+      ByEmpty extends T['by'] extends never[] ? True : False,
+      InputErrors extends ByEmpty extends True
+      ? `Error: "by" must not be empty.`
+      : HavingValid extends False
+      ? {
+          [P in HavingFields]: P extends ByFields
+            ? never
+            : P extends string
+            ? `Error: Field "${P}" used in "having" needs to be provided in "by".`
+            : [
+                Error,
+                'Field ',
+                P,
+                ` in "having" needs to be provided in "by"`,
+              ]
+        }[HavingFields]
+      : 'take' extends Keys<T>
+      ? 'orderBy' extends Keys<T>
+        ? ByValid extends True
+          ? {}
+          : {
+              [P in OrderFields]: P extends ByFields
+                ? never
+                : `Error: Field "${P}" in "orderBy" needs to be provided in "by"`
+            }[OrderFields]
+        : 'Error: If you provide "take", you also need to provide "orderBy"'
+      : 'skip' extends Keys<T>
+      ? 'orderBy' extends Keys<T>
+        ? ByValid extends True
+          ? {}
+          : {
+              [P in OrderFields]: P extends ByFields
+                ? never
+                : `Error: Field "${P}" in "orderBy" needs to be provided in "by"`
+            }[OrderFields]
+        : 'Error: If you provide "skip", you also need to provide "orderBy"'
+      : ByValid extends True
+      ? {}
+      : {
+          [P in OrderFields]: P extends ByFields
+            ? never
+            : `Error: Field "${P}" in "orderBy" needs to be provided in "by"`
+        }[OrderFields]
+    >(args: SubsetIntersection<T, UserGroupByArgs, OrderByArg> & InputErrors): {} extends InputErrors ? GetUserGroupByPayload<T> : Prisma.PrismaPromise<InputErrors>
+  /**
+   * Fields of the User model
+   */
+  readonly fields: UserFieldRefs;
+  }
+
+  /**
+   * The delegate class that acts as a "Promise-like" for User.
+   * Why is this prefixed with `Prisma__`?
+   * Because we want to prevent naming conflicts as mentioned in
+   * https://github.com/prisma/prisma-client-js/issues/707
+   */
+  export interface Prisma__UserClient<T, Null = never, ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs, GlobalOmitOptions = {}> extends Prisma.PrismaPromise<T> {
+    readonly [Symbol.toStringTag]: "PrismaPromise"
+    projects<T extends User$projectsArgs<ExtArgs> = {}>(args?: Subset<T, User$projectsArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$UserProjectPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
+    departments<T extends User$departmentsArgs<ExtArgs> = {}>(args?: Subset<T, User$departmentsArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$UserDepartmentPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
+    userProjectRoles<T extends User$userProjectRolesArgs<ExtArgs> = {}>(args?: Subset<T, User$userProjectRolesArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$UserProjectRolePayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
+    /**
+     * Attaches callbacks for the resolution and/or rejection of the Promise.
+     * @param onfulfilled The callback to execute when the Promise is resolved.
+     * @param onrejected The callback to execute when the Promise is rejected.
+     * @returns A Promise for the completion of which ever callback is executed.
+     */
+    then<TResult1 = T, TResult2 = never>(onfulfilled?: ((value: T) => TResult1 | PromiseLike<TResult1>) | undefined | null, onrejected?: ((reason: any) => TResult2 | PromiseLike<TResult2>) | undefined | null): $Utils.JsPromise<TResult1 | TResult2>
+    /**
+     * Attaches a callback for only the rejection of the Promise.
+     * @param onrejected The callback to execute when the Promise is rejected.
+     * @returns A Promise for the completion of the callback.
+     */
+    catch<TResult = never>(onrejected?: ((reason: any) => TResult | PromiseLike<TResult>) | undefined | null): $Utils.JsPromise<T | TResult>
+    /**
+     * Attaches a callback that is invoked when the Promise is settled (fulfilled or rejected). The
+     * resolved value cannot be modified from the callback.
+     * @param onfinally The callback to execute when the Promise is settled (fulfilled or rejected).
+     * @returns A Promise for the completion of the callback.
+     */
+    finally(onfinally?: (() => void) | undefined | null): $Utils.JsPromise<T>
+  }
+
+
+
+
+  /**
+   * Fields of the User model
+   */
+  interface UserFieldRefs {
+    readonly id: FieldRef<"User", 'String'>
+    readonly tenantId: FieldRef<"User", 'String'>
+    readonly name: FieldRef<"User", 'String'>
+    readonly email: FieldRef<"User", 'String'>
+    readonly role: FieldRef<"User", 'String'>
+  }
+    
+
+  // Custom InputTypes
+  /**
+   * User findUnique
+   */
+  export type UserFindUniqueArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the User
+     */
+    select?: UserSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the User
+     */
+    omit?: UserOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: UserInclude<ExtArgs> | null
+    /**
+     * Filter, which User to fetch.
+     */
+    where: UserWhereUniqueInput
+  }
+
+  /**
+   * User findUniqueOrThrow
+   */
+  export type UserFindUniqueOrThrowArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the User
+     */
+    select?: UserSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the User
+     */
+    omit?: UserOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: UserInclude<ExtArgs> | null
+    /**
+     * Filter, which User to fetch.
+     */
+    where: UserWhereUniqueInput
+  }
+
+  /**
+   * User findFirst
+   */
+  export type UserFindFirstArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the User
+     */
+    select?: UserSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the User
+     */
+    omit?: UserOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: UserInclude<ExtArgs> | null
+    /**
+     * Filter, which User to fetch.
+     */
+    where?: UserWhereInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+     * 
+     * Determine the order of Users to fetch.
+     */
+    orderBy?: UserOrderByWithRelationInput | UserOrderByWithRelationInput[]
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+     * 
+     * Sets the position for searching for Users.
+     */
+    cursor?: UserWhereUniqueInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Take `±n` Users from the position of the cursor.
+     */
+    take?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Skip the first `n` Users.
+     */
+    skip?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/distinct Distinct Docs}
+     * 
+     * Filter by unique combinations of Users.
+     */
+    distinct?: UserScalarFieldEnum | UserScalarFieldEnum[]
+  }
+
+  /**
+   * User findFirstOrThrow
+   */
+  export type UserFindFirstOrThrowArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the User
+     */
+    select?: UserSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the User
+     */
+    omit?: UserOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: UserInclude<ExtArgs> | null
+    /**
+     * Filter, which User to fetch.
+     */
+    where?: UserWhereInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+     * 
+     * Determine the order of Users to fetch.
+     */
+    orderBy?: UserOrderByWithRelationInput | UserOrderByWithRelationInput[]
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+     * 
+     * Sets the position for searching for Users.
+     */
+    cursor?: UserWhereUniqueInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Take `±n` Users from the position of the cursor.
+     */
+    take?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Skip the first `n` Users.
+     */
+    skip?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/distinct Distinct Docs}
+     * 
+     * Filter by unique combinations of Users.
+     */
+    distinct?: UserScalarFieldEnum | UserScalarFieldEnum[]
+  }
+
+  /**
+   * User findMany
+   */
+  export type UserFindManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the User
+     */
+    select?: UserSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the User
+     */
+    omit?: UserOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: UserInclude<ExtArgs> | null
+    /**
+     * Filter, which Users to fetch.
+     */
+    where?: UserWhereInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+     * 
+     * Determine the order of Users to fetch.
+     */
+    orderBy?: UserOrderByWithRelationInput | UserOrderByWithRelationInput[]
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+     * 
+     * Sets the position for listing Users.
+     */
+    cursor?: UserWhereUniqueInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Take `±n` Users from the position of the cursor.
+     */
+    take?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Skip the first `n` Users.
+     */
+    skip?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/distinct Distinct Docs}
+     * 
+     * Filter by unique combinations of Users.
+     */
+    distinct?: UserScalarFieldEnum | UserScalarFieldEnum[]
+  }
+
+  /**
+   * User create
+   */
+  export type UserCreateArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the User
+     */
+    select?: UserSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the User
+     */
+    omit?: UserOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: UserInclude<ExtArgs> | null
+    /**
+     * The data needed to create a User.
+     */
+    data: XOR<UserCreateInput, UserUncheckedCreateInput>
+  }
+
+  /**
+   * User createMany
+   */
+  export type UserCreateManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * The data used to create many Users.
+     */
+    data: UserCreateManyInput | UserCreateManyInput[]
+    skipDuplicates?: boolean
+  }
+
+  /**
+   * User createManyAndReturn
+   */
+  export type UserCreateManyAndReturnArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the User
+     */
+    select?: UserSelectCreateManyAndReturn<ExtArgs> | null
+    /**
+     * Omit specific fields from the User
+     */
+    omit?: UserOmit<ExtArgs> | null
+    /**
+     * The data used to create many Users.
+     */
+    data: UserCreateManyInput | UserCreateManyInput[]
+    skipDuplicates?: boolean
+  }
+
+  /**
+   * User update
+   */
+  export type UserUpdateArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the User
+     */
+    select?: UserSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the User
+     */
+    omit?: UserOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: UserInclude<ExtArgs> | null
+    /**
+     * The data needed to update a User.
+     */
+    data: XOR<UserUpdateInput, UserUncheckedUpdateInput>
+    /**
+     * Choose, which User to update.
+     */
+    where: UserWhereUniqueInput
+  }
+
+  /**
+   * User updateMany
+   */
+  export type UserUpdateManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * The data used to update Users.
+     */
+    data: XOR<UserUpdateManyMutationInput, UserUncheckedUpdateManyInput>
+    /**
+     * Filter which Users to update
+     */
+    where?: UserWhereInput
+    /**
+     * Limit how many Users to update.
+     */
+    limit?: number
+  }
+
+  /**
+   * User updateManyAndReturn
+   */
+  export type UserUpdateManyAndReturnArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the User
+     */
+    select?: UserSelectUpdateManyAndReturn<ExtArgs> | null
+    /**
+     * Omit specific fields from the User
+     */
+    omit?: UserOmit<ExtArgs> | null
+    /**
+     * The data used to update Users.
+     */
+    data: XOR<UserUpdateManyMutationInput, UserUncheckedUpdateManyInput>
+    /**
+     * Filter which Users to update
+     */
+    where?: UserWhereInput
+    /**
+     * Limit how many Users to update.
+     */
+    limit?: number
+  }
+
+  /**
+   * User upsert
+   */
+  export type UserUpsertArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the User
+     */
+    select?: UserSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the User
+     */
+    omit?: UserOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: UserInclude<ExtArgs> | null
+    /**
+     * The filter to search for the User to update in case it exists.
+     */
+    where: UserWhereUniqueInput
+    /**
+     * In case the User found by the `where` argument doesn't exist, create a new User with this data.
+     */
+    create: XOR<UserCreateInput, UserUncheckedCreateInput>
+    /**
+     * In case the User was found with the provided `where` argument, update it with this data.
+     */
+    update: XOR<UserUpdateInput, UserUncheckedUpdateInput>
+  }
+
+  /**
+   * User delete
+   */
+  export type UserDeleteArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the User
+     */
+    select?: UserSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the User
+     */
+    omit?: UserOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: UserInclude<ExtArgs> | null
+    /**
+     * Filter which User to delete.
+     */
+    where: UserWhereUniqueInput
+  }
+
+  /**
+   * User deleteMany
+   */
+  export type UserDeleteManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Filter which Users to delete
+     */
+    where?: UserWhereInput
+    /**
+     * Limit how many Users to delete.
+     */
+    limit?: number
+  }
+
+  /**
+   * User.projects
+   */
+  export type User$projectsArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the UserProject
+     */
+    select?: UserProjectSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the UserProject
+     */
+    omit?: UserProjectOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: UserProjectInclude<ExtArgs> | null
+    where?: UserProjectWhereInput
+    orderBy?: UserProjectOrderByWithRelationInput | UserProjectOrderByWithRelationInput[]
+    cursor?: UserProjectWhereUniqueInput
+    take?: number
+    skip?: number
+    distinct?: UserProjectScalarFieldEnum | UserProjectScalarFieldEnum[]
+  }
+
+  /**
+   * User.departments
+   */
+  export type User$departmentsArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the UserDepartment
+     */
+    select?: UserDepartmentSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the UserDepartment
+     */
+    omit?: UserDepartmentOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: UserDepartmentInclude<ExtArgs> | null
+    where?: UserDepartmentWhereInput
+    orderBy?: UserDepartmentOrderByWithRelationInput | UserDepartmentOrderByWithRelationInput[]
+    cursor?: UserDepartmentWhereUniqueInput
+    take?: number
+    skip?: number
+    distinct?: UserDepartmentScalarFieldEnum | UserDepartmentScalarFieldEnum[]
+  }
+
+  /**
+   * User.userProjectRoles
+   */
+  export type User$userProjectRolesArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the UserProjectRole
+     */
+    select?: UserProjectRoleSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the UserProjectRole
+     */
+    omit?: UserProjectRoleOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: UserProjectRoleInclude<ExtArgs> | null
+    where?: UserProjectRoleWhereInput
+    orderBy?: UserProjectRoleOrderByWithRelationInput | UserProjectRoleOrderByWithRelationInput[]
+    cursor?: UserProjectRoleWhereUniqueInput
+    take?: number
+    skip?: number
+    distinct?: UserProjectRoleScalarFieldEnum | UserProjectRoleScalarFieldEnum[]
+  }
+
+  /**
+   * User without action
+   */
+  export type UserDefaultArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the User
+     */
+    select?: UserSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the User
+     */
+    omit?: UserOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: UserInclude<ExtArgs> | null
+  }
+
+
+  /**
+   * Model Project
+   */
+
+  export type AggregateProject = {
+    _count: ProjectCountAggregateOutputType | null
+    _avg: ProjectAvgAggregateOutputType | null
+    _sum: ProjectSumAggregateOutputType | null
+    _min: ProjectMinAggregateOutputType | null
+    _max: ProjectMaxAggregateOutputType | null
+  }
+
+  export type ProjectAvgAggregateOutputType = {
+    ano: number | null
+  }
+
+  export type ProjectSumAggregateOutputType = {
+    ano: number | null
+  }
+
+  export type ProjectMinAggregateOutputType = {
+    id: string | null
+    tenantId: string | null
+    name: string | null
+    description: string | null
+    logoUrl: string | null
+    slogan: string | null
+    location: string | null
+    startDate: Date | null
+    endDate: Date | null
+    justificativa: string | null
+    objetivos: string | null
+    metodologia: string | null
+    descricaoProduto: string | null
+    premissas: string | null
+    restricoes: string | null
+    limitesAutoridade: string | null
+    semestre: string | null
+    ano: number | null
+    status: $Enums.ProjectStatus | null
+    deletedAt: Date | null
+    createdAt: Date | null
+    updatedAt: Date | null
+  }
+
+  export type ProjectMaxAggregateOutputType = {
+    id: string | null
+    tenantId: string | null
+    name: string | null
+    description: string | null
+    logoUrl: string | null
+    slogan: string | null
+    location: string | null
+    startDate: Date | null
+    endDate: Date | null
+    justificativa: string | null
+    objetivos: string | null
+    metodologia: string | null
+    descricaoProduto: string | null
+    premissas: string | null
+    restricoes: string | null
+    limitesAutoridade: string | null
+    semestre: string | null
+    ano: number | null
+    status: $Enums.ProjectStatus | null
+    deletedAt: Date | null
+    createdAt: Date | null
+    updatedAt: Date | null
+  }
+
+  export type ProjectCountAggregateOutputType = {
+    id: number
+    tenantId: number
+    name: number
+    description: number
+    logoUrl: number
+    slogan: number
+    location: number
+    startDate: number
+    endDate: number
+    justificativa: number
+    objetivos: number
+    metodologia: number
+    descricaoProduto: number
+    premissas: number
+    restricoes: number
+    limitesAutoridade: number
+    semestre: number
+    ano: number
+    departamentos: number
+    status: number
+    deletedAt: number
+    createdAt: number
+    updatedAt: number
+    _all: number
+  }
+
+
+  export type ProjectAvgAggregateInputType = {
+    ano?: true
+  }
+
+  export type ProjectSumAggregateInputType = {
+    ano?: true
+  }
+
+  export type ProjectMinAggregateInputType = {
+    id?: true
+    tenantId?: true
+    name?: true
+    description?: true
+    logoUrl?: true
+    slogan?: true
+    location?: true
+    startDate?: true
+    endDate?: true
+    justificativa?: true
+    objetivos?: true
+    metodologia?: true
+    descricaoProduto?: true
+    premissas?: true
+    restricoes?: true
+    limitesAutoridade?: true
+    semestre?: true
+    ano?: true
+    status?: true
+    deletedAt?: true
+    createdAt?: true
+    updatedAt?: true
+  }
+
+  export type ProjectMaxAggregateInputType = {
+    id?: true
+    tenantId?: true
+    name?: true
+    description?: true
+    logoUrl?: true
+    slogan?: true
+    location?: true
+    startDate?: true
+    endDate?: true
+    justificativa?: true
+    objetivos?: true
+    metodologia?: true
+    descricaoProduto?: true
+    premissas?: true
+    restricoes?: true
+    limitesAutoridade?: true
+    semestre?: true
+    ano?: true
+    status?: true
+    deletedAt?: true
+    createdAt?: true
+    updatedAt?: true
+  }
+
+  export type ProjectCountAggregateInputType = {
+    id?: true
+    tenantId?: true
+    name?: true
+    description?: true
+    logoUrl?: true
+    slogan?: true
+    location?: true
+    startDate?: true
+    endDate?: true
+    justificativa?: true
+    objetivos?: true
+    metodologia?: true
+    descricaoProduto?: true
+    premissas?: true
+    restricoes?: true
+    limitesAutoridade?: true
+    semestre?: true
+    ano?: true
+    departamentos?: true
+    status?: true
+    deletedAt?: true
+    createdAt?: true
+    updatedAt?: true
+    _all?: true
+  }
+
+  export type ProjectAggregateArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Filter which Project to aggregate.
+     */
+    where?: ProjectWhereInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+     * 
+     * Determine the order of Projects to fetch.
+     */
+    orderBy?: ProjectOrderByWithRelationInput | ProjectOrderByWithRelationInput[]
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+     * 
+     * Sets the start position
+     */
+    cursor?: ProjectWhereUniqueInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Take `±n` Projects from the position of the cursor.
+     */
+    take?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Skip the first `n` Projects.
+     */
+    skip?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Count returned Projects
+    **/
+    _count?: true | ProjectCountAggregateInputType
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Select which fields to average
+    **/
+    _avg?: ProjectAvgAggregateInputType
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Select which fields to sum
+    **/
+    _sum?: ProjectSumAggregateInputType
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Select which fields to find the minimum value
+    **/
+    _min?: ProjectMinAggregateInputType
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Select which fields to find the maximum value
+    **/
+    _max?: ProjectMaxAggregateInputType
+  }
+
+  export type GetProjectAggregateType<T extends ProjectAggregateArgs> = {
+        [P in keyof T & keyof AggregateProject]: P extends '_count' | 'count'
+      ? T[P] extends true
+        ? number
+        : GetScalarType<T[P], AggregateProject[P]>
+      : GetScalarType<T[P], AggregateProject[P]>
+  }
+
+
+
+
+  export type ProjectGroupByArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    where?: ProjectWhereInput
+    orderBy?: ProjectOrderByWithAggregationInput | ProjectOrderByWithAggregationInput[]
+    by: ProjectScalarFieldEnum[] | ProjectScalarFieldEnum
+    having?: ProjectScalarWhereWithAggregatesInput
+    take?: number
+    skip?: number
+    _count?: ProjectCountAggregateInputType | true
+    _avg?: ProjectAvgAggregateInputType
+    _sum?: ProjectSumAggregateInputType
+    _min?: ProjectMinAggregateInputType
+    _max?: ProjectMaxAggregateInputType
+  }
+
+  export type ProjectGroupByOutputType = {
+    id: string
+    tenantId: string
+    name: string
+    description: string | null
+    logoUrl: string | null
+    slogan: string | null
+    location: string | null
+    startDate: Date | null
+    endDate: Date | null
+    justificativa: string | null
+    objetivos: string | null
+    metodologia: string | null
+    descricaoProduto: string | null
+    premissas: string | null
+    restricoes: string | null
+    limitesAutoridade: string | null
+    semestre: string | null
+    ano: number | null
+    departamentos: string[]
+    status: $Enums.ProjectStatus
+    deletedAt: Date | null
+    createdAt: Date
+    updatedAt: Date
+    _count: ProjectCountAggregateOutputType | null
+    _avg: ProjectAvgAggregateOutputType | null
+    _sum: ProjectSumAggregateOutputType | null
+    _min: ProjectMinAggregateOutputType | null
+    _max: ProjectMaxAggregateOutputType | null
+  }
+
+  type GetProjectGroupByPayload<T extends ProjectGroupByArgs> = Prisma.PrismaPromise<
+    Array<
+      PickEnumerable<ProjectGroupByOutputType, T['by']> &
+        {
+          [P in ((keyof T) & (keyof ProjectGroupByOutputType))]: P extends '_count'
+            ? T[P] extends boolean
+              ? number
+              : GetScalarType<T[P], ProjectGroupByOutputType[P]>
+            : GetScalarType<T[P], ProjectGroupByOutputType[P]>
+        }
+      >
+    >
+
+
+  export type ProjectSelect<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetSelect<{
+    id?: boolean
+    tenantId?: boolean
+    name?: boolean
+    description?: boolean
+    logoUrl?: boolean
+    slogan?: boolean
+    location?: boolean
+    startDate?: boolean
+    endDate?: boolean
+    justificativa?: boolean
+    objetivos?: boolean
+    metodologia?: boolean
+    descricaoProduto?: boolean
+    premissas?: boolean
+    restricoes?: boolean
+    limitesAutoridade?: boolean
+    semestre?: boolean
+    ano?: boolean
+    departamentos?: boolean
+    status?: boolean
+    deletedAt?: boolean
+    createdAt?: boolean
+    updatedAt?: boolean
+    tenant?: boolean | TenantDefaultArgs<ExtArgs>
+    members?: boolean | Project$membersArgs<ExtArgs>
+    usuariosRole?: boolean | Project$usuariosRoleArgs<ExtArgs>
+    macroFases?: boolean | Project$macroFasesArgs<ExtArgs>
+    stakeholders?: boolean | Project$stakeholdersArgs<ExtArgs>
+    _count?: boolean | ProjectCountOutputTypeDefaultArgs<ExtArgs>
+  }, ExtArgs["result"]["project"]>
+
+  export type ProjectSelectCreateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetSelect<{
+    id?: boolean
+    tenantId?: boolean
+    name?: boolean
+    description?: boolean
+    logoUrl?: boolean
+    slogan?: boolean
+    location?: boolean
+    startDate?: boolean
+    endDate?: boolean
+    justificativa?: boolean
+    objetivos?: boolean
+    metodologia?: boolean
+    descricaoProduto?: boolean
+    premissas?: boolean
+    restricoes?: boolean
+    limitesAutoridade?: boolean
+    semestre?: boolean
+    ano?: boolean
+    departamentos?: boolean
+    status?: boolean
+    deletedAt?: boolean
+    createdAt?: boolean
+    updatedAt?: boolean
+    tenant?: boolean | TenantDefaultArgs<ExtArgs>
+  }, ExtArgs["result"]["project"]>
+
+  export type ProjectSelectUpdateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetSelect<{
+    id?: boolean
+    tenantId?: boolean
+    name?: boolean
+    description?: boolean
+    logoUrl?: boolean
+    slogan?: boolean
+    location?: boolean
+    startDate?: boolean
+    endDate?: boolean
+    justificativa?: boolean
+    objetivos?: boolean
+    metodologia?: boolean
+    descricaoProduto?: boolean
+    premissas?: boolean
+    restricoes?: boolean
+    limitesAutoridade?: boolean
+    semestre?: boolean
+    ano?: boolean
+    departamentos?: boolean
+    status?: boolean
+    deletedAt?: boolean
+    createdAt?: boolean
+    updatedAt?: boolean
+    tenant?: boolean | TenantDefaultArgs<ExtArgs>
+  }, ExtArgs["result"]["project"]>
+
+  export type ProjectSelectScalar = {
+    id?: boolean
+    tenantId?: boolean
+    name?: boolean
+    description?: boolean
+    logoUrl?: boolean
+    slogan?: boolean
+    location?: boolean
+    startDate?: boolean
+    endDate?: boolean
+    justificativa?: boolean
+    objetivos?: boolean
+    metodologia?: boolean
+    descricaoProduto?: boolean
+    premissas?: boolean
+    restricoes?: boolean
+    limitesAutoridade?: boolean
+    semestre?: boolean
+    ano?: boolean
+    departamentos?: boolean
+    status?: boolean
+    deletedAt?: boolean
+    createdAt?: boolean
+    updatedAt?: boolean
+  }
+
+  export type ProjectOmit<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetOmit<"id" | "tenantId" | "name" | "description" | "logoUrl" | "slogan" | "location" | "startDate" | "endDate" | "justificativa" | "objetivos" | "metodologia" | "descricaoProduto" | "premissas" | "restricoes" | "limitesAutoridade" | "semestre" | "ano" | "departamentos" | "status" | "deletedAt" | "createdAt" | "updatedAt", ExtArgs["result"]["project"]>
+  export type ProjectInclude<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    tenant?: boolean | TenantDefaultArgs<ExtArgs>
+    members?: boolean | Project$membersArgs<ExtArgs>
+    usuariosRole?: boolean | Project$usuariosRoleArgs<ExtArgs>
+    macroFases?: boolean | Project$macroFasesArgs<ExtArgs>
+    stakeholders?: boolean | Project$stakeholdersArgs<ExtArgs>
+    _count?: boolean | ProjectCountOutputTypeDefaultArgs<ExtArgs>
+  }
+  export type ProjectIncludeCreateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    tenant?: boolean | TenantDefaultArgs<ExtArgs>
+  }
+  export type ProjectIncludeUpdateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    tenant?: boolean | TenantDefaultArgs<ExtArgs>
+  }
+
+  export type $ProjectPayload<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    name: "Project"
+    objects: {
+      tenant: Prisma.$TenantPayload<ExtArgs>
+      members: Prisma.$UserProjectPayload<ExtArgs>[]
+      usuariosRole: Prisma.$UserProjectRolePayload<ExtArgs>[]
+      macroFases: Prisma.$ProjectMacroFasePayload<ExtArgs>[]
+      stakeholders: Prisma.$ProjectStakeholderPayload<ExtArgs>[]
+    }
+    scalars: $Extensions.GetPayloadResult<{
+      id: string
+      tenantId: string
+      name: string
+      description: string | null
+      logoUrl: string | null
+      slogan: string | null
+      location: string | null
+      startDate: Date | null
+      endDate: Date | null
+      justificativa: string | null
+      objetivos: string | null
+      metodologia: string | null
+      descricaoProduto: string | null
+      premissas: string | null
+      restricoes: string | null
+      limitesAutoridade: string | null
+      semestre: string | null
+      ano: number | null
+      departamentos: string[]
+      status: $Enums.ProjectStatus
+      deletedAt: Date | null
+      createdAt: Date
+      updatedAt: Date
+    }, ExtArgs["result"]["project"]>
+    composites: {}
+  }
+
+  type ProjectGetPayload<S extends boolean | null | undefined | ProjectDefaultArgs> = $Result.GetResult<Prisma.$ProjectPayload, S>
+
+  type ProjectCountArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> =
+    Omit<ProjectFindManyArgs, 'select' | 'include' | 'distinct' | 'omit'> & {
+      select?: ProjectCountAggregateInputType | true
+    }
+
+  export interface ProjectDelegate<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs, GlobalOmitOptions = {}> {
+    [K: symbol]: { types: Prisma.TypeMap<ExtArgs>['model']['Project'], meta: { name: 'Project' } }
+    /**
+     * Find zero or one Project that matches the filter.
+     * @param {ProjectFindUniqueArgs} args - Arguments to find a Project
+     * @example
+     * // Get one Project
+     * const project = await prisma.project.findUnique({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     */
+    findUnique<T extends ProjectFindUniqueArgs>(args: SelectSubset<T, ProjectFindUniqueArgs<ExtArgs>>): Prisma__ProjectClient<$Result.GetResult<Prisma.$ProjectPayload<ExtArgs>, T, "findUnique", GlobalOmitOptions> | null, null, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Find one Project that matches the filter or throw an error with `error.code='P2025'`
+     * if no matches were found.
+     * @param {ProjectFindUniqueOrThrowArgs} args - Arguments to find a Project
+     * @example
+     * // Get one Project
+     * const project = await prisma.project.findUniqueOrThrow({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     */
+    findUniqueOrThrow<T extends ProjectFindUniqueOrThrowArgs>(args: SelectSubset<T, ProjectFindUniqueOrThrowArgs<ExtArgs>>): Prisma__ProjectClient<$Result.GetResult<Prisma.$ProjectPayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Find the first Project that matches the filter.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {ProjectFindFirstArgs} args - Arguments to find a Project
+     * @example
+     * // Get one Project
+     * const project = await prisma.project.findFirst({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     */
+    findFirst<T extends ProjectFindFirstArgs>(args?: SelectSubset<T, ProjectFindFirstArgs<ExtArgs>>): Prisma__ProjectClient<$Result.GetResult<Prisma.$ProjectPayload<ExtArgs>, T, "findFirst", GlobalOmitOptions> | null, null, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Find the first Project that matches the filter or
+     * throw `PrismaKnownClientError` with `P2025` code if no matches were found.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {ProjectFindFirstOrThrowArgs} args - Arguments to find a Project
+     * @example
+     * // Get one Project
+     * const project = await prisma.project.findFirstOrThrow({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     */
+    findFirstOrThrow<T extends ProjectFindFirstOrThrowArgs>(args?: SelectSubset<T, ProjectFindFirstOrThrowArgs<ExtArgs>>): Prisma__ProjectClient<$Result.GetResult<Prisma.$ProjectPayload<ExtArgs>, T, "findFirstOrThrow", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Find zero or more Projects that matches the filter.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {ProjectFindManyArgs} args - Arguments to filter and select certain fields only.
+     * @example
+     * // Get all Projects
+     * const projects = await prisma.project.findMany()
+     * 
+     * // Get first 10 Projects
+     * const projects = await prisma.project.findMany({ take: 10 })
+     * 
+     * // Only select the `id`
+     * const projectWithIdOnly = await prisma.project.findMany({ select: { id: true } })
+     * 
+     */
+    findMany<T extends ProjectFindManyArgs>(args?: SelectSubset<T, ProjectFindManyArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$ProjectPayload<ExtArgs>, T, "findMany", GlobalOmitOptions>>
+
+    /**
+     * Create a Project.
+     * @param {ProjectCreateArgs} args - Arguments to create a Project.
+     * @example
+     * // Create one Project
+     * const Project = await prisma.project.create({
+     *   data: {
+     *     // ... data to create a Project
+     *   }
+     * })
+     * 
+     */
+    create<T extends ProjectCreateArgs>(args: SelectSubset<T, ProjectCreateArgs<ExtArgs>>): Prisma__ProjectClient<$Result.GetResult<Prisma.$ProjectPayload<ExtArgs>, T, "create", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Create many Projects.
+     * @param {ProjectCreateManyArgs} args - Arguments to create many Projects.
+     * @example
+     * // Create many Projects
+     * const project = await prisma.project.createMany({
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     *     
+     */
+    createMany<T extends ProjectCreateManyArgs>(args?: SelectSubset<T, ProjectCreateManyArgs<ExtArgs>>): Prisma.PrismaPromise<BatchPayload>
+
+    /**
+     * Create many Projects and returns the data saved in the database.
+     * @param {ProjectCreateManyAndReturnArgs} args - Arguments to create many Projects.
+     * @example
+     * // Create many Projects
+     * const project = await prisma.project.createManyAndReturn({
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     * 
+     * // Create many Projects and only return the `id`
+     * const projectWithIdOnly = await prisma.project.createManyAndReturn({
+     *   select: { id: true },
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * 
+     */
+    createManyAndReturn<T extends ProjectCreateManyAndReturnArgs>(args?: SelectSubset<T, ProjectCreateManyAndReturnArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$ProjectPayload<ExtArgs>, T, "createManyAndReturn", GlobalOmitOptions>>
+
+    /**
+     * Delete a Project.
+     * @param {ProjectDeleteArgs} args - Arguments to delete one Project.
+     * @example
+     * // Delete one Project
+     * const Project = await prisma.project.delete({
+     *   where: {
+     *     // ... filter to delete one Project
+     *   }
+     * })
+     * 
+     */
+    delete<T extends ProjectDeleteArgs>(args: SelectSubset<T, ProjectDeleteArgs<ExtArgs>>): Prisma__ProjectClient<$Result.GetResult<Prisma.$ProjectPayload<ExtArgs>, T, "delete", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Update one Project.
+     * @param {ProjectUpdateArgs} args - Arguments to update one Project.
+     * @example
+     * // Update one Project
+     * const project = await prisma.project.update({
+     *   where: {
+     *     // ... provide filter here
+     *   },
+     *   data: {
+     *     // ... provide data here
+     *   }
+     * })
+     * 
+     */
+    update<T extends ProjectUpdateArgs>(args: SelectSubset<T, ProjectUpdateArgs<ExtArgs>>): Prisma__ProjectClient<$Result.GetResult<Prisma.$ProjectPayload<ExtArgs>, T, "update", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Delete zero or more Projects.
+     * @param {ProjectDeleteManyArgs} args - Arguments to filter Projects to delete.
+     * @example
+     * // Delete a few Projects
+     * const { count } = await prisma.project.deleteMany({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     * 
+     */
+    deleteMany<T extends ProjectDeleteManyArgs>(args?: SelectSubset<T, ProjectDeleteManyArgs<ExtArgs>>): Prisma.PrismaPromise<BatchPayload>
+
+    /**
+     * Update zero or more Projects.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {ProjectUpdateManyArgs} args - Arguments to update one or more rows.
+     * @example
+     * // Update many Projects
+     * const project = await prisma.project.updateMany({
+     *   where: {
+     *     // ... provide filter here
+     *   },
+     *   data: {
+     *     // ... provide data here
+     *   }
+     * })
+     * 
+     */
+    updateMany<T extends ProjectUpdateManyArgs>(args: SelectSubset<T, ProjectUpdateManyArgs<ExtArgs>>): Prisma.PrismaPromise<BatchPayload>
+
+    /**
+     * Update zero or more Projects and returns the data updated in the database.
+     * @param {ProjectUpdateManyAndReturnArgs} args - Arguments to update many Projects.
+     * @example
+     * // Update many Projects
+     * const project = await prisma.project.updateManyAndReturn({
+     *   where: {
+     *     // ... provide filter here
+     *   },
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     * 
+     * // Update zero or more Projects and only return the `id`
+     * const projectWithIdOnly = await prisma.project.updateManyAndReturn({
+     *   select: { id: true },
+     *   where: {
+     *     // ... provide filter here
+     *   },
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * 
+     */
+    updateManyAndReturn<T extends ProjectUpdateManyAndReturnArgs>(args: SelectSubset<T, ProjectUpdateManyAndReturnArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$ProjectPayload<ExtArgs>, T, "updateManyAndReturn", GlobalOmitOptions>>
+
+    /**
+     * Create or update one Project.
+     * @param {ProjectUpsertArgs} args - Arguments to update or create a Project.
+     * @example
+     * // Update or create a Project
+     * const project = await prisma.project.upsert({
+     *   create: {
+     *     // ... data to create a Project
+     *   },
+     *   update: {
+     *     // ... in case it already exists, update
+     *   },
+     *   where: {
+     *     // ... the filter for the Project we want to update
+     *   }
+     * })
+     */
+    upsert<T extends ProjectUpsertArgs>(args: SelectSubset<T, ProjectUpsertArgs<ExtArgs>>): Prisma__ProjectClient<$Result.GetResult<Prisma.$ProjectPayload<ExtArgs>, T, "upsert", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+
+    /**
+     * Count the number of Projects.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {ProjectCountArgs} args - Arguments to filter Projects to count.
+     * @example
+     * // Count the number of Projects
+     * const count = await prisma.project.count({
+     *   where: {
+     *     // ... the filter for the Projects we want to count
+     *   }
+     * })
+    **/
+    count<T extends ProjectCountArgs>(
+      args?: Subset<T, ProjectCountArgs>,
+    ): Prisma.PrismaPromise<
+      T extends $Utils.Record<'select', any>
+        ? T['select'] extends true
+          ? number
+          : GetScalarType<T['select'], ProjectCountAggregateOutputType>
+        : number
+    >
+
+    /**
+     * Allows you to perform aggregations operations on a Project.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {ProjectAggregateArgs} args - Select which aggregations you would like to apply and on what fields.
+     * @example
+     * // Ordered by age ascending
+     * // Where email contains prisma.io
+     * // Limited to the 10 users
+     * const aggregations = await prisma.user.aggregate({
+     *   _avg: {
+     *     age: true,
+     *   },
+     *   where: {
+     *     email: {
+     *       contains: "prisma.io",
+     *     },
+     *   },
+     *   orderBy: {
+     *     age: "asc",
+     *   },
+     *   take: 10,
+     * })
+    **/
+    aggregate<T extends ProjectAggregateArgs>(args: Subset<T, ProjectAggregateArgs>): Prisma.PrismaPromise<GetProjectAggregateType<T>>
+
+    /**
+     * Group by Project.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {ProjectGroupByArgs} args - Group by arguments.
+     * @example
+     * // Group by city, order by createdAt, get count
+     * const result = await prisma.user.groupBy({
+     *   by: ['city', 'createdAt'],
+     *   orderBy: {
+     *     createdAt: true
+     *   },
+     *   _count: {
+     *     _all: true
+     *   },
+     * })
+     * 
+    **/
+    groupBy<
+      T extends ProjectGroupByArgs,
+      HasSelectOrTake extends Or<
+        Extends<'skip', Keys<T>>,
+        Extends<'take', Keys<T>>
+      >,
+      OrderByArg extends True extends HasSelectOrTake
+        ? { orderBy: ProjectGroupByArgs['orderBy'] }
+        : { orderBy?: ProjectGroupByArgs['orderBy'] },
+      OrderFields extends ExcludeUnderscoreKeys<Keys<MaybeTupleToUnion<T['orderBy']>>>,
+      ByFields extends MaybeTupleToUnion<T['by']>,
+      ByValid extends Has<ByFields, OrderFields>,
+      HavingFields extends GetHavingFields<T['having']>,
+      HavingValid extends Has<ByFields, HavingFields>,
+      ByEmpty extends T['by'] extends never[] ? True : False,
+      InputErrors extends ByEmpty extends True
+      ? `Error: "by" must not be empty.`
+      : HavingValid extends False
+      ? {
+          [P in HavingFields]: P extends ByFields
+            ? never
+            : P extends string
+            ? `Error: Field "${P}" used in "having" needs to be provided in "by".`
+            : [
+                Error,
+                'Field ',
+                P,
+                ` in "having" needs to be provided in "by"`,
+              ]
+        }[HavingFields]
+      : 'take' extends Keys<T>
+      ? 'orderBy' extends Keys<T>
+        ? ByValid extends True
+          ? {}
+          : {
+              [P in OrderFields]: P extends ByFields
+                ? never
+                : `Error: Field "${P}" in "orderBy" needs to be provided in "by"`
+            }[OrderFields]
+        : 'Error: If you provide "take", you also need to provide "orderBy"'
+      : 'skip' extends Keys<T>
+      ? 'orderBy' extends Keys<T>
+        ? ByValid extends True
+          ? {}
+          : {
+              [P in OrderFields]: P extends ByFields
+                ? never
+                : `Error: Field "${P}" in "orderBy" needs to be provided in "by"`
+            }[OrderFields]
+        : 'Error: If you provide "skip", you also need to provide "orderBy"'
+      : ByValid extends True
+      ? {}
+      : {
+          [P in OrderFields]: P extends ByFields
+            ? never
+            : `Error: Field "${P}" in "orderBy" needs to be provided in "by"`
+        }[OrderFields]
+    >(args: SubsetIntersection<T, ProjectGroupByArgs, OrderByArg> & InputErrors): {} extends InputErrors ? GetProjectGroupByPayload<T> : Prisma.PrismaPromise<InputErrors>
+  /**
+   * Fields of the Project model
+   */
+  readonly fields: ProjectFieldRefs;
+  }
+
+  /**
+   * The delegate class that acts as a "Promise-like" for Project.
+   * Why is this prefixed with `Prisma__`?
+   * Because we want to prevent naming conflicts as mentioned in
+   * https://github.com/prisma/prisma-client-js/issues/707
+   */
+  export interface Prisma__ProjectClient<T, Null = never, ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs, GlobalOmitOptions = {}> extends Prisma.PrismaPromise<T> {
+    readonly [Symbol.toStringTag]: "PrismaPromise"
+    tenant<T extends TenantDefaultArgs<ExtArgs> = {}>(args?: Subset<T, TenantDefaultArgs<ExtArgs>>): Prisma__TenantClient<$Result.GetResult<Prisma.$TenantPayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions> | Null, Null, ExtArgs, GlobalOmitOptions>
+    members<T extends Project$membersArgs<ExtArgs> = {}>(args?: Subset<T, Project$membersArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$UserProjectPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
+    usuariosRole<T extends Project$usuariosRoleArgs<ExtArgs> = {}>(args?: Subset<T, Project$usuariosRoleArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$UserProjectRolePayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
+    macroFases<T extends Project$macroFasesArgs<ExtArgs> = {}>(args?: Subset<T, Project$macroFasesArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$ProjectMacroFasePayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
+    stakeholders<T extends Project$stakeholdersArgs<ExtArgs> = {}>(args?: Subset<T, Project$stakeholdersArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$ProjectStakeholderPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
+    /**
+     * Attaches callbacks for the resolution and/or rejection of the Promise.
+     * @param onfulfilled The callback to execute when the Promise is resolved.
+     * @param onrejected The callback to execute when the Promise is rejected.
+     * @returns A Promise for the completion of which ever callback is executed.
+     */
+    then<TResult1 = T, TResult2 = never>(onfulfilled?: ((value: T) => TResult1 | PromiseLike<TResult1>) | undefined | null, onrejected?: ((reason: any) => TResult2 | PromiseLike<TResult2>) | undefined | null): $Utils.JsPromise<TResult1 | TResult2>
+    /**
+     * Attaches a callback for only the rejection of the Promise.
+     * @param onrejected The callback to execute when the Promise is rejected.
+     * @returns A Promise for the completion of the callback.
+     */
+    catch<TResult = never>(onrejected?: ((reason: any) => TResult | PromiseLike<TResult>) | undefined | null): $Utils.JsPromise<T | TResult>
+    /**
+     * Attaches a callback that is invoked when the Promise is settled (fulfilled or rejected). The
+     * resolved value cannot be modified from the callback.
+     * @param onfinally The callback to execute when the Promise is settled (fulfilled or rejected).
+     * @returns A Promise for the completion of the callback.
+     */
+    finally(onfinally?: (() => void) | undefined | null): $Utils.JsPromise<T>
+  }
+
+
+
+
+  /**
+   * Fields of the Project model
+   */
+  interface ProjectFieldRefs {
+    readonly id: FieldRef<"Project", 'String'>
+    readonly tenantId: FieldRef<"Project", 'String'>
+    readonly name: FieldRef<"Project", 'String'>
+    readonly description: FieldRef<"Project", 'String'>
+    readonly logoUrl: FieldRef<"Project", 'String'>
+    readonly slogan: FieldRef<"Project", 'String'>
+    readonly location: FieldRef<"Project", 'String'>
+    readonly startDate: FieldRef<"Project", 'DateTime'>
+    readonly endDate: FieldRef<"Project", 'DateTime'>
+    readonly justificativa: FieldRef<"Project", 'String'>
+    readonly objetivos: FieldRef<"Project", 'String'>
+    readonly metodologia: FieldRef<"Project", 'String'>
+    readonly descricaoProduto: FieldRef<"Project", 'String'>
+    readonly premissas: FieldRef<"Project", 'String'>
+    readonly restricoes: FieldRef<"Project", 'String'>
+    readonly limitesAutoridade: FieldRef<"Project", 'String'>
+    readonly semestre: FieldRef<"Project", 'String'>
+    readonly ano: FieldRef<"Project", 'Int'>
+    readonly departamentos: FieldRef<"Project", 'String[]'>
+    readonly status: FieldRef<"Project", 'ProjectStatus'>
+    readonly deletedAt: FieldRef<"Project", 'DateTime'>
+    readonly createdAt: FieldRef<"Project", 'DateTime'>
+    readonly updatedAt: FieldRef<"Project", 'DateTime'>
+  }
+    
+
+  // Custom InputTypes
+  /**
+   * Project findUnique
+   */
+  export type ProjectFindUniqueArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the Project
+     */
+    select?: ProjectSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the Project
+     */
+    omit?: ProjectOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: ProjectInclude<ExtArgs> | null
+    /**
+     * Filter, which Project to fetch.
+     */
+    where: ProjectWhereUniqueInput
+  }
+
+  /**
+   * Project findUniqueOrThrow
+   */
+  export type ProjectFindUniqueOrThrowArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the Project
+     */
+    select?: ProjectSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the Project
+     */
+    omit?: ProjectOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: ProjectInclude<ExtArgs> | null
+    /**
+     * Filter, which Project to fetch.
+     */
+    where: ProjectWhereUniqueInput
+  }
+
+  /**
+   * Project findFirst
+   */
+  export type ProjectFindFirstArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the Project
+     */
+    select?: ProjectSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the Project
+     */
+    omit?: ProjectOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: ProjectInclude<ExtArgs> | null
+    /**
+     * Filter, which Project to fetch.
+     */
+    where?: ProjectWhereInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+     * 
+     * Determine the order of Projects to fetch.
+     */
+    orderBy?: ProjectOrderByWithRelationInput | ProjectOrderByWithRelationInput[]
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+     * 
+     * Sets the position for searching for Projects.
+     */
+    cursor?: ProjectWhereUniqueInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Take `±n` Projects from the position of the cursor.
+     */
+    take?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Skip the first `n` Projects.
+     */
+    skip?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/distinct Distinct Docs}
+     * 
+     * Filter by unique combinations of Projects.
+     */
+    distinct?: ProjectScalarFieldEnum | ProjectScalarFieldEnum[]
+  }
+
+  /**
+   * Project findFirstOrThrow
+   */
+  export type ProjectFindFirstOrThrowArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the Project
+     */
+    select?: ProjectSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the Project
+     */
+    omit?: ProjectOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: ProjectInclude<ExtArgs> | null
+    /**
+     * Filter, which Project to fetch.
+     */
+    where?: ProjectWhereInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+     * 
+     * Determine the order of Projects to fetch.
+     */
+    orderBy?: ProjectOrderByWithRelationInput | ProjectOrderByWithRelationInput[]
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+     * 
+     * Sets the position for searching for Projects.
+     */
+    cursor?: ProjectWhereUniqueInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Take `±n` Projects from the position of the cursor.
+     */
+    take?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Skip the first `n` Projects.
+     */
+    skip?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/distinct Distinct Docs}
+     * 
+     * Filter by unique combinations of Projects.
+     */
+    distinct?: ProjectScalarFieldEnum | ProjectScalarFieldEnum[]
+  }
+
+  /**
+   * Project findMany
+   */
+  export type ProjectFindManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the Project
+     */
+    select?: ProjectSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the Project
+     */
+    omit?: ProjectOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: ProjectInclude<ExtArgs> | null
+    /**
+     * Filter, which Projects to fetch.
+     */
+    where?: ProjectWhereInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+     * 
+     * Determine the order of Projects to fetch.
+     */
+    orderBy?: ProjectOrderByWithRelationInput | ProjectOrderByWithRelationInput[]
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+     * 
+     * Sets the position for listing Projects.
+     */
+    cursor?: ProjectWhereUniqueInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Take `±n` Projects from the position of the cursor.
+     */
+    take?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Skip the first `n` Projects.
+     */
+    skip?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/distinct Distinct Docs}
+     * 
+     * Filter by unique combinations of Projects.
+     */
+    distinct?: ProjectScalarFieldEnum | ProjectScalarFieldEnum[]
+  }
+
+  /**
+   * Project create
+   */
+  export type ProjectCreateArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the Project
+     */
+    select?: ProjectSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the Project
+     */
+    omit?: ProjectOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: ProjectInclude<ExtArgs> | null
+    /**
+     * The data needed to create a Project.
+     */
+    data: XOR<ProjectCreateInput, ProjectUncheckedCreateInput>
+  }
+
+  /**
+   * Project createMany
+   */
+  export type ProjectCreateManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * The data used to create many Projects.
+     */
+    data: ProjectCreateManyInput | ProjectCreateManyInput[]
+    skipDuplicates?: boolean
+  }
+
+  /**
+   * Project createManyAndReturn
+   */
+  export type ProjectCreateManyAndReturnArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the Project
+     */
+    select?: ProjectSelectCreateManyAndReturn<ExtArgs> | null
+    /**
+     * Omit specific fields from the Project
+     */
+    omit?: ProjectOmit<ExtArgs> | null
+    /**
+     * The data used to create many Projects.
+     */
+    data: ProjectCreateManyInput | ProjectCreateManyInput[]
+    skipDuplicates?: boolean
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: ProjectIncludeCreateManyAndReturn<ExtArgs> | null
+  }
+
+  /**
+   * Project update
+   */
+  export type ProjectUpdateArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the Project
+     */
+    select?: ProjectSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the Project
+     */
+    omit?: ProjectOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: ProjectInclude<ExtArgs> | null
+    /**
+     * The data needed to update a Project.
+     */
+    data: XOR<ProjectUpdateInput, ProjectUncheckedUpdateInput>
+    /**
+     * Choose, which Project to update.
+     */
+    where: ProjectWhereUniqueInput
+  }
+
+  /**
+   * Project updateMany
+   */
+  export type ProjectUpdateManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * The data used to update Projects.
+     */
+    data: XOR<ProjectUpdateManyMutationInput, ProjectUncheckedUpdateManyInput>
+    /**
+     * Filter which Projects to update
+     */
+    where?: ProjectWhereInput
+    /**
+     * Limit how many Projects to update.
+     */
+    limit?: number
+  }
+
+  /**
+   * Project updateManyAndReturn
+   */
+  export type ProjectUpdateManyAndReturnArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the Project
+     */
+    select?: ProjectSelectUpdateManyAndReturn<ExtArgs> | null
+    /**
+     * Omit specific fields from the Project
+     */
+    omit?: ProjectOmit<ExtArgs> | null
+    /**
+     * The data used to update Projects.
+     */
+    data: XOR<ProjectUpdateManyMutationInput, ProjectUncheckedUpdateManyInput>
+    /**
+     * Filter which Projects to update
+     */
+    where?: ProjectWhereInput
+    /**
+     * Limit how many Projects to update.
+     */
+    limit?: number
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: ProjectIncludeUpdateManyAndReturn<ExtArgs> | null
+  }
+
+  /**
+   * Project upsert
+   */
+  export type ProjectUpsertArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the Project
+     */
+    select?: ProjectSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the Project
+     */
+    omit?: ProjectOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: ProjectInclude<ExtArgs> | null
+    /**
+     * The filter to search for the Project to update in case it exists.
+     */
+    where: ProjectWhereUniqueInput
+    /**
+     * In case the Project found by the `where` argument doesn't exist, create a new Project with this data.
+     */
+    create: XOR<ProjectCreateInput, ProjectUncheckedCreateInput>
+    /**
+     * In case the Project was found with the provided `where` argument, update it with this data.
+     */
+    update: XOR<ProjectUpdateInput, ProjectUncheckedUpdateInput>
+  }
+
+  /**
+   * Project delete
+   */
+  export type ProjectDeleteArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the Project
+     */
+    select?: ProjectSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the Project
+     */
+    omit?: ProjectOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: ProjectInclude<ExtArgs> | null
+    /**
+     * Filter which Project to delete.
+     */
+    where: ProjectWhereUniqueInput
+  }
+
+  /**
+   * Project deleteMany
+   */
+  export type ProjectDeleteManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Filter which Projects to delete
+     */
+    where?: ProjectWhereInput
+    /**
+     * Limit how many Projects to delete.
+     */
+    limit?: number
+  }
+
+  /**
+   * Project.members
+   */
+  export type Project$membersArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the UserProject
+     */
+    select?: UserProjectSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the UserProject
+     */
+    omit?: UserProjectOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: UserProjectInclude<ExtArgs> | null
+    where?: UserProjectWhereInput
+    orderBy?: UserProjectOrderByWithRelationInput | UserProjectOrderByWithRelationInput[]
+    cursor?: UserProjectWhereUniqueInput
+    take?: number
+    skip?: number
+    distinct?: UserProjectScalarFieldEnum | UserProjectScalarFieldEnum[]
+  }
+
+  /**
+   * Project.usuariosRole
+   */
+  export type Project$usuariosRoleArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the UserProjectRole
+     */
+    select?: UserProjectRoleSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the UserProjectRole
+     */
+    omit?: UserProjectRoleOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: UserProjectRoleInclude<ExtArgs> | null
+    where?: UserProjectRoleWhereInput
+    orderBy?: UserProjectRoleOrderByWithRelationInput | UserProjectRoleOrderByWithRelationInput[]
+    cursor?: UserProjectRoleWhereUniqueInput
+    take?: number
+    skip?: number
+    distinct?: UserProjectRoleScalarFieldEnum | UserProjectRoleScalarFieldEnum[]
+  }
+
+  /**
+   * Project.macroFases
+   */
+  export type Project$macroFasesArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the ProjectMacroFase
+     */
+    select?: ProjectMacroFaseSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the ProjectMacroFase
+     */
+    omit?: ProjectMacroFaseOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: ProjectMacroFaseInclude<ExtArgs> | null
+    where?: ProjectMacroFaseWhereInput
+    orderBy?: ProjectMacroFaseOrderByWithRelationInput | ProjectMacroFaseOrderByWithRelationInput[]
+    cursor?: ProjectMacroFaseWhereUniqueInput
+    take?: number
+    skip?: number
+    distinct?: ProjectMacroFaseScalarFieldEnum | ProjectMacroFaseScalarFieldEnum[]
+  }
+
+  /**
+   * Project.stakeholders
+   */
+  export type Project$stakeholdersArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the ProjectStakeholder
+     */
+    select?: ProjectStakeholderSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the ProjectStakeholder
+     */
+    omit?: ProjectStakeholderOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: ProjectStakeholderInclude<ExtArgs> | null
+    where?: ProjectStakeholderWhereInput
+    orderBy?: ProjectStakeholderOrderByWithRelationInput | ProjectStakeholderOrderByWithRelationInput[]
+    cursor?: ProjectStakeholderWhereUniqueInput
+    take?: number
+    skip?: number
+    distinct?: ProjectStakeholderScalarFieldEnum | ProjectStakeholderScalarFieldEnum[]
+  }
+
+  /**
+   * Project without action
+   */
+  export type ProjectDefaultArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the Project
+     */
+    select?: ProjectSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the Project
+     */
+    omit?: ProjectOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: ProjectInclude<ExtArgs> | null
+  }
+
+
+  /**
+   * Model ProjectMacroFase
+   */
+
+  export type AggregateProjectMacroFase = {
+    _count: ProjectMacroFaseCountAggregateOutputType | null
+    _min: ProjectMacroFaseMinAggregateOutputType | null
+    _max: ProjectMacroFaseMaxAggregateOutputType | null
+  }
+
+  export type ProjectMacroFaseMinAggregateOutputType = {
+    id: string | null
+    projectId: string | null
+    fase: string | null
+    dataLimite: string | null
+    custo: string | null
+    createdAt: Date | null
+    updatedAt: Date | null
+  }
+
+  export type ProjectMacroFaseMaxAggregateOutputType = {
+    id: string | null
+    projectId: string | null
+    fase: string | null
+    dataLimite: string | null
+    custo: string | null
+    createdAt: Date | null
+    updatedAt: Date | null
+  }
+
+  export type ProjectMacroFaseCountAggregateOutputType = {
+    id: number
+    projectId: number
+    fase: number
+    dataLimite: number
+    custo: number
+    createdAt: number
+    updatedAt: number
+    _all: number
+  }
+
+
+  export type ProjectMacroFaseMinAggregateInputType = {
+    id?: true
+    projectId?: true
+    fase?: true
+    dataLimite?: true
+    custo?: true
+    createdAt?: true
+    updatedAt?: true
+  }
+
+  export type ProjectMacroFaseMaxAggregateInputType = {
+    id?: true
+    projectId?: true
+    fase?: true
+    dataLimite?: true
+    custo?: true
+    createdAt?: true
+    updatedAt?: true
+  }
+
+  export type ProjectMacroFaseCountAggregateInputType = {
+    id?: true
+    projectId?: true
+    fase?: true
+    dataLimite?: true
+    custo?: true
+    createdAt?: true
+    updatedAt?: true
+    _all?: true
+  }
+
+  export type ProjectMacroFaseAggregateArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Filter which ProjectMacroFase to aggregate.
+     */
+    where?: ProjectMacroFaseWhereInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+     * 
+     * Determine the order of ProjectMacroFases to fetch.
+     */
+    orderBy?: ProjectMacroFaseOrderByWithRelationInput | ProjectMacroFaseOrderByWithRelationInput[]
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+     * 
+     * Sets the start position
+     */
+    cursor?: ProjectMacroFaseWhereUniqueInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Take `±n` ProjectMacroFases from the position of the cursor.
+     */
+    take?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Skip the first `n` ProjectMacroFases.
+     */
+    skip?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Count returned ProjectMacroFases
+    **/
+    _count?: true | ProjectMacroFaseCountAggregateInputType
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Select which fields to find the minimum value
+    **/
+    _min?: ProjectMacroFaseMinAggregateInputType
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Select which fields to find the maximum value
+    **/
+    _max?: ProjectMacroFaseMaxAggregateInputType
+  }
+
+  export type GetProjectMacroFaseAggregateType<T extends ProjectMacroFaseAggregateArgs> = {
+        [P in keyof T & keyof AggregateProjectMacroFase]: P extends '_count' | 'count'
+      ? T[P] extends true
+        ? number
+        : GetScalarType<T[P], AggregateProjectMacroFase[P]>
+      : GetScalarType<T[P], AggregateProjectMacroFase[P]>
+  }
+
+
+
+
+  export type ProjectMacroFaseGroupByArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    where?: ProjectMacroFaseWhereInput
+    orderBy?: ProjectMacroFaseOrderByWithAggregationInput | ProjectMacroFaseOrderByWithAggregationInput[]
+    by: ProjectMacroFaseScalarFieldEnum[] | ProjectMacroFaseScalarFieldEnum
+    having?: ProjectMacroFaseScalarWhereWithAggregatesInput
+    take?: number
+    skip?: number
+    _count?: ProjectMacroFaseCountAggregateInputType | true
+    _min?: ProjectMacroFaseMinAggregateInputType
+    _max?: ProjectMacroFaseMaxAggregateInputType
+  }
+
+  export type ProjectMacroFaseGroupByOutputType = {
+    id: string
+    projectId: string
+    fase: string
+    dataLimite: string | null
+    custo: string | null
+    createdAt: Date
+    updatedAt: Date
+    _count: ProjectMacroFaseCountAggregateOutputType | null
+    _min: ProjectMacroFaseMinAggregateOutputType | null
+    _max: ProjectMacroFaseMaxAggregateOutputType | null
+  }
+
+  type GetProjectMacroFaseGroupByPayload<T extends ProjectMacroFaseGroupByArgs> = Prisma.PrismaPromise<
+    Array<
+      PickEnumerable<ProjectMacroFaseGroupByOutputType, T['by']> &
+        {
+          [P in ((keyof T) & (keyof ProjectMacroFaseGroupByOutputType))]: P extends '_count'
+            ? T[P] extends boolean
+              ? number
+              : GetScalarType<T[P], ProjectMacroFaseGroupByOutputType[P]>
+            : GetScalarType<T[P], ProjectMacroFaseGroupByOutputType[P]>
+        }
+      >
+    >
+
+
+  export type ProjectMacroFaseSelect<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetSelect<{
+    id?: boolean
+    projectId?: boolean
+    fase?: boolean
+    dataLimite?: boolean
+    custo?: boolean
+    createdAt?: boolean
+    updatedAt?: boolean
+    project?: boolean | ProjectDefaultArgs<ExtArgs>
+  }, ExtArgs["result"]["projectMacroFase"]>
+
+  export type ProjectMacroFaseSelectCreateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetSelect<{
+    id?: boolean
+    projectId?: boolean
+    fase?: boolean
+    dataLimite?: boolean
+    custo?: boolean
+    createdAt?: boolean
+    updatedAt?: boolean
+    project?: boolean | ProjectDefaultArgs<ExtArgs>
+  }, ExtArgs["result"]["projectMacroFase"]>
+
+  export type ProjectMacroFaseSelectUpdateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetSelect<{
+    id?: boolean
+    projectId?: boolean
+    fase?: boolean
+    dataLimite?: boolean
+    custo?: boolean
+    createdAt?: boolean
+    updatedAt?: boolean
+    project?: boolean | ProjectDefaultArgs<ExtArgs>
+  }, ExtArgs["result"]["projectMacroFase"]>
+
+  export type ProjectMacroFaseSelectScalar = {
+    id?: boolean
+    projectId?: boolean
+    fase?: boolean
+    dataLimite?: boolean
+    custo?: boolean
+    createdAt?: boolean
+    updatedAt?: boolean
+  }
+
+  export type ProjectMacroFaseOmit<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetOmit<"id" | "projectId" | "fase" | "dataLimite" | "custo" | "createdAt" | "updatedAt", ExtArgs["result"]["projectMacroFase"]>
+  export type ProjectMacroFaseInclude<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    project?: boolean | ProjectDefaultArgs<ExtArgs>
+  }
+  export type ProjectMacroFaseIncludeCreateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    project?: boolean | ProjectDefaultArgs<ExtArgs>
+  }
+  export type ProjectMacroFaseIncludeUpdateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    project?: boolean | ProjectDefaultArgs<ExtArgs>
+  }
+
+  export type $ProjectMacroFasePayload<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    name: "ProjectMacroFase"
+    objects: {
+      project: Prisma.$ProjectPayload<ExtArgs>
+    }
+    scalars: $Extensions.GetPayloadResult<{
+      id: string
+      projectId: string
+      fase: string
+      dataLimite: string | null
+      custo: string | null
+      createdAt: Date
+      updatedAt: Date
+    }, ExtArgs["result"]["projectMacroFase"]>
+    composites: {}
+  }
+
+  type ProjectMacroFaseGetPayload<S extends boolean | null | undefined | ProjectMacroFaseDefaultArgs> = $Result.GetResult<Prisma.$ProjectMacroFasePayload, S>
+
+  type ProjectMacroFaseCountArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> =
+    Omit<ProjectMacroFaseFindManyArgs, 'select' | 'include' | 'distinct' | 'omit'> & {
+      select?: ProjectMacroFaseCountAggregateInputType | true
+    }
+
+  export interface ProjectMacroFaseDelegate<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs, GlobalOmitOptions = {}> {
+    [K: symbol]: { types: Prisma.TypeMap<ExtArgs>['model']['ProjectMacroFase'], meta: { name: 'ProjectMacroFase' } }
+    /**
+     * Find zero or one ProjectMacroFase that matches the filter.
+     * @param {ProjectMacroFaseFindUniqueArgs} args - Arguments to find a ProjectMacroFase
+     * @example
+     * // Get one ProjectMacroFase
+     * const projectMacroFase = await prisma.projectMacroFase.findUnique({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     */
+    findUnique<T extends ProjectMacroFaseFindUniqueArgs>(args: SelectSubset<T, ProjectMacroFaseFindUniqueArgs<ExtArgs>>): Prisma__ProjectMacroFaseClient<$Result.GetResult<Prisma.$ProjectMacroFasePayload<ExtArgs>, T, "findUnique", GlobalOmitOptions> | null, null, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Find one ProjectMacroFase that matches the filter or throw an error with `error.code='P2025'`
+     * if no matches were found.
+     * @param {ProjectMacroFaseFindUniqueOrThrowArgs} args - Arguments to find a ProjectMacroFase
+     * @example
+     * // Get one ProjectMacroFase
+     * const projectMacroFase = await prisma.projectMacroFase.findUniqueOrThrow({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     */
+    findUniqueOrThrow<T extends ProjectMacroFaseFindUniqueOrThrowArgs>(args: SelectSubset<T, ProjectMacroFaseFindUniqueOrThrowArgs<ExtArgs>>): Prisma__ProjectMacroFaseClient<$Result.GetResult<Prisma.$ProjectMacroFasePayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Find the first ProjectMacroFase that matches the filter.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {ProjectMacroFaseFindFirstArgs} args - Arguments to find a ProjectMacroFase
+     * @example
+     * // Get one ProjectMacroFase
+     * const projectMacroFase = await prisma.projectMacroFase.findFirst({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     */
+    findFirst<T extends ProjectMacroFaseFindFirstArgs>(args?: SelectSubset<T, ProjectMacroFaseFindFirstArgs<ExtArgs>>): Prisma__ProjectMacroFaseClient<$Result.GetResult<Prisma.$ProjectMacroFasePayload<ExtArgs>, T, "findFirst", GlobalOmitOptions> | null, null, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Find the first ProjectMacroFase that matches the filter or
+     * throw `PrismaKnownClientError` with `P2025` code if no matches were found.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {ProjectMacroFaseFindFirstOrThrowArgs} args - Arguments to find a ProjectMacroFase
+     * @example
+     * // Get one ProjectMacroFase
+     * const projectMacroFase = await prisma.projectMacroFase.findFirstOrThrow({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     */
+    findFirstOrThrow<T extends ProjectMacroFaseFindFirstOrThrowArgs>(args?: SelectSubset<T, ProjectMacroFaseFindFirstOrThrowArgs<ExtArgs>>): Prisma__ProjectMacroFaseClient<$Result.GetResult<Prisma.$ProjectMacroFasePayload<ExtArgs>, T, "findFirstOrThrow", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Find zero or more ProjectMacroFases that matches the filter.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {ProjectMacroFaseFindManyArgs} args - Arguments to filter and select certain fields only.
+     * @example
+     * // Get all ProjectMacroFases
+     * const projectMacroFases = await prisma.projectMacroFase.findMany()
+     * 
+     * // Get first 10 ProjectMacroFases
+     * const projectMacroFases = await prisma.projectMacroFase.findMany({ take: 10 })
+     * 
+     * // Only select the `id`
+     * const projectMacroFaseWithIdOnly = await prisma.projectMacroFase.findMany({ select: { id: true } })
+     * 
+     */
+    findMany<T extends ProjectMacroFaseFindManyArgs>(args?: SelectSubset<T, ProjectMacroFaseFindManyArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$ProjectMacroFasePayload<ExtArgs>, T, "findMany", GlobalOmitOptions>>
+
+    /**
+     * Create a ProjectMacroFase.
+     * @param {ProjectMacroFaseCreateArgs} args - Arguments to create a ProjectMacroFase.
+     * @example
+     * // Create one ProjectMacroFase
+     * const ProjectMacroFase = await prisma.projectMacroFase.create({
+     *   data: {
+     *     // ... data to create a ProjectMacroFase
+     *   }
+     * })
+     * 
+     */
+    create<T extends ProjectMacroFaseCreateArgs>(args: SelectSubset<T, ProjectMacroFaseCreateArgs<ExtArgs>>): Prisma__ProjectMacroFaseClient<$Result.GetResult<Prisma.$ProjectMacroFasePayload<ExtArgs>, T, "create", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Create many ProjectMacroFases.
+     * @param {ProjectMacroFaseCreateManyArgs} args - Arguments to create many ProjectMacroFases.
+     * @example
+     * // Create many ProjectMacroFases
+     * const projectMacroFase = await prisma.projectMacroFase.createMany({
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     *     
+     */
+    createMany<T extends ProjectMacroFaseCreateManyArgs>(args?: SelectSubset<T, ProjectMacroFaseCreateManyArgs<ExtArgs>>): Prisma.PrismaPromise<BatchPayload>
+
+    /**
+     * Create many ProjectMacroFases and returns the data saved in the database.
+     * @param {ProjectMacroFaseCreateManyAndReturnArgs} args - Arguments to create many ProjectMacroFases.
+     * @example
+     * // Create many ProjectMacroFases
+     * const projectMacroFase = await prisma.projectMacroFase.createManyAndReturn({
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     * 
+     * // Create many ProjectMacroFases and only return the `id`
+     * const projectMacroFaseWithIdOnly = await prisma.projectMacroFase.createManyAndReturn({
+     *   select: { id: true },
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * 
+     */
+    createManyAndReturn<T extends ProjectMacroFaseCreateManyAndReturnArgs>(args?: SelectSubset<T, ProjectMacroFaseCreateManyAndReturnArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$ProjectMacroFasePayload<ExtArgs>, T, "createManyAndReturn", GlobalOmitOptions>>
+
+    /**
+     * Delete a ProjectMacroFase.
+     * @param {ProjectMacroFaseDeleteArgs} args - Arguments to delete one ProjectMacroFase.
+     * @example
+     * // Delete one ProjectMacroFase
+     * const ProjectMacroFase = await prisma.projectMacroFase.delete({
+     *   where: {
+     *     // ... filter to delete one ProjectMacroFase
+     *   }
+     * })
+     * 
+     */
+    delete<T extends ProjectMacroFaseDeleteArgs>(args: SelectSubset<T, ProjectMacroFaseDeleteArgs<ExtArgs>>): Prisma__ProjectMacroFaseClient<$Result.GetResult<Prisma.$ProjectMacroFasePayload<ExtArgs>, T, "delete", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Update one ProjectMacroFase.
+     * @param {ProjectMacroFaseUpdateArgs} args - Arguments to update one ProjectMacroFase.
+     * @example
+     * // Update one ProjectMacroFase
+     * const projectMacroFase = await prisma.projectMacroFase.update({
+     *   where: {
+     *     // ... provide filter here
+     *   },
+     *   data: {
+     *     // ... provide data here
+     *   }
+     * })
+     * 
+     */
+    update<T extends ProjectMacroFaseUpdateArgs>(args: SelectSubset<T, ProjectMacroFaseUpdateArgs<ExtArgs>>): Prisma__ProjectMacroFaseClient<$Result.GetResult<Prisma.$ProjectMacroFasePayload<ExtArgs>, T, "update", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Delete zero or more ProjectMacroFases.
+     * @param {ProjectMacroFaseDeleteManyArgs} args - Arguments to filter ProjectMacroFases to delete.
+     * @example
+     * // Delete a few ProjectMacroFases
+     * const { count } = await prisma.projectMacroFase.deleteMany({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     * 
+     */
+    deleteMany<T extends ProjectMacroFaseDeleteManyArgs>(args?: SelectSubset<T, ProjectMacroFaseDeleteManyArgs<ExtArgs>>): Prisma.PrismaPromise<BatchPayload>
+
+    /**
+     * Update zero or more ProjectMacroFases.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {ProjectMacroFaseUpdateManyArgs} args - Arguments to update one or more rows.
+     * @example
+     * // Update many ProjectMacroFases
+     * const projectMacroFase = await prisma.projectMacroFase.updateMany({
+     *   where: {
+     *     // ... provide filter here
+     *   },
+     *   data: {
+     *     // ... provide data here
+     *   }
+     * })
+     * 
+     */
+    updateMany<T extends ProjectMacroFaseUpdateManyArgs>(args: SelectSubset<T, ProjectMacroFaseUpdateManyArgs<ExtArgs>>): Prisma.PrismaPromise<BatchPayload>
+
+    /**
+     * Update zero or more ProjectMacroFases and returns the data updated in the database.
+     * @param {ProjectMacroFaseUpdateManyAndReturnArgs} args - Arguments to update many ProjectMacroFases.
+     * @example
+     * // Update many ProjectMacroFases
+     * const projectMacroFase = await prisma.projectMacroFase.updateManyAndReturn({
+     *   where: {
+     *     // ... provide filter here
+     *   },
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     * 
+     * // Update zero or more ProjectMacroFases and only return the `id`
+     * const projectMacroFaseWithIdOnly = await prisma.projectMacroFase.updateManyAndReturn({
+     *   select: { id: true },
+     *   where: {
+     *     // ... provide filter here
+     *   },
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * 
+     */
+    updateManyAndReturn<T extends ProjectMacroFaseUpdateManyAndReturnArgs>(args: SelectSubset<T, ProjectMacroFaseUpdateManyAndReturnArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$ProjectMacroFasePayload<ExtArgs>, T, "updateManyAndReturn", GlobalOmitOptions>>
+
+    /**
+     * Create or update one ProjectMacroFase.
+     * @param {ProjectMacroFaseUpsertArgs} args - Arguments to update or create a ProjectMacroFase.
+     * @example
+     * // Update or create a ProjectMacroFase
+     * const projectMacroFase = await prisma.projectMacroFase.upsert({
+     *   create: {
+     *     // ... data to create a ProjectMacroFase
+     *   },
+     *   update: {
+     *     // ... in case it already exists, update
+     *   },
+     *   where: {
+     *     // ... the filter for the ProjectMacroFase we want to update
+     *   }
+     * })
+     */
+    upsert<T extends ProjectMacroFaseUpsertArgs>(args: SelectSubset<T, ProjectMacroFaseUpsertArgs<ExtArgs>>): Prisma__ProjectMacroFaseClient<$Result.GetResult<Prisma.$ProjectMacroFasePayload<ExtArgs>, T, "upsert", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+
+    /**
+     * Count the number of ProjectMacroFases.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {ProjectMacroFaseCountArgs} args - Arguments to filter ProjectMacroFases to count.
+     * @example
+     * // Count the number of ProjectMacroFases
+     * const count = await prisma.projectMacroFase.count({
+     *   where: {
+     *     // ... the filter for the ProjectMacroFases we want to count
+     *   }
+     * })
+    **/
+    count<T extends ProjectMacroFaseCountArgs>(
+      args?: Subset<T, ProjectMacroFaseCountArgs>,
+    ): Prisma.PrismaPromise<
+      T extends $Utils.Record<'select', any>
+        ? T['select'] extends true
+          ? number
+          : GetScalarType<T['select'], ProjectMacroFaseCountAggregateOutputType>
+        : number
+    >
+
+    /**
+     * Allows you to perform aggregations operations on a ProjectMacroFase.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {ProjectMacroFaseAggregateArgs} args - Select which aggregations you would like to apply and on what fields.
+     * @example
+     * // Ordered by age ascending
+     * // Where email contains prisma.io
+     * // Limited to the 10 users
+     * const aggregations = await prisma.user.aggregate({
+     *   _avg: {
+     *     age: true,
+     *   },
+     *   where: {
+     *     email: {
+     *       contains: "prisma.io",
+     *     },
+     *   },
+     *   orderBy: {
+     *     age: "asc",
+     *   },
+     *   take: 10,
+     * })
+    **/
+    aggregate<T extends ProjectMacroFaseAggregateArgs>(args: Subset<T, ProjectMacroFaseAggregateArgs>): Prisma.PrismaPromise<GetProjectMacroFaseAggregateType<T>>
+
+    /**
+     * Group by ProjectMacroFase.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {ProjectMacroFaseGroupByArgs} args - Group by arguments.
+     * @example
+     * // Group by city, order by createdAt, get count
+     * const result = await prisma.user.groupBy({
+     *   by: ['city', 'createdAt'],
+     *   orderBy: {
+     *     createdAt: true
+     *   },
+     *   _count: {
+     *     _all: true
+     *   },
+     * })
+     * 
+    **/
+    groupBy<
+      T extends ProjectMacroFaseGroupByArgs,
+      HasSelectOrTake extends Or<
+        Extends<'skip', Keys<T>>,
+        Extends<'take', Keys<T>>
+      >,
+      OrderByArg extends True extends HasSelectOrTake
+        ? { orderBy: ProjectMacroFaseGroupByArgs['orderBy'] }
+        : { orderBy?: ProjectMacroFaseGroupByArgs['orderBy'] },
+      OrderFields extends ExcludeUnderscoreKeys<Keys<MaybeTupleToUnion<T['orderBy']>>>,
+      ByFields extends MaybeTupleToUnion<T['by']>,
+      ByValid extends Has<ByFields, OrderFields>,
+      HavingFields extends GetHavingFields<T['having']>,
+      HavingValid extends Has<ByFields, HavingFields>,
+      ByEmpty extends T['by'] extends never[] ? True : False,
+      InputErrors extends ByEmpty extends True
+      ? `Error: "by" must not be empty.`
+      : HavingValid extends False
+      ? {
+          [P in HavingFields]: P extends ByFields
+            ? never
+            : P extends string
+            ? `Error: Field "${P}" used in "having" needs to be provided in "by".`
+            : [
+                Error,
+                'Field ',
+                P,
+                ` in "having" needs to be provided in "by"`,
+              ]
+        }[HavingFields]
+      : 'take' extends Keys<T>
+      ? 'orderBy' extends Keys<T>
+        ? ByValid extends True
+          ? {}
+          : {
+              [P in OrderFields]: P extends ByFields
+                ? never
+                : `Error: Field "${P}" in "orderBy" needs to be provided in "by"`
+            }[OrderFields]
+        : 'Error: If you provide "take", you also need to provide "orderBy"'
+      : 'skip' extends Keys<T>
+      ? 'orderBy' extends Keys<T>
+        ? ByValid extends True
+          ? {}
+          : {
+              [P in OrderFields]: P extends ByFields
+                ? never
+                : `Error: Field "${P}" in "orderBy" needs to be provided in "by"`
+            }[OrderFields]
+        : 'Error: If you provide "skip", you also need to provide "orderBy"'
+      : ByValid extends True
+      ? {}
+      : {
+          [P in OrderFields]: P extends ByFields
+            ? never
+            : `Error: Field "${P}" in "orderBy" needs to be provided in "by"`
+        }[OrderFields]
+    >(args: SubsetIntersection<T, ProjectMacroFaseGroupByArgs, OrderByArg> & InputErrors): {} extends InputErrors ? GetProjectMacroFaseGroupByPayload<T> : Prisma.PrismaPromise<InputErrors>
+  /**
+   * Fields of the ProjectMacroFase model
+   */
+  readonly fields: ProjectMacroFaseFieldRefs;
+  }
+
+  /**
+   * The delegate class that acts as a "Promise-like" for ProjectMacroFase.
+   * Why is this prefixed with `Prisma__`?
+   * Because we want to prevent naming conflicts as mentioned in
+   * https://github.com/prisma/prisma-client-js/issues/707
+   */
+  export interface Prisma__ProjectMacroFaseClient<T, Null = never, ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs, GlobalOmitOptions = {}> extends Prisma.PrismaPromise<T> {
+    readonly [Symbol.toStringTag]: "PrismaPromise"
+    project<T extends ProjectDefaultArgs<ExtArgs> = {}>(args?: Subset<T, ProjectDefaultArgs<ExtArgs>>): Prisma__ProjectClient<$Result.GetResult<Prisma.$ProjectPayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions> | Null, Null, ExtArgs, GlobalOmitOptions>
+    /**
+     * Attaches callbacks for the resolution and/or rejection of the Promise.
+     * @param onfulfilled The callback to execute when the Promise is resolved.
+     * @param onrejected The callback to execute when the Promise is rejected.
+     * @returns A Promise for the completion of which ever callback is executed.
+     */
+    then<TResult1 = T, TResult2 = never>(onfulfilled?: ((value: T) => TResult1 | PromiseLike<TResult1>) | undefined | null, onrejected?: ((reason: any) => TResult2 | PromiseLike<TResult2>) | undefined | null): $Utils.JsPromise<TResult1 | TResult2>
+    /**
+     * Attaches a callback for only the rejection of the Promise.
+     * @param onrejected The callback to execute when the Promise is rejected.
+     * @returns A Promise for the completion of the callback.
+     */
+    catch<TResult = never>(onrejected?: ((reason: any) => TResult | PromiseLike<TResult>) | undefined | null): $Utils.JsPromise<T | TResult>
+    /**
+     * Attaches a callback that is invoked when the Promise is settled (fulfilled or rejected). The
+     * resolved value cannot be modified from the callback.
+     * @param onfinally The callback to execute when the Promise is settled (fulfilled or rejected).
+     * @returns A Promise for the completion of the callback.
+     */
+    finally(onfinally?: (() => void) | undefined | null): $Utils.JsPromise<T>
+  }
+
+
+
+
+  /**
+   * Fields of the ProjectMacroFase model
+   */
+  interface ProjectMacroFaseFieldRefs {
+    readonly id: FieldRef<"ProjectMacroFase", 'String'>
+    readonly projectId: FieldRef<"ProjectMacroFase", 'String'>
+    readonly fase: FieldRef<"ProjectMacroFase", 'String'>
+    readonly dataLimite: FieldRef<"ProjectMacroFase", 'String'>
+    readonly custo: FieldRef<"ProjectMacroFase", 'String'>
+    readonly createdAt: FieldRef<"ProjectMacroFase", 'DateTime'>
+    readonly updatedAt: FieldRef<"ProjectMacroFase", 'DateTime'>
+  }
+    
+
+  // Custom InputTypes
+  /**
+   * ProjectMacroFase findUnique
+   */
+  export type ProjectMacroFaseFindUniqueArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the ProjectMacroFase
+     */
+    select?: ProjectMacroFaseSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the ProjectMacroFase
+     */
+    omit?: ProjectMacroFaseOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: ProjectMacroFaseInclude<ExtArgs> | null
+    /**
+     * Filter, which ProjectMacroFase to fetch.
+     */
+    where: ProjectMacroFaseWhereUniqueInput
+  }
+
+  /**
+   * ProjectMacroFase findUniqueOrThrow
+   */
+  export type ProjectMacroFaseFindUniqueOrThrowArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the ProjectMacroFase
+     */
+    select?: ProjectMacroFaseSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the ProjectMacroFase
+     */
+    omit?: ProjectMacroFaseOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: ProjectMacroFaseInclude<ExtArgs> | null
+    /**
+     * Filter, which ProjectMacroFase to fetch.
+     */
+    where: ProjectMacroFaseWhereUniqueInput
+  }
+
+  /**
+   * ProjectMacroFase findFirst
+   */
+  export type ProjectMacroFaseFindFirstArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the ProjectMacroFase
+     */
+    select?: ProjectMacroFaseSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the ProjectMacroFase
+     */
+    omit?: ProjectMacroFaseOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: ProjectMacroFaseInclude<ExtArgs> | null
+    /**
+     * Filter, which ProjectMacroFase to fetch.
+     */
+    where?: ProjectMacroFaseWhereInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+     * 
+     * Determine the order of ProjectMacroFases to fetch.
+     */
+    orderBy?: ProjectMacroFaseOrderByWithRelationInput | ProjectMacroFaseOrderByWithRelationInput[]
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+     * 
+     * Sets the position for searching for ProjectMacroFases.
+     */
+    cursor?: ProjectMacroFaseWhereUniqueInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Take `±n` ProjectMacroFases from the position of the cursor.
+     */
+    take?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Skip the first `n` ProjectMacroFases.
+     */
+    skip?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/distinct Distinct Docs}
+     * 
+     * Filter by unique combinations of ProjectMacroFases.
+     */
+    distinct?: ProjectMacroFaseScalarFieldEnum | ProjectMacroFaseScalarFieldEnum[]
+  }
+
+  /**
+   * ProjectMacroFase findFirstOrThrow
+   */
+  export type ProjectMacroFaseFindFirstOrThrowArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the ProjectMacroFase
+     */
+    select?: ProjectMacroFaseSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the ProjectMacroFase
+     */
+    omit?: ProjectMacroFaseOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: ProjectMacroFaseInclude<ExtArgs> | null
+    /**
+     * Filter, which ProjectMacroFase to fetch.
+     */
+    where?: ProjectMacroFaseWhereInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+     * 
+     * Determine the order of ProjectMacroFases to fetch.
+     */
+    orderBy?: ProjectMacroFaseOrderByWithRelationInput | ProjectMacroFaseOrderByWithRelationInput[]
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+     * 
+     * Sets the position for searching for ProjectMacroFases.
+     */
+    cursor?: ProjectMacroFaseWhereUniqueInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Take `±n` ProjectMacroFases from the position of the cursor.
+     */
+    take?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Skip the first `n` ProjectMacroFases.
+     */
+    skip?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/distinct Distinct Docs}
+     * 
+     * Filter by unique combinations of ProjectMacroFases.
+     */
+    distinct?: ProjectMacroFaseScalarFieldEnum | ProjectMacroFaseScalarFieldEnum[]
+  }
+
+  /**
+   * ProjectMacroFase findMany
+   */
+  export type ProjectMacroFaseFindManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the ProjectMacroFase
+     */
+    select?: ProjectMacroFaseSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the ProjectMacroFase
+     */
+    omit?: ProjectMacroFaseOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: ProjectMacroFaseInclude<ExtArgs> | null
+    /**
+     * Filter, which ProjectMacroFases to fetch.
+     */
+    where?: ProjectMacroFaseWhereInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+     * 
+     * Determine the order of ProjectMacroFases to fetch.
+     */
+    orderBy?: ProjectMacroFaseOrderByWithRelationInput | ProjectMacroFaseOrderByWithRelationInput[]
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+     * 
+     * Sets the position for listing ProjectMacroFases.
+     */
+    cursor?: ProjectMacroFaseWhereUniqueInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Take `±n` ProjectMacroFases from the position of the cursor.
+     */
+    take?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Skip the first `n` ProjectMacroFases.
+     */
+    skip?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/distinct Distinct Docs}
+     * 
+     * Filter by unique combinations of ProjectMacroFases.
+     */
+    distinct?: ProjectMacroFaseScalarFieldEnum | ProjectMacroFaseScalarFieldEnum[]
+  }
+
+  /**
+   * ProjectMacroFase create
+   */
+  export type ProjectMacroFaseCreateArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the ProjectMacroFase
+     */
+    select?: ProjectMacroFaseSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the ProjectMacroFase
+     */
+    omit?: ProjectMacroFaseOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: ProjectMacroFaseInclude<ExtArgs> | null
+    /**
+     * The data needed to create a ProjectMacroFase.
+     */
+    data: XOR<ProjectMacroFaseCreateInput, ProjectMacroFaseUncheckedCreateInput>
+  }
+
+  /**
+   * ProjectMacroFase createMany
+   */
+  export type ProjectMacroFaseCreateManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * The data used to create many ProjectMacroFases.
+     */
+    data: ProjectMacroFaseCreateManyInput | ProjectMacroFaseCreateManyInput[]
+    skipDuplicates?: boolean
+  }
+
+  /**
+   * ProjectMacroFase createManyAndReturn
+   */
+  export type ProjectMacroFaseCreateManyAndReturnArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the ProjectMacroFase
+     */
+    select?: ProjectMacroFaseSelectCreateManyAndReturn<ExtArgs> | null
+    /**
+     * Omit specific fields from the ProjectMacroFase
+     */
+    omit?: ProjectMacroFaseOmit<ExtArgs> | null
+    /**
+     * The data used to create many ProjectMacroFases.
+     */
+    data: ProjectMacroFaseCreateManyInput | ProjectMacroFaseCreateManyInput[]
+    skipDuplicates?: boolean
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: ProjectMacroFaseIncludeCreateManyAndReturn<ExtArgs> | null
+  }
+
+  /**
+   * ProjectMacroFase update
+   */
+  export type ProjectMacroFaseUpdateArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the ProjectMacroFase
+     */
+    select?: ProjectMacroFaseSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the ProjectMacroFase
+     */
+    omit?: ProjectMacroFaseOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: ProjectMacroFaseInclude<ExtArgs> | null
+    /**
+     * The data needed to update a ProjectMacroFase.
+     */
+    data: XOR<ProjectMacroFaseUpdateInput, ProjectMacroFaseUncheckedUpdateInput>
+    /**
+     * Choose, which ProjectMacroFase to update.
+     */
+    where: ProjectMacroFaseWhereUniqueInput
+  }
+
+  /**
+   * ProjectMacroFase updateMany
+   */
+  export type ProjectMacroFaseUpdateManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * The data used to update ProjectMacroFases.
+     */
+    data: XOR<ProjectMacroFaseUpdateManyMutationInput, ProjectMacroFaseUncheckedUpdateManyInput>
+    /**
+     * Filter which ProjectMacroFases to update
+     */
+    where?: ProjectMacroFaseWhereInput
+    /**
+     * Limit how many ProjectMacroFases to update.
+     */
+    limit?: number
+  }
+
+  /**
+   * ProjectMacroFase updateManyAndReturn
+   */
+  export type ProjectMacroFaseUpdateManyAndReturnArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the ProjectMacroFase
+     */
+    select?: ProjectMacroFaseSelectUpdateManyAndReturn<ExtArgs> | null
+    /**
+     * Omit specific fields from the ProjectMacroFase
+     */
+    omit?: ProjectMacroFaseOmit<ExtArgs> | null
+    /**
+     * The data used to update ProjectMacroFases.
+     */
+    data: XOR<ProjectMacroFaseUpdateManyMutationInput, ProjectMacroFaseUncheckedUpdateManyInput>
+    /**
+     * Filter which ProjectMacroFases to update
+     */
+    where?: ProjectMacroFaseWhereInput
+    /**
+     * Limit how many ProjectMacroFases to update.
+     */
+    limit?: number
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: ProjectMacroFaseIncludeUpdateManyAndReturn<ExtArgs> | null
+  }
+
+  /**
+   * ProjectMacroFase upsert
+   */
+  export type ProjectMacroFaseUpsertArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the ProjectMacroFase
+     */
+    select?: ProjectMacroFaseSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the ProjectMacroFase
+     */
+    omit?: ProjectMacroFaseOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: ProjectMacroFaseInclude<ExtArgs> | null
+    /**
+     * The filter to search for the ProjectMacroFase to update in case it exists.
+     */
+    where: ProjectMacroFaseWhereUniqueInput
+    /**
+     * In case the ProjectMacroFase found by the `where` argument doesn't exist, create a new ProjectMacroFase with this data.
+     */
+    create: XOR<ProjectMacroFaseCreateInput, ProjectMacroFaseUncheckedCreateInput>
+    /**
+     * In case the ProjectMacroFase was found with the provided `where` argument, update it with this data.
+     */
+    update: XOR<ProjectMacroFaseUpdateInput, ProjectMacroFaseUncheckedUpdateInput>
+  }
+
+  /**
+   * ProjectMacroFase delete
+   */
+  export type ProjectMacroFaseDeleteArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the ProjectMacroFase
+     */
+    select?: ProjectMacroFaseSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the ProjectMacroFase
+     */
+    omit?: ProjectMacroFaseOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: ProjectMacroFaseInclude<ExtArgs> | null
+    /**
+     * Filter which ProjectMacroFase to delete.
+     */
+    where: ProjectMacroFaseWhereUniqueInput
+  }
+
+  /**
+   * ProjectMacroFase deleteMany
+   */
+  export type ProjectMacroFaseDeleteManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Filter which ProjectMacroFases to delete
+     */
+    where?: ProjectMacroFaseWhereInput
+    /**
+     * Limit how many ProjectMacroFases to delete.
+     */
+    limit?: number
+  }
+
+  /**
+   * ProjectMacroFase without action
+   */
+  export type ProjectMacroFaseDefaultArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the ProjectMacroFase
+     */
+    select?: ProjectMacroFaseSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the ProjectMacroFase
+     */
+    omit?: ProjectMacroFaseOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: ProjectMacroFaseInclude<ExtArgs> | null
+  }
+
+
+  /**
+   * Model Department
+   */
+
+  export type AggregateDepartment = {
+    _count: DepartmentCountAggregateOutputType | null
+    _avg: DepartmentAvgAggregateOutputType | null
+    _sum: DepartmentSumAggregateOutputType | null
+    _min: DepartmentMinAggregateOutputType | null
+    _max: DepartmentMaxAggregateOutputType | null
+  }
+
+  export type DepartmentAvgAggregateOutputType = {
+    hourlyRate: number | null
+  }
+
+  export type DepartmentSumAggregateOutputType = {
+    hourlyRate: number | null
+  }
+
+  export type DepartmentMinAggregateOutputType = {
+    id: string | null
+    tenantId: string | null
+    name: string | null
+    description: string | null
+    active: boolean | null
+    hourlyRate: number | null
+    deletedAt: Date | null
+    createdAt: Date | null
+    updatedAt: Date | null
+  }
+
+  export type DepartmentMaxAggregateOutputType = {
+    id: string | null
+    tenantId: string | null
+    name: string | null
+    description: string | null
+    active: boolean | null
+    hourlyRate: number | null
+    deletedAt: Date | null
+    createdAt: Date | null
+    updatedAt: Date | null
+  }
+
+  export type DepartmentCountAggregateOutputType = {
+    id: number
+    tenantId: number
+    name: number
+    description: number
+    active: number
+    hourlyRate: number
+    deletedAt: number
+    createdAt: number
+    updatedAt: number
+    _all: number
+  }
+
+
+  export type DepartmentAvgAggregateInputType = {
+    hourlyRate?: true
+  }
+
+  export type DepartmentSumAggregateInputType = {
+    hourlyRate?: true
+  }
+
+  export type DepartmentMinAggregateInputType = {
+    id?: true
+    tenantId?: true
+    name?: true
+    description?: true
+    active?: true
+    hourlyRate?: true
+    deletedAt?: true
+    createdAt?: true
+    updatedAt?: true
+  }
+
+  export type DepartmentMaxAggregateInputType = {
+    id?: true
+    tenantId?: true
+    name?: true
+    description?: true
+    active?: true
+    hourlyRate?: true
+    deletedAt?: true
+    createdAt?: true
+    updatedAt?: true
+  }
+
+  export type DepartmentCountAggregateInputType = {
+    id?: true
+    tenantId?: true
+    name?: true
+    description?: true
+    active?: true
+    hourlyRate?: true
+    deletedAt?: true
+    createdAt?: true
+    updatedAt?: true
+    _all?: true
+  }
+
+  export type DepartmentAggregateArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Filter which Department to aggregate.
+     */
+    where?: DepartmentWhereInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+     * 
+     * Determine the order of Departments to fetch.
+     */
+    orderBy?: DepartmentOrderByWithRelationInput | DepartmentOrderByWithRelationInput[]
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+     * 
+     * Sets the start position
+     */
+    cursor?: DepartmentWhereUniqueInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Take `±n` Departments from the position of the cursor.
+     */
+    take?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Skip the first `n` Departments.
+     */
+    skip?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Count returned Departments
+    **/
+    _count?: true | DepartmentCountAggregateInputType
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Select which fields to average
+    **/
+    _avg?: DepartmentAvgAggregateInputType
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Select which fields to sum
+    **/
+    _sum?: DepartmentSumAggregateInputType
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Select which fields to find the minimum value
+    **/
+    _min?: DepartmentMinAggregateInputType
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Select which fields to find the maximum value
+    **/
+    _max?: DepartmentMaxAggregateInputType
+  }
+
+  export type GetDepartmentAggregateType<T extends DepartmentAggregateArgs> = {
+        [P in keyof T & keyof AggregateDepartment]: P extends '_count' | 'count'
+      ? T[P] extends true
+        ? number
+        : GetScalarType<T[P], AggregateDepartment[P]>
+      : GetScalarType<T[P], AggregateDepartment[P]>
+  }
+
+
+
+
+  export type DepartmentGroupByArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    where?: DepartmentWhereInput
+    orderBy?: DepartmentOrderByWithAggregationInput | DepartmentOrderByWithAggregationInput[]
+    by: DepartmentScalarFieldEnum[] | DepartmentScalarFieldEnum
+    having?: DepartmentScalarWhereWithAggregatesInput
+    take?: number
+    skip?: number
+    _count?: DepartmentCountAggregateInputType | true
+    _avg?: DepartmentAvgAggregateInputType
+    _sum?: DepartmentSumAggregateInputType
+    _min?: DepartmentMinAggregateInputType
+    _max?: DepartmentMaxAggregateInputType
+  }
+
+  export type DepartmentGroupByOutputType = {
+    id: string
+    tenantId: string
+    name: string
+    description: string | null
+    active: boolean
+    hourlyRate: number | null
+    deletedAt: Date | null
+    createdAt: Date
+    updatedAt: Date
+    _count: DepartmentCountAggregateOutputType | null
+    _avg: DepartmentAvgAggregateOutputType | null
+    _sum: DepartmentSumAggregateOutputType | null
+    _min: DepartmentMinAggregateOutputType | null
+    _max: DepartmentMaxAggregateOutputType | null
+  }
+
+  type GetDepartmentGroupByPayload<T extends DepartmentGroupByArgs> = Prisma.PrismaPromise<
+    Array<
+      PickEnumerable<DepartmentGroupByOutputType, T['by']> &
+        {
+          [P in ((keyof T) & (keyof DepartmentGroupByOutputType))]: P extends '_count'
+            ? T[P] extends boolean
+              ? number
+              : GetScalarType<T[P], DepartmentGroupByOutputType[P]>
+            : GetScalarType<T[P], DepartmentGroupByOutputType[P]>
+        }
+      >
+    >
+
+
+  export type DepartmentSelect<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetSelect<{
+    id?: boolean
+    tenantId?: boolean
+    name?: boolean
+    description?: boolean
+    active?: boolean
+    hourlyRate?: boolean
+    deletedAt?: boolean
+    createdAt?: boolean
+    updatedAt?: boolean
+    tenant?: boolean | TenantDefaultArgs<ExtArgs>
+    users?: boolean | Department$usersArgs<ExtArgs>
+    userProjects?: boolean | Department$userProjectsArgs<ExtArgs>
+    _count?: boolean | DepartmentCountOutputTypeDefaultArgs<ExtArgs>
+  }, ExtArgs["result"]["department"]>
+
+  export type DepartmentSelectCreateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetSelect<{
+    id?: boolean
+    tenantId?: boolean
+    name?: boolean
+    description?: boolean
+    active?: boolean
+    hourlyRate?: boolean
+    deletedAt?: boolean
+    createdAt?: boolean
+    updatedAt?: boolean
+    tenant?: boolean | TenantDefaultArgs<ExtArgs>
+  }, ExtArgs["result"]["department"]>
+
+  export type DepartmentSelectUpdateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetSelect<{
+    id?: boolean
+    tenantId?: boolean
+    name?: boolean
+    description?: boolean
+    active?: boolean
+    hourlyRate?: boolean
+    deletedAt?: boolean
+    createdAt?: boolean
+    updatedAt?: boolean
+    tenant?: boolean | TenantDefaultArgs<ExtArgs>
+  }, ExtArgs["result"]["department"]>
+
+  export type DepartmentSelectScalar = {
+    id?: boolean
+    tenantId?: boolean
+    name?: boolean
+    description?: boolean
+    active?: boolean
+    hourlyRate?: boolean
+    deletedAt?: boolean
+    createdAt?: boolean
+    updatedAt?: boolean
+  }
+
+  export type DepartmentOmit<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetOmit<"id" | "tenantId" | "name" | "description" | "active" | "hourlyRate" | "deletedAt" | "createdAt" | "updatedAt", ExtArgs["result"]["department"]>
+  export type DepartmentInclude<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    tenant?: boolean | TenantDefaultArgs<ExtArgs>
+    users?: boolean | Department$usersArgs<ExtArgs>
+    userProjects?: boolean | Department$userProjectsArgs<ExtArgs>
+    _count?: boolean | DepartmentCountOutputTypeDefaultArgs<ExtArgs>
+  }
+  export type DepartmentIncludeCreateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    tenant?: boolean | TenantDefaultArgs<ExtArgs>
+  }
+  export type DepartmentIncludeUpdateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    tenant?: boolean | TenantDefaultArgs<ExtArgs>
+  }
+
+  export type $DepartmentPayload<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    name: "Department"
+    objects: {
+      tenant: Prisma.$TenantPayload<ExtArgs>
+      users: Prisma.$UserDepartmentPayload<ExtArgs>[]
+      userProjects: Prisma.$UserProjectPayload<ExtArgs>[]
+    }
+    scalars: $Extensions.GetPayloadResult<{
+      id: string
+      tenantId: string
+      name: string
+      description: string | null
+      active: boolean
+      hourlyRate: number | null
+      deletedAt: Date | null
+      createdAt: Date
+      updatedAt: Date
+    }, ExtArgs["result"]["department"]>
+    composites: {}
+  }
+
+  type DepartmentGetPayload<S extends boolean | null | undefined | DepartmentDefaultArgs> = $Result.GetResult<Prisma.$DepartmentPayload, S>
+
+  type DepartmentCountArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> =
+    Omit<DepartmentFindManyArgs, 'select' | 'include' | 'distinct' | 'omit'> & {
+      select?: DepartmentCountAggregateInputType | true
+    }
+
+  export interface DepartmentDelegate<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs, GlobalOmitOptions = {}> {
+    [K: symbol]: { types: Prisma.TypeMap<ExtArgs>['model']['Department'], meta: { name: 'Department' } }
+    /**
+     * Find zero or one Department that matches the filter.
+     * @param {DepartmentFindUniqueArgs} args - Arguments to find a Department
+     * @example
+     * // Get one Department
+     * const department = await prisma.department.findUnique({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     */
+    findUnique<T extends DepartmentFindUniqueArgs>(args: SelectSubset<T, DepartmentFindUniqueArgs<ExtArgs>>): Prisma__DepartmentClient<$Result.GetResult<Prisma.$DepartmentPayload<ExtArgs>, T, "findUnique", GlobalOmitOptions> | null, null, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Find one Department that matches the filter or throw an error with `error.code='P2025'`
+     * if no matches were found.
+     * @param {DepartmentFindUniqueOrThrowArgs} args - Arguments to find a Department
+     * @example
+     * // Get one Department
+     * const department = await prisma.department.findUniqueOrThrow({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     */
+    findUniqueOrThrow<T extends DepartmentFindUniqueOrThrowArgs>(args: SelectSubset<T, DepartmentFindUniqueOrThrowArgs<ExtArgs>>): Prisma__DepartmentClient<$Result.GetResult<Prisma.$DepartmentPayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Find the first Department that matches the filter.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {DepartmentFindFirstArgs} args - Arguments to find a Department
+     * @example
+     * // Get one Department
+     * const department = await prisma.department.findFirst({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     */
+    findFirst<T extends DepartmentFindFirstArgs>(args?: SelectSubset<T, DepartmentFindFirstArgs<ExtArgs>>): Prisma__DepartmentClient<$Result.GetResult<Prisma.$DepartmentPayload<ExtArgs>, T, "findFirst", GlobalOmitOptions> | null, null, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Find the first Department that matches the filter or
+     * throw `PrismaKnownClientError` with `P2025` code if no matches were found.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {DepartmentFindFirstOrThrowArgs} args - Arguments to find a Department
+     * @example
+     * // Get one Department
+     * const department = await prisma.department.findFirstOrThrow({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     */
+    findFirstOrThrow<T extends DepartmentFindFirstOrThrowArgs>(args?: SelectSubset<T, DepartmentFindFirstOrThrowArgs<ExtArgs>>): Prisma__DepartmentClient<$Result.GetResult<Prisma.$DepartmentPayload<ExtArgs>, T, "findFirstOrThrow", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Find zero or more Departments that matches the filter.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {DepartmentFindManyArgs} args - Arguments to filter and select certain fields only.
+     * @example
+     * // Get all Departments
+     * const departments = await prisma.department.findMany()
+     * 
+     * // Get first 10 Departments
+     * const departments = await prisma.department.findMany({ take: 10 })
+     * 
+     * // Only select the `id`
+     * const departmentWithIdOnly = await prisma.department.findMany({ select: { id: true } })
+     * 
+     */
+    findMany<T extends DepartmentFindManyArgs>(args?: SelectSubset<T, DepartmentFindManyArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$DepartmentPayload<ExtArgs>, T, "findMany", GlobalOmitOptions>>
+
+    /**
+     * Create a Department.
+     * @param {DepartmentCreateArgs} args - Arguments to create a Department.
+     * @example
+     * // Create one Department
+     * const Department = await prisma.department.create({
+     *   data: {
+     *     // ... data to create a Department
+     *   }
+     * })
+     * 
+     */
+    create<T extends DepartmentCreateArgs>(args: SelectSubset<T, DepartmentCreateArgs<ExtArgs>>): Prisma__DepartmentClient<$Result.GetResult<Prisma.$DepartmentPayload<ExtArgs>, T, "create", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Create many Departments.
+     * @param {DepartmentCreateManyArgs} args - Arguments to create many Departments.
+     * @example
+     * // Create many Departments
+     * const department = await prisma.department.createMany({
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     *     
+     */
+    createMany<T extends DepartmentCreateManyArgs>(args?: SelectSubset<T, DepartmentCreateManyArgs<ExtArgs>>): Prisma.PrismaPromise<BatchPayload>
+
+    /**
+     * Create many Departments and returns the data saved in the database.
+     * @param {DepartmentCreateManyAndReturnArgs} args - Arguments to create many Departments.
+     * @example
+     * // Create many Departments
+     * const department = await prisma.department.createManyAndReturn({
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     * 
+     * // Create many Departments and only return the `id`
+     * const departmentWithIdOnly = await prisma.department.createManyAndReturn({
+     *   select: { id: true },
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * 
+     */
+    createManyAndReturn<T extends DepartmentCreateManyAndReturnArgs>(args?: SelectSubset<T, DepartmentCreateManyAndReturnArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$DepartmentPayload<ExtArgs>, T, "createManyAndReturn", GlobalOmitOptions>>
+
+    /**
+     * Delete a Department.
+     * @param {DepartmentDeleteArgs} args - Arguments to delete one Department.
+     * @example
+     * // Delete one Department
+     * const Department = await prisma.department.delete({
+     *   where: {
+     *     // ... filter to delete one Department
+     *   }
+     * })
+     * 
+     */
+    delete<T extends DepartmentDeleteArgs>(args: SelectSubset<T, DepartmentDeleteArgs<ExtArgs>>): Prisma__DepartmentClient<$Result.GetResult<Prisma.$DepartmentPayload<ExtArgs>, T, "delete", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Update one Department.
+     * @param {DepartmentUpdateArgs} args - Arguments to update one Department.
+     * @example
+     * // Update one Department
+     * const department = await prisma.department.update({
+     *   where: {
+     *     // ... provide filter here
+     *   },
+     *   data: {
+     *     // ... provide data here
+     *   }
+     * })
+     * 
+     */
+    update<T extends DepartmentUpdateArgs>(args: SelectSubset<T, DepartmentUpdateArgs<ExtArgs>>): Prisma__DepartmentClient<$Result.GetResult<Prisma.$DepartmentPayload<ExtArgs>, T, "update", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Delete zero or more Departments.
+     * @param {DepartmentDeleteManyArgs} args - Arguments to filter Departments to delete.
+     * @example
+     * // Delete a few Departments
+     * const { count } = await prisma.department.deleteMany({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     * 
+     */
+    deleteMany<T extends DepartmentDeleteManyArgs>(args?: SelectSubset<T, DepartmentDeleteManyArgs<ExtArgs>>): Prisma.PrismaPromise<BatchPayload>
+
+    /**
+     * Update zero or more Departments.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {DepartmentUpdateManyArgs} args - Arguments to update one or more rows.
+     * @example
+     * // Update many Departments
+     * const department = await prisma.department.updateMany({
+     *   where: {
+     *     // ... provide filter here
+     *   },
+     *   data: {
+     *     // ... provide data here
+     *   }
+     * })
+     * 
+     */
+    updateMany<T extends DepartmentUpdateManyArgs>(args: SelectSubset<T, DepartmentUpdateManyArgs<ExtArgs>>): Prisma.PrismaPromise<BatchPayload>
+
+    /**
+     * Update zero or more Departments and returns the data updated in the database.
+     * @param {DepartmentUpdateManyAndReturnArgs} args - Arguments to update many Departments.
+     * @example
+     * // Update many Departments
+     * const department = await prisma.department.updateManyAndReturn({
+     *   where: {
+     *     // ... provide filter here
+     *   },
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     * 
+     * // Update zero or more Departments and only return the `id`
+     * const departmentWithIdOnly = await prisma.department.updateManyAndReturn({
+     *   select: { id: true },
+     *   where: {
+     *     // ... provide filter here
+     *   },
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * 
+     */
+    updateManyAndReturn<T extends DepartmentUpdateManyAndReturnArgs>(args: SelectSubset<T, DepartmentUpdateManyAndReturnArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$DepartmentPayload<ExtArgs>, T, "updateManyAndReturn", GlobalOmitOptions>>
+
+    /**
+     * Create or update one Department.
+     * @param {DepartmentUpsertArgs} args - Arguments to update or create a Department.
+     * @example
+     * // Update or create a Department
+     * const department = await prisma.department.upsert({
+     *   create: {
+     *     // ... data to create a Department
+     *   },
+     *   update: {
+     *     // ... in case it already exists, update
+     *   },
+     *   where: {
+     *     // ... the filter for the Department we want to update
+     *   }
+     * })
+     */
+    upsert<T extends DepartmentUpsertArgs>(args: SelectSubset<T, DepartmentUpsertArgs<ExtArgs>>): Prisma__DepartmentClient<$Result.GetResult<Prisma.$DepartmentPayload<ExtArgs>, T, "upsert", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+
+    /**
+     * Count the number of Departments.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {DepartmentCountArgs} args - Arguments to filter Departments to count.
+     * @example
+     * // Count the number of Departments
+     * const count = await prisma.department.count({
+     *   where: {
+     *     // ... the filter for the Departments we want to count
+     *   }
+     * })
+    **/
+    count<T extends DepartmentCountArgs>(
+      args?: Subset<T, DepartmentCountArgs>,
+    ): Prisma.PrismaPromise<
+      T extends $Utils.Record<'select', any>
+        ? T['select'] extends true
+          ? number
+          : GetScalarType<T['select'], DepartmentCountAggregateOutputType>
+        : number
+    >
+
+    /**
+     * Allows you to perform aggregations operations on a Department.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {DepartmentAggregateArgs} args - Select which aggregations you would like to apply and on what fields.
+     * @example
+     * // Ordered by age ascending
+     * // Where email contains prisma.io
+     * // Limited to the 10 users
+     * const aggregations = await prisma.user.aggregate({
+     *   _avg: {
+     *     age: true,
+     *   },
+     *   where: {
+     *     email: {
+     *       contains: "prisma.io",
+     *     },
+     *   },
+     *   orderBy: {
+     *     age: "asc",
+     *   },
+     *   take: 10,
+     * })
+    **/
+    aggregate<T extends DepartmentAggregateArgs>(args: Subset<T, DepartmentAggregateArgs>): Prisma.PrismaPromise<GetDepartmentAggregateType<T>>
+
+    /**
+     * Group by Department.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {DepartmentGroupByArgs} args - Group by arguments.
+     * @example
+     * // Group by city, order by createdAt, get count
+     * const result = await prisma.user.groupBy({
+     *   by: ['city', 'createdAt'],
+     *   orderBy: {
+     *     createdAt: true
+     *   },
+     *   _count: {
+     *     _all: true
+     *   },
+     * })
+     * 
+    **/
+    groupBy<
+      T extends DepartmentGroupByArgs,
+      HasSelectOrTake extends Or<
+        Extends<'skip', Keys<T>>,
+        Extends<'take', Keys<T>>
+      >,
+      OrderByArg extends True extends HasSelectOrTake
+        ? { orderBy: DepartmentGroupByArgs['orderBy'] }
+        : { orderBy?: DepartmentGroupByArgs['orderBy'] },
+      OrderFields extends ExcludeUnderscoreKeys<Keys<MaybeTupleToUnion<T['orderBy']>>>,
+      ByFields extends MaybeTupleToUnion<T['by']>,
+      ByValid extends Has<ByFields, OrderFields>,
+      HavingFields extends GetHavingFields<T['having']>,
+      HavingValid extends Has<ByFields, HavingFields>,
+      ByEmpty extends T['by'] extends never[] ? True : False,
+      InputErrors extends ByEmpty extends True
+      ? `Error: "by" must not be empty.`
+      : HavingValid extends False
+      ? {
+          [P in HavingFields]: P extends ByFields
+            ? never
+            : P extends string
+            ? `Error: Field "${P}" used in "having" needs to be provided in "by".`
+            : [
+                Error,
+                'Field ',
+                P,
+                ` in "having" needs to be provided in "by"`,
+              ]
+        }[HavingFields]
+      : 'take' extends Keys<T>
+      ? 'orderBy' extends Keys<T>
+        ? ByValid extends True
+          ? {}
+          : {
+              [P in OrderFields]: P extends ByFields
+                ? never
+                : `Error: Field "${P}" in "orderBy" needs to be provided in "by"`
+            }[OrderFields]
+        : 'Error: If you provide "take", you also need to provide "orderBy"'
+      : 'skip' extends Keys<T>
+      ? 'orderBy' extends Keys<T>
+        ? ByValid extends True
+          ? {}
+          : {
+              [P in OrderFields]: P extends ByFields
+                ? never
+                : `Error: Field "${P}" in "orderBy" needs to be provided in "by"`
+            }[OrderFields]
+        : 'Error: If you provide "skip", you also need to provide "orderBy"'
+      : ByValid extends True
+      ? {}
+      : {
+          [P in OrderFields]: P extends ByFields
+            ? never
+            : `Error: Field "${P}" in "orderBy" needs to be provided in "by"`
+        }[OrderFields]
+    >(args: SubsetIntersection<T, DepartmentGroupByArgs, OrderByArg> & InputErrors): {} extends InputErrors ? GetDepartmentGroupByPayload<T> : Prisma.PrismaPromise<InputErrors>
+  /**
+   * Fields of the Department model
+   */
+  readonly fields: DepartmentFieldRefs;
+  }
+
+  /**
+   * The delegate class that acts as a "Promise-like" for Department.
+   * Why is this prefixed with `Prisma__`?
+   * Because we want to prevent naming conflicts as mentioned in
+   * https://github.com/prisma/prisma-client-js/issues/707
+   */
+  export interface Prisma__DepartmentClient<T, Null = never, ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs, GlobalOmitOptions = {}> extends Prisma.PrismaPromise<T> {
+    readonly [Symbol.toStringTag]: "PrismaPromise"
+    tenant<T extends TenantDefaultArgs<ExtArgs> = {}>(args?: Subset<T, TenantDefaultArgs<ExtArgs>>): Prisma__TenantClient<$Result.GetResult<Prisma.$TenantPayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions> | Null, Null, ExtArgs, GlobalOmitOptions>
+    users<T extends Department$usersArgs<ExtArgs> = {}>(args?: Subset<T, Department$usersArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$UserDepartmentPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
+    userProjects<T extends Department$userProjectsArgs<ExtArgs> = {}>(args?: Subset<T, Department$userProjectsArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$UserProjectPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
+    /**
+     * Attaches callbacks for the resolution and/or rejection of the Promise.
+     * @param onfulfilled The callback to execute when the Promise is resolved.
+     * @param onrejected The callback to execute when the Promise is rejected.
+     * @returns A Promise for the completion of which ever callback is executed.
+     */
+    then<TResult1 = T, TResult2 = never>(onfulfilled?: ((value: T) => TResult1 | PromiseLike<TResult1>) | undefined | null, onrejected?: ((reason: any) => TResult2 | PromiseLike<TResult2>) | undefined | null): $Utils.JsPromise<TResult1 | TResult2>
+    /**
+     * Attaches a callback for only the rejection of the Promise.
+     * @param onrejected The callback to execute when the Promise is rejected.
+     * @returns A Promise for the completion of the callback.
+     */
+    catch<TResult = never>(onrejected?: ((reason: any) => TResult | PromiseLike<TResult>) | undefined | null): $Utils.JsPromise<T | TResult>
+    /**
+     * Attaches a callback that is invoked when the Promise is settled (fulfilled or rejected). The
+     * resolved value cannot be modified from the callback.
+     * @param onfinally The callback to execute when the Promise is settled (fulfilled or rejected).
+     * @returns A Promise for the completion of the callback.
+     */
+    finally(onfinally?: (() => void) | undefined | null): $Utils.JsPromise<T>
+  }
+
+
+
+
+  /**
+   * Fields of the Department model
+   */
+  interface DepartmentFieldRefs {
+    readonly id: FieldRef<"Department", 'String'>
+    readonly tenantId: FieldRef<"Department", 'String'>
+    readonly name: FieldRef<"Department", 'String'>
+    readonly description: FieldRef<"Department", 'String'>
+    readonly active: FieldRef<"Department", 'Boolean'>
+    readonly hourlyRate: FieldRef<"Department", 'Float'>
+    readonly deletedAt: FieldRef<"Department", 'DateTime'>
+    readonly createdAt: FieldRef<"Department", 'DateTime'>
+    readonly updatedAt: FieldRef<"Department", 'DateTime'>
+  }
+    
+
+  // Custom InputTypes
+  /**
+   * Department findUnique
+   */
+  export type DepartmentFindUniqueArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the Department
+     */
+    select?: DepartmentSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the Department
+     */
+    omit?: DepartmentOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: DepartmentInclude<ExtArgs> | null
+    /**
+     * Filter, which Department to fetch.
+     */
+    where: DepartmentWhereUniqueInput
+  }
+
+  /**
+   * Department findUniqueOrThrow
+   */
+  export type DepartmentFindUniqueOrThrowArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the Department
+     */
+    select?: DepartmentSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the Department
+     */
+    omit?: DepartmentOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: DepartmentInclude<ExtArgs> | null
+    /**
+     * Filter, which Department to fetch.
+     */
+    where: DepartmentWhereUniqueInput
+  }
+
+  /**
+   * Department findFirst
+   */
+  export type DepartmentFindFirstArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the Department
+     */
+    select?: DepartmentSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the Department
+     */
+    omit?: DepartmentOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: DepartmentInclude<ExtArgs> | null
+    /**
+     * Filter, which Department to fetch.
+     */
+    where?: DepartmentWhereInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+     * 
+     * Determine the order of Departments to fetch.
+     */
+    orderBy?: DepartmentOrderByWithRelationInput | DepartmentOrderByWithRelationInput[]
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+     * 
+     * Sets the position for searching for Departments.
+     */
+    cursor?: DepartmentWhereUniqueInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Take `±n` Departments from the position of the cursor.
+     */
+    take?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Skip the first `n` Departments.
+     */
+    skip?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/distinct Distinct Docs}
+     * 
+     * Filter by unique combinations of Departments.
+     */
+    distinct?: DepartmentScalarFieldEnum | DepartmentScalarFieldEnum[]
+  }
+
+  /**
+   * Department findFirstOrThrow
+   */
+  export type DepartmentFindFirstOrThrowArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the Department
+     */
+    select?: DepartmentSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the Department
+     */
+    omit?: DepartmentOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: DepartmentInclude<ExtArgs> | null
+    /**
+     * Filter, which Department to fetch.
+     */
+    where?: DepartmentWhereInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+     * 
+     * Determine the order of Departments to fetch.
+     */
+    orderBy?: DepartmentOrderByWithRelationInput | DepartmentOrderByWithRelationInput[]
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+     * 
+     * Sets the position for searching for Departments.
+     */
+    cursor?: DepartmentWhereUniqueInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Take `±n` Departments from the position of the cursor.
+     */
+    take?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Skip the first `n` Departments.
+     */
+    skip?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/distinct Distinct Docs}
+     * 
+     * Filter by unique combinations of Departments.
+     */
+    distinct?: DepartmentScalarFieldEnum | DepartmentScalarFieldEnum[]
+  }
+
+  /**
+   * Department findMany
+   */
+  export type DepartmentFindManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the Department
+     */
+    select?: DepartmentSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the Department
+     */
+    omit?: DepartmentOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: DepartmentInclude<ExtArgs> | null
+    /**
+     * Filter, which Departments to fetch.
+     */
+    where?: DepartmentWhereInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+     * 
+     * Determine the order of Departments to fetch.
+     */
+    orderBy?: DepartmentOrderByWithRelationInput | DepartmentOrderByWithRelationInput[]
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+     * 
+     * Sets the position for listing Departments.
+     */
+    cursor?: DepartmentWhereUniqueInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Take `±n` Departments from the position of the cursor.
+     */
+    take?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Skip the first `n` Departments.
+     */
+    skip?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/distinct Distinct Docs}
+     * 
+     * Filter by unique combinations of Departments.
+     */
+    distinct?: DepartmentScalarFieldEnum | DepartmentScalarFieldEnum[]
+  }
+
+  /**
+   * Department create
+   */
+  export type DepartmentCreateArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the Department
+     */
+    select?: DepartmentSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the Department
+     */
+    omit?: DepartmentOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: DepartmentInclude<ExtArgs> | null
+    /**
+     * The data needed to create a Department.
+     */
+    data: XOR<DepartmentCreateInput, DepartmentUncheckedCreateInput>
+  }
+
+  /**
+   * Department createMany
+   */
+  export type DepartmentCreateManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * The data used to create many Departments.
+     */
+    data: DepartmentCreateManyInput | DepartmentCreateManyInput[]
+    skipDuplicates?: boolean
+  }
+
+  /**
+   * Department createManyAndReturn
+   */
+  export type DepartmentCreateManyAndReturnArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the Department
+     */
+    select?: DepartmentSelectCreateManyAndReturn<ExtArgs> | null
+    /**
+     * Omit specific fields from the Department
+     */
+    omit?: DepartmentOmit<ExtArgs> | null
+    /**
+     * The data used to create many Departments.
+     */
+    data: DepartmentCreateManyInput | DepartmentCreateManyInput[]
+    skipDuplicates?: boolean
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: DepartmentIncludeCreateManyAndReturn<ExtArgs> | null
+  }
+
+  /**
+   * Department update
+   */
+  export type DepartmentUpdateArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the Department
+     */
+    select?: DepartmentSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the Department
+     */
+    omit?: DepartmentOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: DepartmentInclude<ExtArgs> | null
+    /**
+     * The data needed to update a Department.
+     */
+    data: XOR<DepartmentUpdateInput, DepartmentUncheckedUpdateInput>
+    /**
+     * Choose, which Department to update.
+     */
+    where: DepartmentWhereUniqueInput
+  }
+
+  /**
+   * Department updateMany
+   */
+  export type DepartmentUpdateManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * The data used to update Departments.
+     */
+    data: XOR<DepartmentUpdateManyMutationInput, DepartmentUncheckedUpdateManyInput>
+    /**
+     * Filter which Departments to update
+     */
+    where?: DepartmentWhereInput
+    /**
+     * Limit how many Departments to update.
+     */
+    limit?: number
+  }
+
+  /**
+   * Department updateManyAndReturn
+   */
+  export type DepartmentUpdateManyAndReturnArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the Department
+     */
+    select?: DepartmentSelectUpdateManyAndReturn<ExtArgs> | null
+    /**
+     * Omit specific fields from the Department
+     */
+    omit?: DepartmentOmit<ExtArgs> | null
+    /**
+     * The data used to update Departments.
+     */
+    data: XOR<DepartmentUpdateManyMutationInput, DepartmentUncheckedUpdateManyInput>
+    /**
+     * Filter which Departments to update
+     */
+    where?: DepartmentWhereInput
+    /**
+     * Limit how many Departments to update.
+     */
+    limit?: number
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: DepartmentIncludeUpdateManyAndReturn<ExtArgs> | null
+  }
+
+  /**
+   * Department upsert
+   */
+  export type DepartmentUpsertArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the Department
+     */
+    select?: DepartmentSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the Department
+     */
+    omit?: DepartmentOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: DepartmentInclude<ExtArgs> | null
+    /**
+     * The filter to search for the Department to update in case it exists.
+     */
+    where: DepartmentWhereUniqueInput
+    /**
+     * In case the Department found by the `where` argument doesn't exist, create a new Department with this data.
+     */
+    create: XOR<DepartmentCreateInput, DepartmentUncheckedCreateInput>
+    /**
+     * In case the Department was found with the provided `where` argument, update it with this data.
+     */
+    update: XOR<DepartmentUpdateInput, DepartmentUncheckedUpdateInput>
+  }
+
+  /**
+   * Department delete
+   */
+  export type DepartmentDeleteArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the Department
+     */
+    select?: DepartmentSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the Department
+     */
+    omit?: DepartmentOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: DepartmentInclude<ExtArgs> | null
+    /**
+     * Filter which Department to delete.
+     */
+    where: DepartmentWhereUniqueInput
+  }
+
+  /**
+   * Department deleteMany
+   */
+  export type DepartmentDeleteManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Filter which Departments to delete
+     */
+    where?: DepartmentWhereInput
+    /**
+     * Limit how many Departments to delete.
+     */
+    limit?: number
+  }
+
+  /**
+   * Department.users
+   */
+  export type Department$usersArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the UserDepartment
+     */
+    select?: UserDepartmentSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the UserDepartment
+     */
+    omit?: UserDepartmentOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: UserDepartmentInclude<ExtArgs> | null
+    where?: UserDepartmentWhereInput
+    orderBy?: UserDepartmentOrderByWithRelationInput | UserDepartmentOrderByWithRelationInput[]
+    cursor?: UserDepartmentWhereUniqueInput
+    take?: number
+    skip?: number
+    distinct?: UserDepartmentScalarFieldEnum | UserDepartmentScalarFieldEnum[]
+  }
+
+  /**
+   * Department.userProjects
+   */
+  export type Department$userProjectsArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the UserProject
+     */
+    select?: UserProjectSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the UserProject
+     */
+    omit?: UserProjectOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: UserProjectInclude<ExtArgs> | null
+    where?: UserProjectWhereInput
+    orderBy?: UserProjectOrderByWithRelationInput | UserProjectOrderByWithRelationInput[]
+    cursor?: UserProjectWhereUniqueInput
+    take?: number
+    skip?: number
+    distinct?: UserProjectScalarFieldEnum | UserProjectScalarFieldEnum[]
+  }
+
+  /**
+   * Department without action
+   */
+  export type DepartmentDefaultArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the Department
+     */
+    select?: DepartmentSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the Department
+     */
+    omit?: DepartmentOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: DepartmentInclude<ExtArgs> | null
+  }
+
+
+  /**
+   * Model UserDepartment
+   */
+
+  export type AggregateUserDepartment = {
+    _count: UserDepartmentCountAggregateOutputType | null
+    _min: UserDepartmentMinAggregateOutputType | null
+    _max: UserDepartmentMaxAggregateOutputType | null
+  }
+
+  export type UserDepartmentMinAggregateOutputType = {
+    id: string | null
+    userId: string | null
+    departmentId: string | null
+  }
+
+  export type UserDepartmentMaxAggregateOutputType = {
+    id: string | null
+    userId: string | null
+    departmentId: string | null
+  }
+
+  export type UserDepartmentCountAggregateOutputType = {
+    id: number
+    userId: number
+    departmentId: number
+    _all: number
+  }
+
+
+  export type UserDepartmentMinAggregateInputType = {
+    id?: true
+    userId?: true
+    departmentId?: true
+  }
+
+  export type UserDepartmentMaxAggregateInputType = {
+    id?: true
+    userId?: true
+    departmentId?: true
+  }
+
+  export type UserDepartmentCountAggregateInputType = {
+    id?: true
+    userId?: true
+    departmentId?: true
+    _all?: true
+  }
+
+  export type UserDepartmentAggregateArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Filter which UserDepartment to aggregate.
+     */
+    where?: UserDepartmentWhereInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+     * 
+     * Determine the order of UserDepartments to fetch.
+     */
+    orderBy?: UserDepartmentOrderByWithRelationInput | UserDepartmentOrderByWithRelationInput[]
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+     * 
+     * Sets the start position
+     */
+    cursor?: UserDepartmentWhereUniqueInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Take `±n` UserDepartments from the position of the cursor.
+     */
+    take?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Skip the first `n` UserDepartments.
+     */
+    skip?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Count returned UserDepartments
+    **/
+    _count?: true | UserDepartmentCountAggregateInputType
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Select which fields to find the minimum value
+    **/
+    _min?: UserDepartmentMinAggregateInputType
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Select which fields to find the maximum value
+    **/
+    _max?: UserDepartmentMaxAggregateInputType
+  }
+
+  export type GetUserDepartmentAggregateType<T extends UserDepartmentAggregateArgs> = {
+        [P in keyof T & keyof AggregateUserDepartment]: P extends '_count' | 'count'
+      ? T[P] extends true
+        ? number
+        : GetScalarType<T[P], AggregateUserDepartment[P]>
+      : GetScalarType<T[P], AggregateUserDepartment[P]>
+  }
+
+
+
+
+  export type UserDepartmentGroupByArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    where?: UserDepartmentWhereInput
+    orderBy?: UserDepartmentOrderByWithAggregationInput | UserDepartmentOrderByWithAggregationInput[]
+    by: UserDepartmentScalarFieldEnum[] | UserDepartmentScalarFieldEnum
+    having?: UserDepartmentScalarWhereWithAggregatesInput
+    take?: number
+    skip?: number
+    _count?: UserDepartmentCountAggregateInputType | true
+    _min?: UserDepartmentMinAggregateInputType
+    _max?: UserDepartmentMaxAggregateInputType
+  }
+
+  export type UserDepartmentGroupByOutputType = {
+    id: string
+    userId: string
+    departmentId: string
+    _count: UserDepartmentCountAggregateOutputType | null
+    _min: UserDepartmentMinAggregateOutputType | null
+    _max: UserDepartmentMaxAggregateOutputType | null
+  }
+
+  type GetUserDepartmentGroupByPayload<T extends UserDepartmentGroupByArgs> = Prisma.PrismaPromise<
+    Array<
+      PickEnumerable<UserDepartmentGroupByOutputType, T['by']> &
+        {
+          [P in ((keyof T) & (keyof UserDepartmentGroupByOutputType))]: P extends '_count'
+            ? T[P] extends boolean
+              ? number
+              : GetScalarType<T[P], UserDepartmentGroupByOutputType[P]>
+            : GetScalarType<T[P], UserDepartmentGroupByOutputType[P]>
+        }
+      >
+    >
+
+
+  export type UserDepartmentSelect<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetSelect<{
+    id?: boolean
+    userId?: boolean
+    departmentId?: boolean
+    user?: boolean | UserDefaultArgs<ExtArgs>
+    department?: boolean | DepartmentDefaultArgs<ExtArgs>
+  }, ExtArgs["result"]["userDepartment"]>
+
+  export type UserDepartmentSelectCreateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetSelect<{
+    id?: boolean
+    userId?: boolean
+    departmentId?: boolean
+    user?: boolean | UserDefaultArgs<ExtArgs>
+    department?: boolean | DepartmentDefaultArgs<ExtArgs>
+  }, ExtArgs["result"]["userDepartment"]>
+
+  export type UserDepartmentSelectUpdateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetSelect<{
+    id?: boolean
+    userId?: boolean
+    departmentId?: boolean
+    user?: boolean | UserDefaultArgs<ExtArgs>
+    department?: boolean | DepartmentDefaultArgs<ExtArgs>
+  }, ExtArgs["result"]["userDepartment"]>
+
+  export type UserDepartmentSelectScalar = {
+    id?: boolean
+    userId?: boolean
+    departmentId?: boolean
+  }
+
+  export type UserDepartmentOmit<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetOmit<"id" | "userId" | "departmentId", ExtArgs["result"]["userDepartment"]>
+  export type UserDepartmentInclude<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    user?: boolean | UserDefaultArgs<ExtArgs>
+    department?: boolean | DepartmentDefaultArgs<ExtArgs>
+  }
+  export type UserDepartmentIncludeCreateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    user?: boolean | UserDefaultArgs<ExtArgs>
+    department?: boolean | DepartmentDefaultArgs<ExtArgs>
+  }
+  export type UserDepartmentIncludeUpdateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    user?: boolean | UserDefaultArgs<ExtArgs>
+    department?: boolean | DepartmentDefaultArgs<ExtArgs>
+  }
+
+  export type $UserDepartmentPayload<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    name: "UserDepartment"
+    objects: {
+      user: Prisma.$UserPayload<ExtArgs>
+      department: Prisma.$DepartmentPayload<ExtArgs>
+    }
+    scalars: $Extensions.GetPayloadResult<{
+      id: string
+      userId: string
+      departmentId: string
+    }, ExtArgs["result"]["userDepartment"]>
+    composites: {}
+  }
+
+  type UserDepartmentGetPayload<S extends boolean | null | undefined | UserDepartmentDefaultArgs> = $Result.GetResult<Prisma.$UserDepartmentPayload, S>
+
+  type UserDepartmentCountArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> =
+    Omit<UserDepartmentFindManyArgs, 'select' | 'include' | 'distinct' | 'omit'> & {
+      select?: UserDepartmentCountAggregateInputType | true
+    }
+
+  export interface UserDepartmentDelegate<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs, GlobalOmitOptions = {}> {
+    [K: symbol]: { types: Prisma.TypeMap<ExtArgs>['model']['UserDepartment'], meta: { name: 'UserDepartment' } }
+    /**
+     * Find zero or one UserDepartment that matches the filter.
+     * @param {UserDepartmentFindUniqueArgs} args - Arguments to find a UserDepartment
+     * @example
+     * // Get one UserDepartment
+     * const userDepartment = await prisma.userDepartment.findUnique({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     */
+    findUnique<T extends UserDepartmentFindUniqueArgs>(args: SelectSubset<T, UserDepartmentFindUniqueArgs<ExtArgs>>): Prisma__UserDepartmentClient<$Result.GetResult<Prisma.$UserDepartmentPayload<ExtArgs>, T, "findUnique", GlobalOmitOptions> | null, null, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Find one UserDepartment that matches the filter or throw an error with `error.code='P2025'`
+     * if no matches were found.
+     * @param {UserDepartmentFindUniqueOrThrowArgs} args - Arguments to find a UserDepartment
+     * @example
+     * // Get one UserDepartment
+     * const userDepartment = await prisma.userDepartment.findUniqueOrThrow({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     */
+    findUniqueOrThrow<T extends UserDepartmentFindUniqueOrThrowArgs>(args: SelectSubset<T, UserDepartmentFindUniqueOrThrowArgs<ExtArgs>>): Prisma__UserDepartmentClient<$Result.GetResult<Prisma.$UserDepartmentPayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Find the first UserDepartment that matches the filter.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {UserDepartmentFindFirstArgs} args - Arguments to find a UserDepartment
+     * @example
+     * // Get one UserDepartment
+     * const userDepartment = await prisma.userDepartment.findFirst({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     */
+    findFirst<T extends UserDepartmentFindFirstArgs>(args?: SelectSubset<T, UserDepartmentFindFirstArgs<ExtArgs>>): Prisma__UserDepartmentClient<$Result.GetResult<Prisma.$UserDepartmentPayload<ExtArgs>, T, "findFirst", GlobalOmitOptions> | null, null, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Find the first UserDepartment that matches the filter or
+     * throw `PrismaKnownClientError` with `P2025` code if no matches were found.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {UserDepartmentFindFirstOrThrowArgs} args - Arguments to find a UserDepartment
+     * @example
+     * // Get one UserDepartment
+     * const userDepartment = await prisma.userDepartment.findFirstOrThrow({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     */
+    findFirstOrThrow<T extends UserDepartmentFindFirstOrThrowArgs>(args?: SelectSubset<T, UserDepartmentFindFirstOrThrowArgs<ExtArgs>>): Prisma__UserDepartmentClient<$Result.GetResult<Prisma.$UserDepartmentPayload<ExtArgs>, T, "findFirstOrThrow", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Find zero or more UserDepartments that matches the filter.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {UserDepartmentFindManyArgs} args - Arguments to filter and select certain fields only.
+     * @example
+     * // Get all UserDepartments
+     * const userDepartments = await prisma.userDepartment.findMany()
+     * 
+     * // Get first 10 UserDepartments
+     * const userDepartments = await prisma.userDepartment.findMany({ take: 10 })
+     * 
+     * // Only select the `id`
+     * const userDepartmentWithIdOnly = await prisma.userDepartment.findMany({ select: { id: true } })
+     * 
+     */
+    findMany<T extends UserDepartmentFindManyArgs>(args?: SelectSubset<T, UserDepartmentFindManyArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$UserDepartmentPayload<ExtArgs>, T, "findMany", GlobalOmitOptions>>
+
+    /**
+     * Create a UserDepartment.
+     * @param {UserDepartmentCreateArgs} args - Arguments to create a UserDepartment.
+     * @example
+     * // Create one UserDepartment
+     * const UserDepartment = await prisma.userDepartment.create({
+     *   data: {
+     *     // ... data to create a UserDepartment
+     *   }
+     * })
+     * 
+     */
+    create<T extends UserDepartmentCreateArgs>(args: SelectSubset<T, UserDepartmentCreateArgs<ExtArgs>>): Prisma__UserDepartmentClient<$Result.GetResult<Prisma.$UserDepartmentPayload<ExtArgs>, T, "create", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Create many UserDepartments.
+     * @param {UserDepartmentCreateManyArgs} args - Arguments to create many UserDepartments.
+     * @example
+     * // Create many UserDepartments
+     * const userDepartment = await prisma.userDepartment.createMany({
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     *     
+     */
+    createMany<T extends UserDepartmentCreateManyArgs>(args?: SelectSubset<T, UserDepartmentCreateManyArgs<ExtArgs>>): Prisma.PrismaPromise<BatchPayload>
+
+    /**
+     * Create many UserDepartments and returns the data saved in the database.
+     * @param {UserDepartmentCreateManyAndReturnArgs} args - Arguments to create many UserDepartments.
+     * @example
+     * // Create many UserDepartments
+     * const userDepartment = await prisma.userDepartment.createManyAndReturn({
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     * 
+     * // Create many UserDepartments and only return the `id`
+     * const userDepartmentWithIdOnly = await prisma.userDepartment.createManyAndReturn({
+     *   select: { id: true },
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * 
+     */
+    createManyAndReturn<T extends UserDepartmentCreateManyAndReturnArgs>(args?: SelectSubset<T, UserDepartmentCreateManyAndReturnArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$UserDepartmentPayload<ExtArgs>, T, "createManyAndReturn", GlobalOmitOptions>>
+
+    /**
+     * Delete a UserDepartment.
+     * @param {UserDepartmentDeleteArgs} args - Arguments to delete one UserDepartment.
+     * @example
+     * // Delete one UserDepartment
+     * const UserDepartment = await prisma.userDepartment.delete({
+     *   where: {
+     *     // ... filter to delete one UserDepartment
+     *   }
+     * })
+     * 
+     */
+    delete<T extends UserDepartmentDeleteArgs>(args: SelectSubset<T, UserDepartmentDeleteArgs<ExtArgs>>): Prisma__UserDepartmentClient<$Result.GetResult<Prisma.$UserDepartmentPayload<ExtArgs>, T, "delete", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Update one UserDepartment.
+     * @param {UserDepartmentUpdateArgs} args - Arguments to update one UserDepartment.
+     * @example
+     * // Update one UserDepartment
+     * const userDepartment = await prisma.userDepartment.update({
+     *   where: {
+     *     // ... provide filter here
+     *   },
+     *   data: {
+     *     // ... provide data here
+     *   }
+     * })
+     * 
+     */
+    update<T extends UserDepartmentUpdateArgs>(args: SelectSubset<T, UserDepartmentUpdateArgs<ExtArgs>>): Prisma__UserDepartmentClient<$Result.GetResult<Prisma.$UserDepartmentPayload<ExtArgs>, T, "update", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Delete zero or more UserDepartments.
+     * @param {UserDepartmentDeleteManyArgs} args - Arguments to filter UserDepartments to delete.
+     * @example
+     * // Delete a few UserDepartments
+     * const { count } = await prisma.userDepartment.deleteMany({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     * 
+     */
+    deleteMany<T extends UserDepartmentDeleteManyArgs>(args?: SelectSubset<T, UserDepartmentDeleteManyArgs<ExtArgs>>): Prisma.PrismaPromise<BatchPayload>
+
+    /**
+     * Update zero or more UserDepartments.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {UserDepartmentUpdateManyArgs} args - Arguments to update one or more rows.
+     * @example
+     * // Update many UserDepartments
+     * const userDepartment = await prisma.userDepartment.updateMany({
+     *   where: {
+     *     // ... provide filter here
+     *   },
+     *   data: {
+     *     // ... provide data here
+     *   }
+     * })
+     * 
+     */
+    updateMany<T extends UserDepartmentUpdateManyArgs>(args: SelectSubset<T, UserDepartmentUpdateManyArgs<ExtArgs>>): Prisma.PrismaPromise<BatchPayload>
+
+    /**
+     * Update zero or more UserDepartments and returns the data updated in the database.
+     * @param {UserDepartmentUpdateManyAndReturnArgs} args - Arguments to update many UserDepartments.
+     * @example
+     * // Update many UserDepartments
+     * const userDepartment = await prisma.userDepartment.updateManyAndReturn({
+     *   where: {
+     *     // ... provide filter here
+     *   },
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     * 
+     * // Update zero or more UserDepartments and only return the `id`
+     * const userDepartmentWithIdOnly = await prisma.userDepartment.updateManyAndReturn({
+     *   select: { id: true },
+     *   where: {
+     *     // ... provide filter here
+     *   },
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * 
+     */
+    updateManyAndReturn<T extends UserDepartmentUpdateManyAndReturnArgs>(args: SelectSubset<T, UserDepartmentUpdateManyAndReturnArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$UserDepartmentPayload<ExtArgs>, T, "updateManyAndReturn", GlobalOmitOptions>>
+
+    /**
+     * Create or update one UserDepartment.
+     * @param {UserDepartmentUpsertArgs} args - Arguments to update or create a UserDepartment.
+     * @example
+     * // Update or create a UserDepartment
+     * const userDepartment = await prisma.userDepartment.upsert({
+     *   create: {
+     *     // ... data to create a UserDepartment
+     *   },
+     *   update: {
+     *     // ... in case it already exists, update
+     *   },
+     *   where: {
+     *     // ... the filter for the UserDepartment we want to update
+     *   }
+     * })
+     */
+    upsert<T extends UserDepartmentUpsertArgs>(args: SelectSubset<T, UserDepartmentUpsertArgs<ExtArgs>>): Prisma__UserDepartmentClient<$Result.GetResult<Prisma.$UserDepartmentPayload<ExtArgs>, T, "upsert", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+
+    /**
+     * Count the number of UserDepartments.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {UserDepartmentCountArgs} args - Arguments to filter UserDepartments to count.
+     * @example
+     * // Count the number of UserDepartments
+     * const count = await prisma.userDepartment.count({
+     *   where: {
+     *     // ... the filter for the UserDepartments we want to count
+     *   }
+     * })
+    **/
+    count<T extends UserDepartmentCountArgs>(
+      args?: Subset<T, UserDepartmentCountArgs>,
+    ): Prisma.PrismaPromise<
+      T extends $Utils.Record<'select', any>
+        ? T['select'] extends true
+          ? number
+          : GetScalarType<T['select'], UserDepartmentCountAggregateOutputType>
+        : number
+    >
+
+    /**
+     * Allows you to perform aggregations operations on a UserDepartment.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {UserDepartmentAggregateArgs} args - Select which aggregations you would like to apply and on what fields.
+     * @example
+     * // Ordered by age ascending
+     * // Where email contains prisma.io
+     * // Limited to the 10 users
+     * const aggregations = await prisma.user.aggregate({
+     *   _avg: {
+     *     age: true,
+     *   },
+     *   where: {
+     *     email: {
+     *       contains: "prisma.io",
+     *     },
+     *   },
+     *   orderBy: {
+     *     age: "asc",
+     *   },
+     *   take: 10,
+     * })
+    **/
+    aggregate<T extends UserDepartmentAggregateArgs>(args: Subset<T, UserDepartmentAggregateArgs>): Prisma.PrismaPromise<GetUserDepartmentAggregateType<T>>
+
+    /**
+     * Group by UserDepartment.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {UserDepartmentGroupByArgs} args - Group by arguments.
+     * @example
+     * // Group by city, order by createdAt, get count
+     * const result = await prisma.user.groupBy({
+     *   by: ['city', 'createdAt'],
+     *   orderBy: {
+     *     createdAt: true
+     *   },
+     *   _count: {
+     *     _all: true
+     *   },
+     * })
+     * 
+    **/
+    groupBy<
+      T extends UserDepartmentGroupByArgs,
+      HasSelectOrTake extends Or<
+        Extends<'skip', Keys<T>>,
+        Extends<'take', Keys<T>>
+      >,
+      OrderByArg extends True extends HasSelectOrTake
+        ? { orderBy: UserDepartmentGroupByArgs['orderBy'] }
+        : { orderBy?: UserDepartmentGroupByArgs['orderBy'] },
+      OrderFields extends ExcludeUnderscoreKeys<Keys<MaybeTupleToUnion<T['orderBy']>>>,
+      ByFields extends MaybeTupleToUnion<T['by']>,
+      ByValid extends Has<ByFields, OrderFields>,
+      HavingFields extends GetHavingFields<T['having']>,
+      HavingValid extends Has<ByFields, HavingFields>,
+      ByEmpty extends T['by'] extends never[] ? True : False,
+      InputErrors extends ByEmpty extends True
+      ? `Error: "by" must not be empty.`
+      : HavingValid extends False
+      ? {
+          [P in HavingFields]: P extends ByFields
+            ? never
+            : P extends string
+            ? `Error: Field "${P}" used in "having" needs to be provided in "by".`
+            : [
+                Error,
+                'Field ',
+                P,
+                ` in "having" needs to be provided in "by"`,
+              ]
+        }[HavingFields]
+      : 'take' extends Keys<T>
+      ? 'orderBy' extends Keys<T>
+        ? ByValid extends True
+          ? {}
+          : {
+              [P in OrderFields]: P extends ByFields
+                ? never
+                : `Error: Field "${P}" in "orderBy" needs to be provided in "by"`
+            }[OrderFields]
+        : 'Error: If you provide "take", you also need to provide "orderBy"'
+      : 'skip' extends Keys<T>
+      ? 'orderBy' extends Keys<T>
+        ? ByValid extends True
+          ? {}
+          : {
+              [P in OrderFields]: P extends ByFields
+                ? never
+                : `Error: Field "${P}" in "orderBy" needs to be provided in "by"`
+            }[OrderFields]
+        : 'Error: If you provide "skip", you also need to provide "orderBy"'
+      : ByValid extends True
+      ? {}
+      : {
+          [P in OrderFields]: P extends ByFields
+            ? never
+            : `Error: Field "${P}" in "orderBy" needs to be provided in "by"`
+        }[OrderFields]
+    >(args: SubsetIntersection<T, UserDepartmentGroupByArgs, OrderByArg> & InputErrors): {} extends InputErrors ? GetUserDepartmentGroupByPayload<T> : Prisma.PrismaPromise<InputErrors>
+  /**
+   * Fields of the UserDepartment model
+   */
+  readonly fields: UserDepartmentFieldRefs;
+  }
+
+  /**
+   * The delegate class that acts as a "Promise-like" for UserDepartment.
+   * Why is this prefixed with `Prisma__`?
+   * Because we want to prevent naming conflicts as mentioned in
+   * https://github.com/prisma/prisma-client-js/issues/707
+   */
+  export interface Prisma__UserDepartmentClient<T, Null = never, ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs, GlobalOmitOptions = {}> extends Prisma.PrismaPromise<T> {
+    readonly [Symbol.toStringTag]: "PrismaPromise"
+    user<T extends UserDefaultArgs<ExtArgs> = {}>(args?: Subset<T, UserDefaultArgs<ExtArgs>>): Prisma__UserClient<$Result.GetResult<Prisma.$UserPayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions> | Null, Null, ExtArgs, GlobalOmitOptions>
+    department<T extends DepartmentDefaultArgs<ExtArgs> = {}>(args?: Subset<T, DepartmentDefaultArgs<ExtArgs>>): Prisma__DepartmentClient<$Result.GetResult<Prisma.$DepartmentPayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions> | Null, Null, ExtArgs, GlobalOmitOptions>
+    /**
+     * Attaches callbacks for the resolution and/or rejection of the Promise.
+     * @param onfulfilled The callback to execute when the Promise is resolved.
+     * @param onrejected The callback to execute when the Promise is rejected.
+     * @returns A Promise for the completion of which ever callback is executed.
+     */
+    then<TResult1 = T, TResult2 = never>(onfulfilled?: ((value: T) => TResult1 | PromiseLike<TResult1>) | undefined | null, onrejected?: ((reason: any) => TResult2 | PromiseLike<TResult2>) | undefined | null): $Utils.JsPromise<TResult1 | TResult2>
+    /**
+     * Attaches a callback for only the rejection of the Promise.
+     * @param onrejected The callback to execute when the Promise is rejected.
+     * @returns A Promise for the completion of the callback.
+     */
+    catch<TResult = never>(onrejected?: ((reason: any) => TResult | PromiseLike<TResult>) | undefined | null): $Utils.JsPromise<T | TResult>
+    /**
+     * Attaches a callback that is invoked when the Promise is settled (fulfilled or rejected). The
+     * resolved value cannot be modified from the callback.
+     * @param onfinally The callback to execute when the Promise is settled (fulfilled or rejected).
+     * @returns A Promise for the completion of the callback.
+     */
+    finally(onfinally?: (() => void) | undefined | null): $Utils.JsPromise<T>
+  }
+
+
+
+
+  /**
+   * Fields of the UserDepartment model
+   */
+  interface UserDepartmentFieldRefs {
+    readonly id: FieldRef<"UserDepartment", 'String'>
+    readonly userId: FieldRef<"UserDepartment", 'String'>
+    readonly departmentId: FieldRef<"UserDepartment", 'String'>
+  }
+    
+
+  // Custom InputTypes
+  /**
+   * UserDepartment findUnique
+   */
+  export type UserDepartmentFindUniqueArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the UserDepartment
+     */
+    select?: UserDepartmentSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the UserDepartment
+     */
+    omit?: UserDepartmentOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: UserDepartmentInclude<ExtArgs> | null
+    /**
+     * Filter, which UserDepartment to fetch.
+     */
+    where: UserDepartmentWhereUniqueInput
+  }
+
+  /**
+   * UserDepartment findUniqueOrThrow
+   */
+  export type UserDepartmentFindUniqueOrThrowArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the UserDepartment
+     */
+    select?: UserDepartmentSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the UserDepartment
+     */
+    omit?: UserDepartmentOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: UserDepartmentInclude<ExtArgs> | null
+    /**
+     * Filter, which UserDepartment to fetch.
+     */
+    where: UserDepartmentWhereUniqueInput
+  }
+
+  /**
+   * UserDepartment findFirst
+   */
+  export type UserDepartmentFindFirstArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the UserDepartment
+     */
+    select?: UserDepartmentSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the UserDepartment
+     */
+    omit?: UserDepartmentOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: UserDepartmentInclude<ExtArgs> | null
+    /**
+     * Filter, which UserDepartment to fetch.
+     */
+    where?: UserDepartmentWhereInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+     * 
+     * Determine the order of UserDepartments to fetch.
+     */
+    orderBy?: UserDepartmentOrderByWithRelationInput | UserDepartmentOrderByWithRelationInput[]
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+     * 
+     * Sets the position for searching for UserDepartments.
+     */
+    cursor?: UserDepartmentWhereUniqueInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Take `±n` UserDepartments from the position of the cursor.
+     */
+    take?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Skip the first `n` UserDepartments.
+     */
+    skip?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/distinct Distinct Docs}
+     * 
+     * Filter by unique combinations of UserDepartments.
+     */
+    distinct?: UserDepartmentScalarFieldEnum | UserDepartmentScalarFieldEnum[]
+  }
+
+  /**
+   * UserDepartment findFirstOrThrow
+   */
+  export type UserDepartmentFindFirstOrThrowArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the UserDepartment
+     */
+    select?: UserDepartmentSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the UserDepartment
+     */
+    omit?: UserDepartmentOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: UserDepartmentInclude<ExtArgs> | null
+    /**
+     * Filter, which UserDepartment to fetch.
+     */
+    where?: UserDepartmentWhereInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+     * 
+     * Determine the order of UserDepartments to fetch.
+     */
+    orderBy?: UserDepartmentOrderByWithRelationInput | UserDepartmentOrderByWithRelationInput[]
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+     * 
+     * Sets the position for searching for UserDepartments.
+     */
+    cursor?: UserDepartmentWhereUniqueInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Take `±n` UserDepartments from the position of the cursor.
+     */
+    take?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Skip the first `n` UserDepartments.
+     */
+    skip?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/distinct Distinct Docs}
+     * 
+     * Filter by unique combinations of UserDepartments.
+     */
+    distinct?: UserDepartmentScalarFieldEnum | UserDepartmentScalarFieldEnum[]
+  }
+
+  /**
+   * UserDepartment findMany
+   */
+  export type UserDepartmentFindManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the UserDepartment
+     */
+    select?: UserDepartmentSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the UserDepartment
+     */
+    omit?: UserDepartmentOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: UserDepartmentInclude<ExtArgs> | null
+    /**
+     * Filter, which UserDepartments to fetch.
+     */
+    where?: UserDepartmentWhereInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+     * 
+     * Determine the order of UserDepartments to fetch.
+     */
+    orderBy?: UserDepartmentOrderByWithRelationInput | UserDepartmentOrderByWithRelationInput[]
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+     * 
+     * Sets the position for listing UserDepartments.
+     */
+    cursor?: UserDepartmentWhereUniqueInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Take `±n` UserDepartments from the position of the cursor.
+     */
+    take?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Skip the first `n` UserDepartments.
+     */
+    skip?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/distinct Distinct Docs}
+     * 
+     * Filter by unique combinations of UserDepartments.
+     */
+    distinct?: UserDepartmentScalarFieldEnum | UserDepartmentScalarFieldEnum[]
+  }
+
+  /**
+   * UserDepartment create
+   */
+  export type UserDepartmentCreateArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the UserDepartment
+     */
+    select?: UserDepartmentSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the UserDepartment
+     */
+    omit?: UserDepartmentOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: UserDepartmentInclude<ExtArgs> | null
+    /**
+     * The data needed to create a UserDepartment.
+     */
+    data: XOR<UserDepartmentCreateInput, UserDepartmentUncheckedCreateInput>
+  }
+
+  /**
+   * UserDepartment createMany
+   */
+  export type UserDepartmentCreateManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * The data used to create many UserDepartments.
+     */
+    data: UserDepartmentCreateManyInput | UserDepartmentCreateManyInput[]
+    skipDuplicates?: boolean
+  }
+
+  /**
+   * UserDepartment createManyAndReturn
+   */
+  export type UserDepartmentCreateManyAndReturnArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the UserDepartment
+     */
+    select?: UserDepartmentSelectCreateManyAndReturn<ExtArgs> | null
+    /**
+     * Omit specific fields from the UserDepartment
+     */
+    omit?: UserDepartmentOmit<ExtArgs> | null
+    /**
+     * The data used to create many UserDepartments.
+     */
+    data: UserDepartmentCreateManyInput | UserDepartmentCreateManyInput[]
+    skipDuplicates?: boolean
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: UserDepartmentIncludeCreateManyAndReturn<ExtArgs> | null
+  }
+
+  /**
+   * UserDepartment update
+   */
+  export type UserDepartmentUpdateArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the UserDepartment
+     */
+    select?: UserDepartmentSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the UserDepartment
+     */
+    omit?: UserDepartmentOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: UserDepartmentInclude<ExtArgs> | null
+    /**
+     * The data needed to update a UserDepartment.
+     */
+    data: XOR<UserDepartmentUpdateInput, UserDepartmentUncheckedUpdateInput>
+    /**
+     * Choose, which UserDepartment to update.
+     */
+    where: UserDepartmentWhereUniqueInput
+  }
+
+  /**
+   * UserDepartment updateMany
+   */
+  export type UserDepartmentUpdateManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * The data used to update UserDepartments.
+     */
+    data: XOR<UserDepartmentUpdateManyMutationInput, UserDepartmentUncheckedUpdateManyInput>
+    /**
+     * Filter which UserDepartments to update
+     */
+    where?: UserDepartmentWhereInput
+    /**
+     * Limit how many UserDepartments to update.
+     */
+    limit?: number
+  }
+
+  /**
+   * UserDepartment updateManyAndReturn
+   */
+  export type UserDepartmentUpdateManyAndReturnArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the UserDepartment
+     */
+    select?: UserDepartmentSelectUpdateManyAndReturn<ExtArgs> | null
+    /**
+     * Omit specific fields from the UserDepartment
+     */
+    omit?: UserDepartmentOmit<ExtArgs> | null
+    /**
+     * The data used to update UserDepartments.
+     */
+    data: XOR<UserDepartmentUpdateManyMutationInput, UserDepartmentUncheckedUpdateManyInput>
+    /**
+     * Filter which UserDepartments to update
+     */
+    where?: UserDepartmentWhereInput
+    /**
+     * Limit how many UserDepartments to update.
+     */
+    limit?: number
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: UserDepartmentIncludeUpdateManyAndReturn<ExtArgs> | null
+  }
+
+  /**
+   * UserDepartment upsert
+   */
+  export type UserDepartmentUpsertArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the UserDepartment
+     */
+    select?: UserDepartmentSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the UserDepartment
+     */
+    omit?: UserDepartmentOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: UserDepartmentInclude<ExtArgs> | null
+    /**
+     * The filter to search for the UserDepartment to update in case it exists.
+     */
+    where: UserDepartmentWhereUniqueInput
+    /**
+     * In case the UserDepartment found by the `where` argument doesn't exist, create a new UserDepartment with this data.
+     */
+    create: XOR<UserDepartmentCreateInput, UserDepartmentUncheckedCreateInput>
+    /**
+     * In case the UserDepartment was found with the provided `where` argument, update it with this data.
+     */
+    update: XOR<UserDepartmentUpdateInput, UserDepartmentUncheckedUpdateInput>
+  }
+
+  /**
+   * UserDepartment delete
+   */
+  export type UserDepartmentDeleteArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the UserDepartment
+     */
+    select?: UserDepartmentSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the UserDepartment
+     */
+    omit?: UserDepartmentOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: UserDepartmentInclude<ExtArgs> | null
+    /**
+     * Filter which UserDepartment to delete.
+     */
+    where: UserDepartmentWhereUniqueInput
+  }
+
+  /**
+   * UserDepartment deleteMany
+   */
+  export type UserDepartmentDeleteManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Filter which UserDepartments to delete
+     */
+    where?: UserDepartmentWhereInput
+    /**
+     * Limit how many UserDepartments to delete.
+     */
+    limit?: number
+  }
+
+  /**
+   * UserDepartment without action
+   */
+  export type UserDepartmentDefaultArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the UserDepartment
+     */
+    select?: UserDepartmentSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the UserDepartment
+     */
+    omit?: UserDepartmentOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: UserDepartmentInclude<ExtArgs> | null
+  }
+
+
+  /**
+   * Model UserProject
+   */
+
+  export type AggregateUserProject = {
+    _count: UserProjectCountAggregateOutputType | null
+    _avg: UserProjectAvgAggregateOutputType | null
+    _sum: UserProjectSumAggregateOutputType | null
+    _min: UserProjectMinAggregateOutputType | null
+    _max: UserProjectMaxAggregateOutputType | null
+  }
+
+  export type UserProjectAvgAggregateOutputType = {
+    hourlyRate: number | null
+  }
+
+  export type UserProjectSumAggregateOutputType = {
+    hourlyRate: number | null
+  }
+
+  export type UserProjectMinAggregateOutputType = {
+    id: string | null
+    userId: string | null
+    projectId: string | null
+    active: boolean | null
+    role: string | null
+    departmentId: string | null
+    hourlyRate: number | null
+    startDate: Date | null
+    endDate: Date | null
+  }
+
+  export type UserProjectMaxAggregateOutputType = {
+    id: string | null
+    userId: string | null
+    projectId: string | null
+    active: boolean | null
+    role: string | null
+    departmentId: string | null
+    hourlyRate: number | null
+    startDate: Date | null
+    endDate: Date | null
+  }
+
+  export type UserProjectCountAggregateOutputType = {
+    id: number
+    userId: number
+    projectId: number
+    active: number
+    role: number
+    departmentId: number
+    hourlyRate: number
+    startDate: number
+    endDate: number
+    _all: number
+  }
+
+
+  export type UserProjectAvgAggregateInputType = {
+    hourlyRate?: true
+  }
+
+  export type UserProjectSumAggregateInputType = {
+    hourlyRate?: true
+  }
+
+  export type UserProjectMinAggregateInputType = {
+    id?: true
+    userId?: true
+    projectId?: true
+    active?: true
+    role?: true
+    departmentId?: true
+    hourlyRate?: true
+    startDate?: true
+    endDate?: true
+  }
+
+  export type UserProjectMaxAggregateInputType = {
+    id?: true
+    userId?: true
+    projectId?: true
+    active?: true
+    role?: true
+    departmentId?: true
+    hourlyRate?: true
+    startDate?: true
+    endDate?: true
+  }
+
+  export type UserProjectCountAggregateInputType = {
+    id?: true
+    userId?: true
+    projectId?: true
+    active?: true
+    role?: true
+    departmentId?: true
+    hourlyRate?: true
+    startDate?: true
+    endDate?: true
+    _all?: true
+  }
+
+  export type UserProjectAggregateArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Filter which UserProject to aggregate.
+     */
+    where?: UserProjectWhereInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+     * 
+     * Determine the order of UserProjects to fetch.
+     */
+    orderBy?: UserProjectOrderByWithRelationInput | UserProjectOrderByWithRelationInput[]
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+     * 
+     * Sets the start position
+     */
+    cursor?: UserProjectWhereUniqueInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Take `±n` UserProjects from the position of the cursor.
+     */
+    take?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Skip the first `n` UserProjects.
+     */
+    skip?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Count returned UserProjects
+    **/
+    _count?: true | UserProjectCountAggregateInputType
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Select which fields to average
+    **/
+    _avg?: UserProjectAvgAggregateInputType
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Select which fields to sum
+    **/
+    _sum?: UserProjectSumAggregateInputType
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Select which fields to find the minimum value
+    **/
+    _min?: UserProjectMinAggregateInputType
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Select which fields to find the maximum value
+    **/
+    _max?: UserProjectMaxAggregateInputType
+  }
+
+  export type GetUserProjectAggregateType<T extends UserProjectAggregateArgs> = {
+        [P in keyof T & keyof AggregateUserProject]: P extends '_count' | 'count'
+      ? T[P] extends true
+        ? number
+        : GetScalarType<T[P], AggregateUserProject[P]>
+      : GetScalarType<T[P], AggregateUserProject[P]>
+  }
+
+
+
+
+  export type UserProjectGroupByArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    where?: UserProjectWhereInput
+    orderBy?: UserProjectOrderByWithAggregationInput | UserProjectOrderByWithAggregationInput[]
+    by: UserProjectScalarFieldEnum[] | UserProjectScalarFieldEnum
+    having?: UserProjectScalarWhereWithAggregatesInput
+    take?: number
+    skip?: number
+    _count?: UserProjectCountAggregateInputType | true
+    _avg?: UserProjectAvgAggregateInputType
+    _sum?: UserProjectSumAggregateInputType
+    _min?: UserProjectMinAggregateInputType
+    _max?: UserProjectMaxAggregateInputType
+  }
+
+  export type UserProjectGroupByOutputType = {
+    id: string
+    userId: string
+    projectId: string
+    active: boolean
+    role: string | null
+    departmentId: string | null
+    hourlyRate: number | null
+    startDate: Date
+    endDate: Date | null
+    _count: UserProjectCountAggregateOutputType | null
+    _avg: UserProjectAvgAggregateOutputType | null
+    _sum: UserProjectSumAggregateOutputType | null
+    _min: UserProjectMinAggregateOutputType | null
+    _max: UserProjectMaxAggregateOutputType | null
+  }
+
+  type GetUserProjectGroupByPayload<T extends UserProjectGroupByArgs> = Prisma.PrismaPromise<
+    Array<
+      PickEnumerable<UserProjectGroupByOutputType, T['by']> &
+        {
+          [P in ((keyof T) & (keyof UserProjectGroupByOutputType))]: P extends '_count'
+            ? T[P] extends boolean
+              ? number
+              : GetScalarType<T[P], UserProjectGroupByOutputType[P]>
+            : GetScalarType<T[P], UserProjectGroupByOutputType[P]>
+        }
+      >
+    >
+
+
+  export type UserProjectSelect<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetSelect<{
+    id?: boolean
+    userId?: boolean
+    projectId?: boolean
+    active?: boolean
+    role?: boolean
+    departmentId?: boolean
+    hourlyRate?: boolean
+    startDate?: boolean
+    endDate?: boolean
+    user?: boolean | UserDefaultArgs<ExtArgs>
+    project?: boolean | ProjectDefaultArgs<ExtArgs>
+    department?: boolean | UserProject$departmentArgs<ExtArgs>
+  }, ExtArgs["result"]["userProject"]>
+
+  export type UserProjectSelectCreateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetSelect<{
+    id?: boolean
+    userId?: boolean
+    projectId?: boolean
+    active?: boolean
+    role?: boolean
+    departmentId?: boolean
+    hourlyRate?: boolean
+    startDate?: boolean
+    endDate?: boolean
+    user?: boolean | UserDefaultArgs<ExtArgs>
+    project?: boolean | ProjectDefaultArgs<ExtArgs>
+    department?: boolean | UserProject$departmentArgs<ExtArgs>
+  }, ExtArgs["result"]["userProject"]>
+
+  export type UserProjectSelectUpdateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetSelect<{
+    id?: boolean
+    userId?: boolean
+    projectId?: boolean
+    active?: boolean
+    role?: boolean
+    departmentId?: boolean
+    hourlyRate?: boolean
+    startDate?: boolean
+    endDate?: boolean
+    user?: boolean | UserDefaultArgs<ExtArgs>
+    project?: boolean | ProjectDefaultArgs<ExtArgs>
+    department?: boolean | UserProject$departmentArgs<ExtArgs>
+  }, ExtArgs["result"]["userProject"]>
+
+  export type UserProjectSelectScalar = {
+    id?: boolean
+    userId?: boolean
+    projectId?: boolean
+    active?: boolean
+    role?: boolean
+    departmentId?: boolean
+    hourlyRate?: boolean
+    startDate?: boolean
+    endDate?: boolean
+  }
+
+  export type UserProjectOmit<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetOmit<"id" | "userId" | "projectId" | "active" | "role" | "departmentId" | "hourlyRate" | "startDate" | "endDate", ExtArgs["result"]["userProject"]>
+  export type UserProjectInclude<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    user?: boolean | UserDefaultArgs<ExtArgs>
+    project?: boolean | ProjectDefaultArgs<ExtArgs>
+    department?: boolean | UserProject$departmentArgs<ExtArgs>
+  }
+  export type UserProjectIncludeCreateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    user?: boolean | UserDefaultArgs<ExtArgs>
+    project?: boolean | ProjectDefaultArgs<ExtArgs>
+    department?: boolean | UserProject$departmentArgs<ExtArgs>
+  }
+  export type UserProjectIncludeUpdateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    user?: boolean | UserDefaultArgs<ExtArgs>
+    project?: boolean | ProjectDefaultArgs<ExtArgs>
+    department?: boolean | UserProject$departmentArgs<ExtArgs>
+  }
+
+  export type $UserProjectPayload<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    name: "UserProject"
+    objects: {
+      user: Prisma.$UserPayload<ExtArgs>
+      project: Prisma.$ProjectPayload<ExtArgs>
+      department: Prisma.$DepartmentPayload<ExtArgs> | null
+    }
+    scalars: $Extensions.GetPayloadResult<{
+      id: string
+      userId: string
+      projectId: string
+      active: boolean
+      role: string | null
+      departmentId: string | null
+      hourlyRate: number | null
+      startDate: Date
+      endDate: Date | null
+    }, ExtArgs["result"]["userProject"]>
+    composites: {}
+  }
+
+  type UserProjectGetPayload<S extends boolean | null | undefined | UserProjectDefaultArgs> = $Result.GetResult<Prisma.$UserProjectPayload, S>
+
+  type UserProjectCountArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> =
+    Omit<UserProjectFindManyArgs, 'select' | 'include' | 'distinct' | 'omit'> & {
+      select?: UserProjectCountAggregateInputType | true
+    }
+
+  export interface UserProjectDelegate<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs, GlobalOmitOptions = {}> {
+    [K: symbol]: { types: Prisma.TypeMap<ExtArgs>['model']['UserProject'], meta: { name: 'UserProject' } }
+    /**
+     * Find zero or one UserProject that matches the filter.
+     * @param {UserProjectFindUniqueArgs} args - Arguments to find a UserProject
+     * @example
+     * // Get one UserProject
+     * const userProject = await prisma.userProject.findUnique({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     */
+    findUnique<T extends UserProjectFindUniqueArgs>(args: SelectSubset<T, UserProjectFindUniqueArgs<ExtArgs>>): Prisma__UserProjectClient<$Result.GetResult<Prisma.$UserProjectPayload<ExtArgs>, T, "findUnique", GlobalOmitOptions> | null, null, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Find one UserProject that matches the filter or throw an error with `error.code='P2025'`
+     * if no matches were found.
+     * @param {UserProjectFindUniqueOrThrowArgs} args - Arguments to find a UserProject
+     * @example
+     * // Get one UserProject
+     * const userProject = await prisma.userProject.findUniqueOrThrow({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     */
+    findUniqueOrThrow<T extends UserProjectFindUniqueOrThrowArgs>(args: SelectSubset<T, UserProjectFindUniqueOrThrowArgs<ExtArgs>>): Prisma__UserProjectClient<$Result.GetResult<Prisma.$UserProjectPayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Find the first UserProject that matches the filter.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {UserProjectFindFirstArgs} args - Arguments to find a UserProject
+     * @example
+     * // Get one UserProject
+     * const userProject = await prisma.userProject.findFirst({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     */
+    findFirst<T extends UserProjectFindFirstArgs>(args?: SelectSubset<T, UserProjectFindFirstArgs<ExtArgs>>): Prisma__UserProjectClient<$Result.GetResult<Prisma.$UserProjectPayload<ExtArgs>, T, "findFirst", GlobalOmitOptions> | null, null, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Find the first UserProject that matches the filter or
+     * throw `PrismaKnownClientError` with `P2025` code if no matches were found.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {UserProjectFindFirstOrThrowArgs} args - Arguments to find a UserProject
+     * @example
+     * // Get one UserProject
+     * const userProject = await prisma.userProject.findFirstOrThrow({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     */
+    findFirstOrThrow<T extends UserProjectFindFirstOrThrowArgs>(args?: SelectSubset<T, UserProjectFindFirstOrThrowArgs<ExtArgs>>): Prisma__UserProjectClient<$Result.GetResult<Prisma.$UserProjectPayload<ExtArgs>, T, "findFirstOrThrow", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Find zero or more UserProjects that matches the filter.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {UserProjectFindManyArgs} args - Arguments to filter and select certain fields only.
+     * @example
+     * // Get all UserProjects
+     * const userProjects = await prisma.userProject.findMany()
+     * 
+     * // Get first 10 UserProjects
+     * const userProjects = await prisma.userProject.findMany({ take: 10 })
+     * 
+     * // Only select the `id`
+     * const userProjectWithIdOnly = await prisma.userProject.findMany({ select: { id: true } })
+     * 
+     */
+    findMany<T extends UserProjectFindManyArgs>(args?: SelectSubset<T, UserProjectFindManyArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$UserProjectPayload<ExtArgs>, T, "findMany", GlobalOmitOptions>>
+
+    /**
+     * Create a UserProject.
+     * @param {UserProjectCreateArgs} args - Arguments to create a UserProject.
+     * @example
+     * // Create one UserProject
+     * const UserProject = await prisma.userProject.create({
+     *   data: {
+     *     // ... data to create a UserProject
+     *   }
+     * })
+     * 
+     */
+    create<T extends UserProjectCreateArgs>(args: SelectSubset<T, UserProjectCreateArgs<ExtArgs>>): Prisma__UserProjectClient<$Result.GetResult<Prisma.$UserProjectPayload<ExtArgs>, T, "create", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Create many UserProjects.
+     * @param {UserProjectCreateManyArgs} args - Arguments to create many UserProjects.
+     * @example
+     * // Create many UserProjects
+     * const userProject = await prisma.userProject.createMany({
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     *     
+     */
+    createMany<T extends UserProjectCreateManyArgs>(args?: SelectSubset<T, UserProjectCreateManyArgs<ExtArgs>>): Prisma.PrismaPromise<BatchPayload>
+
+    /**
+     * Create many UserProjects and returns the data saved in the database.
+     * @param {UserProjectCreateManyAndReturnArgs} args - Arguments to create many UserProjects.
+     * @example
+     * // Create many UserProjects
+     * const userProject = await prisma.userProject.createManyAndReturn({
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     * 
+     * // Create many UserProjects and only return the `id`
+     * const userProjectWithIdOnly = await prisma.userProject.createManyAndReturn({
+     *   select: { id: true },
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * 
+     */
+    createManyAndReturn<T extends UserProjectCreateManyAndReturnArgs>(args?: SelectSubset<T, UserProjectCreateManyAndReturnArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$UserProjectPayload<ExtArgs>, T, "createManyAndReturn", GlobalOmitOptions>>
+
+    /**
+     * Delete a UserProject.
+     * @param {UserProjectDeleteArgs} args - Arguments to delete one UserProject.
+     * @example
+     * // Delete one UserProject
+     * const UserProject = await prisma.userProject.delete({
+     *   where: {
+     *     // ... filter to delete one UserProject
+     *   }
+     * })
+     * 
+     */
+    delete<T extends UserProjectDeleteArgs>(args: SelectSubset<T, UserProjectDeleteArgs<ExtArgs>>): Prisma__UserProjectClient<$Result.GetResult<Prisma.$UserProjectPayload<ExtArgs>, T, "delete", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Update one UserProject.
+     * @param {UserProjectUpdateArgs} args - Arguments to update one UserProject.
+     * @example
+     * // Update one UserProject
+     * const userProject = await prisma.userProject.update({
+     *   where: {
+     *     // ... provide filter here
+     *   },
+     *   data: {
+     *     // ... provide data here
+     *   }
+     * })
+     * 
+     */
+    update<T extends UserProjectUpdateArgs>(args: SelectSubset<T, UserProjectUpdateArgs<ExtArgs>>): Prisma__UserProjectClient<$Result.GetResult<Prisma.$UserProjectPayload<ExtArgs>, T, "update", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Delete zero or more UserProjects.
+     * @param {UserProjectDeleteManyArgs} args - Arguments to filter UserProjects to delete.
+     * @example
+     * // Delete a few UserProjects
+     * const { count } = await prisma.userProject.deleteMany({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     * 
+     */
+    deleteMany<T extends UserProjectDeleteManyArgs>(args?: SelectSubset<T, UserProjectDeleteManyArgs<ExtArgs>>): Prisma.PrismaPromise<BatchPayload>
+
+    /**
+     * Update zero or more UserProjects.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {UserProjectUpdateManyArgs} args - Arguments to update one or more rows.
+     * @example
+     * // Update many UserProjects
+     * const userProject = await prisma.userProject.updateMany({
+     *   where: {
+     *     // ... provide filter here
+     *   },
+     *   data: {
+     *     // ... provide data here
+     *   }
+     * })
+     * 
+     */
+    updateMany<T extends UserProjectUpdateManyArgs>(args: SelectSubset<T, UserProjectUpdateManyArgs<ExtArgs>>): Prisma.PrismaPromise<BatchPayload>
+
+    /**
+     * Update zero or more UserProjects and returns the data updated in the database.
+     * @param {UserProjectUpdateManyAndReturnArgs} args - Arguments to update many UserProjects.
+     * @example
+     * // Update many UserProjects
+     * const userProject = await prisma.userProject.updateManyAndReturn({
+     *   where: {
+     *     // ... provide filter here
+     *   },
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     * 
+     * // Update zero or more UserProjects and only return the `id`
+     * const userProjectWithIdOnly = await prisma.userProject.updateManyAndReturn({
+     *   select: { id: true },
+     *   where: {
+     *     // ... provide filter here
+     *   },
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * 
+     */
+    updateManyAndReturn<T extends UserProjectUpdateManyAndReturnArgs>(args: SelectSubset<T, UserProjectUpdateManyAndReturnArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$UserProjectPayload<ExtArgs>, T, "updateManyAndReturn", GlobalOmitOptions>>
+
+    /**
+     * Create or update one UserProject.
+     * @param {UserProjectUpsertArgs} args - Arguments to update or create a UserProject.
+     * @example
+     * // Update or create a UserProject
+     * const userProject = await prisma.userProject.upsert({
+     *   create: {
+     *     // ... data to create a UserProject
+     *   },
+     *   update: {
+     *     // ... in case it already exists, update
+     *   },
+     *   where: {
+     *     // ... the filter for the UserProject we want to update
+     *   }
+     * })
+     */
+    upsert<T extends UserProjectUpsertArgs>(args: SelectSubset<T, UserProjectUpsertArgs<ExtArgs>>): Prisma__UserProjectClient<$Result.GetResult<Prisma.$UserProjectPayload<ExtArgs>, T, "upsert", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+
+    /**
+     * Count the number of UserProjects.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {UserProjectCountArgs} args - Arguments to filter UserProjects to count.
+     * @example
+     * // Count the number of UserProjects
+     * const count = await prisma.userProject.count({
+     *   where: {
+     *     // ... the filter for the UserProjects we want to count
+     *   }
+     * })
+    **/
+    count<T extends UserProjectCountArgs>(
+      args?: Subset<T, UserProjectCountArgs>,
+    ): Prisma.PrismaPromise<
+      T extends $Utils.Record<'select', any>
+        ? T['select'] extends true
+          ? number
+          : GetScalarType<T['select'], UserProjectCountAggregateOutputType>
+        : number
+    >
+
+    /**
+     * Allows you to perform aggregations operations on a UserProject.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {UserProjectAggregateArgs} args - Select which aggregations you would like to apply and on what fields.
+     * @example
+     * // Ordered by age ascending
+     * // Where email contains prisma.io
+     * // Limited to the 10 users
+     * const aggregations = await prisma.user.aggregate({
+     *   _avg: {
+     *     age: true,
+     *   },
+     *   where: {
+     *     email: {
+     *       contains: "prisma.io",
+     *     },
+     *   },
+     *   orderBy: {
+     *     age: "asc",
+     *   },
+     *   take: 10,
+     * })
+    **/
+    aggregate<T extends UserProjectAggregateArgs>(args: Subset<T, UserProjectAggregateArgs>): Prisma.PrismaPromise<GetUserProjectAggregateType<T>>
+
+    /**
+     * Group by UserProject.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {UserProjectGroupByArgs} args - Group by arguments.
+     * @example
+     * // Group by city, order by createdAt, get count
+     * const result = await prisma.user.groupBy({
+     *   by: ['city', 'createdAt'],
+     *   orderBy: {
+     *     createdAt: true
+     *   },
+     *   _count: {
+     *     _all: true
+     *   },
+     * })
+     * 
+    **/
+    groupBy<
+      T extends UserProjectGroupByArgs,
+      HasSelectOrTake extends Or<
+        Extends<'skip', Keys<T>>,
+        Extends<'take', Keys<T>>
+      >,
+      OrderByArg extends True extends HasSelectOrTake
+        ? { orderBy: UserProjectGroupByArgs['orderBy'] }
+        : { orderBy?: UserProjectGroupByArgs['orderBy'] },
+      OrderFields extends ExcludeUnderscoreKeys<Keys<MaybeTupleToUnion<T['orderBy']>>>,
+      ByFields extends MaybeTupleToUnion<T['by']>,
+      ByValid extends Has<ByFields, OrderFields>,
+      HavingFields extends GetHavingFields<T['having']>,
+      HavingValid extends Has<ByFields, HavingFields>,
+      ByEmpty extends T['by'] extends never[] ? True : False,
+      InputErrors extends ByEmpty extends True
+      ? `Error: "by" must not be empty.`
+      : HavingValid extends False
+      ? {
+          [P in HavingFields]: P extends ByFields
+            ? never
+            : P extends string
+            ? `Error: Field "${P}" used in "having" needs to be provided in "by".`
+            : [
+                Error,
+                'Field ',
+                P,
+                ` in "having" needs to be provided in "by"`,
+              ]
+        }[HavingFields]
+      : 'take' extends Keys<T>
+      ? 'orderBy' extends Keys<T>
+        ? ByValid extends True
+          ? {}
+          : {
+              [P in OrderFields]: P extends ByFields
+                ? never
+                : `Error: Field "${P}" in "orderBy" needs to be provided in "by"`
+            }[OrderFields]
+        : 'Error: If you provide "take", you also need to provide "orderBy"'
+      : 'skip' extends Keys<T>
+      ? 'orderBy' extends Keys<T>
+        ? ByValid extends True
+          ? {}
+          : {
+              [P in OrderFields]: P extends ByFields
+                ? never
+                : `Error: Field "${P}" in "orderBy" needs to be provided in "by"`
+            }[OrderFields]
+        : 'Error: If you provide "skip", you also need to provide "orderBy"'
+      : ByValid extends True
+      ? {}
+      : {
+          [P in OrderFields]: P extends ByFields
+            ? never
+            : `Error: Field "${P}" in "orderBy" needs to be provided in "by"`
+        }[OrderFields]
+    >(args: SubsetIntersection<T, UserProjectGroupByArgs, OrderByArg> & InputErrors): {} extends InputErrors ? GetUserProjectGroupByPayload<T> : Prisma.PrismaPromise<InputErrors>
+  /**
+   * Fields of the UserProject model
+   */
+  readonly fields: UserProjectFieldRefs;
+  }
+
+  /**
+   * The delegate class that acts as a "Promise-like" for UserProject.
+   * Why is this prefixed with `Prisma__`?
+   * Because we want to prevent naming conflicts as mentioned in
+   * https://github.com/prisma/prisma-client-js/issues/707
+   */
+  export interface Prisma__UserProjectClient<T, Null = never, ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs, GlobalOmitOptions = {}> extends Prisma.PrismaPromise<T> {
+    readonly [Symbol.toStringTag]: "PrismaPromise"
+    user<T extends UserDefaultArgs<ExtArgs> = {}>(args?: Subset<T, UserDefaultArgs<ExtArgs>>): Prisma__UserClient<$Result.GetResult<Prisma.$UserPayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions> | Null, Null, ExtArgs, GlobalOmitOptions>
+    project<T extends ProjectDefaultArgs<ExtArgs> = {}>(args?: Subset<T, ProjectDefaultArgs<ExtArgs>>): Prisma__ProjectClient<$Result.GetResult<Prisma.$ProjectPayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions> | Null, Null, ExtArgs, GlobalOmitOptions>
+    department<T extends UserProject$departmentArgs<ExtArgs> = {}>(args?: Subset<T, UserProject$departmentArgs<ExtArgs>>): Prisma__DepartmentClient<$Result.GetResult<Prisma.$DepartmentPayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions> | null, null, ExtArgs, GlobalOmitOptions>
+    /**
+     * Attaches callbacks for the resolution and/or rejection of the Promise.
+     * @param onfulfilled The callback to execute when the Promise is resolved.
+     * @param onrejected The callback to execute when the Promise is rejected.
+     * @returns A Promise for the completion of which ever callback is executed.
+     */
+    then<TResult1 = T, TResult2 = never>(onfulfilled?: ((value: T) => TResult1 | PromiseLike<TResult1>) | undefined | null, onrejected?: ((reason: any) => TResult2 | PromiseLike<TResult2>) | undefined | null): $Utils.JsPromise<TResult1 | TResult2>
+    /**
+     * Attaches a callback for only the rejection of the Promise.
+     * @param onrejected The callback to execute when the Promise is rejected.
+     * @returns A Promise for the completion of the callback.
+     */
+    catch<TResult = never>(onrejected?: ((reason: any) => TResult | PromiseLike<TResult>) | undefined | null): $Utils.JsPromise<T | TResult>
+    /**
+     * Attaches a callback that is invoked when the Promise is settled (fulfilled or rejected). The
+     * resolved value cannot be modified from the callback.
+     * @param onfinally The callback to execute when the Promise is settled (fulfilled or rejected).
+     * @returns A Promise for the completion of the callback.
+     */
+    finally(onfinally?: (() => void) | undefined | null): $Utils.JsPromise<T>
+  }
+
+
+
+
+  /**
+   * Fields of the UserProject model
+   */
+  interface UserProjectFieldRefs {
+    readonly id: FieldRef<"UserProject", 'String'>
+    readonly userId: FieldRef<"UserProject", 'String'>
+    readonly projectId: FieldRef<"UserProject", 'String'>
+    readonly active: FieldRef<"UserProject", 'Boolean'>
+    readonly role: FieldRef<"UserProject", 'String'>
+    readonly departmentId: FieldRef<"UserProject", 'String'>
+    readonly hourlyRate: FieldRef<"UserProject", 'Float'>
+    readonly startDate: FieldRef<"UserProject", 'DateTime'>
+    readonly endDate: FieldRef<"UserProject", 'DateTime'>
+  }
+    
+
+  // Custom InputTypes
+  /**
+   * UserProject findUnique
+   */
+  export type UserProjectFindUniqueArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the UserProject
+     */
+    select?: UserProjectSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the UserProject
+     */
+    omit?: UserProjectOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: UserProjectInclude<ExtArgs> | null
+    /**
+     * Filter, which UserProject to fetch.
+     */
+    where: UserProjectWhereUniqueInput
+  }
+
+  /**
+   * UserProject findUniqueOrThrow
+   */
+  export type UserProjectFindUniqueOrThrowArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the UserProject
+     */
+    select?: UserProjectSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the UserProject
+     */
+    omit?: UserProjectOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: UserProjectInclude<ExtArgs> | null
+    /**
+     * Filter, which UserProject to fetch.
+     */
+    where: UserProjectWhereUniqueInput
+  }
+
+  /**
+   * UserProject findFirst
+   */
+  export type UserProjectFindFirstArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the UserProject
+     */
+    select?: UserProjectSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the UserProject
+     */
+    omit?: UserProjectOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: UserProjectInclude<ExtArgs> | null
+    /**
+     * Filter, which UserProject to fetch.
+     */
+    where?: UserProjectWhereInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+     * 
+     * Determine the order of UserProjects to fetch.
+     */
+    orderBy?: UserProjectOrderByWithRelationInput | UserProjectOrderByWithRelationInput[]
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+     * 
+     * Sets the position for searching for UserProjects.
+     */
+    cursor?: UserProjectWhereUniqueInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Take `±n` UserProjects from the position of the cursor.
+     */
+    take?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Skip the first `n` UserProjects.
+     */
+    skip?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/distinct Distinct Docs}
+     * 
+     * Filter by unique combinations of UserProjects.
+     */
+    distinct?: UserProjectScalarFieldEnum | UserProjectScalarFieldEnum[]
+  }
+
+  /**
+   * UserProject findFirstOrThrow
+   */
+  export type UserProjectFindFirstOrThrowArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the UserProject
+     */
+    select?: UserProjectSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the UserProject
+     */
+    omit?: UserProjectOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: UserProjectInclude<ExtArgs> | null
+    /**
+     * Filter, which UserProject to fetch.
+     */
+    where?: UserProjectWhereInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+     * 
+     * Determine the order of UserProjects to fetch.
+     */
+    orderBy?: UserProjectOrderByWithRelationInput | UserProjectOrderByWithRelationInput[]
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+     * 
+     * Sets the position for searching for UserProjects.
+     */
+    cursor?: UserProjectWhereUniqueInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Take `±n` UserProjects from the position of the cursor.
+     */
+    take?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Skip the first `n` UserProjects.
+     */
+    skip?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/distinct Distinct Docs}
+     * 
+     * Filter by unique combinations of UserProjects.
+     */
+    distinct?: UserProjectScalarFieldEnum | UserProjectScalarFieldEnum[]
+  }
+
+  /**
+   * UserProject findMany
+   */
+  export type UserProjectFindManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the UserProject
+     */
+    select?: UserProjectSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the UserProject
+     */
+    omit?: UserProjectOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: UserProjectInclude<ExtArgs> | null
+    /**
+     * Filter, which UserProjects to fetch.
+     */
+    where?: UserProjectWhereInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+     * 
+     * Determine the order of UserProjects to fetch.
+     */
+    orderBy?: UserProjectOrderByWithRelationInput | UserProjectOrderByWithRelationInput[]
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+     * 
+     * Sets the position for listing UserProjects.
+     */
+    cursor?: UserProjectWhereUniqueInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Take `±n` UserProjects from the position of the cursor.
+     */
+    take?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Skip the first `n` UserProjects.
+     */
+    skip?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/distinct Distinct Docs}
+     * 
+     * Filter by unique combinations of UserProjects.
+     */
+    distinct?: UserProjectScalarFieldEnum | UserProjectScalarFieldEnum[]
+  }
+
+  /**
+   * UserProject create
+   */
+  export type UserProjectCreateArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the UserProject
+     */
+    select?: UserProjectSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the UserProject
+     */
+    omit?: UserProjectOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: UserProjectInclude<ExtArgs> | null
+    /**
+     * The data needed to create a UserProject.
+     */
+    data: XOR<UserProjectCreateInput, UserProjectUncheckedCreateInput>
+  }
+
+  /**
+   * UserProject createMany
+   */
+  export type UserProjectCreateManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * The data used to create many UserProjects.
+     */
+    data: UserProjectCreateManyInput | UserProjectCreateManyInput[]
+    skipDuplicates?: boolean
+  }
+
+  /**
+   * UserProject createManyAndReturn
+   */
+  export type UserProjectCreateManyAndReturnArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the UserProject
+     */
+    select?: UserProjectSelectCreateManyAndReturn<ExtArgs> | null
+    /**
+     * Omit specific fields from the UserProject
+     */
+    omit?: UserProjectOmit<ExtArgs> | null
+    /**
+     * The data used to create many UserProjects.
+     */
+    data: UserProjectCreateManyInput | UserProjectCreateManyInput[]
+    skipDuplicates?: boolean
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: UserProjectIncludeCreateManyAndReturn<ExtArgs> | null
+  }
+
+  /**
+   * UserProject update
+   */
+  export type UserProjectUpdateArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the UserProject
+     */
+    select?: UserProjectSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the UserProject
+     */
+    omit?: UserProjectOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: UserProjectInclude<ExtArgs> | null
+    /**
+     * The data needed to update a UserProject.
+     */
+    data: XOR<UserProjectUpdateInput, UserProjectUncheckedUpdateInput>
+    /**
+     * Choose, which UserProject to update.
+     */
+    where: UserProjectWhereUniqueInput
+  }
+
+  /**
+   * UserProject updateMany
+   */
+  export type UserProjectUpdateManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * The data used to update UserProjects.
+     */
+    data: XOR<UserProjectUpdateManyMutationInput, UserProjectUncheckedUpdateManyInput>
+    /**
+     * Filter which UserProjects to update
+     */
+    where?: UserProjectWhereInput
+    /**
+     * Limit how many UserProjects to update.
+     */
+    limit?: number
+  }
+
+  /**
+   * UserProject updateManyAndReturn
+   */
+  export type UserProjectUpdateManyAndReturnArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the UserProject
+     */
+    select?: UserProjectSelectUpdateManyAndReturn<ExtArgs> | null
+    /**
+     * Omit specific fields from the UserProject
+     */
+    omit?: UserProjectOmit<ExtArgs> | null
+    /**
+     * The data used to update UserProjects.
+     */
+    data: XOR<UserProjectUpdateManyMutationInput, UserProjectUncheckedUpdateManyInput>
+    /**
+     * Filter which UserProjects to update
+     */
+    where?: UserProjectWhereInput
+    /**
+     * Limit how many UserProjects to update.
+     */
+    limit?: number
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: UserProjectIncludeUpdateManyAndReturn<ExtArgs> | null
+  }
+
+  /**
+   * UserProject upsert
+   */
+  export type UserProjectUpsertArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the UserProject
+     */
+    select?: UserProjectSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the UserProject
+     */
+    omit?: UserProjectOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: UserProjectInclude<ExtArgs> | null
+    /**
+     * The filter to search for the UserProject to update in case it exists.
+     */
+    where: UserProjectWhereUniqueInput
+    /**
+     * In case the UserProject found by the `where` argument doesn't exist, create a new UserProject with this data.
+     */
+    create: XOR<UserProjectCreateInput, UserProjectUncheckedCreateInput>
+    /**
+     * In case the UserProject was found with the provided `where` argument, update it with this data.
+     */
+    update: XOR<UserProjectUpdateInput, UserProjectUncheckedUpdateInput>
+  }
+
+  /**
+   * UserProject delete
+   */
+  export type UserProjectDeleteArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the UserProject
+     */
+    select?: UserProjectSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the UserProject
+     */
+    omit?: UserProjectOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: UserProjectInclude<ExtArgs> | null
+    /**
+     * Filter which UserProject to delete.
+     */
+    where: UserProjectWhereUniqueInput
+  }
+
+  /**
+   * UserProject deleteMany
+   */
+  export type UserProjectDeleteManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Filter which UserProjects to delete
+     */
+    where?: UserProjectWhereInput
+    /**
+     * Limit how many UserProjects to delete.
+     */
+    limit?: number
+  }
+
+  /**
+   * UserProject.department
+   */
+  export type UserProject$departmentArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the Department
+     */
+    select?: DepartmentSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the Department
+     */
+    omit?: DepartmentOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: DepartmentInclude<ExtArgs> | null
+    where?: DepartmentWhereInput
+  }
+
+  /**
+   * UserProject without action
+   */
+  export type UserProjectDefaultArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the UserProject
+     */
+    select?: UserProjectSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the UserProject
+     */
+    omit?: UserProjectOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: UserProjectInclude<ExtArgs> | null
+  }
+
+
+  /**
+   * Model Role
+   */
+
+  export type AggregateRole = {
+    _count: RoleCountAggregateOutputType | null
+    _min: RoleMinAggregateOutputType | null
+    _max: RoleMaxAggregateOutputType | null
+  }
+
+  export type RoleMinAggregateOutputType = {
+    id: string | null
+    tenantId: string | null
+    name: string | null
+    nameKey: string | null
+    scope: $Enums.RoleScope | null
+    description: string | null
+    deletedAt: Date | null
+    createdAt: Date | null
+    updatedAt: Date | null
+  }
+
+  export type RoleMaxAggregateOutputType = {
+    id: string | null
+    tenantId: string | null
+    name: string | null
+    nameKey: string | null
+    scope: $Enums.RoleScope | null
+    description: string | null
+    deletedAt: Date | null
+    createdAt: Date | null
+    updatedAt: Date | null
+  }
+
+  export type RoleCountAggregateOutputType = {
+    id: number
+    tenantId: number
+    name: number
+    nameKey: number
+    scope: number
+    description: number
+    deletedAt: number
+    createdAt: number
+    updatedAt: number
+    _all: number
+  }
+
+
+  export type RoleMinAggregateInputType = {
+    id?: true
+    tenantId?: true
+    name?: true
+    nameKey?: true
+    scope?: true
+    description?: true
+    deletedAt?: true
+    createdAt?: true
+    updatedAt?: true
+  }
+
+  export type RoleMaxAggregateInputType = {
+    id?: true
+    tenantId?: true
+    name?: true
+    nameKey?: true
+    scope?: true
+    description?: true
+    deletedAt?: true
+    createdAt?: true
+    updatedAt?: true
+  }
+
+  export type RoleCountAggregateInputType = {
+    id?: true
+    tenantId?: true
+    name?: true
+    nameKey?: true
+    scope?: true
+    description?: true
+    deletedAt?: true
+    createdAt?: true
+    updatedAt?: true
+    _all?: true
+  }
+
+  export type RoleAggregateArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Filter which Role to aggregate.
+     */
+    where?: RoleWhereInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+     * 
+     * Determine the order of Roles to fetch.
+     */
+    orderBy?: RoleOrderByWithRelationInput | RoleOrderByWithRelationInput[]
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+     * 
+     * Sets the start position
+     */
+    cursor?: RoleWhereUniqueInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Take `±n` Roles from the position of the cursor.
+     */
+    take?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Skip the first `n` Roles.
+     */
+    skip?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Count returned Roles
+    **/
+    _count?: true | RoleCountAggregateInputType
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Select which fields to find the minimum value
+    **/
+    _min?: RoleMinAggregateInputType
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Select which fields to find the maximum value
+    **/
+    _max?: RoleMaxAggregateInputType
+  }
+
+  export type GetRoleAggregateType<T extends RoleAggregateArgs> = {
+        [P in keyof T & keyof AggregateRole]: P extends '_count' | 'count'
+      ? T[P] extends true
+        ? number
+        : GetScalarType<T[P], AggregateRole[P]>
+      : GetScalarType<T[P], AggregateRole[P]>
+  }
+
+
+
+
+  export type RoleGroupByArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    where?: RoleWhereInput
+    orderBy?: RoleOrderByWithAggregationInput | RoleOrderByWithAggregationInput[]
+    by: RoleScalarFieldEnum[] | RoleScalarFieldEnum
+    having?: RoleScalarWhereWithAggregatesInput
+    take?: number
+    skip?: number
+    _count?: RoleCountAggregateInputType | true
+    _min?: RoleMinAggregateInputType
+    _max?: RoleMaxAggregateInputType
+  }
+
+  export type RoleGroupByOutputType = {
+    id: string
+    tenantId: string
+    name: string
+    nameKey: string
+    scope: $Enums.RoleScope
+    description: string | null
+    deletedAt: Date | null
+    createdAt: Date
+    updatedAt: Date
+    _count: RoleCountAggregateOutputType | null
+    _min: RoleMinAggregateOutputType | null
+    _max: RoleMaxAggregateOutputType | null
+  }
+
+  type GetRoleGroupByPayload<T extends RoleGroupByArgs> = Prisma.PrismaPromise<
+    Array<
+      PickEnumerable<RoleGroupByOutputType, T['by']> &
+        {
+          [P in ((keyof T) & (keyof RoleGroupByOutputType))]: P extends '_count'
+            ? T[P] extends boolean
+              ? number
+              : GetScalarType<T[P], RoleGroupByOutputType[P]>
+            : GetScalarType<T[P], RoleGroupByOutputType[P]>
+        }
+      >
+    >
+
+
+  export type RoleSelect<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetSelect<{
+    id?: boolean
+    tenantId?: boolean
+    name?: boolean
+    nameKey?: boolean
+    scope?: boolean
+    description?: boolean
+    deletedAt?: boolean
+    createdAt?: boolean
+    updatedAt?: boolean
+    tenant?: boolean | TenantDefaultArgs<ExtArgs>
+    permissions?: boolean | Role$permissionsArgs<ExtArgs>
+    userProjectRoles?: boolean | Role$userProjectRolesArgs<ExtArgs>
+    _count?: boolean | RoleCountOutputTypeDefaultArgs<ExtArgs>
+  }, ExtArgs["result"]["role"]>
+
+  export type RoleSelectCreateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetSelect<{
+    id?: boolean
+    tenantId?: boolean
+    name?: boolean
+    nameKey?: boolean
+    scope?: boolean
+    description?: boolean
+    deletedAt?: boolean
+    createdAt?: boolean
+    updatedAt?: boolean
+    tenant?: boolean | TenantDefaultArgs<ExtArgs>
+  }, ExtArgs["result"]["role"]>
+
+  export type RoleSelectUpdateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetSelect<{
+    id?: boolean
+    tenantId?: boolean
+    name?: boolean
+    nameKey?: boolean
+    scope?: boolean
+    description?: boolean
+    deletedAt?: boolean
+    createdAt?: boolean
+    updatedAt?: boolean
+    tenant?: boolean | TenantDefaultArgs<ExtArgs>
+  }, ExtArgs["result"]["role"]>
+
+  export type RoleSelectScalar = {
+    id?: boolean
+    tenantId?: boolean
+    name?: boolean
+    nameKey?: boolean
+    scope?: boolean
+    description?: boolean
+    deletedAt?: boolean
+    createdAt?: boolean
+    updatedAt?: boolean
+  }
+
+  export type RoleOmit<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetOmit<"id" | "tenantId" | "name" | "nameKey" | "scope" | "description" | "deletedAt" | "createdAt" | "updatedAt", ExtArgs["result"]["role"]>
+  export type RoleInclude<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    tenant?: boolean | TenantDefaultArgs<ExtArgs>
+    permissions?: boolean | Role$permissionsArgs<ExtArgs>
+    userProjectRoles?: boolean | Role$userProjectRolesArgs<ExtArgs>
+    _count?: boolean | RoleCountOutputTypeDefaultArgs<ExtArgs>
+  }
+  export type RoleIncludeCreateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    tenant?: boolean | TenantDefaultArgs<ExtArgs>
+  }
+  export type RoleIncludeUpdateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    tenant?: boolean | TenantDefaultArgs<ExtArgs>
+  }
+
+  export type $RolePayload<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    name: "Role"
+    objects: {
+      tenant: Prisma.$TenantPayload<ExtArgs>
+      permissions: Prisma.$RolePermissionPayload<ExtArgs>[]
+      userProjectRoles: Prisma.$UserProjectRolePayload<ExtArgs>[]
+    }
+    scalars: $Extensions.GetPayloadResult<{
+      id: string
+      tenantId: string
+      name: string
+      nameKey: string
+      scope: $Enums.RoleScope
+      description: string | null
+      deletedAt: Date | null
+      createdAt: Date
+      updatedAt: Date
+    }, ExtArgs["result"]["role"]>
+    composites: {}
+  }
+
+  type RoleGetPayload<S extends boolean | null | undefined | RoleDefaultArgs> = $Result.GetResult<Prisma.$RolePayload, S>
+
+  type RoleCountArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> =
+    Omit<RoleFindManyArgs, 'select' | 'include' | 'distinct' | 'omit'> & {
+      select?: RoleCountAggregateInputType | true
+    }
+
+  export interface RoleDelegate<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs, GlobalOmitOptions = {}> {
+    [K: symbol]: { types: Prisma.TypeMap<ExtArgs>['model']['Role'], meta: { name: 'Role' } }
+    /**
+     * Find zero or one Role that matches the filter.
+     * @param {RoleFindUniqueArgs} args - Arguments to find a Role
+     * @example
+     * // Get one Role
+     * const role = await prisma.role.findUnique({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     */
+    findUnique<T extends RoleFindUniqueArgs>(args: SelectSubset<T, RoleFindUniqueArgs<ExtArgs>>): Prisma__RoleClient<$Result.GetResult<Prisma.$RolePayload<ExtArgs>, T, "findUnique", GlobalOmitOptions> | null, null, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Find one Role that matches the filter or throw an error with `error.code='P2025'`
+     * if no matches were found.
+     * @param {RoleFindUniqueOrThrowArgs} args - Arguments to find a Role
+     * @example
+     * // Get one Role
+     * const role = await prisma.role.findUniqueOrThrow({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     */
+    findUniqueOrThrow<T extends RoleFindUniqueOrThrowArgs>(args: SelectSubset<T, RoleFindUniqueOrThrowArgs<ExtArgs>>): Prisma__RoleClient<$Result.GetResult<Prisma.$RolePayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Find the first Role that matches the filter.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {RoleFindFirstArgs} args - Arguments to find a Role
+     * @example
+     * // Get one Role
+     * const role = await prisma.role.findFirst({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     */
+    findFirst<T extends RoleFindFirstArgs>(args?: SelectSubset<T, RoleFindFirstArgs<ExtArgs>>): Prisma__RoleClient<$Result.GetResult<Prisma.$RolePayload<ExtArgs>, T, "findFirst", GlobalOmitOptions> | null, null, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Find the first Role that matches the filter or
+     * throw `PrismaKnownClientError` with `P2025` code if no matches were found.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {RoleFindFirstOrThrowArgs} args - Arguments to find a Role
+     * @example
+     * // Get one Role
+     * const role = await prisma.role.findFirstOrThrow({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     */
+    findFirstOrThrow<T extends RoleFindFirstOrThrowArgs>(args?: SelectSubset<T, RoleFindFirstOrThrowArgs<ExtArgs>>): Prisma__RoleClient<$Result.GetResult<Prisma.$RolePayload<ExtArgs>, T, "findFirstOrThrow", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Find zero or more Roles that matches the filter.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {RoleFindManyArgs} args - Arguments to filter and select certain fields only.
+     * @example
+     * // Get all Roles
+     * const roles = await prisma.role.findMany()
+     * 
+     * // Get first 10 Roles
+     * const roles = await prisma.role.findMany({ take: 10 })
+     * 
+     * // Only select the `id`
+     * const roleWithIdOnly = await prisma.role.findMany({ select: { id: true } })
+     * 
+     */
+    findMany<T extends RoleFindManyArgs>(args?: SelectSubset<T, RoleFindManyArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$RolePayload<ExtArgs>, T, "findMany", GlobalOmitOptions>>
+
+    /**
+     * Create a Role.
+     * @param {RoleCreateArgs} args - Arguments to create a Role.
+     * @example
+     * // Create one Role
+     * const Role = await prisma.role.create({
+     *   data: {
+     *     // ... data to create a Role
+     *   }
+     * })
+     * 
+     */
+    create<T extends RoleCreateArgs>(args: SelectSubset<T, RoleCreateArgs<ExtArgs>>): Prisma__RoleClient<$Result.GetResult<Prisma.$RolePayload<ExtArgs>, T, "create", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Create many Roles.
+     * @param {RoleCreateManyArgs} args - Arguments to create many Roles.
+     * @example
+     * // Create many Roles
+     * const role = await prisma.role.createMany({
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     *     
+     */
+    createMany<T extends RoleCreateManyArgs>(args?: SelectSubset<T, RoleCreateManyArgs<ExtArgs>>): Prisma.PrismaPromise<BatchPayload>
+
+    /**
+     * Create many Roles and returns the data saved in the database.
+     * @param {RoleCreateManyAndReturnArgs} args - Arguments to create many Roles.
+     * @example
+     * // Create many Roles
+     * const role = await prisma.role.createManyAndReturn({
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     * 
+     * // Create many Roles and only return the `id`
+     * const roleWithIdOnly = await prisma.role.createManyAndReturn({
+     *   select: { id: true },
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * 
+     */
+    createManyAndReturn<T extends RoleCreateManyAndReturnArgs>(args?: SelectSubset<T, RoleCreateManyAndReturnArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$RolePayload<ExtArgs>, T, "createManyAndReturn", GlobalOmitOptions>>
+
+    /**
+     * Delete a Role.
+     * @param {RoleDeleteArgs} args - Arguments to delete one Role.
+     * @example
+     * // Delete one Role
+     * const Role = await prisma.role.delete({
+     *   where: {
+     *     // ... filter to delete one Role
+     *   }
+     * })
+     * 
+     */
+    delete<T extends RoleDeleteArgs>(args: SelectSubset<T, RoleDeleteArgs<ExtArgs>>): Prisma__RoleClient<$Result.GetResult<Prisma.$RolePayload<ExtArgs>, T, "delete", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Update one Role.
+     * @param {RoleUpdateArgs} args - Arguments to update one Role.
+     * @example
+     * // Update one Role
+     * const role = await prisma.role.update({
+     *   where: {
+     *     // ... provide filter here
+     *   },
+     *   data: {
+     *     // ... provide data here
+     *   }
+     * })
+     * 
+     */
+    update<T extends RoleUpdateArgs>(args: SelectSubset<T, RoleUpdateArgs<ExtArgs>>): Prisma__RoleClient<$Result.GetResult<Prisma.$RolePayload<ExtArgs>, T, "update", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Delete zero or more Roles.
+     * @param {RoleDeleteManyArgs} args - Arguments to filter Roles to delete.
+     * @example
+     * // Delete a few Roles
+     * const { count } = await prisma.role.deleteMany({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     * 
+     */
+    deleteMany<T extends RoleDeleteManyArgs>(args?: SelectSubset<T, RoleDeleteManyArgs<ExtArgs>>): Prisma.PrismaPromise<BatchPayload>
+
+    /**
+     * Update zero or more Roles.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {RoleUpdateManyArgs} args - Arguments to update one or more rows.
+     * @example
+     * // Update many Roles
+     * const role = await prisma.role.updateMany({
+     *   where: {
+     *     // ... provide filter here
+     *   },
+     *   data: {
+     *     // ... provide data here
+     *   }
+     * })
+     * 
+     */
+    updateMany<T extends RoleUpdateManyArgs>(args: SelectSubset<T, RoleUpdateManyArgs<ExtArgs>>): Prisma.PrismaPromise<BatchPayload>
+
+    /**
+     * Update zero or more Roles and returns the data updated in the database.
+     * @param {RoleUpdateManyAndReturnArgs} args - Arguments to update many Roles.
+     * @example
+     * // Update many Roles
+     * const role = await prisma.role.updateManyAndReturn({
+     *   where: {
+     *     // ... provide filter here
+     *   },
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     * 
+     * // Update zero or more Roles and only return the `id`
+     * const roleWithIdOnly = await prisma.role.updateManyAndReturn({
+     *   select: { id: true },
+     *   where: {
+     *     // ... provide filter here
+     *   },
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * 
+     */
+    updateManyAndReturn<T extends RoleUpdateManyAndReturnArgs>(args: SelectSubset<T, RoleUpdateManyAndReturnArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$RolePayload<ExtArgs>, T, "updateManyAndReturn", GlobalOmitOptions>>
+
+    /**
+     * Create or update one Role.
+     * @param {RoleUpsertArgs} args - Arguments to update or create a Role.
+     * @example
+     * // Update or create a Role
+     * const role = await prisma.role.upsert({
+     *   create: {
+     *     // ... data to create a Role
+     *   },
+     *   update: {
+     *     // ... in case it already exists, update
+     *   },
+     *   where: {
+     *     // ... the filter for the Role we want to update
+     *   }
+     * })
+     */
+    upsert<T extends RoleUpsertArgs>(args: SelectSubset<T, RoleUpsertArgs<ExtArgs>>): Prisma__RoleClient<$Result.GetResult<Prisma.$RolePayload<ExtArgs>, T, "upsert", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+
+    /**
+     * Count the number of Roles.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {RoleCountArgs} args - Arguments to filter Roles to count.
+     * @example
+     * // Count the number of Roles
+     * const count = await prisma.role.count({
+     *   where: {
+     *     // ... the filter for the Roles we want to count
+     *   }
+     * })
+    **/
+    count<T extends RoleCountArgs>(
+      args?: Subset<T, RoleCountArgs>,
+    ): Prisma.PrismaPromise<
+      T extends $Utils.Record<'select', any>
+        ? T['select'] extends true
+          ? number
+          : GetScalarType<T['select'], RoleCountAggregateOutputType>
+        : number
+    >
+
+    /**
+     * Allows you to perform aggregations operations on a Role.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {RoleAggregateArgs} args - Select which aggregations you would like to apply and on what fields.
+     * @example
+     * // Ordered by age ascending
+     * // Where email contains prisma.io
+     * // Limited to the 10 users
+     * const aggregations = await prisma.user.aggregate({
+     *   _avg: {
+     *     age: true,
+     *   },
+     *   where: {
+     *     email: {
+     *       contains: "prisma.io",
+     *     },
+     *   },
+     *   orderBy: {
+     *     age: "asc",
+     *   },
+     *   take: 10,
+     * })
+    **/
+    aggregate<T extends RoleAggregateArgs>(args: Subset<T, RoleAggregateArgs>): Prisma.PrismaPromise<GetRoleAggregateType<T>>
+
+    /**
+     * Group by Role.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {RoleGroupByArgs} args - Group by arguments.
+     * @example
+     * // Group by city, order by createdAt, get count
+     * const result = await prisma.user.groupBy({
+     *   by: ['city', 'createdAt'],
+     *   orderBy: {
+     *     createdAt: true
+     *   },
+     *   _count: {
+     *     _all: true
+     *   },
+     * })
+     * 
+    **/
+    groupBy<
+      T extends RoleGroupByArgs,
+      HasSelectOrTake extends Or<
+        Extends<'skip', Keys<T>>,
+        Extends<'take', Keys<T>>
+      >,
+      OrderByArg extends True extends HasSelectOrTake
+        ? { orderBy: RoleGroupByArgs['orderBy'] }
+        : { orderBy?: RoleGroupByArgs['orderBy'] },
+      OrderFields extends ExcludeUnderscoreKeys<Keys<MaybeTupleToUnion<T['orderBy']>>>,
+      ByFields extends MaybeTupleToUnion<T['by']>,
+      ByValid extends Has<ByFields, OrderFields>,
+      HavingFields extends GetHavingFields<T['having']>,
+      HavingValid extends Has<ByFields, HavingFields>,
+      ByEmpty extends T['by'] extends never[] ? True : False,
+      InputErrors extends ByEmpty extends True
+      ? `Error: "by" must not be empty.`
+      : HavingValid extends False
+      ? {
+          [P in HavingFields]: P extends ByFields
+            ? never
+            : P extends string
+            ? `Error: Field "${P}" used in "having" needs to be provided in "by".`
+            : [
+                Error,
+                'Field ',
+                P,
+                ` in "having" needs to be provided in "by"`,
+              ]
+        }[HavingFields]
+      : 'take' extends Keys<T>
+      ? 'orderBy' extends Keys<T>
+        ? ByValid extends True
+          ? {}
+          : {
+              [P in OrderFields]: P extends ByFields
+                ? never
+                : `Error: Field "${P}" in "orderBy" needs to be provided in "by"`
+            }[OrderFields]
+        : 'Error: If you provide "take", you also need to provide "orderBy"'
+      : 'skip' extends Keys<T>
+      ? 'orderBy' extends Keys<T>
+        ? ByValid extends True
+          ? {}
+          : {
+              [P in OrderFields]: P extends ByFields
+                ? never
+                : `Error: Field "${P}" in "orderBy" needs to be provided in "by"`
+            }[OrderFields]
+        : 'Error: If you provide "skip", you also need to provide "orderBy"'
+      : ByValid extends True
+      ? {}
+      : {
+          [P in OrderFields]: P extends ByFields
+            ? never
+            : `Error: Field "${P}" in "orderBy" needs to be provided in "by"`
+        }[OrderFields]
+    >(args: SubsetIntersection<T, RoleGroupByArgs, OrderByArg> & InputErrors): {} extends InputErrors ? GetRoleGroupByPayload<T> : Prisma.PrismaPromise<InputErrors>
+  /**
+   * Fields of the Role model
+   */
+  readonly fields: RoleFieldRefs;
+  }
+
+  /**
+   * The delegate class that acts as a "Promise-like" for Role.
+   * Why is this prefixed with `Prisma__`?
+   * Because we want to prevent naming conflicts as mentioned in
+   * https://github.com/prisma/prisma-client-js/issues/707
+   */
+  export interface Prisma__RoleClient<T, Null = never, ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs, GlobalOmitOptions = {}> extends Prisma.PrismaPromise<T> {
+    readonly [Symbol.toStringTag]: "PrismaPromise"
+    tenant<T extends TenantDefaultArgs<ExtArgs> = {}>(args?: Subset<T, TenantDefaultArgs<ExtArgs>>): Prisma__TenantClient<$Result.GetResult<Prisma.$TenantPayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions> | Null, Null, ExtArgs, GlobalOmitOptions>
+    permissions<T extends Role$permissionsArgs<ExtArgs> = {}>(args?: Subset<T, Role$permissionsArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$RolePermissionPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
+    userProjectRoles<T extends Role$userProjectRolesArgs<ExtArgs> = {}>(args?: Subset<T, Role$userProjectRolesArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$UserProjectRolePayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
+    /**
+     * Attaches callbacks for the resolution and/or rejection of the Promise.
+     * @param onfulfilled The callback to execute when the Promise is resolved.
+     * @param onrejected The callback to execute when the Promise is rejected.
+     * @returns A Promise for the completion of which ever callback is executed.
+     */
+    then<TResult1 = T, TResult2 = never>(onfulfilled?: ((value: T) => TResult1 | PromiseLike<TResult1>) | undefined | null, onrejected?: ((reason: any) => TResult2 | PromiseLike<TResult2>) | undefined | null): $Utils.JsPromise<TResult1 | TResult2>
+    /**
+     * Attaches a callback for only the rejection of the Promise.
+     * @param onrejected The callback to execute when the Promise is rejected.
+     * @returns A Promise for the completion of the callback.
+     */
+    catch<TResult = never>(onrejected?: ((reason: any) => TResult | PromiseLike<TResult>) | undefined | null): $Utils.JsPromise<T | TResult>
+    /**
+     * Attaches a callback that is invoked when the Promise is settled (fulfilled or rejected). The
+     * resolved value cannot be modified from the callback.
+     * @param onfinally The callback to execute when the Promise is settled (fulfilled or rejected).
+     * @returns A Promise for the completion of the callback.
+     */
+    finally(onfinally?: (() => void) | undefined | null): $Utils.JsPromise<T>
+  }
+
+
+
+
+  /**
+   * Fields of the Role model
+   */
+  interface RoleFieldRefs {
+    readonly id: FieldRef<"Role", 'String'>
+    readonly tenantId: FieldRef<"Role", 'String'>
+    readonly name: FieldRef<"Role", 'String'>
+    readonly nameKey: FieldRef<"Role", 'String'>
+    readonly scope: FieldRef<"Role", 'RoleScope'>
+    readonly description: FieldRef<"Role", 'String'>
+    readonly deletedAt: FieldRef<"Role", 'DateTime'>
+    readonly createdAt: FieldRef<"Role", 'DateTime'>
+    readonly updatedAt: FieldRef<"Role", 'DateTime'>
+  }
+    
+
+  // Custom InputTypes
+  /**
+   * Role findUnique
+   */
+  export type RoleFindUniqueArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the Role
+     */
+    select?: RoleSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the Role
+     */
+    omit?: RoleOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: RoleInclude<ExtArgs> | null
+    /**
+     * Filter, which Role to fetch.
+     */
+    where: RoleWhereUniqueInput
+  }
+
+  /**
+   * Role findUniqueOrThrow
+   */
+  export type RoleFindUniqueOrThrowArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the Role
+     */
+    select?: RoleSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the Role
+     */
+    omit?: RoleOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: RoleInclude<ExtArgs> | null
+    /**
+     * Filter, which Role to fetch.
+     */
+    where: RoleWhereUniqueInput
+  }
+
+  /**
+   * Role findFirst
+   */
+  export type RoleFindFirstArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the Role
+     */
+    select?: RoleSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the Role
+     */
+    omit?: RoleOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: RoleInclude<ExtArgs> | null
+    /**
+     * Filter, which Role to fetch.
+     */
+    where?: RoleWhereInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+     * 
+     * Determine the order of Roles to fetch.
+     */
+    orderBy?: RoleOrderByWithRelationInput | RoleOrderByWithRelationInput[]
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+     * 
+     * Sets the position for searching for Roles.
+     */
+    cursor?: RoleWhereUniqueInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Take `±n` Roles from the position of the cursor.
+     */
+    take?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Skip the first `n` Roles.
+     */
+    skip?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/distinct Distinct Docs}
+     * 
+     * Filter by unique combinations of Roles.
+     */
+    distinct?: RoleScalarFieldEnum | RoleScalarFieldEnum[]
+  }
+
+  /**
+   * Role findFirstOrThrow
+   */
+  export type RoleFindFirstOrThrowArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the Role
+     */
+    select?: RoleSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the Role
+     */
+    omit?: RoleOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: RoleInclude<ExtArgs> | null
+    /**
+     * Filter, which Role to fetch.
+     */
+    where?: RoleWhereInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+     * 
+     * Determine the order of Roles to fetch.
+     */
+    orderBy?: RoleOrderByWithRelationInput | RoleOrderByWithRelationInput[]
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+     * 
+     * Sets the position for searching for Roles.
+     */
+    cursor?: RoleWhereUniqueInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Take `±n` Roles from the position of the cursor.
+     */
+    take?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Skip the first `n` Roles.
+     */
+    skip?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/distinct Distinct Docs}
+     * 
+     * Filter by unique combinations of Roles.
+     */
+    distinct?: RoleScalarFieldEnum | RoleScalarFieldEnum[]
+  }
+
+  /**
+   * Role findMany
+   */
+  export type RoleFindManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the Role
+     */
+    select?: RoleSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the Role
+     */
+    omit?: RoleOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: RoleInclude<ExtArgs> | null
+    /**
+     * Filter, which Roles to fetch.
+     */
+    where?: RoleWhereInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+     * 
+     * Determine the order of Roles to fetch.
+     */
+    orderBy?: RoleOrderByWithRelationInput | RoleOrderByWithRelationInput[]
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+     * 
+     * Sets the position for listing Roles.
+     */
+    cursor?: RoleWhereUniqueInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Take `±n` Roles from the position of the cursor.
+     */
+    take?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Skip the first `n` Roles.
+     */
+    skip?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/distinct Distinct Docs}
+     * 
+     * Filter by unique combinations of Roles.
+     */
+    distinct?: RoleScalarFieldEnum | RoleScalarFieldEnum[]
+  }
+
+  /**
+   * Role create
+   */
+  export type RoleCreateArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the Role
+     */
+    select?: RoleSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the Role
+     */
+    omit?: RoleOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: RoleInclude<ExtArgs> | null
+    /**
+     * The data needed to create a Role.
+     */
+    data: XOR<RoleCreateInput, RoleUncheckedCreateInput>
+  }
+
+  /**
+   * Role createMany
+   */
+  export type RoleCreateManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * The data used to create many Roles.
+     */
+    data: RoleCreateManyInput | RoleCreateManyInput[]
+    skipDuplicates?: boolean
+  }
+
+  /**
+   * Role createManyAndReturn
+   */
+  export type RoleCreateManyAndReturnArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the Role
+     */
+    select?: RoleSelectCreateManyAndReturn<ExtArgs> | null
+    /**
+     * Omit specific fields from the Role
+     */
+    omit?: RoleOmit<ExtArgs> | null
+    /**
+     * The data used to create many Roles.
+     */
+    data: RoleCreateManyInput | RoleCreateManyInput[]
+    skipDuplicates?: boolean
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: RoleIncludeCreateManyAndReturn<ExtArgs> | null
+  }
+
+  /**
+   * Role update
+   */
+  export type RoleUpdateArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the Role
+     */
+    select?: RoleSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the Role
+     */
+    omit?: RoleOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: RoleInclude<ExtArgs> | null
+    /**
+     * The data needed to update a Role.
+     */
+    data: XOR<RoleUpdateInput, RoleUncheckedUpdateInput>
+    /**
+     * Choose, which Role to update.
+     */
+    where: RoleWhereUniqueInput
+  }
+
+  /**
+   * Role updateMany
+   */
+  export type RoleUpdateManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * The data used to update Roles.
+     */
+    data: XOR<RoleUpdateManyMutationInput, RoleUncheckedUpdateManyInput>
+    /**
+     * Filter which Roles to update
+     */
+    where?: RoleWhereInput
+    /**
+     * Limit how many Roles to update.
+     */
+    limit?: number
+  }
+
+  /**
+   * Role updateManyAndReturn
+   */
+  export type RoleUpdateManyAndReturnArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the Role
+     */
+    select?: RoleSelectUpdateManyAndReturn<ExtArgs> | null
+    /**
+     * Omit specific fields from the Role
+     */
+    omit?: RoleOmit<ExtArgs> | null
+    /**
+     * The data used to update Roles.
+     */
+    data: XOR<RoleUpdateManyMutationInput, RoleUncheckedUpdateManyInput>
+    /**
+     * Filter which Roles to update
+     */
+    where?: RoleWhereInput
+    /**
+     * Limit how many Roles to update.
+     */
+    limit?: number
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: RoleIncludeUpdateManyAndReturn<ExtArgs> | null
+  }
+
+  /**
+   * Role upsert
+   */
+  export type RoleUpsertArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the Role
+     */
+    select?: RoleSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the Role
+     */
+    omit?: RoleOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: RoleInclude<ExtArgs> | null
+    /**
+     * The filter to search for the Role to update in case it exists.
+     */
+    where: RoleWhereUniqueInput
+    /**
+     * In case the Role found by the `where` argument doesn't exist, create a new Role with this data.
+     */
+    create: XOR<RoleCreateInput, RoleUncheckedCreateInput>
+    /**
+     * In case the Role was found with the provided `where` argument, update it with this data.
+     */
+    update: XOR<RoleUpdateInput, RoleUncheckedUpdateInput>
+  }
+
+  /**
+   * Role delete
+   */
+  export type RoleDeleteArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the Role
+     */
+    select?: RoleSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the Role
+     */
+    omit?: RoleOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: RoleInclude<ExtArgs> | null
+    /**
+     * Filter which Role to delete.
+     */
+    where: RoleWhereUniqueInput
+  }
+
+  /**
+   * Role deleteMany
+   */
+  export type RoleDeleteManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Filter which Roles to delete
+     */
+    where?: RoleWhereInput
+    /**
+     * Limit how many Roles to delete.
+     */
+    limit?: number
+  }
+
+  /**
+   * Role.permissions
+   */
+  export type Role$permissionsArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the RolePermission
+     */
+    select?: RolePermissionSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the RolePermission
+     */
+    omit?: RolePermissionOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: RolePermissionInclude<ExtArgs> | null
+    where?: RolePermissionWhereInput
+    orderBy?: RolePermissionOrderByWithRelationInput | RolePermissionOrderByWithRelationInput[]
+    cursor?: RolePermissionWhereUniqueInput
+    take?: number
+    skip?: number
+    distinct?: RolePermissionScalarFieldEnum | RolePermissionScalarFieldEnum[]
+  }
+
+  /**
+   * Role.userProjectRoles
+   */
+  export type Role$userProjectRolesArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the UserProjectRole
+     */
+    select?: UserProjectRoleSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the UserProjectRole
+     */
+    omit?: UserProjectRoleOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: UserProjectRoleInclude<ExtArgs> | null
+    where?: UserProjectRoleWhereInput
+    orderBy?: UserProjectRoleOrderByWithRelationInput | UserProjectRoleOrderByWithRelationInput[]
+    cursor?: UserProjectRoleWhereUniqueInput
+    take?: number
+    skip?: number
+    distinct?: UserProjectRoleScalarFieldEnum | UserProjectRoleScalarFieldEnum[]
+  }
+
+  /**
+   * Role without action
+   */
+  export type RoleDefaultArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the Role
+     */
+    select?: RoleSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the Role
+     */
+    omit?: RoleOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: RoleInclude<ExtArgs> | null
+  }
+
+
+  /**
+   * Model Permission
+   */
+
+  export type AggregatePermission = {
+    _count: PermissionCountAggregateOutputType | null
+    _min: PermissionMinAggregateOutputType | null
+    _max: PermissionMaxAggregateOutputType | null
+  }
+
+  export type PermissionMinAggregateOutputType = {
+    id: string | null
+    name: string | null
+    description: string | null
+    resource: string | null
+    action: string | null
+    deletedAt: Date | null
+    createdAt: Date | null
+    updatedAt: Date | null
+  }
+
+  export type PermissionMaxAggregateOutputType = {
+    id: string | null
+    name: string | null
+    description: string | null
+    resource: string | null
+    action: string | null
+    deletedAt: Date | null
+    createdAt: Date | null
+    updatedAt: Date | null
+  }
+
+  export type PermissionCountAggregateOutputType = {
+    id: number
+    name: number
+    description: number
+    resource: number
+    action: number
+    deletedAt: number
+    createdAt: number
+    updatedAt: number
+    _all: number
+  }
+
+
+  export type PermissionMinAggregateInputType = {
+    id?: true
+    name?: true
+    description?: true
+    resource?: true
+    action?: true
+    deletedAt?: true
+    createdAt?: true
+    updatedAt?: true
+  }
+
+  export type PermissionMaxAggregateInputType = {
+    id?: true
+    name?: true
+    description?: true
+    resource?: true
+    action?: true
+    deletedAt?: true
+    createdAt?: true
+    updatedAt?: true
+  }
+
+  export type PermissionCountAggregateInputType = {
+    id?: true
+    name?: true
+    description?: true
+    resource?: true
+    action?: true
+    deletedAt?: true
+    createdAt?: true
+    updatedAt?: true
+    _all?: true
+  }
+
+  export type PermissionAggregateArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Filter which Permission to aggregate.
+     */
+    where?: PermissionWhereInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+     * 
+     * Determine the order of Permissions to fetch.
+     */
+    orderBy?: PermissionOrderByWithRelationInput | PermissionOrderByWithRelationInput[]
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+     * 
+     * Sets the start position
+     */
+    cursor?: PermissionWhereUniqueInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Take `±n` Permissions from the position of the cursor.
+     */
+    take?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Skip the first `n` Permissions.
+     */
+    skip?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Count returned Permissions
+    **/
+    _count?: true | PermissionCountAggregateInputType
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Select which fields to find the minimum value
+    **/
+    _min?: PermissionMinAggregateInputType
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Select which fields to find the maximum value
+    **/
+    _max?: PermissionMaxAggregateInputType
+  }
+
+  export type GetPermissionAggregateType<T extends PermissionAggregateArgs> = {
+        [P in keyof T & keyof AggregatePermission]: P extends '_count' | 'count'
+      ? T[P] extends true
+        ? number
+        : GetScalarType<T[P], AggregatePermission[P]>
+      : GetScalarType<T[P], AggregatePermission[P]>
+  }
+
+
+
+
+  export type PermissionGroupByArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    where?: PermissionWhereInput
+    orderBy?: PermissionOrderByWithAggregationInput | PermissionOrderByWithAggregationInput[]
+    by: PermissionScalarFieldEnum[] | PermissionScalarFieldEnum
+    having?: PermissionScalarWhereWithAggregatesInput
+    take?: number
+    skip?: number
+    _count?: PermissionCountAggregateInputType | true
+    _min?: PermissionMinAggregateInputType
+    _max?: PermissionMaxAggregateInputType
+  }
+
+  export type PermissionGroupByOutputType = {
+    id: string
+    name: string
+    description: string | null
+    resource: string
+    action: string
+    deletedAt: Date | null
+    createdAt: Date
+    updatedAt: Date
+    _count: PermissionCountAggregateOutputType | null
+    _min: PermissionMinAggregateOutputType | null
+    _max: PermissionMaxAggregateOutputType | null
+  }
+
+  type GetPermissionGroupByPayload<T extends PermissionGroupByArgs> = Prisma.PrismaPromise<
+    Array<
+      PickEnumerable<PermissionGroupByOutputType, T['by']> &
+        {
+          [P in ((keyof T) & (keyof PermissionGroupByOutputType))]: P extends '_count'
+            ? T[P] extends boolean
+              ? number
+              : GetScalarType<T[P], PermissionGroupByOutputType[P]>
+            : GetScalarType<T[P], PermissionGroupByOutputType[P]>
+        }
+      >
+    >
+
+
+  export type PermissionSelect<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetSelect<{
+    id?: boolean
+    name?: boolean
+    description?: boolean
+    resource?: boolean
+    action?: boolean
+    deletedAt?: boolean
+    createdAt?: boolean
+    updatedAt?: boolean
+    roles?: boolean | Permission$rolesArgs<ExtArgs>
+    _count?: boolean | PermissionCountOutputTypeDefaultArgs<ExtArgs>
+  }, ExtArgs["result"]["permission"]>
+
+  export type PermissionSelectCreateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetSelect<{
+    id?: boolean
+    name?: boolean
+    description?: boolean
+    resource?: boolean
+    action?: boolean
+    deletedAt?: boolean
+    createdAt?: boolean
+    updatedAt?: boolean
+  }, ExtArgs["result"]["permission"]>
+
+  export type PermissionSelectUpdateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetSelect<{
+    id?: boolean
+    name?: boolean
+    description?: boolean
+    resource?: boolean
+    action?: boolean
+    deletedAt?: boolean
+    createdAt?: boolean
+    updatedAt?: boolean
+  }, ExtArgs["result"]["permission"]>
+
+  export type PermissionSelectScalar = {
+    id?: boolean
+    name?: boolean
+    description?: boolean
+    resource?: boolean
+    action?: boolean
+    deletedAt?: boolean
+    createdAt?: boolean
+    updatedAt?: boolean
+  }
+
+  export type PermissionOmit<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetOmit<"id" | "name" | "description" | "resource" | "action" | "deletedAt" | "createdAt" | "updatedAt", ExtArgs["result"]["permission"]>
+  export type PermissionInclude<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    roles?: boolean | Permission$rolesArgs<ExtArgs>
+    _count?: boolean | PermissionCountOutputTypeDefaultArgs<ExtArgs>
+  }
+  export type PermissionIncludeCreateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {}
+  export type PermissionIncludeUpdateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {}
+
+  export type $PermissionPayload<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    name: "Permission"
+    objects: {
+      roles: Prisma.$RolePermissionPayload<ExtArgs>[]
+    }
+    scalars: $Extensions.GetPayloadResult<{
+      id: string
+      name: string
+      description: string | null
+      resource: string
+      action: string
+      deletedAt: Date | null
+      createdAt: Date
+      updatedAt: Date
+    }, ExtArgs["result"]["permission"]>
+    composites: {}
+  }
+
+  type PermissionGetPayload<S extends boolean | null | undefined | PermissionDefaultArgs> = $Result.GetResult<Prisma.$PermissionPayload, S>
+
+  type PermissionCountArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> =
+    Omit<PermissionFindManyArgs, 'select' | 'include' | 'distinct' | 'omit'> & {
+      select?: PermissionCountAggregateInputType | true
+    }
+
+  export interface PermissionDelegate<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs, GlobalOmitOptions = {}> {
+    [K: symbol]: { types: Prisma.TypeMap<ExtArgs>['model']['Permission'], meta: { name: 'Permission' } }
+    /**
+     * Find zero or one Permission that matches the filter.
+     * @param {PermissionFindUniqueArgs} args - Arguments to find a Permission
+     * @example
+     * // Get one Permission
+     * const permission = await prisma.permission.findUnique({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     */
+    findUnique<T extends PermissionFindUniqueArgs>(args: SelectSubset<T, PermissionFindUniqueArgs<ExtArgs>>): Prisma__PermissionClient<$Result.GetResult<Prisma.$PermissionPayload<ExtArgs>, T, "findUnique", GlobalOmitOptions> | null, null, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Find one Permission that matches the filter or throw an error with `error.code='P2025'`
+     * if no matches were found.
+     * @param {PermissionFindUniqueOrThrowArgs} args - Arguments to find a Permission
+     * @example
+     * // Get one Permission
+     * const permission = await prisma.permission.findUniqueOrThrow({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     */
+    findUniqueOrThrow<T extends PermissionFindUniqueOrThrowArgs>(args: SelectSubset<T, PermissionFindUniqueOrThrowArgs<ExtArgs>>): Prisma__PermissionClient<$Result.GetResult<Prisma.$PermissionPayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Find the first Permission that matches the filter.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {PermissionFindFirstArgs} args - Arguments to find a Permission
+     * @example
+     * // Get one Permission
+     * const permission = await prisma.permission.findFirst({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     */
+    findFirst<T extends PermissionFindFirstArgs>(args?: SelectSubset<T, PermissionFindFirstArgs<ExtArgs>>): Prisma__PermissionClient<$Result.GetResult<Prisma.$PermissionPayload<ExtArgs>, T, "findFirst", GlobalOmitOptions> | null, null, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Find the first Permission that matches the filter or
+     * throw `PrismaKnownClientError` with `P2025` code if no matches were found.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {PermissionFindFirstOrThrowArgs} args - Arguments to find a Permission
+     * @example
+     * // Get one Permission
+     * const permission = await prisma.permission.findFirstOrThrow({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     */
+    findFirstOrThrow<T extends PermissionFindFirstOrThrowArgs>(args?: SelectSubset<T, PermissionFindFirstOrThrowArgs<ExtArgs>>): Prisma__PermissionClient<$Result.GetResult<Prisma.$PermissionPayload<ExtArgs>, T, "findFirstOrThrow", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Find zero or more Permissions that matches the filter.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {PermissionFindManyArgs} args - Arguments to filter and select certain fields only.
+     * @example
+     * // Get all Permissions
+     * const permissions = await prisma.permission.findMany()
+     * 
+     * // Get first 10 Permissions
+     * const permissions = await prisma.permission.findMany({ take: 10 })
+     * 
+     * // Only select the `id`
+     * const permissionWithIdOnly = await prisma.permission.findMany({ select: { id: true } })
+     * 
+     */
+    findMany<T extends PermissionFindManyArgs>(args?: SelectSubset<T, PermissionFindManyArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$PermissionPayload<ExtArgs>, T, "findMany", GlobalOmitOptions>>
+
+    /**
+     * Create a Permission.
+     * @param {PermissionCreateArgs} args - Arguments to create a Permission.
+     * @example
+     * // Create one Permission
+     * const Permission = await prisma.permission.create({
+     *   data: {
+     *     // ... data to create a Permission
+     *   }
+     * })
+     * 
+     */
+    create<T extends PermissionCreateArgs>(args: SelectSubset<T, PermissionCreateArgs<ExtArgs>>): Prisma__PermissionClient<$Result.GetResult<Prisma.$PermissionPayload<ExtArgs>, T, "create", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Create many Permissions.
+     * @param {PermissionCreateManyArgs} args - Arguments to create many Permissions.
+     * @example
+     * // Create many Permissions
+     * const permission = await prisma.permission.createMany({
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     *     
+     */
+    createMany<T extends PermissionCreateManyArgs>(args?: SelectSubset<T, PermissionCreateManyArgs<ExtArgs>>): Prisma.PrismaPromise<BatchPayload>
+
+    /**
+     * Create many Permissions and returns the data saved in the database.
+     * @param {PermissionCreateManyAndReturnArgs} args - Arguments to create many Permissions.
+     * @example
+     * // Create many Permissions
+     * const permission = await prisma.permission.createManyAndReturn({
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     * 
+     * // Create many Permissions and only return the `id`
+     * const permissionWithIdOnly = await prisma.permission.createManyAndReturn({
+     *   select: { id: true },
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * 
+     */
+    createManyAndReturn<T extends PermissionCreateManyAndReturnArgs>(args?: SelectSubset<T, PermissionCreateManyAndReturnArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$PermissionPayload<ExtArgs>, T, "createManyAndReturn", GlobalOmitOptions>>
+
+    /**
+     * Delete a Permission.
+     * @param {PermissionDeleteArgs} args - Arguments to delete one Permission.
+     * @example
+     * // Delete one Permission
+     * const Permission = await prisma.permission.delete({
+     *   where: {
+     *     // ... filter to delete one Permission
+     *   }
+     * })
+     * 
+     */
+    delete<T extends PermissionDeleteArgs>(args: SelectSubset<T, PermissionDeleteArgs<ExtArgs>>): Prisma__PermissionClient<$Result.GetResult<Prisma.$PermissionPayload<ExtArgs>, T, "delete", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Update one Permission.
+     * @param {PermissionUpdateArgs} args - Arguments to update one Permission.
+     * @example
+     * // Update one Permission
+     * const permission = await prisma.permission.update({
+     *   where: {
+     *     // ... provide filter here
+     *   },
+     *   data: {
+     *     // ... provide data here
+     *   }
+     * })
+     * 
+     */
+    update<T extends PermissionUpdateArgs>(args: SelectSubset<T, PermissionUpdateArgs<ExtArgs>>): Prisma__PermissionClient<$Result.GetResult<Prisma.$PermissionPayload<ExtArgs>, T, "update", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Delete zero or more Permissions.
+     * @param {PermissionDeleteManyArgs} args - Arguments to filter Permissions to delete.
+     * @example
+     * // Delete a few Permissions
+     * const { count } = await prisma.permission.deleteMany({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     * 
+     */
+    deleteMany<T extends PermissionDeleteManyArgs>(args?: SelectSubset<T, PermissionDeleteManyArgs<ExtArgs>>): Prisma.PrismaPromise<BatchPayload>
+
+    /**
+     * Update zero or more Permissions.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {PermissionUpdateManyArgs} args - Arguments to update one or more rows.
+     * @example
+     * // Update many Permissions
+     * const permission = await prisma.permission.updateMany({
+     *   where: {
+     *     // ... provide filter here
+     *   },
+     *   data: {
+     *     // ... provide data here
+     *   }
+     * })
+     * 
+     */
+    updateMany<T extends PermissionUpdateManyArgs>(args: SelectSubset<T, PermissionUpdateManyArgs<ExtArgs>>): Prisma.PrismaPromise<BatchPayload>
+
+    /**
+     * Update zero or more Permissions and returns the data updated in the database.
+     * @param {PermissionUpdateManyAndReturnArgs} args - Arguments to update many Permissions.
+     * @example
+     * // Update many Permissions
+     * const permission = await prisma.permission.updateManyAndReturn({
+     *   where: {
+     *     // ... provide filter here
+     *   },
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     * 
+     * // Update zero or more Permissions and only return the `id`
+     * const permissionWithIdOnly = await prisma.permission.updateManyAndReturn({
+     *   select: { id: true },
+     *   where: {
+     *     // ... provide filter here
+     *   },
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * 
+     */
+    updateManyAndReturn<T extends PermissionUpdateManyAndReturnArgs>(args: SelectSubset<T, PermissionUpdateManyAndReturnArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$PermissionPayload<ExtArgs>, T, "updateManyAndReturn", GlobalOmitOptions>>
+
+    /**
+     * Create or update one Permission.
+     * @param {PermissionUpsertArgs} args - Arguments to update or create a Permission.
+     * @example
+     * // Update or create a Permission
+     * const permission = await prisma.permission.upsert({
+     *   create: {
+     *     // ... data to create a Permission
+     *   },
+     *   update: {
+     *     // ... in case it already exists, update
+     *   },
+     *   where: {
+     *     // ... the filter for the Permission we want to update
+     *   }
+     * })
+     */
+    upsert<T extends PermissionUpsertArgs>(args: SelectSubset<T, PermissionUpsertArgs<ExtArgs>>): Prisma__PermissionClient<$Result.GetResult<Prisma.$PermissionPayload<ExtArgs>, T, "upsert", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+
+    /**
+     * Count the number of Permissions.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {PermissionCountArgs} args - Arguments to filter Permissions to count.
+     * @example
+     * // Count the number of Permissions
+     * const count = await prisma.permission.count({
+     *   where: {
+     *     // ... the filter for the Permissions we want to count
+     *   }
+     * })
+    **/
+    count<T extends PermissionCountArgs>(
+      args?: Subset<T, PermissionCountArgs>,
+    ): Prisma.PrismaPromise<
+      T extends $Utils.Record<'select', any>
+        ? T['select'] extends true
+          ? number
+          : GetScalarType<T['select'], PermissionCountAggregateOutputType>
+        : number
+    >
+
+    /**
+     * Allows you to perform aggregations operations on a Permission.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {PermissionAggregateArgs} args - Select which aggregations you would like to apply and on what fields.
+     * @example
+     * // Ordered by age ascending
+     * // Where email contains prisma.io
+     * // Limited to the 10 users
+     * const aggregations = await prisma.user.aggregate({
+     *   _avg: {
+     *     age: true,
+     *   },
+     *   where: {
+     *     email: {
+     *       contains: "prisma.io",
+     *     },
+     *   },
+     *   orderBy: {
+     *     age: "asc",
+     *   },
+     *   take: 10,
+     * })
+    **/
+    aggregate<T extends PermissionAggregateArgs>(args: Subset<T, PermissionAggregateArgs>): Prisma.PrismaPromise<GetPermissionAggregateType<T>>
+
+    /**
+     * Group by Permission.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {PermissionGroupByArgs} args - Group by arguments.
+     * @example
+     * // Group by city, order by createdAt, get count
+     * const result = await prisma.user.groupBy({
+     *   by: ['city', 'createdAt'],
+     *   orderBy: {
+     *     createdAt: true
+     *   },
+     *   _count: {
+     *     _all: true
+     *   },
+     * })
+     * 
+    **/
+    groupBy<
+      T extends PermissionGroupByArgs,
+      HasSelectOrTake extends Or<
+        Extends<'skip', Keys<T>>,
+        Extends<'take', Keys<T>>
+      >,
+      OrderByArg extends True extends HasSelectOrTake
+        ? { orderBy: PermissionGroupByArgs['orderBy'] }
+        : { orderBy?: PermissionGroupByArgs['orderBy'] },
+      OrderFields extends ExcludeUnderscoreKeys<Keys<MaybeTupleToUnion<T['orderBy']>>>,
+      ByFields extends MaybeTupleToUnion<T['by']>,
+      ByValid extends Has<ByFields, OrderFields>,
+      HavingFields extends GetHavingFields<T['having']>,
+      HavingValid extends Has<ByFields, HavingFields>,
+      ByEmpty extends T['by'] extends never[] ? True : False,
+      InputErrors extends ByEmpty extends True
+      ? `Error: "by" must not be empty.`
+      : HavingValid extends False
+      ? {
+          [P in HavingFields]: P extends ByFields
+            ? never
+            : P extends string
+            ? `Error: Field "${P}" used in "having" needs to be provided in "by".`
+            : [
+                Error,
+                'Field ',
+                P,
+                ` in "having" needs to be provided in "by"`,
+              ]
+        }[HavingFields]
+      : 'take' extends Keys<T>
+      ? 'orderBy' extends Keys<T>
+        ? ByValid extends True
+          ? {}
+          : {
+              [P in OrderFields]: P extends ByFields
+                ? never
+                : `Error: Field "${P}" in "orderBy" needs to be provided in "by"`
+            }[OrderFields]
+        : 'Error: If you provide "take", you also need to provide "orderBy"'
+      : 'skip' extends Keys<T>
+      ? 'orderBy' extends Keys<T>
+        ? ByValid extends True
+          ? {}
+          : {
+              [P in OrderFields]: P extends ByFields
+                ? never
+                : `Error: Field "${P}" in "orderBy" needs to be provided in "by"`
+            }[OrderFields]
+        : 'Error: If you provide "skip", you also need to provide "orderBy"'
+      : ByValid extends True
+      ? {}
+      : {
+          [P in OrderFields]: P extends ByFields
+            ? never
+            : `Error: Field "${P}" in "orderBy" needs to be provided in "by"`
+        }[OrderFields]
+    >(args: SubsetIntersection<T, PermissionGroupByArgs, OrderByArg> & InputErrors): {} extends InputErrors ? GetPermissionGroupByPayload<T> : Prisma.PrismaPromise<InputErrors>
+  /**
+   * Fields of the Permission model
+   */
+  readonly fields: PermissionFieldRefs;
+  }
+
+  /**
+   * The delegate class that acts as a "Promise-like" for Permission.
+   * Why is this prefixed with `Prisma__`?
+   * Because we want to prevent naming conflicts as mentioned in
+   * https://github.com/prisma/prisma-client-js/issues/707
+   */
+  export interface Prisma__PermissionClient<T, Null = never, ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs, GlobalOmitOptions = {}> extends Prisma.PrismaPromise<T> {
+    readonly [Symbol.toStringTag]: "PrismaPromise"
+    roles<T extends Permission$rolesArgs<ExtArgs> = {}>(args?: Subset<T, Permission$rolesArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$RolePermissionPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
+    /**
+     * Attaches callbacks for the resolution and/or rejection of the Promise.
+     * @param onfulfilled The callback to execute when the Promise is resolved.
+     * @param onrejected The callback to execute when the Promise is rejected.
+     * @returns A Promise for the completion of which ever callback is executed.
+     */
+    then<TResult1 = T, TResult2 = never>(onfulfilled?: ((value: T) => TResult1 | PromiseLike<TResult1>) | undefined | null, onrejected?: ((reason: any) => TResult2 | PromiseLike<TResult2>) | undefined | null): $Utils.JsPromise<TResult1 | TResult2>
+    /**
+     * Attaches a callback for only the rejection of the Promise.
+     * @param onrejected The callback to execute when the Promise is rejected.
+     * @returns A Promise for the completion of the callback.
+     */
+    catch<TResult = never>(onrejected?: ((reason: any) => TResult | PromiseLike<TResult>) | undefined | null): $Utils.JsPromise<T | TResult>
+    /**
+     * Attaches a callback that is invoked when the Promise is settled (fulfilled or rejected). The
+     * resolved value cannot be modified from the callback.
+     * @param onfinally The callback to execute when the Promise is settled (fulfilled or rejected).
+     * @returns A Promise for the completion of the callback.
+     */
+    finally(onfinally?: (() => void) | undefined | null): $Utils.JsPromise<T>
+  }
+
+
+
+
+  /**
+   * Fields of the Permission model
+   */
+  interface PermissionFieldRefs {
+    readonly id: FieldRef<"Permission", 'String'>
+    readonly name: FieldRef<"Permission", 'String'>
+    readonly description: FieldRef<"Permission", 'String'>
+    readonly resource: FieldRef<"Permission", 'String'>
+    readonly action: FieldRef<"Permission", 'String'>
+    readonly deletedAt: FieldRef<"Permission", 'DateTime'>
+    readonly createdAt: FieldRef<"Permission", 'DateTime'>
+    readonly updatedAt: FieldRef<"Permission", 'DateTime'>
+  }
+    
+
+  // Custom InputTypes
+  /**
+   * Permission findUnique
+   */
+  export type PermissionFindUniqueArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the Permission
+     */
+    select?: PermissionSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the Permission
+     */
+    omit?: PermissionOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: PermissionInclude<ExtArgs> | null
+    /**
+     * Filter, which Permission to fetch.
+     */
+    where: PermissionWhereUniqueInput
+  }
+
+  /**
+   * Permission findUniqueOrThrow
+   */
+  export type PermissionFindUniqueOrThrowArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the Permission
+     */
+    select?: PermissionSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the Permission
+     */
+    omit?: PermissionOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: PermissionInclude<ExtArgs> | null
+    /**
+     * Filter, which Permission to fetch.
+     */
+    where: PermissionWhereUniqueInput
+  }
+
+  /**
+   * Permission findFirst
+   */
+  export type PermissionFindFirstArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the Permission
+     */
+    select?: PermissionSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the Permission
+     */
+    omit?: PermissionOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: PermissionInclude<ExtArgs> | null
+    /**
+     * Filter, which Permission to fetch.
+     */
+    where?: PermissionWhereInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+     * 
+     * Determine the order of Permissions to fetch.
+     */
+    orderBy?: PermissionOrderByWithRelationInput | PermissionOrderByWithRelationInput[]
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+     * 
+     * Sets the position for searching for Permissions.
+     */
+    cursor?: PermissionWhereUniqueInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Take `±n` Permissions from the position of the cursor.
+     */
+    take?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Skip the first `n` Permissions.
+     */
+    skip?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/distinct Distinct Docs}
+     * 
+     * Filter by unique combinations of Permissions.
+     */
+    distinct?: PermissionScalarFieldEnum | PermissionScalarFieldEnum[]
+  }
+
+  /**
+   * Permission findFirstOrThrow
+   */
+  export type PermissionFindFirstOrThrowArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the Permission
+     */
+    select?: PermissionSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the Permission
+     */
+    omit?: PermissionOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: PermissionInclude<ExtArgs> | null
+    /**
+     * Filter, which Permission to fetch.
+     */
+    where?: PermissionWhereInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+     * 
+     * Determine the order of Permissions to fetch.
+     */
+    orderBy?: PermissionOrderByWithRelationInput | PermissionOrderByWithRelationInput[]
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+     * 
+     * Sets the position for searching for Permissions.
+     */
+    cursor?: PermissionWhereUniqueInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Take `±n` Permissions from the position of the cursor.
+     */
+    take?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Skip the first `n` Permissions.
+     */
+    skip?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/distinct Distinct Docs}
+     * 
+     * Filter by unique combinations of Permissions.
+     */
+    distinct?: PermissionScalarFieldEnum | PermissionScalarFieldEnum[]
+  }
+
+  /**
+   * Permission findMany
+   */
+  export type PermissionFindManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the Permission
+     */
+    select?: PermissionSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the Permission
+     */
+    omit?: PermissionOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: PermissionInclude<ExtArgs> | null
+    /**
+     * Filter, which Permissions to fetch.
+     */
+    where?: PermissionWhereInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+     * 
+     * Determine the order of Permissions to fetch.
+     */
+    orderBy?: PermissionOrderByWithRelationInput | PermissionOrderByWithRelationInput[]
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+     * 
+     * Sets the position for listing Permissions.
+     */
+    cursor?: PermissionWhereUniqueInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Take `±n` Permissions from the position of the cursor.
+     */
+    take?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Skip the first `n` Permissions.
+     */
+    skip?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/distinct Distinct Docs}
+     * 
+     * Filter by unique combinations of Permissions.
+     */
+    distinct?: PermissionScalarFieldEnum | PermissionScalarFieldEnum[]
+  }
+
+  /**
+   * Permission create
+   */
+  export type PermissionCreateArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the Permission
+     */
+    select?: PermissionSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the Permission
+     */
+    omit?: PermissionOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: PermissionInclude<ExtArgs> | null
+    /**
+     * The data needed to create a Permission.
+     */
+    data: XOR<PermissionCreateInput, PermissionUncheckedCreateInput>
+  }
+
+  /**
+   * Permission createMany
+   */
+  export type PermissionCreateManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * The data used to create many Permissions.
+     */
+    data: PermissionCreateManyInput | PermissionCreateManyInput[]
+    skipDuplicates?: boolean
+  }
+
+  /**
+   * Permission createManyAndReturn
+   */
+  export type PermissionCreateManyAndReturnArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the Permission
+     */
+    select?: PermissionSelectCreateManyAndReturn<ExtArgs> | null
+    /**
+     * Omit specific fields from the Permission
+     */
+    omit?: PermissionOmit<ExtArgs> | null
+    /**
+     * The data used to create many Permissions.
+     */
+    data: PermissionCreateManyInput | PermissionCreateManyInput[]
+    skipDuplicates?: boolean
+  }
+
+  /**
+   * Permission update
+   */
+  export type PermissionUpdateArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the Permission
+     */
+    select?: PermissionSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the Permission
+     */
+    omit?: PermissionOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: PermissionInclude<ExtArgs> | null
+    /**
+     * The data needed to update a Permission.
+     */
+    data: XOR<PermissionUpdateInput, PermissionUncheckedUpdateInput>
+    /**
+     * Choose, which Permission to update.
+     */
+    where: PermissionWhereUniqueInput
+  }
+
+  /**
+   * Permission updateMany
+   */
+  export type PermissionUpdateManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * The data used to update Permissions.
+     */
+    data: XOR<PermissionUpdateManyMutationInput, PermissionUncheckedUpdateManyInput>
+    /**
+     * Filter which Permissions to update
+     */
+    where?: PermissionWhereInput
+    /**
+     * Limit how many Permissions to update.
+     */
+    limit?: number
+  }
+
+  /**
+   * Permission updateManyAndReturn
+   */
+  export type PermissionUpdateManyAndReturnArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the Permission
+     */
+    select?: PermissionSelectUpdateManyAndReturn<ExtArgs> | null
+    /**
+     * Omit specific fields from the Permission
+     */
+    omit?: PermissionOmit<ExtArgs> | null
+    /**
+     * The data used to update Permissions.
+     */
+    data: XOR<PermissionUpdateManyMutationInput, PermissionUncheckedUpdateManyInput>
+    /**
+     * Filter which Permissions to update
+     */
+    where?: PermissionWhereInput
+    /**
+     * Limit how many Permissions to update.
+     */
+    limit?: number
+  }
+
+  /**
+   * Permission upsert
+   */
+  export type PermissionUpsertArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the Permission
+     */
+    select?: PermissionSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the Permission
+     */
+    omit?: PermissionOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: PermissionInclude<ExtArgs> | null
+    /**
+     * The filter to search for the Permission to update in case it exists.
+     */
+    where: PermissionWhereUniqueInput
+    /**
+     * In case the Permission found by the `where` argument doesn't exist, create a new Permission with this data.
+     */
+    create: XOR<PermissionCreateInput, PermissionUncheckedCreateInput>
+    /**
+     * In case the Permission was found with the provided `where` argument, update it with this data.
+     */
+    update: XOR<PermissionUpdateInput, PermissionUncheckedUpdateInput>
+  }
+
+  /**
+   * Permission delete
+   */
+  export type PermissionDeleteArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the Permission
+     */
+    select?: PermissionSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the Permission
+     */
+    omit?: PermissionOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: PermissionInclude<ExtArgs> | null
+    /**
+     * Filter which Permission to delete.
+     */
+    where: PermissionWhereUniqueInput
+  }
+
+  /**
+   * Permission deleteMany
+   */
+  export type PermissionDeleteManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Filter which Permissions to delete
+     */
+    where?: PermissionWhereInput
+    /**
+     * Limit how many Permissions to delete.
+     */
+    limit?: number
+  }
+
+  /**
+   * Permission.roles
+   */
+  export type Permission$rolesArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the RolePermission
+     */
+    select?: RolePermissionSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the RolePermission
+     */
+    omit?: RolePermissionOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: RolePermissionInclude<ExtArgs> | null
+    where?: RolePermissionWhereInput
+    orderBy?: RolePermissionOrderByWithRelationInput | RolePermissionOrderByWithRelationInput[]
+    cursor?: RolePermissionWhereUniqueInput
+    take?: number
+    skip?: number
+    distinct?: RolePermissionScalarFieldEnum | RolePermissionScalarFieldEnum[]
+  }
+
+  /**
+   * Permission without action
+   */
+  export type PermissionDefaultArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the Permission
+     */
+    select?: PermissionSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the Permission
+     */
+    omit?: PermissionOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: PermissionInclude<ExtArgs> | null
+  }
+
+
+  /**
+   * Model RolePermission
+   */
+
+  export type AggregateRolePermission = {
+    _count: RolePermissionCountAggregateOutputType | null
+    _min: RolePermissionMinAggregateOutputType | null
+    _max: RolePermissionMaxAggregateOutputType | null
+  }
+
+  export type RolePermissionMinAggregateOutputType = {
+    id: string | null
+    roleId: string | null
+    permissionId: string | null
+  }
+
+  export type RolePermissionMaxAggregateOutputType = {
+    id: string | null
+    roleId: string | null
+    permissionId: string | null
+  }
+
+  export type RolePermissionCountAggregateOutputType = {
+    id: number
+    roleId: number
+    permissionId: number
+    _all: number
+  }
+
+
+  export type RolePermissionMinAggregateInputType = {
+    id?: true
+    roleId?: true
+    permissionId?: true
+  }
+
+  export type RolePermissionMaxAggregateInputType = {
+    id?: true
+    roleId?: true
+    permissionId?: true
+  }
+
+  export type RolePermissionCountAggregateInputType = {
+    id?: true
+    roleId?: true
+    permissionId?: true
+    _all?: true
+  }
+
+  export type RolePermissionAggregateArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Filter which RolePermission to aggregate.
+     */
+    where?: RolePermissionWhereInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+     * 
+     * Determine the order of RolePermissions to fetch.
+     */
+    orderBy?: RolePermissionOrderByWithRelationInput | RolePermissionOrderByWithRelationInput[]
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+     * 
+     * Sets the start position
+     */
+    cursor?: RolePermissionWhereUniqueInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Take `±n` RolePermissions from the position of the cursor.
+     */
+    take?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Skip the first `n` RolePermissions.
+     */
+    skip?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Count returned RolePermissions
+    **/
+    _count?: true | RolePermissionCountAggregateInputType
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Select which fields to find the minimum value
+    **/
+    _min?: RolePermissionMinAggregateInputType
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Select which fields to find the maximum value
+    **/
+    _max?: RolePermissionMaxAggregateInputType
+  }
+
+  export type GetRolePermissionAggregateType<T extends RolePermissionAggregateArgs> = {
+        [P in keyof T & keyof AggregateRolePermission]: P extends '_count' | 'count'
+      ? T[P] extends true
+        ? number
+        : GetScalarType<T[P], AggregateRolePermission[P]>
+      : GetScalarType<T[P], AggregateRolePermission[P]>
+  }
+
+
+
+
+  export type RolePermissionGroupByArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    where?: RolePermissionWhereInput
+    orderBy?: RolePermissionOrderByWithAggregationInput | RolePermissionOrderByWithAggregationInput[]
+    by: RolePermissionScalarFieldEnum[] | RolePermissionScalarFieldEnum
+    having?: RolePermissionScalarWhereWithAggregatesInput
+    take?: number
+    skip?: number
+    _count?: RolePermissionCountAggregateInputType | true
+    _min?: RolePermissionMinAggregateInputType
+    _max?: RolePermissionMaxAggregateInputType
+  }
+
+  export type RolePermissionGroupByOutputType = {
+    id: string
+    roleId: string
+    permissionId: string
+    _count: RolePermissionCountAggregateOutputType | null
+    _min: RolePermissionMinAggregateOutputType | null
+    _max: RolePermissionMaxAggregateOutputType | null
+  }
+
+  type GetRolePermissionGroupByPayload<T extends RolePermissionGroupByArgs> = Prisma.PrismaPromise<
+    Array<
+      PickEnumerable<RolePermissionGroupByOutputType, T['by']> &
+        {
+          [P in ((keyof T) & (keyof RolePermissionGroupByOutputType))]: P extends '_count'
+            ? T[P] extends boolean
+              ? number
+              : GetScalarType<T[P], RolePermissionGroupByOutputType[P]>
+            : GetScalarType<T[P], RolePermissionGroupByOutputType[P]>
+        }
+      >
+    >
+
+
+  export type RolePermissionSelect<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetSelect<{
+    id?: boolean
+    roleId?: boolean
+    permissionId?: boolean
+    role?: boolean | RoleDefaultArgs<ExtArgs>
+    permission?: boolean | PermissionDefaultArgs<ExtArgs>
+  }, ExtArgs["result"]["rolePermission"]>
+
+  export type RolePermissionSelectCreateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetSelect<{
+    id?: boolean
+    roleId?: boolean
+    permissionId?: boolean
+    role?: boolean | RoleDefaultArgs<ExtArgs>
+    permission?: boolean | PermissionDefaultArgs<ExtArgs>
+  }, ExtArgs["result"]["rolePermission"]>
+
+  export type RolePermissionSelectUpdateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetSelect<{
+    id?: boolean
+    roleId?: boolean
+    permissionId?: boolean
+    role?: boolean | RoleDefaultArgs<ExtArgs>
+    permission?: boolean | PermissionDefaultArgs<ExtArgs>
+  }, ExtArgs["result"]["rolePermission"]>
+
+  export type RolePermissionSelectScalar = {
+    id?: boolean
+    roleId?: boolean
+    permissionId?: boolean
+  }
+
+  export type RolePermissionOmit<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetOmit<"id" | "roleId" | "permissionId", ExtArgs["result"]["rolePermission"]>
+  export type RolePermissionInclude<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    role?: boolean | RoleDefaultArgs<ExtArgs>
+    permission?: boolean | PermissionDefaultArgs<ExtArgs>
+  }
+  export type RolePermissionIncludeCreateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    role?: boolean | RoleDefaultArgs<ExtArgs>
+    permission?: boolean | PermissionDefaultArgs<ExtArgs>
+  }
+  export type RolePermissionIncludeUpdateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    role?: boolean | RoleDefaultArgs<ExtArgs>
+    permission?: boolean | PermissionDefaultArgs<ExtArgs>
+  }
+
+  export type $RolePermissionPayload<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    name: "RolePermission"
+    objects: {
+      role: Prisma.$RolePayload<ExtArgs>
+      permission: Prisma.$PermissionPayload<ExtArgs>
+    }
+    scalars: $Extensions.GetPayloadResult<{
+      id: string
+      roleId: string
+      permissionId: string
+    }, ExtArgs["result"]["rolePermission"]>
+    composites: {}
+  }
+
+  type RolePermissionGetPayload<S extends boolean | null | undefined | RolePermissionDefaultArgs> = $Result.GetResult<Prisma.$RolePermissionPayload, S>
+
+  type RolePermissionCountArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> =
+    Omit<RolePermissionFindManyArgs, 'select' | 'include' | 'distinct' | 'omit'> & {
+      select?: RolePermissionCountAggregateInputType | true
+    }
+
+  export interface RolePermissionDelegate<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs, GlobalOmitOptions = {}> {
+    [K: symbol]: { types: Prisma.TypeMap<ExtArgs>['model']['RolePermission'], meta: { name: 'RolePermission' } }
+    /**
+     * Find zero or one RolePermission that matches the filter.
+     * @param {RolePermissionFindUniqueArgs} args - Arguments to find a RolePermission
+     * @example
+     * // Get one RolePermission
+     * const rolePermission = await prisma.rolePermission.findUnique({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     */
+    findUnique<T extends RolePermissionFindUniqueArgs>(args: SelectSubset<T, RolePermissionFindUniqueArgs<ExtArgs>>): Prisma__RolePermissionClient<$Result.GetResult<Prisma.$RolePermissionPayload<ExtArgs>, T, "findUnique", GlobalOmitOptions> | null, null, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Find one RolePermission that matches the filter or throw an error with `error.code='P2025'`
+     * if no matches were found.
+     * @param {RolePermissionFindUniqueOrThrowArgs} args - Arguments to find a RolePermission
+     * @example
+     * // Get one RolePermission
+     * const rolePermission = await prisma.rolePermission.findUniqueOrThrow({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     */
+    findUniqueOrThrow<T extends RolePermissionFindUniqueOrThrowArgs>(args: SelectSubset<T, RolePermissionFindUniqueOrThrowArgs<ExtArgs>>): Prisma__RolePermissionClient<$Result.GetResult<Prisma.$RolePermissionPayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Find the first RolePermission that matches the filter.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {RolePermissionFindFirstArgs} args - Arguments to find a RolePermission
+     * @example
+     * // Get one RolePermission
+     * const rolePermission = await prisma.rolePermission.findFirst({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     */
+    findFirst<T extends RolePermissionFindFirstArgs>(args?: SelectSubset<T, RolePermissionFindFirstArgs<ExtArgs>>): Prisma__RolePermissionClient<$Result.GetResult<Prisma.$RolePermissionPayload<ExtArgs>, T, "findFirst", GlobalOmitOptions> | null, null, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Find the first RolePermission that matches the filter or
+     * throw `PrismaKnownClientError` with `P2025` code if no matches were found.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {RolePermissionFindFirstOrThrowArgs} args - Arguments to find a RolePermission
+     * @example
+     * // Get one RolePermission
+     * const rolePermission = await prisma.rolePermission.findFirstOrThrow({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     */
+    findFirstOrThrow<T extends RolePermissionFindFirstOrThrowArgs>(args?: SelectSubset<T, RolePermissionFindFirstOrThrowArgs<ExtArgs>>): Prisma__RolePermissionClient<$Result.GetResult<Prisma.$RolePermissionPayload<ExtArgs>, T, "findFirstOrThrow", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Find zero or more RolePermissions that matches the filter.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {RolePermissionFindManyArgs} args - Arguments to filter and select certain fields only.
+     * @example
+     * // Get all RolePermissions
+     * const rolePermissions = await prisma.rolePermission.findMany()
+     * 
+     * // Get first 10 RolePermissions
+     * const rolePermissions = await prisma.rolePermission.findMany({ take: 10 })
+     * 
+     * // Only select the `id`
+     * const rolePermissionWithIdOnly = await prisma.rolePermission.findMany({ select: { id: true } })
+     * 
+     */
+    findMany<T extends RolePermissionFindManyArgs>(args?: SelectSubset<T, RolePermissionFindManyArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$RolePermissionPayload<ExtArgs>, T, "findMany", GlobalOmitOptions>>
+
+    /**
+     * Create a RolePermission.
+     * @param {RolePermissionCreateArgs} args - Arguments to create a RolePermission.
+     * @example
+     * // Create one RolePermission
+     * const RolePermission = await prisma.rolePermission.create({
+     *   data: {
+     *     // ... data to create a RolePermission
+     *   }
+     * })
+     * 
+     */
+    create<T extends RolePermissionCreateArgs>(args: SelectSubset<T, RolePermissionCreateArgs<ExtArgs>>): Prisma__RolePermissionClient<$Result.GetResult<Prisma.$RolePermissionPayload<ExtArgs>, T, "create", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Create many RolePermissions.
+     * @param {RolePermissionCreateManyArgs} args - Arguments to create many RolePermissions.
+     * @example
+     * // Create many RolePermissions
+     * const rolePermission = await prisma.rolePermission.createMany({
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     *     
+     */
+    createMany<T extends RolePermissionCreateManyArgs>(args?: SelectSubset<T, RolePermissionCreateManyArgs<ExtArgs>>): Prisma.PrismaPromise<BatchPayload>
+
+    /**
+     * Create many RolePermissions and returns the data saved in the database.
+     * @param {RolePermissionCreateManyAndReturnArgs} args - Arguments to create many RolePermissions.
+     * @example
+     * // Create many RolePermissions
+     * const rolePermission = await prisma.rolePermission.createManyAndReturn({
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     * 
+     * // Create many RolePermissions and only return the `id`
+     * const rolePermissionWithIdOnly = await prisma.rolePermission.createManyAndReturn({
+     *   select: { id: true },
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * 
+     */
+    createManyAndReturn<T extends RolePermissionCreateManyAndReturnArgs>(args?: SelectSubset<T, RolePermissionCreateManyAndReturnArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$RolePermissionPayload<ExtArgs>, T, "createManyAndReturn", GlobalOmitOptions>>
+
+    /**
+     * Delete a RolePermission.
+     * @param {RolePermissionDeleteArgs} args - Arguments to delete one RolePermission.
+     * @example
+     * // Delete one RolePermission
+     * const RolePermission = await prisma.rolePermission.delete({
+     *   where: {
+     *     // ... filter to delete one RolePermission
+     *   }
+     * })
+     * 
+     */
+    delete<T extends RolePermissionDeleteArgs>(args: SelectSubset<T, RolePermissionDeleteArgs<ExtArgs>>): Prisma__RolePermissionClient<$Result.GetResult<Prisma.$RolePermissionPayload<ExtArgs>, T, "delete", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Update one RolePermission.
+     * @param {RolePermissionUpdateArgs} args - Arguments to update one RolePermission.
+     * @example
+     * // Update one RolePermission
+     * const rolePermission = await prisma.rolePermission.update({
+     *   where: {
+     *     // ... provide filter here
+     *   },
+     *   data: {
+     *     // ... provide data here
+     *   }
+     * })
+     * 
+     */
+    update<T extends RolePermissionUpdateArgs>(args: SelectSubset<T, RolePermissionUpdateArgs<ExtArgs>>): Prisma__RolePermissionClient<$Result.GetResult<Prisma.$RolePermissionPayload<ExtArgs>, T, "update", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Delete zero or more RolePermissions.
+     * @param {RolePermissionDeleteManyArgs} args - Arguments to filter RolePermissions to delete.
+     * @example
+     * // Delete a few RolePermissions
+     * const { count } = await prisma.rolePermission.deleteMany({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     * 
+     */
+    deleteMany<T extends RolePermissionDeleteManyArgs>(args?: SelectSubset<T, RolePermissionDeleteManyArgs<ExtArgs>>): Prisma.PrismaPromise<BatchPayload>
+
+    /**
+     * Update zero or more RolePermissions.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {RolePermissionUpdateManyArgs} args - Arguments to update one or more rows.
+     * @example
+     * // Update many RolePermissions
+     * const rolePermission = await prisma.rolePermission.updateMany({
+     *   where: {
+     *     // ... provide filter here
+     *   },
+     *   data: {
+     *     // ... provide data here
+     *   }
+     * })
+     * 
+     */
+    updateMany<T extends RolePermissionUpdateManyArgs>(args: SelectSubset<T, RolePermissionUpdateManyArgs<ExtArgs>>): Prisma.PrismaPromise<BatchPayload>
+
+    /**
+     * Update zero or more RolePermissions and returns the data updated in the database.
+     * @param {RolePermissionUpdateManyAndReturnArgs} args - Arguments to update many RolePermissions.
+     * @example
+     * // Update many RolePermissions
+     * const rolePermission = await prisma.rolePermission.updateManyAndReturn({
+     *   where: {
+     *     // ... provide filter here
+     *   },
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     * 
+     * // Update zero or more RolePermissions and only return the `id`
+     * const rolePermissionWithIdOnly = await prisma.rolePermission.updateManyAndReturn({
+     *   select: { id: true },
+     *   where: {
+     *     // ... provide filter here
+     *   },
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * 
+     */
+    updateManyAndReturn<T extends RolePermissionUpdateManyAndReturnArgs>(args: SelectSubset<T, RolePermissionUpdateManyAndReturnArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$RolePermissionPayload<ExtArgs>, T, "updateManyAndReturn", GlobalOmitOptions>>
+
+    /**
+     * Create or update one RolePermission.
+     * @param {RolePermissionUpsertArgs} args - Arguments to update or create a RolePermission.
+     * @example
+     * // Update or create a RolePermission
+     * const rolePermission = await prisma.rolePermission.upsert({
+     *   create: {
+     *     // ... data to create a RolePermission
+     *   },
+     *   update: {
+     *     // ... in case it already exists, update
+     *   },
+     *   where: {
+     *     // ... the filter for the RolePermission we want to update
+     *   }
+     * })
+     */
+    upsert<T extends RolePermissionUpsertArgs>(args: SelectSubset<T, RolePermissionUpsertArgs<ExtArgs>>): Prisma__RolePermissionClient<$Result.GetResult<Prisma.$RolePermissionPayload<ExtArgs>, T, "upsert", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+
+    /**
+     * Count the number of RolePermissions.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {RolePermissionCountArgs} args - Arguments to filter RolePermissions to count.
+     * @example
+     * // Count the number of RolePermissions
+     * const count = await prisma.rolePermission.count({
+     *   where: {
+     *     // ... the filter for the RolePermissions we want to count
+     *   }
+     * })
+    **/
+    count<T extends RolePermissionCountArgs>(
+      args?: Subset<T, RolePermissionCountArgs>,
+    ): Prisma.PrismaPromise<
+      T extends $Utils.Record<'select', any>
+        ? T['select'] extends true
+          ? number
+          : GetScalarType<T['select'], RolePermissionCountAggregateOutputType>
+        : number
+    >
+
+    /**
+     * Allows you to perform aggregations operations on a RolePermission.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {RolePermissionAggregateArgs} args - Select which aggregations you would like to apply and on what fields.
+     * @example
+     * // Ordered by age ascending
+     * // Where email contains prisma.io
+     * // Limited to the 10 users
+     * const aggregations = await prisma.user.aggregate({
+     *   _avg: {
+     *     age: true,
+     *   },
+     *   where: {
+     *     email: {
+     *       contains: "prisma.io",
+     *     },
+     *   },
+     *   orderBy: {
+     *     age: "asc",
+     *   },
+     *   take: 10,
+     * })
+    **/
+    aggregate<T extends RolePermissionAggregateArgs>(args: Subset<T, RolePermissionAggregateArgs>): Prisma.PrismaPromise<GetRolePermissionAggregateType<T>>
+
+    /**
+     * Group by RolePermission.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {RolePermissionGroupByArgs} args - Group by arguments.
+     * @example
+     * // Group by city, order by createdAt, get count
+     * const result = await prisma.user.groupBy({
+     *   by: ['city', 'createdAt'],
+     *   orderBy: {
+     *     createdAt: true
+     *   },
+     *   _count: {
+     *     _all: true
+     *   },
+     * })
+     * 
+    **/
+    groupBy<
+      T extends RolePermissionGroupByArgs,
+      HasSelectOrTake extends Or<
+        Extends<'skip', Keys<T>>,
+        Extends<'take', Keys<T>>
+      >,
+      OrderByArg extends True extends HasSelectOrTake
+        ? { orderBy: RolePermissionGroupByArgs['orderBy'] }
+        : { orderBy?: RolePermissionGroupByArgs['orderBy'] },
+      OrderFields extends ExcludeUnderscoreKeys<Keys<MaybeTupleToUnion<T['orderBy']>>>,
+      ByFields extends MaybeTupleToUnion<T['by']>,
+      ByValid extends Has<ByFields, OrderFields>,
+      HavingFields extends GetHavingFields<T['having']>,
+      HavingValid extends Has<ByFields, HavingFields>,
+      ByEmpty extends T['by'] extends never[] ? True : False,
+      InputErrors extends ByEmpty extends True
+      ? `Error: "by" must not be empty.`
+      : HavingValid extends False
+      ? {
+          [P in HavingFields]: P extends ByFields
+            ? never
+            : P extends string
+            ? `Error: Field "${P}" used in "having" needs to be provided in "by".`
+            : [
+                Error,
+                'Field ',
+                P,
+                ` in "having" needs to be provided in "by"`,
+              ]
+        }[HavingFields]
+      : 'take' extends Keys<T>
+      ? 'orderBy' extends Keys<T>
+        ? ByValid extends True
+          ? {}
+          : {
+              [P in OrderFields]: P extends ByFields
+                ? never
+                : `Error: Field "${P}" in "orderBy" needs to be provided in "by"`
+            }[OrderFields]
+        : 'Error: If you provide "take", you also need to provide "orderBy"'
+      : 'skip' extends Keys<T>
+      ? 'orderBy' extends Keys<T>
+        ? ByValid extends True
+          ? {}
+          : {
+              [P in OrderFields]: P extends ByFields
+                ? never
+                : `Error: Field "${P}" in "orderBy" needs to be provided in "by"`
+            }[OrderFields]
+        : 'Error: If you provide "skip", you also need to provide "orderBy"'
+      : ByValid extends True
+      ? {}
+      : {
+          [P in OrderFields]: P extends ByFields
+            ? never
+            : `Error: Field "${P}" in "orderBy" needs to be provided in "by"`
+        }[OrderFields]
+    >(args: SubsetIntersection<T, RolePermissionGroupByArgs, OrderByArg> & InputErrors): {} extends InputErrors ? GetRolePermissionGroupByPayload<T> : Prisma.PrismaPromise<InputErrors>
+  /**
+   * Fields of the RolePermission model
+   */
+  readonly fields: RolePermissionFieldRefs;
+  }
+
+  /**
+   * The delegate class that acts as a "Promise-like" for RolePermission.
+   * Why is this prefixed with `Prisma__`?
+   * Because we want to prevent naming conflicts as mentioned in
+   * https://github.com/prisma/prisma-client-js/issues/707
+   */
+  export interface Prisma__RolePermissionClient<T, Null = never, ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs, GlobalOmitOptions = {}> extends Prisma.PrismaPromise<T> {
+    readonly [Symbol.toStringTag]: "PrismaPromise"
+    role<T extends RoleDefaultArgs<ExtArgs> = {}>(args?: Subset<T, RoleDefaultArgs<ExtArgs>>): Prisma__RoleClient<$Result.GetResult<Prisma.$RolePayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions> | Null, Null, ExtArgs, GlobalOmitOptions>
+    permission<T extends PermissionDefaultArgs<ExtArgs> = {}>(args?: Subset<T, PermissionDefaultArgs<ExtArgs>>): Prisma__PermissionClient<$Result.GetResult<Prisma.$PermissionPayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions> | Null, Null, ExtArgs, GlobalOmitOptions>
+    /**
+     * Attaches callbacks for the resolution and/or rejection of the Promise.
+     * @param onfulfilled The callback to execute when the Promise is resolved.
+     * @param onrejected The callback to execute when the Promise is rejected.
+     * @returns A Promise for the completion of which ever callback is executed.
+     */
+    then<TResult1 = T, TResult2 = never>(onfulfilled?: ((value: T) => TResult1 | PromiseLike<TResult1>) | undefined | null, onrejected?: ((reason: any) => TResult2 | PromiseLike<TResult2>) | undefined | null): $Utils.JsPromise<TResult1 | TResult2>
+    /**
+     * Attaches a callback for only the rejection of the Promise.
+     * @param onrejected The callback to execute when the Promise is rejected.
+     * @returns A Promise for the completion of the callback.
+     */
+    catch<TResult = never>(onrejected?: ((reason: any) => TResult | PromiseLike<TResult>) | undefined | null): $Utils.JsPromise<T | TResult>
+    /**
+     * Attaches a callback that is invoked when the Promise is settled (fulfilled or rejected). The
+     * resolved value cannot be modified from the callback.
+     * @param onfinally The callback to execute when the Promise is settled (fulfilled or rejected).
+     * @returns A Promise for the completion of the callback.
+     */
+    finally(onfinally?: (() => void) | undefined | null): $Utils.JsPromise<T>
+  }
+
+
+
+
+  /**
+   * Fields of the RolePermission model
+   */
+  interface RolePermissionFieldRefs {
+    readonly id: FieldRef<"RolePermission", 'String'>
+    readonly roleId: FieldRef<"RolePermission", 'String'>
+    readonly permissionId: FieldRef<"RolePermission", 'String'>
+  }
+    
+
+  // Custom InputTypes
+  /**
+   * RolePermission findUnique
+   */
+  export type RolePermissionFindUniqueArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the RolePermission
+     */
+    select?: RolePermissionSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the RolePermission
+     */
+    omit?: RolePermissionOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: RolePermissionInclude<ExtArgs> | null
+    /**
+     * Filter, which RolePermission to fetch.
+     */
+    where: RolePermissionWhereUniqueInput
+  }
+
+  /**
+   * RolePermission findUniqueOrThrow
+   */
+  export type RolePermissionFindUniqueOrThrowArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the RolePermission
+     */
+    select?: RolePermissionSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the RolePermission
+     */
+    omit?: RolePermissionOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: RolePermissionInclude<ExtArgs> | null
+    /**
+     * Filter, which RolePermission to fetch.
+     */
+    where: RolePermissionWhereUniqueInput
+  }
+
+  /**
+   * RolePermission findFirst
+   */
+  export type RolePermissionFindFirstArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the RolePermission
+     */
+    select?: RolePermissionSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the RolePermission
+     */
+    omit?: RolePermissionOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: RolePermissionInclude<ExtArgs> | null
+    /**
+     * Filter, which RolePermission to fetch.
+     */
+    where?: RolePermissionWhereInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+     * 
+     * Determine the order of RolePermissions to fetch.
+     */
+    orderBy?: RolePermissionOrderByWithRelationInput | RolePermissionOrderByWithRelationInput[]
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+     * 
+     * Sets the position for searching for RolePermissions.
+     */
+    cursor?: RolePermissionWhereUniqueInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Take `±n` RolePermissions from the position of the cursor.
+     */
+    take?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Skip the first `n` RolePermissions.
+     */
+    skip?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/distinct Distinct Docs}
+     * 
+     * Filter by unique combinations of RolePermissions.
+     */
+    distinct?: RolePermissionScalarFieldEnum | RolePermissionScalarFieldEnum[]
+  }
+
+  /**
+   * RolePermission findFirstOrThrow
+   */
+  export type RolePermissionFindFirstOrThrowArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the RolePermission
+     */
+    select?: RolePermissionSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the RolePermission
+     */
+    omit?: RolePermissionOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: RolePermissionInclude<ExtArgs> | null
+    /**
+     * Filter, which RolePermission to fetch.
+     */
+    where?: RolePermissionWhereInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+     * 
+     * Determine the order of RolePermissions to fetch.
+     */
+    orderBy?: RolePermissionOrderByWithRelationInput | RolePermissionOrderByWithRelationInput[]
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+     * 
+     * Sets the position for searching for RolePermissions.
+     */
+    cursor?: RolePermissionWhereUniqueInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Take `±n` RolePermissions from the position of the cursor.
+     */
+    take?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Skip the first `n` RolePermissions.
+     */
+    skip?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/distinct Distinct Docs}
+     * 
+     * Filter by unique combinations of RolePermissions.
+     */
+    distinct?: RolePermissionScalarFieldEnum | RolePermissionScalarFieldEnum[]
+  }
+
+  /**
+   * RolePermission findMany
+   */
+  export type RolePermissionFindManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the RolePermission
+     */
+    select?: RolePermissionSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the RolePermission
+     */
+    omit?: RolePermissionOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: RolePermissionInclude<ExtArgs> | null
+    /**
+     * Filter, which RolePermissions to fetch.
+     */
+    where?: RolePermissionWhereInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+     * 
+     * Determine the order of RolePermissions to fetch.
+     */
+    orderBy?: RolePermissionOrderByWithRelationInput | RolePermissionOrderByWithRelationInput[]
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+     * 
+     * Sets the position for listing RolePermissions.
+     */
+    cursor?: RolePermissionWhereUniqueInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Take `±n` RolePermissions from the position of the cursor.
+     */
+    take?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Skip the first `n` RolePermissions.
+     */
+    skip?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/distinct Distinct Docs}
+     * 
+     * Filter by unique combinations of RolePermissions.
+     */
+    distinct?: RolePermissionScalarFieldEnum | RolePermissionScalarFieldEnum[]
+  }
+
+  /**
+   * RolePermission create
+   */
+  export type RolePermissionCreateArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the RolePermission
+     */
+    select?: RolePermissionSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the RolePermission
+     */
+    omit?: RolePermissionOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: RolePermissionInclude<ExtArgs> | null
+    /**
+     * The data needed to create a RolePermission.
+     */
+    data: XOR<RolePermissionCreateInput, RolePermissionUncheckedCreateInput>
+  }
+
+  /**
+   * RolePermission createMany
+   */
+  export type RolePermissionCreateManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * The data used to create many RolePermissions.
+     */
+    data: RolePermissionCreateManyInput | RolePermissionCreateManyInput[]
+    skipDuplicates?: boolean
+  }
+
+  /**
+   * RolePermission createManyAndReturn
+   */
+  export type RolePermissionCreateManyAndReturnArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the RolePermission
+     */
+    select?: RolePermissionSelectCreateManyAndReturn<ExtArgs> | null
+    /**
+     * Omit specific fields from the RolePermission
+     */
+    omit?: RolePermissionOmit<ExtArgs> | null
+    /**
+     * The data used to create many RolePermissions.
+     */
+    data: RolePermissionCreateManyInput | RolePermissionCreateManyInput[]
+    skipDuplicates?: boolean
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: RolePermissionIncludeCreateManyAndReturn<ExtArgs> | null
+  }
+
+  /**
+   * RolePermission update
+   */
+  export type RolePermissionUpdateArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the RolePermission
+     */
+    select?: RolePermissionSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the RolePermission
+     */
+    omit?: RolePermissionOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: RolePermissionInclude<ExtArgs> | null
+    /**
+     * The data needed to update a RolePermission.
+     */
+    data: XOR<RolePermissionUpdateInput, RolePermissionUncheckedUpdateInput>
+    /**
+     * Choose, which RolePermission to update.
+     */
+    where: RolePermissionWhereUniqueInput
+  }
+
+  /**
+   * RolePermission updateMany
+   */
+  export type RolePermissionUpdateManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * The data used to update RolePermissions.
+     */
+    data: XOR<RolePermissionUpdateManyMutationInput, RolePermissionUncheckedUpdateManyInput>
+    /**
+     * Filter which RolePermissions to update
+     */
+    where?: RolePermissionWhereInput
+    /**
+     * Limit how many RolePermissions to update.
+     */
+    limit?: number
+  }
+
+  /**
+   * RolePermission updateManyAndReturn
+   */
+  export type RolePermissionUpdateManyAndReturnArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the RolePermission
+     */
+    select?: RolePermissionSelectUpdateManyAndReturn<ExtArgs> | null
+    /**
+     * Omit specific fields from the RolePermission
+     */
+    omit?: RolePermissionOmit<ExtArgs> | null
+    /**
+     * The data used to update RolePermissions.
+     */
+    data: XOR<RolePermissionUpdateManyMutationInput, RolePermissionUncheckedUpdateManyInput>
+    /**
+     * Filter which RolePermissions to update
+     */
+    where?: RolePermissionWhereInput
+    /**
+     * Limit how many RolePermissions to update.
+     */
+    limit?: number
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: RolePermissionIncludeUpdateManyAndReturn<ExtArgs> | null
+  }
+
+  /**
+   * RolePermission upsert
+   */
+  export type RolePermissionUpsertArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the RolePermission
+     */
+    select?: RolePermissionSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the RolePermission
+     */
+    omit?: RolePermissionOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: RolePermissionInclude<ExtArgs> | null
+    /**
+     * The filter to search for the RolePermission to update in case it exists.
+     */
+    where: RolePermissionWhereUniqueInput
+    /**
+     * In case the RolePermission found by the `where` argument doesn't exist, create a new RolePermission with this data.
+     */
+    create: XOR<RolePermissionCreateInput, RolePermissionUncheckedCreateInput>
+    /**
+     * In case the RolePermission was found with the provided `where` argument, update it with this data.
+     */
+    update: XOR<RolePermissionUpdateInput, RolePermissionUncheckedUpdateInput>
+  }
+
+  /**
+   * RolePermission delete
+   */
+  export type RolePermissionDeleteArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the RolePermission
+     */
+    select?: RolePermissionSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the RolePermission
+     */
+    omit?: RolePermissionOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: RolePermissionInclude<ExtArgs> | null
+    /**
+     * Filter which RolePermission to delete.
+     */
+    where: RolePermissionWhereUniqueInput
+  }
+
+  /**
+   * RolePermission deleteMany
+   */
+  export type RolePermissionDeleteManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Filter which RolePermissions to delete
+     */
+    where?: RolePermissionWhereInput
+    /**
+     * Limit how many RolePermissions to delete.
+     */
+    limit?: number
+  }
+
+  /**
+   * RolePermission without action
+   */
+  export type RolePermissionDefaultArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the RolePermission
+     */
+    select?: RolePermissionSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the RolePermission
+     */
+    omit?: RolePermissionOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: RolePermissionInclude<ExtArgs> | null
+  }
+
+
+  /**
+   * Model UserProjectRole
+   */
+
+  export type AggregateUserProjectRole = {
+    _count: UserProjectRoleCountAggregateOutputType | null
+    _min: UserProjectRoleMinAggregateOutputType | null
+    _max: UserProjectRoleMaxAggregateOutputType | null
+  }
+
+  export type UserProjectRoleMinAggregateOutputType = {
+    id: string | null
+    userId: string | null
+    projectId: string | null
+    roleId: string | null
+    deletedAt: Date | null
+    createdAt: Date | null
+    updatedAt: Date | null
+  }
+
+  export type UserProjectRoleMaxAggregateOutputType = {
+    id: string | null
+    userId: string | null
+    projectId: string | null
+    roleId: string | null
+    deletedAt: Date | null
+    createdAt: Date | null
+    updatedAt: Date | null
+  }
+
+  export type UserProjectRoleCountAggregateOutputType = {
+    id: number
+    userId: number
+    projectId: number
+    roleId: number
+    deletedAt: number
+    createdAt: number
+    updatedAt: number
+    _all: number
+  }
+
+
+  export type UserProjectRoleMinAggregateInputType = {
+    id?: true
+    userId?: true
+    projectId?: true
+    roleId?: true
+    deletedAt?: true
+    createdAt?: true
+    updatedAt?: true
+  }
+
+  export type UserProjectRoleMaxAggregateInputType = {
+    id?: true
+    userId?: true
+    projectId?: true
+    roleId?: true
+    deletedAt?: true
+    createdAt?: true
+    updatedAt?: true
+  }
+
+  export type UserProjectRoleCountAggregateInputType = {
+    id?: true
+    userId?: true
+    projectId?: true
+    roleId?: true
+    deletedAt?: true
+    createdAt?: true
+    updatedAt?: true
+    _all?: true
+  }
+
+  export type UserProjectRoleAggregateArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Filter which UserProjectRole to aggregate.
+     */
+    where?: UserProjectRoleWhereInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+     * 
+     * Determine the order of UserProjectRoles to fetch.
+     */
+    orderBy?: UserProjectRoleOrderByWithRelationInput | UserProjectRoleOrderByWithRelationInput[]
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+     * 
+     * Sets the start position
+     */
+    cursor?: UserProjectRoleWhereUniqueInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Take `±n` UserProjectRoles from the position of the cursor.
+     */
+    take?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Skip the first `n` UserProjectRoles.
+     */
+    skip?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Count returned UserProjectRoles
+    **/
+    _count?: true | UserProjectRoleCountAggregateInputType
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Select which fields to find the minimum value
+    **/
+    _min?: UserProjectRoleMinAggregateInputType
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Select which fields to find the maximum value
+    **/
+    _max?: UserProjectRoleMaxAggregateInputType
+  }
+
+  export type GetUserProjectRoleAggregateType<T extends UserProjectRoleAggregateArgs> = {
+        [P in keyof T & keyof AggregateUserProjectRole]: P extends '_count' | 'count'
+      ? T[P] extends true
+        ? number
+        : GetScalarType<T[P], AggregateUserProjectRole[P]>
+      : GetScalarType<T[P], AggregateUserProjectRole[P]>
+  }
+
+
+
+
+  export type UserProjectRoleGroupByArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    where?: UserProjectRoleWhereInput
+    orderBy?: UserProjectRoleOrderByWithAggregationInput | UserProjectRoleOrderByWithAggregationInput[]
+    by: UserProjectRoleScalarFieldEnum[] | UserProjectRoleScalarFieldEnum
+    having?: UserProjectRoleScalarWhereWithAggregatesInput
+    take?: number
+    skip?: number
+    _count?: UserProjectRoleCountAggregateInputType | true
+    _min?: UserProjectRoleMinAggregateInputType
+    _max?: UserProjectRoleMaxAggregateInputType
+  }
+
+  export type UserProjectRoleGroupByOutputType = {
+    id: string
+    userId: string
+    projectId: string
+    roleId: string
+    deletedAt: Date | null
+    createdAt: Date
+    updatedAt: Date
+    _count: UserProjectRoleCountAggregateOutputType | null
+    _min: UserProjectRoleMinAggregateOutputType | null
+    _max: UserProjectRoleMaxAggregateOutputType | null
+  }
+
+  type GetUserProjectRoleGroupByPayload<T extends UserProjectRoleGroupByArgs> = Prisma.PrismaPromise<
+    Array<
+      PickEnumerable<UserProjectRoleGroupByOutputType, T['by']> &
+        {
+          [P in ((keyof T) & (keyof UserProjectRoleGroupByOutputType))]: P extends '_count'
+            ? T[P] extends boolean
+              ? number
+              : GetScalarType<T[P], UserProjectRoleGroupByOutputType[P]>
+            : GetScalarType<T[P], UserProjectRoleGroupByOutputType[P]>
+        }
+      >
+    >
+
+
+  export type UserProjectRoleSelect<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetSelect<{
+    id?: boolean
+    userId?: boolean
+    projectId?: boolean
+    roleId?: boolean
+    deletedAt?: boolean
+    createdAt?: boolean
+    updatedAt?: boolean
+    project?: boolean | ProjectDefaultArgs<ExtArgs>
+    role?: boolean | RoleDefaultArgs<ExtArgs>
+    user?: boolean | UserDefaultArgs<ExtArgs>
+  }, ExtArgs["result"]["userProjectRole"]>
+
+  export type UserProjectRoleSelectCreateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetSelect<{
+    id?: boolean
+    userId?: boolean
+    projectId?: boolean
+    roleId?: boolean
+    deletedAt?: boolean
+    createdAt?: boolean
+    updatedAt?: boolean
+    project?: boolean | ProjectDefaultArgs<ExtArgs>
+    role?: boolean | RoleDefaultArgs<ExtArgs>
+    user?: boolean | UserDefaultArgs<ExtArgs>
+  }, ExtArgs["result"]["userProjectRole"]>
+
+  export type UserProjectRoleSelectUpdateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetSelect<{
+    id?: boolean
+    userId?: boolean
+    projectId?: boolean
+    roleId?: boolean
+    deletedAt?: boolean
+    createdAt?: boolean
+    updatedAt?: boolean
+    project?: boolean | ProjectDefaultArgs<ExtArgs>
+    role?: boolean | RoleDefaultArgs<ExtArgs>
+    user?: boolean | UserDefaultArgs<ExtArgs>
+  }, ExtArgs["result"]["userProjectRole"]>
+
+  export type UserProjectRoleSelectScalar = {
+    id?: boolean
+    userId?: boolean
+    projectId?: boolean
+    roleId?: boolean
+    deletedAt?: boolean
+    createdAt?: boolean
+    updatedAt?: boolean
+  }
+
+  export type UserProjectRoleOmit<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetOmit<"id" | "userId" | "projectId" | "roleId" | "deletedAt" | "createdAt" | "updatedAt", ExtArgs["result"]["userProjectRole"]>
+  export type UserProjectRoleInclude<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    project?: boolean | ProjectDefaultArgs<ExtArgs>
+    role?: boolean | RoleDefaultArgs<ExtArgs>
+    user?: boolean | UserDefaultArgs<ExtArgs>
+  }
+  export type UserProjectRoleIncludeCreateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    project?: boolean | ProjectDefaultArgs<ExtArgs>
+    role?: boolean | RoleDefaultArgs<ExtArgs>
+    user?: boolean | UserDefaultArgs<ExtArgs>
+  }
+  export type UserProjectRoleIncludeUpdateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    project?: boolean | ProjectDefaultArgs<ExtArgs>
+    role?: boolean | RoleDefaultArgs<ExtArgs>
+    user?: boolean | UserDefaultArgs<ExtArgs>
+  }
+
+  export type $UserProjectRolePayload<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    name: "UserProjectRole"
+    objects: {
+      project: Prisma.$ProjectPayload<ExtArgs>
+      role: Prisma.$RolePayload<ExtArgs>
+      user: Prisma.$UserPayload<ExtArgs>
+    }
+    scalars: $Extensions.GetPayloadResult<{
+      id: string
+      userId: string
+      projectId: string
+      roleId: string
+      deletedAt: Date | null
+      createdAt: Date
+      updatedAt: Date
+    }, ExtArgs["result"]["userProjectRole"]>
+    composites: {}
+  }
+
+  type UserProjectRoleGetPayload<S extends boolean | null | undefined | UserProjectRoleDefaultArgs> = $Result.GetResult<Prisma.$UserProjectRolePayload, S>
+
+  type UserProjectRoleCountArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> =
+    Omit<UserProjectRoleFindManyArgs, 'select' | 'include' | 'distinct' | 'omit'> & {
+      select?: UserProjectRoleCountAggregateInputType | true
+    }
+
+  export interface UserProjectRoleDelegate<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs, GlobalOmitOptions = {}> {
+    [K: symbol]: { types: Prisma.TypeMap<ExtArgs>['model']['UserProjectRole'], meta: { name: 'UserProjectRole' } }
+    /**
+     * Find zero or one UserProjectRole that matches the filter.
+     * @param {UserProjectRoleFindUniqueArgs} args - Arguments to find a UserProjectRole
+     * @example
+     * // Get one UserProjectRole
+     * const userProjectRole = await prisma.userProjectRole.findUnique({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     */
+    findUnique<T extends UserProjectRoleFindUniqueArgs>(args: SelectSubset<T, UserProjectRoleFindUniqueArgs<ExtArgs>>): Prisma__UserProjectRoleClient<$Result.GetResult<Prisma.$UserProjectRolePayload<ExtArgs>, T, "findUnique", GlobalOmitOptions> | null, null, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Find one UserProjectRole that matches the filter or throw an error with `error.code='P2025'`
+     * if no matches were found.
+     * @param {UserProjectRoleFindUniqueOrThrowArgs} args - Arguments to find a UserProjectRole
+     * @example
+     * // Get one UserProjectRole
+     * const userProjectRole = await prisma.userProjectRole.findUniqueOrThrow({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     */
+    findUniqueOrThrow<T extends UserProjectRoleFindUniqueOrThrowArgs>(args: SelectSubset<T, UserProjectRoleFindUniqueOrThrowArgs<ExtArgs>>): Prisma__UserProjectRoleClient<$Result.GetResult<Prisma.$UserProjectRolePayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Find the first UserProjectRole that matches the filter.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {UserProjectRoleFindFirstArgs} args - Arguments to find a UserProjectRole
+     * @example
+     * // Get one UserProjectRole
+     * const userProjectRole = await prisma.userProjectRole.findFirst({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     */
+    findFirst<T extends UserProjectRoleFindFirstArgs>(args?: SelectSubset<T, UserProjectRoleFindFirstArgs<ExtArgs>>): Prisma__UserProjectRoleClient<$Result.GetResult<Prisma.$UserProjectRolePayload<ExtArgs>, T, "findFirst", GlobalOmitOptions> | null, null, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Find the first UserProjectRole that matches the filter or
+     * throw `PrismaKnownClientError` with `P2025` code if no matches were found.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {UserProjectRoleFindFirstOrThrowArgs} args - Arguments to find a UserProjectRole
+     * @example
+     * // Get one UserProjectRole
+     * const userProjectRole = await prisma.userProjectRole.findFirstOrThrow({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     */
+    findFirstOrThrow<T extends UserProjectRoleFindFirstOrThrowArgs>(args?: SelectSubset<T, UserProjectRoleFindFirstOrThrowArgs<ExtArgs>>): Prisma__UserProjectRoleClient<$Result.GetResult<Prisma.$UserProjectRolePayload<ExtArgs>, T, "findFirstOrThrow", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Find zero or more UserProjectRoles that matches the filter.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {UserProjectRoleFindManyArgs} args - Arguments to filter and select certain fields only.
+     * @example
+     * // Get all UserProjectRoles
+     * const userProjectRoles = await prisma.userProjectRole.findMany()
+     * 
+     * // Get first 10 UserProjectRoles
+     * const userProjectRoles = await prisma.userProjectRole.findMany({ take: 10 })
+     * 
+     * // Only select the `id`
+     * const userProjectRoleWithIdOnly = await prisma.userProjectRole.findMany({ select: { id: true } })
+     * 
+     */
+    findMany<T extends UserProjectRoleFindManyArgs>(args?: SelectSubset<T, UserProjectRoleFindManyArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$UserProjectRolePayload<ExtArgs>, T, "findMany", GlobalOmitOptions>>
+
+    /**
+     * Create a UserProjectRole.
+     * @param {UserProjectRoleCreateArgs} args - Arguments to create a UserProjectRole.
+     * @example
+     * // Create one UserProjectRole
+     * const UserProjectRole = await prisma.userProjectRole.create({
+     *   data: {
+     *     // ... data to create a UserProjectRole
+     *   }
+     * })
+     * 
+     */
+    create<T extends UserProjectRoleCreateArgs>(args: SelectSubset<T, UserProjectRoleCreateArgs<ExtArgs>>): Prisma__UserProjectRoleClient<$Result.GetResult<Prisma.$UserProjectRolePayload<ExtArgs>, T, "create", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Create many UserProjectRoles.
+     * @param {UserProjectRoleCreateManyArgs} args - Arguments to create many UserProjectRoles.
+     * @example
+     * // Create many UserProjectRoles
+     * const userProjectRole = await prisma.userProjectRole.createMany({
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     *     
+     */
+    createMany<T extends UserProjectRoleCreateManyArgs>(args?: SelectSubset<T, UserProjectRoleCreateManyArgs<ExtArgs>>): Prisma.PrismaPromise<BatchPayload>
+
+    /**
+     * Create many UserProjectRoles and returns the data saved in the database.
+     * @param {UserProjectRoleCreateManyAndReturnArgs} args - Arguments to create many UserProjectRoles.
+     * @example
+     * // Create many UserProjectRoles
+     * const userProjectRole = await prisma.userProjectRole.createManyAndReturn({
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     * 
+     * // Create many UserProjectRoles and only return the `id`
+     * const userProjectRoleWithIdOnly = await prisma.userProjectRole.createManyAndReturn({
+     *   select: { id: true },
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * 
+     */
+    createManyAndReturn<T extends UserProjectRoleCreateManyAndReturnArgs>(args?: SelectSubset<T, UserProjectRoleCreateManyAndReturnArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$UserProjectRolePayload<ExtArgs>, T, "createManyAndReturn", GlobalOmitOptions>>
+
+    /**
+     * Delete a UserProjectRole.
+     * @param {UserProjectRoleDeleteArgs} args - Arguments to delete one UserProjectRole.
+     * @example
+     * // Delete one UserProjectRole
+     * const UserProjectRole = await prisma.userProjectRole.delete({
+     *   where: {
+     *     // ... filter to delete one UserProjectRole
+     *   }
+     * })
+     * 
+     */
+    delete<T extends UserProjectRoleDeleteArgs>(args: SelectSubset<T, UserProjectRoleDeleteArgs<ExtArgs>>): Prisma__UserProjectRoleClient<$Result.GetResult<Prisma.$UserProjectRolePayload<ExtArgs>, T, "delete", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Update one UserProjectRole.
+     * @param {UserProjectRoleUpdateArgs} args - Arguments to update one UserProjectRole.
+     * @example
+     * // Update one UserProjectRole
+     * const userProjectRole = await prisma.userProjectRole.update({
+     *   where: {
+     *     // ... provide filter here
+     *   },
+     *   data: {
+     *     // ... provide data here
+     *   }
+     * })
+     * 
+     */
+    update<T extends UserProjectRoleUpdateArgs>(args: SelectSubset<T, UserProjectRoleUpdateArgs<ExtArgs>>): Prisma__UserProjectRoleClient<$Result.GetResult<Prisma.$UserProjectRolePayload<ExtArgs>, T, "update", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Delete zero or more UserProjectRoles.
+     * @param {UserProjectRoleDeleteManyArgs} args - Arguments to filter UserProjectRoles to delete.
+     * @example
+     * // Delete a few UserProjectRoles
+     * const { count } = await prisma.userProjectRole.deleteMany({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     * 
+     */
+    deleteMany<T extends UserProjectRoleDeleteManyArgs>(args?: SelectSubset<T, UserProjectRoleDeleteManyArgs<ExtArgs>>): Prisma.PrismaPromise<BatchPayload>
+
+    /**
+     * Update zero or more UserProjectRoles.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {UserProjectRoleUpdateManyArgs} args - Arguments to update one or more rows.
+     * @example
+     * // Update many UserProjectRoles
+     * const userProjectRole = await prisma.userProjectRole.updateMany({
+     *   where: {
+     *     // ... provide filter here
+     *   },
+     *   data: {
+     *     // ... provide data here
+     *   }
+     * })
+     * 
+     */
+    updateMany<T extends UserProjectRoleUpdateManyArgs>(args: SelectSubset<T, UserProjectRoleUpdateManyArgs<ExtArgs>>): Prisma.PrismaPromise<BatchPayload>
+
+    /**
+     * Update zero or more UserProjectRoles and returns the data updated in the database.
+     * @param {UserProjectRoleUpdateManyAndReturnArgs} args - Arguments to update many UserProjectRoles.
+     * @example
+     * // Update many UserProjectRoles
+     * const userProjectRole = await prisma.userProjectRole.updateManyAndReturn({
+     *   where: {
+     *     // ... provide filter here
+     *   },
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     * 
+     * // Update zero or more UserProjectRoles and only return the `id`
+     * const userProjectRoleWithIdOnly = await prisma.userProjectRole.updateManyAndReturn({
+     *   select: { id: true },
+     *   where: {
+     *     // ... provide filter here
+     *   },
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * 
+     */
+    updateManyAndReturn<T extends UserProjectRoleUpdateManyAndReturnArgs>(args: SelectSubset<T, UserProjectRoleUpdateManyAndReturnArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$UserProjectRolePayload<ExtArgs>, T, "updateManyAndReturn", GlobalOmitOptions>>
+
+    /**
+     * Create or update one UserProjectRole.
+     * @param {UserProjectRoleUpsertArgs} args - Arguments to update or create a UserProjectRole.
+     * @example
+     * // Update or create a UserProjectRole
+     * const userProjectRole = await prisma.userProjectRole.upsert({
+     *   create: {
+     *     // ... data to create a UserProjectRole
+     *   },
+     *   update: {
+     *     // ... in case it already exists, update
+     *   },
+     *   where: {
+     *     // ... the filter for the UserProjectRole we want to update
+     *   }
+     * })
+     */
+    upsert<T extends UserProjectRoleUpsertArgs>(args: SelectSubset<T, UserProjectRoleUpsertArgs<ExtArgs>>): Prisma__UserProjectRoleClient<$Result.GetResult<Prisma.$UserProjectRolePayload<ExtArgs>, T, "upsert", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+
+    /**
+     * Count the number of UserProjectRoles.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {UserProjectRoleCountArgs} args - Arguments to filter UserProjectRoles to count.
+     * @example
+     * // Count the number of UserProjectRoles
+     * const count = await prisma.userProjectRole.count({
+     *   where: {
+     *     // ... the filter for the UserProjectRoles we want to count
+     *   }
+     * })
+    **/
+    count<T extends UserProjectRoleCountArgs>(
+      args?: Subset<T, UserProjectRoleCountArgs>,
+    ): Prisma.PrismaPromise<
+      T extends $Utils.Record<'select', any>
+        ? T['select'] extends true
+          ? number
+          : GetScalarType<T['select'], UserProjectRoleCountAggregateOutputType>
+        : number
+    >
+
+    /**
+     * Allows you to perform aggregations operations on a UserProjectRole.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {UserProjectRoleAggregateArgs} args - Select which aggregations you would like to apply and on what fields.
+     * @example
+     * // Ordered by age ascending
+     * // Where email contains prisma.io
+     * // Limited to the 10 users
+     * const aggregations = await prisma.user.aggregate({
+     *   _avg: {
+     *     age: true,
+     *   },
+     *   where: {
+     *     email: {
+     *       contains: "prisma.io",
+     *     },
+     *   },
+     *   orderBy: {
+     *     age: "asc",
+     *   },
+     *   take: 10,
+     * })
+    **/
+    aggregate<T extends UserProjectRoleAggregateArgs>(args: Subset<T, UserProjectRoleAggregateArgs>): Prisma.PrismaPromise<GetUserProjectRoleAggregateType<T>>
+
+    /**
+     * Group by UserProjectRole.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {UserProjectRoleGroupByArgs} args - Group by arguments.
+     * @example
+     * // Group by city, order by createdAt, get count
+     * const result = await prisma.user.groupBy({
+     *   by: ['city', 'createdAt'],
+     *   orderBy: {
+     *     createdAt: true
+     *   },
+     *   _count: {
+     *     _all: true
+     *   },
+     * })
+     * 
+    **/
+    groupBy<
+      T extends UserProjectRoleGroupByArgs,
+      HasSelectOrTake extends Or<
+        Extends<'skip', Keys<T>>,
+        Extends<'take', Keys<T>>
+      >,
+      OrderByArg extends True extends HasSelectOrTake
+        ? { orderBy: UserProjectRoleGroupByArgs['orderBy'] }
+        : { orderBy?: UserProjectRoleGroupByArgs['orderBy'] },
+      OrderFields extends ExcludeUnderscoreKeys<Keys<MaybeTupleToUnion<T['orderBy']>>>,
+      ByFields extends MaybeTupleToUnion<T['by']>,
+      ByValid extends Has<ByFields, OrderFields>,
+      HavingFields extends GetHavingFields<T['having']>,
+      HavingValid extends Has<ByFields, HavingFields>,
+      ByEmpty extends T['by'] extends never[] ? True : False,
+      InputErrors extends ByEmpty extends True
+      ? `Error: "by" must not be empty.`
+      : HavingValid extends False
+      ? {
+          [P in HavingFields]: P extends ByFields
+            ? never
+            : P extends string
+            ? `Error: Field "${P}" used in "having" needs to be provided in "by".`
+            : [
+                Error,
+                'Field ',
+                P,
+                ` in "having" needs to be provided in "by"`,
+              ]
+        }[HavingFields]
+      : 'take' extends Keys<T>
+      ? 'orderBy' extends Keys<T>
+        ? ByValid extends True
+          ? {}
+          : {
+              [P in OrderFields]: P extends ByFields
+                ? never
+                : `Error: Field "${P}" in "orderBy" needs to be provided in "by"`
+            }[OrderFields]
+        : 'Error: If you provide "take", you also need to provide "orderBy"'
+      : 'skip' extends Keys<T>
+      ? 'orderBy' extends Keys<T>
+        ? ByValid extends True
+          ? {}
+          : {
+              [P in OrderFields]: P extends ByFields
+                ? never
+                : `Error: Field "${P}" in "orderBy" needs to be provided in "by"`
+            }[OrderFields]
+        : 'Error: If you provide "skip", you also need to provide "orderBy"'
+      : ByValid extends True
+      ? {}
+      : {
+          [P in OrderFields]: P extends ByFields
+            ? never
+            : `Error: Field "${P}" in "orderBy" needs to be provided in "by"`
+        }[OrderFields]
+    >(args: SubsetIntersection<T, UserProjectRoleGroupByArgs, OrderByArg> & InputErrors): {} extends InputErrors ? GetUserProjectRoleGroupByPayload<T> : Prisma.PrismaPromise<InputErrors>
+  /**
+   * Fields of the UserProjectRole model
+   */
+  readonly fields: UserProjectRoleFieldRefs;
+  }
+
+  /**
+   * The delegate class that acts as a "Promise-like" for UserProjectRole.
+   * Why is this prefixed with `Prisma__`?
+   * Because we want to prevent naming conflicts as mentioned in
+   * https://github.com/prisma/prisma-client-js/issues/707
+   */
+  export interface Prisma__UserProjectRoleClient<T, Null = never, ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs, GlobalOmitOptions = {}> extends Prisma.PrismaPromise<T> {
+    readonly [Symbol.toStringTag]: "PrismaPromise"
+    project<T extends ProjectDefaultArgs<ExtArgs> = {}>(args?: Subset<T, ProjectDefaultArgs<ExtArgs>>): Prisma__ProjectClient<$Result.GetResult<Prisma.$ProjectPayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions> | Null, Null, ExtArgs, GlobalOmitOptions>
+    role<T extends RoleDefaultArgs<ExtArgs> = {}>(args?: Subset<T, RoleDefaultArgs<ExtArgs>>): Prisma__RoleClient<$Result.GetResult<Prisma.$RolePayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions> | Null, Null, ExtArgs, GlobalOmitOptions>
+    user<T extends UserDefaultArgs<ExtArgs> = {}>(args?: Subset<T, UserDefaultArgs<ExtArgs>>): Prisma__UserClient<$Result.GetResult<Prisma.$UserPayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions> | Null, Null, ExtArgs, GlobalOmitOptions>
+    /**
+     * Attaches callbacks for the resolution and/or rejection of the Promise.
+     * @param onfulfilled The callback to execute when the Promise is resolved.
+     * @param onrejected The callback to execute when the Promise is rejected.
+     * @returns A Promise for the completion of which ever callback is executed.
+     */
+    then<TResult1 = T, TResult2 = never>(onfulfilled?: ((value: T) => TResult1 | PromiseLike<TResult1>) | undefined | null, onrejected?: ((reason: any) => TResult2 | PromiseLike<TResult2>) | undefined | null): $Utils.JsPromise<TResult1 | TResult2>
+    /**
+     * Attaches a callback for only the rejection of the Promise.
+     * @param onrejected The callback to execute when the Promise is rejected.
+     * @returns A Promise for the completion of the callback.
+     */
+    catch<TResult = never>(onrejected?: ((reason: any) => TResult | PromiseLike<TResult>) | undefined | null): $Utils.JsPromise<T | TResult>
+    /**
+     * Attaches a callback that is invoked when the Promise is settled (fulfilled or rejected). The
+     * resolved value cannot be modified from the callback.
+     * @param onfinally The callback to execute when the Promise is settled (fulfilled or rejected).
+     * @returns A Promise for the completion of the callback.
+     */
+    finally(onfinally?: (() => void) | undefined | null): $Utils.JsPromise<T>
+  }
+
+
+
+
+  /**
+   * Fields of the UserProjectRole model
+   */
+  interface UserProjectRoleFieldRefs {
+    readonly id: FieldRef<"UserProjectRole", 'String'>
+    readonly userId: FieldRef<"UserProjectRole", 'String'>
+    readonly projectId: FieldRef<"UserProjectRole", 'String'>
+    readonly roleId: FieldRef<"UserProjectRole", 'String'>
+    readonly deletedAt: FieldRef<"UserProjectRole", 'DateTime'>
+    readonly createdAt: FieldRef<"UserProjectRole", 'DateTime'>
+    readonly updatedAt: FieldRef<"UserProjectRole", 'DateTime'>
+  }
+    
+
+  // Custom InputTypes
+  /**
+   * UserProjectRole findUnique
+   */
+  export type UserProjectRoleFindUniqueArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the UserProjectRole
+     */
+    select?: UserProjectRoleSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the UserProjectRole
+     */
+    omit?: UserProjectRoleOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: UserProjectRoleInclude<ExtArgs> | null
+    /**
+     * Filter, which UserProjectRole to fetch.
+     */
+    where: UserProjectRoleWhereUniqueInput
+  }
+
+  /**
+   * UserProjectRole findUniqueOrThrow
+   */
+  export type UserProjectRoleFindUniqueOrThrowArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the UserProjectRole
+     */
+    select?: UserProjectRoleSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the UserProjectRole
+     */
+    omit?: UserProjectRoleOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: UserProjectRoleInclude<ExtArgs> | null
+    /**
+     * Filter, which UserProjectRole to fetch.
+     */
+    where: UserProjectRoleWhereUniqueInput
+  }
+
+  /**
+   * UserProjectRole findFirst
+   */
+  export type UserProjectRoleFindFirstArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the UserProjectRole
+     */
+    select?: UserProjectRoleSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the UserProjectRole
+     */
+    omit?: UserProjectRoleOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: UserProjectRoleInclude<ExtArgs> | null
+    /**
+     * Filter, which UserProjectRole to fetch.
+     */
+    where?: UserProjectRoleWhereInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+     * 
+     * Determine the order of UserProjectRoles to fetch.
+     */
+    orderBy?: UserProjectRoleOrderByWithRelationInput | UserProjectRoleOrderByWithRelationInput[]
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+     * 
+     * Sets the position for searching for UserProjectRoles.
+     */
+    cursor?: UserProjectRoleWhereUniqueInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Take `±n` UserProjectRoles from the position of the cursor.
+     */
+    take?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Skip the first `n` UserProjectRoles.
+     */
+    skip?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/distinct Distinct Docs}
+     * 
+     * Filter by unique combinations of UserProjectRoles.
+     */
+    distinct?: UserProjectRoleScalarFieldEnum | UserProjectRoleScalarFieldEnum[]
+  }
+
+  /**
+   * UserProjectRole findFirstOrThrow
+   */
+  export type UserProjectRoleFindFirstOrThrowArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the UserProjectRole
+     */
+    select?: UserProjectRoleSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the UserProjectRole
+     */
+    omit?: UserProjectRoleOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: UserProjectRoleInclude<ExtArgs> | null
+    /**
+     * Filter, which UserProjectRole to fetch.
+     */
+    where?: UserProjectRoleWhereInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+     * 
+     * Determine the order of UserProjectRoles to fetch.
+     */
+    orderBy?: UserProjectRoleOrderByWithRelationInput | UserProjectRoleOrderByWithRelationInput[]
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+     * 
+     * Sets the position for searching for UserProjectRoles.
+     */
+    cursor?: UserProjectRoleWhereUniqueInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Take `±n` UserProjectRoles from the position of the cursor.
+     */
+    take?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Skip the first `n` UserProjectRoles.
+     */
+    skip?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/distinct Distinct Docs}
+     * 
+     * Filter by unique combinations of UserProjectRoles.
+     */
+    distinct?: UserProjectRoleScalarFieldEnum | UserProjectRoleScalarFieldEnum[]
+  }
+
+  /**
+   * UserProjectRole findMany
+   */
+  export type UserProjectRoleFindManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the UserProjectRole
+     */
+    select?: UserProjectRoleSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the UserProjectRole
+     */
+    omit?: UserProjectRoleOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: UserProjectRoleInclude<ExtArgs> | null
+    /**
+     * Filter, which UserProjectRoles to fetch.
+     */
+    where?: UserProjectRoleWhereInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+     * 
+     * Determine the order of UserProjectRoles to fetch.
+     */
+    orderBy?: UserProjectRoleOrderByWithRelationInput | UserProjectRoleOrderByWithRelationInput[]
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+     * 
+     * Sets the position for listing UserProjectRoles.
+     */
+    cursor?: UserProjectRoleWhereUniqueInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Take `±n` UserProjectRoles from the position of the cursor.
+     */
+    take?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Skip the first `n` UserProjectRoles.
+     */
+    skip?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/distinct Distinct Docs}
+     * 
+     * Filter by unique combinations of UserProjectRoles.
+     */
+    distinct?: UserProjectRoleScalarFieldEnum | UserProjectRoleScalarFieldEnum[]
+  }
+
+  /**
+   * UserProjectRole create
+   */
+  export type UserProjectRoleCreateArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the UserProjectRole
+     */
+    select?: UserProjectRoleSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the UserProjectRole
+     */
+    omit?: UserProjectRoleOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: UserProjectRoleInclude<ExtArgs> | null
+    /**
+     * The data needed to create a UserProjectRole.
+     */
+    data: XOR<UserProjectRoleCreateInput, UserProjectRoleUncheckedCreateInput>
+  }
+
+  /**
+   * UserProjectRole createMany
+   */
+  export type UserProjectRoleCreateManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * The data used to create many UserProjectRoles.
+     */
+    data: UserProjectRoleCreateManyInput | UserProjectRoleCreateManyInput[]
+    skipDuplicates?: boolean
+  }
+
+  /**
+   * UserProjectRole createManyAndReturn
+   */
+  export type UserProjectRoleCreateManyAndReturnArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the UserProjectRole
+     */
+    select?: UserProjectRoleSelectCreateManyAndReturn<ExtArgs> | null
+    /**
+     * Omit specific fields from the UserProjectRole
+     */
+    omit?: UserProjectRoleOmit<ExtArgs> | null
+    /**
+     * The data used to create many UserProjectRoles.
+     */
+    data: UserProjectRoleCreateManyInput | UserProjectRoleCreateManyInput[]
+    skipDuplicates?: boolean
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: UserProjectRoleIncludeCreateManyAndReturn<ExtArgs> | null
+  }
+
+  /**
+   * UserProjectRole update
+   */
+  export type UserProjectRoleUpdateArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the UserProjectRole
+     */
+    select?: UserProjectRoleSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the UserProjectRole
+     */
+    omit?: UserProjectRoleOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: UserProjectRoleInclude<ExtArgs> | null
+    /**
+     * The data needed to update a UserProjectRole.
+     */
+    data: XOR<UserProjectRoleUpdateInput, UserProjectRoleUncheckedUpdateInput>
+    /**
+     * Choose, which UserProjectRole to update.
+     */
+    where: UserProjectRoleWhereUniqueInput
+  }
+
+  /**
+   * UserProjectRole updateMany
+   */
+  export type UserProjectRoleUpdateManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * The data used to update UserProjectRoles.
+     */
+    data: XOR<UserProjectRoleUpdateManyMutationInput, UserProjectRoleUncheckedUpdateManyInput>
+    /**
+     * Filter which UserProjectRoles to update
+     */
+    where?: UserProjectRoleWhereInput
+    /**
+     * Limit how many UserProjectRoles to update.
+     */
+    limit?: number
+  }
+
+  /**
+   * UserProjectRole updateManyAndReturn
+   */
+  export type UserProjectRoleUpdateManyAndReturnArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the UserProjectRole
+     */
+    select?: UserProjectRoleSelectUpdateManyAndReturn<ExtArgs> | null
+    /**
+     * Omit specific fields from the UserProjectRole
+     */
+    omit?: UserProjectRoleOmit<ExtArgs> | null
+    /**
+     * The data used to update UserProjectRoles.
+     */
+    data: XOR<UserProjectRoleUpdateManyMutationInput, UserProjectRoleUncheckedUpdateManyInput>
+    /**
+     * Filter which UserProjectRoles to update
+     */
+    where?: UserProjectRoleWhereInput
+    /**
+     * Limit how many UserProjectRoles to update.
+     */
+    limit?: number
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: UserProjectRoleIncludeUpdateManyAndReturn<ExtArgs> | null
+  }
+
+  /**
+   * UserProjectRole upsert
+   */
+  export type UserProjectRoleUpsertArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the UserProjectRole
+     */
+    select?: UserProjectRoleSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the UserProjectRole
+     */
+    omit?: UserProjectRoleOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: UserProjectRoleInclude<ExtArgs> | null
+    /**
+     * The filter to search for the UserProjectRole to update in case it exists.
+     */
+    where: UserProjectRoleWhereUniqueInput
+    /**
+     * In case the UserProjectRole found by the `where` argument doesn't exist, create a new UserProjectRole with this data.
+     */
+    create: XOR<UserProjectRoleCreateInput, UserProjectRoleUncheckedCreateInput>
+    /**
+     * In case the UserProjectRole was found with the provided `where` argument, update it with this data.
+     */
+    update: XOR<UserProjectRoleUpdateInput, UserProjectRoleUncheckedUpdateInput>
+  }
+
+  /**
+   * UserProjectRole delete
+   */
+  export type UserProjectRoleDeleteArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the UserProjectRole
+     */
+    select?: UserProjectRoleSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the UserProjectRole
+     */
+    omit?: UserProjectRoleOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: UserProjectRoleInclude<ExtArgs> | null
+    /**
+     * Filter which UserProjectRole to delete.
+     */
+    where: UserProjectRoleWhereUniqueInput
+  }
+
+  /**
+   * UserProjectRole deleteMany
+   */
+  export type UserProjectRoleDeleteManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Filter which UserProjectRoles to delete
+     */
+    where?: UserProjectRoleWhereInput
+    /**
+     * Limit how many UserProjectRoles to delete.
+     */
+    limit?: number
+  }
+
+  /**
+   * UserProjectRole without action
+   */
+  export type UserProjectRoleDefaultArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the UserProjectRole
+     */
+    select?: UserProjectRoleSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the UserProjectRole
+     */
+    omit?: UserProjectRoleOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: UserProjectRoleInclude<ExtArgs> | null
+  }
+
+
+  /**
+   * Model Stakeholder
+   */
+
+  export type AggregateStakeholder = {
+    _count: StakeholderCountAggregateOutputType | null
+    _min: StakeholderMinAggregateOutputType | null
+    _max: StakeholderMaxAggregateOutputType | null
+  }
+
+  export type StakeholderMinAggregateOutputType = {
+    id: string | null
+    tenantId: string | null
+    name: string | null
+    logoUrl: string | null
+    company: string | null
+    competence: string | null
+    email: string | null
+    phone: string | null
+    cep: string | null
+    logradouro: string | null
+    numero: string | null
+    complemento: string | null
+    bairro: string | null
+    cidade: string | null
+    estado: string | null
+    notes: string | null
+    isActive: boolean | null
+    createdAt: Date | null
+    updatedAt: Date | null
+  }
+
+  export type StakeholderMaxAggregateOutputType = {
+    id: string | null
+    tenantId: string | null
+    name: string | null
+    logoUrl: string | null
+    company: string | null
+    competence: string | null
+    email: string | null
+    phone: string | null
+    cep: string | null
+    logradouro: string | null
+    numero: string | null
+    complemento: string | null
+    bairro: string | null
+    cidade: string | null
+    estado: string | null
+    notes: string | null
+    isActive: boolean | null
+    createdAt: Date | null
+    updatedAt: Date | null
+  }
+
+  export type StakeholderCountAggregateOutputType = {
+    id: number
+    tenantId: number
+    name: number
+    logoUrl: number
+    company: number
+    competence: number
+    email: number
+    phone: number
+    cep: number
+    logradouro: number
+    numero: number
+    complemento: number
+    bairro: number
+    cidade: number
+    estado: number
+    notes: number
+    isActive: number
+    createdAt: number
+    updatedAt: number
+    _all: number
+  }
+
+
+  export type StakeholderMinAggregateInputType = {
+    id?: true
+    tenantId?: true
+    name?: true
+    logoUrl?: true
+    company?: true
+    competence?: true
+    email?: true
+    phone?: true
+    cep?: true
+    logradouro?: true
+    numero?: true
+    complemento?: true
+    bairro?: true
+    cidade?: true
+    estado?: true
+    notes?: true
+    isActive?: true
+    createdAt?: true
+    updatedAt?: true
+  }
+
+  export type StakeholderMaxAggregateInputType = {
+    id?: true
+    tenantId?: true
+    name?: true
+    logoUrl?: true
+    company?: true
+    competence?: true
+    email?: true
+    phone?: true
+    cep?: true
+    logradouro?: true
+    numero?: true
+    complemento?: true
+    bairro?: true
+    cidade?: true
+    estado?: true
+    notes?: true
+    isActive?: true
+    createdAt?: true
+    updatedAt?: true
+  }
+
+  export type StakeholderCountAggregateInputType = {
+    id?: true
+    tenantId?: true
+    name?: true
+    logoUrl?: true
+    company?: true
+    competence?: true
+    email?: true
+    phone?: true
+    cep?: true
+    logradouro?: true
+    numero?: true
+    complemento?: true
+    bairro?: true
+    cidade?: true
+    estado?: true
+    notes?: true
+    isActive?: true
+    createdAt?: true
+    updatedAt?: true
+    _all?: true
+  }
+
+  export type StakeholderAggregateArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Filter which Stakeholder to aggregate.
+     */
+    where?: StakeholderWhereInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+     * 
+     * Determine the order of Stakeholders to fetch.
+     */
+    orderBy?: StakeholderOrderByWithRelationInput | StakeholderOrderByWithRelationInput[]
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+     * 
+     * Sets the start position
+     */
+    cursor?: StakeholderWhereUniqueInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Take `±n` Stakeholders from the position of the cursor.
+     */
+    take?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Skip the first `n` Stakeholders.
+     */
+    skip?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Count returned Stakeholders
+    **/
+    _count?: true | StakeholderCountAggregateInputType
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Select which fields to find the minimum value
+    **/
+    _min?: StakeholderMinAggregateInputType
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Select which fields to find the maximum value
+    **/
+    _max?: StakeholderMaxAggregateInputType
+  }
+
+  export type GetStakeholderAggregateType<T extends StakeholderAggregateArgs> = {
+        [P in keyof T & keyof AggregateStakeholder]: P extends '_count' | 'count'
+      ? T[P] extends true
+        ? number
+        : GetScalarType<T[P], AggregateStakeholder[P]>
+      : GetScalarType<T[P], AggregateStakeholder[P]>
+  }
+
+
+
+
+  export type StakeholderGroupByArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    where?: StakeholderWhereInput
+    orderBy?: StakeholderOrderByWithAggregationInput | StakeholderOrderByWithAggregationInput[]
+    by: StakeholderScalarFieldEnum[] | StakeholderScalarFieldEnum
+    having?: StakeholderScalarWhereWithAggregatesInput
+    take?: number
+    skip?: number
+    _count?: StakeholderCountAggregateInputType | true
+    _min?: StakeholderMinAggregateInputType
+    _max?: StakeholderMaxAggregateInputType
+  }
+
+  export type StakeholderGroupByOutputType = {
+    id: string
+    tenantId: string
+    name: string
+    logoUrl: string | null
+    company: string | null
+    competence: string | null
+    email: string | null
+    phone: string | null
+    cep: string | null
+    logradouro: string | null
+    numero: string | null
+    complemento: string | null
+    bairro: string | null
+    cidade: string | null
+    estado: string | null
+    notes: string | null
+    isActive: boolean
+    createdAt: Date
+    updatedAt: Date
+    _count: StakeholderCountAggregateOutputType | null
+    _min: StakeholderMinAggregateOutputType | null
+    _max: StakeholderMaxAggregateOutputType | null
+  }
+
+  type GetStakeholderGroupByPayload<T extends StakeholderGroupByArgs> = Prisma.PrismaPromise<
+    Array<
+      PickEnumerable<StakeholderGroupByOutputType, T['by']> &
+        {
+          [P in ((keyof T) & (keyof StakeholderGroupByOutputType))]: P extends '_count'
+            ? T[P] extends boolean
+              ? number
+              : GetScalarType<T[P], StakeholderGroupByOutputType[P]>
+            : GetScalarType<T[P], StakeholderGroupByOutputType[P]>
+        }
+      >
+    >
+
+
+  export type StakeholderSelect<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetSelect<{
+    id?: boolean
+    tenantId?: boolean
+    name?: boolean
+    logoUrl?: boolean
+    company?: boolean
+    competence?: boolean
+    email?: boolean
+    phone?: boolean
+    cep?: boolean
+    logradouro?: boolean
+    numero?: boolean
+    complemento?: boolean
+    bairro?: boolean
+    cidade?: boolean
+    estado?: boolean
+    notes?: boolean
+    isActive?: boolean
+    createdAt?: boolean
+    updatedAt?: boolean
+    projects?: boolean | Stakeholder$projectsArgs<ExtArgs>
+    tenant?: boolean | TenantDefaultArgs<ExtArgs>
+    _count?: boolean | StakeholderCountOutputTypeDefaultArgs<ExtArgs>
+  }, ExtArgs["result"]["stakeholder"]>
+
+  export type StakeholderSelectCreateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetSelect<{
+    id?: boolean
+    tenantId?: boolean
+    name?: boolean
+    logoUrl?: boolean
+    company?: boolean
+    competence?: boolean
+    email?: boolean
+    phone?: boolean
+    cep?: boolean
+    logradouro?: boolean
+    numero?: boolean
+    complemento?: boolean
+    bairro?: boolean
+    cidade?: boolean
+    estado?: boolean
+    notes?: boolean
+    isActive?: boolean
+    createdAt?: boolean
+    updatedAt?: boolean
+    tenant?: boolean | TenantDefaultArgs<ExtArgs>
+  }, ExtArgs["result"]["stakeholder"]>
+
+  export type StakeholderSelectUpdateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetSelect<{
+    id?: boolean
+    tenantId?: boolean
+    name?: boolean
+    logoUrl?: boolean
+    company?: boolean
+    competence?: boolean
+    email?: boolean
+    phone?: boolean
+    cep?: boolean
+    logradouro?: boolean
+    numero?: boolean
+    complemento?: boolean
+    bairro?: boolean
+    cidade?: boolean
+    estado?: boolean
+    notes?: boolean
+    isActive?: boolean
+    createdAt?: boolean
+    updatedAt?: boolean
+    tenant?: boolean | TenantDefaultArgs<ExtArgs>
+  }, ExtArgs["result"]["stakeholder"]>
+
+  export type StakeholderSelectScalar = {
+    id?: boolean
+    tenantId?: boolean
+    name?: boolean
+    logoUrl?: boolean
+    company?: boolean
+    competence?: boolean
+    email?: boolean
+    phone?: boolean
+    cep?: boolean
+    logradouro?: boolean
+    numero?: boolean
+    complemento?: boolean
+    bairro?: boolean
+    cidade?: boolean
+    estado?: boolean
+    notes?: boolean
+    isActive?: boolean
+    createdAt?: boolean
+    updatedAt?: boolean
+  }
+
+  export type StakeholderOmit<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetOmit<"id" | "tenantId" | "name" | "logoUrl" | "company" | "competence" | "email" | "phone" | "cep" | "logradouro" | "numero" | "complemento" | "bairro" | "cidade" | "estado" | "notes" | "isActive" | "createdAt" | "updatedAt", ExtArgs["result"]["stakeholder"]>
+  export type StakeholderInclude<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    projects?: boolean | Stakeholder$projectsArgs<ExtArgs>
+    tenant?: boolean | TenantDefaultArgs<ExtArgs>
+    _count?: boolean | StakeholderCountOutputTypeDefaultArgs<ExtArgs>
+  }
+  export type StakeholderIncludeCreateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    tenant?: boolean | TenantDefaultArgs<ExtArgs>
+  }
+  export type StakeholderIncludeUpdateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    tenant?: boolean | TenantDefaultArgs<ExtArgs>
+  }
+
+  export type $StakeholderPayload<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    name: "Stakeholder"
+    objects: {
+      projects: Prisma.$ProjectStakeholderPayload<ExtArgs>[]
+      tenant: Prisma.$TenantPayload<ExtArgs>
+    }
+    scalars: $Extensions.GetPayloadResult<{
+      id: string
+      tenantId: string
+      name: string
+      logoUrl: string | null
+      company: string | null
+      competence: string | null
+      email: string | null
+      phone: string | null
+      cep: string | null
+      logradouro: string | null
+      numero: string | null
+      complemento: string | null
+      bairro: string | null
+      cidade: string | null
+      estado: string | null
+      notes: string | null
+      isActive: boolean
+      createdAt: Date
+      updatedAt: Date
+    }, ExtArgs["result"]["stakeholder"]>
+    composites: {}
+  }
+
+  type StakeholderGetPayload<S extends boolean | null | undefined | StakeholderDefaultArgs> = $Result.GetResult<Prisma.$StakeholderPayload, S>
+
+  type StakeholderCountArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> =
+    Omit<StakeholderFindManyArgs, 'select' | 'include' | 'distinct' | 'omit'> & {
+      select?: StakeholderCountAggregateInputType | true
+    }
+
+  export interface StakeholderDelegate<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs, GlobalOmitOptions = {}> {
+    [K: symbol]: { types: Prisma.TypeMap<ExtArgs>['model']['Stakeholder'], meta: { name: 'Stakeholder' } }
+    /**
+     * Find zero or one Stakeholder that matches the filter.
+     * @param {StakeholderFindUniqueArgs} args - Arguments to find a Stakeholder
+     * @example
+     * // Get one Stakeholder
+     * const stakeholder = await prisma.stakeholder.findUnique({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     */
+    findUnique<T extends StakeholderFindUniqueArgs>(args: SelectSubset<T, StakeholderFindUniqueArgs<ExtArgs>>): Prisma__StakeholderClient<$Result.GetResult<Prisma.$StakeholderPayload<ExtArgs>, T, "findUnique", GlobalOmitOptions> | null, null, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Find one Stakeholder that matches the filter or throw an error with `error.code='P2025'`
+     * if no matches were found.
+     * @param {StakeholderFindUniqueOrThrowArgs} args - Arguments to find a Stakeholder
+     * @example
+     * // Get one Stakeholder
+     * const stakeholder = await prisma.stakeholder.findUniqueOrThrow({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     */
+    findUniqueOrThrow<T extends StakeholderFindUniqueOrThrowArgs>(args: SelectSubset<T, StakeholderFindUniqueOrThrowArgs<ExtArgs>>): Prisma__StakeholderClient<$Result.GetResult<Prisma.$StakeholderPayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Find the first Stakeholder that matches the filter.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {StakeholderFindFirstArgs} args - Arguments to find a Stakeholder
+     * @example
+     * // Get one Stakeholder
+     * const stakeholder = await prisma.stakeholder.findFirst({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     */
+    findFirst<T extends StakeholderFindFirstArgs>(args?: SelectSubset<T, StakeholderFindFirstArgs<ExtArgs>>): Prisma__StakeholderClient<$Result.GetResult<Prisma.$StakeholderPayload<ExtArgs>, T, "findFirst", GlobalOmitOptions> | null, null, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Find the first Stakeholder that matches the filter or
+     * throw `PrismaKnownClientError` with `P2025` code if no matches were found.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {StakeholderFindFirstOrThrowArgs} args - Arguments to find a Stakeholder
+     * @example
+     * // Get one Stakeholder
+     * const stakeholder = await prisma.stakeholder.findFirstOrThrow({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     */
+    findFirstOrThrow<T extends StakeholderFindFirstOrThrowArgs>(args?: SelectSubset<T, StakeholderFindFirstOrThrowArgs<ExtArgs>>): Prisma__StakeholderClient<$Result.GetResult<Prisma.$StakeholderPayload<ExtArgs>, T, "findFirstOrThrow", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Find zero or more Stakeholders that matches the filter.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {StakeholderFindManyArgs} args - Arguments to filter and select certain fields only.
+     * @example
+     * // Get all Stakeholders
+     * const stakeholders = await prisma.stakeholder.findMany()
+     * 
+     * // Get first 10 Stakeholders
+     * const stakeholders = await prisma.stakeholder.findMany({ take: 10 })
+     * 
+     * // Only select the `id`
+     * const stakeholderWithIdOnly = await prisma.stakeholder.findMany({ select: { id: true } })
+     * 
+     */
+    findMany<T extends StakeholderFindManyArgs>(args?: SelectSubset<T, StakeholderFindManyArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$StakeholderPayload<ExtArgs>, T, "findMany", GlobalOmitOptions>>
+
+    /**
+     * Create a Stakeholder.
+     * @param {StakeholderCreateArgs} args - Arguments to create a Stakeholder.
+     * @example
+     * // Create one Stakeholder
+     * const Stakeholder = await prisma.stakeholder.create({
+     *   data: {
+     *     // ... data to create a Stakeholder
+     *   }
+     * })
+     * 
+     */
+    create<T extends StakeholderCreateArgs>(args: SelectSubset<T, StakeholderCreateArgs<ExtArgs>>): Prisma__StakeholderClient<$Result.GetResult<Prisma.$StakeholderPayload<ExtArgs>, T, "create", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Create many Stakeholders.
+     * @param {StakeholderCreateManyArgs} args - Arguments to create many Stakeholders.
+     * @example
+     * // Create many Stakeholders
+     * const stakeholder = await prisma.stakeholder.createMany({
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     *     
+     */
+    createMany<T extends StakeholderCreateManyArgs>(args?: SelectSubset<T, StakeholderCreateManyArgs<ExtArgs>>): Prisma.PrismaPromise<BatchPayload>
+
+    /**
+     * Create many Stakeholders and returns the data saved in the database.
+     * @param {StakeholderCreateManyAndReturnArgs} args - Arguments to create many Stakeholders.
+     * @example
+     * // Create many Stakeholders
+     * const stakeholder = await prisma.stakeholder.createManyAndReturn({
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     * 
+     * // Create many Stakeholders and only return the `id`
+     * const stakeholderWithIdOnly = await prisma.stakeholder.createManyAndReturn({
+     *   select: { id: true },
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * 
+     */
+    createManyAndReturn<T extends StakeholderCreateManyAndReturnArgs>(args?: SelectSubset<T, StakeholderCreateManyAndReturnArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$StakeholderPayload<ExtArgs>, T, "createManyAndReturn", GlobalOmitOptions>>
+
+    /**
+     * Delete a Stakeholder.
+     * @param {StakeholderDeleteArgs} args - Arguments to delete one Stakeholder.
+     * @example
+     * // Delete one Stakeholder
+     * const Stakeholder = await prisma.stakeholder.delete({
+     *   where: {
+     *     // ... filter to delete one Stakeholder
+     *   }
+     * })
+     * 
+     */
+    delete<T extends StakeholderDeleteArgs>(args: SelectSubset<T, StakeholderDeleteArgs<ExtArgs>>): Prisma__StakeholderClient<$Result.GetResult<Prisma.$StakeholderPayload<ExtArgs>, T, "delete", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Update one Stakeholder.
+     * @param {StakeholderUpdateArgs} args - Arguments to update one Stakeholder.
+     * @example
+     * // Update one Stakeholder
+     * const stakeholder = await prisma.stakeholder.update({
+     *   where: {
+     *     // ... provide filter here
+     *   },
+     *   data: {
+     *     // ... provide data here
+     *   }
+     * })
+     * 
+     */
+    update<T extends StakeholderUpdateArgs>(args: SelectSubset<T, StakeholderUpdateArgs<ExtArgs>>): Prisma__StakeholderClient<$Result.GetResult<Prisma.$StakeholderPayload<ExtArgs>, T, "update", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Delete zero or more Stakeholders.
+     * @param {StakeholderDeleteManyArgs} args - Arguments to filter Stakeholders to delete.
+     * @example
+     * // Delete a few Stakeholders
+     * const { count } = await prisma.stakeholder.deleteMany({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     * 
+     */
+    deleteMany<T extends StakeholderDeleteManyArgs>(args?: SelectSubset<T, StakeholderDeleteManyArgs<ExtArgs>>): Prisma.PrismaPromise<BatchPayload>
+
+    /**
+     * Update zero or more Stakeholders.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {StakeholderUpdateManyArgs} args - Arguments to update one or more rows.
+     * @example
+     * // Update many Stakeholders
+     * const stakeholder = await prisma.stakeholder.updateMany({
+     *   where: {
+     *     // ... provide filter here
+     *   },
+     *   data: {
+     *     // ... provide data here
+     *   }
+     * })
+     * 
+     */
+    updateMany<T extends StakeholderUpdateManyArgs>(args: SelectSubset<T, StakeholderUpdateManyArgs<ExtArgs>>): Prisma.PrismaPromise<BatchPayload>
+
+    /**
+     * Update zero or more Stakeholders and returns the data updated in the database.
+     * @param {StakeholderUpdateManyAndReturnArgs} args - Arguments to update many Stakeholders.
+     * @example
+     * // Update many Stakeholders
+     * const stakeholder = await prisma.stakeholder.updateManyAndReturn({
+     *   where: {
+     *     // ... provide filter here
+     *   },
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     * 
+     * // Update zero or more Stakeholders and only return the `id`
+     * const stakeholderWithIdOnly = await prisma.stakeholder.updateManyAndReturn({
+     *   select: { id: true },
+     *   where: {
+     *     // ... provide filter here
+     *   },
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * 
+     */
+    updateManyAndReturn<T extends StakeholderUpdateManyAndReturnArgs>(args: SelectSubset<T, StakeholderUpdateManyAndReturnArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$StakeholderPayload<ExtArgs>, T, "updateManyAndReturn", GlobalOmitOptions>>
+
+    /**
+     * Create or update one Stakeholder.
+     * @param {StakeholderUpsertArgs} args - Arguments to update or create a Stakeholder.
+     * @example
+     * // Update or create a Stakeholder
+     * const stakeholder = await prisma.stakeholder.upsert({
+     *   create: {
+     *     // ... data to create a Stakeholder
+     *   },
+     *   update: {
+     *     // ... in case it already exists, update
+     *   },
+     *   where: {
+     *     // ... the filter for the Stakeholder we want to update
+     *   }
+     * })
+     */
+    upsert<T extends StakeholderUpsertArgs>(args: SelectSubset<T, StakeholderUpsertArgs<ExtArgs>>): Prisma__StakeholderClient<$Result.GetResult<Prisma.$StakeholderPayload<ExtArgs>, T, "upsert", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+
+    /**
+     * Count the number of Stakeholders.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {StakeholderCountArgs} args - Arguments to filter Stakeholders to count.
+     * @example
+     * // Count the number of Stakeholders
+     * const count = await prisma.stakeholder.count({
+     *   where: {
+     *     // ... the filter for the Stakeholders we want to count
+     *   }
+     * })
+    **/
+    count<T extends StakeholderCountArgs>(
+      args?: Subset<T, StakeholderCountArgs>,
+    ): Prisma.PrismaPromise<
+      T extends $Utils.Record<'select', any>
+        ? T['select'] extends true
+          ? number
+          : GetScalarType<T['select'], StakeholderCountAggregateOutputType>
+        : number
+    >
+
+    /**
+     * Allows you to perform aggregations operations on a Stakeholder.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {StakeholderAggregateArgs} args - Select which aggregations you would like to apply and on what fields.
+     * @example
+     * // Ordered by age ascending
+     * // Where email contains prisma.io
+     * // Limited to the 10 users
+     * const aggregations = await prisma.user.aggregate({
+     *   _avg: {
+     *     age: true,
+     *   },
+     *   where: {
+     *     email: {
+     *       contains: "prisma.io",
+     *     },
+     *   },
+     *   orderBy: {
+     *     age: "asc",
+     *   },
+     *   take: 10,
+     * })
+    **/
+    aggregate<T extends StakeholderAggregateArgs>(args: Subset<T, StakeholderAggregateArgs>): Prisma.PrismaPromise<GetStakeholderAggregateType<T>>
+
+    /**
+     * Group by Stakeholder.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {StakeholderGroupByArgs} args - Group by arguments.
+     * @example
+     * // Group by city, order by createdAt, get count
+     * const result = await prisma.user.groupBy({
+     *   by: ['city', 'createdAt'],
+     *   orderBy: {
+     *     createdAt: true
+     *   },
+     *   _count: {
+     *     _all: true
+     *   },
+     * })
+     * 
+    **/
+    groupBy<
+      T extends StakeholderGroupByArgs,
+      HasSelectOrTake extends Or<
+        Extends<'skip', Keys<T>>,
+        Extends<'take', Keys<T>>
+      >,
+      OrderByArg extends True extends HasSelectOrTake
+        ? { orderBy: StakeholderGroupByArgs['orderBy'] }
+        : { orderBy?: StakeholderGroupByArgs['orderBy'] },
+      OrderFields extends ExcludeUnderscoreKeys<Keys<MaybeTupleToUnion<T['orderBy']>>>,
+      ByFields extends MaybeTupleToUnion<T['by']>,
+      ByValid extends Has<ByFields, OrderFields>,
+      HavingFields extends GetHavingFields<T['having']>,
+      HavingValid extends Has<ByFields, HavingFields>,
+      ByEmpty extends T['by'] extends never[] ? True : False,
+      InputErrors extends ByEmpty extends True
+      ? `Error: "by" must not be empty.`
+      : HavingValid extends False
+      ? {
+          [P in HavingFields]: P extends ByFields
+            ? never
+            : P extends string
+            ? `Error: Field "${P}" used in "having" needs to be provided in "by".`
+            : [
+                Error,
+                'Field ',
+                P,
+                ` in "having" needs to be provided in "by"`,
+              ]
+        }[HavingFields]
+      : 'take' extends Keys<T>
+      ? 'orderBy' extends Keys<T>
+        ? ByValid extends True
+          ? {}
+          : {
+              [P in OrderFields]: P extends ByFields
+                ? never
+                : `Error: Field "${P}" in "orderBy" needs to be provided in "by"`
+            }[OrderFields]
+        : 'Error: If you provide "take", you also need to provide "orderBy"'
+      : 'skip' extends Keys<T>
+      ? 'orderBy' extends Keys<T>
+        ? ByValid extends True
+          ? {}
+          : {
+              [P in OrderFields]: P extends ByFields
+                ? never
+                : `Error: Field "${P}" in "orderBy" needs to be provided in "by"`
+            }[OrderFields]
+        : 'Error: If you provide "skip", you also need to provide "orderBy"'
+      : ByValid extends True
+      ? {}
+      : {
+          [P in OrderFields]: P extends ByFields
+            ? never
+            : `Error: Field "${P}" in "orderBy" needs to be provided in "by"`
+        }[OrderFields]
+    >(args: SubsetIntersection<T, StakeholderGroupByArgs, OrderByArg> & InputErrors): {} extends InputErrors ? GetStakeholderGroupByPayload<T> : Prisma.PrismaPromise<InputErrors>
+  /**
+   * Fields of the Stakeholder model
+   */
+  readonly fields: StakeholderFieldRefs;
+  }
+
+  /**
+   * The delegate class that acts as a "Promise-like" for Stakeholder.
+   * Why is this prefixed with `Prisma__`?
+   * Because we want to prevent naming conflicts as mentioned in
+   * https://github.com/prisma/prisma-client-js/issues/707
+   */
+  export interface Prisma__StakeholderClient<T, Null = never, ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs, GlobalOmitOptions = {}> extends Prisma.PrismaPromise<T> {
+    readonly [Symbol.toStringTag]: "PrismaPromise"
+    projects<T extends Stakeholder$projectsArgs<ExtArgs> = {}>(args?: Subset<T, Stakeholder$projectsArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$ProjectStakeholderPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
+    tenant<T extends TenantDefaultArgs<ExtArgs> = {}>(args?: Subset<T, TenantDefaultArgs<ExtArgs>>): Prisma__TenantClient<$Result.GetResult<Prisma.$TenantPayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions> | Null, Null, ExtArgs, GlobalOmitOptions>
+    /**
+     * Attaches callbacks for the resolution and/or rejection of the Promise.
+     * @param onfulfilled The callback to execute when the Promise is resolved.
+     * @param onrejected The callback to execute when the Promise is rejected.
+     * @returns A Promise for the completion of which ever callback is executed.
+     */
+    then<TResult1 = T, TResult2 = never>(onfulfilled?: ((value: T) => TResult1 | PromiseLike<TResult1>) | undefined | null, onrejected?: ((reason: any) => TResult2 | PromiseLike<TResult2>) | undefined | null): $Utils.JsPromise<TResult1 | TResult2>
+    /**
+     * Attaches a callback for only the rejection of the Promise.
+     * @param onrejected The callback to execute when the Promise is rejected.
+     * @returns A Promise for the completion of the callback.
+     */
+    catch<TResult = never>(onrejected?: ((reason: any) => TResult | PromiseLike<TResult>) | undefined | null): $Utils.JsPromise<T | TResult>
+    /**
+     * Attaches a callback that is invoked when the Promise is settled (fulfilled or rejected). The
+     * resolved value cannot be modified from the callback.
+     * @param onfinally The callback to execute when the Promise is settled (fulfilled or rejected).
+     * @returns A Promise for the completion of the callback.
+     */
+    finally(onfinally?: (() => void) | undefined | null): $Utils.JsPromise<T>
+  }
+
+
+
+
+  /**
+   * Fields of the Stakeholder model
+   */
+  interface StakeholderFieldRefs {
+    readonly id: FieldRef<"Stakeholder", 'String'>
+    readonly tenantId: FieldRef<"Stakeholder", 'String'>
+    readonly name: FieldRef<"Stakeholder", 'String'>
+    readonly logoUrl: FieldRef<"Stakeholder", 'String'>
+    readonly company: FieldRef<"Stakeholder", 'String'>
+    readonly competence: FieldRef<"Stakeholder", 'String'>
+    readonly email: FieldRef<"Stakeholder", 'String'>
+    readonly phone: FieldRef<"Stakeholder", 'String'>
+    readonly cep: FieldRef<"Stakeholder", 'String'>
+    readonly logradouro: FieldRef<"Stakeholder", 'String'>
+    readonly numero: FieldRef<"Stakeholder", 'String'>
+    readonly complemento: FieldRef<"Stakeholder", 'String'>
+    readonly bairro: FieldRef<"Stakeholder", 'String'>
+    readonly cidade: FieldRef<"Stakeholder", 'String'>
+    readonly estado: FieldRef<"Stakeholder", 'String'>
+    readonly notes: FieldRef<"Stakeholder", 'String'>
+    readonly isActive: FieldRef<"Stakeholder", 'Boolean'>
+    readonly createdAt: FieldRef<"Stakeholder", 'DateTime'>
+    readonly updatedAt: FieldRef<"Stakeholder", 'DateTime'>
+  }
+    
+
+  // Custom InputTypes
+  /**
+   * Stakeholder findUnique
+   */
+  export type StakeholderFindUniqueArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the Stakeholder
+     */
+    select?: StakeholderSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the Stakeholder
+     */
+    omit?: StakeholderOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: StakeholderInclude<ExtArgs> | null
+    /**
+     * Filter, which Stakeholder to fetch.
+     */
+    where: StakeholderWhereUniqueInput
+  }
+
+  /**
+   * Stakeholder findUniqueOrThrow
+   */
+  export type StakeholderFindUniqueOrThrowArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the Stakeholder
+     */
+    select?: StakeholderSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the Stakeholder
+     */
+    omit?: StakeholderOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: StakeholderInclude<ExtArgs> | null
+    /**
+     * Filter, which Stakeholder to fetch.
+     */
+    where: StakeholderWhereUniqueInput
+  }
+
+  /**
+   * Stakeholder findFirst
+   */
+  export type StakeholderFindFirstArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the Stakeholder
+     */
+    select?: StakeholderSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the Stakeholder
+     */
+    omit?: StakeholderOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: StakeholderInclude<ExtArgs> | null
+    /**
+     * Filter, which Stakeholder to fetch.
+     */
+    where?: StakeholderWhereInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+     * 
+     * Determine the order of Stakeholders to fetch.
+     */
+    orderBy?: StakeholderOrderByWithRelationInput | StakeholderOrderByWithRelationInput[]
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+     * 
+     * Sets the position for searching for Stakeholders.
+     */
+    cursor?: StakeholderWhereUniqueInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Take `±n` Stakeholders from the position of the cursor.
+     */
+    take?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Skip the first `n` Stakeholders.
+     */
+    skip?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/distinct Distinct Docs}
+     * 
+     * Filter by unique combinations of Stakeholders.
+     */
+    distinct?: StakeholderScalarFieldEnum | StakeholderScalarFieldEnum[]
+  }
+
+  /**
+   * Stakeholder findFirstOrThrow
+   */
+  export type StakeholderFindFirstOrThrowArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the Stakeholder
+     */
+    select?: StakeholderSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the Stakeholder
+     */
+    omit?: StakeholderOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: StakeholderInclude<ExtArgs> | null
+    /**
+     * Filter, which Stakeholder to fetch.
+     */
+    where?: StakeholderWhereInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+     * 
+     * Determine the order of Stakeholders to fetch.
+     */
+    orderBy?: StakeholderOrderByWithRelationInput | StakeholderOrderByWithRelationInput[]
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+     * 
+     * Sets the position for searching for Stakeholders.
+     */
+    cursor?: StakeholderWhereUniqueInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Take `±n` Stakeholders from the position of the cursor.
+     */
+    take?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Skip the first `n` Stakeholders.
+     */
+    skip?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/distinct Distinct Docs}
+     * 
+     * Filter by unique combinations of Stakeholders.
+     */
+    distinct?: StakeholderScalarFieldEnum | StakeholderScalarFieldEnum[]
+  }
+
+  /**
+   * Stakeholder findMany
+   */
+  export type StakeholderFindManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the Stakeholder
+     */
+    select?: StakeholderSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the Stakeholder
+     */
+    omit?: StakeholderOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: StakeholderInclude<ExtArgs> | null
+    /**
+     * Filter, which Stakeholders to fetch.
+     */
+    where?: StakeholderWhereInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+     * 
+     * Determine the order of Stakeholders to fetch.
+     */
+    orderBy?: StakeholderOrderByWithRelationInput | StakeholderOrderByWithRelationInput[]
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+     * 
+     * Sets the position for listing Stakeholders.
+     */
+    cursor?: StakeholderWhereUniqueInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Take `±n` Stakeholders from the position of the cursor.
+     */
+    take?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Skip the first `n` Stakeholders.
+     */
+    skip?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/distinct Distinct Docs}
+     * 
+     * Filter by unique combinations of Stakeholders.
+     */
+    distinct?: StakeholderScalarFieldEnum | StakeholderScalarFieldEnum[]
+  }
+
+  /**
+   * Stakeholder create
+   */
+  export type StakeholderCreateArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the Stakeholder
+     */
+    select?: StakeholderSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the Stakeholder
+     */
+    omit?: StakeholderOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: StakeholderInclude<ExtArgs> | null
+    /**
+     * The data needed to create a Stakeholder.
+     */
+    data: XOR<StakeholderCreateInput, StakeholderUncheckedCreateInput>
+  }
+
+  /**
+   * Stakeholder createMany
+   */
+  export type StakeholderCreateManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * The data used to create many Stakeholders.
+     */
+    data: StakeholderCreateManyInput | StakeholderCreateManyInput[]
+    skipDuplicates?: boolean
+  }
+
+  /**
+   * Stakeholder createManyAndReturn
+   */
+  export type StakeholderCreateManyAndReturnArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the Stakeholder
+     */
+    select?: StakeholderSelectCreateManyAndReturn<ExtArgs> | null
+    /**
+     * Omit specific fields from the Stakeholder
+     */
+    omit?: StakeholderOmit<ExtArgs> | null
+    /**
+     * The data used to create many Stakeholders.
+     */
+    data: StakeholderCreateManyInput | StakeholderCreateManyInput[]
+    skipDuplicates?: boolean
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: StakeholderIncludeCreateManyAndReturn<ExtArgs> | null
+  }
+
+  /**
+   * Stakeholder update
+   */
+  export type StakeholderUpdateArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the Stakeholder
+     */
+    select?: StakeholderSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the Stakeholder
+     */
+    omit?: StakeholderOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: StakeholderInclude<ExtArgs> | null
+    /**
+     * The data needed to update a Stakeholder.
+     */
+    data: XOR<StakeholderUpdateInput, StakeholderUncheckedUpdateInput>
+    /**
+     * Choose, which Stakeholder to update.
+     */
+    where: StakeholderWhereUniqueInput
+  }
+
+  /**
+   * Stakeholder updateMany
+   */
+  export type StakeholderUpdateManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * The data used to update Stakeholders.
+     */
+    data: XOR<StakeholderUpdateManyMutationInput, StakeholderUncheckedUpdateManyInput>
+    /**
+     * Filter which Stakeholders to update
+     */
+    where?: StakeholderWhereInput
+    /**
+     * Limit how many Stakeholders to update.
+     */
+    limit?: number
+  }
+
+  /**
+   * Stakeholder updateManyAndReturn
+   */
+  export type StakeholderUpdateManyAndReturnArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the Stakeholder
+     */
+    select?: StakeholderSelectUpdateManyAndReturn<ExtArgs> | null
+    /**
+     * Omit specific fields from the Stakeholder
+     */
+    omit?: StakeholderOmit<ExtArgs> | null
+    /**
+     * The data used to update Stakeholders.
+     */
+    data: XOR<StakeholderUpdateManyMutationInput, StakeholderUncheckedUpdateManyInput>
+    /**
+     * Filter which Stakeholders to update
+     */
+    where?: StakeholderWhereInput
+    /**
+     * Limit how many Stakeholders to update.
+     */
+    limit?: number
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: StakeholderIncludeUpdateManyAndReturn<ExtArgs> | null
+  }
+
+  /**
+   * Stakeholder upsert
+   */
+  export type StakeholderUpsertArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the Stakeholder
+     */
+    select?: StakeholderSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the Stakeholder
+     */
+    omit?: StakeholderOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: StakeholderInclude<ExtArgs> | null
+    /**
+     * The filter to search for the Stakeholder to update in case it exists.
+     */
+    where: StakeholderWhereUniqueInput
+    /**
+     * In case the Stakeholder found by the `where` argument doesn't exist, create a new Stakeholder with this data.
+     */
+    create: XOR<StakeholderCreateInput, StakeholderUncheckedCreateInput>
+    /**
+     * In case the Stakeholder was found with the provided `where` argument, update it with this data.
+     */
+    update: XOR<StakeholderUpdateInput, StakeholderUncheckedUpdateInput>
+  }
+
+  /**
+   * Stakeholder delete
+   */
+  export type StakeholderDeleteArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the Stakeholder
+     */
+    select?: StakeholderSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the Stakeholder
+     */
+    omit?: StakeholderOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: StakeholderInclude<ExtArgs> | null
+    /**
+     * Filter which Stakeholder to delete.
+     */
+    where: StakeholderWhereUniqueInput
+  }
+
+  /**
+   * Stakeholder deleteMany
+   */
+  export type StakeholderDeleteManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Filter which Stakeholders to delete
+     */
+    where?: StakeholderWhereInput
+    /**
+     * Limit how many Stakeholders to delete.
+     */
+    limit?: number
+  }
+
+  /**
+   * Stakeholder.projects
+   */
+  export type Stakeholder$projectsArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the ProjectStakeholder
+     */
+    select?: ProjectStakeholderSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the ProjectStakeholder
+     */
+    omit?: ProjectStakeholderOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: ProjectStakeholderInclude<ExtArgs> | null
+    where?: ProjectStakeholderWhereInput
+    orderBy?: ProjectStakeholderOrderByWithRelationInput | ProjectStakeholderOrderByWithRelationInput[]
+    cursor?: ProjectStakeholderWhereUniqueInput
+    take?: number
+    skip?: number
+    distinct?: ProjectStakeholderScalarFieldEnum | ProjectStakeholderScalarFieldEnum[]
+  }
+
+  /**
+   * Stakeholder without action
+   */
+  export type StakeholderDefaultArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the Stakeholder
+     */
+    select?: StakeholderSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the Stakeholder
+     */
+    omit?: StakeholderOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: StakeholderInclude<ExtArgs> | null
+  }
+
+
+  /**
+   * Model ProjectStakeholder
+   */
+
+  export type AggregateProjectStakeholder = {
+    _count: ProjectStakeholderCountAggregateOutputType | null
+    _min: ProjectStakeholderMinAggregateOutputType | null
+    _max: ProjectStakeholderMaxAggregateOutputType | null
+  }
+
+  export type ProjectStakeholderMinAggregateOutputType = {
+    id: string | null
+    projectId: string | null
+    stakeholderId: string | null
+    createdAt: Date | null
+  }
+
+  export type ProjectStakeholderMaxAggregateOutputType = {
+    id: string | null
+    projectId: string | null
+    stakeholderId: string | null
+    createdAt: Date | null
+  }
+
+  export type ProjectStakeholderCountAggregateOutputType = {
+    id: number
+    projectId: number
+    stakeholderId: number
+    createdAt: number
+    _all: number
+  }
+
+
+  export type ProjectStakeholderMinAggregateInputType = {
+    id?: true
+    projectId?: true
+    stakeholderId?: true
+    createdAt?: true
+  }
+
+  export type ProjectStakeholderMaxAggregateInputType = {
+    id?: true
+    projectId?: true
+    stakeholderId?: true
+    createdAt?: true
+  }
+
+  export type ProjectStakeholderCountAggregateInputType = {
+    id?: true
+    projectId?: true
+    stakeholderId?: true
+    createdAt?: true
+    _all?: true
+  }
+
+  export type ProjectStakeholderAggregateArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Filter which ProjectStakeholder to aggregate.
+     */
+    where?: ProjectStakeholderWhereInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+     * 
+     * Determine the order of ProjectStakeholders to fetch.
+     */
+    orderBy?: ProjectStakeholderOrderByWithRelationInput | ProjectStakeholderOrderByWithRelationInput[]
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+     * 
+     * Sets the start position
+     */
+    cursor?: ProjectStakeholderWhereUniqueInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Take `±n` ProjectStakeholders from the position of the cursor.
+     */
+    take?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Skip the first `n` ProjectStakeholders.
+     */
+    skip?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Count returned ProjectStakeholders
+    **/
+    _count?: true | ProjectStakeholderCountAggregateInputType
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Select which fields to find the minimum value
+    **/
+    _min?: ProjectStakeholderMinAggregateInputType
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Select which fields to find the maximum value
+    **/
+    _max?: ProjectStakeholderMaxAggregateInputType
+  }
+
+  export type GetProjectStakeholderAggregateType<T extends ProjectStakeholderAggregateArgs> = {
+        [P in keyof T & keyof AggregateProjectStakeholder]: P extends '_count' | 'count'
+      ? T[P] extends true
+        ? number
+        : GetScalarType<T[P], AggregateProjectStakeholder[P]>
+      : GetScalarType<T[P], AggregateProjectStakeholder[P]>
+  }
+
+
+
+
+  export type ProjectStakeholderGroupByArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    where?: ProjectStakeholderWhereInput
+    orderBy?: ProjectStakeholderOrderByWithAggregationInput | ProjectStakeholderOrderByWithAggregationInput[]
+    by: ProjectStakeholderScalarFieldEnum[] | ProjectStakeholderScalarFieldEnum
+    having?: ProjectStakeholderScalarWhereWithAggregatesInput
+    take?: number
+    skip?: number
+    _count?: ProjectStakeholderCountAggregateInputType | true
+    _min?: ProjectStakeholderMinAggregateInputType
+    _max?: ProjectStakeholderMaxAggregateInputType
+  }
+
+  export type ProjectStakeholderGroupByOutputType = {
+    id: string
+    projectId: string
+    stakeholderId: string
+    createdAt: Date
+    _count: ProjectStakeholderCountAggregateOutputType | null
+    _min: ProjectStakeholderMinAggregateOutputType | null
+    _max: ProjectStakeholderMaxAggregateOutputType | null
+  }
+
+  type GetProjectStakeholderGroupByPayload<T extends ProjectStakeholderGroupByArgs> = Prisma.PrismaPromise<
+    Array<
+      PickEnumerable<ProjectStakeholderGroupByOutputType, T['by']> &
+        {
+          [P in ((keyof T) & (keyof ProjectStakeholderGroupByOutputType))]: P extends '_count'
+            ? T[P] extends boolean
+              ? number
+              : GetScalarType<T[P], ProjectStakeholderGroupByOutputType[P]>
+            : GetScalarType<T[P], ProjectStakeholderGroupByOutputType[P]>
+        }
+      >
+    >
+
+
+  export type ProjectStakeholderSelect<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetSelect<{
+    id?: boolean
+    projectId?: boolean
+    stakeholderId?: boolean
+    createdAt?: boolean
+    project?: boolean | ProjectDefaultArgs<ExtArgs>
+    stakeholder?: boolean | StakeholderDefaultArgs<ExtArgs>
+  }, ExtArgs["result"]["projectStakeholder"]>
+
+  export type ProjectStakeholderSelectCreateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetSelect<{
+    id?: boolean
+    projectId?: boolean
+    stakeholderId?: boolean
+    createdAt?: boolean
+    project?: boolean | ProjectDefaultArgs<ExtArgs>
+    stakeholder?: boolean | StakeholderDefaultArgs<ExtArgs>
+  }, ExtArgs["result"]["projectStakeholder"]>
+
+  export type ProjectStakeholderSelectUpdateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetSelect<{
+    id?: boolean
+    projectId?: boolean
+    stakeholderId?: boolean
+    createdAt?: boolean
+    project?: boolean | ProjectDefaultArgs<ExtArgs>
+    stakeholder?: boolean | StakeholderDefaultArgs<ExtArgs>
+  }, ExtArgs["result"]["projectStakeholder"]>
+
+  export type ProjectStakeholderSelectScalar = {
+    id?: boolean
+    projectId?: boolean
+    stakeholderId?: boolean
+    createdAt?: boolean
+  }
+
+  export type ProjectStakeholderOmit<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetOmit<"id" | "projectId" | "stakeholderId" | "createdAt", ExtArgs["result"]["projectStakeholder"]>
+  export type ProjectStakeholderInclude<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    project?: boolean | ProjectDefaultArgs<ExtArgs>
+    stakeholder?: boolean | StakeholderDefaultArgs<ExtArgs>
+  }
+  export type ProjectStakeholderIncludeCreateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    project?: boolean | ProjectDefaultArgs<ExtArgs>
+    stakeholder?: boolean | StakeholderDefaultArgs<ExtArgs>
+  }
+  export type ProjectStakeholderIncludeUpdateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    project?: boolean | ProjectDefaultArgs<ExtArgs>
+    stakeholder?: boolean | StakeholderDefaultArgs<ExtArgs>
+  }
+
+  export type $ProjectStakeholderPayload<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    name: "ProjectStakeholder"
+    objects: {
+      project: Prisma.$ProjectPayload<ExtArgs>
+      stakeholder: Prisma.$StakeholderPayload<ExtArgs>
+    }
+    scalars: $Extensions.GetPayloadResult<{
+      id: string
+      projectId: string
+      stakeholderId: string
+      createdAt: Date
+    }, ExtArgs["result"]["projectStakeholder"]>
+    composites: {}
+  }
+
+  type ProjectStakeholderGetPayload<S extends boolean | null | undefined | ProjectStakeholderDefaultArgs> = $Result.GetResult<Prisma.$ProjectStakeholderPayload, S>
+
+  type ProjectStakeholderCountArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> =
+    Omit<ProjectStakeholderFindManyArgs, 'select' | 'include' | 'distinct' | 'omit'> & {
+      select?: ProjectStakeholderCountAggregateInputType | true
+    }
+
+  export interface ProjectStakeholderDelegate<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs, GlobalOmitOptions = {}> {
+    [K: symbol]: { types: Prisma.TypeMap<ExtArgs>['model']['ProjectStakeholder'], meta: { name: 'ProjectStakeholder' } }
+    /**
+     * Find zero or one ProjectStakeholder that matches the filter.
+     * @param {ProjectStakeholderFindUniqueArgs} args - Arguments to find a ProjectStakeholder
+     * @example
+     * // Get one ProjectStakeholder
+     * const projectStakeholder = await prisma.projectStakeholder.findUnique({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     */
+    findUnique<T extends ProjectStakeholderFindUniqueArgs>(args: SelectSubset<T, ProjectStakeholderFindUniqueArgs<ExtArgs>>): Prisma__ProjectStakeholderClient<$Result.GetResult<Prisma.$ProjectStakeholderPayload<ExtArgs>, T, "findUnique", GlobalOmitOptions> | null, null, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Find one ProjectStakeholder that matches the filter or throw an error with `error.code='P2025'`
+     * if no matches were found.
+     * @param {ProjectStakeholderFindUniqueOrThrowArgs} args - Arguments to find a ProjectStakeholder
+     * @example
+     * // Get one ProjectStakeholder
+     * const projectStakeholder = await prisma.projectStakeholder.findUniqueOrThrow({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     */
+    findUniqueOrThrow<T extends ProjectStakeholderFindUniqueOrThrowArgs>(args: SelectSubset<T, ProjectStakeholderFindUniqueOrThrowArgs<ExtArgs>>): Prisma__ProjectStakeholderClient<$Result.GetResult<Prisma.$ProjectStakeholderPayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Find the first ProjectStakeholder that matches the filter.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {ProjectStakeholderFindFirstArgs} args - Arguments to find a ProjectStakeholder
+     * @example
+     * // Get one ProjectStakeholder
+     * const projectStakeholder = await prisma.projectStakeholder.findFirst({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     */
+    findFirst<T extends ProjectStakeholderFindFirstArgs>(args?: SelectSubset<T, ProjectStakeholderFindFirstArgs<ExtArgs>>): Prisma__ProjectStakeholderClient<$Result.GetResult<Prisma.$ProjectStakeholderPayload<ExtArgs>, T, "findFirst", GlobalOmitOptions> | null, null, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Find the first ProjectStakeholder that matches the filter or
+     * throw `PrismaKnownClientError` with `P2025` code if no matches were found.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {ProjectStakeholderFindFirstOrThrowArgs} args - Arguments to find a ProjectStakeholder
+     * @example
+     * // Get one ProjectStakeholder
+     * const projectStakeholder = await prisma.projectStakeholder.findFirstOrThrow({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     */
+    findFirstOrThrow<T extends ProjectStakeholderFindFirstOrThrowArgs>(args?: SelectSubset<T, ProjectStakeholderFindFirstOrThrowArgs<ExtArgs>>): Prisma__ProjectStakeholderClient<$Result.GetResult<Prisma.$ProjectStakeholderPayload<ExtArgs>, T, "findFirstOrThrow", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Find zero or more ProjectStakeholders that matches the filter.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {ProjectStakeholderFindManyArgs} args - Arguments to filter and select certain fields only.
+     * @example
+     * // Get all ProjectStakeholders
+     * const projectStakeholders = await prisma.projectStakeholder.findMany()
+     * 
+     * // Get first 10 ProjectStakeholders
+     * const projectStakeholders = await prisma.projectStakeholder.findMany({ take: 10 })
+     * 
+     * // Only select the `id`
+     * const projectStakeholderWithIdOnly = await prisma.projectStakeholder.findMany({ select: { id: true } })
+     * 
+     */
+    findMany<T extends ProjectStakeholderFindManyArgs>(args?: SelectSubset<T, ProjectStakeholderFindManyArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$ProjectStakeholderPayload<ExtArgs>, T, "findMany", GlobalOmitOptions>>
+
+    /**
+     * Create a ProjectStakeholder.
+     * @param {ProjectStakeholderCreateArgs} args - Arguments to create a ProjectStakeholder.
+     * @example
+     * // Create one ProjectStakeholder
+     * const ProjectStakeholder = await prisma.projectStakeholder.create({
+     *   data: {
+     *     // ... data to create a ProjectStakeholder
+     *   }
+     * })
+     * 
+     */
+    create<T extends ProjectStakeholderCreateArgs>(args: SelectSubset<T, ProjectStakeholderCreateArgs<ExtArgs>>): Prisma__ProjectStakeholderClient<$Result.GetResult<Prisma.$ProjectStakeholderPayload<ExtArgs>, T, "create", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Create many ProjectStakeholders.
+     * @param {ProjectStakeholderCreateManyArgs} args - Arguments to create many ProjectStakeholders.
+     * @example
+     * // Create many ProjectStakeholders
+     * const projectStakeholder = await prisma.projectStakeholder.createMany({
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     *     
+     */
+    createMany<T extends ProjectStakeholderCreateManyArgs>(args?: SelectSubset<T, ProjectStakeholderCreateManyArgs<ExtArgs>>): Prisma.PrismaPromise<BatchPayload>
+
+    /**
+     * Create many ProjectStakeholders and returns the data saved in the database.
+     * @param {ProjectStakeholderCreateManyAndReturnArgs} args - Arguments to create many ProjectStakeholders.
+     * @example
+     * // Create many ProjectStakeholders
+     * const projectStakeholder = await prisma.projectStakeholder.createManyAndReturn({
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     * 
+     * // Create many ProjectStakeholders and only return the `id`
+     * const projectStakeholderWithIdOnly = await prisma.projectStakeholder.createManyAndReturn({
+     *   select: { id: true },
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * 
+     */
+    createManyAndReturn<T extends ProjectStakeholderCreateManyAndReturnArgs>(args?: SelectSubset<T, ProjectStakeholderCreateManyAndReturnArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$ProjectStakeholderPayload<ExtArgs>, T, "createManyAndReturn", GlobalOmitOptions>>
+
+    /**
+     * Delete a ProjectStakeholder.
+     * @param {ProjectStakeholderDeleteArgs} args - Arguments to delete one ProjectStakeholder.
+     * @example
+     * // Delete one ProjectStakeholder
+     * const ProjectStakeholder = await prisma.projectStakeholder.delete({
+     *   where: {
+     *     // ... filter to delete one ProjectStakeholder
+     *   }
+     * })
+     * 
+     */
+    delete<T extends ProjectStakeholderDeleteArgs>(args: SelectSubset<T, ProjectStakeholderDeleteArgs<ExtArgs>>): Prisma__ProjectStakeholderClient<$Result.GetResult<Prisma.$ProjectStakeholderPayload<ExtArgs>, T, "delete", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Update one ProjectStakeholder.
+     * @param {ProjectStakeholderUpdateArgs} args - Arguments to update one ProjectStakeholder.
+     * @example
+     * // Update one ProjectStakeholder
+     * const projectStakeholder = await prisma.projectStakeholder.update({
+     *   where: {
+     *     // ... provide filter here
+     *   },
+     *   data: {
+     *     // ... provide data here
+     *   }
+     * })
+     * 
+     */
+    update<T extends ProjectStakeholderUpdateArgs>(args: SelectSubset<T, ProjectStakeholderUpdateArgs<ExtArgs>>): Prisma__ProjectStakeholderClient<$Result.GetResult<Prisma.$ProjectStakeholderPayload<ExtArgs>, T, "update", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Delete zero or more ProjectStakeholders.
+     * @param {ProjectStakeholderDeleteManyArgs} args - Arguments to filter ProjectStakeholders to delete.
+     * @example
+     * // Delete a few ProjectStakeholders
+     * const { count } = await prisma.projectStakeholder.deleteMany({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     * 
+     */
+    deleteMany<T extends ProjectStakeholderDeleteManyArgs>(args?: SelectSubset<T, ProjectStakeholderDeleteManyArgs<ExtArgs>>): Prisma.PrismaPromise<BatchPayload>
+
+    /**
+     * Update zero or more ProjectStakeholders.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {ProjectStakeholderUpdateManyArgs} args - Arguments to update one or more rows.
+     * @example
+     * // Update many ProjectStakeholders
+     * const projectStakeholder = await prisma.projectStakeholder.updateMany({
+     *   where: {
+     *     // ... provide filter here
+     *   },
+     *   data: {
+     *     // ... provide data here
+     *   }
+     * })
+     * 
+     */
+    updateMany<T extends ProjectStakeholderUpdateManyArgs>(args: SelectSubset<T, ProjectStakeholderUpdateManyArgs<ExtArgs>>): Prisma.PrismaPromise<BatchPayload>
+
+    /**
+     * Update zero or more ProjectStakeholders and returns the data updated in the database.
+     * @param {ProjectStakeholderUpdateManyAndReturnArgs} args - Arguments to update many ProjectStakeholders.
+     * @example
+     * // Update many ProjectStakeholders
+     * const projectStakeholder = await prisma.projectStakeholder.updateManyAndReturn({
+     *   where: {
+     *     // ... provide filter here
+     *   },
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     * 
+     * // Update zero or more ProjectStakeholders and only return the `id`
+     * const projectStakeholderWithIdOnly = await prisma.projectStakeholder.updateManyAndReturn({
+     *   select: { id: true },
+     *   where: {
+     *     // ... provide filter here
+     *   },
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * 
+     */
+    updateManyAndReturn<T extends ProjectStakeholderUpdateManyAndReturnArgs>(args: SelectSubset<T, ProjectStakeholderUpdateManyAndReturnArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$ProjectStakeholderPayload<ExtArgs>, T, "updateManyAndReturn", GlobalOmitOptions>>
+
+    /**
+     * Create or update one ProjectStakeholder.
+     * @param {ProjectStakeholderUpsertArgs} args - Arguments to update or create a ProjectStakeholder.
+     * @example
+     * // Update or create a ProjectStakeholder
+     * const projectStakeholder = await prisma.projectStakeholder.upsert({
+     *   create: {
+     *     // ... data to create a ProjectStakeholder
+     *   },
+     *   update: {
+     *     // ... in case it already exists, update
+     *   },
+     *   where: {
+     *     // ... the filter for the ProjectStakeholder we want to update
+     *   }
+     * })
+     */
+    upsert<T extends ProjectStakeholderUpsertArgs>(args: SelectSubset<T, ProjectStakeholderUpsertArgs<ExtArgs>>): Prisma__ProjectStakeholderClient<$Result.GetResult<Prisma.$ProjectStakeholderPayload<ExtArgs>, T, "upsert", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+
+    /**
+     * Count the number of ProjectStakeholders.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {ProjectStakeholderCountArgs} args - Arguments to filter ProjectStakeholders to count.
+     * @example
+     * // Count the number of ProjectStakeholders
+     * const count = await prisma.projectStakeholder.count({
+     *   where: {
+     *     // ... the filter for the ProjectStakeholders we want to count
+     *   }
+     * })
+    **/
+    count<T extends ProjectStakeholderCountArgs>(
+      args?: Subset<T, ProjectStakeholderCountArgs>,
+    ): Prisma.PrismaPromise<
+      T extends $Utils.Record<'select', any>
+        ? T['select'] extends true
+          ? number
+          : GetScalarType<T['select'], ProjectStakeholderCountAggregateOutputType>
+        : number
+    >
+
+    /**
+     * Allows you to perform aggregations operations on a ProjectStakeholder.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {ProjectStakeholderAggregateArgs} args - Select which aggregations you would like to apply and on what fields.
+     * @example
+     * // Ordered by age ascending
+     * // Where email contains prisma.io
+     * // Limited to the 10 users
+     * const aggregations = await prisma.user.aggregate({
+     *   _avg: {
+     *     age: true,
+     *   },
+     *   where: {
+     *     email: {
+     *       contains: "prisma.io",
+     *     },
+     *   },
+     *   orderBy: {
+     *     age: "asc",
+     *   },
+     *   take: 10,
+     * })
+    **/
+    aggregate<T extends ProjectStakeholderAggregateArgs>(args: Subset<T, ProjectStakeholderAggregateArgs>): Prisma.PrismaPromise<GetProjectStakeholderAggregateType<T>>
+
+    /**
+     * Group by ProjectStakeholder.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {ProjectStakeholderGroupByArgs} args - Group by arguments.
+     * @example
+     * // Group by city, order by createdAt, get count
+     * const result = await prisma.user.groupBy({
+     *   by: ['city', 'createdAt'],
+     *   orderBy: {
+     *     createdAt: true
+     *   },
+     *   _count: {
+     *     _all: true
+     *   },
+     * })
+     * 
+    **/
+    groupBy<
+      T extends ProjectStakeholderGroupByArgs,
+      HasSelectOrTake extends Or<
+        Extends<'skip', Keys<T>>,
+        Extends<'take', Keys<T>>
+      >,
+      OrderByArg extends True extends HasSelectOrTake
+        ? { orderBy: ProjectStakeholderGroupByArgs['orderBy'] }
+        : { orderBy?: ProjectStakeholderGroupByArgs['orderBy'] },
+      OrderFields extends ExcludeUnderscoreKeys<Keys<MaybeTupleToUnion<T['orderBy']>>>,
+      ByFields extends MaybeTupleToUnion<T['by']>,
+      ByValid extends Has<ByFields, OrderFields>,
+      HavingFields extends GetHavingFields<T['having']>,
+      HavingValid extends Has<ByFields, HavingFields>,
+      ByEmpty extends T['by'] extends never[] ? True : False,
+      InputErrors extends ByEmpty extends True
+      ? `Error: "by" must not be empty.`
+      : HavingValid extends False
+      ? {
+          [P in HavingFields]: P extends ByFields
+            ? never
+            : P extends string
+            ? `Error: Field "${P}" used in "having" needs to be provided in "by".`
+            : [
+                Error,
+                'Field ',
+                P,
+                ` in "having" needs to be provided in "by"`,
+              ]
+        }[HavingFields]
+      : 'take' extends Keys<T>
+      ? 'orderBy' extends Keys<T>
+        ? ByValid extends True
+          ? {}
+          : {
+              [P in OrderFields]: P extends ByFields
+                ? never
+                : `Error: Field "${P}" in "orderBy" needs to be provided in "by"`
+            }[OrderFields]
+        : 'Error: If you provide "take", you also need to provide "orderBy"'
+      : 'skip' extends Keys<T>
+      ? 'orderBy' extends Keys<T>
+        ? ByValid extends True
+          ? {}
+          : {
+              [P in OrderFields]: P extends ByFields
+                ? never
+                : `Error: Field "${P}" in "orderBy" needs to be provided in "by"`
+            }[OrderFields]
+        : 'Error: If you provide "skip", you also need to provide "orderBy"'
+      : ByValid extends True
+      ? {}
+      : {
+          [P in OrderFields]: P extends ByFields
+            ? never
+            : `Error: Field "${P}" in "orderBy" needs to be provided in "by"`
+        }[OrderFields]
+    >(args: SubsetIntersection<T, ProjectStakeholderGroupByArgs, OrderByArg> & InputErrors): {} extends InputErrors ? GetProjectStakeholderGroupByPayload<T> : Prisma.PrismaPromise<InputErrors>
+  /**
+   * Fields of the ProjectStakeholder model
+   */
+  readonly fields: ProjectStakeholderFieldRefs;
+  }
+
+  /**
+   * The delegate class that acts as a "Promise-like" for ProjectStakeholder.
+   * Why is this prefixed with `Prisma__`?
+   * Because we want to prevent naming conflicts as mentioned in
+   * https://github.com/prisma/prisma-client-js/issues/707
+   */
+  export interface Prisma__ProjectStakeholderClient<T, Null = never, ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs, GlobalOmitOptions = {}> extends Prisma.PrismaPromise<T> {
+    readonly [Symbol.toStringTag]: "PrismaPromise"
+    project<T extends ProjectDefaultArgs<ExtArgs> = {}>(args?: Subset<T, ProjectDefaultArgs<ExtArgs>>): Prisma__ProjectClient<$Result.GetResult<Prisma.$ProjectPayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions> | Null, Null, ExtArgs, GlobalOmitOptions>
+    stakeholder<T extends StakeholderDefaultArgs<ExtArgs> = {}>(args?: Subset<T, StakeholderDefaultArgs<ExtArgs>>): Prisma__StakeholderClient<$Result.GetResult<Prisma.$StakeholderPayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions> | Null, Null, ExtArgs, GlobalOmitOptions>
+    /**
+     * Attaches callbacks for the resolution and/or rejection of the Promise.
+     * @param onfulfilled The callback to execute when the Promise is resolved.
+     * @param onrejected The callback to execute when the Promise is rejected.
+     * @returns A Promise for the completion of which ever callback is executed.
+     */
+    then<TResult1 = T, TResult2 = never>(onfulfilled?: ((value: T) => TResult1 | PromiseLike<TResult1>) | undefined | null, onrejected?: ((reason: any) => TResult2 | PromiseLike<TResult2>) | undefined | null): $Utils.JsPromise<TResult1 | TResult2>
+    /**
+     * Attaches a callback for only the rejection of the Promise.
+     * @param onrejected The callback to execute when the Promise is rejected.
+     * @returns A Promise for the completion of the callback.
+     */
+    catch<TResult = never>(onrejected?: ((reason: any) => TResult | PromiseLike<TResult>) | undefined | null): $Utils.JsPromise<T | TResult>
+    /**
+     * Attaches a callback that is invoked when the Promise is settled (fulfilled or rejected). The
+     * resolved value cannot be modified from the callback.
+     * @param onfinally The callback to execute when the Promise is settled (fulfilled or rejected).
+     * @returns A Promise for the completion of the callback.
+     */
+    finally(onfinally?: (() => void) | undefined | null): $Utils.JsPromise<T>
+  }
+
+
+
+
+  /**
+   * Fields of the ProjectStakeholder model
+   */
+  interface ProjectStakeholderFieldRefs {
+    readonly id: FieldRef<"ProjectStakeholder", 'String'>
+    readonly projectId: FieldRef<"ProjectStakeholder", 'String'>
+    readonly stakeholderId: FieldRef<"ProjectStakeholder", 'String'>
+    readonly createdAt: FieldRef<"ProjectStakeholder", 'DateTime'>
+  }
+    
+
+  // Custom InputTypes
+  /**
+   * ProjectStakeholder findUnique
+   */
+  export type ProjectStakeholderFindUniqueArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the ProjectStakeholder
+     */
+    select?: ProjectStakeholderSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the ProjectStakeholder
+     */
+    omit?: ProjectStakeholderOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: ProjectStakeholderInclude<ExtArgs> | null
+    /**
+     * Filter, which ProjectStakeholder to fetch.
+     */
+    where: ProjectStakeholderWhereUniqueInput
+  }
+
+  /**
+   * ProjectStakeholder findUniqueOrThrow
+   */
+  export type ProjectStakeholderFindUniqueOrThrowArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the ProjectStakeholder
+     */
+    select?: ProjectStakeholderSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the ProjectStakeholder
+     */
+    omit?: ProjectStakeholderOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: ProjectStakeholderInclude<ExtArgs> | null
+    /**
+     * Filter, which ProjectStakeholder to fetch.
+     */
+    where: ProjectStakeholderWhereUniqueInput
+  }
+
+  /**
+   * ProjectStakeholder findFirst
+   */
+  export type ProjectStakeholderFindFirstArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the ProjectStakeholder
+     */
+    select?: ProjectStakeholderSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the ProjectStakeholder
+     */
+    omit?: ProjectStakeholderOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: ProjectStakeholderInclude<ExtArgs> | null
+    /**
+     * Filter, which ProjectStakeholder to fetch.
+     */
+    where?: ProjectStakeholderWhereInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+     * 
+     * Determine the order of ProjectStakeholders to fetch.
+     */
+    orderBy?: ProjectStakeholderOrderByWithRelationInput | ProjectStakeholderOrderByWithRelationInput[]
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+     * 
+     * Sets the position for searching for ProjectStakeholders.
+     */
+    cursor?: ProjectStakeholderWhereUniqueInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Take `±n` ProjectStakeholders from the position of the cursor.
+     */
+    take?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Skip the first `n` ProjectStakeholders.
+     */
+    skip?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/distinct Distinct Docs}
+     * 
+     * Filter by unique combinations of ProjectStakeholders.
+     */
+    distinct?: ProjectStakeholderScalarFieldEnum | ProjectStakeholderScalarFieldEnum[]
+  }
+
+  /**
+   * ProjectStakeholder findFirstOrThrow
+   */
+  export type ProjectStakeholderFindFirstOrThrowArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the ProjectStakeholder
+     */
+    select?: ProjectStakeholderSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the ProjectStakeholder
+     */
+    omit?: ProjectStakeholderOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: ProjectStakeholderInclude<ExtArgs> | null
+    /**
+     * Filter, which ProjectStakeholder to fetch.
+     */
+    where?: ProjectStakeholderWhereInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+     * 
+     * Determine the order of ProjectStakeholders to fetch.
+     */
+    orderBy?: ProjectStakeholderOrderByWithRelationInput | ProjectStakeholderOrderByWithRelationInput[]
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+     * 
+     * Sets the position for searching for ProjectStakeholders.
+     */
+    cursor?: ProjectStakeholderWhereUniqueInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Take `±n` ProjectStakeholders from the position of the cursor.
+     */
+    take?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Skip the first `n` ProjectStakeholders.
+     */
+    skip?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/distinct Distinct Docs}
+     * 
+     * Filter by unique combinations of ProjectStakeholders.
+     */
+    distinct?: ProjectStakeholderScalarFieldEnum | ProjectStakeholderScalarFieldEnum[]
+  }
+
+  /**
+   * ProjectStakeholder findMany
+   */
+  export type ProjectStakeholderFindManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the ProjectStakeholder
+     */
+    select?: ProjectStakeholderSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the ProjectStakeholder
+     */
+    omit?: ProjectStakeholderOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: ProjectStakeholderInclude<ExtArgs> | null
+    /**
+     * Filter, which ProjectStakeholders to fetch.
+     */
+    where?: ProjectStakeholderWhereInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+     * 
+     * Determine the order of ProjectStakeholders to fetch.
+     */
+    orderBy?: ProjectStakeholderOrderByWithRelationInput | ProjectStakeholderOrderByWithRelationInput[]
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+     * 
+     * Sets the position for listing ProjectStakeholders.
+     */
+    cursor?: ProjectStakeholderWhereUniqueInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Take `±n` ProjectStakeholders from the position of the cursor.
+     */
+    take?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Skip the first `n` ProjectStakeholders.
+     */
+    skip?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/distinct Distinct Docs}
+     * 
+     * Filter by unique combinations of ProjectStakeholders.
+     */
+    distinct?: ProjectStakeholderScalarFieldEnum | ProjectStakeholderScalarFieldEnum[]
+  }
+
+  /**
+   * ProjectStakeholder create
+   */
+  export type ProjectStakeholderCreateArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the ProjectStakeholder
+     */
+    select?: ProjectStakeholderSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the ProjectStakeholder
+     */
+    omit?: ProjectStakeholderOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: ProjectStakeholderInclude<ExtArgs> | null
+    /**
+     * The data needed to create a ProjectStakeholder.
+     */
+    data: XOR<ProjectStakeholderCreateInput, ProjectStakeholderUncheckedCreateInput>
+  }
+
+  /**
+   * ProjectStakeholder createMany
+   */
+  export type ProjectStakeholderCreateManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * The data used to create many ProjectStakeholders.
+     */
+    data: ProjectStakeholderCreateManyInput | ProjectStakeholderCreateManyInput[]
+    skipDuplicates?: boolean
+  }
+
+  /**
+   * ProjectStakeholder createManyAndReturn
+   */
+  export type ProjectStakeholderCreateManyAndReturnArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the ProjectStakeholder
+     */
+    select?: ProjectStakeholderSelectCreateManyAndReturn<ExtArgs> | null
+    /**
+     * Omit specific fields from the ProjectStakeholder
+     */
+    omit?: ProjectStakeholderOmit<ExtArgs> | null
+    /**
+     * The data used to create many ProjectStakeholders.
+     */
+    data: ProjectStakeholderCreateManyInput | ProjectStakeholderCreateManyInput[]
+    skipDuplicates?: boolean
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: ProjectStakeholderIncludeCreateManyAndReturn<ExtArgs> | null
+  }
+
+  /**
+   * ProjectStakeholder update
+   */
+  export type ProjectStakeholderUpdateArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the ProjectStakeholder
+     */
+    select?: ProjectStakeholderSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the ProjectStakeholder
+     */
+    omit?: ProjectStakeholderOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: ProjectStakeholderInclude<ExtArgs> | null
+    /**
+     * The data needed to update a ProjectStakeholder.
+     */
+    data: XOR<ProjectStakeholderUpdateInput, ProjectStakeholderUncheckedUpdateInput>
+    /**
+     * Choose, which ProjectStakeholder to update.
+     */
+    where: ProjectStakeholderWhereUniqueInput
+  }
+
+  /**
+   * ProjectStakeholder updateMany
+   */
+  export type ProjectStakeholderUpdateManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * The data used to update ProjectStakeholders.
+     */
+    data: XOR<ProjectStakeholderUpdateManyMutationInput, ProjectStakeholderUncheckedUpdateManyInput>
+    /**
+     * Filter which ProjectStakeholders to update
+     */
+    where?: ProjectStakeholderWhereInput
+    /**
+     * Limit how many ProjectStakeholders to update.
+     */
+    limit?: number
+  }
+
+  /**
+   * ProjectStakeholder updateManyAndReturn
+   */
+  export type ProjectStakeholderUpdateManyAndReturnArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the ProjectStakeholder
+     */
+    select?: ProjectStakeholderSelectUpdateManyAndReturn<ExtArgs> | null
+    /**
+     * Omit specific fields from the ProjectStakeholder
+     */
+    omit?: ProjectStakeholderOmit<ExtArgs> | null
+    /**
+     * The data used to update ProjectStakeholders.
+     */
+    data: XOR<ProjectStakeholderUpdateManyMutationInput, ProjectStakeholderUncheckedUpdateManyInput>
+    /**
+     * Filter which ProjectStakeholders to update
+     */
+    where?: ProjectStakeholderWhereInput
+    /**
+     * Limit how many ProjectStakeholders to update.
+     */
+    limit?: number
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: ProjectStakeholderIncludeUpdateManyAndReturn<ExtArgs> | null
+  }
+
+  /**
+   * ProjectStakeholder upsert
+   */
+  export type ProjectStakeholderUpsertArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the ProjectStakeholder
+     */
+    select?: ProjectStakeholderSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the ProjectStakeholder
+     */
+    omit?: ProjectStakeholderOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: ProjectStakeholderInclude<ExtArgs> | null
+    /**
+     * The filter to search for the ProjectStakeholder to update in case it exists.
+     */
+    where: ProjectStakeholderWhereUniqueInput
+    /**
+     * In case the ProjectStakeholder found by the `where` argument doesn't exist, create a new ProjectStakeholder with this data.
+     */
+    create: XOR<ProjectStakeholderCreateInput, ProjectStakeholderUncheckedCreateInput>
+    /**
+     * In case the ProjectStakeholder was found with the provided `where` argument, update it with this data.
+     */
+    update: XOR<ProjectStakeholderUpdateInput, ProjectStakeholderUncheckedUpdateInput>
+  }
+
+  /**
+   * ProjectStakeholder delete
+   */
+  export type ProjectStakeholderDeleteArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the ProjectStakeholder
+     */
+    select?: ProjectStakeholderSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the ProjectStakeholder
+     */
+    omit?: ProjectStakeholderOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: ProjectStakeholderInclude<ExtArgs> | null
+    /**
+     * Filter which ProjectStakeholder to delete.
+     */
+    where: ProjectStakeholderWhereUniqueInput
+  }
+
+  /**
+   * ProjectStakeholder deleteMany
+   */
+  export type ProjectStakeholderDeleteManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Filter which ProjectStakeholders to delete
+     */
+    where?: ProjectStakeholderWhereInput
+    /**
+     * Limit how many ProjectStakeholders to delete.
+     */
+    limit?: number
+  }
+
+  /**
+   * ProjectStakeholder without action
+   */
+  export type ProjectStakeholderDefaultArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the ProjectStakeholder
+     */
+    select?: ProjectStakeholderSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the ProjectStakeholder
+     */
+    omit?: ProjectStakeholderOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: ProjectStakeholderInclude<ExtArgs> | null
+  }
+
+
+  /**
+   * Enums
+   */
+
+  export const TransactionIsolationLevel: {
+    ReadUncommitted: 'ReadUncommitted',
+    ReadCommitted: 'ReadCommitted',
+    RepeatableRead: 'RepeatableRead',
+    Serializable: 'Serializable'
+  };
+
+  export type TransactionIsolationLevel = (typeof TransactionIsolationLevel)[keyof typeof TransactionIsolationLevel]
+
+
+  export const TenantScalarFieldEnum: {
+    id: 'id',
+    name: 'name',
+    subdomain: 'subdomain',
+    status: 'status',
+    deletedAt: 'deletedAt',
+    createdAt: 'createdAt',
+    updatedAt: 'updatedAt'
+  };
+
+  export type TenantScalarFieldEnum = (typeof TenantScalarFieldEnum)[keyof typeof TenantScalarFieldEnum]
+
+
+  export const UserScalarFieldEnum: {
+    id: 'id',
+    tenantId: 'tenantId',
+    name: 'name',
+    email: 'email',
+    role: 'role'
+  };
+
+  export type UserScalarFieldEnum = (typeof UserScalarFieldEnum)[keyof typeof UserScalarFieldEnum]
+
+
+  export const ProjectScalarFieldEnum: {
+    id: 'id',
+    tenantId: 'tenantId',
+    name: 'name',
+    description: 'description',
+    logoUrl: 'logoUrl',
+    slogan: 'slogan',
+    location: 'location',
+    startDate: 'startDate',
+    endDate: 'endDate',
+    justificativa: 'justificativa',
+    objetivos: 'objetivos',
+    metodologia: 'metodologia',
+    descricaoProduto: 'descricaoProduto',
+    premissas: 'premissas',
+    restricoes: 'restricoes',
+    limitesAutoridade: 'limitesAutoridade',
+    semestre: 'semestre',
+    ano: 'ano',
+    departamentos: 'departamentos',
+    status: 'status',
+    deletedAt: 'deletedAt',
+    createdAt: 'createdAt',
+    updatedAt: 'updatedAt'
+  };
+
+  export type ProjectScalarFieldEnum = (typeof ProjectScalarFieldEnum)[keyof typeof ProjectScalarFieldEnum]
+
+
+  export const ProjectMacroFaseScalarFieldEnum: {
+    id: 'id',
+    projectId: 'projectId',
+    fase: 'fase',
+    dataLimite: 'dataLimite',
+    custo: 'custo',
+    createdAt: 'createdAt',
+    updatedAt: 'updatedAt'
+  };
+
+  export type ProjectMacroFaseScalarFieldEnum = (typeof ProjectMacroFaseScalarFieldEnum)[keyof typeof ProjectMacroFaseScalarFieldEnum]
+
+
+  export const DepartmentScalarFieldEnum: {
+    id: 'id',
+    tenantId: 'tenantId',
+    name: 'name',
+    description: 'description',
+    active: 'active',
+    hourlyRate: 'hourlyRate',
+    deletedAt: 'deletedAt',
+    createdAt: 'createdAt',
+    updatedAt: 'updatedAt'
+  };
+
+  export type DepartmentScalarFieldEnum = (typeof DepartmentScalarFieldEnum)[keyof typeof DepartmentScalarFieldEnum]
+
+
+  export const UserDepartmentScalarFieldEnum: {
+    id: 'id',
+    userId: 'userId',
+    departmentId: 'departmentId'
+  };
+
+  export type UserDepartmentScalarFieldEnum = (typeof UserDepartmentScalarFieldEnum)[keyof typeof UserDepartmentScalarFieldEnum]
+
+
+  export const UserProjectScalarFieldEnum: {
+    id: 'id',
+    userId: 'userId',
+    projectId: 'projectId',
+    active: 'active',
+    role: 'role',
+    departmentId: 'departmentId',
+    hourlyRate: 'hourlyRate',
+    startDate: 'startDate',
+    endDate: 'endDate'
+  };
+
+  export type UserProjectScalarFieldEnum = (typeof UserProjectScalarFieldEnum)[keyof typeof UserProjectScalarFieldEnum]
+
+
+  export const RoleScalarFieldEnum: {
+    id: 'id',
+    tenantId: 'tenantId',
+    name: 'name',
+    nameKey: 'nameKey',
+    scope: 'scope',
+    description: 'description',
+    deletedAt: 'deletedAt',
+    createdAt: 'createdAt',
+    updatedAt: 'updatedAt'
+  };
+
+  export type RoleScalarFieldEnum = (typeof RoleScalarFieldEnum)[keyof typeof RoleScalarFieldEnum]
+
+
+  export const PermissionScalarFieldEnum: {
+    id: 'id',
+    name: 'name',
+    description: 'description',
+    resource: 'resource',
+    action: 'action',
+    deletedAt: 'deletedAt',
+    createdAt: 'createdAt',
+    updatedAt: 'updatedAt'
+  };
+
+  export type PermissionScalarFieldEnum = (typeof PermissionScalarFieldEnum)[keyof typeof PermissionScalarFieldEnum]
+
+
+  export const RolePermissionScalarFieldEnum: {
+    id: 'id',
+    roleId: 'roleId',
+    permissionId: 'permissionId'
+  };
+
+  export type RolePermissionScalarFieldEnum = (typeof RolePermissionScalarFieldEnum)[keyof typeof RolePermissionScalarFieldEnum]
+
+
+  export const UserProjectRoleScalarFieldEnum: {
+    id: 'id',
+    userId: 'userId',
+    projectId: 'projectId',
+    roleId: 'roleId',
+    deletedAt: 'deletedAt',
+    createdAt: 'createdAt',
+    updatedAt: 'updatedAt'
+  };
+
+  export type UserProjectRoleScalarFieldEnum = (typeof UserProjectRoleScalarFieldEnum)[keyof typeof UserProjectRoleScalarFieldEnum]
+
+
+  export const StakeholderScalarFieldEnum: {
+    id: 'id',
+    tenantId: 'tenantId',
+    name: 'name',
+    logoUrl: 'logoUrl',
+    company: 'company',
+    competence: 'competence',
+    email: 'email',
+    phone: 'phone',
+    cep: 'cep',
+    logradouro: 'logradouro',
+    numero: 'numero',
+    complemento: 'complemento',
+    bairro: 'bairro',
+    cidade: 'cidade',
+    estado: 'estado',
+    notes: 'notes',
+    isActive: 'isActive',
+    createdAt: 'createdAt',
+    updatedAt: 'updatedAt'
+  };
+
+  export type StakeholderScalarFieldEnum = (typeof StakeholderScalarFieldEnum)[keyof typeof StakeholderScalarFieldEnum]
+
+
+  export const ProjectStakeholderScalarFieldEnum: {
+    id: 'id',
+    projectId: 'projectId',
+    stakeholderId: 'stakeholderId',
+    createdAt: 'createdAt'
+  };
+
+  export type ProjectStakeholderScalarFieldEnum = (typeof ProjectStakeholderScalarFieldEnum)[keyof typeof ProjectStakeholderScalarFieldEnum]
+
+
+  export const SortOrder: {
+    asc: 'asc',
+    desc: 'desc'
+  };
+
+  export type SortOrder = (typeof SortOrder)[keyof typeof SortOrder]
+
+
+  export const QueryMode: {
+    default: 'default',
+    insensitive: 'insensitive'
+  };
+
+  export type QueryMode = (typeof QueryMode)[keyof typeof QueryMode]
+
+
+  export const NullsOrder: {
+    first: 'first',
+    last: 'last'
+  };
+
+  export type NullsOrder = (typeof NullsOrder)[keyof typeof NullsOrder]
+
+
+  /**
+   * Field references
+   */
+
+
+  /**
+   * Reference to a field of type 'String'
+   */
+  export type StringFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'String'>
+    
+
+
+  /**
+   * Reference to a field of type 'String[]'
+   */
+  export type ListStringFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'String[]'>
+    
+
+
+  /**
+   * Reference to a field of type 'TenantStatus'
+   */
+  export type EnumTenantStatusFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'TenantStatus'>
+    
+
+
+  /**
+   * Reference to a field of type 'TenantStatus[]'
+   */
+  export type ListEnumTenantStatusFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'TenantStatus[]'>
+    
+
+
+  /**
+   * Reference to a field of type 'DateTime'
+   */
+  export type DateTimeFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'DateTime'>
+    
+
+
+  /**
+   * Reference to a field of type 'DateTime[]'
+   */
+  export type ListDateTimeFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'DateTime[]'>
+    
+
+
+  /**
+   * Reference to a field of type 'Int'
+   */
+  export type IntFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'Int'>
+    
+
+
+  /**
+   * Reference to a field of type 'Int[]'
+   */
+  export type ListIntFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'Int[]'>
+    
+
+
+  /**
+   * Reference to a field of type 'ProjectStatus'
+   */
+  export type EnumProjectStatusFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'ProjectStatus'>
+    
+
+
+  /**
+   * Reference to a field of type 'ProjectStatus[]'
+   */
+  export type ListEnumProjectStatusFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'ProjectStatus[]'>
+    
+
+
+  /**
+   * Reference to a field of type 'Boolean'
+   */
+  export type BooleanFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'Boolean'>
+    
+
+
+  /**
+   * Reference to a field of type 'Float'
+   */
+  export type FloatFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'Float'>
+    
+
+
+  /**
+   * Reference to a field of type 'Float[]'
+   */
+  export type ListFloatFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'Float[]'>
+    
+
+
+  /**
+   * Reference to a field of type 'RoleScope'
+   */
+  export type EnumRoleScopeFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'RoleScope'>
+    
+
+
+  /**
+   * Reference to a field of type 'RoleScope[]'
+   */
+  export type ListEnumRoleScopeFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'RoleScope[]'>
+    
+  /**
+   * Deep Input Types
+   */
+
+
+  export type TenantWhereInput = {
+    AND?: TenantWhereInput | TenantWhereInput[]
+    OR?: TenantWhereInput[]
+    NOT?: TenantWhereInput | TenantWhereInput[]
+    id?: StringFilter<"Tenant"> | string
+    name?: StringFilter<"Tenant"> | string
+    subdomain?: StringFilter<"Tenant"> | string
+    status?: EnumTenantStatusFilter<"Tenant"> | $Enums.TenantStatus
+    deletedAt?: DateTimeNullableFilter<"Tenant"> | Date | string | null
+    createdAt?: DateTimeFilter<"Tenant"> | Date | string
+    updatedAt?: DateTimeFilter<"Tenant"> | Date | string
+    projects?: ProjectListRelationFilter
+    departments?: DepartmentListRelationFilter
+    roles?: RoleListRelationFilter
+    stakeholders?: StakeholderListRelationFilter
+  }
+
+  export type TenantOrderByWithRelationInput = {
+    id?: SortOrder
+    name?: SortOrder
+    subdomain?: SortOrder
+    status?: SortOrder
+    deletedAt?: SortOrderInput | SortOrder
+    createdAt?: SortOrder
+    updatedAt?: SortOrder
+    projects?: ProjectOrderByRelationAggregateInput
+    departments?: DepartmentOrderByRelationAggregateInput
+    roles?: RoleOrderByRelationAggregateInput
+    stakeholders?: StakeholderOrderByRelationAggregateInput
+  }
+
+  export type TenantWhereUniqueInput = Prisma.AtLeast<{
+    id?: string
+    subdomain?: string
+    AND?: TenantWhereInput | TenantWhereInput[]
+    OR?: TenantWhereInput[]
+    NOT?: TenantWhereInput | TenantWhereInput[]
+    name?: StringFilter<"Tenant"> | string
+    status?: EnumTenantStatusFilter<"Tenant"> | $Enums.TenantStatus
+    deletedAt?: DateTimeNullableFilter<"Tenant"> | Date | string | null
+    createdAt?: DateTimeFilter<"Tenant"> | Date | string
+    updatedAt?: DateTimeFilter<"Tenant"> | Date | string
+    projects?: ProjectListRelationFilter
+    departments?: DepartmentListRelationFilter
+    roles?: RoleListRelationFilter
+    stakeholders?: StakeholderListRelationFilter
+  }, "id" | "subdomain">
+
+  export type TenantOrderByWithAggregationInput = {
+    id?: SortOrder
+    name?: SortOrder
+    subdomain?: SortOrder
+    status?: SortOrder
+    deletedAt?: SortOrderInput | SortOrder
+    createdAt?: SortOrder
+    updatedAt?: SortOrder
+    _count?: TenantCountOrderByAggregateInput
+    _max?: TenantMaxOrderByAggregateInput
+    _min?: TenantMinOrderByAggregateInput
+  }
+
+  export type TenantScalarWhereWithAggregatesInput = {
+    AND?: TenantScalarWhereWithAggregatesInput | TenantScalarWhereWithAggregatesInput[]
+    OR?: TenantScalarWhereWithAggregatesInput[]
+    NOT?: TenantScalarWhereWithAggregatesInput | TenantScalarWhereWithAggregatesInput[]
+    id?: StringWithAggregatesFilter<"Tenant"> | string
+    name?: StringWithAggregatesFilter<"Tenant"> | string
+    subdomain?: StringWithAggregatesFilter<"Tenant"> | string
+    status?: EnumTenantStatusWithAggregatesFilter<"Tenant"> | $Enums.TenantStatus
+    deletedAt?: DateTimeNullableWithAggregatesFilter<"Tenant"> | Date | string | null
+    createdAt?: DateTimeWithAggregatesFilter<"Tenant"> | Date | string
+    updatedAt?: DateTimeWithAggregatesFilter<"Tenant"> | Date | string
+  }
+
+  export type UserWhereInput = {
+    AND?: UserWhereInput | UserWhereInput[]
+    OR?: UserWhereInput[]
+    NOT?: UserWhereInput | UserWhereInput[]
+    id?: StringFilter<"User"> | string
+    tenantId?: StringFilter<"User"> | string
+    name?: StringFilter<"User"> | string
+    email?: StringFilter<"User"> | string
+    role?: StringFilter<"User"> | string
+    projects?: UserProjectListRelationFilter
+    departments?: UserDepartmentListRelationFilter
+    userProjectRoles?: UserProjectRoleListRelationFilter
+  }
+
+  export type UserOrderByWithRelationInput = {
+    id?: SortOrder
+    tenantId?: SortOrder
+    name?: SortOrder
+    email?: SortOrder
+    role?: SortOrder
+    projects?: UserProjectOrderByRelationAggregateInput
+    departments?: UserDepartmentOrderByRelationAggregateInput
+    userProjectRoles?: UserProjectRoleOrderByRelationAggregateInput
+  }
+
+  export type UserWhereUniqueInput = Prisma.AtLeast<{
+    id?: string
+    email_tenantId?: UserEmailTenantIdCompoundUniqueInput
+    AND?: UserWhereInput | UserWhereInput[]
+    OR?: UserWhereInput[]
+    NOT?: UserWhereInput | UserWhereInput[]
+    tenantId?: StringFilter<"User"> | string
+    name?: StringFilter<"User"> | string
+    email?: StringFilter<"User"> | string
+    role?: StringFilter<"User"> | string
+    projects?: UserProjectListRelationFilter
+    departments?: UserDepartmentListRelationFilter
+    userProjectRoles?: UserProjectRoleListRelationFilter
+  }, "id" | "email_tenantId">
+
+  export type UserOrderByWithAggregationInput = {
+    id?: SortOrder
+    tenantId?: SortOrder
+    name?: SortOrder
+    email?: SortOrder
+    role?: SortOrder
+    _count?: UserCountOrderByAggregateInput
+    _max?: UserMaxOrderByAggregateInput
+    _min?: UserMinOrderByAggregateInput
+  }
+
+  export type UserScalarWhereWithAggregatesInput = {
+    AND?: UserScalarWhereWithAggregatesInput | UserScalarWhereWithAggregatesInput[]
+    OR?: UserScalarWhereWithAggregatesInput[]
+    NOT?: UserScalarWhereWithAggregatesInput | UserScalarWhereWithAggregatesInput[]
+    id?: StringWithAggregatesFilter<"User"> | string
+    tenantId?: StringWithAggregatesFilter<"User"> | string
+    name?: StringWithAggregatesFilter<"User"> | string
+    email?: StringWithAggregatesFilter<"User"> | string
+    role?: StringWithAggregatesFilter<"User"> | string
+  }
+
+  export type ProjectWhereInput = {
+    AND?: ProjectWhereInput | ProjectWhereInput[]
+    OR?: ProjectWhereInput[]
+    NOT?: ProjectWhereInput | ProjectWhereInput[]
+    id?: StringFilter<"Project"> | string
+    tenantId?: StringFilter<"Project"> | string
+    name?: StringFilter<"Project"> | string
+    description?: StringNullableFilter<"Project"> | string | null
+    logoUrl?: StringNullableFilter<"Project"> | string | null
+    slogan?: StringNullableFilter<"Project"> | string | null
+    location?: StringNullableFilter<"Project"> | string | null
+    startDate?: DateTimeNullableFilter<"Project"> | Date | string | null
+    endDate?: DateTimeNullableFilter<"Project"> | Date | string | null
+    justificativa?: StringNullableFilter<"Project"> | string | null
+    objetivos?: StringNullableFilter<"Project"> | string | null
+    metodologia?: StringNullableFilter<"Project"> | string | null
+    descricaoProduto?: StringNullableFilter<"Project"> | string | null
+    premissas?: StringNullableFilter<"Project"> | string | null
+    restricoes?: StringNullableFilter<"Project"> | string | null
+    limitesAutoridade?: StringNullableFilter<"Project"> | string | null
+    semestre?: StringNullableFilter<"Project"> | string | null
+    ano?: IntNullableFilter<"Project"> | number | null
+    departamentos?: StringNullableListFilter<"Project">
+    status?: EnumProjectStatusFilter<"Project"> | $Enums.ProjectStatus
+    deletedAt?: DateTimeNullableFilter<"Project"> | Date | string | null
+    createdAt?: DateTimeFilter<"Project"> | Date | string
+    updatedAt?: DateTimeFilter<"Project"> | Date | string
+    tenant?: XOR<TenantScalarRelationFilter, TenantWhereInput>
+    members?: UserProjectListRelationFilter
+    usuariosRole?: UserProjectRoleListRelationFilter
+    macroFases?: ProjectMacroFaseListRelationFilter
+    stakeholders?: ProjectStakeholderListRelationFilter
+  }
+
+  export type ProjectOrderByWithRelationInput = {
+    id?: SortOrder
+    tenantId?: SortOrder
+    name?: SortOrder
+    description?: SortOrderInput | SortOrder
+    logoUrl?: SortOrderInput | SortOrder
+    slogan?: SortOrderInput | SortOrder
+    location?: SortOrderInput | SortOrder
+    startDate?: SortOrderInput | SortOrder
+    endDate?: SortOrderInput | SortOrder
+    justificativa?: SortOrderInput | SortOrder
+    objetivos?: SortOrderInput | SortOrder
+    metodologia?: SortOrderInput | SortOrder
+    descricaoProduto?: SortOrderInput | SortOrder
+    premissas?: SortOrderInput | SortOrder
+    restricoes?: SortOrderInput | SortOrder
+    limitesAutoridade?: SortOrderInput | SortOrder
+    semestre?: SortOrderInput | SortOrder
+    ano?: SortOrderInput | SortOrder
+    departamentos?: SortOrder
+    status?: SortOrder
+    deletedAt?: SortOrderInput | SortOrder
+    createdAt?: SortOrder
+    updatedAt?: SortOrder
+    tenant?: TenantOrderByWithRelationInput
+    members?: UserProjectOrderByRelationAggregateInput
+    usuariosRole?: UserProjectRoleOrderByRelationAggregateInput
+    macroFases?: ProjectMacroFaseOrderByRelationAggregateInput
+    stakeholders?: ProjectStakeholderOrderByRelationAggregateInput
+  }
+
+  export type ProjectWhereUniqueInput = Prisma.AtLeast<{
+    id?: string
+    name_tenantId?: ProjectNameTenantIdCompoundUniqueInput
+    AND?: ProjectWhereInput | ProjectWhereInput[]
+    OR?: ProjectWhereInput[]
+    NOT?: ProjectWhereInput | ProjectWhereInput[]
+    tenantId?: StringFilter<"Project"> | string
+    name?: StringFilter<"Project"> | string
+    description?: StringNullableFilter<"Project"> | string | null
+    logoUrl?: StringNullableFilter<"Project"> | string | null
+    slogan?: StringNullableFilter<"Project"> | string | null
+    location?: StringNullableFilter<"Project"> | string | null
+    startDate?: DateTimeNullableFilter<"Project"> | Date | string | null
+    endDate?: DateTimeNullableFilter<"Project"> | Date | string | null
+    justificativa?: StringNullableFilter<"Project"> | string | null
+    objetivos?: StringNullableFilter<"Project"> | string | null
+    metodologia?: StringNullableFilter<"Project"> | string | null
+    descricaoProduto?: StringNullableFilter<"Project"> | string | null
+    premissas?: StringNullableFilter<"Project"> | string | null
+    restricoes?: StringNullableFilter<"Project"> | string | null
+    limitesAutoridade?: StringNullableFilter<"Project"> | string | null
+    semestre?: StringNullableFilter<"Project"> | string | null
+    ano?: IntNullableFilter<"Project"> | number | null
+    departamentos?: StringNullableListFilter<"Project">
+    status?: EnumProjectStatusFilter<"Project"> | $Enums.ProjectStatus
+    deletedAt?: DateTimeNullableFilter<"Project"> | Date | string | null
+    createdAt?: DateTimeFilter<"Project"> | Date | string
+    updatedAt?: DateTimeFilter<"Project"> | Date | string
+    tenant?: XOR<TenantScalarRelationFilter, TenantWhereInput>
+    members?: UserProjectListRelationFilter
+    usuariosRole?: UserProjectRoleListRelationFilter
+    macroFases?: ProjectMacroFaseListRelationFilter
+    stakeholders?: ProjectStakeholderListRelationFilter
+  }, "id" | "name_tenantId">
+
+  export type ProjectOrderByWithAggregationInput = {
+    id?: SortOrder
+    tenantId?: SortOrder
+    name?: SortOrder
+    description?: SortOrderInput | SortOrder
+    logoUrl?: SortOrderInput | SortOrder
+    slogan?: SortOrderInput | SortOrder
+    location?: SortOrderInput | SortOrder
+    startDate?: SortOrderInput | SortOrder
+    endDate?: SortOrderInput | SortOrder
+    justificativa?: SortOrderInput | SortOrder
+    objetivos?: SortOrderInput | SortOrder
+    metodologia?: SortOrderInput | SortOrder
+    descricaoProduto?: SortOrderInput | SortOrder
+    premissas?: SortOrderInput | SortOrder
+    restricoes?: SortOrderInput | SortOrder
+    limitesAutoridade?: SortOrderInput | SortOrder
+    semestre?: SortOrderInput | SortOrder
+    ano?: SortOrderInput | SortOrder
+    departamentos?: SortOrder
+    status?: SortOrder
+    deletedAt?: SortOrderInput | SortOrder
+    createdAt?: SortOrder
+    updatedAt?: SortOrder
+    _count?: ProjectCountOrderByAggregateInput
+    _avg?: ProjectAvgOrderByAggregateInput
+    _max?: ProjectMaxOrderByAggregateInput
+    _min?: ProjectMinOrderByAggregateInput
+    _sum?: ProjectSumOrderByAggregateInput
+  }
+
+  export type ProjectScalarWhereWithAggregatesInput = {
+    AND?: ProjectScalarWhereWithAggregatesInput | ProjectScalarWhereWithAggregatesInput[]
+    OR?: ProjectScalarWhereWithAggregatesInput[]
+    NOT?: ProjectScalarWhereWithAggregatesInput | ProjectScalarWhereWithAggregatesInput[]
+    id?: StringWithAggregatesFilter<"Project"> | string
+    tenantId?: StringWithAggregatesFilter<"Project"> | string
+    name?: StringWithAggregatesFilter<"Project"> | string
+    description?: StringNullableWithAggregatesFilter<"Project"> | string | null
+    logoUrl?: StringNullableWithAggregatesFilter<"Project"> | string | null
+    slogan?: StringNullableWithAggregatesFilter<"Project"> | string | null
+    location?: StringNullableWithAggregatesFilter<"Project"> | string | null
+    startDate?: DateTimeNullableWithAggregatesFilter<"Project"> | Date | string | null
+    endDate?: DateTimeNullableWithAggregatesFilter<"Project"> | Date | string | null
+    justificativa?: StringNullableWithAggregatesFilter<"Project"> | string | null
+    objetivos?: StringNullableWithAggregatesFilter<"Project"> | string | null
+    metodologia?: StringNullableWithAggregatesFilter<"Project"> | string | null
+    descricaoProduto?: StringNullableWithAggregatesFilter<"Project"> | string | null
+    premissas?: StringNullableWithAggregatesFilter<"Project"> | string | null
+    restricoes?: StringNullableWithAggregatesFilter<"Project"> | string | null
+    limitesAutoridade?: StringNullableWithAggregatesFilter<"Project"> | string | null
+    semestre?: StringNullableWithAggregatesFilter<"Project"> | string | null
+    ano?: IntNullableWithAggregatesFilter<"Project"> | number | null
+    departamentos?: StringNullableListFilter<"Project">
+    status?: EnumProjectStatusWithAggregatesFilter<"Project"> | $Enums.ProjectStatus
+    deletedAt?: DateTimeNullableWithAggregatesFilter<"Project"> | Date | string | null
+    createdAt?: DateTimeWithAggregatesFilter<"Project"> | Date | string
+    updatedAt?: DateTimeWithAggregatesFilter<"Project"> | Date | string
+  }
+
+  export type ProjectMacroFaseWhereInput = {
+    AND?: ProjectMacroFaseWhereInput | ProjectMacroFaseWhereInput[]
+    OR?: ProjectMacroFaseWhereInput[]
+    NOT?: ProjectMacroFaseWhereInput | ProjectMacroFaseWhereInput[]
+    id?: StringFilter<"ProjectMacroFase"> | string
+    projectId?: StringFilter<"ProjectMacroFase"> | string
+    fase?: StringFilter<"ProjectMacroFase"> | string
+    dataLimite?: StringNullableFilter<"ProjectMacroFase"> | string | null
+    custo?: StringNullableFilter<"ProjectMacroFase"> | string | null
+    createdAt?: DateTimeFilter<"ProjectMacroFase"> | Date | string
+    updatedAt?: DateTimeFilter<"ProjectMacroFase"> | Date | string
+    project?: XOR<ProjectScalarRelationFilter, ProjectWhereInput>
+  }
+
+  export type ProjectMacroFaseOrderByWithRelationInput = {
+    id?: SortOrder
+    projectId?: SortOrder
+    fase?: SortOrder
+    dataLimite?: SortOrderInput | SortOrder
+    custo?: SortOrderInput | SortOrder
+    createdAt?: SortOrder
+    updatedAt?: SortOrder
+    project?: ProjectOrderByWithRelationInput
+  }
+
+  export type ProjectMacroFaseWhereUniqueInput = Prisma.AtLeast<{
+    id?: string
+    AND?: ProjectMacroFaseWhereInput | ProjectMacroFaseWhereInput[]
+    OR?: ProjectMacroFaseWhereInput[]
+    NOT?: ProjectMacroFaseWhereInput | ProjectMacroFaseWhereInput[]
+    projectId?: StringFilter<"ProjectMacroFase"> | string
+    fase?: StringFilter<"ProjectMacroFase"> | string
+    dataLimite?: StringNullableFilter<"ProjectMacroFase"> | string | null
+    custo?: StringNullableFilter<"ProjectMacroFase"> | string | null
+    createdAt?: DateTimeFilter<"ProjectMacroFase"> | Date | string
+    updatedAt?: DateTimeFilter<"ProjectMacroFase"> | Date | string
+    project?: XOR<ProjectScalarRelationFilter, ProjectWhereInput>
+  }, "id">
+
+  export type ProjectMacroFaseOrderByWithAggregationInput = {
+    id?: SortOrder
+    projectId?: SortOrder
+    fase?: SortOrder
+    dataLimite?: SortOrderInput | SortOrder
+    custo?: SortOrderInput | SortOrder
+    createdAt?: SortOrder
+    updatedAt?: SortOrder
+    _count?: ProjectMacroFaseCountOrderByAggregateInput
+    _max?: ProjectMacroFaseMaxOrderByAggregateInput
+    _min?: ProjectMacroFaseMinOrderByAggregateInput
+  }
+
+  export type ProjectMacroFaseScalarWhereWithAggregatesInput = {
+    AND?: ProjectMacroFaseScalarWhereWithAggregatesInput | ProjectMacroFaseScalarWhereWithAggregatesInput[]
+    OR?: ProjectMacroFaseScalarWhereWithAggregatesInput[]
+    NOT?: ProjectMacroFaseScalarWhereWithAggregatesInput | ProjectMacroFaseScalarWhereWithAggregatesInput[]
+    id?: StringWithAggregatesFilter<"ProjectMacroFase"> | string
+    projectId?: StringWithAggregatesFilter<"ProjectMacroFase"> | string
+    fase?: StringWithAggregatesFilter<"ProjectMacroFase"> | string
+    dataLimite?: StringNullableWithAggregatesFilter<"ProjectMacroFase"> | string | null
+    custo?: StringNullableWithAggregatesFilter<"ProjectMacroFase"> | string | null
+    createdAt?: DateTimeWithAggregatesFilter<"ProjectMacroFase"> | Date | string
+    updatedAt?: DateTimeWithAggregatesFilter<"ProjectMacroFase"> | Date | string
+  }
+
+  export type DepartmentWhereInput = {
+    AND?: DepartmentWhereInput | DepartmentWhereInput[]
+    OR?: DepartmentWhereInput[]
+    NOT?: DepartmentWhereInput | DepartmentWhereInput[]
+    id?: StringFilter<"Department"> | string
+    tenantId?: StringFilter<"Department"> | string
+    name?: StringFilter<"Department"> | string
+    description?: StringNullableFilter<"Department"> | string | null
+    active?: BoolFilter<"Department"> | boolean
+    hourlyRate?: FloatNullableFilter<"Department"> | number | null
+    deletedAt?: DateTimeNullableFilter<"Department"> | Date | string | null
+    createdAt?: DateTimeFilter<"Department"> | Date | string
+    updatedAt?: DateTimeFilter<"Department"> | Date | string
+    tenant?: XOR<TenantScalarRelationFilter, TenantWhereInput>
+    users?: UserDepartmentListRelationFilter
+    userProjects?: UserProjectListRelationFilter
+  }
+
+  export type DepartmentOrderByWithRelationInput = {
+    id?: SortOrder
+    tenantId?: SortOrder
+    name?: SortOrder
+    description?: SortOrderInput | SortOrder
+    active?: SortOrder
+    hourlyRate?: SortOrderInput | SortOrder
+    deletedAt?: SortOrderInput | SortOrder
+    createdAt?: SortOrder
+    updatedAt?: SortOrder
+    tenant?: TenantOrderByWithRelationInput
+    users?: UserDepartmentOrderByRelationAggregateInput
+    userProjects?: UserProjectOrderByRelationAggregateInput
+  }
+
+  export type DepartmentWhereUniqueInput = Prisma.AtLeast<{
+    id?: string
+    name_tenantId?: DepartmentNameTenantIdCompoundUniqueInput
+    AND?: DepartmentWhereInput | DepartmentWhereInput[]
+    OR?: DepartmentWhereInput[]
+    NOT?: DepartmentWhereInput | DepartmentWhereInput[]
+    tenantId?: StringFilter<"Department"> | string
+    name?: StringFilter<"Department"> | string
+    description?: StringNullableFilter<"Department"> | string | null
+    active?: BoolFilter<"Department"> | boolean
+    hourlyRate?: FloatNullableFilter<"Department"> | number | null
+    deletedAt?: DateTimeNullableFilter<"Department"> | Date | string | null
+    createdAt?: DateTimeFilter<"Department"> | Date | string
+    updatedAt?: DateTimeFilter<"Department"> | Date | string
+    tenant?: XOR<TenantScalarRelationFilter, TenantWhereInput>
+    users?: UserDepartmentListRelationFilter
+    userProjects?: UserProjectListRelationFilter
+  }, "id" | "name_tenantId">
+
+  export type DepartmentOrderByWithAggregationInput = {
+    id?: SortOrder
+    tenantId?: SortOrder
+    name?: SortOrder
+    description?: SortOrderInput | SortOrder
+    active?: SortOrder
+    hourlyRate?: SortOrderInput | SortOrder
+    deletedAt?: SortOrderInput | SortOrder
+    createdAt?: SortOrder
+    updatedAt?: SortOrder
+    _count?: DepartmentCountOrderByAggregateInput
+    _avg?: DepartmentAvgOrderByAggregateInput
+    _max?: DepartmentMaxOrderByAggregateInput
+    _min?: DepartmentMinOrderByAggregateInput
+    _sum?: DepartmentSumOrderByAggregateInput
+  }
+
+  export type DepartmentScalarWhereWithAggregatesInput = {
+    AND?: DepartmentScalarWhereWithAggregatesInput | DepartmentScalarWhereWithAggregatesInput[]
+    OR?: DepartmentScalarWhereWithAggregatesInput[]
+    NOT?: DepartmentScalarWhereWithAggregatesInput | DepartmentScalarWhereWithAggregatesInput[]
+    id?: StringWithAggregatesFilter<"Department"> | string
+    tenantId?: StringWithAggregatesFilter<"Department"> | string
+    name?: StringWithAggregatesFilter<"Department"> | string
+    description?: StringNullableWithAggregatesFilter<"Department"> | string | null
+    active?: BoolWithAggregatesFilter<"Department"> | boolean
+    hourlyRate?: FloatNullableWithAggregatesFilter<"Department"> | number | null
+    deletedAt?: DateTimeNullableWithAggregatesFilter<"Department"> | Date | string | null
+    createdAt?: DateTimeWithAggregatesFilter<"Department"> | Date | string
+    updatedAt?: DateTimeWithAggregatesFilter<"Department"> | Date | string
+  }
+
+  export type UserDepartmentWhereInput = {
+    AND?: UserDepartmentWhereInput | UserDepartmentWhereInput[]
+    OR?: UserDepartmentWhereInput[]
+    NOT?: UserDepartmentWhereInput | UserDepartmentWhereInput[]
+    id?: StringFilter<"UserDepartment"> | string
+    userId?: StringFilter<"UserDepartment"> | string
+    departmentId?: StringFilter<"UserDepartment"> | string
+    user?: XOR<UserScalarRelationFilter, UserWhereInput>
+    department?: XOR<DepartmentScalarRelationFilter, DepartmentWhereInput>
+  }
+
+  export type UserDepartmentOrderByWithRelationInput = {
+    id?: SortOrder
+    userId?: SortOrder
+    departmentId?: SortOrder
+    user?: UserOrderByWithRelationInput
+    department?: DepartmentOrderByWithRelationInput
+  }
+
+  export type UserDepartmentWhereUniqueInput = Prisma.AtLeast<{
+    id?: string
+    userId_departmentId?: UserDepartmentUserIdDepartmentIdCompoundUniqueInput
+    AND?: UserDepartmentWhereInput | UserDepartmentWhereInput[]
+    OR?: UserDepartmentWhereInput[]
+    NOT?: UserDepartmentWhereInput | UserDepartmentWhereInput[]
+    userId?: StringFilter<"UserDepartment"> | string
+    departmentId?: StringFilter<"UserDepartment"> | string
+    user?: XOR<UserScalarRelationFilter, UserWhereInput>
+    department?: XOR<DepartmentScalarRelationFilter, DepartmentWhereInput>
+  }, "id" | "userId_departmentId">
+
+  export type UserDepartmentOrderByWithAggregationInput = {
+    id?: SortOrder
+    userId?: SortOrder
+    departmentId?: SortOrder
+    _count?: UserDepartmentCountOrderByAggregateInput
+    _max?: UserDepartmentMaxOrderByAggregateInput
+    _min?: UserDepartmentMinOrderByAggregateInput
+  }
+
+  export type UserDepartmentScalarWhereWithAggregatesInput = {
+    AND?: UserDepartmentScalarWhereWithAggregatesInput | UserDepartmentScalarWhereWithAggregatesInput[]
+    OR?: UserDepartmentScalarWhereWithAggregatesInput[]
+    NOT?: UserDepartmentScalarWhereWithAggregatesInput | UserDepartmentScalarWhereWithAggregatesInput[]
+    id?: StringWithAggregatesFilter<"UserDepartment"> | string
+    userId?: StringWithAggregatesFilter<"UserDepartment"> | string
+    departmentId?: StringWithAggregatesFilter<"UserDepartment"> | string
+  }
+
+  export type UserProjectWhereInput = {
+    AND?: UserProjectWhereInput | UserProjectWhereInput[]
+    OR?: UserProjectWhereInput[]
+    NOT?: UserProjectWhereInput | UserProjectWhereInput[]
+    id?: StringFilter<"UserProject"> | string
+    userId?: StringFilter<"UserProject"> | string
+    projectId?: StringFilter<"UserProject"> | string
+    active?: BoolFilter<"UserProject"> | boolean
+    role?: StringNullableFilter<"UserProject"> | string | null
+    departmentId?: StringNullableFilter<"UserProject"> | string | null
+    hourlyRate?: FloatNullableFilter<"UserProject"> | number | null
+    startDate?: DateTimeFilter<"UserProject"> | Date | string
+    endDate?: DateTimeNullableFilter<"UserProject"> | Date | string | null
+    user?: XOR<UserScalarRelationFilter, UserWhereInput>
+    project?: XOR<ProjectScalarRelationFilter, ProjectWhereInput>
+    department?: XOR<DepartmentNullableScalarRelationFilter, DepartmentWhereInput> | null
+  }
+
+  export type UserProjectOrderByWithRelationInput = {
+    id?: SortOrder
+    userId?: SortOrder
+    projectId?: SortOrder
+    active?: SortOrder
+    role?: SortOrderInput | SortOrder
+    departmentId?: SortOrderInput | SortOrder
+    hourlyRate?: SortOrderInput | SortOrder
+    startDate?: SortOrder
+    endDate?: SortOrderInput | SortOrder
+    user?: UserOrderByWithRelationInput
+    project?: ProjectOrderByWithRelationInput
+    department?: DepartmentOrderByWithRelationInput
+  }
+
+  export type UserProjectWhereUniqueInput = Prisma.AtLeast<{
+    id?: string
+    userId_projectId?: UserProjectUserIdProjectIdCompoundUniqueInput
+    AND?: UserProjectWhereInput | UserProjectWhereInput[]
+    OR?: UserProjectWhereInput[]
+    NOT?: UserProjectWhereInput | UserProjectWhereInput[]
+    userId?: StringFilter<"UserProject"> | string
+    projectId?: StringFilter<"UserProject"> | string
+    active?: BoolFilter<"UserProject"> | boolean
+    role?: StringNullableFilter<"UserProject"> | string | null
+    departmentId?: StringNullableFilter<"UserProject"> | string | null
+    hourlyRate?: FloatNullableFilter<"UserProject"> | number | null
+    startDate?: DateTimeFilter<"UserProject"> | Date | string
+    endDate?: DateTimeNullableFilter<"UserProject"> | Date | string | null
+    user?: XOR<UserScalarRelationFilter, UserWhereInput>
+    project?: XOR<ProjectScalarRelationFilter, ProjectWhereInput>
+    department?: XOR<DepartmentNullableScalarRelationFilter, DepartmentWhereInput> | null
+  }, "id" | "userId_projectId">
+
+  export type UserProjectOrderByWithAggregationInput = {
+    id?: SortOrder
+    userId?: SortOrder
+    projectId?: SortOrder
+    active?: SortOrder
+    role?: SortOrderInput | SortOrder
+    departmentId?: SortOrderInput | SortOrder
+    hourlyRate?: SortOrderInput | SortOrder
+    startDate?: SortOrder
+    endDate?: SortOrderInput | SortOrder
+    _count?: UserProjectCountOrderByAggregateInput
+    _avg?: UserProjectAvgOrderByAggregateInput
+    _max?: UserProjectMaxOrderByAggregateInput
+    _min?: UserProjectMinOrderByAggregateInput
+    _sum?: UserProjectSumOrderByAggregateInput
+  }
+
+  export type UserProjectScalarWhereWithAggregatesInput = {
+    AND?: UserProjectScalarWhereWithAggregatesInput | UserProjectScalarWhereWithAggregatesInput[]
+    OR?: UserProjectScalarWhereWithAggregatesInput[]
+    NOT?: UserProjectScalarWhereWithAggregatesInput | UserProjectScalarWhereWithAggregatesInput[]
+    id?: StringWithAggregatesFilter<"UserProject"> | string
+    userId?: StringWithAggregatesFilter<"UserProject"> | string
+    projectId?: StringWithAggregatesFilter<"UserProject"> | string
+    active?: BoolWithAggregatesFilter<"UserProject"> | boolean
+    role?: StringNullableWithAggregatesFilter<"UserProject"> | string | null
+    departmentId?: StringNullableWithAggregatesFilter<"UserProject"> | string | null
+    hourlyRate?: FloatNullableWithAggregatesFilter<"UserProject"> | number | null
+    startDate?: DateTimeWithAggregatesFilter<"UserProject"> | Date | string
+    endDate?: DateTimeNullableWithAggregatesFilter<"UserProject"> | Date | string | null
+  }
+
+  export type RoleWhereInput = {
+    AND?: RoleWhereInput | RoleWhereInput[]
+    OR?: RoleWhereInput[]
+    NOT?: RoleWhereInput | RoleWhereInput[]
+    id?: StringFilter<"Role"> | string
+    tenantId?: StringFilter<"Role"> | string
+    name?: StringFilter<"Role"> | string
+    nameKey?: StringFilter<"Role"> | string
+    scope?: EnumRoleScopeFilter<"Role"> | $Enums.RoleScope
+    description?: StringNullableFilter<"Role"> | string | null
+    deletedAt?: DateTimeNullableFilter<"Role"> | Date | string | null
+    createdAt?: DateTimeFilter<"Role"> | Date | string
+    updatedAt?: DateTimeFilter<"Role"> | Date | string
+    tenant?: XOR<TenantScalarRelationFilter, TenantWhereInput>
+    permissions?: RolePermissionListRelationFilter
+    userProjectRoles?: UserProjectRoleListRelationFilter
+  }
+
+  export type RoleOrderByWithRelationInput = {
+    id?: SortOrder
+    tenantId?: SortOrder
+    name?: SortOrder
+    nameKey?: SortOrder
+    scope?: SortOrder
+    description?: SortOrderInput | SortOrder
+    deletedAt?: SortOrderInput | SortOrder
+    createdAt?: SortOrder
+    updatedAt?: SortOrder
+    tenant?: TenantOrderByWithRelationInput
+    permissions?: RolePermissionOrderByRelationAggregateInput
+    userProjectRoles?: UserProjectRoleOrderByRelationAggregateInput
+  }
+
+  export type RoleWhereUniqueInput = Prisma.AtLeast<{
+    id?: string
+    nameKey_tenantId_scope?: RoleNameKeyTenantIdScopeCompoundUniqueInput
+    AND?: RoleWhereInput | RoleWhereInput[]
+    OR?: RoleWhereInput[]
+    NOT?: RoleWhereInput | RoleWhereInput[]
+    tenantId?: StringFilter<"Role"> | string
+    name?: StringFilter<"Role"> | string
+    nameKey?: StringFilter<"Role"> | string
+    scope?: EnumRoleScopeFilter<"Role"> | $Enums.RoleScope
+    description?: StringNullableFilter<"Role"> | string | null
+    deletedAt?: DateTimeNullableFilter<"Role"> | Date | string | null
+    createdAt?: DateTimeFilter<"Role"> | Date | string
+    updatedAt?: DateTimeFilter<"Role"> | Date | string
+    tenant?: XOR<TenantScalarRelationFilter, TenantWhereInput>
+    permissions?: RolePermissionListRelationFilter
+    userProjectRoles?: UserProjectRoleListRelationFilter
+  }, "id" | "nameKey_tenantId_scope">
+
+  export type RoleOrderByWithAggregationInput = {
+    id?: SortOrder
+    tenantId?: SortOrder
+    name?: SortOrder
+    nameKey?: SortOrder
+    scope?: SortOrder
+    description?: SortOrderInput | SortOrder
+    deletedAt?: SortOrderInput | SortOrder
+    createdAt?: SortOrder
+    updatedAt?: SortOrder
+    _count?: RoleCountOrderByAggregateInput
+    _max?: RoleMaxOrderByAggregateInput
+    _min?: RoleMinOrderByAggregateInput
+  }
+
+  export type RoleScalarWhereWithAggregatesInput = {
+    AND?: RoleScalarWhereWithAggregatesInput | RoleScalarWhereWithAggregatesInput[]
+    OR?: RoleScalarWhereWithAggregatesInput[]
+    NOT?: RoleScalarWhereWithAggregatesInput | RoleScalarWhereWithAggregatesInput[]
+    id?: StringWithAggregatesFilter<"Role"> | string
+    tenantId?: StringWithAggregatesFilter<"Role"> | string
+    name?: StringWithAggregatesFilter<"Role"> | string
+    nameKey?: StringWithAggregatesFilter<"Role"> | string
+    scope?: EnumRoleScopeWithAggregatesFilter<"Role"> | $Enums.RoleScope
+    description?: StringNullableWithAggregatesFilter<"Role"> | string | null
+    deletedAt?: DateTimeNullableWithAggregatesFilter<"Role"> | Date | string | null
+    createdAt?: DateTimeWithAggregatesFilter<"Role"> | Date | string
+    updatedAt?: DateTimeWithAggregatesFilter<"Role"> | Date | string
+  }
+
+  export type PermissionWhereInput = {
+    AND?: PermissionWhereInput | PermissionWhereInput[]
+    OR?: PermissionWhereInput[]
+    NOT?: PermissionWhereInput | PermissionWhereInput[]
+    id?: StringFilter<"Permission"> | string
+    name?: StringFilter<"Permission"> | string
+    description?: StringNullableFilter<"Permission"> | string | null
+    resource?: StringFilter<"Permission"> | string
+    action?: StringFilter<"Permission"> | string
+    deletedAt?: DateTimeNullableFilter<"Permission"> | Date | string | null
+    createdAt?: DateTimeFilter<"Permission"> | Date | string
+    updatedAt?: DateTimeFilter<"Permission"> | Date | string
+    roles?: RolePermissionListRelationFilter
+  }
+
+  export type PermissionOrderByWithRelationInput = {
+    id?: SortOrder
+    name?: SortOrder
+    description?: SortOrderInput | SortOrder
+    resource?: SortOrder
+    action?: SortOrder
+    deletedAt?: SortOrderInput | SortOrder
+    createdAt?: SortOrder
+    updatedAt?: SortOrder
+    roles?: RolePermissionOrderByRelationAggregateInput
+  }
+
+  export type PermissionWhereUniqueInput = Prisma.AtLeast<{
+    id?: string
+    name?: string
+    resource_action?: PermissionResourceActionCompoundUniqueInput
+    AND?: PermissionWhereInput | PermissionWhereInput[]
+    OR?: PermissionWhereInput[]
+    NOT?: PermissionWhereInput | PermissionWhereInput[]
+    description?: StringNullableFilter<"Permission"> | string | null
+    resource?: StringFilter<"Permission"> | string
+    action?: StringFilter<"Permission"> | string
+    deletedAt?: DateTimeNullableFilter<"Permission"> | Date | string | null
+    createdAt?: DateTimeFilter<"Permission"> | Date | string
+    updatedAt?: DateTimeFilter<"Permission"> | Date | string
+    roles?: RolePermissionListRelationFilter
+  }, "id" | "name" | "resource_action">
+
+  export type PermissionOrderByWithAggregationInput = {
+    id?: SortOrder
+    name?: SortOrder
+    description?: SortOrderInput | SortOrder
+    resource?: SortOrder
+    action?: SortOrder
+    deletedAt?: SortOrderInput | SortOrder
+    createdAt?: SortOrder
+    updatedAt?: SortOrder
+    _count?: PermissionCountOrderByAggregateInput
+    _max?: PermissionMaxOrderByAggregateInput
+    _min?: PermissionMinOrderByAggregateInput
+  }
+
+  export type PermissionScalarWhereWithAggregatesInput = {
+    AND?: PermissionScalarWhereWithAggregatesInput | PermissionScalarWhereWithAggregatesInput[]
+    OR?: PermissionScalarWhereWithAggregatesInput[]
+    NOT?: PermissionScalarWhereWithAggregatesInput | PermissionScalarWhereWithAggregatesInput[]
+    id?: StringWithAggregatesFilter<"Permission"> | string
+    name?: StringWithAggregatesFilter<"Permission"> | string
+    description?: StringNullableWithAggregatesFilter<"Permission"> | string | null
+    resource?: StringWithAggregatesFilter<"Permission"> | string
+    action?: StringWithAggregatesFilter<"Permission"> | string
+    deletedAt?: DateTimeNullableWithAggregatesFilter<"Permission"> | Date | string | null
+    createdAt?: DateTimeWithAggregatesFilter<"Permission"> | Date | string
+    updatedAt?: DateTimeWithAggregatesFilter<"Permission"> | Date | string
+  }
+
+  export type RolePermissionWhereInput = {
+    AND?: RolePermissionWhereInput | RolePermissionWhereInput[]
+    OR?: RolePermissionWhereInput[]
+    NOT?: RolePermissionWhereInput | RolePermissionWhereInput[]
+    id?: StringFilter<"RolePermission"> | string
+    roleId?: StringFilter<"RolePermission"> | string
+    permissionId?: StringFilter<"RolePermission"> | string
+    role?: XOR<RoleScalarRelationFilter, RoleWhereInput>
+    permission?: XOR<PermissionScalarRelationFilter, PermissionWhereInput>
+  }
+
+  export type RolePermissionOrderByWithRelationInput = {
+    id?: SortOrder
+    roleId?: SortOrder
+    permissionId?: SortOrder
+    role?: RoleOrderByWithRelationInput
+    permission?: PermissionOrderByWithRelationInput
+  }
+
+  export type RolePermissionWhereUniqueInput = Prisma.AtLeast<{
+    id?: string
+    roleId_permissionId?: RolePermissionRoleIdPermissionIdCompoundUniqueInput
+    AND?: RolePermissionWhereInput | RolePermissionWhereInput[]
+    OR?: RolePermissionWhereInput[]
+    NOT?: RolePermissionWhereInput | RolePermissionWhereInput[]
+    roleId?: StringFilter<"RolePermission"> | string
+    permissionId?: StringFilter<"RolePermission"> | string
+    role?: XOR<RoleScalarRelationFilter, RoleWhereInput>
+    permission?: XOR<PermissionScalarRelationFilter, PermissionWhereInput>
+  }, "id" | "roleId_permissionId">
+
+  export type RolePermissionOrderByWithAggregationInput = {
+    id?: SortOrder
+    roleId?: SortOrder
+    permissionId?: SortOrder
+    _count?: RolePermissionCountOrderByAggregateInput
+    _max?: RolePermissionMaxOrderByAggregateInput
+    _min?: RolePermissionMinOrderByAggregateInput
+  }
+
+  export type RolePermissionScalarWhereWithAggregatesInput = {
+    AND?: RolePermissionScalarWhereWithAggregatesInput | RolePermissionScalarWhereWithAggregatesInput[]
+    OR?: RolePermissionScalarWhereWithAggregatesInput[]
+    NOT?: RolePermissionScalarWhereWithAggregatesInput | RolePermissionScalarWhereWithAggregatesInput[]
+    id?: StringWithAggregatesFilter<"RolePermission"> | string
+    roleId?: StringWithAggregatesFilter<"RolePermission"> | string
+    permissionId?: StringWithAggregatesFilter<"RolePermission"> | string
+  }
+
+  export type UserProjectRoleWhereInput = {
+    AND?: UserProjectRoleWhereInput | UserProjectRoleWhereInput[]
+    OR?: UserProjectRoleWhereInput[]
+    NOT?: UserProjectRoleWhereInput | UserProjectRoleWhereInput[]
+    id?: StringFilter<"UserProjectRole"> | string
+    userId?: StringFilter<"UserProjectRole"> | string
+    projectId?: StringFilter<"UserProjectRole"> | string
+    roleId?: StringFilter<"UserProjectRole"> | string
+    deletedAt?: DateTimeNullableFilter<"UserProjectRole"> | Date | string | null
+    createdAt?: DateTimeFilter<"UserProjectRole"> | Date | string
+    updatedAt?: DateTimeFilter<"UserProjectRole"> | Date | string
+    project?: XOR<ProjectScalarRelationFilter, ProjectWhereInput>
+    role?: XOR<RoleScalarRelationFilter, RoleWhereInput>
+    user?: XOR<UserScalarRelationFilter, UserWhereInput>
+  }
+
+  export type UserProjectRoleOrderByWithRelationInput = {
+    id?: SortOrder
+    userId?: SortOrder
+    projectId?: SortOrder
+    roleId?: SortOrder
+    deletedAt?: SortOrderInput | SortOrder
+    createdAt?: SortOrder
+    updatedAt?: SortOrder
+    project?: ProjectOrderByWithRelationInput
+    role?: RoleOrderByWithRelationInput
+    user?: UserOrderByWithRelationInput
+  }
+
+  export type UserProjectRoleWhereUniqueInput = Prisma.AtLeast<{
+    id?: string
+    userId_projectId?: UserProjectRoleUserIdProjectIdCompoundUniqueInput
+    AND?: UserProjectRoleWhereInput | UserProjectRoleWhereInput[]
+    OR?: UserProjectRoleWhereInput[]
+    NOT?: UserProjectRoleWhereInput | UserProjectRoleWhereInput[]
+    userId?: StringFilter<"UserProjectRole"> | string
+    projectId?: StringFilter<"UserProjectRole"> | string
+    roleId?: StringFilter<"UserProjectRole"> | string
+    deletedAt?: DateTimeNullableFilter<"UserProjectRole"> | Date | string | null
+    createdAt?: DateTimeFilter<"UserProjectRole"> | Date | string
+    updatedAt?: DateTimeFilter<"UserProjectRole"> | Date | string
+    project?: XOR<ProjectScalarRelationFilter, ProjectWhereInput>
+    role?: XOR<RoleScalarRelationFilter, RoleWhereInput>
+    user?: XOR<UserScalarRelationFilter, UserWhereInput>
+  }, "id" | "userId_projectId">
+
+  export type UserProjectRoleOrderByWithAggregationInput = {
+    id?: SortOrder
+    userId?: SortOrder
+    projectId?: SortOrder
+    roleId?: SortOrder
+    deletedAt?: SortOrderInput | SortOrder
+    createdAt?: SortOrder
+    updatedAt?: SortOrder
+    _count?: UserProjectRoleCountOrderByAggregateInput
+    _max?: UserProjectRoleMaxOrderByAggregateInput
+    _min?: UserProjectRoleMinOrderByAggregateInput
+  }
+
+  export type UserProjectRoleScalarWhereWithAggregatesInput = {
+    AND?: UserProjectRoleScalarWhereWithAggregatesInput | UserProjectRoleScalarWhereWithAggregatesInput[]
+    OR?: UserProjectRoleScalarWhereWithAggregatesInput[]
+    NOT?: UserProjectRoleScalarWhereWithAggregatesInput | UserProjectRoleScalarWhereWithAggregatesInput[]
+    id?: StringWithAggregatesFilter<"UserProjectRole"> | string
+    userId?: StringWithAggregatesFilter<"UserProjectRole"> | string
+    projectId?: StringWithAggregatesFilter<"UserProjectRole"> | string
+    roleId?: StringWithAggregatesFilter<"UserProjectRole"> | string
+    deletedAt?: DateTimeNullableWithAggregatesFilter<"UserProjectRole"> | Date | string | null
+    createdAt?: DateTimeWithAggregatesFilter<"UserProjectRole"> | Date | string
+    updatedAt?: DateTimeWithAggregatesFilter<"UserProjectRole"> | Date | string
+  }
+
+  export type StakeholderWhereInput = {
+    AND?: StakeholderWhereInput | StakeholderWhereInput[]
+    OR?: StakeholderWhereInput[]
+    NOT?: StakeholderWhereInput | StakeholderWhereInput[]
+    id?: StringFilter<"Stakeholder"> | string
+    tenantId?: StringFilter<"Stakeholder"> | string
+    name?: StringFilter<"Stakeholder"> | string
+    logoUrl?: StringNullableFilter<"Stakeholder"> | string | null
+    company?: StringNullableFilter<"Stakeholder"> | string | null
+    competence?: StringNullableFilter<"Stakeholder"> | string | null
+    email?: StringNullableFilter<"Stakeholder"> | string | null
+    phone?: StringNullableFilter<"Stakeholder"> | string | null
+    cep?: StringNullableFilter<"Stakeholder"> | string | null
+    logradouro?: StringNullableFilter<"Stakeholder"> | string | null
+    numero?: StringNullableFilter<"Stakeholder"> | string | null
+    complemento?: StringNullableFilter<"Stakeholder"> | string | null
+    bairro?: StringNullableFilter<"Stakeholder"> | string | null
+    cidade?: StringNullableFilter<"Stakeholder"> | string | null
+    estado?: StringNullableFilter<"Stakeholder"> | string | null
+    notes?: StringNullableFilter<"Stakeholder"> | string | null
+    isActive?: BoolFilter<"Stakeholder"> | boolean
+    createdAt?: DateTimeFilter<"Stakeholder"> | Date | string
+    updatedAt?: DateTimeFilter<"Stakeholder"> | Date | string
+    projects?: ProjectStakeholderListRelationFilter
+    tenant?: XOR<TenantScalarRelationFilter, TenantWhereInput>
+  }
+
+  export type StakeholderOrderByWithRelationInput = {
+    id?: SortOrder
+    tenantId?: SortOrder
+    name?: SortOrder
+    logoUrl?: SortOrderInput | SortOrder
+    company?: SortOrderInput | SortOrder
+    competence?: SortOrderInput | SortOrder
+    email?: SortOrderInput | SortOrder
+    phone?: SortOrderInput | SortOrder
+    cep?: SortOrderInput | SortOrder
+    logradouro?: SortOrderInput | SortOrder
+    numero?: SortOrderInput | SortOrder
+    complemento?: SortOrderInput | SortOrder
+    bairro?: SortOrderInput | SortOrder
+    cidade?: SortOrderInput | SortOrder
+    estado?: SortOrderInput | SortOrder
+    notes?: SortOrderInput | SortOrder
+    isActive?: SortOrder
+    createdAt?: SortOrder
+    updatedAt?: SortOrder
+    projects?: ProjectStakeholderOrderByRelationAggregateInput
+    tenant?: TenantOrderByWithRelationInput
+  }
+
+  export type StakeholderWhereUniqueInput = Prisma.AtLeast<{
+    id?: string
+    AND?: StakeholderWhereInput | StakeholderWhereInput[]
+    OR?: StakeholderWhereInput[]
+    NOT?: StakeholderWhereInput | StakeholderWhereInput[]
+    tenantId?: StringFilter<"Stakeholder"> | string
+    name?: StringFilter<"Stakeholder"> | string
+    logoUrl?: StringNullableFilter<"Stakeholder"> | string | null
+    company?: StringNullableFilter<"Stakeholder"> | string | null
+    competence?: StringNullableFilter<"Stakeholder"> | string | null
+    email?: StringNullableFilter<"Stakeholder"> | string | null
+    phone?: StringNullableFilter<"Stakeholder"> | string | null
+    cep?: StringNullableFilter<"Stakeholder"> | string | null
+    logradouro?: StringNullableFilter<"Stakeholder"> | string | null
+    numero?: StringNullableFilter<"Stakeholder"> | string | null
+    complemento?: StringNullableFilter<"Stakeholder"> | string | null
+    bairro?: StringNullableFilter<"Stakeholder"> | string | null
+    cidade?: StringNullableFilter<"Stakeholder"> | string | null
+    estado?: StringNullableFilter<"Stakeholder"> | string | null
+    notes?: StringNullableFilter<"Stakeholder"> | string | null
+    isActive?: BoolFilter<"Stakeholder"> | boolean
+    createdAt?: DateTimeFilter<"Stakeholder"> | Date | string
+    updatedAt?: DateTimeFilter<"Stakeholder"> | Date | string
+    projects?: ProjectStakeholderListRelationFilter
+    tenant?: XOR<TenantScalarRelationFilter, TenantWhereInput>
+  }, "id">
+
+  export type StakeholderOrderByWithAggregationInput = {
+    id?: SortOrder
+    tenantId?: SortOrder
+    name?: SortOrder
+    logoUrl?: SortOrderInput | SortOrder
+    company?: SortOrderInput | SortOrder
+    competence?: SortOrderInput | SortOrder
+    email?: SortOrderInput | SortOrder
+    phone?: SortOrderInput | SortOrder
+    cep?: SortOrderInput | SortOrder
+    logradouro?: SortOrderInput | SortOrder
+    numero?: SortOrderInput | SortOrder
+    complemento?: SortOrderInput | SortOrder
+    bairro?: SortOrderInput | SortOrder
+    cidade?: SortOrderInput | SortOrder
+    estado?: SortOrderInput | SortOrder
+    notes?: SortOrderInput | SortOrder
+    isActive?: SortOrder
+    createdAt?: SortOrder
+    updatedAt?: SortOrder
+    _count?: StakeholderCountOrderByAggregateInput
+    _max?: StakeholderMaxOrderByAggregateInput
+    _min?: StakeholderMinOrderByAggregateInput
+  }
+
+  export type StakeholderScalarWhereWithAggregatesInput = {
+    AND?: StakeholderScalarWhereWithAggregatesInput | StakeholderScalarWhereWithAggregatesInput[]
+    OR?: StakeholderScalarWhereWithAggregatesInput[]
+    NOT?: StakeholderScalarWhereWithAggregatesInput | StakeholderScalarWhereWithAggregatesInput[]
+    id?: StringWithAggregatesFilter<"Stakeholder"> | string
+    tenantId?: StringWithAggregatesFilter<"Stakeholder"> | string
+    name?: StringWithAggregatesFilter<"Stakeholder"> | string
+    logoUrl?: StringNullableWithAggregatesFilter<"Stakeholder"> | string | null
+    company?: StringNullableWithAggregatesFilter<"Stakeholder"> | string | null
+    competence?: StringNullableWithAggregatesFilter<"Stakeholder"> | string | null
+    email?: StringNullableWithAggregatesFilter<"Stakeholder"> | string | null
+    phone?: StringNullableWithAggregatesFilter<"Stakeholder"> | string | null
+    cep?: StringNullableWithAggregatesFilter<"Stakeholder"> | string | null
+    logradouro?: StringNullableWithAggregatesFilter<"Stakeholder"> | string | null
+    numero?: StringNullableWithAggregatesFilter<"Stakeholder"> | string | null
+    complemento?: StringNullableWithAggregatesFilter<"Stakeholder"> | string | null
+    bairro?: StringNullableWithAggregatesFilter<"Stakeholder"> | string | null
+    cidade?: StringNullableWithAggregatesFilter<"Stakeholder"> | string | null
+    estado?: StringNullableWithAggregatesFilter<"Stakeholder"> | string | null
+    notes?: StringNullableWithAggregatesFilter<"Stakeholder"> | string | null
+    isActive?: BoolWithAggregatesFilter<"Stakeholder"> | boolean
+    createdAt?: DateTimeWithAggregatesFilter<"Stakeholder"> | Date | string
+    updatedAt?: DateTimeWithAggregatesFilter<"Stakeholder"> | Date | string
+  }
+
+  export type ProjectStakeholderWhereInput = {
+    AND?: ProjectStakeholderWhereInput | ProjectStakeholderWhereInput[]
+    OR?: ProjectStakeholderWhereInput[]
+    NOT?: ProjectStakeholderWhereInput | ProjectStakeholderWhereInput[]
+    id?: StringFilter<"ProjectStakeholder"> | string
+    projectId?: StringFilter<"ProjectStakeholder"> | string
+    stakeholderId?: StringFilter<"ProjectStakeholder"> | string
+    createdAt?: DateTimeFilter<"ProjectStakeholder"> | Date | string
+    project?: XOR<ProjectScalarRelationFilter, ProjectWhereInput>
+    stakeholder?: XOR<StakeholderScalarRelationFilter, StakeholderWhereInput>
+  }
+
+  export type ProjectStakeholderOrderByWithRelationInput = {
+    id?: SortOrder
+    projectId?: SortOrder
+    stakeholderId?: SortOrder
+    createdAt?: SortOrder
+    project?: ProjectOrderByWithRelationInput
+    stakeholder?: StakeholderOrderByWithRelationInput
+  }
+
+  export type ProjectStakeholderWhereUniqueInput = Prisma.AtLeast<{
+    id?: string
+    projectId_stakeholderId?: ProjectStakeholderProjectIdStakeholderIdCompoundUniqueInput
+    AND?: ProjectStakeholderWhereInput | ProjectStakeholderWhereInput[]
+    OR?: ProjectStakeholderWhereInput[]
+    NOT?: ProjectStakeholderWhereInput | ProjectStakeholderWhereInput[]
+    projectId?: StringFilter<"ProjectStakeholder"> | string
+    stakeholderId?: StringFilter<"ProjectStakeholder"> | string
+    createdAt?: DateTimeFilter<"ProjectStakeholder"> | Date | string
+    project?: XOR<ProjectScalarRelationFilter, ProjectWhereInput>
+    stakeholder?: XOR<StakeholderScalarRelationFilter, StakeholderWhereInput>
+  }, "id" | "projectId_stakeholderId">
+
+  export type ProjectStakeholderOrderByWithAggregationInput = {
+    id?: SortOrder
+    projectId?: SortOrder
+    stakeholderId?: SortOrder
+    createdAt?: SortOrder
+    _count?: ProjectStakeholderCountOrderByAggregateInput
+    _max?: ProjectStakeholderMaxOrderByAggregateInput
+    _min?: ProjectStakeholderMinOrderByAggregateInput
+  }
+
+  export type ProjectStakeholderScalarWhereWithAggregatesInput = {
+    AND?: ProjectStakeholderScalarWhereWithAggregatesInput | ProjectStakeholderScalarWhereWithAggregatesInput[]
+    OR?: ProjectStakeholderScalarWhereWithAggregatesInput[]
+    NOT?: ProjectStakeholderScalarWhereWithAggregatesInput | ProjectStakeholderScalarWhereWithAggregatesInput[]
+    id?: StringWithAggregatesFilter<"ProjectStakeholder"> | string
+    projectId?: StringWithAggregatesFilter<"ProjectStakeholder"> | string
+    stakeholderId?: StringWithAggregatesFilter<"ProjectStakeholder"> | string
+    createdAt?: DateTimeWithAggregatesFilter<"ProjectStakeholder"> | Date | string
+  }
+
+  export type TenantCreateInput = {
+    id?: string
+    name: string
+    subdomain: string
+    status?: $Enums.TenantStatus
+    deletedAt?: Date | string | null
+    createdAt?: Date | string
+    updatedAt?: Date | string
+    projects?: ProjectCreateNestedManyWithoutTenantInput
+    departments?: DepartmentCreateNestedManyWithoutTenantInput
+    roles?: RoleCreateNestedManyWithoutTenantInput
+    stakeholders?: StakeholderCreateNestedManyWithoutTenantInput
+  }
+
+  export type TenantUncheckedCreateInput = {
+    id?: string
+    name: string
+    subdomain: string
+    status?: $Enums.TenantStatus
+    deletedAt?: Date | string | null
+    createdAt?: Date | string
+    updatedAt?: Date | string
+    projects?: ProjectUncheckedCreateNestedManyWithoutTenantInput
+    departments?: DepartmentUncheckedCreateNestedManyWithoutTenantInput
+    roles?: RoleUncheckedCreateNestedManyWithoutTenantInput
+    stakeholders?: StakeholderUncheckedCreateNestedManyWithoutTenantInput
+  }
+
+  export type TenantUpdateInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    name?: StringFieldUpdateOperationsInput | string
+    subdomain?: StringFieldUpdateOperationsInput | string
+    status?: EnumTenantStatusFieldUpdateOperationsInput | $Enums.TenantStatus
+    deletedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    projects?: ProjectUpdateManyWithoutTenantNestedInput
+    departments?: DepartmentUpdateManyWithoutTenantNestedInput
+    roles?: RoleUpdateManyWithoutTenantNestedInput
+    stakeholders?: StakeholderUpdateManyWithoutTenantNestedInput
+  }
+
+  export type TenantUncheckedUpdateInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    name?: StringFieldUpdateOperationsInput | string
+    subdomain?: StringFieldUpdateOperationsInput | string
+    status?: EnumTenantStatusFieldUpdateOperationsInput | $Enums.TenantStatus
+    deletedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    projects?: ProjectUncheckedUpdateManyWithoutTenantNestedInput
+    departments?: DepartmentUncheckedUpdateManyWithoutTenantNestedInput
+    roles?: RoleUncheckedUpdateManyWithoutTenantNestedInput
+    stakeholders?: StakeholderUncheckedUpdateManyWithoutTenantNestedInput
+  }
+
+  export type TenantCreateManyInput = {
+    id?: string
+    name: string
+    subdomain: string
+    status?: $Enums.TenantStatus
+    deletedAt?: Date | string | null
+    createdAt?: Date | string
+    updatedAt?: Date | string
+  }
+
+  export type TenantUpdateManyMutationInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    name?: StringFieldUpdateOperationsInput | string
+    subdomain?: StringFieldUpdateOperationsInput | string
+    status?: EnumTenantStatusFieldUpdateOperationsInput | $Enums.TenantStatus
+    deletedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
+  export type TenantUncheckedUpdateManyInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    name?: StringFieldUpdateOperationsInput | string
+    subdomain?: StringFieldUpdateOperationsInput | string
+    status?: EnumTenantStatusFieldUpdateOperationsInput | $Enums.TenantStatus
+    deletedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
+  export type UserCreateInput = {
+    id?: string
+    tenantId: string
+    name: string
+    email: string
+    role?: string
+    projects?: UserProjectCreateNestedManyWithoutUserInput
+    departments?: UserDepartmentCreateNestedManyWithoutUserInput
+    userProjectRoles?: UserProjectRoleCreateNestedManyWithoutUserInput
+  }
+
+  export type UserUncheckedCreateInput = {
+    id?: string
+    tenantId: string
+    name: string
+    email: string
+    role?: string
+    projects?: UserProjectUncheckedCreateNestedManyWithoutUserInput
+    departments?: UserDepartmentUncheckedCreateNestedManyWithoutUserInput
+    userProjectRoles?: UserProjectRoleUncheckedCreateNestedManyWithoutUserInput
+  }
+
+  export type UserUpdateInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    tenantId?: StringFieldUpdateOperationsInput | string
+    name?: StringFieldUpdateOperationsInput | string
+    email?: StringFieldUpdateOperationsInput | string
+    role?: StringFieldUpdateOperationsInput | string
+    projects?: UserProjectUpdateManyWithoutUserNestedInput
+    departments?: UserDepartmentUpdateManyWithoutUserNestedInput
+    userProjectRoles?: UserProjectRoleUpdateManyWithoutUserNestedInput
+  }
+
+  export type UserUncheckedUpdateInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    tenantId?: StringFieldUpdateOperationsInput | string
+    name?: StringFieldUpdateOperationsInput | string
+    email?: StringFieldUpdateOperationsInput | string
+    role?: StringFieldUpdateOperationsInput | string
+    projects?: UserProjectUncheckedUpdateManyWithoutUserNestedInput
+    departments?: UserDepartmentUncheckedUpdateManyWithoutUserNestedInput
+    userProjectRoles?: UserProjectRoleUncheckedUpdateManyWithoutUserNestedInput
+  }
+
+  export type UserCreateManyInput = {
+    id?: string
+    tenantId: string
+    name: string
+    email: string
+    role?: string
+  }
+
+  export type UserUpdateManyMutationInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    tenantId?: StringFieldUpdateOperationsInput | string
+    name?: StringFieldUpdateOperationsInput | string
+    email?: StringFieldUpdateOperationsInput | string
+    role?: StringFieldUpdateOperationsInput | string
+  }
+
+  export type UserUncheckedUpdateManyInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    tenantId?: StringFieldUpdateOperationsInput | string
+    name?: StringFieldUpdateOperationsInput | string
+    email?: StringFieldUpdateOperationsInput | string
+    role?: StringFieldUpdateOperationsInput | string
+  }
+
+  export type ProjectCreateInput = {
+    id?: string
+    name: string
+    description?: string | null
+    logoUrl?: string | null
+    slogan?: string | null
+    location?: string | null
+    startDate?: Date | string | null
+    endDate?: Date | string | null
+    justificativa?: string | null
+    objetivos?: string | null
+    metodologia?: string | null
+    descricaoProduto?: string | null
+    premissas?: string | null
+    restricoes?: string | null
+    limitesAutoridade?: string | null
+    semestre?: string | null
+    ano?: number | null
+    departamentos?: ProjectCreatedepartamentosInput | string[]
+    status?: $Enums.ProjectStatus
+    deletedAt?: Date | string | null
+    createdAt?: Date | string
+    updatedAt?: Date | string
+    tenant: TenantCreateNestedOneWithoutProjectsInput
+    members?: UserProjectCreateNestedManyWithoutProjectInput
+    usuariosRole?: UserProjectRoleCreateNestedManyWithoutProjectInput
+    macroFases?: ProjectMacroFaseCreateNestedManyWithoutProjectInput
+    stakeholders?: ProjectStakeholderCreateNestedManyWithoutProjectInput
+  }
+
+  export type ProjectUncheckedCreateInput = {
+    id?: string
+    tenantId: string
+    name: string
+    description?: string | null
+    logoUrl?: string | null
+    slogan?: string | null
+    location?: string | null
+    startDate?: Date | string | null
+    endDate?: Date | string | null
+    justificativa?: string | null
+    objetivos?: string | null
+    metodologia?: string | null
+    descricaoProduto?: string | null
+    premissas?: string | null
+    restricoes?: string | null
+    limitesAutoridade?: string | null
+    semestre?: string | null
+    ano?: number | null
+    departamentos?: ProjectCreatedepartamentosInput | string[]
+    status?: $Enums.ProjectStatus
+    deletedAt?: Date | string | null
+    createdAt?: Date | string
+    updatedAt?: Date | string
+    members?: UserProjectUncheckedCreateNestedManyWithoutProjectInput
+    usuariosRole?: UserProjectRoleUncheckedCreateNestedManyWithoutProjectInput
+    macroFases?: ProjectMacroFaseUncheckedCreateNestedManyWithoutProjectInput
+    stakeholders?: ProjectStakeholderUncheckedCreateNestedManyWithoutProjectInput
+  }
+
+  export type ProjectUpdateInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    name?: StringFieldUpdateOperationsInput | string
+    description?: NullableStringFieldUpdateOperationsInput | string | null
+    logoUrl?: NullableStringFieldUpdateOperationsInput | string | null
+    slogan?: NullableStringFieldUpdateOperationsInput | string | null
+    location?: NullableStringFieldUpdateOperationsInput | string | null
+    startDate?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    endDate?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    justificativa?: NullableStringFieldUpdateOperationsInput | string | null
+    objetivos?: NullableStringFieldUpdateOperationsInput | string | null
+    metodologia?: NullableStringFieldUpdateOperationsInput | string | null
+    descricaoProduto?: NullableStringFieldUpdateOperationsInput | string | null
+    premissas?: NullableStringFieldUpdateOperationsInput | string | null
+    restricoes?: NullableStringFieldUpdateOperationsInput | string | null
+    limitesAutoridade?: NullableStringFieldUpdateOperationsInput | string | null
+    semestre?: NullableStringFieldUpdateOperationsInput | string | null
+    ano?: NullableIntFieldUpdateOperationsInput | number | null
+    departamentos?: ProjectUpdatedepartamentosInput | string[]
+    status?: EnumProjectStatusFieldUpdateOperationsInput | $Enums.ProjectStatus
+    deletedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    tenant?: TenantUpdateOneRequiredWithoutProjectsNestedInput
+    members?: UserProjectUpdateManyWithoutProjectNestedInput
+    usuariosRole?: UserProjectRoleUpdateManyWithoutProjectNestedInput
+    macroFases?: ProjectMacroFaseUpdateManyWithoutProjectNestedInput
+    stakeholders?: ProjectStakeholderUpdateManyWithoutProjectNestedInput
+  }
+
+  export type ProjectUncheckedUpdateInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    tenantId?: StringFieldUpdateOperationsInput | string
+    name?: StringFieldUpdateOperationsInput | string
+    description?: NullableStringFieldUpdateOperationsInput | string | null
+    logoUrl?: NullableStringFieldUpdateOperationsInput | string | null
+    slogan?: NullableStringFieldUpdateOperationsInput | string | null
+    location?: NullableStringFieldUpdateOperationsInput | string | null
+    startDate?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    endDate?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    justificativa?: NullableStringFieldUpdateOperationsInput | string | null
+    objetivos?: NullableStringFieldUpdateOperationsInput | string | null
+    metodologia?: NullableStringFieldUpdateOperationsInput | string | null
+    descricaoProduto?: NullableStringFieldUpdateOperationsInput | string | null
+    premissas?: NullableStringFieldUpdateOperationsInput | string | null
+    restricoes?: NullableStringFieldUpdateOperationsInput | string | null
+    limitesAutoridade?: NullableStringFieldUpdateOperationsInput | string | null
+    semestre?: NullableStringFieldUpdateOperationsInput | string | null
+    ano?: NullableIntFieldUpdateOperationsInput | number | null
+    departamentos?: ProjectUpdatedepartamentosInput | string[]
+    status?: EnumProjectStatusFieldUpdateOperationsInput | $Enums.ProjectStatus
+    deletedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    members?: UserProjectUncheckedUpdateManyWithoutProjectNestedInput
+    usuariosRole?: UserProjectRoleUncheckedUpdateManyWithoutProjectNestedInput
+    macroFases?: ProjectMacroFaseUncheckedUpdateManyWithoutProjectNestedInput
+    stakeholders?: ProjectStakeholderUncheckedUpdateManyWithoutProjectNestedInput
+  }
+
+  export type ProjectCreateManyInput = {
+    id?: string
+    tenantId: string
+    name: string
+    description?: string | null
+    logoUrl?: string | null
+    slogan?: string | null
+    location?: string | null
+    startDate?: Date | string | null
+    endDate?: Date | string | null
+    justificativa?: string | null
+    objetivos?: string | null
+    metodologia?: string | null
+    descricaoProduto?: string | null
+    premissas?: string | null
+    restricoes?: string | null
+    limitesAutoridade?: string | null
+    semestre?: string | null
+    ano?: number | null
+    departamentos?: ProjectCreatedepartamentosInput | string[]
+    status?: $Enums.ProjectStatus
+    deletedAt?: Date | string | null
+    createdAt?: Date | string
+    updatedAt?: Date | string
+  }
+
+  export type ProjectUpdateManyMutationInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    name?: StringFieldUpdateOperationsInput | string
+    description?: NullableStringFieldUpdateOperationsInput | string | null
+    logoUrl?: NullableStringFieldUpdateOperationsInput | string | null
+    slogan?: NullableStringFieldUpdateOperationsInput | string | null
+    location?: NullableStringFieldUpdateOperationsInput | string | null
+    startDate?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    endDate?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    justificativa?: NullableStringFieldUpdateOperationsInput | string | null
+    objetivos?: NullableStringFieldUpdateOperationsInput | string | null
+    metodologia?: NullableStringFieldUpdateOperationsInput | string | null
+    descricaoProduto?: NullableStringFieldUpdateOperationsInput | string | null
+    premissas?: NullableStringFieldUpdateOperationsInput | string | null
+    restricoes?: NullableStringFieldUpdateOperationsInput | string | null
+    limitesAutoridade?: NullableStringFieldUpdateOperationsInput | string | null
+    semestre?: NullableStringFieldUpdateOperationsInput | string | null
+    ano?: NullableIntFieldUpdateOperationsInput | number | null
+    departamentos?: ProjectUpdatedepartamentosInput | string[]
+    status?: EnumProjectStatusFieldUpdateOperationsInput | $Enums.ProjectStatus
+    deletedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
+  export type ProjectUncheckedUpdateManyInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    tenantId?: StringFieldUpdateOperationsInput | string
+    name?: StringFieldUpdateOperationsInput | string
+    description?: NullableStringFieldUpdateOperationsInput | string | null
+    logoUrl?: NullableStringFieldUpdateOperationsInput | string | null
+    slogan?: NullableStringFieldUpdateOperationsInput | string | null
+    location?: NullableStringFieldUpdateOperationsInput | string | null
+    startDate?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    endDate?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    justificativa?: NullableStringFieldUpdateOperationsInput | string | null
+    objetivos?: NullableStringFieldUpdateOperationsInput | string | null
+    metodologia?: NullableStringFieldUpdateOperationsInput | string | null
+    descricaoProduto?: NullableStringFieldUpdateOperationsInput | string | null
+    premissas?: NullableStringFieldUpdateOperationsInput | string | null
+    restricoes?: NullableStringFieldUpdateOperationsInput | string | null
+    limitesAutoridade?: NullableStringFieldUpdateOperationsInput | string | null
+    semestre?: NullableStringFieldUpdateOperationsInput | string | null
+    ano?: NullableIntFieldUpdateOperationsInput | number | null
+    departamentos?: ProjectUpdatedepartamentosInput | string[]
+    status?: EnumProjectStatusFieldUpdateOperationsInput | $Enums.ProjectStatus
+    deletedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
+  export type ProjectMacroFaseCreateInput = {
+    id?: string
+    fase: string
+    dataLimite?: string | null
+    custo?: string | null
+    createdAt?: Date | string
+    updatedAt?: Date | string
+    project: ProjectCreateNestedOneWithoutMacroFasesInput
+  }
+
+  export type ProjectMacroFaseUncheckedCreateInput = {
+    id?: string
+    projectId: string
+    fase: string
+    dataLimite?: string | null
+    custo?: string | null
+    createdAt?: Date | string
+    updatedAt?: Date | string
+  }
+
+  export type ProjectMacroFaseUpdateInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    fase?: StringFieldUpdateOperationsInput | string
+    dataLimite?: NullableStringFieldUpdateOperationsInput | string | null
+    custo?: NullableStringFieldUpdateOperationsInput | string | null
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    project?: ProjectUpdateOneRequiredWithoutMacroFasesNestedInput
+  }
+
+  export type ProjectMacroFaseUncheckedUpdateInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    projectId?: StringFieldUpdateOperationsInput | string
+    fase?: StringFieldUpdateOperationsInput | string
+    dataLimite?: NullableStringFieldUpdateOperationsInput | string | null
+    custo?: NullableStringFieldUpdateOperationsInput | string | null
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
+  export type ProjectMacroFaseCreateManyInput = {
+    id?: string
+    projectId: string
+    fase: string
+    dataLimite?: string | null
+    custo?: string | null
+    createdAt?: Date | string
+    updatedAt?: Date | string
+  }
+
+  export type ProjectMacroFaseUpdateManyMutationInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    fase?: StringFieldUpdateOperationsInput | string
+    dataLimite?: NullableStringFieldUpdateOperationsInput | string | null
+    custo?: NullableStringFieldUpdateOperationsInput | string | null
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
+  export type ProjectMacroFaseUncheckedUpdateManyInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    projectId?: StringFieldUpdateOperationsInput | string
+    fase?: StringFieldUpdateOperationsInput | string
+    dataLimite?: NullableStringFieldUpdateOperationsInput | string | null
+    custo?: NullableStringFieldUpdateOperationsInput | string | null
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
+  export type DepartmentCreateInput = {
+    id?: string
+    name: string
+    description?: string | null
+    active?: boolean
+    hourlyRate?: number | null
+    deletedAt?: Date | string | null
+    createdAt?: Date | string
+    updatedAt?: Date | string
+    tenant: TenantCreateNestedOneWithoutDepartmentsInput
+    users?: UserDepartmentCreateNestedManyWithoutDepartmentInput
+    userProjects?: UserProjectCreateNestedManyWithoutDepartmentInput
+  }
+
+  export type DepartmentUncheckedCreateInput = {
+    id?: string
+    tenantId: string
+    name: string
+    description?: string | null
+    active?: boolean
+    hourlyRate?: number | null
+    deletedAt?: Date | string | null
+    createdAt?: Date | string
+    updatedAt?: Date | string
+    users?: UserDepartmentUncheckedCreateNestedManyWithoutDepartmentInput
+    userProjects?: UserProjectUncheckedCreateNestedManyWithoutDepartmentInput
+  }
+
+  export type DepartmentUpdateInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    name?: StringFieldUpdateOperationsInput | string
+    description?: NullableStringFieldUpdateOperationsInput | string | null
+    active?: BoolFieldUpdateOperationsInput | boolean
+    hourlyRate?: NullableFloatFieldUpdateOperationsInput | number | null
+    deletedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    tenant?: TenantUpdateOneRequiredWithoutDepartmentsNestedInput
+    users?: UserDepartmentUpdateManyWithoutDepartmentNestedInput
+    userProjects?: UserProjectUpdateManyWithoutDepartmentNestedInput
+  }
+
+  export type DepartmentUncheckedUpdateInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    tenantId?: StringFieldUpdateOperationsInput | string
+    name?: StringFieldUpdateOperationsInput | string
+    description?: NullableStringFieldUpdateOperationsInput | string | null
+    active?: BoolFieldUpdateOperationsInput | boolean
+    hourlyRate?: NullableFloatFieldUpdateOperationsInput | number | null
+    deletedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    users?: UserDepartmentUncheckedUpdateManyWithoutDepartmentNestedInput
+    userProjects?: UserProjectUncheckedUpdateManyWithoutDepartmentNestedInput
+  }
+
+  export type DepartmentCreateManyInput = {
+    id?: string
+    tenantId: string
+    name: string
+    description?: string | null
+    active?: boolean
+    hourlyRate?: number | null
+    deletedAt?: Date | string | null
+    createdAt?: Date | string
+    updatedAt?: Date | string
+  }
+
+  export type DepartmentUpdateManyMutationInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    name?: StringFieldUpdateOperationsInput | string
+    description?: NullableStringFieldUpdateOperationsInput | string | null
+    active?: BoolFieldUpdateOperationsInput | boolean
+    hourlyRate?: NullableFloatFieldUpdateOperationsInput | number | null
+    deletedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
+  export type DepartmentUncheckedUpdateManyInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    tenantId?: StringFieldUpdateOperationsInput | string
+    name?: StringFieldUpdateOperationsInput | string
+    description?: NullableStringFieldUpdateOperationsInput | string | null
+    active?: BoolFieldUpdateOperationsInput | boolean
+    hourlyRate?: NullableFloatFieldUpdateOperationsInput | number | null
+    deletedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
+  export type UserDepartmentCreateInput = {
+    id?: string
+    user: UserCreateNestedOneWithoutDepartmentsInput
+    department: DepartmentCreateNestedOneWithoutUsersInput
+  }
+
+  export type UserDepartmentUncheckedCreateInput = {
+    id?: string
+    userId: string
+    departmentId: string
+  }
+
+  export type UserDepartmentUpdateInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    user?: UserUpdateOneRequiredWithoutDepartmentsNestedInput
+    department?: DepartmentUpdateOneRequiredWithoutUsersNestedInput
+  }
+
+  export type UserDepartmentUncheckedUpdateInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    userId?: StringFieldUpdateOperationsInput | string
+    departmentId?: StringFieldUpdateOperationsInput | string
+  }
+
+  export type UserDepartmentCreateManyInput = {
+    id?: string
+    userId: string
+    departmentId: string
+  }
+
+  export type UserDepartmentUpdateManyMutationInput = {
+    id?: StringFieldUpdateOperationsInput | string
+  }
+
+  export type UserDepartmentUncheckedUpdateManyInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    userId?: StringFieldUpdateOperationsInput | string
+    departmentId?: StringFieldUpdateOperationsInput | string
+  }
+
+  export type UserProjectCreateInput = {
+    id?: string
+    active?: boolean
+    role?: string | null
+    hourlyRate?: number | null
+    startDate?: Date | string
+    endDate?: Date | string | null
+    user: UserCreateNestedOneWithoutProjectsInput
+    project: ProjectCreateNestedOneWithoutMembersInput
+    department?: DepartmentCreateNestedOneWithoutUserProjectsInput
+  }
+
+  export type UserProjectUncheckedCreateInput = {
+    id?: string
+    userId: string
+    projectId: string
+    active?: boolean
+    role?: string | null
+    departmentId?: string | null
+    hourlyRate?: number | null
+    startDate?: Date | string
+    endDate?: Date | string | null
+  }
+
+  export type UserProjectUpdateInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    active?: BoolFieldUpdateOperationsInput | boolean
+    role?: NullableStringFieldUpdateOperationsInput | string | null
+    hourlyRate?: NullableFloatFieldUpdateOperationsInput | number | null
+    startDate?: DateTimeFieldUpdateOperationsInput | Date | string
+    endDate?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    user?: UserUpdateOneRequiredWithoutProjectsNestedInput
+    project?: ProjectUpdateOneRequiredWithoutMembersNestedInput
+    department?: DepartmentUpdateOneWithoutUserProjectsNestedInput
+  }
+
+  export type UserProjectUncheckedUpdateInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    userId?: StringFieldUpdateOperationsInput | string
+    projectId?: StringFieldUpdateOperationsInput | string
+    active?: BoolFieldUpdateOperationsInput | boolean
+    role?: NullableStringFieldUpdateOperationsInput | string | null
+    departmentId?: NullableStringFieldUpdateOperationsInput | string | null
+    hourlyRate?: NullableFloatFieldUpdateOperationsInput | number | null
+    startDate?: DateTimeFieldUpdateOperationsInput | Date | string
+    endDate?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  }
+
+  export type UserProjectCreateManyInput = {
+    id?: string
+    userId: string
+    projectId: string
+    active?: boolean
+    role?: string | null
+    departmentId?: string | null
+    hourlyRate?: number | null
+    startDate?: Date | string
+    endDate?: Date | string | null
+  }
+
+  export type UserProjectUpdateManyMutationInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    active?: BoolFieldUpdateOperationsInput | boolean
+    role?: NullableStringFieldUpdateOperationsInput | string | null
+    hourlyRate?: NullableFloatFieldUpdateOperationsInput | number | null
+    startDate?: DateTimeFieldUpdateOperationsInput | Date | string
+    endDate?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  }
+
+  export type UserProjectUncheckedUpdateManyInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    userId?: StringFieldUpdateOperationsInput | string
+    projectId?: StringFieldUpdateOperationsInput | string
+    active?: BoolFieldUpdateOperationsInput | boolean
+    role?: NullableStringFieldUpdateOperationsInput | string | null
+    departmentId?: NullableStringFieldUpdateOperationsInput | string | null
+    hourlyRate?: NullableFloatFieldUpdateOperationsInput | number | null
+    startDate?: DateTimeFieldUpdateOperationsInput | Date | string
+    endDate?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  }
+
+  export type RoleCreateInput = {
+    id?: string
+    name: string
+    nameKey: string
+    scope: $Enums.RoleScope
+    description?: string | null
+    deletedAt?: Date | string | null
+    createdAt?: Date | string
+    updatedAt?: Date | string
+    tenant: TenantCreateNestedOneWithoutRolesInput
+    permissions?: RolePermissionCreateNestedManyWithoutRoleInput
+    userProjectRoles?: UserProjectRoleCreateNestedManyWithoutRoleInput
+  }
+
+  export type RoleUncheckedCreateInput = {
+    id?: string
+    tenantId: string
+    name: string
+    nameKey: string
+    scope: $Enums.RoleScope
+    description?: string | null
+    deletedAt?: Date | string | null
+    createdAt?: Date | string
+    updatedAt?: Date | string
+    permissions?: RolePermissionUncheckedCreateNestedManyWithoutRoleInput
+    userProjectRoles?: UserProjectRoleUncheckedCreateNestedManyWithoutRoleInput
+  }
+
+  export type RoleUpdateInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    name?: StringFieldUpdateOperationsInput | string
+    nameKey?: StringFieldUpdateOperationsInput | string
+    scope?: EnumRoleScopeFieldUpdateOperationsInput | $Enums.RoleScope
+    description?: NullableStringFieldUpdateOperationsInput | string | null
+    deletedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    tenant?: TenantUpdateOneRequiredWithoutRolesNestedInput
+    permissions?: RolePermissionUpdateManyWithoutRoleNestedInput
+    userProjectRoles?: UserProjectRoleUpdateManyWithoutRoleNestedInput
+  }
+
+  export type RoleUncheckedUpdateInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    tenantId?: StringFieldUpdateOperationsInput | string
+    name?: StringFieldUpdateOperationsInput | string
+    nameKey?: StringFieldUpdateOperationsInput | string
+    scope?: EnumRoleScopeFieldUpdateOperationsInput | $Enums.RoleScope
+    description?: NullableStringFieldUpdateOperationsInput | string | null
+    deletedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    permissions?: RolePermissionUncheckedUpdateManyWithoutRoleNestedInput
+    userProjectRoles?: UserProjectRoleUncheckedUpdateManyWithoutRoleNestedInput
+  }
+
+  export type RoleCreateManyInput = {
+    id?: string
+    tenantId: string
+    name: string
+    nameKey: string
+    scope: $Enums.RoleScope
+    description?: string | null
+    deletedAt?: Date | string | null
+    createdAt?: Date | string
+    updatedAt?: Date | string
+  }
+
+  export type RoleUpdateManyMutationInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    name?: StringFieldUpdateOperationsInput | string
+    nameKey?: StringFieldUpdateOperationsInput | string
+    scope?: EnumRoleScopeFieldUpdateOperationsInput | $Enums.RoleScope
+    description?: NullableStringFieldUpdateOperationsInput | string | null
+    deletedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
+  export type RoleUncheckedUpdateManyInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    tenantId?: StringFieldUpdateOperationsInput | string
+    name?: StringFieldUpdateOperationsInput | string
+    nameKey?: StringFieldUpdateOperationsInput | string
+    scope?: EnumRoleScopeFieldUpdateOperationsInput | $Enums.RoleScope
+    description?: NullableStringFieldUpdateOperationsInput | string | null
+    deletedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
+  export type PermissionCreateInput = {
+    id?: string
+    name: string
+    description?: string | null
+    resource: string
+    action: string
+    deletedAt?: Date | string | null
+    createdAt?: Date | string
+    updatedAt?: Date | string
+    roles?: RolePermissionCreateNestedManyWithoutPermissionInput
+  }
+
+  export type PermissionUncheckedCreateInput = {
+    id?: string
+    name: string
+    description?: string | null
+    resource: string
+    action: string
+    deletedAt?: Date | string | null
+    createdAt?: Date | string
+    updatedAt?: Date | string
+    roles?: RolePermissionUncheckedCreateNestedManyWithoutPermissionInput
+  }
+
+  export type PermissionUpdateInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    name?: StringFieldUpdateOperationsInput | string
+    description?: NullableStringFieldUpdateOperationsInput | string | null
+    resource?: StringFieldUpdateOperationsInput | string
+    action?: StringFieldUpdateOperationsInput | string
+    deletedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    roles?: RolePermissionUpdateManyWithoutPermissionNestedInput
+  }
+
+  export type PermissionUncheckedUpdateInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    name?: StringFieldUpdateOperationsInput | string
+    description?: NullableStringFieldUpdateOperationsInput | string | null
+    resource?: StringFieldUpdateOperationsInput | string
+    action?: StringFieldUpdateOperationsInput | string
+    deletedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    roles?: RolePermissionUncheckedUpdateManyWithoutPermissionNestedInput
+  }
+
+  export type PermissionCreateManyInput = {
+    id?: string
+    name: string
+    description?: string | null
+    resource: string
+    action: string
+    deletedAt?: Date | string | null
+    createdAt?: Date | string
+    updatedAt?: Date | string
+  }
+
+  export type PermissionUpdateManyMutationInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    name?: StringFieldUpdateOperationsInput | string
+    description?: NullableStringFieldUpdateOperationsInput | string | null
+    resource?: StringFieldUpdateOperationsInput | string
+    action?: StringFieldUpdateOperationsInput | string
+    deletedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
+  export type PermissionUncheckedUpdateManyInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    name?: StringFieldUpdateOperationsInput | string
+    description?: NullableStringFieldUpdateOperationsInput | string | null
+    resource?: StringFieldUpdateOperationsInput | string
+    action?: StringFieldUpdateOperationsInput | string
+    deletedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
+  export type RolePermissionCreateInput = {
+    id?: string
+    role: RoleCreateNestedOneWithoutPermissionsInput
+    permission: PermissionCreateNestedOneWithoutRolesInput
+  }
+
+  export type RolePermissionUncheckedCreateInput = {
+    id?: string
+    roleId: string
+    permissionId: string
+  }
+
+  export type RolePermissionUpdateInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    role?: RoleUpdateOneRequiredWithoutPermissionsNestedInput
+    permission?: PermissionUpdateOneRequiredWithoutRolesNestedInput
+  }
+
+  export type RolePermissionUncheckedUpdateInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    roleId?: StringFieldUpdateOperationsInput | string
+    permissionId?: StringFieldUpdateOperationsInput | string
+  }
+
+  export type RolePermissionCreateManyInput = {
+    id?: string
+    roleId: string
+    permissionId: string
+  }
+
+  export type RolePermissionUpdateManyMutationInput = {
+    id?: StringFieldUpdateOperationsInput | string
+  }
+
+  export type RolePermissionUncheckedUpdateManyInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    roleId?: StringFieldUpdateOperationsInput | string
+    permissionId?: StringFieldUpdateOperationsInput | string
+  }
+
+  export type UserProjectRoleCreateInput = {
+    id?: string
+    deletedAt?: Date | string | null
+    createdAt?: Date | string
+    updatedAt?: Date | string
+    project: ProjectCreateNestedOneWithoutUsuariosRoleInput
+    role: RoleCreateNestedOneWithoutUserProjectRolesInput
+    user: UserCreateNestedOneWithoutUserProjectRolesInput
+  }
+
+  export type UserProjectRoleUncheckedCreateInput = {
+    id?: string
+    userId: string
+    projectId: string
+    roleId: string
+    deletedAt?: Date | string | null
+    createdAt?: Date | string
+    updatedAt?: Date | string
+  }
+
+  export type UserProjectRoleUpdateInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    deletedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    project?: ProjectUpdateOneRequiredWithoutUsuariosRoleNestedInput
+    role?: RoleUpdateOneRequiredWithoutUserProjectRolesNestedInput
+    user?: UserUpdateOneRequiredWithoutUserProjectRolesNestedInput
+  }
+
+  export type UserProjectRoleUncheckedUpdateInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    userId?: StringFieldUpdateOperationsInput | string
+    projectId?: StringFieldUpdateOperationsInput | string
+    roleId?: StringFieldUpdateOperationsInput | string
+    deletedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
+  export type UserProjectRoleCreateManyInput = {
+    id?: string
+    userId: string
+    projectId: string
+    roleId: string
+    deletedAt?: Date | string | null
+    createdAt?: Date | string
+    updatedAt?: Date | string
+  }
+
+  export type UserProjectRoleUpdateManyMutationInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    deletedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
+  export type UserProjectRoleUncheckedUpdateManyInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    userId?: StringFieldUpdateOperationsInput | string
+    projectId?: StringFieldUpdateOperationsInput | string
+    roleId?: StringFieldUpdateOperationsInput | string
+    deletedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
+  export type StakeholderCreateInput = {
+    id?: string
+    name: string
+    logoUrl?: string | null
+    company?: string | null
+    competence?: string | null
+    email?: string | null
+    phone?: string | null
+    cep?: string | null
+    logradouro?: string | null
+    numero?: string | null
+    complemento?: string | null
+    bairro?: string | null
+    cidade?: string | null
+    estado?: string | null
+    notes?: string | null
+    isActive?: boolean
+    createdAt?: Date | string
+    updatedAt?: Date | string
+    projects?: ProjectStakeholderCreateNestedManyWithoutStakeholderInput
+    tenant: TenantCreateNestedOneWithoutStakeholdersInput
+  }
+
+  export type StakeholderUncheckedCreateInput = {
+    id?: string
+    tenantId: string
+    name: string
+    logoUrl?: string | null
+    company?: string | null
+    competence?: string | null
+    email?: string | null
+    phone?: string | null
+    cep?: string | null
+    logradouro?: string | null
+    numero?: string | null
+    complemento?: string | null
+    bairro?: string | null
+    cidade?: string | null
+    estado?: string | null
+    notes?: string | null
+    isActive?: boolean
+    createdAt?: Date | string
+    updatedAt?: Date | string
+    projects?: ProjectStakeholderUncheckedCreateNestedManyWithoutStakeholderInput
+  }
+
+  export type StakeholderUpdateInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    name?: StringFieldUpdateOperationsInput | string
+    logoUrl?: NullableStringFieldUpdateOperationsInput | string | null
+    company?: NullableStringFieldUpdateOperationsInput | string | null
+    competence?: NullableStringFieldUpdateOperationsInput | string | null
+    email?: NullableStringFieldUpdateOperationsInput | string | null
+    phone?: NullableStringFieldUpdateOperationsInput | string | null
+    cep?: NullableStringFieldUpdateOperationsInput | string | null
+    logradouro?: NullableStringFieldUpdateOperationsInput | string | null
+    numero?: NullableStringFieldUpdateOperationsInput | string | null
+    complemento?: NullableStringFieldUpdateOperationsInput | string | null
+    bairro?: NullableStringFieldUpdateOperationsInput | string | null
+    cidade?: NullableStringFieldUpdateOperationsInput | string | null
+    estado?: NullableStringFieldUpdateOperationsInput | string | null
+    notes?: NullableStringFieldUpdateOperationsInput | string | null
+    isActive?: BoolFieldUpdateOperationsInput | boolean
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    projects?: ProjectStakeholderUpdateManyWithoutStakeholderNestedInput
+    tenant?: TenantUpdateOneRequiredWithoutStakeholdersNestedInput
+  }
+
+  export type StakeholderUncheckedUpdateInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    tenantId?: StringFieldUpdateOperationsInput | string
+    name?: StringFieldUpdateOperationsInput | string
+    logoUrl?: NullableStringFieldUpdateOperationsInput | string | null
+    company?: NullableStringFieldUpdateOperationsInput | string | null
+    competence?: NullableStringFieldUpdateOperationsInput | string | null
+    email?: NullableStringFieldUpdateOperationsInput | string | null
+    phone?: NullableStringFieldUpdateOperationsInput | string | null
+    cep?: NullableStringFieldUpdateOperationsInput | string | null
+    logradouro?: NullableStringFieldUpdateOperationsInput | string | null
+    numero?: NullableStringFieldUpdateOperationsInput | string | null
+    complemento?: NullableStringFieldUpdateOperationsInput | string | null
+    bairro?: NullableStringFieldUpdateOperationsInput | string | null
+    cidade?: NullableStringFieldUpdateOperationsInput | string | null
+    estado?: NullableStringFieldUpdateOperationsInput | string | null
+    notes?: NullableStringFieldUpdateOperationsInput | string | null
+    isActive?: BoolFieldUpdateOperationsInput | boolean
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    projects?: ProjectStakeholderUncheckedUpdateManyWithoutStakeholderNestedInput
+  }
+
+  export type StakeholderCreateManyInput = {
+    id?: string
+    tenantId: string
+    name: string
+    logoUrl?: string | null
+    company?: string | null
+    competence?: string | null
+    email?: string | null
+    phone?: string | null
+    cep?: string | null
+    logradouro?: string | null
+    numero?: string | null
+    complemento?: string | null
+    bairro?: string | null
+    cidade?: string | null
+    estado?: string | null
+    notes?: string | null
+    isActive?: boolean
+    createdAt?: Date | string
+    updatedAt?: Date | string
+  }
+
+  export type StakeholderUpdateManyMutationInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    name?: StringFieldUpdateOperationsInput | string
+    logoUrl?: NullableStringFieldUpdateOperationsInput | string | null
+    company?: NullableStringFieldUpdateOperationsInput | string | null
+    competence?: NullableStringFieldUpdateOperationsInput | string | null
+    email?: NullableStringFieldUpdateOperationsInput | string | null
+    phone?: NullableStringFieldUpdateOperationsInput | string | null
+    cep?: NullableStringFieldUpdateOperationsInput | string | null
+    logradouro?: NullableStringFieldUpdateOperationsInput | string | null
+    numero?: NullableStringFieldUpdateOperationsInput | string | null
+    complemento?: NullableStringFieldUpdateOperationsInput | string | null
+    bairro?: NullableStringFieldUpdateOperationsInput | string | null
+    cidade?: NullableStringFieldUpdateOperationsInput | string | null
+    estado?: NullableStringFieldUpdateOperationsInput | string | null
+    notes?: NullableStringFieldUpdateOperationsInput | string | null
+    isActive?: BoolFieldUpdateOperationsInput | boolean
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
+  export type StakeholderUncheckedUpdateManyInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    tenantId?: StringFieldUpdateOperationsInput | string
+    name?: StringFieldUpdateOperationsInput | string
+    logoUrl?: NullableStringFieldUpdateOperationsInput | string | null
+    company?: NullableStringFieldUpdateOperationsInput | string | null
+    competence?: NullableStringFieldUpdateOperationsInput | string | null
+    email?: NullableStringFieldUpdateOperationsInput | string | null
+    phone?: NullableStringFieldUpdateOperationsInput | string | null
+    cep?: NullableStringFieldUpdateOperationsInput | string | null
+    logradouro?: NullableStringFieldUpdateOperationsInput | string | null
+    numero?: NullableStringFieldUpdateOperationsInput | string | null
+    complemento?: NullableStringFieldUpdateOperationsInput | string | null
+    bairro?: NullableStringFieldUpdateOperationsInput | string | null
+    cidade?: NullableStringFieldUpdateOperationsInput | string | null
+    estado?: NullableStringFieldUpdateOperationsInput | string | null
+    notes?: NullableStringFieldUpdateOperationsInput | string | null
+    isActive?: BoolFieldUpdateOperationsInput | boolean
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
+  export type ProjectStakeholderCreateInput = {
+    id?: string
+    createdAt?: Date | string
+    project: ProjectCreateNestedOneWithoutStakeholdersInput
+    stakeholder: StakeholderCreateNestedOneWithoutProjectsInput
+  }
+
+  export type ProjectStakeholderUncheckedCreateInput = {
+    id?: string
+    projectId: string
+    stakeholderId: string
+    createdAt?: Date | string
+  }
+
+  export type ProjectStakeholderUpdateInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    project?: ProjectUpdateOneRequiredWithoutStakeholdersNestedInput
+    stakeholder?: StakeholderUpdateOneRequiredWithoutProjectsNestedInput
+  }
+
+  export type ProjectStakeholderUncheckedUpdateInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    projectId?: StringFieldUpdateOperationsInput | string
+    stakeholderId?: StringFieldUpdateOperationsInput | string
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
+  export type ProjectStakeholderCreateManyInput = {
+    id?: string
+    projectId: string
+    stakeholderId: string
+    createdAt?: Date | string
+  }
+
+  export type ProjectStakeholderUpdateManyMutationInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
+  export type ProjectStakeholderUncheckedUpdateManyInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    projectId?: StringFieldUpdateOperationsInput | string
+    stakeholderId?: StringFieldUpdateOperationsInput | string
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
+  export type StringFilter<$PrismaModel = never> = {
+    equals?: string | StringFieldRefInput<$PrismaModel>
+    in?: string[] | ListStringFieldRefInput<$PrismaModel>
+    notIn?: string[] | ListStringFieldRefInput<$PrismaModel>
+    lt?: string | StringFieldRefInput<$PrismaModel>
+    lte?: string | StringFieldRefInput<$PrismaModel>
+    gt?: string | StringFieldRefInput<$PrismaModel>
+    gte?: string | StringFieldRefInput<$PrismaModel>
+    contains?: string | StringFieldRefInput<$PrismaModel>
+    startsWith?: string | StringFieldRefInput<$PrismaModel>
+    endsWith?: string | StringFieldRefInput<$PrismaModel>
+    mode?: QueryMode
+    not?: NestedStringFilter<$PrismaModel> | string
+  }
+
+  export type EnumTenantStatusFilter<$PrismaModel = never> = {
+    equals?: $Enums.TenantStatus | EnumTenantStatusFieldRefInput<$PrismaModel>
+    in?: $Enums.TenantStatus[] | ListEnumTenantStatusFieldRefInput<$PrismaModel>
+    notIn?: $Enums.TenantStatus[] | ListEnumTenantStatusFieldRefInput<$PrismaModel>
+    not?: NestedEnumTenantStatusFilter<$PrismaModel> | $Enums.TenantStatus
+  }
+
+  export type DateTimeNullableFilter<$PrismaModel = never> = {
+    equals?: Date | string | DateTimeFieldRefInput<$PrismaModel> | null
+    in?: Date[] | string[] | ListDateTimeFieldRefInput<$PrismaModel> | null
+    notIn?: Date[] | string[] | ListDateTimeFieldRefInput<$PrismaModel> | null
+    lt?: Date | string | DateTimeFieldRefInput<$PrismaModel>
+    lte?: Date | string | DateTimeFieldRefInput<$PrismaModel>
+    gt?: Date | string | DateTimeFieldRefInput<$PrismaModel>
+    gte?: Date | string | DateTimeFieldRefInput<$PrismaModel>
+    not?: NestedDateTimeNullableFilter<$PrismaModel> | Date | string | null
+  }
+
+  export type DateTimeFilter<$PrismaModel = never> = {
+    equals?: Date | string | DateTimeFieldRefInput<$PrismaModel>
+    in?: Date[] | string[] | ListDateTimeFieldRefInput<$PrismaModel>
+    notIn?: Date[] | string[] | ListDateTimeFieldRefInput<$PrismaModel>
+    lt?: Date | string | DateTimeFieldRefInput<$PrismaModel>
+    lte?: Date | string | DateTimeFieldRefInput<$PrismaModel>
+    gt?: Date | string | DateTimeFieldRefInput<$PrismaModel>
+    gte?: Date | string | DateTimeFieldRefInput<$PrismaModel>
+    not?: NestedDateTimeFilter<$PrismaModel> | Date | string
+  }
+
+  export type ProjectListRelationFilter = {
+    every?: ProjectWhereInput
+    some?: ProjectWhereInput
+    none?: ProjectWhereInput
+  }
+
+  export type DepartmentListRelationFilter = {
+    every?: DepartmentWhereInput
+    some?: DepartmentWhereInput
+    none?: DepartmentWhereInput
+  }
+
+  export type RoleListRelationFilter = {
+    every?: RoleWhereInput
+    some?: RoleWhereInput
+    none?: RoleWhereInput
+  }
+
+  export type StakeholderListRelationFilter = {
+    every?: StakeholderWhereInput
+    some?: StakeholderWhereInput
+    none?: StakeholderWhereInput
+  }
+
+  export type SortOrderInput = {
+    sort: SortOrder
+    nulls?: NullsOrder
+  }
+
+  export type ProjectOrderByRelationAggregateInput = {
+    _count?: SortOrder
+  }
+
+  export type DepartmentOrderByRelationAggregateInput = {
+    _count?: SortOrder
+  }
+
+  export type RoleOrderByRelationAggregateInput = {
+    _count?: SortOrder
+  }
+
+  export type StakeholderOrderByRelationAggregateInput = {
+    _count?: SortOrder
+  }
+
+  export type TenantCountOrderByAggregateInput = {
+    id?: SortOrder
+    name?: SortOrder
+    subdomain?: SortOrder
+    status?: SortOrder
+    deletedAt?: SortOrder
+    createdAt?: SortOrder
+    updatedAt?: SortOrder
+  }
+
+  export type TenantMaxOrderByAggregateInput = {
+    id?: SortOrder
+    name?: SortOrder
+    subdomain?: SortOrder
+    status?: SortOrder
+    deletedAt?: SortOrder
+    createdAt?: SortOrder
+    updatedAt?: SortOrder
+  }
+
+  export type TenantMinOrderByAggregateInput = {
+    id?: SortOrder
+    name?: SortOrder
+    subdomain?: SortOrder
+    status?: SortOrder
+    deletedAt?: SortOrder
+    createdAt?: SortOrder
+    updatedAt?: SortOrder
+  }
+
+  export type StringWithAggregatesFilter<$PrismaModel = never> = {
+    equals?: string | StringFieldRefInput<$PrismaModel>
+    in?: string[] | ListStringFieldRefInput<$PrismaModel>
+    notIn?: string[] | ListStringFieldRefInput<$PrismaModel>
+    lt?: string | StringFieldRefInput<$PrismaModel>
+    lte?: string | StringFieldRefInput<$PrismaModel>
+    gt?: string | StringFieldRefInput<$PrismaModel>
+    gte?: string | StringFieldRefInput<$PrismaModel>
+    contains?: string | StringFieldRefInput<$PrismaModel>
+    startsWith?: string | StringFieldRefInput<$PrismaModel>
+    endsWith?: string | StringFieldRefInput<$PrismaModel>
+    mode?: QueryMode
+    not?: NestedStringWithAggregatesFilter<$PrismaModel> | string
+    _count?: NestedIntFilter<$PrismaModel>
+    _min?: NestedStringFilter<$PrismaModel>
+    _max?: NestedStringFilter<$PrismaModel>
+  }
+
+  export type EnumTenantStatusWithAggregatesFilter<$PrismaModel = never> = {
+    equals?: $Enums.TenantStatus | EnumTenantStatusFieldRefInput<$PrismaModel>
+    in?: $Enums.TenantStatus[] | ListEnumTenantStatusFieldRefInput<$PrismaModel>
+    notIn?: $Enums.TenantStatus[] | ListEnumTenantStatusFieldRefInput<$PrismaModel>
+    not?: NestedEnumTenantStatusWithAggregatesFilter<$PrismaModel> | $Enums.TenantStatus
+    _count?: NestedIntFilter<$PrismaModel>
+    _min?: NestedEnumTenantStatusFilter<$PrismaModel>
+    _max?: NestedEnumTenantStatusFilter<$PrismaModel>
+  }
+
+  export type DateTimeNullableWithAggregatesFilter<$PrismaModel = never> = {
+    equals?: Date | string | DateTimeFieldRefInput<$PrismaModel> | null
+    in?: Date[] | string[] | ListDateTimeFieldRefInput<$PrismaModel> | null
+    notIn?: Date[] | string[] | ListDateTimeFieldRefInput<$PrismaModel> | null
+    lt?: Date | string | DateTimeFieldRefInput<$PrismaModel>
+    lte?: Date | string | DateTimeFieldRefInput<$PrismaModel>
+    gt?: Date | string | DateTimeFieldRefInput<$PrismaModel>
+    gte?: Date | string | DateTimeFieldRefInput<$PrismaModel>
+    not?: NestedDateTimeNullableWithAggregatesFilter<$PrismaModel> | Date | string | null
+    _count?: NestedIntNullableFilter<$PrismaModel>
+    _min?: NestedDateTimeNullableFilter<$PrismaModel>
+    _max?: NestedDateTimeNullableFilter<$PrismaModel>
+  }
+
+  export type DateTimeWithAggregatesFilter<$PrismaModel = never> = {
+    equals?: Date | string | DateTimeFieldRefInput<$PrismaModel>
+    in?: Date[] | string[] | ListDateTimeFieldRefInput<$PrismaModel>
+    notIn?: Date[] | string[] | ListDateTimeFieldRefInput<$PrismaModel>
+    lt?: Date | string | DateTimeFieldRefInput<$PrismaModel>
+    lte?: Date | string | DateTimeFieldRefInput<$PrismaModel>
+    gt?: Date | string | DateTimeFieldRefInput<$PrismaModel>
+    gte?: Date | string | DateTimeFieldRefInput<$PrismaModel>
+    not?: NestedDateTimeWithAggregatesFilter<$PrismaModel> | Date | string
+    _count?: NestedIntFilter<$PrismaModel>
+    _min?: NestedDateTimeFilter<$PrismaModel>
+    _max?: NestedDateTimeFilter<$PrismaModel>
+  }
+
+  export type UserProjectListRelationFilter = {
+    every?: UserProjectWhereInput
+    some?: UserProjectWhereInput
+    none?: UserProjectWhereInput
+  }
+
+  export type UserDepartmentListRelationFilter = {
+    every?: UserDepartmentWhereInput
+    some?: UserDepartmentWhereInput
+    none?: UserDepartmentWhereInput
+  }
+
+  export type UserProjectRoleListRelationFilter = {
+    every?: UserProjectRoleWhereInput
+    some?: UserProjectRoleWhereInput
+    none?: UserProjectRoleWhereInput
+  }
+
+  export type UserProjectOrderByRelationAggregateInput = {
+    _count?: SortOrder
+  }
+
+  export type UserDepartmentOrderByRelationAggregateInput = {
+    _count?: SortOrder
+  }
+
+  export type UserProjectRoleOrderByRelationAggregateInput = {
+    _count?: SortOrder
+  }
+
+  export type UserEmailTenantIdCompoundUniqueInput = {
+    email: string
+    tenantId: string
+  }
+
+  export type UserCountOrderByAggregateInput = {
+    id?: SortOrder
+    tenantId?: SortOrder
+    name?: SortOrder
+    email?: SortOrder
+    role?: SortOrder
+  }
+
+  export type UserMaxOrderByAggregateInput = {
+    id?: SortOrder
+    tenantId?: SortOrder
+    name?: SortOrder
+    email?: SortOrder
+    role?: SortOrder
+  }
+
+  export type UserMinOrderByAggregateInput = {
+    id?: SortOrder
+    tenantId?: SortOrder
+    name?: SortOrder
+    email?: SortOrder
+    role?: SortOrder
+  }
+
+  export type StringNullableFilter<$PrismaModel = never> = {
+    equals?: string | StringFieldRefInput<$PrismaModel> | null
+    in?: string[] | ListStringFieldRefInput<$PrismaModel> | null
+    notIn?: string[] | ListStringFieldRefInput<$PrismaModel> | null
+    lt?: string | StringFieldRefInput<$PrismaModel>
+    lte?: string | StringFieldRefInput<$PrismaModel>
+    gt?: string | StringFieldRefInput<$PrismaModel>
+    gte?: string | StringFieldRefInput<$PrismaModel>
+    contains?: string | StringFieldRefInput<$PrismaModel>
+    startsWith?: string | StringFieldRefInput<$PrismaModel>
+    endsWith?: string | StringFieldRefInput<$PrismaModel>
+    mode?: QueryMode
+    not?: NestedStringNullableFilter<$PrismaModel> | string | null
+  }
+
+  export type IntNullableFilter<$PrismaModel = never> = {
+    equals?: number | IntFieldRefInput<$PrismaModel> | null
+    in?: number[] | ListIntFieldRefInput<$PrismaModel> | null
+    notIn?: number[] | ListIntFieldRefInput<$PrismaModel> | null
+    lt?: number | IntFieldRefInput<$PrismaModel>
+    lte?: number | IntFieldRefInput<$PrismaModel>
+    gt?: number | IntFieldRefInput<$PrismaModel>
+    gte?: number | IntFieldRefInput<$PrismaModel>
+    not?: NestedIntNullableFilter<$PrismaModel> | number | null
+  }
+
+  export type StringNullableListFilter<$PrismaModel = never> = {
+    equals?: string[] | ListStringFieldRefInput<$PrismaModel> | null
+    has?: string | StringFieldRefInput<$PrismaModel> | null
+    hasEvery?: string[] | ListStringFieldRefInput<$PrismaModel>
+    hasSome?: string[] | ListStringFieldRefInput<$PrismaModel>
+    isEmpty?: boolean
+  }
+
+  export type EnumProjectStatusFilter<$PrismaModel = never> = {
+    equals?: $Enums.ProjectStatus | EnumProjectStatusFieldRefInput<$PrismaModel>
+    in?: $Enums.ProjectStatus[] | ListEnumProjectStatusFieldRefInput<$PrismaModel>
+    notIn?: $Enums.ProjectStatus[] | ListEnumProjectStatusFieldRefInput<$PrismaModel>
+    not?: NestedEnumProjectStatusFilter<$PrismaModel> | $Enums.ProjectStatus
+  }
+
+  export type TenantScalarRelationFilter = {
+    is?: TenantWhereInput
+    isNot?: TenantWhereInput
+  }
+
+  export type ProjectMacroFaseListRelationFilter = {
+    every?: ProjectMacroFaseWhereInput
+    some?: ProjectMacroFaseWhereInput
+    none?: ProjectMacroFaseWhereInput
+  }
+
+  export type ProjectStakeholderListRelationFilter = {
+    every?: ProjectStakeholderWhereInput
+    some?: ProjectStakeholderWhereInput
+    none?: ProjectStakeholderWhereInput
+  }
+
+  export type ProjectMacroFaseOrderByRelationAggregateInput = {
+    _count?: SortOrder
+  }
+
+  export type ProjectStakeholderOrderByRelationAggregateInput = {
+    _count?: SortOrder
+  }
+
+  export type ProjectNameTenantIdCompoundUniqueInput = {
+    name: string
+    tenantId: string
+  }
+
+  export type ProjectCountOrderByAggregateInput = {
+    id?: SortOrder
+    tenantId?: SortOrder
+    name?: SortOrder
+    description?: SortOrder
+    logoUrl?: SortOrder
+    slogan?: SortOrder
+    location?: SortOrder
+    startDate?: SortOrder
+    endDate?: SortOrder
+    justificativa?: SortOrder
+    objetivos?: SortOrder
+    metodologia?: SortOrder
+    descricaoProduto?: SortOrder
+    premissas?: SortOrder
+    restricoes?: SortOrder
+    limitesAutoridade?: SortOrder
+    semestre?: SortOrder
+    ano?: SortOrder
+    departamentos?: SortOrder
+    status?: SortOrder
+    deletedAt?: SortOrder
+    createdAt?: SortOrder
+    updatedAt?: SortOrder
+  }
+
+  export type ProjectAvgOrderByAggregateInput = {
+    ano?: SortOrder
+  }
+
+  export type ProjectMaxOrderByAggregateInput = {
+    id?: SortOrder
+    tenantId?: SortOrder
+    name?: SortOrder
+    description?: SortOrder
+    logoUrl?: SortOrder
+    slogan?: SortOrder
+    location?: SortOrder
+    startDate?: SortOrder
+    endDate?: SortOrder
+    justificativa?: SortOrder
+    objetivos?: SortOrder
+    metodologia?: SortOrder
+    descricaoProduto?: SortOrder
+    premissas?: SortOrder
+    restricoes?: SortOrder
+    limitesAutoridade?: SortOrder
+    semestre?: SortOrder
+    ano?: SortOrder
+    status?: SortOrder
+    deletedAt?: SortOrder
+    createdAt?: SortOrder
+    updatedAt?: SortOrder
+  }
+
+  export type ProjectMinOrderByAggregateInput = {
+    id?: SortOrder
+    tenantId?: SortOrder
+    name?: SortOrder
+    description?: SortOrder
+    logoUrl?: SortOrder
+    slogan?: SortOrder
+    location?: SortOrder
+    startDate?: SortOrder
+    endDate?: SortOrder
+    justificativa?: SortOrder
+    objetivos?: SortOrder
+    metodologia?: SortOrder
+    descricaoProduto?: SortOrder
+    premissas?: SortOrder
+    restricoes?: SortOrder
+    limitesAutoridade?: SortOrder
+    semestre?: SortOrder
+    ano?: SortOrder
+    status?: SortOrder
+    deletedAt?: SortOrder
+    createdAt?: SortOrder
+    updatedAt?: SortOrder
+  }
+
+  export type ProjectSumOrderByAggregateInput = {
+    ano?: SortOrder
+  }
+
+  export type StringNullableWithAggregatesFilter<$PrismaModel = never> = {
+    equals?: string | StringFieldRefInput<$PrismaModel> | null
+    in?: string[] | ListStringFieldRefInput<$PrismaModel> | null
+    notIn?: string[] | ListStringFieldRefInput<$PrismaModel> | null
+    lt?: string | StringFieldRefInput<$PrismaModel>
+    lte?: string | StringFieldRefInput<$PrismaModel>
+    gt?: string | StringFieldRefInput<$PrismaModel>
+    gte?: string | StringFieldRefInput<$PrismaModel>
+    contains?: string | StringFieldRefInput<$PrismaModel>
+    startsWith?: string | StringFieldRefInput<$PrismaModel>
+    endsWith?: string | StringFieldRefInput<$PrismaModel>
+    mode?: QueryMode
+    not?: NestedStringNullableWithAggregatesFilter<$PrismaModel> | string | null
+    _count?: NestedIntNullableFilter<$PrismaModel>
+    _min?: NestedStringNullableFilter<$PrismaModel>
+    _max?: NestedStringNullableFilter<$PrismaModel>
+  }
+
+  export type IntNullableWithAggregatesFilter<$PrismaModel = never> = {
+    equals?: number | IntFieldRefInput<$PrismaModel> | null
+    in?: number[] | ListIntFieldRefInput<$PrismaModel> | null
+    notIn?: number[] | ListIntFieldRefInput<$PrismaModel> | null
+    lt?: number | IntFieldRefInput<$PrismaModel>
+    lte?: number | IntFieldRefInput<$PrismaModel>
+    gt?: number | IntFieldRefInput<$PrismaModel>
+    gte?: number | IntFieldRefInput<$PrismaModel>
+    not?: NestedIntNullableWithAggregatesFilter<$PrismaModel> | number | null
+    _count?: NestedIntNullableFilter<$PrismaModel>
+    _avg?: NestedFloatNullableFilter<$PrismaModel>
+    _sum?: NestedIntNullableFilter<$PrismaModel>
+    _min?: NestedIntNullableFilter<$PrismaModel>
+    _max?: NestedIntNullableFilter<$PrismaModel>
+  }
+
+  export type EnumProjectStatusWithAggregatesFilter<$PrismaModel = never> = {
+    equals?: $Enums.ProjectStatus | EnumProjectStatusFieldRefInput<$PrismaModel>
+    in?: $Enums.ProjectStatus[] | ListEnumProjectStatusFieldRefInput<$PrismaModel>
+    notIn?: $Enums.ProjectStatus[] | ListEnumProjectStatusFieldRefInput<$PrismaModel>
+    not?: NestedEnumProjectStatusWithAggregatesFilter<$PrismaModel> | $Enums.ProjectStatus
+    _count?: NestedIntFilter<$PrismaModel>
+    _min?: NestedEnumProjectStatusFilter<$PrismaModel>
+    _max?: NestedEnumProjectStatusFilter<$PrismaModel>
+  }
+
+  export type ProjectScalarRelationFilter = {
+    is?: ProjectWhereInput
+    isNot?: ProjectWhereInput
+  }
+
+  export type ProjectMacroFaseCountOrderByAggregateInput = {
+    id?: SortOrder
+    projectId?: SortOrder
+    fase?: SortOrder
+    dataLimite?: SortOrder
+    custo?: SortOrder
+    createdAt?: SortOrder
+    updatedAt?: SortOrder
+  }
+
+  export type ProjectMacroFaseMaxOrderByAggregateInput = {
+    id?: SortOrder
+    projectId?: SortOrder
+    fase?: SortOrder
+    dataLimite?: SortOrder
+    custo?: SortOrder
+    createdAt?: SortOrder
+    updatedAt?: SortOrder
+  }
+
+  export type ProjectMacroFaseMinOrderByAggregateInput = {
+    id?: SortOrder
+    projectId?: SortOrder
+    fase?: SortOrder
+    dataLimite?: SortOrder
+    custo?: SortOrder
+    createdAt?: SortOrder
+    updatedAt?: SortOrder
+  }
+
+  export type BoolFilter<$PrismaModel = never> = {
+    equals?: boolean | BooleanFieldRefInput<$PrismaModel>
+    not?: NestedBoolFilter<$PrismaModel> | boolean
+  }
+
+  export type FloatNullableFilter<$PrismaModel = never> = {
+    equals?: number | FloatFieldRefInput<$PrismaModel> | null
+    in?: number[] | ListFloatFieldRefInput<$PrismaModel> | null
+    notIn?: number[] | ListFloatFieldRefInput<$PrismaModel> | null
+    lt?: number | FloatFieldRefInput<$PrismaModel>
+    lte?: number | FloatFieldRefInput<$PrismaModel>
+    gt?: number | FloatFieldRefInput<$PrismaModel>
+    gte?: number | FloatFieldRefInput<$PrismaModel>
+    not?: NestedFloatNullableFilter<$PrismaModel> | number | null
+  }
+
+  export type DepartmentNameTenantIdCompoundUniqueInput = {
+    name: string
+    tenantId: string
+  }
+
+  export type DepartmentCountOrderByAggregateInput = {
+    id?: SortOrder
+    tenantId?: SortOrder
+    name?: SortOrder
+    description?: SortOrder
+    active?: SortOrder
+    hourlyRate?: SortOrder
+    deletedAt?: SortOrder
+    createdAt?: SortOrder
+    updatedAt?: SortOrder
+  }
+
+  export type DepartmentAvgOrderByAggregateInput = {
+    hourlyRate?: SortOrder
+  }
+
+  export type DepartmentMaxOrderByAggregateInput = {
+    id?: SortOrder
+    tenantId?: SortOrder
+    name?: SortOrder
+    description?: SortOrder
+    active?: SortOrder
+    hourlyRate?: SortOrder
+    deletedAt?: SortOrder
+    createdAt?: SortOrder
+    updatedAt?: SortOrder
+  }
+
+  export type DepartmentMinOrderByAggregateInput = {
+    id?: SortOrder
+    tenantId?: SortOrder
+    name?: SortOrder
+    description?: SortOrder
+    active?: SortOrder
+    hourlyRate?: SortOrder
+    deletedAt?: SortOrder
+    createdAt?: SortOrder
+    updatedAt?: SortOrder
+  }
+
+  export type DepartmentSumOrderByAggregateInput = {
+    hourlyRate?: SortOrder
+  }
+
+  export type BoolWithAggregatesFilter<$PrismaModel = never> = {
+    equals?: boolean | BooleanFieldRefInput<$PrismaModel>
+    not?: NestedBoolWithAggregatesFilter<$PrismaModel> | boolean
+    _count?: NestedIntFilter<$PrismaModel>
+    _min?: NestedBoolFilter<$PrismaModel>
+    _max?: NestedBoolFilter<$PrismaModel>
+  }
+
+  export type FloatNullableWithAggregatesFilter<$PrismaModel = never> = {
+    equals?: number | FloatFieldRefInput<$PrismaModel> | null
+    in?: number[] | ListFloatFieldRefInput<$PrismaModel> | null
+    notIn?: number[] | ListFloatFieldRefInput<$PrismaModel> | null
+    lt?: number | FloatFieldRefInput<$PrismaModel>
+    lte?: number | FloatFieldRefInput<$PrismaModel>
+    gt?: number | FloatFieldRefInput<$PrismaModel>
+    gte?: number | FloatFieldRefInput<$PrismaModel>
+    not?: NestedFloatNullableWithAggregatesFilter<$PrismaModel> | number | null
+    _count?: NestedIntNullableFilter<$PrismaModel>
+    _avg?: NestedFloatNullableFilter<$PrismaModel>
+    _sum?: NestedFloatNullableFilter<$PrismaModel>
+    _min?: NestedFloatNullableFilter<$PrismaModel>
+    _max?: NestedFloatNullableFilter<$PrismaModel>
+  }
+
+  export type UserScalarRelationFilter = {
+    is?: UserWhereInput
+    isNot?: UserWhereInput
+  }
+
+  export type DepartmentScalarRelationFilter = {
+    is?: DepartmentWhereInput
+    isNot?: DepartmentWhereInput
+  }
+
+  export type UserDepartmentUserIdDepartmentIdCompoundUniqueInput = {
+    userId: string
+    departmentId: string
+  }
+
+  export type UserDepartmentCountOrderByAggregateInput = {
+    id?: SortOrder
+    userId?: SortOrder
+    departmentId?: SortOrder
+  }
+
+  export type UserDepartmentMaxOrderByAggregateInput = {
+    id?: SortOrder
+    userId?: SortOrder
+    departmentId?: SortOrder
+  }
+
+  export type UserDepartmentMinOrderByAggregateInput = {
+    id?: SortOrder
+    userId?: SortOrder
+    departmentId?: SortOrder
+  }
+
+  export type DepartmentNullableScalarRelationFilter = {
+    is?: DepartmentWhereInput | null
+    isNot?: DepartmentWhereInput | null
+  }
+
+  export type UserProjectUserIdProjectIdCompoundUniqueInput = {
+    userId: string
+    projectId: string
+  }
+
+  export type UserProjectCountOrderByAggregateInput = {
+    id?: SortOrder
+    userId?: SortOrder
+    projectId?: SortOrder
+    active?: SortOrder
+    role?: SortOrder
+    departmentId?: SortOrder
+    hourlyRate?: SortOrder
+    startDate?: SortOrder
+    endDate?: SortOrder
+  }
+
+  export type UserProjectAvgOrderByAggregateInput = {
+    hourlyRate?: SortOrder
+  }
+
+  export type UserProjectMaxOrderByAggregateInput = {
+    id?: SortOrder
+    userId?: SortOrder
+    projectId?: SortOrder
+    active?: SortOrder
+    role?: SortOrder
+    departmentId?: SortOrder
+    hourlyRate?: SortOrder
+    startDate?: SortOrder
+    endDate?: SortOrder
+  }
+
+  export type UserProjectMinOrderByAggregateInput = {
+    id?: SortOrder
+    userId?: SortOrder
+    projectId?: SortOrder
+    active?: SortOrder
+    role?: SortOrder
+    departmentId?: SortOrder
+    hourlyRate?: SortOrder
+    startDate?: SortOrder
+    endDate?: SortOrder
+  }
+
+  export type UserProjectSumOrderByAggregateInput = {
+    hourlyRate?: SortOrder
+  }
+
+  export type EnumRoleScopeFilter<$PrismaModel = never> = {
+    equals?: $Enums.RoleScope | EnumRoleScopeFieldRefInput<$PrismaModel>
+    in?: $Enums.RoleScope[] | ListEnumRoleScopeFieldRefInput<$PrismaModel>
+    notIn?: $Enums.RoleScope[] | ListEnumRoleScopeFieldRefInput<$PrismaModel>
+    not?: NestedEnumRoleScopeFilter<$PrismaModel> | $Enums.RoleScope
+  }
+
+  export type RolePermissionListRelationFilter = {
+    every?: RolePermissionWhereInput
+    some?: RolePermissionWhereInput
+    none?: RolePermissionWhereInput
+  }
+
+  export type RolePermissionOrderByRelationAggregateInput = {
+    _count?: SortOrder
+  }
+
+  export type RoleNameKeyTenantIdScopeCompoundUniqueInput = {
+    nameKey: string
+    tenantId: string
+    scope: $Enums.RoleScope
+  }
+
+  export type RoleCountOrderByAggregateInput = {
+    id?: SortOrder
+    tenantId?: SortOrder
+    name?: SortOrder
+    nameKey?: SortOrder
+    scope?: SortOrder
+    description?: SortOrder
+    deletedAt?: SortOrder
+    createdAt?: SortOrder
+    updatedAt?: SortOrder
+  }
+
+  export type RoleMaxOrderByAggregateInput = {
+    id?: SortOrder
+    tenantId?: SortOrder
+    name?: SortOrder
+    nameKey?: SortOrder
+    scope?: SortOrder
+    description?: SortOrder
+    deletedAt?: SortOrder
+    createdAt?: SortOrder
+    updatedAt?: SortOrder
+  }
+
+  export type RoleMinOrderByAggregateInput = {
+    id?: SortOrder
+    tenantId?: SortOrder
+    name?: SortOrder
+    nameKey?: SortOrder
+    scope?: SortOrder
+    description?: SortOrder
+    deletedAt?: SortOrder
+    createdAt?: SortOrder
+    updatedAt?: SortOrder
+  }
+
+  export type EnumRoleScopeWithAggregatesFilter<$PrismaModel = never> = {
+    equals?: $Enums.RoleScope | EnumRoleScopeFieldRefInput<$PrismaModel>
+    in?: $Enums.RoleScope[] | ListEnumRoleScopeFieldRefInput<$PrismaModel>
+    notIn?: $Enums.RoleScope[] | ListEnumRoleScopeFieldRefInput<$PrismaModel>
+    not?: NestedEnumRoleScopeWithAggregatesFilter<$PrismaModel> | $Enums.RoleScope
+    _count?: NestedIntFilter<$PrismaModel>
+    _min?: NestedEnumRoleScopeFilter<$PrismaModel>
+    _max?: NestedEnumRoleScopeFilter<$PrismaModel>
+  }
+
+  export type PermissionResourceActionCompoundUniqueInput = {
+    resource: string
+    action: string
+  }
+
+  export type PermissionCountOrderByAggregateInput = {
+    id?: SortOrder
+    name?: SortOrder
+    description?: SortOrder
+    resource?: SortOrder
+    action?: SortOrder
+    deletedAt?: SortOrder
+    createdAt?: SortOrder
+    updatedAt?: SortOrder
+  }
+
+  export type PermissionMaxOrderByAggregateInput = {
+    id?: SortOrder
+    name?: SortOrder
+    description?: SortOrder
+    resource?: SortOrder
+    action?: SortOrder
+    deletedAt?: SortOrder
+    createdAt?: SortOrder
+    updatedAt?: SortOrder
+  }
+
+  export type PermissionMinOrderByAggregateInput = {
+    id?: SortOrder
+    name?: SortOrder
+    description?: SortOrder
+    resource?: SortOrder
+    action?: SortOrder
+    deletedAt?: SortOrder
+    createdAt?: SortOrder
+    updatedAt?: SortOrder
+  }
+
+  export type RoleScalarRelationFilter = {
+    is?: RoleWhereInput
+    isNot?: RoleWhereInput
+  }
+
+  export type PermissionScalarRelationFilter = {
+    is?: PermissionWhereInput
+    isNot?: PermissionWhereInput
+  }
+
+  export type RolePermissionRoleIdPermissionIdCompoundUniqueInput = {
+    roleId: string
+    permissionId: string
+  }
+
+  export type RolePermissionCountOrderByAggregateInput = {
+    id?: SortOrder
+    roleId?: SortOrder
+    permissionId?: SortOrder
+  }
+
+  export type RolePermissionMaxOrderByAggregateInput = {
+    id?: SortOrder
+    roleId?: SortOrder
+    permissionId?: SortOrder
+  }
+
+  export type RolePermissionMinOrderByAggregateInput = {
+    id?: SortOrder
+    roleId?: SortOrder
+    permissionId?: SortOrder
+  }
+
+  export type UserProjectRoleUserIdProjectIdCompoundUniqueInput = {
+    userId: string
+    projectId: string
+  }
+
+  export type UserProjectRoleCountOrderByAggregateInput = {
+    id?: SortOrder
+    userId?: SortOrder
+    projectId?: SortOrder
+    roleId?: SortOrder
+    deletedAt?: SortOrder
+    createdAt?: SortOrder
+    updatedAt?: SortOrder
+  }
+
+  export type UserProjectRoleMaxOrderByAggregateInput = {
+    id?: SortOrder
+    userId?: SortOrder
+    projectId?: SortOrder
+    roleId?: SortOrder
+    deletedAt?: SortOrder
+    createdAt?: SortOrder
+    updatedAt?: SortOrder
+  }
+
+  export type UserProjectRoleMinOrderByAggregateInput = {
+    id?: SortOrder
+    userId?: SortOrder
+    projectId?: SortOrder
+    roleId?: SortOrder
+    deletedAt?: SortOrder
+    createdAt?: SortOrder
+    updatedAt?: SortOrder
+  }
+
+  export type StakeholderCountOrderByAggregateInput = {
+    id?: SortOrder
+    tenantId?: SortOrder
+    name?: SortOrder
+    logoUrl?: SortOrder
+    company?: SortOrder
+    competence?: SortOrder
+    email?: SortOrder
+    phone?: SortOrder
+    cep?: SortOrder
+    logradouro?: SortOrder
+    numero?: SortOrder
+    complemento?: SortOrder
+    bairro?: SortOrder
+    cidade?: SortOrder
+    estado?: SortOrder
+    notes?: SortOrder
+    isActive?: SortOrder
+    createdAt?: SortOrder
+    updatedAt?: SortOrder
+  }
+
+  export type StakeholderMaxOrderByAggregateInput = {
+    id?: SortOrder
+    tenantId?: SortOrder
+    name?: SortOrder
+    logoUrl?: SortOrder
+    company?: SortOrder
+    competence?: SortOrder
+    email?: SortOrder
+    phone?: SortOrder
+    cep?: SortOrder
+    logradouro?: SortOrder
+    numero?: SortOrder
+    complemento?: SortOrder
+    bairro?: SortOrder
+    cidade?: SortOrder
+    estado?: SortOrder
+    notes?: SortOrder
+    isActive?: SortOrder
+    createdAt?: SortOrder
+    updatedAt?: SortOrder
+  }
+
+  export type StakeholderMinOrderByAggregateInput = {
+    id?: SortOrder
+    tenantId?: SortOrder
+    name?: SortOrder
+    logoUrl?: SortOrder
+    company?: SortOrder
+    competence?: SortOrder
+    email?: SortOrder
+    phone?: SortOrder
+    cep?: SortOrder
+    logradouro?: SortOrder
+    numero?: SortOrder
+    complemento?: SortOrder
+    bairro?: SortOrder
+    cidade?: SortOrder
+    estado?: SortOrder
+    notes?: SortOrder
+    isActive?: SortOrder
+    createdAt?: SortOrder
+    updatedAt?: SortOrder
+  }
+
+  export type StakeholderScalarRelationFilter = {
+    is?: StakeholderWhereInput
+    isNot?: StakeholderWhereInput
+  }
+
+  export type ProjectStakeholderProjectIdStakeholderIdCompoundUniqueInput = {
+    projectId: string
+    stakeholderId: string
+  }
+
+  export type ProjectStakeholderCountOrderByAggregateInput = {
+    id?: SortOrder
+    projectId?: SortOrder
+    stakeholderId?: SortOrder
+    createdAt?: SortOrder
+  }
+
+  export type ProjectStakeholderMaxOrderByAggregateInput = {
+    id?: SortOrder
+    projectId?: SortOrder
+    stakeholderId?: SortOrder
+    createdAt?: SortOrder
+  }
+
+  export type ProjectStakeholderMinOrderByAggregateInput = {
+    id?: SortOrder
+    projectId?: SortOrder
+    stakeholderId?: SortOrder
+    createdAt?: SortOrder
+  }
+
+  export type ProjectCreateNestedManyWithoutTenantInput = {
+    create?: XOR<ProjectCreateWithoutTenantInput, ProjectUncheckedCreateWithoutTenantInput> | ProjectCreateWithoutTenantInput[] | ProjectUncheckedCreateWithoutTenantInput[]
+    connectOrCreate?: ProjectCreateOrConnectWithoutTenantInput | ProjectCreateOrConnectWithoutTenantInput[]
+    createMany?: ProjectCreateManyTenantInputEnvelope
+    connect?: ProjectWhereUniqueInput | ProjectWhereUniqueInput[]
+  }
+
+  export type DepartmentCreateNestedManyWithoutTenantInput = {
+    create?: XOR<DepartmentCreateWithoutTenantInput, DepartmentUncheckedCreateWithoutTenantInput> | DepartmentCreateWithoutTenantInput[] | DepartmentUncheckedCreateWithoutTenantInput[]
+    connectOrCreate?: DepartmentCreateOrConnectWithoutTenantInput | DepartmentCreateOrConnectWithoutTenantInput[]
+    createMany?: DepartmentCreateManyTenantInputEnvelope
+    connect?: DepartmentWhereUniqueInput | DepartmentWhereUniqueInput[]
+  }
+
+  export type RoleCreateNestedManyWithoutTenantInput = {
+    create?: XOR<RoleCreateWithoutTenantInput, RoleUncheckedCreateWithoutTenantInput> | RoleCreateWithoutTenantInput[] | RoleUncheckedCreateWithoutTenantInput[]
+    connectOrCreate?: RoleCreateOrConnectWithoutTenantInput | RoleCreateOrConnectWithoutTenantInput[]
+    createMany?: RoleCreateManyTenantInputEnvelope
+    connect?: RoleWhereUniqueInput | RoleWhereUniqueInput[]
+  }
+
+  export type StakeholderCreateNestedManyWithoutTenantInput = {
+    create?: XOR<StakeholderCreateWithoutTenantInput, StakeholderUncheckedCreateWithoutTenantInput> | StakeholderCreateWithoutTenantInput[] | StakeholderUncheckedCreateWithoutTenantInput[]
+    connectOrCreate?: StakeholderCreateOrConnectWithoutTenantInput | StakeholderCreateOrConnectWithoutTenantInput[]
+    createMany?: StakeholderCreateManyTenantInputEnvelope
+    connect?: StakeholderWhereUniqueInput | StakeholderWhereUniqueInput[]
+  }
+
+  export type ProjectUncheckedCreateNestedManyWithoutTenantInput = {
+    create?: XOR<ProjectCreateWithoutTenantInput, ProjectUncheckedCreateWithoutTenantInput> | ProjectCreateWithoutTenantInput[] | ProjectUncheckedCreateWithoutTenantInput[]
+    connectOrCreate?: ProjectCreateOrConnectWithoutTenantInput | ProjectCreateOrConnectWithoutTenantInput[]
+    createMany?: ProjectCreateManyTenantInputEnvelope
+    connect?: ProjectWhereUniqueInput | ProjectWhereUniqueInput[]
+  }
+
+  export type DepartmentUncheckedCreateNestedManyWithoutTenantInput = {
+    create?: XOR<DepartmentCreateWithoutTenantInput, DepartmentUncheckedCreateWithoutTenantInput> | DepartmentCreateWithoutTenantInput[] | DepartmentUncheckedCreateWithoutTenantInput[]
+    connectOrCreate?: DepartmentCreateOrConnectWithoutTenantInput | DepartmentCreateOrConnectWithoutTenantInput[]
+    createMany?: DepartmentCreateManyTenantInputEnvelope
+    connect?: DepartmentWhereUniqueInput | DepartmentWhereUniqueInput[]
+  }
+
+  export type RoleUncheckedCreateNestedManyWithoutTenantInput = {
+    create?: XOR<RoleCreateWithoutTenantInput, RoleUncheckedCreateWithoutTenantInput> | RoleCreateWithoutTenantInput[] | RoleUncheckedCreateWithoutTenantInput[]
+    connectOrCreate?: RoleCreateOrConnectWithoutTenantInput | RoleCreateOrConnectWithoutTenantInput[]
+    createMany?: RoleCreateManyTenantInputEnvelope
+    connect?: RoleWhereUniqueInput | RoleWhereUniqueInput[]
+  }
+
+  export type StakeholderUncheckedCreateNestedManyWithoutTenantInput = {
+    create?: XOR<StakeholderCreateWithoutTenantInput, StakeholderUncheckedCreateWithoutTenantInput> | StakeholderCreateWithoutTenantInput[] | StakeholderUncheckedCreateWithoutTenantInput[]
+    connectOrCreate?: StakeholderCreateOrConnectWithoutTenantInput | StakeholderCreateOrConnectWithoutTenantInput[]
+    createMany?: StakeholderCreateManyTenantInputEnvelope
+    connect?: StakeholderWhereUniqueInput | StakeholderWhereUniqueInput[]
+  }
+
+  export type StringFieldUpdateOperationsInput = {
+    set?: string
+  }
+
+  export type EnumTenantStatusFieldUpdateOperationsInput = {
+    set?: $Enums.TenantStatus
+  }
+
+  export type NullableDateTimeFieldUpdateOperationsInput = {
+    set?: Date | string | null
+  }
+
+  export type DateTimeFieldUpdateOperationsInput = {
+    set?: Date | string
+  }
+
+  export type ProjectUpdateManyWithoutTenantNestedInput = {
+    create?: XOR<ProjectCreateWithoutTenantInput, ProjectUncheckedCreateWithoutTenantInput> | ProjectCreateWithoutTenantInput[] | ProjectUncheckedCreateWithoutTenantInput[]
+    connectOrCreate?: ProjectCreateOrConnectWithoutTenantInput | ProjectCreateOrConnectWithoutTenantInput[]
+    upsert?: ProjectUpsertWithWhereUniqueWithoutTenantInput | ProjectUpsertWithWhereUniqueWithoutTenantInput[]
+    createMany?: ProjectCreateManyTenantInputEnvelope
+    set?: ProjectWhereUniqueInput | ProjectWhereUniqueInput[]
+    disconnect?: ProjectWhereUniqueInput | ProjectWhereUniqueInput[]
+    delete?: ProjectWhereUniqueInput | ProjectWhereUniqueInput[]
+    connect?: ProjectWhereUniqueInput | ProjectWhereUniqueInput[]
+    update?: ProjectUpdateWithWhereUniqueWithoutTenantInput | ProjectUpdateWithWhereUniqueWithoutTenantInput[]
+    updateMany?: ProjectUpdateManyWithWhereWithoutTenantInput | ProjectUpdateManyWithWhereWithoutTenantInput[]
+    deleteMany?: ProjectScalarWhereInput | ProjectScalarWhereInput[]
+  }
+
+  export type DepartmentUpdateManyWithoutTenantNestedInput = {
+    create?: XOR<DepartmentCreateWithoutTenantInput, DepartmentUncheckedCreateWithoutTenantInput> | DepartmentCreateWithoutTenantInput[] | DepartmentUncheckedCreateWithoutTenantInput[]
+    connectOrCreate?: DepartmentCreateOrConnectWithoutTenantInput | DepartmentCreateOrConnectWithoutTenantInput[]
+    upsert?: DepartmentUpsertWithWhereUniqueWithoutTenantInput | DepartmentUpsertWithWhereUniqueWithoutTenantInput[]
+    createMany?: DepartmentCreateManyTenantInputEnvelope
+    set?: DepartmentWhereUniqueInput | DepartmentWhereUniqueInput[]
+    disconnect?: DepartmentWhereUniqueInput | DepartmentWhereUniqueInput[]
+    delete?: DepartmentWhereUniqueInput | DepartmentWhereUniqueInput[]
+    connect?: DepartmentWhereUniqueInput | DepartmentWhereUniqueInput[]
+    update?: DepartmentUpdateWithWhereUniqueWithoutTenantInput | DepartmentUpdateWithWhereUniqueWithoutTenantInput[]
+    updateMany?: DepartmentUpdateManyWithWhereWithoutTenantInput | DepartmentUpdateManyWithWhereWithoutTenantInput[]
+    deleteMany?: DepartmentScalarWhereInput | DepartmentScalarWhereInput[]
+  }
+
+  export type RoleUpdateManyWithoutTenantNestedInput = {
+    create?: XOR<RoleCreateWithoutTenantInput, RoleUncheckedCreateWithoutTenantInput> | RoleCreateWithoutTenantInput[] | RoleUncheckedCreateWithoutTenantInput[]
+    connectOrCreate?: RoleCreateOrConnectWithoutTenantInput | RoleCreateOrConnectWithoutTenantInput[]
+    upsert?: RoleUpsertWithWhereUniqueWithoutTenantInput | RoleUpsertWithWhereUniqueWithoutTenantInput[]
+    createMany?: RoleCreateManyTenantInputEnvelope
+    set?: RoleWhereUniqueInput | RoleWhereUniqueInput[]
+    disconnect?: RoleWhereUniqueInput | RoleWhereUniqueInput[]
+    delete?: RoleWhereUniqueInput | RoleWhereUniqueInput[]
+    connect?: RoleWhereUniqueInput | RoleWhereUniqueInput[]
+    update?: RoleUpdateWithWhereUniqueWithoutTenantInput | RoleUpdateWithWhereUniqueWithoutTenantInput[]
+    updateMany?: RoleUpdateManyWithWhereWithoutTenantInput | RoleUpdateManyWithWhereWithoutTenantInput[]
+    deleteMany?: RoleScalarWhereInput | RoleScalarWhereInput[]
+  }
+
+  export type StakeholderUpdateManyWithoutTenantNestedInput = {
+    create?: XOR<StakeholderCreateWithoutTenantInput, StakeholderUncheckedCreateWithoutTenantInput> | StakeholderCreateWithoutTenantInput[] | StakeholderUncheckedCreateWithoutTenantInput[]
+    connectOrCreate?: StakeholderCreateOrConnectWithoutTenantInput | StakeholderCreateOrConnectWithoutTenantInput[]
+    upsert?: StakeholderUpsertWithWhereUniqueWithoutTenantInput | StakeholderUpsertWithWhereUniqueWithoutTenantInput[]
+    createMany?: StakeholderCreateManyTenantInputEnvelope
+    set?: StakeholderWhereUniqueInput | StakeholderWhereUniqueInput[]
+    disconnect?: StakeholderWhereUniqueInput | StakeholderWhereUniqueInput[]
+    delete?: StakeholderWhereUniqueInput | StakeholderWhereUniqueInput[]
+    connect?: StakeholderWhereUniqueInput | StakeholderWhereUniqueInput[]
+    update?: StakeholderUpdateWithWhereUniqueWithoutTenantInput | StakeholderUpdateWithWhereUniqueWithoutTenantInput[]
+    updateMany?: StakeholderUpdateManyWithWhereWithoutTenantInput | StakeholderUpdateManyWithWhereWithoutTenantInput[]
+    deleteMany?: StakeholderScalarWhereInput | StakeholderScalarWhereInput[]
+  }
+
+  export type ProjectUncheckedUpdateManyWithoutTenantNestedInput = {
+    create?: XOR<ProjectCreateWithoutTenantInput, ProjectUncheckedCreateWithoutTenantInput> | ProjectCreateWithoutTenantInput[] | ProjectUncheckedCreateWithoutTenantInput[]
+    connectOrCreate?: ProjectCreateOrConnectWithoutTenantInput | ProjectCreateOrConnectWithoutTenantInput[]
+    upsert?: ProjectUpsertWithWhereUniqueWithoutTenantInput | ProjectUpsertWithWhereUniqueWithoutTenantInput[]
+    createMany?: ProjectCreateManyTenantInputEnvelope
+    set?: ProjectWhereUniqueInput | ProjectWhereUniqueInput[]
+    disconnect?: ProjectWhereUniqueInput | ProjectWhereUniqueInput[]
+    delete?: ProjectWhereUniqueInput | ProjectWhereUniqueInput[]
+    connect?: ProjectWhereUniqueInput | ProjectWhereUniqueInput[]
+    update?: ProjectUpdateWithWhereUniqueWithoutTenantInput | ProjectUpdateWithWhereUniqueWithoutTenantInput[]
+    updateMany?: ProjectUpdateManyWithWhereWithoutTenantInput | ProjectUpdateManyWithWhereWithoutTenantInput[]
+    deleteMany?: ProjectScalarWhereInput | ProjectScalarWhereInput[]
+  }
+
+  export type DepartmentUncheckedUpdateManyWithoutTenantNestedInput = {
+    create?: XOR<DepartmentCreateWithoutTenantInput, DepartmentUncheckedCreateWithoutTenantInput> | DepartmentCreateWithoutTenantInput[] | DepartmentUncheckedCreateWithoutTenantInput[]
+    connectOrCreate?: DepartmentCreateOrConnectWithoutTenantInput | DepartmentCreateOrConnectWithoutTenantInput[]
+    upsert?: DepartmentUpsertWithWhereUniqueWithoutTenantInput | DepartmentUpsertWithWhereUniqueWithoutTenantInput[]
+    createMany?: DepartmentCreateManyTenantInputEnvelope
+    set?: DepartmentWhereUniqueInput | DepartmentWhereUniqueInput[]
+    disconnect?: DepartmentWhereUniqueInput | DepartmentWhereUniqueInput[]
+    delete?: DepartmentWhereUniqueInput | DepartmentWhereUniqueInput[]
+    connect?: DepartmentWhereUniqueInput | DepartmentWhereUniqueInput[]
+    update?: DepartmentUpdateWithWhereUniqueWithoutTenantInput | DepartmentUpdateWithWhereUniqueWithoutTenantInput[]
+    updateMany?: DepartmentUpdateManyWithWhereWithoutTenantInput | DepartmentUpdateManyWithWhereWithoutTenantInput[]
+    deleteMany?: DepartmentScalarWhereInput | DepartmentScalarWhereInput[]
+  }
+
+  export type RoleUncheckedUpdateManyWithoutTenantNestedInput = {
+    create?: XOR<RoleCreateWithoutTenantInput, RoleUncheckedCreateWithoutTenantInput> | RoleCreateWithoutTenantInput[] | RoleUncheckedCreateWithoutTenantInput[]
+    connectOrCreate?: RoleCreateOrConnectWithoutTenantInput | RoleCreateOrConnectWithoutTenantInput[]
+    upsert?: RoleUpsertWithWhereUniqueWithoutTenantInput | RoleUpsertWithWhereUniqueWithoutTenantInput[]
+    createMany?: RoleCreateManyTenantInputEnvelope
+    set?: RoleWhereUniqueInput | RoleWhereUniqueInput[]
+    disconnect?: RoleWhereUniqueInput | RoleWhereUniqueInput[]
+    delete?: RoleWhereUniqueInput | RoleWhereUniqueInput[]
+    connect?: RoleWhereUniqueInput | RoleWhereUniqueInput[]
+    update?: RoleUpdateWithWhereUniqueWithoutTenantInput | RoleUpdateWithWhereUniqueWithoutTenantInput[]
+    updateMany?: RoleUpdateManyWithWhereWithoutTenantInput | RoleUpdateManyWithWhereWithoutTenantInput[]
+    deleteMany?: RoleScalarWhereInput | RoleScalarWhereInput[]
+  }
+
+  export type StakeholderUncheckedUpdateManyWithoutTenantNestedInput = {
+    create?: XOR<StakeholderCreateWithoutTenantInput, StakeholderUncheckedCreateWithoutTenantInput> | StakeholderCreateWithoutTenantInput[] | StakeholderUncheckedCreateWithoutTenantInput[]
+    connectOrCreate?: StakeholderCreateOrConnectWithoutTenantInput | StakeholderCreateOrConnectWithoutTenantInput[]
+    upsert?: StakeholderUpsertWithWhereUniqueWithoutTenantInput | StakeholderUpsertWithWhereUniqueWithoutTenantInput[]
+    createMany?: StakeholderCreateManyTenantInputEnvelope
+    set?: StakeholderWhereUniqueInput | StakeholderWhereUniqueInput[]
+    disconnect?: StakeholderWhereUniqueInput | StakeholderWhereUniqueInput[]
+    delete?: StakeholderWhereUniqueInput | StakeholderWhereUniqueInput[]
+    connect?: StakeholderWhereUniqueInput | StakeholderWhereUniqueInput[]
+    update?: StakeholderUpdateWithWhereUniqueWithoutTenantInput | StakeholderUpdateWithWhereUniqueWithoutTenantInput[]
+    updateMany?: StakeholderUpdateManyWithWhereWithoutTenantInput | StakeholderUpdateManyWithWhereWithoutTenantInput[]
+    deleteMany?: StakeholderScalarWhereInput | StakeholderScalarWhereInput[]
+  }
+
+  export type UserProjectCreateNestedManyWithoutUserInput = {
+    create?: XOR<UserProjectCreateWithoutUserInput, UserProjectUncheckedCreateWithoutUserInput> | UserProjectCreateWithoutUserInput[] | UserProjectUncheckedCreateWithoutUserInput[]
+    connectOrCreate?: UserProjectCreateOrConnectWithoutUserInput | UserProjectCreateOrConnectWithoutUserInput[]
+    createMany?: UserProjectCreateManyUserInputEnvelope
+    connect?: UserProjectWhereUniqueInput | UserProjectWhereUniqueInput[]
+  }
+
+  export type UserDepartmentCreateNestedManyWithoutUserInput = {
+    create?: XOR<UserDepartmentCreateWithoutUserInput, UserDepartmentUncheckedCreateWithoutUserInput> | UserDepartmentCreateWithoutUserInput[] | UserDepartmentUncheckedCreateWithoutUserInput[]
+    connectOrCreate?: UserDepartmentCreateOrConnectWithoutUserInput | UserDepartmentCreateOrConnectWithoutUserInput[]
+    createMany?: UserDepartmentCreateManyUserInputEnvelope
+    connect?: UserDepartmentWhereUniqueInput | UserDepartmentWhereUniqueInput[]
+  }
+
+  export type UserProjectRoleCreateNestedManyWithoutUserInput = {
+    create?: XOR<UserProjectRoleCreateWithoutUserInput, UserProjectRoleUncheckedCreateWithoutUserInput> | UserProjectRoleCreateWithoutUserInput[] | UserProjectRoleUncheckedCreateWithoutUserInput[]
+    connectOrCreate?: UserProjectRoleCreateOrConnectWithoutUserInput | UserProjectRoleCreateOrConnectWithoutUserInput[]
+    createMany?: UserProjectRoleCreateManyUserInputEnvelope
+    connect?: UserProjectRoleWhereUniqueInput | UserProjectRoleWhereUniqueInput[]
+  }
+
+  export type UserProjectUncheckedCreateNestedManyWithoutUserInput = {
+    create?: XOR<UserProjectCreateWithoutUserInput, UserProjectUncheckedCreateWithoutUserInput> | UserProjectCreateWithoutUserInput[] | UserProjectUncheckedCreateWithoutUserInput[]
+    connectOrCreate?: UserProjectCreateOrConnectWithoutUserInput | UserProjectCreateOrConnectWithoutUserInput[]
+    createMany?: UserProjectCreateManyUserInputEnvelope
+    connect?: UserProjectWhereUniqueInput | UserProjectWhereUniqueInput[]
+  }
+
+  export type UserDepartmentUncheckedCreateNestedManyWithoutUserInput = {
+    create?: XOR<UserDepartmentCreateWithoutUserInput, UserDepartmentUncheckedCreateWithoutUserInput> | UserDepartmentCreateWithoutUserInput[] | UserDepartmentUncheckedCreateWithoutUserInput[]
+    connectOrCreate?: UserDepartmentCreateOrConnectWithoutUserInput | UserDepartmentCreateOrConnectWithoutUserInput[]
+    createMany?: UserDepartmentCreateManyUserInputEnvelope
+    connect?: UserDepartmentWhereUniqueInput | UserDepartmentWhereUniqueInput[]
+  }
+
+  export type UserProjectRoleUncheckedCreateNestedManyWithoutUserInput = {
+    create?: XOR<UserProjectRoleCreateWithoutUserInput, UserProjectRoleUncheckedCreateWithoutUserInput> | UserProjectRoleCreateWithoutUserInput[] | UserProjectRoleUncheckedCreateWithoutUserInput[]
+    connectOrCreate?: UserProjectRoleCreateOrConnectWithoutUserInput | UserProjectRoleCreateOrConnectWithoutUserInput[]
+    createMany?: UserProjectRoleCreateManyUserInputEnvelope
+    connect?: UserProjectRoleWhereUniqueInput | UserProjectRoleWhereUniqueInput[]
+  }
+
+  export type UserProjectUpdateManyWithoutUserNestedInput = {
+    create?: XOR<UserProjectCreateWithoutUserInput, UserProjectUncheckedCreateWithoutUserInput> | UserProjectCreateWithoutUserInput[] | UserProjectUncheckedCreateWithoutUserInput[]
+    connectOrCreate?: UserProjectCreateOrConnectWithoutUserInput | UserProjectCreateOrConnectWithoutUserInput[]
+    upsert?: UserProjectUpsertWithWhereUniqueWithoutUserInput | UserProjectUpsertWithWhereUniqueWithoutUserInput[]
+    createMany?: UserProjectCreateManyUserInputEnvelope
+    set?: UserProjectWhereUniqueInput | UserProjectWhereUniqueInput[]
+    disconnect?: UserProjectWhereUniqueInput | UserProjectWhereUniqueInput[]
+    delete?: UserProjectWhereUniqueInput | UserProjectWhereUniqueInput[]
+    connect?: UserProjectWhereUniqueInput | UserProjectWhereUniqueInput[]
+    update?: UserProjectUpdateWithWhereUniqueWithoutUserInput | UserProjectUpdateWithWhereUniqueWithoutUserInput[]
+    updateMany?: UserProjectUpdateManyWithWhereWithoutUserInput | UserProjectUpdateManyWithWhereWithoutUserInput[]
+    deleteMany?: UserProjectScalarWhereInput | UserProjectScalarWhereInput[]
+  }
+
+  export type UserDepartmentUpdateManyWithoutUserNestedInput = {
+    create?: XOR<UserDepartmentCreateWithoutUserInput, UserDepartmentUncheckedCreateWithoutUserInput> | UserDepartmentCreateWithoutUserInput[] | UserDepartmentUncheckedCreateWithoutUserInput[]
+    connectOrCreate?: UserDepartmentCreateOrConnectWithoutUserInput | UserDepartmentCreateOrConnectWithoutUserInput[]
+    upsert?: UserDepartmentUpsertWithWhereUniqueWithoutUserInput | UserDepartmentUpsertWithWhereUniqueWithoutUserInput[]
+    createMany?: UserDepartmentCreateManyUserInputEnvelope
+    set?: UserDepartmentWhereUniqueInput | UserDepartmentWhereUniqueInput[]
+    disconnect?: UserDepartmentWhereUniqueInput | UserDepartmentWhereUniqueInput[]
+    delete?: UserDepartmentWhereUniqueInput | UserDepartmentWhereUniqueInput[]
+    connect?: UserDepartmentWhereUniqueInput | UserDepartmentWhereUniqueInput[]
+    update?: UserDepartmentUpdateWithWhereUniqueWithoutUserInput | UserDepartmentUpdateWithWhereUniqueWithoutUserInput[]
+    updateMany?: UserDepartmentUpdateManyWithWhereWithoutUserInput | UserDepartmentUpdateManyWithWhereWithoutUserInput[]
+    deleteMany?: UserDepartmentScalarWhereInput | UserDepartmentScalarWhereInput[]
+  }
+
+  export type UserProjectRoleUpdateManyWithoutUserNestedInput = {
+    create?: XOR<UserProjectRoleCreateWithoutUserInput, UserProjectRoleUncheckedCreateWithoutUserInput> | UserProjectRoleCreateWithoutUserInput[] | UserProjectRoleUncheckedCreateWithoutUserInput[]
+    connectOrCreate?: UserProjectRoleCreateOrConnectWithoutUserInput | UserProjectRoleCreateOrConnectWithoutUserInput[]
+    upsert?: UserProjectRoleUpsertWithWhereUniqueWithoutUserInput | UserProjectRoleUpsertWithWhereUniqueWithoutUserInput[]
+    createMany?: UserProjectRoleCreateManyUserInputEnvelope
+    set?: UserProjectRoleWhereUniqueInput | UserProjectRoleWhereUniqueInput[]
+    disconnect?: UserProjectRoleWhereUniqueInput | UserProjectRoleWhereUniqueInput[]
+    delete?: UserProjectRoleWhereUniqueInput | UserProjectRoleWhereUniqueInput[]
+    connect?: UserProjectRoleWhereUniqueInput | UserProjectRoleWhereUniqueInput[]
+    update?: UserProjectRoleUpdateWithWhereUniqueWithoutUserInput | UserProjectRoleUpdateWithWhereUniqueWithoutUserInput[]
+    updateMany?: UserProjectRoleUpdateManyWithWhereWithoutUserInput | UserProjectRoleUpdateManyWithWhereWithoutUserInput[]
+    deleteMany?: UserProjectRoleScalarWhereInput | UserProjectRoleScalarWhereInput[]
+  }
+
+  export type UserProjectUncheckedUpdateManyWithoutUserNestedInput = {
+    create?: XOR<UserProjectCreateWithoutUserInput, UserProjectUncheckedCreateWithoutUserInput> | UserProjectCreateWithoutUserInput[] | UserProjectUncheckedCreateWithoutUserInput[]
+    connectOrCreate?: UserProjectCreateOrConnectWithoutUserInput | UserProjectCreateOrConnectWithoutUserInput[]
+    upsert?: UserProjectUpsertWithWhereUniqueWithoutUserInput | UserProjectUpsertWithWhereUniqueWithoutUserInput[]
+    createMany?: UserProjectCreateManyUserInputEnvelope
+    set?: UserProjectWhereUniqueInput | UserProjectWhereUniqueInput[]
+    disconnect?: UserProjectWhereUniqueInput | UserProjectWhereUniqueInput[]
+    delete?: UserProjectWhereUniqueInput | UserProjectWhereUniqueInput[]
+    connect?: UserProjectWhereUniqueInput | UserProjectWhereUniqueInput[]
+    update?: UserProjectUpdateWithWhereUniqueWithoutUserInput | UserProjectUpdateWithWhereUniqueWithoutUserInput[]
+    updateMany?: UserProjectUpdateManyWithWhereWithoutUserInput | UserProjectUpdateManyWithWhereWithoutUserInput[]
+    deleteMany?: UserProjectScalarWhereInput | UserProjectScalarWhereInput[]
+  }
+
+  export type UserDepartmentUncheckedUpdateManyWithoutUserNestedInput = {
+    create?: XOR<UserDepartmentCreateWithoutUserInput, UserDepartmentUncheckedCreateWithoutUserInput> | UserDepartmentCreateWithoutUserInput[] | UserDepartmentUncheckedCreateWithoutUserInput[]
+    connectOrCreate?: UserDepartmentCreateOrConnectWithoutUserInput | UserDepartmentCreateOrConnectWithoutUserInput[]
+    upsert?: UserDepartmentUpsertWithWhereUniqueWithoutUserInput | UserDepartmentUpsertWithWhereUniqueWithoutUserInput[]
+    createMany?: UserDepartmentCreateManyUserInputEnvelope
+    set?: UserDepartmentWhereUniqueInput | UserDepartmentWhereUniqueInput[]
+    disconnect?: UserDepartmentWhereUniqueInput | UserDepartmentWhereUniqueInput[]
+    delete?: UserDepartmentWhereUniqueInput | UserDepartmentWhereUniqueInput[]
+    connect?: UserDepartmentWhereUniqueInput | UserDepartmentWhereUniqueInput[]
+    update?: UserDepartmentUpdateWithWhereUniqueWithoutUserInput | UserDepartmentUpdateWithWhereUniqueWithoutUserInput[]
+    updateMany?: UserDepartmentUpdateManyWithWhereWithoutUserInput | UserDepartmentUpdateManyWithWhereWithoutUserInput[]
+    deleteMany?: UserDepartmentScalarWhereInput | UserDepartmentScalarWhereInput[]
+  }
+
+  export type UserProjectRoleUncheckedUpdateManyWithoutUserNestedInput = {
+    create?: XOR<UserProjectRoleCreateWithoutUserInput, UserProjectRoleUncheckedCreateWithoutUserInput> | UserProjectRoleCreateWithoutUserInput[] | UserProjectRoleUncheckedCreateWithoutUserInput[]
+    connectOrCreate?: UserProjectRoleCreateOrConnectWithoutUserInput | UserProjectRoleCreateOrConnectWithoutUserInput[]
+    upsert?: UserProjectRoleUpsertWithWhereUniqueWithoutUserInput | UserProjectRoleUpsertWithWhereUniqueWithoutUserInput[]
+    createMany?: UserProjectRoleCreateManyUserInputEnvelope
+    set?: UserProjectRoleWhereUniqueInput | UserProjectRoleWhereUniqueInput[]
+    disconnect?: UserProjectRoleWhereUniqueInput | UserProjectRoleWhereUniqueInput[]
+    delete?: UserProjectRoleWhereUniqueInput | UserProjectRoleWhereUniqueInput[]
+    connect?: UserProjectRoleWhereUniqueInput | UserProjectRoleWhereUniqueInput[]
+    update?: UserProjectRoleUpdateWithWhereUniqueWithoutUserInput | UserProjectRoleUpdateWithWhereUniqueWithoutUserInput[]
+    updateMany?: UserProjectRoleUpdateManyWithWhereWithoutUserInput | UserProjectRoleUpdateManyWithWhereWithoutUserInput[]
+    deleteMany?: UserProjectRoleScalarWhereInput | UserProjectRoleScalarWhereInput[]
+  }
+
+  export type ProjectCreatedepartamentosInput = {
+    set: string[]
+  }
+
+  export type TenantCreateNestedOneWithoutProjectsInput = {
+    create?: XOR<TenantCreateWithoutProjectsInput, TenantUncheckedCreateWithoutProjectsInput>
+    connectOrCreate?: TenantCreateOrConnectWithoutProjectsInput
+    connect?: TenantWhereUniqueInput
+  }
+
+  export type UserProjectCreateNestedManyWithoutProjectInput = {
+    create?: XOR<UserProjectCreateWithoutProjectInput, UserProjectUncheckedCreateWithoutProjectInput> | UserProjectCreateWithoutProjectInput[] | UserProjectUncheckedCreateWithoutProjectInput[]
+    connectOrCreate?: UserProjectCreateOrConnectWithoutProjectInput | UserProjectCreateOrConnectWithoutProjectInput[]
+    createMany?: UserProjectCreateManyProjectInputEnvelope
+    connect?: UserProjectWhereUniqueInput | UserProjectWhereUniqueInput[]
+  }
+
+  export type UserProjectRoleCreateNestedManyWithoutProjectInput = {
+    create?: XOR<UserProjectRoleCreateWithoutProjectInput, UserProjectRoleUncheckedCreateWithoutProjectInput> | UserProjectRoleCreateWithoutProjectInput[] | UserProjectRoleUncheckedCreateWithoutProjectInput[]
+    connectOrCreate?: UserProjectRoleCreateOrConnectWithoutProjectInput | UserProjectRoleCreateOrConnectWithoutProjectInput[]
+    createMany?: UserProjectRoleCreateManyProjectInputEnvelope
+    connect?: UserProjectRoleWhereUniqueInput | UserProjectRoleWhereUniqueInput[]
+  }
+
+  export type ProjectMacroFaseCreateNestedManyWithoutProjectInput = {
+    create?: XOR<ProjectMacroFaseCreateWithoutProjectInput, ProjectMacroFaseUncheckedCreateWithoutProjectInput> | ProjectMacroFaseCreateWithoutProjectInput[] | ProjectMacroFaseUncheckedCreateWithoutProjectInput[]
+    connectOrCreate?: ProjectMacroFaseCreateOrConnectWithoutProjectInput | ProjectMacroFaseCreateOrConnectWithoutProjectInput[]
+    createMany?: ProjectMacroFaseCreateManyProjectInputEnvelope
+    connect?: ProjectMacroFaseWhereUniqueInput | ProjectMacroFaseWhereUniqueInput[]
+  }
+
+  export type ProjectStakeholderCreateNestedManyWithoutProjectInput = {
+    create?: XOR<ProjectStakeholderCreateWithoutProjectInput, ProjectStakeholderUncheckedCreateWithoutProjectInput> | ProjectStakeholderCreateWithoutProjectInput[] | ProjectStakeholderUncheckedCreateWithoutProjectInput[]
+    connectOrCreate?: ProjectStakeholderCreateOrConnectWithoutProjectInput | ProjectStakeholderCreateOrConnectWithoutProjectInput[]
+    createMany?: ProjectStakeholderCreateManyProjectInputEnvelope
+    connect?: ProjectStakeholderWhereUniqueInput | ProjectStakeholderWhereUniqueInput[]
+  }
+
+  export type UserProjectUncheckedCreateNestedManyWithoutProjectInput = {
+    create?: XOR<UserProjectCreateWithoutProjectInput, UserProjectUncheckedCreateWithoutProjectInput> | UserProjectCreateWithoutProjectInput[] | UserProjectUncheckedCreateWithoutProjectInput[]
+    connectOrCreate?: UserProjectCreateOrConnectWithoutProjectInput | UserProjectCreateOrConnectWithoutProjectInput[]
+    createMany?: UserProjectCreateManyProjectInputEnvelope
+    connect?: UserProjectWhereUniqueInput | UserProjectWhereUniqueInput[]
+  }
+
+  export type UserProjectRoleUncheckedCreateNestedManyWithoutProjectInput = {
+    create?: XOR<UserProjectRoleCreateWithoutProjectInput, UserProjectRoleUncheckedCreateWithoutProjectInput> | UserProjectRoleCreateWithoutProjectInput[] | UserProjectRoleUncheckedCreateWithoutProjectInput[]
+    connectOrCreate?: UserProjectRoleCreateOrConnectWithoutProjectInput | UserProjectRoleCreateOrConnectWithoutProjectInput[]
+    createMany?: UserProjectRoleCreateManyProjectInputEnvelope
+    connect?: UserProjectRoleWhereUniqueInput | UserProjectRoleWhereUniqueInput[]
+  }
+
+  export type ProjectMacroFaseUncheckedCreateNestedManyWithoutProjectInput = {
+    create?: XOR<ProjectMacroFaseCreateWithoutProjectInput, ProjectMacroFaseUncheckedCreateWithoutProjectInput> | ProjectMacroFaseCreateWithoutProjectInput[] | ProjectMacroFaseUncheckedCreateWithoutProjectInput[]
+    connectOrCreate?: ProjectMacroFaseCreateOrConnectWithoutProjectInput | ProjectMacroFaseCreateOrConnectWithoutProjectInput[]
+    createMany?: ProjectMacroFaseCreateManyProjectInputEnvelope
+    connect?: ProjectMacroFaseWhereUniqueInput | ProjectMacroFaseWhereUniqueInput[]
+  }
+
+  export type ProjectStakeholderUncheckedCreateNestedManyWithoutProjectInput = {
+    create?: XOR<ProjectStakeholderCreateWithoutProjectInput, ProjectStakeholderUncheckedCreateWithoutProjectInput> | ProjectStakeholderCreateWithoutProjectInput[] | ProjectStakeholderUncheckedCreateWithoutProjectInput[]
+    connectOrCreate?: ProjectStakeholderCreateOrConnectWithoutProjectInput | ProjectStakeholderCreateOrConnectWithoutProjectInput[]
+    createMany?: ProjectStakeholderCreateManyProjectInputEnvelope
+    connect?: ProjectStakeholderWhereUniqueInput | ProjectStakeholderWhereUniqueInput[]
+  }
+
+  export type NullableStringFieldUpdateOperationsInput = {
+    set?: string | null
+  }
+
+  export type NullableIntFieldUpdateOperationsInput = {
+    set?: number | null
+    increment?: number
+    decrement?: number
+    multiply?: number
+    divide?: number
+  }
+
+  export type ProjectUpdatedepartamentosInput = {
+    set?: string[]
+    push?: string | string[]
+  }
+
+  export type EnumProjectStatusFieldUpdateOperationsInput = {
+    set?: $Enums.ProjectStatus
+  }
+
+  export type TenantUpdateOneRequiredWithoutProjectsNestedInput = {
+    create?: XOR<TenantCreateWithoutProjectsInput, TenantUncheckedCreateWithoutProjectsInput>
+    connectOrCreate?: TenantCreateOrConnectWithoutProjectsInput
+    upsert?: TenantUpsertWithoutProjectsInput
+    connect?: TenantWhereUniqueInput
+    update?: XOR<XOR<TenantUpdateToOneWithWhereWithoutProjectsInput, TenantUpdateWithoutProjectsInput>, TenantUncheckedUpdateWithoutProjectsInput>
+  }
+
+  export type UserProjectUpdateManyWithoutProjectNestedInput = {
+    create?: XOR<UserProjectCreateWithoutProjectInput, UserProjectUncheckedCreateWithoutProjectInput> | UserProjectCreateWithoutProjectInput[] | UserProjectUncheckedCreateWithoutProjectInput[]
+    connectOrCreate?: UserProjectCreateOrConnectWithoutProjectInput | UserProjectCreateOrConnectWithoutProjectInput[]
+    upsert?: UserProjectUpsertWithWhereUniqueWithoutProjectInput | UserProjectUpsertWithWhereUniqueWithoutProjectInput[]
+    createMany?: UserProjectCreateManyProjectInputEnvelope
+    set?: UserProjectWhereUniqueInput | UserProjectWhereUniqueInput[]
+    disconnect?: UserProjectWhereUniqueInput | UserProjectWhereUniqueInput[]
+    delete?: UserProjectWhereUniqueInput | UserProjectWhereUniqueInput[]
+    connect?: UserProjectWhereUniqueInput | UserProjectWhereUniqueInput[]
+    update?: UserProjectUpdateWithWhereUniqueWithoutProjectInput | UserProjectUpdateWithWhereUniqueWithoutProjectInput[]
+    updateMany?: UserProjectUpdateManyWithWhereWithoutProjectInput | UserProjectUpdateManyWithWhereWithoutProjectInput[]
+    deleteMany?: UserProjectScalarWhereInput | UserProjectScalarWhereInput[]
+  }
+
+  export type UserProjectRoleUpdateManyWithoutProjectNestedInput = {
+    create?: XOR<UserProjectRoleCreateWithoutProjectInput, UserProjectRoleUncheckedCreateWithoutProjectInput> | UserProjectRoleCreateWithoutProjectInput[] | UserProjectRoleUncheckedCreateWithoutProjectInput[]
+    connectOrCreate?: UserProjectRoleCreateOrConnectWithoutProjectInput | UserProjectRoleCreateOrConnectWithoutProjectInput[]
+    upsert?: UserProjectRoleUpsertWithWhereUniqueWithoutProjectInput | UserProjectRoleUpsertWithWhereUniqueWithoutProjectInput[]
+    createMany?: UserProjectRoleCreateManyProjectInputEnvelope
+    set?: UserProjectRoleWhereUniqueInput | UserProjectRoleWhereUniqueInput[]
+    disconnect?: UserProjectRoleWhereUniqueInput | UserProjectRoleWhereUniqueInput[]
+    delete?: UserProjectRoleWhereUniqueInput | UserProjectRoleWhereUniqueInput[]
+    connect?: UserProjectRoleWhereUniqueInput | UserProjectRoleWhereUniqueInput[]
+    update?: UserProjectRoleUpdateWithWhereUniqueWithoutProjectInput | UserProjectRoleUpdateWithWhereUniqueWithoutProjectInput[]
+    updateMany?: UserProjectRoleUpdateManyWithWhereWithoutProjectInput | UserProjectRoleUpdateManyWithWhereWithoutProjectInput[]
+    deleteMany?: UserProjectRoleScalarWhereInput | UserProjectRoleScalarWhereInput[]
+  }
+
+  export type ProjectMacroFaseUpdateManyWithoutProjectNestedInput = {
+    create?: XOR<ProjectMacroFaseCreateWithoutProjectInput, ProjectMacroFaseUncheckedCreateWithoutProjectInput> | ProjectMacroFaseCreateWithoutProjectInput[] | ProjectMacroFaseUncheckedCreateWithoutProjectInput[]
+    connectOrCreate?: ProjectMacroFaseCreateOrConnectWithoutProjectInput | ProjectMacroFaseCreateOrConnectWithoutProjectInput[]
+    upsert?: ProjectMacroFaseUpsertWithWhereUniqueWithoutProjectInput | ProjectMacroFaseUpsertWithWhereUniqueWithoutProjectInput[]
+    createMany?: ProjectMacroFaseCreateManyProjectInputEnvelope
+    set?: ProjectMacroFaseWhereUniqueInput | ProjectMacroFaseWhereUniqueInput[]
+    disconnect?: ProjectMacroFaseWhereUniqueInput | ProjectMacroFaseWhereUniqueInput[]
+    delete?: ProjectMacroFaseWhereUniqueInput | ProjectMacroFaseWhereUniqueInput[]
+    connect?: ProjectMacroFaseWhereUniqueInput | ProjectMacroFaseWhereUniqueInput[]
+    update?: ProjectMacroFaseUpdateWithWhereUniqueWithoutProjectInput | ProjectMacroFaseUpdateWithWhereUniqueWithoutProjectInput[]
+    updateMany?: ProjectMacroFaseUpdateManyWithWhereWithoutProjectInput | ProjectMacroFaseUpdateManyWithWhereWithoutProjectInput[]
+    deleteMany?: ProjectMacroFaseScalarWhereInput | ProjectMacroFaseScalarWhereInput[]
+  }
+
+  export type ProjectStakeholderUpdateManyWithoutProjectNestedInput = {
+    create?: XOR<ProjectStakeholderCreateWithoutProjectInput, ProjectStakeholderUncheckedCreateWithoutProjectInput> | ProjectStakeholderCreateWithoutProjectInput[] | ProjectStakeholderUncheckedCreateWithoutProjectInput[]
+    connectOrCreate?: ProjectStakeholderCreateOrConnectWithoutProjectInput | ProjectStakeholderCreateOrConnectWithoutProjectInput[]
+    upsert?: ProjectStakeholderUpsertWithWhereUniqueWithoutProjectInput | ProjectStakeholderUpsertWithWhereUniqueWithoutProjectInput[]
+    createMany?: ProjectStakeholderCreateManyProjectInputEnvelope
+    set?: ProjectStakeholderWhereUniqueInput | ProjectStakeholderWhereUniqueInput[]
+    disconnect?: ProjectStakeholderWhereUniqueInput | ProjectStakeholderWhereUniqueInput[]
+    delete?: ProjectStakeholderWhereUniqueInput | ProjectStakeholderWhereUniqueInput[]
+    connect?: ProjectStakeholderWhereUniqueInput | ProjectStakeholderWhereUniqueInput[]
+    update?: ProjectStakeholderUpdateWithWhereUniqueWithoutProjectInput | ProjectStakeholderUpdateWithWhereUniqueWithoutProjectInput[]
+    updateMany?: ProjectStakeholderUpdateManyWithWhereWithoutProjectInput | ProjectStakeholderUpdateManyWithWhereWithoutProjectInput[]
+    deleteMany?: ProjectStakeholderScalarWhereInput | ProjectStakeholderScalarWhereInput[]
+  }
+
+  export type UserProjectUncheckedUpdateManyWithoutProjectNestedInput = {
+    create?: XOR<UserProjectCreateWithoutProjectInput, UserProjectUncheckedCreateWithoutProjectInput> | UserProjectCreateWithoutProjectInput[] | UserProjectUncheckedCreateWithoutProjectInput[]
+    connectOrCreate?: UserProjectCreateOrConnectWithoutProjectInput | UserProjectCreateOrConnectWithoutProjectInput[]
+    upsert?: UserProjectUpsertWithWhereUniqueWithoutProjectInput | UserProjectUpsertWithWhereUniqueWithoutProjectInput[]
+    createMany?: UserProjectCreateManyProjectInputEnvelope
+    set?: UserProjectWhereUniqueInput | UserProjectWhereUniqueInput[]
+    disconnect?: UserProjectWhereUniqueInput | UserProjectWhereUniqueInput[]
+    delete?: UserProjectWhereUniqueInput | UserProjectWhereUniqueInput[]
+    connect?: UserProjectWhereUniqueInput | UserProjectWhereUniqueInput[]
+    update?: UserProjectUpdateWithWhereUniqueWithoutProjectInput | UserProjectUpdateWithWhereUniqueWithoutProjectInput[]
+    updateMany?: UserProjectUpdateManyWithWhereWithoutProjectInput | UserProjectUpdateManyWithWhereWithoutProjectInput[]
+    deleteMany?: UserProjectScalarWhereInput | UserProjectScalarWhereInput[]
+  }
+
+  export type UserProjectRoleUncheckedUpdateManyWithoutProjectNestedInput = {
+    create?: XOR<UserProjectRoleCreateWithoutProjectInput, UserProjectRoleUncheckedCreateWithoutProjectInput> | UserProjectRoleCreateWithoutProjectInput[] | UserProjectRoleUncheckedCreateWithoutProjectInput[]
+    connectOrCreate?: UserProjectRoleCreateOrConnectWithoutProjectInput | UserProjectRoleCreateOrConnectWithoutProjectInput[]
+    upsert?: UserProjectRoleUpsertWithWhereUniqueWithoutProjectInput | UserProjectRoleUpsertWithWhereUniqueWithoutProjectInput[]
+    createMany?: UserProjectRoleCreateManyProjectInputEnvelope
+    set?: UserProjectRoleWhereUniqueInput | UserProjectRoleWhereUniqueInput[]
+    disconnect?: UserProjectRoleWhereUniqueInput | UserProjectRoleWhereUniqueInput[]
+    delete?: UserProjectRoleWhereUniqueInput | UserProjectRoleWhereUniqueInput[]
+    connect?: UserProjectRoleWhereUniqueInput | UserProjectRoleWhereUniqueInput[]
+    update?: UserProjectRoleUpdateWithWhereUniqueWithoutProjectInput | UserProjectRoleUpdateWithWhereUniqueWithoutProjectInput[]
+    updateMany?: UserProjectRoleUpdateManyWithWhereWithoutProjectInput | UserProjectRoleUpdateManyWithWhereWithoutProjectInput[]
+    deleteMany?: UserProjectRoleScalarWhereInput | UserProjectRoleScalarWhereInput[]
+  }
+
+  export type ProjectMacroFaseUncheckedUpdateManyWithoutProjectNestedInput = {
+    create?: XOR<ProjectMacroFaseCreateWithoutProjectInput, ProjectMacroFaseUncheckedCreateWithoutProjectInput> | ProjectMacroFaseCreateWithoutProjectInput[] | ProjectMacroFaseUncheckedCreateWithoutProjectInput[]
+    connectOrCreate?: ProjectMacroFaseCreateOrConnectWithoutProjectInput | ProjectMacroFaseCreateOrConnectWithoutProjectInput[]
+    upsert?: ProjectMacroFaseUpsertWithWhereUniqueWithoutProjectInput | ProjectMacroFaseUpsertWithWhereUniqueWithoutProjectInput[]
+    createMany?: ProjectMacroFaseCreateManyProjectInputEnvelope
+    set?: ProjectMacroFaseWhereUniqueInput | ProjectMacroFaseWhereUniqueInput[]
+    disconnect?: ProjectMacroFaseWhereUniqueInput | ProjectMacroFaseWhereUniqueInput[]
+    delete?: ProjectMacroFaseWhereUniqueInput | ProjectMacroFaseWhereUniqueInput[]
+    connect?: ProjectMacroFaseWhereUniqueInput | ProjectMacroFaseWhereUniqueInput[]
+    update?: ProjectMacroFaseUpdateWithWhereUniqueWithoutProjectInput | ProjectMacroFaseUpdateWithWhereUniqueWithoutProjectInput[]
+    updateMany?: ProjectMacroFaseUpdateManyWithWhereWithoutProjectInput | ProjectMacroFaseUpdateManyWithWhereWithoutProjectInput[]
+    deleteMany?: ProjectMacroFaseScalarWhereInput | ProjectMacroFaseScalarWhereInput[]
+  }
+
+  export type ProjectStakeholderUncheckedUpdateManyWithoutProjectNestedInput = {
+    create?: XOR<ProjectStakeholderCreateWithoutProjectInput, ProjectStakeholderUncheckedCreateWithoutProjectInput> | ProjectStakeholderCreateWithoutProjectInput[] | ProjectStakeholderUncheckedCreateWithoutProjectInput[]
+    connectOrCreate?: ProjectStakeholderCreateOrConnectWithoutProjectInput | ProjectStakeholderCreateOrConnectWithoutProjectInput[]
+    upsert?: ProjectStakeholderUpsertWithWhereUniqueWithoutProjectInput | ProjectStakeholderUpsertWithWhereUniqueWithoutProjectInput[]
+    createMany?: ProjectStakeholderCreateManyProjectInputEnvelope
+    set?: ProjectStakeholderWhereUniqueInput | ProjectStakeholderWhereUniqueInput[]
+    disconnect?: ProjectStakeholderWhereUniqueInput | ProjectStakeholderWhereUniqueInput[]
+    delete?: ProjectStakeholderWhereUniqueInput | ProjectStakeholderWhereUniqueInput[]
+    connect?: ProjectStakeholderWhereUniqueInput | ProjectStakeholderWhereUniqueInput[]
+    update?: ProjectStakeholderUpdateWithWhereUniqueWithoutProjectInput | ProjectStakeholderUpdateWithWhereUniqueWithoutProjectInput[]
+    updateMany?: ProjectStakeholderUpdateManyWithWhereWithoutProjectInput | ProjectStakeholderUpdateManyWithWhereWithoutProjectInput[]
+    deleteMany?: ProjectStakeholderScalarWhereInput | ProjectStakeholderScalarWhereInput[]
+  }
+
+  export type ProjectCreateNestedOneWithoutMacroFasesInput = {
+    create?: XOR<ProjectCreateWithoutMacroFasesInput, ProjectUncheckedCreateWithoutMacroFasesInput>
+    connectOrCreate?: ProjectCreateOrConnectWithoutMacroFasesInput
+    connect?: ProjectWhereUniqueInput
+  }
+
+  export type ProjectUpdateOneRequiredWithoutMacroFasesNestedInput = {
+    create?: XOR<ProjectCreateWithoutMacroFasesInput, ProjectUncheckedCreateWithoutMacroFasesInput>
+    connectOrCreate?: ProjectCreateOrConnectWithoutMacroFasesInput
+    upsert?: ProjectUpsertWithoutMacroFasesInput
+    connect?: ProjectWhereUniqueInput
+    update?: XOR<XOR<ProjectUpdateToOneWithWhereWithoutMacroFasesInput, ProjectUpdateWithoutMacroFasesInput>, ProjectUncheckedUpdateWithoutMacroFasesInput>
+  }
+
+  export type TenantCreateNestedOneWithoutDepartmentsInput = {
+    create?: XOR<TenantCreateWithoutDepartmentsInput, TenantUncheckedCreateWithoutDepartmentsInput>
+    connectOrCreate?: TenantCreateOrConnectWithoutDepartmentsInput
+    connect?: TenantWhereUniqueInput
+  }
+
+  export type UserDepartmentCreateNestedManyWithoutDepartmentInput = {
+    create?: XOR<UserDepartmentCreateWithoutDepartmentInput, UserDepartmentUncheckedCreateWithoutDepartmentInput> | UserDepartmentCreateWithoutDepartmentInput[] | UserDepartmentUncheckedCreateWithoutDepartmentInput[]
+    connectOrCreate?: UserDepartmentCreateOrConnectWithoutDepartmentInput | UserDepartmentCreateOrConnectWithoutDepartmentInput[]
+    createMany?: UserDepartmentCreateManyDepartmentInputEnvelope
+    connect?: UserDepartmentWhereUniqueInput | UserDepartmentWhereUniqueInput[]
+  }
+
+  export type UserProjectCreateNestedManyWithoutDepartmentInput = {
+    create?: XOR<UserProjectCreateWithoutDepartmentInput, UserProjectUncheckedCreateWithoutDepartmentInput> | UserProjectCreateWithoutDepartmentInput[] | UserProjectUncheckedCreateWithoutDepartmentInput[]
+    connectOrCreate?: UserProjectCreateOrConnectWithoutDepartmentInput | UserProjectCreateOrConnectWithoutDepartmentInput[]
+    createMany?: UserProjectCreateManyDepartmentInputEnvelope
+    connect?: UserProjectWhereUniqueInput | UserProjectWhereUniqueInput[]
+  }
+
+  export type UserDepartmentUncheckedCreateNestedManyWithoutDepartmentInput = {
+    create?: XOR<UserDepartmentCreateWithoutDepartmentInput, UserDepartmentUncheckedCreateWithoutDepartmentInput> | UserDepartmentCreateWithoutDepartmentInput[] | UserDepartmentUncheckedCreateWithoutDepartmentInput[]
+    connectOrCreate?: UserDepartmentCreateOrConnectWithoutDepartmentInput | UserDepartmentCreateOrConnectWithoutDepartmentInput[]
+    createMany?: UserDepartmentCreateManyDepartmentInputEnvelope
+    connect?: UserDepartmentWhereUniqueInput | UserDepartmentWhereUniqueInput[]
+  }
+
+  export type UserProjectUncheckedCreateNestedManyWithoutDepartmentInput = {
+    create?: XOR<UserProjectCreateWithoutDepartmentInput, UserProjectUncheckedCreateWithoutDepartmentInput> | UserProjectCreateWithoutDepartmentInput[] | UserProjectUncheckedCreateWithoutDepartmentInput[]
+    connectOrCreate?: UserProjectCreateOrConnectWithoutDepartmentInput | UserProjectCreateOrConnectWithoutDepartmentInput[]
+    createMany?: UserProjectCreateManyDepartmentInputEnvelope
+    connect?: UserProjectWhereUniqueInput | UserProjectWhereUniqueInput[]
+  }
+
+  export type BoolFieldUpdateOperationsInput = {
+    set?: boolean
+  }
+
+  export type NullableFloatFieldUpdateOperationsInput = {
+    set?: number | null
+    increment?: number
+    decrement?: number
+    multiply?: number
+    divide?: number
+  }
+
+  export type TenantUpdateOneRequiredWithoutDepartmentsNestedInput = {
+    create?: XOR<TenantCreateWithoutDepartmentsInput, TenantUncheckedCreateWithoutDepartmentsInput>
+    connectOrCreate?: TenantCreateOrConnectWithoutDepartmentsInput
+    upsert?: TenantUpsertWithoutDepartmentsInput
+    connect?: TenantWhereUniqueInput
+    update?: XOR<XOR<TenantUpdateToOneWithWhereWithoutDepartmentsInput, TenantUpdateWithoutDepartmentsInput>, TenantUncheckedUpdateWithoutDepartmentsInput>
+  }
+
+  export type UserDepartmentUpdateManyWithoutDepartmentNestedInput = {
+    create?: XOR<UserDepartmentCreateWithoutDepartmentInput, UserDepartmentUncheckedCreateWithoutDepartmentInput> | UserDepartmentCreateWithoutDepartmentInput[] | UserDepartmentUncheckedCreateWithoutDepartmentInput[]
+    connectOrCreate?: UserDepartmentCreateOrConnectWithoutDepartmentInput | UserDepartmentCreateOrConnectWithoutDepartmentInput[]
+    upsert?: UserDepartmentUpsertWithWhereUniqueWithoutDepartmentInput | UserDepartmentUpsertWithWhereUniqueWithoutDepartmentInput[]
+    createMany?: UserDepartmentCreateManyDepartmentInputEnvelope
+    set?: UserDepartmentWhereUniqueInput | UserDepartmentWhereUniqueInput[]
+    disconnect?: UserDepartmentWhereUniqueInput | UserDepartmentWhereUniqueInput[]
+    delete?: UserDepartmentWhereUniqueInput | UserDepartmentWhereUniqueInput[]
+    connect?: UserDepartmentWhereUniqueInput | UserDepartmentWhereUniqueInput[]
+    update?: UserDepartmentUpdateWithWhereUniqueWithoutDepartmentInput | UserDepartmentUpdateWithWhereUniqueWithoutDepartmentInput[]
+    updateMany?: UserDepartmentUpdateManyWithWhereWithoutDepartmentInput | UserDepartmentUpdateManyWithWhereWithoutDepartmentInput[]
+    deleteMany?: UserDepartmentScalarWhereInput | UserDepartmentScalarWhereInput[]
+  }
+
+  export type UserProjectUpdateManyWithoutDepartmentNestedInput = {
+    create?: XOR<UserProjectCreateWithoutDepartmentInput, UserProjectUncheckedCreateWithoutDepartmentInput> | UserProjectCreateWithoutDepartmentInput[] | UserProjectUncheckedCreateWithoutDepartmentInput[]
+    connectOrCreate?: UserProjectCreateOrConnectWithoutDepartmentInput | UserProjectCreateOrConnectWithoutDepartmentInput[]
+    upsert?: UserProjectUpsertWithWhereUniqueWithoutDepartmentInput | UserProjectUpsertWithWhereUniqueWithoutDepartmentInput[]
+    createMany?: UserProjectCreateManyDepartmentInputEnvelope
+    set?: UserProjectWhereUniqueInput | UserProjectWhereUniqueInput[]
+    disconnect?: UserProjectWhereUniqueInput | UserProjectWhereUniqueInput[]
+    delete?: UserProjectWhereUniqueInput | UserProjectWhereUniqueInput[]
+    connect?: UserProjectWhereUniqueInput | UserProjectWhereUniqueInput[]
+    update?: UserProjectUpdateWithWhereUniqueWithoutDepartmentInput | UserProjectUpdateWithWhereUniqueWithoutDepartmentInput[]
+    updateMany?: UserProjectUpdateManyWithWhereWithoutDepartmentInput | UserProjectUpdateManyWithWhereWithoutDepartmentInput[]
+    deleteMany?: UserProjectScalarWhereInput | UserProjectScalarWhereInput[]
+  }
+
+  export type UserDepartmentUncheckedUpdateManyWithoutDepartmentNestedInput = {
+    create?: XOR<UserDepartmentCreateWithoutDepartmentInput, UserDepartmentUncheckedCreateWithoutDepartmentInput> | UserDepartmentCreateWithoutDepartmentInput[] | UserDepartmentUncheckedCreateWithoutDepartmentInput[]
+    connectOrCreate?: UserDepartmentCreateOrConnectWithoutDepartmentInput | UserDepartmentCreateOrConnectWithoutDepartmentInput[]
+    upsert?: UserDepartmentUpsertWithWhereUniqueWithoutDepartmentInput | UserDepartmentUpsertWithWhereUniqueWithoutDepartmentInput[]
+    createMany?: UserDepartmentCreateManyDepartmentInputEnvelope
+    set?: UserDepartmentWhereUniqueInput | UserDepartmentWhereUniqueInput[]
+    disconnect?: UserDepartmentWhereUniqueInput | UserDepartmentWhereUniqueInput[]
+    delete?: UserDepartmentWhereUniqueInput | UserDepartmentWhereUniqueInput[]
+    connect?: UserDepartmentWhereUniqueInput | UserDepartmentWhereUniqueInput[]
+    update?: UserDepartmentUpdateWithWhereUniqueWithoutDepartmentInput | UserDepartmentUpdateWithWhereUniqueWithoutDepartmentInput[]
+    updateMany?: UserDepartmentUpdateManyWithWhereWithoutDepartmentInput | UserDepartmentUpdateManyWithWhereWithoutDepartmentInput[]
+    deleteMany?: UserDepartmentScalarWhereInput | UserDepartmentScalarWhereInput[]
+  }
+
+  export type UserProjectUncheckedUpdateManyWithoutDepartmentNestedInput = {
+    create?: XOR<UserProjectCreateWithoutDepartmentInput, UserProjectUncheckedCreateWithoutDepartmentInput> | UserProjectCreateWithoutDepartmentInput[] | UserProjectUncheckedCreateWithoutDepartmentInput[]
+    connectOrCreate?: UserProjectCreateOrConnectWithoutDepartmentInput | UserProjectCreateOrConnectWithoutDepartmentInput[]
+    upsert?: UserProjectUpsertWithWhereUniqueWithoutDepartmentInput | UserProjectUpsertWithWhereUniqueWithoutDepartmentInput[]
+    createMany?: UserProjectCreateManyDepartmentInputEnvelope
+    set?: UserProjectWhereUniqueInput | UserProjectWhereUniqueInput[]
+    disconnect?: UserProjectWhereUniqueInput | UserProjectWhereUniqueInput[]
+    delete?: UserProjectWhereUniqueInput | UserProjectWhereUniqueInput[]
+    connect?: UserProjectWhereUniqueInput | UserProjectWhereUniqueInput[]
+    update?: UserProjectUpdateWithWhereUniqueWithoutDepartmentInput | UserProjectUpdateWithWhereUniqueWithoutDepartmentInput[]
+    updateMany?: UserProjectUpdateManyWithWhereWithoutDepartmentInput | UserProjectUpdateManyWithWhereWithoutDepartmentInput[]
+    deleteMany?: UserProjectScalarWhereInput | UserProjectScalarWhereInput[]
+  }
+
+  export type UserCreateNestedOneWithoutDepartmentsInput = {
+    create?: XOR<UserCreateWithoutDepartmentsInput, UserUncheckedCreateWithoutDepartmentsInput>
+    connectOrCreate?: UserCreateOrConnectWithoutDepartmentsInput
+    connect?: UserWhereUniqueInput
+  }
+
+  export type DepartmentCreateNestedOneWithoutUsersInput = {
+    create?: XOR<DepartmentCreateWithoutUsersInput, DepartmentUncheckedCreateWithoutUsersInput>
+    connectOrCreate?: DepartmentCreateOrConnectWithoutUsersInput
+    connect?: DepartmentWhereUniqueInput
+  }
+
+  export type UserUpdateOneRequiredWithoutDepartmentsNestedInput = {
+    create?: XOR<UserCreateWithoutDepartmentsInput, UserUncheckedCreateWithoutDepartmentsInput>
+    connectOrCreate?: UserCreateOrConnectWithoutDepartmentsInput
+    upsert?: UserUpsertWithoutDepartmentsInput
+    connect?: UserWhereUniqueInput
+    update?: XOR<XOR<UserUpdateToOneWithWhereWithoutDepartmentsInput, UserUpdateWithoutDepartmentsInput>, UserUncheckedUpdateWithoutDepartmentsInput>
+  }
+
+  export type DepartmentUpdateOneRequiredWithoutUsersNestedInput = {
+    create?: XOR<DepartmentCreateWithoutUsersInput, DepartmentUncheckedCreateWithoutUsersInput>
+    connectOrCreate?: DepartmentCreateOrConnectWithoutUsersInput
+    upsert?: DepartmentUpsertWithoutUsersInput
+    connect?: DepartmentWhereUniqueInput
+    update?: XOR<XOR<DepartmentUpdateToOneWithWhereWithoutUsersInput, DepartmentUpdateWithoutUsersInput>, DepartmentUncheckedUpdateWithoutUsersInput>
+  }
+
+  export type UserCreateNestedOneWithoutProjectsInput = {
+    create?: XOR<UserCreateWithoutProjectsInput, UserUncheckedCreateWithoutProjectsInput>
+    connectOrCreate?: UserCreateOrConnectWithoutProjectsInput
+    connect?: UserWhereUniqueInput
+  }
+
+  export type ProjectCreateNestedOneWithoutMembersInput = {
+    create?: XOR<ProjectCreateWithoutMembersInput, ProjectUncheckedCreateWithoutMembersInput>
+    connectOrCreate?: ProjectCreateOrConnectWithoutMembersInput
+    connect?: ProjectWhereUniqueInput
+  }
+
+  export type DepartmentCreateNestedOneWithoutUserProjectsInput = {
+    create?: XOR<DepartmentCreateWithoutUserProjectsInput, DepartmentUncheckedCreateWithoutUserProjectsInput>
+    connectOrCreate?: DepartmentCreateOrConnectWithoutUserProjectsInput
+    connect?: DepartmentWhereUniqueInput
+  }
+
+  export type UserUpdateOneRequiredWithoutProjectsNestedInput = {
+    create?: XOR<UserCreateWithoutProjectsInput, UserUncheckedCreateWithoutProjectsInput>
+    connectOrCreate?: UserCreateOrConnectWithoutProjectsInput
+    upsert?: UserUpsertWithoutProjectsInput
+    connect?: UserWhereUniqueInput
+    update?: XOR<XOR<UserUpdateToOneWithWhereWithoutProjectsInput, UserUpdateWithoutProjectsInput>, UserUncheckedUpdateWithoutProjectsInput>
+  }
+
+  export type ProjectUpdateOneRequiredWithoutMembersNestedInput = {
+    create?: XOR<ProjectCreateWithoutMembersInput, ProjectUncheckedCreateWithoutMembersInput>
+    connectOrCreate?: ProjectCreateOrConnectWithoutMembersInput
+    upsert?: ProjectUpsertWithoutMembersInput
+    connect?: ProjectWhereUniqueInput
+    update?: XOR<XOR<ProjectUpdateToOneWithWhereWithoutMembersInput, ProjectUpdateWithoutMembersInput>, ProjectUncheckedUpdateWithoutMembersInput>
+  }
+
+  export type DepartmentUpdateOneWithoutUserProjectsNestedInput = {
+    create?: XOR<DepartmentCreateWithoutUserProjectsInput, DepartmentUncheckedCreateWithoutUserProjectsInput>
+    connectOrCreate?: DepartmentCreateOrConnectWithoutUserProjectsInput
+    upsert?: DepartmentUpsertWithoutUserProjectsInput
+    disconnect?: DepartmentWhereInput | boolean
+    delete?: DepartmentWhereInput | boolean
+    connect?: DepartmentWhereUniqueInput
+    update?: XOR<XOR<DepartmentUpdateToOneWithWhereWithoutUserProjectsInput, DepartmentUpdateWithoutUserProjectsInput>, DepartmentUncheckedUpdateWithoutUserProjectsInput>
+  }
+
+  export type TenantCreateNestedOneWithoutRolesInput = {
+    create?: XOR<TenantCreateWithoutRolesInput, TenantUncheckedCreateWithoutRolesInput>
+    connectOrCreate?: TenantCreateOrConnectWithoutRolesInput
+    connect?: TenantWhereUniqueInput
+  }
+
+  export type RolePermissionCreateNestedManyWithoutRoleInput = {
+    create?: XOR<RolePermissionCreateWithoutRoleInput, RolePermissionUncheckedCreateWithoutRoleInput> | RolePermissionCreateWithoutRoleInput[] | RolePermissionUncheckedCreateWithoutRoleInput[]
+    connectOrCreate?: RolePermissionCreateOrConnectWithoutRoleInput | RolePermissionCreateOrConnectWithoutRoleInput[]
+    createMany?: RolePermissionCreateManyRoleInputEnvelope
+    connect?: RolePermissionWhereUniqueInput | RolePermissionWhereUniqueInput[]
+  }
+
+  export type UserProjectRoleCreateNestedManyWithoutRoleInput = {
+    create?: XOR<UserProjectRoleCreateWithoutRoleInput, UserProjectRoleUncheckedCreateWithoutRoleInput> | UserProjectRoleCreateWithoutRoleInput[] | UserProjectRoleUncheckedCreateWithoutRoleInput[]
+    connectOrCreate?: UserProjectRoleCreateOrConnectWithoutRoleInput | UserProjectRoleCreateOrConnectWithoutRoleInput[]
+    createMany?: UserProjectRoleCreateManyRoleInputEnvelope
+    connect?: UserProjectRoleWhereUniqueInput | UserProjectRoleWhereUniqueInput[]
+  }
+
+  export type RolePermissionUncheckedCreateNestedManyWithoutRoleInput = {
+    create?: XOR<RolePermissionCreateWithoutRoleInput, RolePermissionUncheckedCreateWithoutRoleInput> | RolePermissionCreateWithoutRoleInput[] | RolePermissionUncheckedCreateWithoutRoleInput[]
+    connectOrCreate?: RolePermissionCreateOrConnectWithoutRoleInput | RolePermissionCreateOrConnectWithoutRoleInput[]
+    createMany?: RolePermissionCreateManyRoleInputEnvelope
+    connect?: RolePermissionWhereUniqueInput | RolePermissionWhereUniqueInput[]
+  }
+
+  export type UserProjectRoleUncheckedCreateNestedManyWithoutRoleInput = {
+    create?: XOR<UserProjectRoleCreateWithoutRoleInput, UserProjectRoleUncheckedCreateWithoutRoleInput> | UserProjectRoleCreateWithoutRoleInput[] | UserProjectRoleUncheckedCreateWithoutRoleInput[]
+    connectOrCreate?: UserProjectRoleCreateOrConnectWithoutRoleInput | UserProjectRoleCreateOrConnectWithoutRoleInput[]
+    createMany?: UserProjectRoleCreateManyRoleInputEnvelope
+    connect?: UserProjectRoleWhereUniqueInput | UserProjectRoleWhereUniqueInput[]
+  }
+
+  export type EnumRoleScopeFieldUpdateOperationsInput = {
+    set?: $Enums.RoleScope
+  }
+
+  export type TenantUpdateOneRequiredWithoutRolesNestedInput = {
+    create?: XOR<TenantCreateWithoutRolesInput, TenantUncheckedCreateWithoutRolesInput>
+    connectOrCreate?: TenantCreateOrConnectWithoutRolesInput
+    upsert?: TenantUpsertWithoutRolesInput
+    connect?: TenantWhereUniqueInput
+    update?: XOR<XOR<TenantUpdateToOneWithWhereWithoutRolesInput, TenantUpdateWithoutRolesInput>, TenantUncheckedUpdateWithoutRolesInput>
+  }
+
+  export type RolePermissionUpdateManyWithoutRoleNestedInput = {
+    create?: XOR<RolePermissionCreateWithoutRoleInput, RolePermissionUncheckedCreateWithoutRoleInput> | RolePermissionCreateWithoutRoleInput[] | RolePermissionUncheckedCreateWithoutRoleInput[]
+    connectOrCreate?: RolePermissionCreateOrConnectWithoutRoleInput | RolePermissionCreateOrConnectWithoutRoleInput[]
+    upsert?: RolePermissionUpsertWithWhereUniqueWithoutRoleInput | RolePermissionUpsertWithWhereUniqueWithoutRoleInput[]
+    createMany?: RolePermissionCreateManyRoleInputEnvelope
+    set?: RolePermissionWhereUniqueInput | RolePermissionWhereUniqueInput[]
+    disconnect?: RolePermissionWhereUniqueInput | RolePermissionWhereUniqueInput[]
+    delete?: RolePermissionWhereUniqueInput | RolePermissionWhereUniqueInput[]
+    connect?: RolePermissionWhereUniqueInput | RolePermissionWhereUniqueInput[]
+    update?: RolePermissionUpdateWithWhereUniqueWithoutRoleInput | RolePermissionUpdateWithWhereUniqueWithoutRoleInput[]
+    updateMany?: RolePermissionUpdateManyWithWhereWithoutRoleInput | RolePermissionUpdateManyWithWhereWithoutRoleInput[]
+    deleteMany?: RolePermissionScalarWhereInput | RolePermissionScalarWhereInput[]
+  }
+
+  export type UserProjectRoleUpdateManyWithoutRoleNestedInput = {
+    create?: XOR<UserProjectRoleCreateWithoutRoleInput, UserProjectRoleUncheckedCreateWithoutRoleInput> | UserProjectRoleCreateWithoutRoleInput[] | UserProjectRoleUncheckedCreateWithoutRoleInput[]
+    connectOrCreate?: UserProjectRoleCreateOrConnectWithoutRoleInput | UserProjectRoleCreateOrConnectWithoutRoleInput[]
+    upsert?: UserProjectRoleUpsertWithWhereUniqueWithoutRoleInput | UserProjectRoleUpsertWithWhereUniqueWithoutRoleInput[]
+    createMany?: UserProjectRoleCreateManyRoleInputEnvelope
+    set?: UserProjectRoleWhereUniqueInput | UserProjectRoleWhereUniqueInput[]
+    disconnect?: UserProjectRoleWhereUniqueInput | UserProjectRoleWhereUniqueInput[]
+    delete?: UserProjectRoleWhereUniqueInput | UserProjectRoleWhereUniqueInput[]
+    connect?: UserProjectRoleWhereUniqueInput | UserProjectRoleWhereUniqueInput[]
+    update?: UserProjectRoleUpdateWithWhereUniqueWithoutRoleInput | UserProjectRoleUpdateWithWhereUniqueWithoutRoleInput[]
+    updateMany?: UserProjectRoleUpdateManyWithWhereWithoutRoleInput | UserProjectRoleUpdateManyWithWhereWithoutRoleInput[]
+    deleteMany?: UserProjectRoleScalarWhereInput | UserProjectRoleScalarWhereInput[]
+  }
+
+  export type RolePermissionUncheckedUpdateManyWithoutRoleNestedInput = {
+    create?: XOR<RolePermissionCreateWithoutRoleInput, RolePermissionUncheckedCreateWithoutRoleInput> | RolePermissionCreateWithoutRoleInput[] | RolePermissionUncheckedCreateWithoutRoleInput[]
+    connectOrCreate?: RolePermissionCreateOrConnectWithoutRoleInput | RolePermissionCreateOrConnectWithoutRoleInput[]
+    upsert?: RolePermissionUpsertWithWhereUniqueWithoutRoleInput | RolePermissionUpsertWithWhereUniqueWithoutRoleInput[]
+    createMany?: RolePermissionCreateManyRoleInputEnvelope
+    set?: RolePermissionWhereUniqueInput | RolePermissionWhereUniqueInput[]
+    disconnect?: RolePermissionWhereUniqueInput | RolePermissionWhereUniqueInput[]
+    delete?: RolePermissionWhereUniqueInput | RolePermissionWhereUniqueInput[]
+    connect?: RolePermissionWhereUniqueInput | RolePermissionWhereUniqueInput[]
+    update?: RolePermissionUpdateWithWhereUniqueWithoutRoleInput | RolePermissionUpdateWithWhereUniqueWithoutRoleInput[]
+    updateMany?: RolePermissionUpdateManyWithWhereWithoutRoleInput | RolePermissionUpdateManyWithWhereWithoutRoleInput[]
+    deleteMany?: RolePermissionScalarWhereInput | RolePermissionScalarWhereInput[]
+  }
+
+  export type UserProjectRoleUncheckedUpdateManyWithoutRoleNestedInput = {
+    create?: XOR<UserProjectRoleCreateWithoutRoleInput, UserProjectRoleUncheckedCreateWithoutRoleInput> | UserProjectRoleCreateWithoutRoleInput[] | UserProjectRoleUncheckedCreateWithoutRoleInput[]
+    connectOrCreate?: UserProjectRoleCreateOrConnectWithoutRoleInput | UserProjectRoleCreateOrConnectWithoutRoleInput[]
+    upsert?: UserProjectRoleUpsertWithWhereUniqueWithoutRoleInput | UserProjectRoleUpsertWithWhereUniqueWithoutRoleInput[]
+    createMany?: UserProjectRoleCreateManyRoleInputEnvelope
+    set?: UserProjectRoleWhereUniqueInput | UserProjectRoleWhereUniqueInput[]
+    disconnect?: UserProjectRoleWhereUniqueInput | UserProjectRoleWhereUniqueInput[]
+    delete?: UserProjectRoleWhereUniqueInput | UserProjectRoleWhereUniqueInput[]
+    connect?: UserProjectRoleWhereUniqueInput | UserProjectRoleWhereUniqueInput[]
+    update?: UserProjectRoleUpdateWithWhereUniqueWithoutRoleInput | UserProjectRoleUpdateWithWhereUniqueWithoutRoleInput[]
+    updateMany?: UserProjectRoleUpdateManyWithWhereWithoutRoleInput | UserProjectRoleUpdateManyWithWhereWithoutRoleInput[]
+    deleteMany?: UserProjectRoleScalarWhereInput | UserProjectRoleScalarWhereInput[]
+  }
+
+  export type RolePermissionCreateNestedManyWithoutPermissionInput = {
+    create?: XOR<RolePermissionCreateWithoutPermissionInput, RolePermissionUncheckedCreateWithoutPermissionInput> | RolePermissionCreateWithoutPermissionInput[] | RolePermissionUncheckedCreateWithoutPermissionInput[]
+    connectOrCreate?: RolePermissionCreateOrConnectWithoutPermissionInput | RolePermissionCreateOrConnectWithoutPermissionInput[]
+    createMany?: RolePermissionCreateManyPermissionInputEnvelope
+    connect?: RolePermissionWhereUniqueInput | RolePermissionWhereUniqueInput[]
+  }
+
+  export type RolePermissionUncheckedCreateNestedManyWithoutPermissionInput = {
+    create?: XOR<RolePermissionCreateWithoutPermissionInput, RolePermissionUncheckedCreateWithoutPermissionInput> | RolePermissionCreateWithoutPermissionInput[] | RolePermissionUncheckedCreateWithoutPermissionInput[]
+    connectOrCreate?: RolePermissionCreateOrConnectWithoutPermissionInput | RolePermissionCreateOrConnectWithoutPermissionInput[]
+    createMany?: RolePermissionCreateManyPermissionInputEnvelope
+    connect?: RolePermissionWhereUniqueInput | RolePermissionWhereUniqueInput[]
+  }
+
+  export type RolePermissionUpdateManyWithoutPermissionNestedInput = {
+    create?: XOR<RolePermissionCreateWithoutPermissionInput, RolePermissionUncheckedCreateWithoutPermissionInput> | RolePermissionCreateWithoutPermissionInput[] | RolePermissionUncheckedCreateWithoutPermissionInput[]
+    connectOrCreate?: RolePermissionCreateOrConnectWithoutPermissionInput | RolePermissionCreateOrConnectWithoutPermissionInput[]
+    upsert?: RolePermissionUpsertWithWhereUniqueWithoutPermissionInput | RolePermissionUpsertWithWhereUniqueWithoutPermissionInput[]
+    createMany?: RolePermissionCreateManyPermissionInputEnvelope
+    set?: RolePermissionWhereUniqueInput | RolePermissionWhereUniqueInput[]
+    disconnect?: RolePermissionWhereUniqueInput | RolePermissionWhereUniqueInput[]
+    delete?: RolePermissionWhereUniqueInput | RolePermissionWhereUniqueInput[]
+    connect?: RolePermissionWhereUniqueInput | RolePermissionWhereUniqueInput[]
+    update?: RolePermissionUpdateWithWhereUniqueWithoutPermissionInput | RolePermissionUpdateWithWhereUniqueWithoutPermissionInput[]
+    updateMany?: RolePermissionUpdateManyWithWhereWithoutPermissionInput | RolePermissionUpdateManyWithWhereWithoutPermissionInput[]
+    deleteMany?: RolePermissionScalarWhereInput | RolePermissionScalarWhereInput[]
+  }
+
+  export type RolePermissionUncheckedUpdateManyWithoutPermissionNestedInput = {
+    create?: XOR<RolePermissionCreateWithoutPermissionInput, RolePermissionUncheckedCreateWithoutPermissionInput> | RolePermissionCreateWithoutPermissionInput[] | RolePermissionUncheckedCreateWithoutPermissionInput[]
+    connectOrCreate?: RolePermissionCreateOrConnectWithoutPermissionInput | RolePermissionCreateOrConnectWithoutPermissionInput[]
+    upsert?: RolePermissionUpsertWithWhereUniqueWithoutPermissionInput | RolePermissionUpsertWithWhereUniqueWithoutPermissionInput[]
+    createMany?: RolePermissionCreateManyPermissionInputEnvelope
+    set?: RolePermissionWhereUniqueInput | RolePermissionWhereUniqueInput[]
+    disconnect?: RolePermissionWhereUniqueInput | RolePermissionWhereUniqueInput[]
+    delete?: RolePermissionWhereUniqueInput | RolePermissionWhereUniqueInput[]
+    connect?: RolePermissionWhereUniqueInput | RolePermissionWhereUniqueInput[]
+    update?: RolePermissionUpdateWithWhereUniqueWithoutPermissionInput | RolePermissionUpdateWithWhereUniqueWithoutPermissionInput[]
+    updateMany?: RolePermissionUpdateManyWithWhereWithoutPermissionInput | RolePermissionUpdateManyWithWhereWithoutPermissionInput[]
+    deleteMany?: RolePermissionScalarWhereInput | RolePermissionScalarWhereInput[]
+  }
+
+  export type RoleCreateNestedOneWithoutPermissionsInput = {
+    create?: XOR<RoleCreateWithoutPermissionsInput, RoleUncheckedCreateWithoutPermissionsInput>
+    connectOrCreate?: RoleCreateOrConnectWithoutPermissionsInput
+    connect?: RoleWhereUniqueInput
+  }
+
+  export type PermissionCreateNestedOneWithoutRolesInput = {
+    create?: XOR<PermissionCreateWithoutRolesInput, PermissionUncheckedCreateWithoutRolesInput>
+    connectOrCreate?: PermissionCreateOrConnectWithoutRolesInput
+    connect?: PermissionWhereUniqueInput
+  }
+
+  export type RoleUpdateOneRequiredWithoutPermissionsNestedInput = {
+    create?: XOR<RoleCreateWithoutPermissionsInput, RoleUncheckedCreateWithoutPermissionsInput>
+    connectOrCreate?: RoleCreateOrConnectWithoutPermissionsInput
+    upsert?: RoleUpsertWithoutPermissionsInput
+    connect?: RoleWhereUniqueInput
+    update?: XOR<XOR<RoleUpdateToOneWithWhereWithoutPermissionsInput, RoleUpdateWithoutPermissionsInput>, RoleUncheckedUpdateWithoutPermissionsInput>
+  }
+
+  export type PermissionUpdateOneRequiredWithoutRolesNestedInput = {
+    create?: XOR<PermissionCreateWithoutRolesInput, PermissionUncheckedCreateWithoutRolesInput>
+    connectOrCreate?: PermissionCreateOrConnectWithoutRolesInput
+    upsert?: PermissionUpsertWithoutRolesInput
+    connect?: PermissionWhereUniqueInput
+    update?: XOR<XOR<PermissionUpdateToOneWithWhereWithoutRolesInput, PermissionUpdateWithoutRolesInput>, PermissionUncheckedUpdateWithoutRolesInput>
+  }
+
+  export type ProjectCreateNestedOneWithoutUsuariosRoleInput = {
+    create?: XOR<ProjectCreateWithoutUsuariosRoleInput, ProjectUncheckedCreateWithoutUsuariosRoleInput>
+    connectOrCreate?: ProjectCreateOrConnectWithoutUsuariosRoleInput
+    connect?: ProjectWhereUniqueInput
+  }
+
+  export type RoleCreateNestedOneWithoutUserProjectRolesInput = {
+    create?: XOR<RoleCreateWithoutUserProjectRolesInput, RoleUncheckedCreateWithoutUserProjectRolesInput>
+    connectOrCreate?: RoleCreateOrConnectWithoutUserProjectRolesInput
+    connect?: RoleWhereUniqueInput
+  }
+
+  export type UserCreateNestedOneWithoutUserProjectRolesInput = {
+    create?: XOR<UserCreateWithoutUserProjectRolesInput, UserUncheckedCreateWithoutUserProjectRolesInput>
+    connectOrCreate?: UserCreateOrConnectWithoutUserProjectRolesInput
+    connect?: UserWhereUniqueInput
+  }
+
+  export type ProjectUpdateOneRequiredWithoutUsuariosRoleNestedInput = {
+    create?: XOR<ProjectCreateWithoutUsuariosRoleInput, ProjectUncheckedCreateWithoutUsuariosRoleInput>
+    connectOrCreate?: ProjectCreateOrConnectWithoutUsuariosRoleInput
+    upsert?: ProjectUpsertWithoutUsuariosRoleInput
+    connect?: ProjectWhereUniqueInput
+    update?: XOR<XOR<ProjectUpdateToOneWithWhereWithoutUsuariosRoleInput, ProjectUpdateWithoutUsuariosRoleInput>, ProjectUncheckedUpdateWithoutUsuariosRoleInput>
+  }
+
+  export type RoleUpdateOneRequiredWithoutUserProjectRolesNestedInput = {
+    create?: XOR<RoleCreateWithoutUserProjectRolesInput, RoleUncheckedCreateWithoutUserProjectRolesInput>
+    connectOrCreate?: RoleCreateOrConnectWithoutUserProjectRolesInput
+    upsert?: RoleUpsertWithoutUserProjectRolesInput
+    connect?: RoleWhereUniqueInput
+    update?: XOR<XOR<RoleUpdateToOneWithWhereWithoutUserProjectRolesInput, RoleUpdateWithoutUserProjectRolesInput>, RoleUncheckedUpdateWithoutUserProjectRolesInput>
+  }
+
+  export type UserUpdateOneRequiredWithoutUserProjectRolesNestedInput = {
+    create?: XOR<UserCreateWithoutUserProjectRolesInput, UserUncheckedCreateWithoutUserProjectRolesInput>
+    connectOrCreate?: UserCreateOrConnectWithoutUserProjectRolesInput
+    upsert?: UserUpsertWithoutUserProjectRolesInput
+    connect?: UserWhereUniqueInput
+    update?: XOR<XOR<UserUpdateToOneWithWhereWithoutUserProjectRolesInput, UserUpdateWithoutUserProjectRolesInput>, UserUncheckedUpdateWithoutUserProjectRolesInput>
+  }
+
+  export type ProjectStakeholderCreateNestedManyWithoutStakeholderInput = {
+    create?: XOR<ProjectStakeholderCreateWithoutStakeholderInput, ProjectStakeholderUncheckedCreateWithoutStakeholderInput> | ProjectStakeholderCreateWithoutStakeholderInput[] | ProjectStakeholderUncheckedCreateWithoutStakeholderInput[]
+    connectOrCreate?: ProjectStakeholderCreateOrConnectWithoutStakeholderInput | ProjectStakeholderCreateOrConnectWithoutStakeholderInput[]
+    createMany?: ProjectStakeholderCreateManyStakeholderInputEnvelope
+    connect?: ProjectStakeholderWhereUniqueInput | ProjectStakeholderWhereUniqueInput[]
+  }
+
+  export type TenantCreateNestedOneWithoutStakeholdersInput = {
+    create?: XOR<TenantCreateWithoutStakeholdersInput, TenantUncheckedCreateWithoutStakeholdersInput>
+    connectOrCreate?: TenantCreateOrConnectWithoutStakeholdersInput
+    connect?: TenantWhereUniqueInput
+  }
+
+  export type ProjectStakeholderUncheckedCreateNestedManyWithoutStakeholderInput = {
+    create?: XOR<ProjectStakeholderCreateWithoutStakeholderInput, ProjectStakeholderUncheckedCreateWithoutStakeholderInput> | ProjectStakeholderCreateWithoutStakeholderInput[] | ProjectStakeholderUncheckedCreateWithoutStakeholderInput[]
+    connectOrCreate?: ProjectStakeholderCreateOrConnectWithoutStakeholderInput | ProjectStakeholderCreateOrConnectWithoutStakeholderInput[]
+    createMany?: ProjectStakeholderCreateManyStakeholderInputEnvelope
+    connect?: ProjectStakeholderWhereUniqueInput | ProjectStakeholderWhereUniqueInput[]
+  }
+
+  export type ProjectStakeholderUpdateManyWithoutStakeholderNestedInput = {
+    create?: XOR<ProjectStakeholderCreateWithoutStakeholderInput, ProjectStakeholderUncheckedCreateWithoutStakeholderInput> | ProjectStakeholderCreateWithoutStakeholderInput[] | ProjectStakeholderUncheckedCreateWithoutStakeholderInput[]
+    connectOrCreate?: ProjectStakeholderCreateOrConnectWithoutStakeholderInput | ProjectStakeholderCreateOrConnectWithoutStakeholderInput[]
+    upsert?: ProjectStakeholderUpsertWithWhereUniqueWithoutStakeholderInput | ProjectStakeholderUpsertWithWhereUniqueWithoutStakeholderInput[]
+    createMany?: ProjectStakeholderCreateManyStakeholderInputEnvelope
+    set?: ProjectStakeholderWhereUniqueInput | ProjectStakeholderWhereUniqueInput[]
+    disconnect?: ProjectStakeholderWhereUniqueInput | ProjectStakeholderWhereUniqueInput[]
+    delete?: ProjectStakeholderWhereUniqueInput | ProjectStakeholderWhereUniqueInput[]
+    connect?: ProjectStakeholderWhereUniqueInput | ProjectStakeholderWhereUniqueInput[]
+    update?: ProjectStakeholderUpdateWithWhereUniqueWithoutStakeholderInput | ProjectStakeholderUpdateWithWhereUniqueWithoutStakeholderInput[]
+    updateMany?: ProjectStakeholderUpdateManyWithWhereWithoutStakeholderInput | ProjectStakeholderUpdateManyWithWhereWithoutStakeholderInput[]
+    deleteMany?: ProjectStakeholderScalarWhereInput | ProjectStakeholderScalarWhereInput[]
+  }
+
+  export type TenantUpdateOneRequiredWithoutStakeholdersNestedInput = {
+    create?: XOR<TenantCreateWithoutStakeholdersInput, TenantUncheckedCreateWithoutStakeholdersInput>
+    connectOrCreate?: TenantCreateOrConnectWithoutStakeholdersInput
+    upsert?: TenantUpsertWithoutStakeholdersInput
+    connect?: TenantWhereUniqueInput
+    update?: XOR<XOR<TenantUpdateToOneWithWhereWithoutStakeholdersInput, TenantUpdateWithoutStakeholdersInput>, TenantUncheckedUpdateWithoutStakeholdersInput>
+  }
+
+  export type ProjectStakeholderUncheckedUpdateManyWithoutStakeholderNestedInput = {
+    create?: XOR<ProjectStakeholderCreateWithoutStakeholderInput, ProjectStakeholderUncheckedCreateWithoutStakeholderInput> | ProjectStakeholderCreateWithoutStakeholderInput[] | ProjectStakeholderUncheckedCreateWithoutStakeholderInput[]
+    connectOrCreate?: ProjectStakeholderCreateOrConnectWithoutStakeholderInput | ProjectStakeholderCreateOrConnectWithoutStakeholderInput[]
+    upsert?: ProjectStakeholderUpsertWithWhereUniqueWithoutStakeholderInput | ProjectStakeholderUpsertWithWhereUniqueWithoutStakeholderInput[]
+    createMany?: ProjectStakeholderCreateManyStakeholderInputEnvelope
+    set?: ProjectStakeholderWhereUniqueInput | ProjectStakeholderWhereUniqueInput[]
+    disconnect?: ProjectStakeholderWhereUniqueInput | ProjectStakeholderWhereUniqueInput[]
+    delete?: ProjectStakeholderWhereUniqueInput | ProjectStakeholderWhereUniqueInput[]
+    connect?: ProjectStakeholderWhereUniqueInput | ProjectStakeholderWhereUniqueInput[]
+    update?: ProjectStakeholderUpdateWithWhereUniqueWithoutStakeholderInput | ProjectStakeholderUpdateWithWhereUniqueWithoutStakeholderInput[]
+    updateMany?: ProjectStakeholderUpdateManyWithWhereWithoutStakeholderInput | ProjectStakeholderUpdateManyWithWhereWithoutStakeholderInput[]
+    deleteMany?: ProjectStakeholderScalarWhereInput | ProjectStakeholderScalarWhereInput[]
+  }
+
+  export type ProjectCreateNestedOneWithoutStakeholdersInput = {
+    create?: XOR<ProjectCreateWithoutStakeholdersInput, ProjectUncheckedCreateWithoutStakeholdersInput>
+    connectOrCreate?: ProjectCreateOrConnectWithoutStakeholdersInput
+    connect?: ProjectWhereUniqueInput
+  }
+
+  export type StakeholderCreateNestedOneWithoutProjectsInput = {
+    create?: XOR<StakeholderCreateWithoutProjectsInput, StakeholderUncheckedCreateWithoutProjectsInput>
+    connectOrCreate?: StakeholderCreateOrConnectWithoutProjectsInput
+    connect?: StakeholderWhereUniqueInput
+  }
+
+  export type ProjectUpdateOneRequiredWithoutStakeholdersNestedInput = {
+    create?: XOR<ProjectCreateWithoutStakeholdersInput, ProjectUncheckedCreateWithoutStakeholdersInput>
+    connectOrCreate?: ProjectCreateOrConnectWithoutStakeholdersInput
+    upsert?: ProjectUpsertWithoutStakeholdersInput
+    connect?: ProjectWhereUniqueInput
+    update?: XOR<XOR<ProjectUpdateToOneWithWhereWithoutStakeholdersInput, ProjectUpdateWithoutStakeholdersInput>, ProjectUncheckedUpdateWithoutStakeholdersInput>
+  }
+
+  export type StakeholderUpdateOneRequiredWithoutProjectsNestedInput = {
+    create?: XOR<StakeholderCreateWithoutProjectsInput, StakeholderUncheckedCreateWithoutProjectsInput>
+    connectOrCreate?: StakeholderCreateOrConnectWithoutProjectsInput
+    upsert?: StakeholderUpsertWithoutProjectsInput
+    connect?: StakeholderWhereUniqueInput
+    update?: XOR<XOR<StakeholderUpdateToOneWithWhereWithoutProjectsInput, StakeholderUpdateWithoutProjectsInput>, StakeholderUncheckedUpdateWithoutProjectsInput>
+  }
+
+  export type NestedStringFilter<$PrismaModel = never> = {
+    equals?: string | StringFieldRefInput<$PrismaModel>
+    in?: string[] | ListStringFieldRefInput<$PrismaModel>
+    notIn?: string[] | ListStringFieldRefInput<$PrismaModel>
+    lt?: string | StringFieldRefInput<$PrismaModel>
+    lte?: string | StringFieldRefInput<$PrismaModel>
+    gt?: string | StringFieldRefInput<$PrismaModel>
+    gte?: string | StringFieldRefInput<$PrismaModel>
+    contains?: string | StringFieldRefInput<$PrismaModel>
+    startsWith?: string | StringFieldRefInput<$PrismaModel>
+    endsWith?: string | StringFieldRefInput<$PrismaModel>
+    not?: NestedStringFilter<$PrismaModel> | string
+  }
+
+  export type NestedEnumTenantStatusFilter<$PrismaModel = never> = {
+    equals?: $Enums.TenantStatus | EnumTenantStatusFieldRefInput<$PrismaModel>
+    in?: $Enums.TenantStatus[] | ListEnumTenantStatusFieldRefInput<$PrismaModel>
+    notIn?: $Enums.TenantStatus[] | ListEnumTenantStatusFieldRefInput<$PrismaModel>
+    not?: NestedEnumTenantStatusFilter<$PrismaModel> | $Enums.TenantStatus
+  }
+
+  export type NestedDateTimeNullableFilter<$PrismaModel = never> = {
+    equals?: Date | string | DateTimeFieldRefInput<$PrismaModel> | null
+    in?: Date[] | string[] | ListDateTimeFieldRefInput<$PrismaModel> | null
+    notIn?: Date[] | string[] | ListDateTimeFieldRefInput<$PrismaModel> | null
+    lt?: Date | string | DateTimeFieldRefInput<$PrismaModel>
+    lte?: Date | string | DateTimeFieldRefInput<$PrismaModel>
+    gt?: Date | string | DateTimeFieldRefInput<$PrismaModel>
+    gte?: Date | string | DateTimeFieldRefInput<$PrismaModel>
+    not?: NestedDateTimeNullableFilter<$PrismaModel> | Date | string | null
+  }
+
+  export type NestedDateTimeFilter<$PrismaModel = never> = {
+    equals?: Date | string | DateTimeFieldRefInput<$PrismaModel>
+    in?: Date[] | string[] | ListDateTimeFieldRefInput<$PrismaModel>
+    notIn?: Date[] | string[] | ListDateTimeFieldRefInput<$PrismaModel>
+    lt?: Date | string | DateTimeFieldRefInput<$PrismaModel>
+    lte?: Date | string | DateTimeFieldRefInput<$PrismaModel>
+    gt?: Date | string | DateTimeFieldRefInput<$PrismaModel>
+    gte?: Date | string | DateTimeFieldRefInput<$PrismaModel>
+    not?: NestedDateTimeFilter<$PrismaModel> | Date | string
+  }
+
+  export type NestedStringWithAggregatesFilter<$PrismaModel = never> = {
+    equals?: string | StringFieldRefInput<$PrismaModel>
+    in?: string[] | ListStringFieldRefInput<$PrismaModel>
+    notIn?: string[] | ListStringFieldRefInput<$PrismaModel>
+    lt?: string | StringFieldRefInput<$PrismaModel>
+    lte?: string | StringFieldRefInput<$PrismaModel>
+    gt?: string | StringFieldRefInput<$PrismaModel>
+    gte?: string | StringFieldRefInput<$PrismaModel>
+    contains?: string | StringFieldRefInput<$PrismaModel>
+    startsWith?: string | StringFieldRefInput<$PrismaModel>
+    endsWith?: string | StringFieldRefInput<$PrismaModel>
+    not?: NestedStringWithAggregatesFilter<$PrismaModel> | string
+    _count?: NestedIntFilter<$PrismaModel>
+    _min?: NestedStringFilter<$PrismaModel>
+    _max?: NestedStringFilter<$PrismaModel>
+  }
+
+  export type NestedIntFilter<$PrismaModel = never> = {
+    equals?: number | IntFieldRefInput<$PrismaModel>
+    in?: number[] | ListIntFieldRefInput<$PrismaModel>
+    notIn?: number[] | ListIntFieldRefInput<$PrismaModel>
+    lt?: number | IntFieldRefInput<$PrismaModel>
+    lte?: number | IntFieldRefInput<$PrismaModel>
+    gt?: number | IntFieldRefInput<$PrismaModel>
+    gte?: number | IntFieldRefInput<$PrismaModel>
+    not?: NestedIntFilter<$PrismaModel> | number
+  }
+
+  export type NestedEnumTenantStatusWithAggregatesFilter<$PrismaModel = never> = {
+    equals?: $Enums.TenantStatus | EnumTenantStatusFieldRefInput<$PrismaModel>
+    in?: $Enums.TenantStatus[] | ListEnumTenantStatusFieldRefInput<$PrismaModel>
+    notIn?: $Enums.TenantStatus[] | ListEnumTenantStatusFieldRefInput<$PrismaModel>
+    not?: NestedEnumTenantStatusWithAggregatesFilter<$PrismaModel> | $Enums.TenantStatus
+    _count?: NestedIntFilter<$PrismaModel>
+    _min?: NestedEnumTenantStatusFilter<$PrismaModel>
+    _max?: NestedEnumTenantStatusFilter<$PrismaModel>
+  }
+
+  export type NestedDateTimeNullableWithAggregatesFilter<$PrismaModel = never> = {
+    equals?: Date | string | DateTimeFieldRefInput<$PrismaModel> | null
+    in?: Date[] | string[] | ListDateTimeFieldRefInput<$PrismaModel> | null
+    notIn?: Date[] | string[] | ListDateTimeFieldRefInput<$PrismaModel> | null
+    lt?: Date | string | DateTimeFieldRefInput<$PrismaModel>
+    lte?: Date | string | DateTimeFieldRefInput<$PrismaModel>
+    gt?: Date | string | DateTimeFieldRefInput<$PrismaModel>
+    gte?: Date | string | DateTimeFieldRefInput<$PrismaModel>
+    not?: NestedDateTimeNullableWithAggregatesFilter<$PrismaModel> | Date | string | null
+    _count?: NestedIntNullableFilter<$PrismaModel>
+    _min?: NestedDateTimeNullableFilter<$PrismaModel>
+    _max?: NestedDateTimeNullableFilter<$PrismaModel>
+  }
+
+  export type NestedIntNullableFilter<$PrismaModel = never> = {
+    equals?: number | IntFieldRefInput<$PrismaModel> | null
+    in?: number[] | ListIntFieldRefInput<$PrismaModel> | null
+    notIn?: number[] | ListIntFieldRefInput<$PrismaModel> | null
+    lt?: number | IntFieldRefInput<$PrismaModel>
+    lte?: number | IntFieldRefInput<$PrismaModel>
+    gt?: number | IntFieldRefInput<$PrismaModel>
+    gte?: number | IntFieldRefInput<$PrismaModel>
+    not?: NestedIntNullableFilter<$PrismaModel> | number | null
+  }
+
+  export type NestedDateTimeWithAggregatesFilter<$PrismaModel = never> = {
+    equals?: Date | string | DateTimeFieldRefInput<$PrismaModel>
+    in?: Date[] | string[] | ListDateTimeFieldRefInput<$PrismaModel>
+    notIn?: Date[] | string[] | ListDateTimeFieldRefInput<$PrismaModel>
+    lt?: Date | string | DateTimeFieldRefInput<$PrismaModel>
+    lte?: Date | string | DateTimeFieldRefInput<$PrismaModel>
+    gt?: Date | string | DateTimeFieldRefInput<$PrismaModel>
+    gte?: Date | string | DateTimeFieldRefInput<$PrismaModel>
+    not?: NestedDateTimeWithAggregatesFilter<$PrismaModel> | Date | string
+    _count?: NestedIntFilter<$PrismaModel>
+    _min?: NestedDateTimeFilter<$PrismaModel>
+    _max?: NestedDateTimeFilter<$PrismaModel>
+  }
+
+  export type NestedStringNullableFilter<$PrismaModel = never> = {
+    equals?: string | StringFieldRefInput<$PrismaModel> | null
+    in?: string[] | ListStringFieldRefInput<$PrismaModel> | null
+    notIn?: string[] | ListStringFieldRefInput<$PrismaModel> | null
+    lt?: string | StringFieldRefInput<$PrismaModel>
+    lte?: string | StringFieldRefInput<$PrismaModel>
+    gt?: string | StringFieldRefInput<$PrismaModel>
+    gte?: string | StringFieldRefInput<$PrismaModel>
+    contains?: string | StringFieldRefInput<$PrismaModel>
+    startsWith?: string | StringFieldRefInput<$PrismaModel>
+    endsWith?: string | StringFieldRefInput<$PrismaModel>
+    not?: NestedStringNullableFilter<$PrismaModel> | string | null
+  }
+
+  export type NestedEnumProjectStatusFilter<$PrismaModel = never> = {
+    equals?: $Enums.ProjectStatus | EnumProjectStatusFieldRefInput<$PrismaModel>
+    in?: $Enums.ProjectStatus[] | ListEnumProjectStatusFieldRefInput<$PrismaModel>
+    notIn?: $Enums.ProjectStatus[] | ListEnumProjectStatusFieldRefInput<$PrismaModel>
+    not?: NestedEnumProjectStatusFilter<$PrismaModel> | $Enums.ProjectStatus
+  }
+
+  export type NestedStringNullableWithAggregatesFilter<$PrismaModel = never> = {
+    equals?: string | StringFieldRefInput<$PrismaModel> | null
+    in?: string[] | ListStringFieldRefInput<$PrismaModel> | null
+    notIn?: string[] | ListStringFieldRefInput<$PrismaModel> | null
+    lt?: string | StringFieldRefInput<$PrismaModel>
+    lte?: string | StringFieldRefInput<$PrismaModel>
+    gt?: string | StringFieldRefInput<$PrismaModel>
+    gte?: string | StringFieldRefInput<$PrismaModel>
+    contains?: string | StringFieldRefInput<$PrismaModel>
+    startsWith?: string | StringFieldRefInput<$PrismaModel>
+    endsWith?: string | StringFieldRefInput<$PrismaModel>
+    not?: NestedStringNullableWithAggregatesFilter<$PrismaModel> | string | null
+    _count?: NestedIntNullableFilter<$PrismaModel>
+    _min?: NestedStringNullableFilter<$PrismaModel>
+    _max?: NestedStringNullableFilter<$PrismaModel>
+  }
+
+  export type NestedIntNullableWithAggregatesFilter<$PrismaModel = never> = {
+    equals?: number | IntFieldRefInput<$PrismaModel> | null
+    in?: number[] | ListIntFieldRefInput<$PrismaModel> | null
+    notIn?: number[] | ListIntFieldRefInput<$PrismaModel> | null
+    lt?: number | IntFieldRefInput<$PrismaModel>
+    lte?: number | IntFieldRefInput<$PrismaModel>
+    gt?: number | IntFieldRefInput<$PrismaModel>
+    gte?: number | IntFieldRefInput<$PrismaModel>
+    not?: NestedIntNullableWithAggregatesFilter<$PrismaModel> | number | null
+    _count?: NestedIntNullableFilter<$PrismaModel>
+    _avg?: NestedFloatNullableFilter<$PrismaModel>
+    _sum?: NestedIntNullableFilter<$PrismaModel>
+    _min?: NestedIntNullableFilter<$PrismaModel>
+    _max?: NestedIntNullableFilter<$PrismaModel>
+  }
+
+  export type NestedFloatNullableFilter<$PrismaModel = never> = {
+    equals?: number | FloatFieldRefInput<$PrismaModel> | null
+    in?: number[] | ListFloatFieldRefInput<$PrismaModel> | null
+    notIn?: number[] | ListFloatFieldRefInput<$PrismaModel> | null
+    lt?: number | FloatFieldRefInput<$PrismaModel>
+    lte?: number | FloatFieldRefInput<$PrismaModel>
+    gt?: number | FloatFieldRefInput<$PrismaModel>
+    gte?: number | FloatFieldRefInput<$PrismaModel>
+    not?: NestedFloatNullableFilter<$PrismaModel> | number | null
+  }
+
+  export type NestedEnumProjectStatusWithAggregatesFilter<$PrismaModel = never> = {
+    equals?: $Enums.ProjectStatus | EnumProjectStatusFieldRefInput<$PrismaModel>
+    in?: $Enums.ProjectStatus[] | ListEnumProjectStatusFieldRefInput<$PrismaModel>
+    notIn?: $Enums.ProjectStatus[] | ListEnumProjectStatusFieldRefInput<$PrismaModel>
+    not?: NestedEnumProjectStatusWithAggregatesFilter<$PrismaModel> | $Enums.ProjectStatus
+    _count?: NestedIntFilter<$PrismaModel>
+    _min?: NestedEnumProjectStatusFilter<$PrismaModel>
+    _max?: NestedEnumProjectStatusFilter<$PrismaModel>
+  }
+
+  export type NestedBoolFilter<$PrismaModel = never> = {
+    equals?: boolean | BooleanFieldRefInput<$PrismaModel>
+    not?: NestedBoolFilter<$PrismaModel> | boolean
+  }
+
+  export type NestedBoolWithAggregatesFilter<$PrismaModel = never> = {
+    equals?: boolean | BooleanFieldRefInput<$PrismaModel>
+    not?: NestedBoolWithAggregatesFilter<$PrismaModel> | boolean
+    _count?: NestedIntFilter<$PrismaModel>
+    _min?: NestedBoolFilter<$PrismaModel>
+    _max?: NestedBoolFilter<$PrismaModel>
+  }
+
+  export type NestedFloatNullableWithAggregatesFilter<$PrismaModel = never> = {
+    equals?: number | FloatFieldRefInput<$PrismaModel> | null
+    in?: number[] | ListFloatFieldRefInput<$PrismaModel> | null
+    notIn?: number[] | ListFloatFieldRefInput<$PrismaModel> | null
+    lt?: number | FloatFieldRefInput<$PrismaModel>
+    lte?: number | FloatFieldRefInput<$PrismaModel>
+    gt?: number | FloatFieldRefInput<$PrismaModel>
+    gte?: number | FloatFieldRefInput<$PrismaModel>
+    not?: NestedFloatNullableWithAggregatesFilter<$PrismaModel> | number | null
+    _count?: NestedIntNullableFilter<$PrismaModel>
+    _avg?: NestedFloatNullableFilter<$PrismaModel>
+    _sum?: NestedFloatNullableFilter<$PrismaModel>
+    _min?: NestedFloatNullableFilter<$PrismaModel>
+    _max?: NestedFloatNullableFilter<$PrismaModel>
+  }
+
+  export type NestedEnumRoleScopeFilter<$PrismaModel = never> = {
+    equals?: $Enums.RoleScope | EnumRoleScopeFieldRefInput<$PrismaModel>
+    in?: $Enums.RoleScope[] | ListEnumRoleScopeFieldRefInput<$PrismaModel>
+    notIn?: $Enums.RoleScope[] | ListEnumRoleScopeFieldRefInput<$PrismaModel>
+    not?: NestedEnumRoleScopeFilter<$PrismaModel> | $Enums.RoleScope
+  }
+
+  export type NestedEnumRoleScopeWithAggregatesFilter<$PrismaModel = never> = {
+    equals?: $Enums.RoleScope | EnumRoleScopeFieldRefInput<$PrismaModel>
+    in?: $Enums.RoleScope[] | ListEnumRoleScopeFieldRefInput<$PrismaModel>
+    notIn?: $Enums.RoleScope[] | ListEnumRoleScopeFieldRefInput<$PrismaModel>
+    not?: NestedEnumRoleScopeWithAggregatesFilter<$PrismaModel> | $Enums.RoleScope
+    _count?: NestedIntFilter<$PrismaModel>
+    _min?: NestedEnumRoleScopeFilter<$PrismaModel>
+    _max?: NestedEnumRoleScopeFilter<$PrismaModel>
+  }
+
+  export type ProjectCreateWithoutTenantInput = {
+    id?: string
+    name: string
+    description?: string | null
+    logoUrl?: string | null
+    slogan?: string | null
+    location?: string | null
+    startDate?: Date | string | null
+    endDate?: Date | string | null
+    justificativa?: string | null
+    objetivos?: string | null
+    metodologia?: string | null
+    descricaoProduto?: string | null
+    premissas?: string | null
+    restricoes?: string | null
+    limitesAutoridade?: string | null
+    semestre?: string | null
+    ano?: number | null
+    departamentos?: ProjectCreatedepartamentosInput | string[]
+    status?: $Enums.ProjectStatus
+    deletedAt?: Date | string | null
+    createdAt?: Date | string
+    updatedAt?: Date | string
+    members?: UserProjectCreateNestedManyWithoutProjectInput
+    usuariosRole?: UserProjectRoleCreateNestedManyWithoutProjectInput
+    macroFases?: ProjectMacroFaseCreateNestedManyWithoutProjectInput
+    stakeholders?: ProjectStakeholderCreateNestedManyWithoutProjectInput
+  }
+
+  export type ProjectUncheckedCreateWithoutTenantInput = {
+    id?: string
+    name: string
+    description?: string | null
+    logoUrl?: string | null
+    slogan?: string | null
+    location?: string | null
+    startDate?: Date | string | null
+    endDate?: Date | string | null
+    justificativa?: string | null
+    objetivos?: string | null
+    metodologia?: string | null
+    descricaoProduto?: string | null
+    premissas?: string | null
+    restricoes?: string | null
+    limitesAutoridade?: string | null
+    semestre?: string | null
+    ano?: number | null
+    departamentos?: ProjectCreatedepartamentosInput | string[]
+    status?: $Enums.ProjectStatus
+    deletedAt?: Date | string | null
+    createdAt?: Date | string
+    updatedAt?: Date | string
+    members?: UserProjectUncheckedCreateNestedManyWithoutProjectInput
+    usuariosRole?: UserProjectRoleUncheckedCreateNestedManyWithoutProjectInput
+    macroFases?: ProjectMacroFaseUncheckedCreateNestedManyWithoutProjectInput
+    stakeholders?: ProjectStakeholderUncheckedCreateNestedManyWithoutProjectInput
+  }
+
+  export type ProjectCreateOrConnectWithoutTenantInput = {
+    where: ProjectWhereUniqueInput
+    create: XOR<ProjectCreateWithoutTenantInput, ProjectUncheckedCreateWithoutTenantInput>
+  }
+
+  export type ProjectCreateManyTenantInputEnvelope = {
+    data: ProjectCreateManyTenantInput | ProjectCreateManyTenantInput[]
+    skipDuplicates?: boolean
+  }
+
+  export type DepartmentCreateWithoutTenantInput = {
+    id?: string
+    name: string
+    description?: string | null
+    active?: boolean
+    hourlyRate?: number | null
+    deletedAt?: Date | string | null
+    createdAt?: Date | string
+    updatedAt?: Date | string
+    users?: UserDepartmentCreateNestedManyWithoutDepartmentInput
+    userProjects?: UserProjectCreateNestedManyWithoutDepartmentInput
+  }
+
+  export type DepartmentUncheckedCreateWithoutTenantInput = {
+    id?: string
+    name: string
+    description?: string | null
+    active?: boolean
+    hourlyRate?: number | null
+    deletedAt?: Date | string | null
+    createdAt?: Date | string
+    updatedAt?: Date | string
+    users?: UserDepartmentUncheckedCreateNestedManyWithoutDepartmentInput
+    userProjects?: UserProjectUncheckedCreateNestedManyWithoutDepartmentInput
+  }
+
+  export type DepartmentCreateOrConnectWithoutTenantInput = {
+    where: DepartmentWhereUniqueInput
+    create: XOR<DepartmentCreateWithoutTenantInput, DepartmentUncheckedCreateWithoutTenantInput>
+  }
+
+  export type DepartmentCreateManyTenantInputEnvelope = {
+    data: DepartmentCreateManyTenantInput | DepartmentCreateManyTenantInput[]
+    skipDuplicates?: boolean
+  }
+
+  export type RoleCreateWithoutTenantInput = {
+    id?: string
+    name: string
+    nameKey: string
+    scope: $Enums.RoleScope
+    description?: string | null
+    deletedAt?: Date | string | null
+    createdAt?: Date | string
+    updatedAt?: Date | string
+    permissions?: RolePermissionCreateNestedManyWithoutRoleInput
+    userProjectRoles?: UserProjectRoleCreateNestedManyWithoutRoleInput
+  }
+
+  export type RoleUncheckedCreateWithoutTenantInput = {
+    id?: string
+    name: string
+    nameKey: string
+    scope: $Enums.RoleScope
+    description?: string | null
+    deletedAt?: Date | string | null
+    createdAt?: Date | string
+    updatedAt?: Date | string
+    permissions?: RolePermissionUncheckedCreateNestedManyWithoutRoleInput
+    userProjectRoles?: UserProjectRoleUncheckedCreateNestedManyWithoutRoleInput
+  }
+
+  export type RoleCreateOrConnectWithoutTenantInput = {
+    where: RoleWhereUniqueInput
+    create: XOR<RoleCreateWithoutTenantInput, RoleUncheckedCreateWithoutTenantInput>
+  }
+
+  export type RoleCreateManyTenantInputEnvelope = {
+    data: RoleCreateManyTenantInput | RoleCreateManyTenantInput[]
+    skipDuplicates?: boolean
+  }
+
+  export type StakeholderCreateWithoutTenantInput = {
+    id?: string
+    name: string
+    logoUrl?: string | null
+    company?: string | null
+    competence?: string | null
+    email?: string | null
+    phone?: string | null
+    cep?: string | null
+    logradouro?: string | null
+    numero?: string | null
+    complemento?: string | null
+    bairro?: string | null
+    cidade?: string | null
+    estado?: string | null
+    notes?: string | null
+    isActive?: boolean
+    createdAt?: Date | string
+    updatedAt?: Date | string
+    projects?: ProjectStakeholderCreateNestedManyWithoutStakeholderInput
+  }
+
+  export type StakeholderUncheckedCreateWithoutTenantInput = {
+    id?: string
+    name: string
+    logoUrl?: string | null
+    company?: string | null
+    competence?: string | null
+    email?: string | null
+    phone?: string | null
+    cep?: string | null
+    logradouro?: string | null
+    numero?: string | null
+    complemento?: string | null
+    bairro?: string | null
+    cidade?: string | null
+    estado?: string | null
+    notes?: string | null
+    isActive?: boolean
+    createdAt?: Date | string
+    updatedAt?: Date | string
+    projects?: ProjectStakeholderUncheckedCreateNestedManyWithoutStakeholderInput
+  }
+
+  export type StakeholderCreateOrConnectWithoutTenantInput = {
+    where: StakeholderWhereUniqueInput
+    create: XOR<StakeholderCreateWithoutTenantInput, StakeholderUncheckedCreateWithoutTenantInput>
+  }
+
+  export type StakeholderCreateManyTenantInputEnvelope = {
+    data: StakeholderCreateManyTenantInput | StakeholderCreateManyTenantInput[]
+    skipDuplicates?: boolean
+  }
+
+  export type ProjectUpsertWithWhereUniqueWithoutTenantInput = {
+    where: ProjectWhereUniqueInput
+    update: XOR<ProjectUpdateWithoutTenantInput, ProjectUncheckedUpdateWithoutTenantInput>
+    create: XOR<ProjectCreateWithoutTenantInput, ProjectUncheckedCreateWithoutTenantInput>
+  }
+
+  export type ProjectUpdateWithWhereUniqueWithoutTenantInput = {
+    where: ProjectWhereUniqueInput
+    data: XOR<ProjectUpdateWithoutTenantInput, ProjectUncheckedUpdateWithoutTenantInput>
+  }
+
+  export type ProjectUpdateManyWithWhereWithoutTenantInput = {
+    where: ProjectScalarWhereInput
+    data: XOR<ProjectUpdateManyMutationInput, ProjectUncheckedUpdateManyWithoutTenantInput>
+  }
+
+  export type ProjectScalarWhereInput = {
+    AND?: ProjectScalarWhereInput | ProjectScalarWhereInput[]
+    OR?: ProjectScalarWhereInput[]
+    NOT?: ProjectScalarWhereInput | ProjectScalarWhereInput[]
+    id?: StringFilter<"Project"> | string
+    tenantId?: StringFilter<"Project"> | string
+    name?: StringFilter<"Project"> | string
+    description?: StringNullableFilter<"Project"> | string | null
+    logoUrl?: StringNullableFilter<"Project"> | string | null
+    slogan?: StringNullableFilter<"Project"> | string | null
+    location?: StringNullableFilter<"Project"> | string | null
+    startDate?: DateTimeNullableFilter<"Project"> | Date | string | null
+    endDate?: DateTimeNullableFilter<"Project"> | Date | string | null
+    justificativa?: StringNullableFilter<"Project"> | string | null
+    objetivos?: StringNullableFilter<"Project"> | string | null
+    metodologia?: StringNullableFilter<"Project"> | string | null
+    descricaoProduto?: StringNullableFilter<"Project"> | string | null
+    premissas?: StringNullableFilter<"Project"> | string | null
+    restricoes?: StringNullableFilter<"Project"> | string | null
+    limitesAutoridade?: StringNullableFilter<"Project"> | string | null
+    semestre?: StringNullableFilter<"Project"> | string | null
+    ano?: IntNullableFilter<"Project"> | number | null
+    departamentos?: StringNullableListFilter<"Project">
+    status?: EnumProjectStatusFilter<"Project"> | $Enums.ProjectStatus
+    deletedAt?: DateTimeNullableFilter<"Project"> | Date | string | null
+    createdAt?: DateTimeFilter<"Project"> | Date | string
+    updatedAt?: DateTimeFilter<"Project"> | Date | string
+  }
+
+  export type DepartmentUpsertWithWhereUniqueWithoutTenantInput = {
+    where: DepartmentWhereUniqueInput
+    update: XOR<DepartmentUpdateWithoutTenantInput, DepartmentUncheckedUpdateWithoutTenantInput>
+    create: XOR<DepartmentCreateWithoutTenantInput, DepartmentUncheckedCreateWithoutTenantInput>
+  }
+
+  export type DepartmentUpdateWithWhereUniqueWithoutTenantInput = {
+    where: DepartmentWhereUniqueInput
+    data: XOR<DepartmentUpdateWithoutTenantInput, DepartmentUncheckedUpdateWithoutTenantInput>
+  }
+
+  export type DepartmentUpdateManyWithWhereWithoutTenantInput = {
+    where: DepartmentScalarWhereInput
+    data: XOR<DepartmentUpdateManyMutationInput, DepartmentUncheckedUpdateManyWithoutTenantInput>
+  }
+
+  export type DepartmentScalarWhereInput = {
+    AND?: DepartmentScalarWhereInput | DepartmentScalarWhereInput[]
+    OR?: DepartmentScalarWhereInput[]
+    NOT?: DepartmentScalarWhereInput | DepartmentScalarWhereInput[]
+    id?: StringFilter<"Department"> | string
+    tenantId?: StringFilter<"Department"> | string
+    name?: StringFilter<"Department"> | string
+    description?: StringNullableFilter<"Department"> | string | null
+    active?: BoolFilter<"Department"> | boolean
+    hourlyRate?: FloatNullableFilter<"Department"> | number | null
+    deletedAt?: DateTimeNullableFilter<"Department"> | Date | string | null
+    createdAt?: DateTimeFilter<"Department"> | Date | string
+    updatedAt?: DateTimeFilter<"Department"> | Date | string
+  }
+
+  export type RoleUpsertWithWhereUniqueWithoutTenantInput = {
+    where: RoleWhereUniqueInput
+    update: XOR<RoleUpdateWithoutTenantInput, RoleUncheckedUpdateWithoutTenantInput>
+    create: XOR<RoleCreateWithoutTenantInput, RoleUncheckedCreateWithoutTenantInput>
+  }
+
+  export type RoleUpdateWithWhereUniqueWithoutTenantInput = {
+    where: RoleWhereUniqueInput
+    data: XOR<RoleUpdateWithoutTenantInput, RoleUncheckedUpdateWithoutTenantInput>
+  }
+
+  export type RoleUpdateManyWithWhereWithoutTenantInput = {
+    where: RoleScalarWhereInput
+    data: XOR<RoleUpdateManyMutationInput, RoleUncheckedUpdateManyWithoutTenantInput>
+  }
+
+  export type RoleScalarWhereInput = {
+    AND?: RoleScalarWhereInput | RoleScalarWhereInput[]
+    OR?: RoleScalarWhereInput[]
+    NOT?: RoleScalarWhereInput | RoleScalarWhereInput[]
+    id?: StringFilter<"Role"> | string
+    tenantId?: StringFilter<"Role"> | string
+    name?: StringFilter<"Role"> | string
+    nameKey?: StringFilter<"Role"> | string
+    scope?: EnumRoleScopeFilter<"Role"> | $Enums.RoleScope
+    description?: StringNullableFilter<"Role"> | string | null
+    deletedAt?: DateTimeNullableFilter<"Role"> | Date | string | null
+    createdAt?: DateTimeFilter<"Role"> | Date | string
+    updatedAt?: DateTimeFilter<"Role"> | Date | string
+  }
+
+  export type StakeholderUpsertWithWhereUniqueWithoutTenantInput = {
+    where: StakeholderWhereUniqueInput
+    update: XOR<StakeholderUpdateWithoutTenantInput, StakeholderUncheckedUpdateWithoutTenantInput>
+    create: XOR<StakeholderCreateWithoutTenantInput, StakeholderUncheckedCreateWithoutTenantInput>
+  }
+
+  export type StakeholderUpdateWithWhereUniqueWithoutTenantInput = {
+    where: StakeholderWhereUniqueInput
+    data: XOR<StakeholderUpdateWithoutTenantInput, StakeholderUncheckedUpdateWithoutTenantInput>
+  }
+
+  export type StakeholderUpdateManyWithWhereWithoutTenantInput = {
+    where: StakeholderScalarWhereInput
+    data: XOR<StakeholderUpdateManyMutationInput, StakeholderUncheckedUpdateManyWithoutTenantInput>
+  }
+
+  export type StakeholderScalarWhereInput = {
+    AND?: StakeholderScalarWhereInput | StakeholderScalarWhereInput[]
+    OR?: StakeholderScalarWhereInput[]
+    NOT?: StakeholderScalarWhereInput | StakeholderScalarWhereInput[]
+    id?: StringFilter<"Stakeholder"> | string
+    tenantId?: StringFilter<"Stakeholder"> | string
+    name?: StringFilter<"Stakeholder"> | string
+    logoUrl?: StringNullableFilter<"Stakeholder"> | string | null
+    company?: StringNullableFilter<"Stakeholder"> | string | null
+    competence?: StringNullableFilter<"Stakeholder"> | string | null
+    email?: StringNullableFilter<"Stakeholder"> | string | null
+    phone?: StringNullableFilter<"Stakeholder"> | string | null
+    cep?: StringNullableFilter<"Stakeholder"> | string | null
+    logradouro?: StringNullableFilter<"Stakeholder"> | string | null
+    numero?: StringNullableFilter<"Stakeholder"> | string | null
+    complemento?: StringNullableFilter<"Stakeholder"> | string | null
+    bairro?: StringNullableFilter<"Stakeholder"> | string | null
+    cidade?: StringNullableFilter<"Stakeholder"> | string | null
+    estado?: StringNullableFilter<"Stakeholder"> | string | null
+    notes?: StringNullableFilter<"Stakeholder"> | string | null
+    isActive?: BoolFilter<"Stakeholder"> | boolean
+    createdAt?: DateTimeFilter<"Stakeholder"> | Date | string
+    updatedAt?: DateTimeFilter<"Stakeholder"> | Date | string
+  }
+
+  export type UserProjectCreateWithoutUserInput = {
+    id?: string
+    active?: boolean
+    role?: string | null
+    hourlyRate?: number | null
+    startDate?: Date | string
+    endDate?: Date | string | null
+    project: ProjectCreateNestedOneWithoutMembersInput
+    department?: DepartmentCreateNestedOneWithoutUserProjectsInput
+  }
+
+  export type UserProjectUncheckedCreateWithoutUserInput = {
+    id?: string
+    projectId: string
+    active?: boolean
+    role?: string | null
+    departmentId?: string | null
+    hourlyRate?: number | null
+    startDate?: Date | string
+    endDate?: Date | string | null
+  }
+
+  export type UserProjectCreateOrConnectWithoutUserInput = {
+    where: UserProjectWhereUniqueInput
+    create: XOR<UserProjectCreateWithoutUserInput, UserProjectUncheckedCreateWithoutUserInput>
+  }
+
+  export type UserProjectCreateManyUserInputEnvelope = {
+    data: UserProjectCreateManyUserInput | UserProjectCreateManyUserInput[]
+    skipDuplicates?: boolean
+  }
+
+  export type UserDepartmentCreateWithoutUserInput = {
+    id?: string
+    department: DepartmentCreateNestedOneWithoutUsersInput
+  }
+
+  export type UserDepartmentUncheckedCreateWithoutUserInput = {
+    id?: string
+    departmentId: string
+  }
+
+  export type UserDepartmentCreateOrConnectWithoutUserInput = {
+    where: UserDepartmentWhereUniqueInput
+    create: XOR<UserDepartmentCreateWithoutUserInput, UserDepartmentUncheckedCreateWithoutUserInput>
+  }
+
+  export type UserDepartmentCreateManyUserInputEnvelope = {
+    data: UserDepartmentCreateManyUserInput | UserDepartmentCreateManyUserInput[]
+    skipDuplicates?: boolean
+  }
+
+  export type UserProjectRoleCreateWithoutUserInput = {
+    id?: string
+    deletedAt?: Date | string | null
+    createdAt?: Date | string
+    updatedAt?: Date | string
+    project: ProjectCreateNestedOneWithoutUsuariosRoleInput
+    role: RoleCreateNestedOneWithoutUserProjectRolesInput
+  }
+
+  export type UserProjectRoleUncheckedCreateWithoutUserInput = {
+    id?: string
+    projectId: string
+    roleId: string
+    deletedAt?: Date | string | null
+    createdAt?: Date | string
+    updatedAt?: Date | string
+  }
+
+  export type UserProjectRoleCreateOrConnectWithoutUserInput = {
+    where: UserProjectRoleWhereUniqueInput
+    create: XOR<UserProjectRoleCreateWithoutUserInput, UserProjectRoleUncheckedCreateWithoutUserInput>
+  }
+
+  export type UserProjectRoleCreateManyUserInputEnvelope = {
+    data: UserProjectRoleCreateManyUserInput | UserProjectRoleCreateManyUserInput[]
+    skipDuplicates?: boolean
+  }
+
+  export type UserProjectUpsertWithWhereUniqueWithoutUserInput = {
+    where: UserProjectWhereUniqueInput
+    update: XOR<UserProjectUpdateWithoutUserInput, UserProjectUncheckedUpdateWithoutUserInput>
+    create: XOR<UserProjectCreateWithoutUserInput, UserProjectUncheckedCreateWithoutUserInput>
+  }
+
+  export type UserProjectUpdateWithWhereUniqueWithoutUserInput = {
+    where: UserProjectWhereUniqueInput
+    data: XOR<UserProjectUpdateWithoutUserInput, UserProjectUncheckedUpdateWithoutUserInput>
+  }
+
+  export type UserProjectUpdateManyWithWhereWithoutUserInput = {
+    where: UserProjectScalarWhereInput
+    data: XOR<UserProjectUpdateManyMutationInput, UserProjectUncheckedUpdateManyWithoutUserInput>
+  }
+
+  export type UserProjectScalarWhereInput = {
+    AND?: UserProjectScalarWhereInput | UserProjectScalarWhereInput[]
+    OR?: UserProjectScalarWhereInput[]
+    NOT?: UserProjectScalarWhereInput | UserProjectScalarWhereInput[]
+    id?: StringFilter<"UserProject"> | string
+    userId?: StringFilter<"UserProject"> | string
+    projectId?: StringFilter<"UserProject"> | string
+    active?: BoolFilter<"UserProject"> | boolean
+    role?: StringNullableFilter<"UserProject"> | string | null
+    departmentId?: StringNullableFilter<"UserProject"> | string | null
+    hourlyRate?: FloatNullableFilter<"UserProject"> | number | null
+    startDate?: DateTimeFilter<"UserProject"> | Date | string
+    endDate?: DateTimeNullableFilter<"UserProject"> | Date | string | null
+  }
+
+  export type UserDepartmentUpsertWithWhereUniqueWithoutUserInput = {
+    where: UserDepartmentWhereUniqueInput
+    update: XOR<UserDepartmentUpdateWithoutUserInput, UserDepartmentUncheckedUpdateWithoutUserInput>
+    create: XOR<UserDepartmentCreateWithoutUserInput, UserDepartmentUncheckedCreateWithoutUserInput>
+  }
+
+  export type UserDepartmentUpdateWithWhereUniqueWithoutUserInput = {
+    where: UserDepartmentWhereUniqueInput
+    data: XOR<UserDepartmentUpdateWithoutUserInput, UserDepartmentUncheckedUpdateWithoutUserInput>
+  }
+
+  export type UserDepartmentUpdateManyWithWhereWithoutUserInput = {
+    where: UserDepartmentScalarWhereInput
+    data: XOR<UserDepartmentUpdateManyMutationInput, UserDepartmentUncheckedUpdateManyWithoutUserInput>
+  }
+
+  export type UserDepartmentScalarWhereInput = {
+    AND?: UserDepartmentScalarWhereInput | UserDepartmentScalarWhereInput[]
+    OR?: UserDepartmentScalarWhereInput[]
+    NOT?: UserDepartmentScalarWhereInput | UserDepartmentScalarWhereInput[]
+    id?: StringFilter<"UserDepartment"> | string
+    userId?: StringFilter<"UserDepartment"> | string
+    departmentId?: StringFilter<"UserDepartment"> | string
+  }
+
+  export type UserProjectRoleUpsertWithWhereUniqueWithoutUserInput = {
+    where: UserProjectRoleWhereUniqueInput
+    update: XOR<UserProjectRoleUpdateWithoutUserInput, UserProjectRoleUncheckedUpdateWithoutUserInput>
+    create: XOR<UserProjectRoleCreateWithoutUserInput, UserProjectRoleUncheckedCreateWithoutUserInput>
+  }
+
+  export type UserProjectRoleUpdateWithWhereUniqueWithoutUserInput = {
+    where: UserProjectRoleWhereUniqueInput
+    data: XOR<UserProjectRoleUpdateWithoutUserInput, UserProjectRoleUncheckedUpdateWithoutUserInput>
+  }
+
+  export type UserProjectRoleUpdateManyWithWhereWithoutUserInput = {
+    where: UserProjectRoleScalarWhereInput
+    data: XOR<UserProjectRoleUpdateManyMutationInput, UserProjectRoleUncheckedUpdateManyWithoutUserInput>
+  }
+
+  export type UserProjectRoleScalarWhereInput = {
+    AND?: UserProjectRoleScalarWhereInput | UserProjectRoleScalarWhereInput[]
+    OR?: UserProjectRoleScalarWhereInput[]
+    NOT?: UserProjectRoleScalarWhereInput | UserProjectRoleScalarWhereInput[]
+    id?: StringFilter<"UserProjectRole"> | string
+    userId?: StringFilter<"UserProjectRole"> | string
+    projectId?: StringFilter<"UserProjectRole"> | string
+    roleId?: StringFilter<"UserProjectRole"> | string
+    deletedAt?: DateTimeNullableFilter<"UserProjectRole"> | Date | string | null
+    createdAt?: DateTimeFilter<"UserProjectRole"> | Date | string
+    updatedAt?: DateTimeFilter<"UserProjectRole"> | Date | string
+  }
+
+  export type TenantCreateWithoutProjectsInput = {
+    id?: string
+    name: string
+    subdomain: string
+    status?: $Enums.TenantStatus
+    deletedAt?: Date | string | null
+    createdAt?: Date | string
+    updatedAt?: Date | string
+    departments?: DepartmentCreateNestedManyWithoutTenantInput
+    roles?: RoleCreateNestedManyWithoutTenantInput
+    stakeholders?: StakeholderCreateNestedManyWithoutTenantInput
+  }
+
+  export type TenantUncheckedCreateWithoutProjectsInput = {
+    id?: string
+    name: string
+    subdomain: string
+    status?: $Enums.TenantStatus
+    deletedAt?: Date | string | null
+    createdAt?: Date | string
+    updatedAt?: Date | string
+    departments?: DepartmentUncheckedCreateNestedManyWithoutTenantInput
+    roles?: RoleUncheckedCreateNestedManyWithoutTenantInput
+    stakeholders?: StakeholderUncheckedCreateNestedManyWithoutTenantInput
+  }
+
+  export type TenantCreateOrConnectWithoutProjectsInput = {
+    where: TenantWhereUniqueInput
+    create: XOR<TenantCreateWithoutProjectsInput, TenantUncheckedCreateWithoutProjectsInput>
+  }
+
+  export type UserProjectCreateWithoutProjectInput = {
+    id?: string
+    active?: boolean
+    role?: string | null
+    hourlyRate?: number | null
+    startDate?: Date | string
+    endDate?: Date | string | null
+    user: UserCreateNestedOneWithoutProjectsInput
+    department?: DepartmentCreateNestedOneWithoutUserProjectsInput
+  }
+
+  export type UserProjectUncheckedCreateWithoutProjectInput = {
+    id?: string
+    userId: string
+    active?: boolean
+    role?: string | null
+    departmentId?: string | null
+    hourlyRate?: number | null
+    startDate?: Date | string
+    endDate?: Date | string | null
+  }
+
+  export type UserProjectCreateOrConnectWithoutProjectInput = {
+    where: UserProjectWhereUniqueInput
+    create: XOR<UserProjectCreateWithoutProjectInput, UserProjectUncheckedCreateWithoutProjectInput>
+  }
+
+  export type UserProjectCreateManyProjectInputEnvelope = {
+    data: UserProjectCreateManyProjectInput | UserProjectCreateManyProjectInput[]
+    skipDuplicates?: boolean
+  }
+
+  export type UserProjectRoleCreateWithoutProjectInput = {
+    id?: string
+    deletedAt?: Date | string | null
+    createdAt?: Date | string
+    updatedAt?: Date | string
+    role: RoleCreateNestedOneWithoutUserProjectRolesInput
+    user: UserCreateNestedOneWithoutUserProjectRolesInput
+  }
+
+  export type UserProjectRoleUncheckedCreateWithoutProjectInput = {
+    id?: string
+    userId: string
+    roleId: string
+    deletedAt?: Date | string | null
+    createdAt?: Date | string
+    updatedAt?: Date | string
+  }
+
+  export type UserProjectRoleCreateOrConnectWithoutProjectInput = {
+    where: UserProjectRoleWhereUniqueInput
+    create: XOR<UserProjectRoleCreateWithoutProjectInput, UserProjectRoleUncheckedCreateWithoutProjectInput>
+  }
+
+  export type UserProjectRoleCreateManyProjectInputEnvelope = {
+    data: UserProjectRoleCreateManyProjectInput | UserProjectRoleCreateManyProjectInput[]
+    skipDuplicates?: boolean
+  }
+
+  export type ProjectMacroFaseCreateWithoutProjectInput = {
+    id?: string
+    fase: string
+    dataLimite?: string | null
+    custo?: string | null
+    createdAt?: Date | string
+    updatedAt?: Date | string
+  }
+
+  export type ProjectMacroFaseUncheckedCreateWithoutProjectInput = {
+    id?: string
+    fase: string
+    dataLimite?: string | null
+    custo?: string | null
+    createdAt?: Date | string
+    updatedAt?: Date | string
+  }
+
+  export type ProjectMacroFaseCreateOrConnectWithoutProjectInput = {
+    where: ProjectMacroFaseWhereUniqueInput
+    create: XOR<ProjectMacroFaseCreateWithoutProjectInput, ProjectMacroFaseUncheckedCreateWithoutProjectInput>
+  }
+
+  export type ProjectMacroFaseCreateManyProjectInputEnvelope = {
+    data: ProjectMacroFaseCreateManyProjectInput | ProjectMacroFaseCreateManyProjectInput[]
+    skipDuplicates?: boolean
+  }
+
+  export type ProjectStakeholderCreateWithoutProjectInput = {
+    id?: string
+    createdAt?: Date | string
+    stakeholder: StakeholderCreateNestedOneWithoutProjectsInput
+  }
+
+  export type ProjectStakeholderUncheckedCreateWithoutProjectInput = {
+    id?: string
+    stakeholderId: string
+    createdAt?: Date | string
+  }
+
+  export type ProjectStakeholderCreateOrConnectWithoutProjectInput = {
+    where: ProjectStakeholderWhereUniqueInput
+    create: XOR<ProjectStakeholderCreateWithoutProjectInput, ProjectStakeholderUncheckedCreateWithoutProjectInput>
+  }
+
+  export type ProjectStakeholderCreateManyProjectInputEnvelope = {
+    data: ProjectStakeholderCreateManyProjectInput | ProjectStakeholderCreateManyProjectInput[]
+    skipDuplicates?: boolean
+  }
+
+  export type TenantUpsertWithoutProjectsInput = {
+    update: XOR<TenantUpdateWithoutProjectsInput, TenantUncheckedUpdateWithoutProjectsInput>
+    create: XOR<TenantCreateWithoutProjectsInput, TenantUncheckedCreateWithoutProjectsInput>
+    where?: TenantWhereInput
+  }
+
+  export type TenantUpdateToOneWithWhereWithoutProjectsInput = {
+    where?: TenantWhereInput
+    data: XOR<TenantUpdateWithoutProjectsInput, TenantUncheckedUpdateWithoutProjectsInput>
+  }
+
+  export type TenantUpdateWithoutProjectsInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    name?: StringFieldUpdateOperationsInput | string
+    subdomain?: StringFieldUpdateOperationsInput | string
+    status?: EnumTenantStatusFieldUpdateOperationsInput | $Enums.TenantStatus
+    deletedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    departments?: DepartmentUpdateManyWithoutTenantNestedInput
+    roles?: RoleUpdateManyWithoutTenantNestedInput
+    stakeholders?: StakeholderUpdateManyWithoutTenantNestedInput
+  }
+
+  export type TenantUncheckedUpdateWithoutProjectsInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    name?: StringFieldUpdateOperationsInput | string
+    subdomain?: StringFieldUpdateOperationsInput | string
+    status?: EnumTenantStatusFieldUpdateOperationsInput | $Enums.TenantStatus
+    deletedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    departments?: DepartmentUncheckedUpdateManyWithoutTenantNestedInput
+    roles?: RoleUncheckedUpdateManyWithoutTenantNestedInput
+    stakeholders?: StakeholderUncheckedUpdateManyWithoutTenantNestedInput
+  }
+
+  export type UserProjectUpsertWithWhereUniqueWithoutProjectInput = {
+    where: UserProjectWhereUniqueInput
+    update: XOR<UserProjectUpdateWithoutProjectInput, UserProjectUncheckedUpdateWithoutProjectInput>
+    create: XOR<UserProjectCreateWithoutProjectInput, UserProjectUncheckedCreateWithoutProjectInput>
+  }
+
+  export type UserProjectUpdateWithWhereUniqueWithoutProjectInput = {
+    where: UserProjectWhereUniqueInput
+    data: XOR<UserProjectUpdateWithoutProjectInput, UserProjectUncheckedUpdateWithoutProjectInput>
+  }
+
+  export type UserProjectUpdateManyWithWhereWithoutProjectInput = {
+    where: UserProjectScalarWhereInput
+    data: XOR<UserProjectUpdateManyMutationInput, UserProjectUncheckedUpdateManyWithoutProjectInput>
+  }
+
+  export type UserProjectRoleUpsertWithWhereUniqueWithoutProjectInput = {
+    where: UserProjectRoleWhereUniqueInput
+    update: XOR<UserProjectRoleUpdateWithoutProjectInput, UserProjectRoleUncheckedUpdateWithoutProjectInput>
+    create: XOR<UserProjectRoleCreateWithoutProjectInput, UserProjectRoleUncheckedCreateWithoutProjectInput>
+  }
+
+  export type UserProjectRoleUpdateWithWhereUniqueWithoutProjectInput = {
+    where: UserProjectRoleWhereUniqueInput
+    data: XOR<UserProjectRoleUpdateWithoutProjectInput, UserProjectRoleUncheckedUpdateWithoutProjectInput>
+  }
+
+  export type UserProjectRoleUpdateManyWithWhereWithoutProjectInput = {
+    where: UserProjectRoleScalarWhereInput
+    data: XOR<UserProjectRoleUpdateManyMutationInput, UserProjectRoleUncheckedUpdateManyWithoutProjectInput>
+  }
+
+  export type ProjectMacroFaseUpsertWithWhereUniqueWithoutProjectInput = {
+    where: ProjectMacroFaseWhereUniqueInput
+    update: XOR<ProjectMacroFaseUpdateWithoutProjectInput, ProjectMacroFaseUncheckedUpdateWithoutProjectInput>
+    create: XOR<ProjectMacroFaseCreateWithoutProjectInput, ProjectMacroFaseUncheckedCreateWithoutProjectInput>
+  }
+
+  export type ProjectMacroFaseUpdateWithWhereUniqueWithoutProjectInput = {
+    where: ProjectMacroFaseWhereUniqueInput
+    data: XOR<ProjectMacroFaseUpdateWithoutProjectInput, ProjectMacroFaseUncheckedUpdateWithoutProjectInput>
+  }
+
+  export type ProjectMacroFaseUpdateManyWithWhereWithoutProjectInput = {
+    where: ProjectMacroFaseScalarWhereInput
+    data: XOR<ProjectMacroFaseUpdateManyMutationInput, ProjectMacroFaseUncheckedUpdateManyWithoutProjectInput>
+  }
+
+  export type ProjectMacroFaseScalarWhereInput = {
+    AND?: ProjectMacroFaseScalarWhereInput | ProjectMacroFaseScalarWhereInput[]
+    OR?: ProjectMacroFaseScalarWhereInput[]
+    NOT?: ProjectMacroFaseScalarWhereInput | ProjectMacroFaseScalarWhereInput[]
+    id?: StringFilter<"ProjectMacroFase"> | string
+    projectId?: StringFilter<"ProjectMacroFase"> | string
+    fase?: StringFilter<"ProjectMacroFase"> | string
+    dataLimite?: StringNullableFilter<"ProjectMacroFase"> | string | null
+    custo?: StringNullableFilter<"ProjectMacroFase"> | string | null
+    createdAt?: DateTimeFilter<"ProjectMacroFase"> | Date | string
+    updatedAt?: DateTimeFilter<"ProjectMacroFase"> | Date | string
+  }
+
+  export type ProjectStakeholderUpsertWithWhereUniqueWithoutProjectInput = {
+    where: ProjectStakeholderWhereUniqueInput
+    update: XOR<ProjectStakeholderUpdateWithoutProjectInput, ProjectStakeholderUncheckedUpdateWithoutProjectInput>
+    create: XOR<ProjectStakeholderCreateWithoutProjectInput, ProjectStakeholderUncheckedCreateWithoutProjectInput>
+  }
+
+  export type ProjectStakeholderUpdateWithWhereUniqueWithoutProjectInput = {
+    where: ProjectStakeholderWhereUniqueInput
+    data: XOR<ProjectStakeholderUpdateWithoutProjectInput, ProjectStakeholderUncheckedUpdateWithoutProjectInput>
+  }
+
+  export type ProjectStakeholderUpdateManyWithWhereWithoutProjectInput = {
+    where: ProjectStakeholderScalarWhereInput
+    data: XOR<ProjectStakeholderUpdateManyMutationInput, ProjectStakeholderUncheckedUpdateManyWithoutProjectInput>
+  }
+
+  export type ProjectStakeholderScalarWhereInput = {
+    AND?: ProjectStakeholderScalarWhereInput | ProjectStakeholderScalarWhereInput[]
+    OR?: ProjectStakeholderScalarWhereInput[]
+    NOT?: ProjectStakeholderScalarWhereInput | ProjectStakeholderScalarWhereInput[]
+    id?: StringFilter<"ProjectStakeholder"> | string
+    projectId?: StringFilter<"ProjectStakeholder"> | string
+    stakeholderId?: StringFilter<"ProjectStakeholder"> | string
+    createdAt?: DateTimeFilter<"ProjectStakeholder"> | Date | string
+  }
+
+  export type ProjectCreateWithoutMacroFasesInput = {
+    id?: string
+    name: string
+    description?: string | null
+    logoUrl?: string | null
+    slogan?: string | null
+    location?: string | null
+    startDate?: Date | string | null
+    endDate?: Date | string | null
+    justificativa?: string | null
+    objetivos?: string | null
+    metodologia?: string | null
+    descricaoProduto?: string | null
+    premissas?: string | null
+    restricoes?: string | null
+    limitesAutoridade?: string | null
+    semestre?: string | null
+    ano?: number | null
+    departamentos?: ProjectCreatedepartamentosInput | string[]
+    status?: $Enums.ProjectStatus
+    deletedAt?: Date | string | null
+    createdAt?: Date | string
+    updatedAt?: Date | string
+    tenant: TenantCreateNestedOneWithoutProjectsInput
+    members?: UserProjectCreateNestedManyWithoutProjectInput
+    usuariosRole?: UserProjectRoleCreateNestedManyWithoutProjectInput
+    stakeholders?: ProjectStakeholderCreateNestedManyWithoutProjectInput
+  }
+
+  export type ProjectUncheckedCreateWithoutMacroFasesInput = {
+    id?: string
+    tenantId: string
+    name: string
+    description?: string | null
+    logoUrl?: string | null
+    slogan?: string | null
+    location?: string | null
+    startDate?: Date | string | null
+    endDate?: Date | string | null
+    justificativa?: string | null
+    objetivos?: string | null
+    metodologia?: string | null
+    descricaoProduto?: string | null
+    premissas?: string | null
+    restricoes?: string | null
+    limitesAutoridade?: string | null
+    semestre?: string | null
+    ano?: number | null
+    departamentos?: ProjectCreatedepartamentosInput | string[]
+    status?: $Enums.ProjectStatus
+    deletedAt?: Date | string | null
+    createdAt?: Date | string
+    updatedAt?: Date | string
+    members?: UserProjectUncheckedCreateNestedManyWithoutProjectInput
+    usuariosRole?: UserProjectRoleUncheckedCreateNestedManyWithoutProjectInput
+    stakeholders?: ProjectStakeholderUncheckedCreateNestedManyWithoutProjectInput
+  }
+
+  export type ProjectCreateOrConnectWithoutMacroFasesInput = {
+    where: ProjectWhereUniqueInput
+    create: XOR<ProjectCreateWithoutMacroFasesInput, ProjectUncheckedCreateWithoutMacroFasesInput>
+  }
+
+  export type ProjectUpsertWithoutMacroFasesInput = {
+    update: XOR<ProjectUpdateWithoutMacroFasesInput, ProjectUncheckedUpdateWithoutMacroFasesInput>
+    create: XOR<ProjectCreateWithoutMacroFasesInput, ProjectUncheckedCreateWithoutMacroFasesInput>
+    where?: ProjectWhereInput
+  }
+
+  export type ProjectUpdateToOneWithWhereWithoutMacroFasesInput = {
+    where?: ProjectWhereInput
+    data: XOR<ProjectUpdateWithoutMacroFasesInput, ProjectUncheckedUpdateWithoutMacroFasesInput>
+  }
+
+  export type ProjectUpdateWithoutMacroFasesInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    name?: StringFieldUpdateOperationsInput | string
+    description?: NullableStringFieldUpdateOperationsInput | string | null
+    logoUrl?: NullableStringFieldUpdateOperationsInput | string | null
+    slogan?: NullableStringFieldUpdateOperationsInput | string | null
+    location?: NullableStringFieldUpdateOperationsInput | string | null
+    startDate?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    endDate?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    justificativa?: NullableStringFieldUpdateOperationsInput | string | null
+    objetivos?: NullableStringFieldUpdateOperationsInput | string | null
+    metodologia?: NullableStringFieldUpdateOperationsInput | string | null
+    descricaoProduto?: NullableStringFieldUpdateOperationsInput | string | null
+    premissas?: NullableStringFieldUpdateOperationsInput | string | null
+    restricoes?: NullableStringFieldUpdateOperationsInput | string | null
+    limitesAutoridade?: NullableStringFieldUpdateOperationsInput | string | null
+    semestre?: NullableStringFieldUpdateOperationsInput | string | null
+    ano?: NullableIntFieldUpdateOperationsInput | number | null
+    departamentos?: ProjectUpdatedepartamentosInput | string[]
+    status?: EnumProjectStatusFieldUpdateOperationsInput | $Enums.ProjectStatus
+    deletedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    tenant?: TenantUpdateOneRequiredWithoutProjectsNestedInput
+    members?: UserProjectUpdateManyWithoutProjectNestedInput
+    usuariosRole?: UserProjectRoleUpdateManyWithoutProjectNestedInput
+    stakeholders?: ProjectStakeholderUpdateManyWithoutProjectNestedInput
+  }
+
+  export type ProjectUncheckedUpdateWithoutMacroFasesInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    tenantId?: StringFieldUpdateOperationsInput | string
+    name?: StringFieldUpdateOperationsInput | string
+    description?: NullableStringFieldUpdateOperationsInput | string | null
+    logoUrl?: NullableStringFieldUpdateOperationsInput | string | null
+    slogan?: NullableStringFieldUpdateOperationsInput | string | null
+    location?: NullableStringFieldUpdateOperationsInput | string | null
+    startDate?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    endDate?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    justificativa?: NullableStringFieldUpdateOperationsInput | string | null
+    objetivos?: NullableStringFieldUpdateOperationsInput | string | null
+    metodologia?: NullableStringFieldUpdateOperationsInput | string | null
+    descricaoProduto?: NullableStringFieldUpdateOperationsInput | string | null
+    premissas?: NullableStringFieldUpdateOperationsInput | string | null
+    restricoes?: NullableStringFieldUpdateOperationsInput | string | null
+    limitesAutoridade?: NullableStringFieldUpdateOperationsInput | string | null
+    semestre?: NullableStringFieldUpdateOperationsInput | string | null
+    ano?: NullableIntFieldUpdateOperationsInput | number | null
+    departamentos?: ProjectUpdatedepartamentosInput | string[]
+    status?: EnumProjectStatusFieldUpdateOperationsInput | $Enums.ProjectStatus
+    deletedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    members?: UserProjectUncheckedUpdateManyWithoutProjectNestedInput
+    usuariosRole?: UserProjectRoleUncheckedUpdateManyWithoutProjectNestedInput
+    stakeholders?: ProjectStakeholderUncheckedUpdateManyWithoutProjectNestedInput
+  }
+
+  export type TenantCreateWithoutDepartmentsInput = {
+    id?: string
+    name: string
+    subdomain: string
+    status?: $Enums.TenantStatus
+    deletedAt?: Date | string | null
+    createdAt?: Date | string
+    updatedAt?: Date | string
+    projects?: ProjectCreateNestedManyWithoutTenantInput
+    roles?: RoleCreateNestedManyWithoutTenantInput
+    stakeholders?: StakeholderCreateNestedManyWithoutTenantInput
+  }
+
+  export type TenantUncheckedCreateWithoutDepartmentsInput = {
+    id?: string
+    name: string
+    subdomain: string
+    status?: $Enums.TenantStatus
+    deletedAt?: Date | string | null
+    createdAt?: Date | string
+    updatedAt?: Date | string
+    projects?: ProjectUncheckedCreateNestedManyWithoutTenantInput
+    roles?: RoleUncheckedCreateNestedManyWithoutTenantInput
+    stakeholders?: StakeholderUncheckedCreateNestedManyWithoutTenantInput
+  }
+
+  export type TenantCreateOrConnectWithoutDepartmentsInput = {
+    where: TenantWhereUniqueInput
+    create: XOR<TenantCreateWithoutDepartmentsInput, TenantUncheckedCreateWithoutDepartmentsInput>
+  }
+
+  export type UserDepartmentCreateWithoutDepartmentInput = {
+    id?: string
+    user: UserCreateNestedOneWithoutDepartmentsInput
+  }
+
+  export type UserDepartmentUncheckedCreateWithoutDepartmentInput = {
+    id?: string
+    userId: string
+  }
+
+  export type UserDepartmentCreateOrConnectWithoutDepartmentInput = {
+    where: UserDepartmentWhereUniqueInput
+    create: XOR<UserDepartmentCreateWithoutDepartmentInput, UserDepartmentUncheckedCreateWithoutDepartmentInput>
+  }
+
+  export type UserDepartmentCreateManyDepartmentInputEnvelope = {
+    data: UserDepartmentCreateManyDepartmentInput | UserDepartmentCreateManyDepartmentInput[]
+    skipDuplicates?: boolean
+  }
+
+  export type UserProjectCreateWithoutDepartmentInput = {
+    id?: string
+    active?: boolean
+    role?: string | null
+    hourlyRate?: number | null
+    startDate?: Date | string
+    endDate?: Date | string | null
+    user: UserCreateNestedOneWithoutProjectsInput
+    project: ProjectCreateNestedOneWithoutMembersInput
+  }
+
+  export type UserProjectUncheckedCreateWithoutDepartmentInput = {
+    id?: string
+    userId: string
+    projectId: string
+    active?: boolean
+    role?: string | null
+    hourlyRate?: number | null
+    startDate?: Date | string
+    endDate?: Date | string | null
+  }
+
+  export type UserProjectCreateOrConnectWithoutDepartmentInput = {
+    where: UserProjectWhereUniqueInput
+    create: XOR<UserProjectCreateWithoutDepartmentInput, UserProjectUncheckedCreateWithoutDepartmentInput>
+  }
+
+  export type UserProjectCreateManyDepartmentInputEnvelope = {
+    data: UserProjectCreateManyDepartmentInput | UserProjectCreateManyDepartmentInput[]
+    skipDuplicates?: boolean
+  }
+
+  export type TenantUpsertWithoutDepartmentsInput = {
+    update: XOR<TenantUpdateWithoutDepartmentsInput, TenantUncheckedUpdateWithoutDepartmentsInput>
+    create: XOR<TenantCreateWithoutDepartmentsInput, TenantUncheckedCreateWithoutDepartmentsInput>
+    where?: TenantWhereInput
+  }
+
+  export type TenantUpdateToOneWithWhereWithoutDepartmentsInput = {
+    where?: TenantWhereInput
+    data: XOR<TenantUpdateWithoutDepartmentsInput, TenantUncheckedUpdateWithoutDepartmentsInput>
+  }
+
+  export type TenantUpdateWithoutDepartmentsInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    name?: StringFieldUpdateOperationsInput | string
+    subdomain?: StringFieldUpdateOperationsInput | string
+    status?: EnumTenantStatusFieldUpdateOperationsInput | $Enums.TenantStatus
+    deletedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    projects?: ProjectUpdateManyWithoutTenantNestedInput
+    roles?: RoleUpdateManyWithoutTenantNestedInput
+    stakeholders?: StakeholderUpdateManyWithoutTenantNestedInput
+  }
+
+  export type TenantUncheckedUpdateWithoutDepartmentsInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    name?: StringFieldUpdateOperationsInput | string
+    subdomain?: StringFieldUpdateOperationsInput | string
+    status?: EnumTenantStatusFieldUpdateOperationsInput | $Enums.TenantStatus
+    deletedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    projects?: ProjectUncheckedUpdateManyWithoutTenantNestedInput
+    roles?: RoleUncheckedUpdateManyWithoutTenantNestedInput
+    stakeholders?: StakeholderUncheckedUpdateManyWithoutTenantNestedInput
+  }
+
+  export type UserDepartmentUpsertWithWhereUniqueWithoutDepartmentInput = {
+    where: UserDepartmentWhereUniqueInput
+    update: XOR<UserDepartmentUpdateWithoutDepartmentInput, UserDepartmentUncheckedUpdateWithoutDepartmentInput>
+    create: XOR<UserDepartmentCreateWithoutDepartmentInput, UserDepartmentUncheckedCreateWithoutDepartmentInput>
+  }
+
+  export type UserDepartmentUpdateWithWhereUniqueWithoutDepartmentInput = {
+    where: UserDepartmentWhereUniqueInput
+    data: XOR<UserDepartmentUpdateWithoutDepartmentInput, UserDepartmentUncheckedUpdateWithoutDepartmentInput>
+  }
+
+  export type UserDepartmentUpdateManyWithWhereWithoutDepartmentInput = {
+    where: UserDepartmentScalarWhereInput
+    data: XOR<UserDepartmentUpdateManyMutationInput, UserDepartmentUncheckedUpdateManyWithoutDepartmentInput>
+  }
+
+  export type UserProjectUpsertWithWhereUniqueWithoutDepartmentInput = {
+    where: UserProjectWhereUniqueInput
+    update: XOR<UserProjectUpdateWithoutDepartmentInput, UserProjectUncheckedUpdateWithoutDepartmentInput>
+    create: XOR<UserProjectCreateWithoutDepartmentInput, UserProjectUncheckedCreateWithoutDepartmentInput>
+  }
+
+  export type UserProjectUpdateWithWhereUniqueWithoutDepartmentInput = {
+    where: UserProjectWhereUniqueInput
+    data: XOR<UserProjectUpdateWithoutDepartmentInput, UserProjectUncheckedUpdateWithoutDepartmentInput>
+  }
+
+  export type UserProjectUpdateManyWithWhereWithoutDepartmentInput = {
+    where: UserProjectScalarWhereInput
+    data: XOR<UserProjectUpdateManyMutationInput, UserProjectUncheckedUpdateManyWithoutDepartmentInput>
+  }
+
+  export type UserCreateWithoutDepartmentsInput = {
+    id?: string
+    tenantId: string
+    name: string
+    email: string
+    role?: string
+    projects?: UserProjectCreateNestedManyWithoutUserInput
+    userProjectRoles?: UserProjectRoleCreateNestedManyWithoutUserInput
+  }
+
+  export type UserUncheckedCreateWithoutDepartmentsInput = {
+    id?: string
+    tenantId: string
+    name: string
+    email: string
+    role?: string
+    projects?: UserProjectUncheckedCreateNestedManyWithoutUserInput
+    userProjectRoles?: UserProjectRoleUncheckedCreateNestedManyWithoutUserInput
+  }
+
+  export type UserCreateOrConnectWithoutDepartmentsInput = {
+    where: UserWhereUniqueInput
+    create: XOR<UserCreateWithoutDepartmentsInput, UserUncheckedCreateWithoutDepartmentsInput>
+  }
+
+  export type DepartmentCreateWithoutUsersInput = {
+    id?: string
+    name: string
+    description?: string | null
+    active?: boolean
+    hourlyRate?: number | null
+    deletedAt?: Date | string | null
+    createdAt?: Date | string
+    updatedAt?: Date | string
+    tenant: TenantCreateNestedOneWithoutDepartmentsInput
+    userProjects?: UserProjectCreateNestedManyWithoutDepartmentInput
+  }
+
+  export type DepartmentUncheckedCreateWithoutUsersInput = {
+    id?: string
+    tenantId: string
+    name: string
+    description?: string | null
+    active?: boolean
+    hourlyRate?: number | null
+    deletedAt?: Date | string | null
+    createdAt?: Date | string
+    updatedAt?: Date | string
+    userProjects?: UserProjectUncheckedCreateNestedManyWithoutDepartmentInput
+  }
+
+  export type DepartmentCreateOrConnectWithoutUsersInput = {
+    where: DepartmentWhereUniqueInput
+    create: XOR<DepartmentCreateWithoutUsersInput, DepartmentUncheckedCreateWithoutUsersInput>
+  }
+
+  export type UserUpsertWithoutDepartmentsInput = {
+    update: XOR<UserUpdateWithoutDepartmentsInput, UserUncheckedUpdateWithoutDepartmentsInput>
+    create: XOR<UserCreateWithoutDepartmentsInput, UserUncheckedCreateWithoutDepartmentsInput>
+    where?: UserWhereInput
+  }
+
+  export type UserUpdateToOneWithWhereWithoutDepartmentsInput = {
+    where?: UserWhereInput
+    data: XOR<UserUpdateWithoutDepartmentsInput, UserUncheckedUpdateWithoutDepartmentsInput>
+  }
+
+  export type UserUpdateWithoutDepartmentsInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    tenantId?: StringFieldUpdateOperationsInput | string
+    name?: StringFieldUpdateOperationsInput | string
+    email?: StringFieldUpdateOperationsInput | string
+    role?: StringFieldUpdateOperationsInput | string
+    projects?: UserProjectUpdateManyWithoutUserNestedInput
+    userProjectRoles?: UserProjectRoleUpdateManyWithoutUserNestedInput
+  }
+
+  export type UserUncheckedUpdateWithoutDepartmentsInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    tenantId?: StringFieldUpdateOperationsInput | string
+    name?: StringFieldUpdateOperationsInput | string
+    email?: StringFieldUpdateOperationsInput | string
+    role?: StringFieldUpdateOperationsInput | string
+    projects?: UserProjectUncheckedUpdateManyWithoutUserNestedInput
+    userProjectRoles?: UserProjectRoleUncheckedUpdateManyWithoutUserNestedInput
+  }
+
+  export type DepartmentUpsertWithoutUsersInput = {
+    update: XOR<DepartmentUpdateWithoutUsersInput, DepartmentUncheckedUpdateWithoutUsersInput>
+    create: XOR<DepartmentCreateWithoutUsersInput, DepartmentUncheckedCreateWithoutUsersInput>
+    where?: DepartmentWhereInput
+  }
+
+  export type DepartmentUpdateToOneWithWhereWithoutUsersInput = {
+    where?: DepartmentWhereInput
+    data: XOR<DepartmentUpdateWithoutUsersInput, DepartmentUncheckedUpdateWithoutUsersInput>
+  }
+
+  export type DepartmentUpdateWithoutUsersInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    name?: StringFieldUpdateOperationsInput | string
+    description?: NullableStringFieldUpdateOperationsInput | string | null
+    active?: BoolFieldUpdateOperationsInput | boolean
+    hourlyRate?: NullableFloatFieldUpdateOperationsInput | number | null
+    deletedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    tenant?: TenantUpdateOneRequiredWithoutDepartmentsNestedInput
+    userProjects?: UserProjectUpdateManyWithoutDepartmentNestedInput
+  }
+
+  export type DepartmentUncheckedUpdateWithoutUsersInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    tenantId?: StringFieldUpdateOperationsInput | string
+    name?: StringFieldUpdateOperationsInput | string
+    description?: NullableStringFieldUpdateOperationsInput | string | null
+    active?: BoolFieldUpdateOperationsInput | boolean
+    hourlyRate?: NullableFloatFieldUpdateOperationsInput | number | null
+    deletedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    userProjects?: UserProjectUncheckedUpdateManyWithoutDepartmentNestedInput
+  }
+
+  export type UserCreateWithoutProjectsInput = {
+    id?: string
+    tenantId: string
+    name: string
+    email: string
+    role?: string
+    departments?: UserDepartmentCreateNestedManyWithoutUserInput
+    userProjectRoles?: UserProjectRoleCreateNestedManyWithoutUserInput
+  }
+
+  export type UserUncheckedCreateWithoutProjectsInput = {
+    id?: string
+    tenantId: string
+    name: string
+    email: string
+    role?: string
+    departments?: UserDepartmentUncheckedCreateNestedManyWithoutUserInput
+    userProjectRoles?: UserProjectRoleUncheckedCreateNestedManyWithoutUserInput
+  }
+
+  export type UserCreateOrConnectWithoutProjectsInput = {
+    where: UserWhereUniqueInput
+    create: XOR<UserCreateWithoutProjectsInput, UserUncheckedCreateWithoutProjectsInput>
+  }
+
+  export type ProjectCreateWithoutMembersInput = {
+    id?: string
+    name: string
+    description?: string | null
+    logoUrl?: string | null
+    slogan?: string | null
+    location?: string | null
+    startDate?: Date | string | null
+    endDate?: Date | string | null
+    justificativa?: string | null
+    objetivos?: string | null
+    metodologia?: string | null
+    descricaoProduto?: string | null
+    premissas?: string | null
+    restricoes?: string | null
+    limitesAutoridade?: string | null
+    semestre?: string | null
+    ano?: number | null
+    departamentos?: ProjectCreatedepartamentosInput | string[]
+    status?: $Enums.ProjectStatus
+    deletedAt?: Date | string | null
+    createdAt?: Date | string
+    updatedAt?: Date | string
+    tenant: TenantCreateNestedOneWithoutProjectsInput
+    usuariosRole?: UserProjectRoleCreateNestedManyWithoutProjectInput
+    macroFases?: ProjectMacroFaseCreateNestedManyWithoutProjectInput
+    stakeholders?: ProjectStakeholderCreateNestedManyWithoutProjectInput
+  }
+
+  export type ProjectUncheckedCreateWithoutMembersInput = {
+    id?: string
+    tenantId: string
+    name: string
+    description?: string | null
+    logoUrl?: string | null
+    slogan?: string | null
+    location?: string | null
+    startDate?: Date | string | null
+    endDate?: Date | string | null
+    justificativa?: string | null
+    objetivos?: string | null
+    metodologia?: string | null
+    descricaoProduto?: string | null
+    premissas?: string | null
+    restricoes?: string | null
+    limitesAutoridade?: string | null
+    semestre?: string | null
+    ano?: number | null
+    departamentos?: ProjectCreatedepartamentosInput | string[]
+    status?: $Enums.ProjectStatus
+    deletedAt?: Date | string | null
+    createdAt?: Date | string
+    updatedAt?: Date | string
+    usuariosRole?: UserProjectRoleUncheckedCreateNestedManyWithoutProjectInput
+    macroFases?: ProjectMacroFaseUncheckedCreateNestedManyWithoutProjectInput
+    stakeholders?: ProjectStakeholderUncheckedCreateNestedManyWithoutProjectInput
+  }
+
+  export type ProjectCreateOrConnectWithoutMembersInput = {
+    where: ProjectWhereUniqueInput
+    create: XOR<ProjectCreateWithoutMembersInput, ProjectUncheckedCreateWithoutMembersInput>
+  }
+
+  export type DepartmentCreateWithoutUserProjectsInput = {
+    id?: string
+    name: string
+    description?: string | null
+    active?: boolean
+    hourlyRate?: number | null
+    deletedAt?: Date | string | null
+    createdAt?: Date | string
+    updatedAt?: Date | string
+    tenant: TenantCreateNestedOneWithoutDepartmentsInput
+    users?: UserDepartmentCreateNestedManyWithoutDepartmentInput
+  }
+
+  export type DepartmentUncheckedCreateWithoutUserProjectsInput = {
+    id?: string
+    tenantId: string
+    name: string
+    description?: string | null
+    active?: boolean
+    hourlyRate?: number | null
+    deletedAt?: Date | string | null
+    createdAt?: Date | string
+    updatedAt?: Date | string
+    users?: UserDepartmentUncheckedCreateNestedManyWithoutDepartmentInput
+  }
+
+  export type DepartmentCreateOrConnectWithoutUserProjectsInput = {
+    where: DepartmentWhereUniqueInput
+    create: XOR<DepartmentCreateWithoutUserProjectsInput, DepartmentUncheckedCreateWithoutUserProjectsInput>
+  }
+
+  export type UserUpsertWithoutProjectsInput = {
+    update: XOR<UserUpdateWithoutProjectsInput, UserUncheckedUpdateWithoutProjectsInput>
+    create: XOR<UserCreateWithoutProjectsInput, UserUncheckedCreateWithoutProjectsInput>
+    where?: UserWhereInput
+  }
+
+  export type UserUpdateToOneWithWhereWithoutProjectsInput = {
+    where?: UserWhereInput
+    data: XOR<UserUpdateWithoutProjectsInput, UserUncheckedUpdateWithoutProjectsInput>
+  }
+
+  export type UserUpdateWithoutProjectsInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    tenantId?: StringFieldUpdateOperationsInput | string
+    name?: StringFieldUpdateOperationsInput | string
+    email?: StringFieldUpdateOperationsInput | string
+    role?: StringFieldUpdateOperationsInput | string
+    departments?: UserDepartmentUpdateManyWithoutUserNestedInput
+    userProjectRoles?: UserProjectRoleUpdateManyWithoutUserNestedInput
+  }
+
+  export type UserUncheckedUpdateWithoutProjectsInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    tenantId?: StringFieldUpdateOperationsInput | string
+    name?: StringFieldUpdateOperationsInput | string
+    email?: StringFieldUpdateOperationsInput | string
+    role?: StringFieldUpdateOperationsInput | string
+    departments?: UserDepartmentUncheckedUpdateManyWithoutUserNestedInput
+    userProjectRoles?: UserProjectRoleUncheckedUpdateManyWithoutUserNestedInput
+  }
+
+  export type ProjectUpsertWithoutMembersInput = {
+    update: XOR<ProjectUpdateWithoutMembersInput, ProjectUncheckedUpdateWithoutMembersInput>
+    create: XOR<ProjectCreateWithoutMembersInput, ProjectUncheckedCreateWithoutMembersInput>
+    where?: ProjectWhereInput
+  }
+
+  export type ProjectUpdateToOneWithWhereWithoutMembersInput = {
+    where?: ProjectWhereInput
+    data: XOR<ProjectUpdateWithoutMembersInput, ProjectUncheckedUpdateWithoutMembersInput>
+  }
+
+  export type ProjectUpdateWithoutMembersInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    name?: StringFieldUpdateOperationsInput | string
+    description?: NullableStringFieldUpdateOperationsInput | string | null
+    logoUrl?: NullableStringFieldUpdateOperationsInput | string | null
+    slogan?: NullableStringFieldUpdateOperationsInput | string | null
+    location?: NullableStringFieldUpdateOperationsInput | string | null
+    startDate?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    endDate?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    justificativa?: NullableStringFieldUpdateOperationsInput | string | null
+    objetivos?: NullableStringFieldUpdateOperationsInput | string | null
+    metodologia?: NullableStringFieldUpdateOperationsInput | string | null
+    descricaoProduto?: NullableStringFieldUpdateOperationsInput | string | null
+    premissas?: NullableStringFieldUpdateOperationsInput | string | null
+    restricoes?: NullableStringFieldUpdateOperationsInput | string | null
+    limitesAutoridade?: NullableStringFieldUpdateOperationsInput | string | null
+    semestre?: NullableStringFieldUpdateOperationsInput | string | null
+    ano?: NullableIntFieldUpdateOperationsInput | number | null
+    departamentos?: ProjectUpdatedepartamentosInput | string[]
+    status?: EnumProjectStatusFieldUpdateOperationsInput | $Enums.ProjectStatus
+    deletedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    tenant?: TenantUpdateOneRequiredWithoutProjectsNestedInput
+    usuariosRole?: UserProjectRoleUpdateManyWithoutProjectNestedInput
+    macroFases?: ProjectMacroFaseUpdateManyWithoutProjectNestedInput
+    stakeholders?: ProjectStakeholderUpdateManyWithoutProjectNestedInput
+  }
+
+  export type ProjectUncheckedUpdateWithoutMembersInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    tenantId?: StringFieldUpdateOperationsInput | string
+    name?: StringFieldUpdateOperationsInput | string
+    description?: NullableStringFieldUpdateOperationsInput | string | null
+    logoUrl?: NullableStringFieldUpdateOperationsInput | string | null
+    slogan?: NullableStringFieldUpdateOperationsInput | string | null
+    location?: NullableStringFieldUpdateOperationsInput | string | null
+    startDate?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    endDate?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    justificativa?: NullableStringFieldUpdateOperationsInput | string | null
+    objetivos?: NullableStringFieldUpdateOperationsInput | string | null
+    metodologia?: NullableStringFieldUpdateOperationsInput | string | null
+    descricaoProduto?: NullableStringFieldUpdateOperationsInput | string | null
+    premissas?: NullableStringFieldUpdateOperationsInput | string | null
+    restricoes?: NullableStringFieldUpdateOperationsInput | string | null
+    limitesAutoridade?: NullableStringFieldUpdateOperationsInput | string | null
+    semestre?: NullableStringFieldUpdateOperationsInput | string | null
+    ano?: NullableIntFieldUpdateOperationsInput | number | null
+    departamentos?: ProjectUpdatedepartamentosInput | string[]
+    status?: EnumProjectStatusFieldUpdateOperationsInput | $Enums.ProjectStatus
+    deletedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    usuariosRole?: UserProjectRoleUncheckedUpdateManyWithoutProjectNestedInput
+    macroFases?: ProjectMacroFaseUncheckedUpdateManyWithoutProjectNestedInput
+    stakeholders?: ProjectStakeholderUncheckedUpdateManyWithoutProjectNestedInput
+  }
+
+  export type DepartmentUpsertWithoutUserProjectsInput = {
+    update: XOR<DepartmentUpdateWithoutUserProjectsInput, DepartmentUncheckedUpdateWithoutUserProjectsInput>
+    create: XOR<DepartmentCreateWithoutUserProjectsInput, DepartmentUncheckedCreateWithoutUserProjectsInput>
+    where?: DepartmentWhereInput
+  }
+
+  export type DepartmentUpdateToOneWithWhereWithoutUserProjectsInput = {
+    where?: DepartmentWhereInput
+    data: XOR<DepartmentUpdateWithoutUserProjectsInput, DepartmentUncheckedUpdateWithoutUserProjectsInput>
+  }
+
+  export type DepartmentUpdateWithoutUserProjectsInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    name?: StringFieldUpdateOperationsInput | string
+    description?: NullableStringFieldUpdateOperationsInput | string | null
+    active?: BoolFieldUpdateOperationsInput | boolean
+    hourlyRate?: NullableFloatFieldUpdateOperationsInput | number | null
+    deletedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    tenant?: TenantUpdateOneRequiredWithoutDepartmentsNestedInput
+    users?: UserDepartmentUpdateManyWithoutDepartmentNestedInput
+  }
+
+  export type DepartmentUncheckedUpdateWithoutUserProjectsInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    tenantId?: StringFieldUpdateOperationsInput | string
+    name?: StringFieldUpdateOperationsInput | string
+    description?: NullableStringFieldUpdateOperationsInput | string | null
+    active?: BoolFieldUpdateOperationsInput | boolean
+    hourlyRate?: NullableFloatFieldUpdateOperationsInput | number | null
+    deletedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    users?: UserDepartmentUncheckedUpdateManyWithoutDepartmentNestedInput
+  }
+
+  export type TenantCreateWithoutRolesInput = {
+    id?: string
+    name: string
+    subdomain: string
+    status?: $Enums.TenantStatus
+    deletedAt?: Date | string | null
+    createdAt?: Date | string
+    updatedAt?: Date | string
+    projects?: ProjectCreateNestedManyWithoutTenantInput
+    departments?: DepartmentCreateNestedManyWithoutTenantInput
+    stakeholders?: StakeholderCreateNestedManyWithoutTenantInput
+  }
+
+  export type TenantUncheckedCreateWithoutRolesInput = {
+    id?: string
+    name: string
+    subdomain: string
+    status?: $Enums.TenantStatus
+    deletedAt?: Date | string | null
+    createdAt?: Date | string
+    updatedAt?: Date | string
+    projects?: ProjectUncheckedCreateNestedManyWithoutTenantInput
+    departments?: DepartmentUncheckedCreateNestedManyWithoutTenantInput
+    stakeholders?: StakeholderUncheckedCreateNestedManyWithoutTenantInput
+  }
+
+  export type TenantCreateOrConnectWithoutRolesInput = {
+    where: TenantWhereUniqueInput
+    create: XOR<TenantCreateWithoutRolesInput, TenantUncheckedCreateWithoutRolesInput>
+  }
+
+  export type RolePermissionCreateWithoutRoleInput = {
+    id?: string
+    permission: PermissionCreateNestedOneWithoutRolesInput
+  }
+
+  export type RolePermissionUncheckedCreateWithoutRoleInput = {
+    id?: string
+    permissionId: string
+  }
+
+  export type RolePermissionCreateOrConnectWithoutRoleInput = {
+    where: RolePermissionWhereUniqueInput
+    create: XOR<RolePermissionCreateWithoutRoleInput, RolePermissionUncheckedCreateWithoutRoleInput>
+  }
+
+  export type RolePermissionCreateManyRoleInputEnvelope = {
+    data: RolePermissionCreateManyRoleInput | RolePermissionCreateManyRoleInput[]
+    skipDuplicates?: boolean
+  }
+
+  export type UserProjectRoleCreateWithoutRoleInput = {
+    id?: string
+    deletedAt?: Date | string | null
+    createdAt?: Date | string
+    updatedAt?: Date | string
+    project: ProjectCreateNestedOneWithoutUsuariosRoleInput
+    user: UserCreateNestedOneWithoutUserProjectRolesInput
+  }
+
+  export type UserProjectRoleUncheckedCreateWithoutRoleInput = {
+    id?: string
+    userId: string
+    projectId: string
+    deletedAt?: Date | string | null
+    createdAt?: Date | string
+    updatedAt?: Date | string
+  }
+
+  export type UserProjectRoleCreateOrConnectWithoutRoleInput = {
+    where: UserProjectRoleWhereUniqueInput
+    create: XOR<UserProjectRoleCreateWithoutRoleInput, UserProjectRoleUncheckedCreateWithoutRoleInput>
+  }
+
+  export type UserProjectRoleCreateManyRoleInputEnvelope = {
+    data: UserProjectRoleCreateManyRoleInput | UserProjectRoleCreateManyRoleInput[]
+    skipDuplicates?: boolean
+  }
+
+  export type TenantUpsertWithoutRolesInput = {
+    update: XOR<TenantUpdateWithoutRolesInput, TenantUncheckedUpdateWithoutRolesInput>
+    create: XOR<TenantCreateWithoutRolesInput, TenantUncheckedCreateWithoutRolesInput>
+    where?: TenantWhereInput
+  }
+
+  export type TenantUpdateToOneWithWhereWithoutRolesInput = {
+    where?: TenantWhereInput
+    data: XOR<TenantUpdateWithoutRolesInput, TenantUncheckedUpdateWithoutRolesInput>
+  }
+
+  export type TenantUpdateWithoutRolesInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    name?: StringFieldUpdateOperationsInput | string
+    subdomain?: StringFieldUpdateOperationsInput | string
+    status?: EnumTenantStatusFieldUpdateOperationsInput | $Enums.TenantStatus
+    deletedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    projects?: ProjectUpdateManyWithoutTenantNestedInput
+    departments?: DepartmentUpdateManyWithoutTenantNestedInput
+    stakeholders?: StakeholderUpdateManyWithoutTenantNestedInput
+  }
+
+  export type TenantUncheckedUpdateWithoutRolesInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    name?: StringFieldUpdateOperationsInput | string
+    subdomain?: StringFieldUpdateOperationsInput | string
+    status?: EnumTenantStatusFieldUpdateOperationsInput | $Enums.TenantStatus
+    deletedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    projects?: ProjectUncheckedUpdateManyWithoutTenantNestedInput
+    departments?: DepartmentUncheckedUpdateManyWithoutTenantNestedInput
+    stakeholders?: StakeholderUncheckedUpdateManyWithoutTenantNestedInput
+  }
+
+  export type RolePermissionUpsertWithWhereUniqueWithoutRoleInput = {
+    where: RolePermissionWhereUniqueInput
+    update: XOR<RolePermissionUpdateWithoutRoleInput, RolePermissionUncheckedUpdateWithoutRoleInput>
+    create: XOR<RolePermissionCreateWithoutRoleInput, RolePermissionUncheckedCreateWithoutRoleInput>
+  }
+
+  export type RolePermissionUpdateWithWhereUniqueWithoutRoleInput = {
+    where: RolePermissionWhereUniqueInput
+    data: XOR<RolePermissionUpdateWithoutRoleInput, RolePermissionUncheckedUpdateWithoutRoleInput>
+  }
+
+  export type RolePermissionUpdateManyWithWhereWithoutRoleInput = {
+    where: RolePermissionScalarWhereInput
+    data: XOR<RolePermissionUpdateManyMutationInput, RolePermissionUncheckedUpdateManyWithoutRoleInput>
+  }
+
+  export type RolePermissionScalarWhereInput = {
+    AND?: RolePermissionScalarWhereInput | RolePermissionScalarWhereInput[]
+    OR?: RolePermissionScalarWhereInput[]
+    NOT?: RolePermissionScalarWhereInput | RolePermissionScalarWhereInput[]
+    id?: StringFilter<"RolePermission"> | string
+    roleId?: StringFilter<"RolePermission"> | string
+    permissionId?: StringFilter<"RolePermission"> | string
+  }
+
+  export type UserProjectRoleUpsertWithWhereUniqueWithoutRoleInput = {
+    where: UserProjectRoleWhereUniqueInput
+    update: XOR<UserProjectRoleUpdateWithoutRoleInput, UserProjectRoleUncheckedUpdateWithoutRoleInput>
+    create: XOR<UserProjectRoleCreateWithoutRoleInput, UserProjectRoleUncheckedCreateWithoutRoleInput>
+  }
+
+  export type UserProjectRoleUpdateWithWhereUniqueWithoutRoleInput = {
+    where: UserProjectRoleWhereUniqueInput
+    data: XOR<UserProjectRoleUpdateWithoutRoleInput, UserProjectRoleUncheckedUpdateWithoutRoleInput>
+  }
+
+  export type UserProjectRoleUpdateManyWithWhereWithoutRoleInput = {
+    where: UserProjectRoleScalarWhereInput
+    data: XOR<UserProjectRoleUpdateManyMutationInput, UserProjectRoleUncheckedUpdateManyWithoutRoleInput>
+  }
+
+  export type RolePermissionCreateWithoutPermissionInput = {
+    id?: string
+    role: RoleCreateNestedOneWithoutPermissionsInput
+  }
+
+  export type RolePermissionUncheckedCreateWithoutPermissionInput = {
+    id?: string
+    roleId: string
+  }
+
+  export type RolePermissionCreateOrConnectWithoutPermissionInput = {
+    where: RolePermissionWhereUniqueInput
+    create: XOR<RolePermissionCreateWithoutPermissionInput, RolePermissionUncheckedCreateWithoutPermissionInput>
+  }
+
+  export type RolePermissionCreateManyPermissionInputEnvelope = {
+    data: RolePermissionCreateManyPermissionInput | RolePermissionCreateManyPermissionInput[]
+    skipDuplicates?: boolean
+  }
+
+  export type RolePermissionUpsertWithWhereUniqueWithoutPermissionInput = {
+    where: RolePermissionWhereUniqueInput
+    update: XOR<RolePermissionUpdateWithoutPermissionInput, RolePermissionUncheckedUpdateWithoutPermissionInput>
+    create: XOR<RolePermissionCreateWithoutPermissionInput, RolePermissionUncheckedCreateWithoutPermissionInput>
+  }
+
+  export type RolePermissionUpdateWithWhereUniqueWithoutPermissionInput = {
+    where: RolePermissionWhereUniqueInput
+    data: XOR<RolePermissionUpdateWithoutPermissionInput, RolePermissionUncheckedUpdateWithoutPermissionInput>
+  }
+
+  export type RolePermissionUpdateManyWithWhereWithoutPermissionInput = {
+    where: RolePermissionScalarWhereInput
+    data: XOR<RolePermissionUpdateManyMutationInput, RolePermissionUncheckedUpdateManyWithoutPermissionInput>
+  }
+
+  export type RoleCreateWithoutPermissionsInput = {
+    id?: string
+    name: string
+    nameKey: string
+    scope: $Enums.RoleScope
+    description?: string | null
+    deletedAt?: Date | string | null
+    createdAt?: Date | string
+    updatedAt?: Date | string
+    tenant: TenantCreateNestedOneWithoutRolesInput
+    userProjectRoles?: UserProjectRoleCreateNestedManyWithoutRoleInput
+  }
+
+  export type RoleUncheckedCreateWithoutPermissionsInput = {
+    id?: string
+    tenantId: string
+    name: string
+    nameKey: string
+    scope: $Enums.RoleScope
+    description?: string | null
+    deletedAt?: Date | string | null
+    createdAt?: Date | string
+    updatedAt?: Date | string
+    userProjectRoles?: UserProjectRoleUncheckedCreateNestedManyWithoutRoleInput
+  }
+
+  export type RoleCreateOrConnectWithoutPermissionsInput = {
+    where: RoleWhereUniqueInput
+    create: XOR<RoleCreateWithoutPermissionsInput, RoleUncheckedCreateWithoutPermissionsInput>
+  }
+
+  export type PermissionCreateWithoutRolesInput = {
+    id?: string
+    name: string
+    description?: string | null
+    resource: string
+    action: string
+    deletedAt?: Date | string | null
+    createdAt?: Date | string
+    updatedAt?: Date | string
+  }
+
+  export type PermissionUncheckedCreateWithoutRolesInput = {
+    id?: string
+    name: string
+    description?: string | null
+    resource: string
+    action: string
+    deletedAt?: Date | string | null
+    createdAt?: Date | string
+    updatedAt?: Date | string
+  }
+
+  export type PermissionCreateOrConnectWithoutRolesInput = {
+    where: PermissionWhereUniqueInput
+    create: XOR<PermissionCreateWithoutRolesInput, PermissionUncheckedCreateWithoutRolesInput>
+  }
+
+  export type RoleUpsertWithoutPermissionsInput = {
+    update: XOR<RoleUpdateWithoutPermissionsInput, RoleUncheckedUpdateWithoutPermissionsInput>
+    create: XOR<RoleCreateWithoutPermissionsInput, RoleUncheckedCreateWithoutPermissionsInput>
+    where?: RoleWhereInput
+  }
+
+  export type RoleUpdateToOneWithWhereWithoutPermissionsInput = {
+    where?: RoleWhereInput
+    data: XOR<RoleUpdateWithoutPermissionsInput, RoleUncheckedUpdateWithoutPermissionsInput>
+  }
+
+  export type RoleUpdateWithoutPermissionsInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    name?: StringFieldUpdateOperationsInput | string
+    nameKey?: StringFieldUpdateOperationsInput | string
+    scope?: EnumRoleScopeFieldUpdateOperationsInput | $Enums.RoleScope
+    description?: NullableStringFieldUpdateOperationsInput | string | null
+    deletedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    tenant?: TenantUpdateOneRequiredWithoutRolesNestedInput
+    userProjectRoles?: UserProjectRoleUpdateManyWithoutRoleNestedInput
+  }
+
+  export type RoleUncheckedUpdateWithoutPermissionsInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    tenantId?: StringFieldUpdateOperationsInput | string
+    name?: StringFieldUpdateOperationsInput | string
+    nameKey?: StringFieldUpdateOperationsInput | string
+    scope?: EnumRoleScopeFieldUpdateOperationsInput | $Enums.RoleScope
+    description?: NullableStringFieldUpdateOperationsInput | string | null
+    deletedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    userProjectRoles?: UserProjectRoleUncheckedUpdateManyWithoutRoleNestedInput
+  }
+
+  export type PermissionUpsertWithoutRolesInput = {
+    update: XOR<PermissionUpdateWithoutRolesInput, PermissionUncheckedUpdateWithoutRolesInput>
+    create: XOR<PermissionCreateWithoutRolesInput, PermissionUncheckedCreateWithoutRolesInput>
+    where?: PermissionWhereInput
+  }
+
+  export type PermissionUpdateToOneWithWhereWithoutRolesInput = {
+    where?: PermissionWhereInput
+    data: XOR<PermissionUpdateWithoutRolesInput, PermissionUncheckedUpdateWithoutRolesInput>
+  }
+
+  export type PermissionUpdateWithoutRolesInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    name?: StringFieldUpdateOperationsInput | string
+    description?: NullableStringFieldUpdateOperationsInput | string | null
+    resource?: StringFieldUpdateOperationsInput | string
+    action?: StringFieldUpdateOperationsInput | string
+    deletedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
+  export type PermissionUncheckedUpdateWithoutRolesInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    name?: StringFieldUpdateOperationsInput | string
+    description?: NullableStringFieldUpdateOperationsInput | string | null
+    resource?: StringFieldUpdateOperationsInput | string
+    action?: StringFieldUpdateOperationsInput | string
+    deletedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
+  export type ProjectCreateWithoutUsuariosRoleInput = {
+    id?: string
+    name: string
+    description?: string | null
+    logoUrl?: string | null
+    slogan?: string | null
+    location?: string | null
+    startDate?: Date | string | null
+    endDate?: Date | string | null
+    justificativa?: string | null
+    objetivos?: string | null
+    metodologia?: string | null
+    descricaoProduto?: string | null
+    premissas?: string | null
+    restricoes?: string | null
+    limitesAutoridade?: string | null
+    semestre?: string | null
+    ano?: number | null
+    departamentos?: ProjectCreatedepartamentosInput | string[]
+    status?: $Enums.ProjectStatus
+    deletedAt?: Date | string | null
+    createdAt?: Date | string
+    updatedAt?: Date | string
+    tenant: TenantCreateNestedOneWithoutProjectsInput
+    members?: UserProjectCreateNestedManyWithoutProjectInput
+    macroFases?: ProjectMacroFaseCreateNestedManyWithoutProjectInput
+    stakeholders?: ProjectStakeholderCreateNestedManyWithoutProjectInput
+  }
+
+  export type ProjectUncheckedCreateWithoutUsuariosRoleInput = {
+    id?: string
+    tenantId: string
+    name: string
+    description?: string | null
+    logoUrl?: string | null
+    slogan?: string | null
+    location?: string | null
+    startDate?: Date | string | null
+    endDate?: Date | string | null
+    justificativa?: string | null
+    objetivos?: string | null
+    metodologia?: string | null
+    descricaoProduto?: string | null
+    premissas?: string | null
+    restricoes?: string | null
+    limitesAutoridade?: string | null
+    semestre?: string | null
+    ano?: number | null
+    departamentos?: ProjectCreatedepartamentosInput | string[]
+    status?: $Enums.ProjectStatus
+    deletedAt?: Date | string | null
+    createdAt?: Date | string
+    updatedAt?: Date | string
+    members?: UserProjectUncheckedCreateNestedManyWithoutProjectInput
+    macroFases?: ProjectMacroFaseUncheckedCreateNestedManyWithoutProjectInput
+    stakeholders?: ProjectStakeholderUncheckedCreateNestedManyWithoutProjectInput
+  }
+
+  export type ProjectCreateOrConnectWithoutUsuariosRoleInput = {
+    where: ProjectWhereUniqueInput
+    create: XOR<ProjectCreateWithoutUsuariosRoleInput, ProjectUncheckedCreateWithoutUsuariosRoleInput>
+  }
+
+  export type RoleCreateWithoutUserProjectRolesInput = {
+    id?: string
+    name: string
+    nameKey: string
+    scope: $Enums.RoleScope
+    description?: string | null
+    deletedAt?: Date | string | null
+    createdAt?: Date | string
+    updatedAt?: Date | string
+    tenant: TenantCreateNestedOneWithoutRolesInput
+    permissions?: RolePermissionCreateNestedManyWithoutRoleInput
+  }
+
+  export type RoleUncheckedCreateWithoutUserProjectRolesInput = {
+    id?: string
+    tenantId: string
+    name: string
+    nameKey: string
+    scope: $Enums.RoleScope
+    description?: string | null
+    deletedAt?: Date | string | null
+    createdAt?: Date | string
+    updatedAt?: Date | string
+    permissions?: RolePermissionUncheckedCreateNestedManyWithoutRoleInput
+  }
+
+  export type RoleCreateOrConnectWithoutUserProjectRolesInput = {
+    where: RoleWhereUniqueInput
+    create: XOR<RoleCreateWithoutUserProjectRolesInput, RoleUncheckedCreateWithoutUserProjectRolesInput>
+  }
+
+  export type UserCreateWithoutUserProjectRolesInput = {
+    id?: string
+    tenantId: string
+    name: string
+    email: string
+    role?: string
+    projects?: UserProjectCreateNestedManyWithoutUserInput
+    departments?: UserDepartmentCreateNestedManyWithoutUserInput
+  }
+
+  export type UserUncheckedCreateWithoutUserProjectRolesInput = {
+    id?: string
+    tenantId: string
+    name: string
+    email: string
+    role?: string
+    projects?: UserProjectUncheckedCreateNestedManyWithoutUserInput
+    departments?: UserDepartmentUncheckedCreateNestedManyWithoutUserInput
+  }
+
+  export type UserCreateOrConnectWithoutUserProjectRolesInput = {
+    where: UserWhereUniqueInput
+    create: XOR<UserCreateWithoutUserProjectRolesInput, UserUncheckedCreateWithoutUserProjectRolesInput>
+  }
+
+  export type ProjectUpsertWithoutUsuariosRoleInput = {
+    update: XOR<ProjectUpdateWithoutUsuariosRoleInput, ProjectUncheckedUpdateWithoutUsuariosRoleInput>
+    create: XOR<ProjectCreateWithoutUsuariosRoleInput, ProjectUncheckedCreateWithoutUsuariosRoleInput>
+    where?: ProjectWhereInput
+  }
+
+  export type ProjectUpdateToOneWithWhereWithoutUsuariosRoleInput = {
+    where?: ProjectWhereInput
+    data: XOR<ProjectUpdateWithoutUsuariosRoleInput, ProjectUncheckedUpdateWithoutUsuariosRoleInput>
+  }
+
+  export type ProjectUpdateWithoutUsuariosRoleInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    name?: StringFieldUpdateOperationsInput | string
+    description?: NullableStringFieldUpdateOperationsInput | string | null
+    logoUrl?: NullableStringFieldUpdateOperationsInput | string | null
+    slogan?: NullableStringFieldUpdateOperationsInput | string | null
+    location?: NullableStringFieldUpdateOperationsInput | string | null
+    startDate?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    endDate?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    justificativa?: NullableStringFieldUpdateOperationsInput | string | null
+    objetivos?: NullableStringFieldUpdateOperationsInput | string | null
+    metodologia?: NullableStringFieldUpdateOperationsInput | string | null
+    descricaoProduto?: NullableStringFieldUpdateOperationsInput | string | null
+    premissas?: NullableStringFieldUpdateOperationsInput | string | null
+    restricoes?: NullableStringFieldUpdateOperationsInput | string | null
+    limitesAutoridade?: NullableStringFieldUpdateOperationsInput | string | null
+    semestre?: NullableStringFieldUpdateOperationsInput | string | null
+    ano?: NullableIntFieldUpdateOperationsInput | number | null
+    departamentos?: ProjectUpdatedepartamentosInput | string[]
+    status?: EnumProjectStatusFieldUpdateOperationsInput | $Enums.ProjectStatus
+    deletedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    tenant?: TenantUpdateOneRequiredWithoutProjectsNestedInput
+    members?: UserProjectUpdateManyWithoutProjectNestedInput
+    macroFases?: ProjectMacroFaseUpdateManyWithoutProjectNestedInput
+    stakeholders?: ProjectStakeholderUpdateManyWithoutProjectNestedInput
+  }
+
+  export type ProjectUncheckedUpdateWithoutUsuariosRoleInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    tenantId?: StringFieldUpdateOperationsInput | string
+    name?: StringFieldUpdateOperationsInput | string
+    description?: NullableStringFieldUpdateOperationsInput | string | null
+    logoUrl?: NullableStringFieldUpdateOperationsInput | string | null
+    slogan?: NullableStringFieldUpdateOperationsInput | string | null
+    location?: NullableStringFieldUpdateOperationsInput | string | null
+    startDate?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    endDate?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    justificativa?: NullableStringFieldUpdateOperationsInput | string | null
+    objetivos?: NullableStringFieldUpdateOperationsInput | string | null
+    metodologia?: NullableStringFieldUpdateOperationsInput | string | null
+    descricaoProduto?: NullableStringFieldUpdateOperationsInput | string | null
+    premissas?: NullableStringFieldUpdateOperationsInput | string | null
+    restricoes?: NullableStringFieldUpdateOperationsInput | string | null
+    limitesAutoridade?: NullableStringFieldUpdateOperationsInput | string | null
+    semestre?: NullableStringFieldUpdateOperationsInput | string | null
+    ano?: NullableIntFieldUpdateOperationsInput | number | null
+    departamentos?: ProjectUpdatedepartamentosInput | string[]
+    status?: EnumProjectStatusFieldUpdateOperationsInput | $Enums.ProjectStatus
+    deletedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    members?: UserProjectUncheckedUpdateManyWithoutProjectNestedInput
+    macroFases?: ProjectMacroFaseUncheckedUpdateManyWithoutProjectNestedInput
+    stakeholders?: ProjectStakeholderUncheckedUpdateManyWithoutProjectNestedInput
+  }
+
+  export type RoleUpsertWithoutUserProjectRolesInput = {
+    update: XOR<RoleUpdateWithoutUserProjectRolesInput, RoleUncheckedUpdateWithoutUserProjectRolesInput>
+    create: XOR<RoleCreateWithoutUserProjectRolesInput, RoleUncheckedCreateWithoutUserProjectRolesInput>
+    where?: RoleWhereInput
+  }
+
+  export type RoleUpdateToOneWithWhereWithoutUserProjectRolesInput = {
+    where?: RoleWhereInput
+    data: XOR<RoleUpdateWithoutUserProjectRolesInput, RoleUncheckedUpdateWithoutUserProjectRolesInput>
+  }
+
+  export type RoleUpdateWithoutUserProjectRolesInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    name?: StringFieldUpdateOperationsInput | string
+    nameKey?: StringFieldUpdateOperationsInput | string
+    scope?: EnumRoleScopeFieldUpdateOperationsInput | $Enums.RoleScope
+    description?: NullableStringFieldUpdateOperationsInput | string | null
+    deletedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    tenant?: TenantUpdateOneRequiredWithoutRolesNestedInput
+    permissions?: RolePermissionUpdateManyWithoutRoleNestedInput
+  }
+
+  export type RoleUncheckedUpdateWithoutUserProjectRolesInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    tenantId?: StringFieldUpdateOperationsInput | string
+    name?: StringFieldUpdateOperationsInput | string
+    nameKey?: StringFieldUpdateOperationsInput | string
+    scope?: EnumRoleScopeFieldUpdateOperationsInput | $Enums.RoleScope
+    description?: NullableStringFieldUpdateOperationsInput | string | null
+    deletedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    permissions?: RolePermissionUncheckedUpdateManyWithoutRoleNestedInput
+  }
+
+  export type UserUpsertWithoutUserProjectRolesInput = {
+    update: XOR<UserUpdateWithoutUserProjectRolesInput, UserUncheckedUpdateWithoutUserProjectRolesInput>
+    create: XOR<UserCreateWithoutUserProjectRolesInput, UserUncheckedCreateWithoutUserProjectRolesInput>
+    where?: UserWhereInput
+  }
+
+  export type UserUpdateToOneWithWhereWithoutUserProjectRolesInput = {
+    where?: UserWhereInput
+    data: XOR<UserUpdateWithoutUserProjectRolesInput, UserUncheckedUpdateWithoutUserProjectRolesInput>
+  }
+
+  export type UserUpdateWithoutUserProjectRolesInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    tenantId?: StringFieldUpdateOperationsInput | string
+    name?: StringFieldUpdateOperationsInput | string
+    email?: StringFieldUpdateOperationsInput | string
+    role?: StringFieldUpdateOperationsInput | string
+    projects?: UserProjectUpdateManyWithoutUserNestedInput
+    departments?: UserDepartmentUpdateManyWithoutUserNestedInput
+  }
+
+  export type UserUncheckedUpdateWithoutUserProjectRolesInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    tenantId?: StringFieldUpdateOperationsInput | string
+    name?: StringFieldUpdateOperationsInput | string
+    email?: StringFieldUpdateOperationsInput | string
+    role?: StringFieldUpdateOperationsInput | string
+    projects?: UserProjectUncheckedUpdateManyWithoutUserNestedInput
+    departments?: UserDepartmentUncheckedUpdateManyWithoutUserNestedInput
+  }
+
+  export type ProjectStakeholderCreateWithoutStakeholderInput = {
+    id?: string
+    createdAt?: Date | string
+    project: ProjectCreateNestedOneWithoutStakeholdersInput
+  }
+
+  export type ProjectStakeholderUncheckedCreateWithoutStakeholderInput = {
+    id?: string
+    projectId: string
+    createdAt?: Date | string
+  }
+
+  export type ProjectStakeholderCreateOrConnectWithoutStakeholderInput = {
+    where: ProjectStakeholderWhereUniqueInput
+    create: XOR<ProjectStakeholderCreateWithoutStakeholderInput, ProjectStakeholderUncheckedCreateWithoutStakeholderInput>
+  }
+
+  export type ProjectStakeholderCreateManyStakeholderInputEnvelope = {
+    data: ProjectStakeholderCreateManyStakeholderInput | ProjectStakeholderCreateManyStakeholderInput[]
+    skipDuplicates?: boolean
+  }
+
+  export type TenantCreateWithoutStakeholdersInput = {
+    id?: string
+    name: string
+    subdomain: string
+    status?: $Enums.TenantStatus
+    deletedAt?: Date | string | null
+    createdAt?: Date | string
+    updatedAt?: Date | string
+    projects?: ProjectCreateNestedManyWithoutTenantInput
+    departments?: DepartmentCreateNestedManyWithoutTenantInput
+    roles?: RoleCreateNestedManyWithoutTenantInput
+  }
+
+  export type TenantUncheckedCreateWithoutStakeholdersInput = {
+    id?: string
+    name: string
+    subdomain: string
+    status?: $Enums.TenantStatus
+    deletedAt?: Date | string | null
+    createdAt?: Date | string
+    updatedAt?: Date | string
+    projects?: ProjectUncheckedCreateNestedManyWithoutTenantInput
+    departments?: DepartmentUncheckedCreateNestedManyWithoutTenantInput
+    roles?: RoleUncheckedCreateNestedManyWithoutTenantInput
+  }
+
+  export type TenantCreateOrConnectWithoutStakeholdersInput = {
+    where: TenantWhereUniqueInput
+    create: XOR<TenantCreateWithoutStakeholdersInput, TenantUncheckedCreateWithoutStakeholdersInput>
+  }
+
+  export type ProjectStakeholderUpsertWithWhereUniqueWithoutStakeholderInput = {
+    where: ProjectStakeholderWhereUniqueInput
+    update: XOR<ProjectStakeholderUpdateWithoutStakeholderInput, ProjectStakeholderUncheckedUpdateWithoutStakeholderInput>
+    create: XOR<ProjectStakeholderCreateWithoutStakeholderInput, ProjectStakeholderUncheckedCreateWithoutStakeholderInput>
+  }
+
+  export type ProjectStakeholderUpdateWithWhereUniqueWithoutStakeholderInput = {
+    where: ProjectStakeholderWhereUniqueInput
+    data: XOR<ProjectStakeholderUpdateWithoutStakeholderInput, ProjectStakeholderUncheckedUpdateWithoutStakeholderInput>
+  }
+
+  export type ProjectStakeholderUpdateManyWithWhereWithoutStakeholderInput = {
+    where: ProjectStakeholderScalarWhereInput
+    data: XOR<ProjectStakeholderUpdateManyMutationInput, ProjectStakeholderUncheckedUpdateManyWithoutStakeholderInput>
+  }
+
+  export type TenantUpsertWithoutStakeholdersInput = {
+    update: XOR<TenantUpdateWithoutStakeholdersInput, TenantUncheckedUpdateWithoutStakeholdersInput>
+    create: XOR<TenantCreateWithoutStakeholdersInput, TenantUncheckedCreateWithoutStakeholdersInput>
+    where?: TenantWhereInput
+  }
+
+  export type TenantUpdateToOneWithWhereWithoutStakeholdersInput = {
+    where?: TenantWhereInput
+    data: XOR<TenantUpdateWithoutStakeholdersInput, TenantUncheckedUpdateWithoutStakeholdersInput>
+  }
+
+  export type TenantUpdateWithoutStakeholdersInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    name?: StringFieldUpdateOperationsInput | string
+    subdomain?: StringFieldUpdateOperationsInput | string
+    status?: EnumTenantStatusFieldUpdateOperationsInput | $Enums.TenantStatus
+    deletedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    projects?: ProjectUpdateManyWithoutTenantNestedInput
+    departments?: DepartmentUpdateManyWithoutTenantNestedInput
+    roles?: RoleUpdateManyWithoutTenantNestedInput
+  }
+
+  export type TenantUncheckedUpdateWithoutStakeholdersInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    name?: StringFieldUpdateOperationsInput | string
+    subdomain?: StringFieldUpdateOperationsInput | string
+    status?: EnumTenantStatusFieldUpdateOperationsInput | $Enums.TenantStatus
+    deletedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    projects?: ProjectUncheckedUpdateManyWithoutTenantNestedInput
+    departments?: DepartmentUncheckedUpdateManyWithoutTenantNestedInput
+    roles?: RoleUncheckedUpdateManyWithoutTenantNestedInput
+  }
+
+  export type ProjectCreateWithoutStakeholdersInput = {
+    id?: string
+    name: string
+    description?: string | null
+    logoUrl?: string | null
+    slogan?: string | null
+    location?: string | null
+    startDate?: Date | string | null
+    endDate?: Date | string | null
+    justificativa?: string | null
+    objetivos?: string | null
+    metodologia?: string | null
+    descricaoProduto?: string | null
+    premissas?: string | null
+    restricoes?: string | null
+    limitesAutoridade?: string | null
+    semestre?: string | null
+    ano?: number | null
+    departamentos?: ProjectCreatedepartamentosInput | string[]
+    status?: $Enums.ProjectStatus
+    deletedAt?: Date | string | null
+    createdAt?: Date | string
+    updatedAt?: Date | string
+    tenant: TenantCreateNestedOneWithoutProjectsInput
+    members?: UserProjectCreateNestedManyWithoutProjectInput
+    usuariosRole?: UserProjectRoleCreateNestedManyWithoutProjectInput
+    macroFases?: ProjectMacroFaseCreateNestedManyWithoutProjectInput
+  }
+
+  export type ProjectUncheckedCreateWithoutStakeholdersInput = {
+    id?: string
+    tenantId: string
+    name: string
+    description?: string | null
+    logoUrl?: string | null
+    slogan?: string | null
+    location?: string | null
+    startDate?: Date | string | null
+    endDate?: Date | string | null
+    justificativa?: string | null
+    objetivos?: string | null
+    metodologia?: string | null
+    descricaoProduto?: string | null
+    premissas?: string | null
+    restricoes?: string | null
+    limitesAutoridade?: string | null
+    semestre?: string | null
+    ano?: number | null
+    departamentos?: ProjectCreatedepartamentosInput | string[]
+    status?: $Enums.ProjectStatus
+    deletedAt?: Date | string | null
+    createdAt?: Date | string
+    updatedAt?: Date | string
+    members?: UserProjectUncheckedCreateNestedManyWithoutProjectInput
+    usuariosRole?: UserProjectRoleUncheckedCreateNestedManyWithoutProjectInput
+    macroFases?: ProjectMacroFaseUncheckedCreateNestedManyWithoutProjectInput
+  }
+
+  export type ProjectCreateOrConnectWithoutStakeholdersInput = {
+    where: ProjectWhereUniqueInput
+    create: XOR<ProjectCreateWithoutStakeholdersInput, ProjectUncheckedCreateWithoutStakeholdersInput>
+  }
+
+  export type StakeholderCreateWithoutProjectsInput = {
+    id?: string
+    name: string
+    logoUrl?: string | null
+    company?: string | null
+    competence?: string | null
+    email?: string | null
+    phone?: string | null
+    cep?: string | null
+    logradouro?: string | null
+    numero?: string | null
+    complemento?: string | null
+    bairro?: string | null
+    cidade?: string | null
+    estado?: string | null
+    notes?: string | null
+    isActive?: boolean
+    createdAt?: Date | string
+    updatedAt?: Date | string
+    tenant: TenantCreateNestedOneWithoutStakeholdersInput
+  }
+
+  export type StakeholderUncheckedCreateWithoutProjectsInput = {
+    id?: string
+    tenantId: string
+    name: string
+    logoUrl?: string | null
+    company?: string | null
+    competence?: string | null
+    email?: string | null
+    phone?: string | null
+    cep?: string | null
+    logradouro?: string | null
+    numero?: string | null
+    complemento?: string | null
+    bairro?: string | null
+    cidade?: string | null
+    estado?: string | null
+    notes?: string | null
+    isActive?: boolean
+    createdAt?: Date | string
+    updatedAt?: Date | string
+  }
+
+  export type StakeholderCreateOrConnectWithoutProjectsInput = {
+    where: StakeholderWhereUniqueInput
+    create: XOR<StakeholderCreateWithoutProjectsInput, StakeholderUncheckedCreateWithoutProjectsInput>
+  }
+
+  export type ProjectUpsertWithoutStakeholdersInput = {
+    update: XOR<ProjectUpdateWithoutStakeholdersInput, ProjectUncheckedUpdateWithoutStakeholdersInput>
+    create: XOR<ProjectCreateWithoutStakeholdersInput, ProjectUncheckedCreateWithoutStakeholdersInput>
+    where?: ProjectWhereInput
+  }
+
+  export type ProjectUpdateToOneWithWhereWithoutStakeholdersInput = {
+    where?: ProjectWhereInput
+    data: XOR<ProjectUpdateWithoutStakeholdersInput, ProjectUncheckedUpdateWithoutStakeholdersInput>
+  }
+
+  export type ProjectUpdateWithoutStakeholdersInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    name?: StringFieldUpdateOperationsInput | string
+    description?: NullableStringFieldUpdateOperationsInput | string | null
+    logoUrl?: NullableStringFieldUpdateOperationsInput | string | null
+    slogan?: NullableStringFieldUpdateOperationsInput | string | null
+    location?: NullableStringFieldUpdateOperationsInput | string | null
+    startDate?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    endDate?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    justificativa?: NullableStringFieldUpdateOperationsInput | string | null
+    objetivos?: NullableStringFieldUpdateOperationsInput | string | null
+    metodologia?: NullableStringFieldUpdateOperationsInput | string | null
+    descricaoProduto?: NullableStringFieldUpdateOperationsInput | string | null
+    premissas?: NullableStringFieldUpdateOperationsInput | string | null
+    restricoes?: NullableStringFieldUpdateOperationsInput | string | null
+    limitesAutoridade?: NullableStringFieldUpdateOperationsInput | string | null
+    semestre?: NullableStringFieldUpdateOperationsInput | string | null
+    ano?: NullableIntFieldUpdateOperationsInput | number | null
+    departamentos?: ProjectUpdatedepartamentosInput | string[]
+    status?: EnumProjectStatusFieldUpdateOperationsInput | $Enums.ProjectStatus
+    deletedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    tenant?: TenantUpdateOneRequiredWithoutProjectsNestedInput
+    members?: UserProjectUpdateManyWithoutProjectNestedInput
+    usuariosRole?: UserProjectRoleUpdateManyWithoutProjectNestedInput
+    macroFases?: ProjectMacroFaseUpdateManyWithoutProjectNestedInput
+  }
+
+  export type ProjectUncheckedUpdateWithoutStakeholdersInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    tenantId?: StringFieldUpdateOperationsInput | string
+    name?: StringFieldUpdateOperationsInput | string
+    description?: NullableStringFieldUpdateOperationsInput | string | null
+    logoUrl?: NullableStringFieldUpdateOperationsInput | string | null
+    slogan?: NullableStringFieldUpdateOperationsInput | string | null
+    location?: NullableStringFieldUpdateOperationsInput | string | null
+    startDate?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    endDate?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    justificativa?: NullableStringFieldUpdateOperationsInput | string | null
+    objetivos?: NullableStringFieldUpdateOperationsInput | string | null
+    metodologia?: NullableStringFieldUpdateOperationsInput | string | null
+    descricaoProduto?: NullableStringFieldUpdateOperationsInput | string | null
+    premissas?: NullableStringFieldUpdateOperationsInput | string | null
+    restricoes?: NullableStringFieldUpdateOperationsInput | string | null
+    limitesAutoridade?: NullableStringFieldUpdateOperationsInput | string | null
+    semestre?: NullableStringFieldUpdateOperationsInput | string | null
+    ano?: NullableIntFieldUpdateOperationsInput | number | null
+    departamentos?: ProjectUpdatedepartamentosInput | string[]
+    status?: EnumProjectStatusFieldUpdateOperationsInput | $Enums.ProjectStatus
+    deletedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    members?: UserProjectUncheckedUpdateManyWithoutProjectNestedInput
+    usuariosRole?: UserProjectRoleUncheckedUpdateManyWithoutProjectNestedInput
+    macroFases?: ProjectMacroFaseUncheckedUpdateManyWithoutProjectNestedInput
+  }
+
+  export type StakeholderUpsertWithoutProjectsInput = {
+    update: XOR<StakeholderUpdateWithoutProjectsInput, StakeholderUncheckedUpdateWithoutProjectsInput>
+    create: XOR<StakeholderCreateWithoutProjectsInput, StakeholderUncheckedCreateWithoutProjectsInput>
+    where?: StakeholderWhereInput
+  }
+
+  export type StakeholderUpdateToOneWithWhereWithoutProjectsInput = {
+    where?: StakeholderWhereInput
+    data: XOR<StakeholderUpdateWithoutProjectsInput, StakeholderUncheckedUpdateWithoutProjectsInput>
+  }
+
+  export type StakeholderUpdateWithoutProjectsInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    name?: StringFieldUpdateOperationsInput | string
+    logoUrl?: NullableStringFieldUpdateOperationsInput | string | null
+    company?: NullableStringFieldUpdateOperationsInput | string | null
+    competence?: NullableStringFieldUpdateOperationsInput | string | null
+    email?: NullableStringFieldUpdateOperationsInput | string | null
+    phone?: NullableStringFieldUpdateOperationsInput | string | null
+    cep?: NullableStringFieldUpdateOperationsInput | string | null
+    logradouro?: NullableStringFieldUpdateOperationsInput | string | null
+    numero?: NullableStringFieldUpdateOperationsInput | string | null
+    complemento?: NullableStringFieldUpdateOperationsInput | string | null
+    bairro?: NullableStringFieldUpdateOperationsInput | string | null
+    cidade?: NullableStringFieldUpdateOperationsInput | string | null
+    estado?: NullableStringFieldUpdateOperationsInput | string | null
+    notes?: NullableStringFieldUpdateOperationsInput | string | null
+    isActive?: BoolFieldUpdateOperationsInput | boolean
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    tenant?: TenantUpdateOneRequiredWithoutStakeholdersNestedInput
+  }
+
+  export type StakeholderUncheckedUpdateWithoutProjectsInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    tenantId?: StringFieldUpdateOperationsInput | string
+    name?: StringFieldUpdateOperationsInput | string
+    logoUrl?: NullableStringFieldUpdateOperationsInput | string | null
+    company?: NullableStringFieldUpdateOperationsInput | string | null
+    competence?: NullableStringFieldUpdateOperationsInput | string | null
+    email?: NullableStringFieldUpdateOperationsInput | string | null
+    phone?: NullableStringFieldUpdateOperationsInput | string | null
+    cep?: NullableStringFieldUpdateOperationsInput | string | null
+    logradouro?: NullableStringFieldUpdateOperationsInput | string | null
+    numero?: NullableStringFieldUpdateOperationsInput | string | null
+    complemento?: NullableStringFieldUpdateOperationsInput | string | null
+    bairro?: NullableStringFieldUpdateOperationsInput | string | null
+    cidade?: NullableStringFieldUpdateOperationsInput | string | null
+    estado?: NullableStringFieldUpdateOperationsInput | string | null
+    notes?: NullableStringFieldUpdateOperationsInput | string | null
+    isActive?: BoolFieldUpdateOperationsInput | boolean
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
+  export type ProjectCreateManyTenantInput = {
+    id?: string
+    name: string
+    description?: string | null
+    logoUrl?: string | null
+    slogan?: string | null
+    location?: string | null
+    startDate?: Date | string | null
+    endDate?: Date | string | null
+    justificativa?: string | null
+    objetivos?: string | null
+    metodologia?: string | null
+    descricaoProduto?: string | null
+    premissas?: string | null
+    restricoes?: string | null
+    limitesAutoridade?: string | null
+    semestre?: string | null
+    ano?: number | null
+    departamentos?: ProjectCreatedepartamentosInput | string[]
+    status?: $Enums.ProjectStatus
+    deletedAt?: Date | string | null
+    createdAt?: Date | string
+    updatedAt?: Date | string
+  }
+
+  export type DepartmentCreateManyTenantInput = {
+    id?: string
+    name: string
+    description?: string | null
+    active?: boolean
+    hourlyRate?: number | null
+    deletedAt?: Date | string | null
+    createdAt?: Date | string
+    updatedAt?: Date | string
+  }
+
+  export type RoleCreateManyTenantInput = {
+    id?: string
+    name: string
+    nameKey: string
+    scope: $Enums.RoleScope
+    description?: string | null
+    deletedAt?: Date | string | null
+    createdAt?: Date | string
+    updatedAt?: Date | string
+  }
+
+  export type StakeholderCreateManyTenantInput = {
+    id?: string
+    name: string
+    logoUrl?: string | null
+    company?: string | null
+    competence?: string | null
+    email?: string | null
+    phone?: string | null
+    cep?: string | null
+    logradouro?: string | null
+    numero?: string | null
+    complemento?: string | null
+    bairro?: string | null
+    cidade?: string | null
+    estado?: string | null
+    notes?: string | null
+    isActive?: boolean
+    createdAt?: Date | string
+    updatedAt?: Date | string
+  }
+
+  export type ProjectUpdateWithoutTenantInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    name?: StringFieldUpdateOperationsInput | string
+    description?: NullableStringFieldUpdateOperationsInput | string | null
+    logoUrl?: NullableStringFieldUpdateOperationsInput | string | null
+    slogan?: NullableStringFieldUpdateOperationsInput | string | null
+    location?: NullableStringFieldUpdateOperationsInput | string | null
+    startDate?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    endDate?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    justificativa?: NullableStringFieldUpdateOperationsInput | string | null
+    objetivos?: NullableStringFieldUpdateOperationsInput | string | null
+    metodologia?: NullableStringFieldUpdateOperationsInput | string | null
+    descricaoProduto?: NullableStringFieldUpdateOperationsInput | string | null
+    premissas?: NullableStringFieldUpdateOperationsInput | string | null
+    restricoes?: NullableStringFieldUpdateOperationsInput | string | null
+    limitesAutoridade?: NullableStringFieldUpdateOperationsInput | string | null
+    semestre?: NullableStringFieldUpdateOperationsInput | string | null
+    ano?: NullableIntFieldUpdateOperationsInput | number | null
+    departamentos?: ProjectUpdatedepartamentosInput | string[]
+    status?: EnumProjectStatusFieldUpdateOperationsInput | $Enums.ProjectStatus
+    deletedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    members?: UserProjectUpdateManyWithoutProjectNestedInput
+    usuariosRole?: UserProjectRoleUpdateManyWithoutProjectNestedInput
+    macroFases?: ProjectMacroFaseUpdateManyWithoutProjectNestedInput
+    stakeholders?: ProjectStakeholderUpdateManyWithoutProjectNestedInput
+  }
+
+  export type ProjectUncheckedUpdateWithoutTenantInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    name?: StringFieldUpdateOperationsInput | string
+    description?: NullableStringFieldUpdateOperationsInput | string | null
+    logoUrl?: NullableStringFieldUpdateOperationsInput | string | null
+    slogan?: NullableStringFieldUpdateOperationsInput | string | null
+    location?: NullableStringFieldUpdateOperationsInput | string | null
+    startDate?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    endDate?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    justificativa?: NullableStringFieldUpdateOperationsInput | string | null
+    objetivos?: NullableStringFieldUpdateOperationsInput | string | null
+    metodologia?: NullableStringFieldUpdateOperationsInput | string | null
+    descricaoProduto?: NullableStringFieldUpdateOperationsInput | string | null
+    premissas?: NullableStringFieldUpdateOperationsInput | string | null
+    restricoes?: NullableStringFieldUpdateOperationsInput | string | null
+    limitesAutoridade?: NullableStringFieldUpdateOperationsInput | string | null
+    semestre?: NullableStringFieldUpdateOperationsInput | string | null
+    ano?: NullableIntFieldUpdateOperationsInput | number | null
+    departamentos?: ProjectUpdatedepartamentosInput | string[]
+    status?: EnumProjectStatusFieldUpdateOperationsInput | $Enums.ProjectStatus
+    deletedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    members?: UserProjectUncheckedUpdateManyWithoutProjectNestedInput
+    usuariosRole?: UserProjectRoleUncheckedUpdateManyWithoutProjectNestedInput
+    macroFases?: ProjectMacroFaseUncheckedUpdateManyWithoutProjectNestedInput
+    stakeholders?: ProjectStakeholderUncheckedUpdateManyWithoutProjectNestedInput
+  }
+
+  export type ProjectUncheckedUpdateManyWithoutTenantInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    name?: StringFieldUpdateOperationsInput | string
+    description?: NullableStringFieldUpdateOperationsInput | string | null
+    logoUrl?: NullableStringFieldUpdateOperationsInput | string | null
+    slogan?: NullableStringFieldUpdateOperationsInput | string | null
+    location?: NullableStringFieldUpdateOperationsInput | string | null
+    startDate?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    endDate?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    justificativa?: NullableStringFieldUpdateOperationsInput | string | null
+    objetivos?: NullableStringFieldUpdateOperationsInput | string | null
+    metodologia?: NullableStringFieldUpdateOperationsInput | string | null
+    descricaoProduto?: NullableStringFieldUpdateOperationsInput | string | null
+    premissas?: NullableStringFieldUpdateOperationsInput | string | null
+    restricoes?: NullableStringFieldUpdateOperationsInput | string | null
+    limitesAutoridade?: NullableStringFieldUpdateOperationsInput | string | null
+    semestre?: NullableStringFieldUpdateOperationsInput | string | null
+    ano?: NullableIntFieldUpdateOperationsInput | number | null
+    departamentos?: ProjectUpdatedepartamentosInput | string[]
+    status?: EnumProjectStatusFieldUpdateOperationsInput | $Enums.ProjectStatus
+    deletedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
+  export type DepartmentUpdateWithoutTenantInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    name?: StringFieldUpdateOperationsInput | string
+    description?: NullableStringFieldUpdateOperationsInput | string | null
+    active?: BoolFieldUpdateOperationsInput | boolean
+    hourlyRate?: NullableFloatFieldUpdateOperationsInput | number | null
+    deletedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    users?: UserDepartmentUpdateManyWithoutDepartmentNestedInput
+    userProjects?: UserProjectUpdateManyWithoutDepartmentNestedInput
+  }
+
+  export type DepartmentUncheckedUpdateWithoutTenantInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    name?: StringFieldUpdateOperationsInput | string
+    description?: NullableStringFieldUpdateOperationsInput | string | null
+    active?: BoolFieldUpdateOperationsInput | boolean
+    hourlyRate?: NullableFloatFieldUpdateOperationsInput | number | null
+    deletedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    users?: UserDepartmentUncheckedUpdateManyWithoutDepartmentNestedInput
+    userProjects?: UserProjectUncheckedUpdateManyWithoutDepartmentNestedInput
+  }
+
+  export type DepartmentUncheckedUpdateManyWithoutTenantInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    name?: StringFieldUpdateOperationsInput | string
+    description?: NullableStringFieldUpdateOperationsInput | string | null
+    active?: BoolFieldUpdateOperationsInput | boolean
+    hourlyRate?: NullableFloatFieldUpdateOperationsInput | number | null
+    deletedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
+  export type RoleUpdateWithoutTenantInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    name?: StringFieldUpdateOperationsInput | string
+    nameKey?: StringFieldUpdateOperationsInput | string
+    scope?: EnumRoleScopeFieldUpdateOperationsInput | $Enums.RoleScope
+    description?: NullableStringFieldUpdateOperationsInput | string | null
+    deletedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    permissions?: RolePermissionUpdateManyWithoutRoleNestedInput
+    userProjectRoles?: UserProjectRoleUpdateManyWithoutRoleNestedInput
+  }
+
+  export type RoleUncheckedUpdateWithoutTenantInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    name?: StringFieldUpdateOperationsInput | string
+    nameKey?: StringFieldUpdateOperationsInput | string
+    scope?: EnumRoleScopeFieldUpdateOperationsInput | $Enums.RoleScope
+    description?: NullableStringFieldUpdateOperationsInput | string | null
+    deletedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    permissions?: RolePermissionUncheckedUpdateManyWithoutRoleNestedInput
+    userProjectRoles?: UserProjectRoleUncheckedUpdateManyWithoutRoleNestedInput
+  }
+
+  export type RoleUncheckedUpdateManyWithoutTenantInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    name?: StringFieldUpdateOperationsInput | string
+    nameKey?: StringFieldUpdateOperationsInput | string
+    scope?: EnumRoleScopeFieldUpdateOperationsInput | $Enums.RoleScope
+    description?: NullableStringFieldUpdateOperationsInput | string | null
+    deletedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
+  export type StakeholderUpdateWithoutTenantInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    name?: StringFieldUpdateOperationsInput | string
+    logoUrl?: NullableStringFieldUpdateOperationsInput | string | null
+    company?: NullableStringFieldUpdateOperationsInput | string | null
+    competence?: NullableStringFieldUpdateOperationsInput | string | null
+    email?: NullableStringFieldUpdateOperationsInput | string | null
+    phone?: NullableStringFieldUpdateOperationsInput | string | null
+    cep?: NullableStringFieldUpdateOperationsInput | string | null
+    logradouro?: NullableStringFieldUpdateOperationsInput | string | null
+    numero?: NullableStringFieldUpdateOperationsInput | string | null
+    complemento?: NullableStringFieldUpdateOperationsInput | string | null
+    bairro?: NullableStringFieldUpdateOperationsInput | string | null
+    cidade?: NullableStringFieldUpdateOperationsInput | string | null
+    estado?: NullableStringFieldUpdateOperationsInput | string | null
+    notes?: NullableStringFieldUpdateOperationsInput | string | null
+    isActive?: BoolFieldUpdateOperationsInput | boolean
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    projects?: ProjectStakeholderUpdateManyWithoutStakeholderNestedInput
+  }
+
+  export type StakeholderUncheckedUpdateWithoutTenantInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    name?: StringFieldUpdateOperationsInput | string
+    logoUrl?: NullableStringFieldUpdateOperationsInput | string | null
+    company?: NullableStringFieldUpdateOperationsInput | string | null
+    competence?: NullableStringFieldUpdateOperationsInput | string | null
+    email?: NullableStringFieldUpdateOperationsInput | string | null
+    phone?: NullableStringFieldUpdateOperationsInput | string | null
+    cep?: NullableStringFieldUpdateOperationsInput | string | null
+    logradouro?: NullableStringFieldUpdateOperationsInput | string | null
+    numero?: NullableStringFieldUpdateOperationsInput | string | null
+    complemento?: NullableStringFieldUpdateOperationsInput | string | null
+    bairro?: NullableStringFieldUpdateOperationsInput | string | null
+    cidade?: NullableStringFieldUpdateOperationsInput | string | null
+    estado?: NullableStringFieldUpdateOperationsInput | string | null
+    notes?: NullableStringFieldUpdateOperationsInput | string | null
+    isActive?: BoolFieldUpdateOperationsInput | boolean
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    projects?: ProjectStakeholderUncheckedUpdateManyWithoutStakeholderNestedInput
+  }
+
+  export type StakeholderUncheckedUpdateManyWithoutTenantInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    name?: StringFieldUpdateOperationsInput | string
+    logoUrl?: NullableStringFieldUpdateOperationsInput | string | null
+    company?: NullableStringFieldUpdateOperationsInput | string | null
+    competence?: NullableStringFieldUpdateOperationsInput | string | null
+    email?: NullableStringFieldUpdateOperationsInput | string | null
+    phone?: NullableStringFieldUpdateOperationsInput | string | null
+    cep?: NullableStringFieldUpdateOperationsInput | string | null
+    logradouro?: NullableStringFieldUpdateOperationsInput | string | null
+    numero?: NullableStringFieldUpdateOperationsInput | string | null
+    complemento?: NullableStringFieldUpdateOperationsInput | string | null
+    bairro?: NullableStringFieldUpdateOperationsInput | string | null
+    cidade?: NullableStringFieldUpdateOperationsInput | string | null
+    estado?: NullableStringFieldUpdateOperationsInput | string | null
+    notes?: NullableStringFieldUpdateOperationsInput | string | null
+    isActive?: BoolFieldUpdateOperationsInput | boolean
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
+  export type UserProjectCreateManyUserInput = {
+    id?: string
+    projectId: string
+    active?: boolean
+    role?: string | null
+    departmentId?: string | null
+    hourlyRate?: number | null
+    startDate?: Date | string
+    endDate?: Date | string | null
+  }
+
+  export type UserDepartmentCreateManyUserInput = {
+    id?: string
+    departmentId: string
+  }
+
+  export type UserProjectRoleCreateManyUserInput = {
+    id?: string
+    projectId: string
+    roleId: string
+    deletedAt?: Date | string | null
+    createdAt?: Date | string
+    updatedAt?: Date | string
+  }
+
+  export type UserProjectUpdateWithoutUserInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    active?: BoolFieldUpdateOperationsInput | boolean
+    role?: NullableStringFieldUpdateOperationsInput | string | null
+    hourlyRate?: NullableFloatFieldUpdateOperationsInput | number | null
+    startDate?: DateTimeFieldUpdateOperationsInput | Date | string
+    endDate?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    project?: ProjectUpdateOneRequiredWithoutMembersNestedInput
+    department?: DepartmentUpdateOneWithoutUserProjectsNestedInput
+  }
+
+  export type UserProjectUncheckedUpdateWithoutUserInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    projectId?: StringFieldUpdateOperationsInput | string
+    active?: BoolFieldUpdateOperationsInput | boolean
+    role?: NullableStringFieldUpdateOperationsInput | string | null
+    departmentId?: NullableStringFieldUpdateOperationsInput | string | null
+    hourlyRate?: NullableFloatFieldUpdateOperationsInput | number | null
+    startDate?: DateTimeFieldUpdateOperationsInput | Date | string
+    endDate?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  }
+
+  export type UserProjectUncheckedUpdateManyWithoutUserInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    projectId?: StringFieldUpdateOperationsInput | string
+    active?: BoolFieldUpdateOperationsInput | boolean
+    role?: NullableStringFieldUpdateOperationsInput | string | null
+    departmentId?: NullableStringFieldUpdateOperationsInput | string | null
+    hourlyRate?: NullableFloatFieldUpdateOperationsInput | number | null
+    startDate?: DateTimeFieldUpdateOperationsInput | Date | string
+    endDate?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  }
+
+  export type UserDepartmentUpdateWithoutUserInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    department?: DepartmentUpdateOneRequiredWithoutUsersNestedInput
+  }
+
+  export type UserDepartmentUncheckedUpdateWithoutUserInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    departmentId?: StringFieldUpdateOperationsInput | string
+  }
+
+  export type UserDepartmentUncheckedUpdateManyWithoutUserInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    departmentId?: StringFieldUpdateOperationsInput | string
+  }
+
+  export type UserProjectRoleUpdateWithoutUserInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    deletedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    project?: ProjectUpdateOneRequiredWithoutUsuariosRoleNestedInput
+    role?: RoleUpdateOneRequiredWithoutUserProjectRolesNestedInput
+  }
+
+  export type UserProjectRoleUncheckedUpdateWithoutUserInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    projectId?: StringFieldUpdateOperationsInput | string
+    roleId?: StringFieldUpdateOperationsInput | string
+    deletedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
+  export type UserProjectRoleUncheckedUpdateManyWithoutUserInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    projectId?: StringFieldUpdateOperationsInput | string
+    roleId?: StringFieldUpdateOperationsInput | string
+    deletedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
+  export type UserProjectCreateManyProjectInput = {
+    id?: string
+    userId: string
+    active?: boolean
+    role?: string | null
+    departmentId?: string | null
+    hourlyRate?: number | null
+    startDate?: Date | string
+    endDate?: Date | string | null
+  }
+
+  export type UserProjectRoleCreateManyProjectInput = {
+    id?: string
+    userId: string
+    roleId: string
+    deletedAt?: Date | string | null
+    createdAt?: Date | string
+    updatedAt?: Date | string
+  }
+
+  export type ProjectMacroFaseCreateManyProjectInput = {
+    id?: string
+    fase: string
+    dataLimite?: string | null
+    custo?: string | null
+    createdAt?: Date | string
+    updatedAt?: Date | string
+  }
+
+  export type ProjectStakeholderCreateManyProjectInput = {
+    id?: string
+    stakeholderId: string
+    createdAt?: Date | string
+  }
+
+  export type UserProjectUpdateWithoutProjectInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    active?: BoolFieldUpdateOperationsInput | boolean
+    role?: NullableStringFieldUpdateOperationsInput | string | null
+    hourlyRate?: NullableFloatFieldUpdateOperationsInput | number | null
+    startDate?: DateTimeFieldUpdateOperationsInput | Date | string
+    endDate?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    user?: UserUpdateOneRequiredWithoutProjectsNestedInput
+    department?: DepartmentUpdateOneWithoutUserProjectsNestedInput
+  }
+
+  export type UserProjectUncheckedUpdateWithoutProjectInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    userId?: StringFieldUpdateOperationsInput | string
+    active?: BoolFieldUpdateOperationsInput | boolean
+    role?: NullableStringFieldUpdateOperationsInput | string | null
+    departmentId?: NullableStringFieldUpdateOperationsInput | string | null
+    hourlyRate?: NullableFloatFieldUpdateOperationsInput | number | null
+    startDate?: DateTimeFieldUpdateOperationsInput | Date | string
+    endDate?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  }
+
+  export type UserProjectUncheckedUpdateManyWithoutProjectInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    userId?: StringFieldUpdateOperationsInput | string
+    active?: BoolFieldUpdateOperationsInput | boolean
+    role?: NullableStringFieldUpdateOperationsInput | string | null
+    departmentId?: NullableStringFieldUpdateOperationsInput | string | null
+    hourlyRate?: NullableFloatFieldUpdateOperationsInput | number | null
+    startDate?: DateTimeFieldUpdateOperationsInput | Date | string
+    endDate?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  }
+
+  export type UserProjectRoleUpdateWithoutProjectInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    deletedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    role?: RoleUpdateOneRequiredWithoutUserProjectRolesNestedInput
+    user?: UserUpdateOneRequiredWithoutUserProjectRolesNestedInput
+  }
+
+  export type UserProjectRoleUncheckedUpdateWithoutProjectInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    userId?: StringFieldUpdateOperationsInput | string
+    roleId?: StringFieldUpdateOperationsInput | string
+    deletedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
+  export type UserProjectRoleUncheckedUpdateManyWithoutProjectInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    userId?: StringFieldUpdateOperationsInput | string
+    roleId?: StringFieldUpdateOperationsInput | string
+    deletedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
+  export type ProjectMacroFaseUpdateWithoutProjectInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    fase?: StringFieldUpdateOperationsInput | string
+    dataLimite?: NullableStringFieldUpdateOperationsInput | string | null
+    custo?: NullableStringFieldUpdateOperationsInput | string | null
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
+  export type ProjectMacroFaseUncheckedUpdateWithoutProjectInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    fase?: StringFieldUpdateOperationsInput | string
+    dataLimite?: NullableStringFieldUpdateOperationsInput | string | null
+    custo?: NullableStringFieldUpdateOperationsInput | string | null
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
+  export type ProjectMacroFaseUncheckedUpdateManyWithoutProjectInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    fase?: StringFieldUpdateOperationsInput | string
+    dataLimite?: NullableStringFieldUpdateOperationsInput | string | null
+    custo?: NullableStringFieldUpdateOperationsInput | string | null
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
+  export type ProjectStakeholderUpdateWithoutProjectInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    stakeholder?: StakeholderUpdateOneRequiredWithoutProjectsNestedInput
+  }
+
+  export type ProjectStakeholderUncheckedUpdateWithoutProjectInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    stakeholderId?: StringFieldUpdateOperationsInput | string
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
+  export type ProjectStakeholderUncheckedUpdateManyWithoutProjectInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    stakeholderId?: StringFieldUpdateOperationsInput | string
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
+  export type UserDepartmentCreateManyDepartmentInput = {
+    id?: string
+    userId: string
+  }
+
+  export type UserProjectCreateManyDepartmentInput = {
+    id?: string
+    userId: string
+    projectId: string
+    active?: boolean
+    role?: string | null
+    hourlyRate?: number | null
+    startDate?: Date | string
+    endDate?: Date | string | null
+  }
+
+  export type UserDepartmentUpdateWithoutDepartmentInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    user?: UserUpdateOneRequiredWithoutDepartmentsNestedInput
+  }
+
+  export type UserDepartmentUncheckedUpdateWithoutDepartmentInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    userId?: StringFieldUpdateOperationsInput | string
+  }
+
+  export type UserDepartmentUncheckedUpdateManyWithoutDepartmentInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    userId?: StringFieldUpdateOperationsInput | string
+  }
+
+  export type UserProjectUpdateWithoutDepartmentInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    active?: BoolFieldUpdateOperationsInput | boolean
+    role?: NullableStringFieldUpdateOperationsInput | string | null
+    hourlyRate?: NullableFloatFieldUpdateOperationsInput | number | null
+    startDate?: DateTimeFieldUpdateOperationsInput | Date | string
+    endDate?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    user?: UserUpdateOneRequiredWithoutProjectsNestedInput
+    project?: ProjectUpdateOneRequiredWithoutMembersNestedInput
+  }
+
+  export type UserProjectUncheckedUpdateWithoutDepartmentInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    userId?: StringFieldUpdateOperationsInput | string
+    projectId?: StringFieldUpdateOperationsInput | string
+    active?: BoolFieldUpdateOperationsInput | boolean
+    role?: NullableStringFieldUpdateOperationsInput | string | null
+    hourlyRate?: NullableFloatFieldUpdateOperationsInput | number | null
+    startDate?: DateTimeFieldUpdateOperationsInput | Date | string
+    endDate?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  }
+
+  export type UserProjectUncheckedUpdateManyWithoutDepartmentInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    userId?: StringFieldUpdateOperationsInput | string
+    projectId?: StringFieldUpdateOperationsInput | string
+    active?: BoolFieldUpdateOperationsInput | boolean
+    role?: NullableStringFieldUpdateOperationsInput | string | null
+    hourlyRate?: NullableFloatFieldUpdateOperationsInput | number | null
+    startDate?: DateTimeFieldUpdateOperationsInput | Date | string
+    endDate?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  }
+
+  export type RolePermissionCreateManyRoleInput = {
+    id?: string
+    permissionId: string
+  }
+
+  export type UserProjectRoleCreateManyRoleInput = {
+    id?: string
+    userId: string
+    projectId: string
+    deletedAt?: Date | string | null
+    createdAt?: Date | string
+    updatedAt?: Date | string
+  }
+
+  export type RolePermissionUpdateWithoutRoleInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    permission?: PermissionUpdateOneRequiredWithoutRolesNestedInput
+  }
+
+  export type RolePermissionUncheckedUpdateWithoutRoleInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    permissionId?: StringFieldUpdateOperationsInput | string
+  }
+
+  export type RolePermissionUncheckedUpdateManyWithoutRoleInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    permissionId?: StringFieldUpdateOperationsInput | string
+  }
+
+  export type UserProjectRoleUpdateWithoutRoleInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    deletedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    project?: ProjectUpdateOneRequiredWithoutUsuariosRoleNestedInput
+    user?: UserUpdateOneRequiredWithoutUserProjectRolesNestedInput
+  }
+
+  export type UserProjectRoleUncheckedUpdateWithoutRoleInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    userId?: StringFieldUpdateOperationsInput | string
+    projectId?: StringFieldUpdateOperationsInput | string
+    deletedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
+  export type UserProjectRoleUncheckedUpdateManyWithoutRoleInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    userId?: StringFieldUpdateOperationsInput | string
+    projectId?: StringFieldUpdateOperationsInput | string
+    deletedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
+  export type RolePermissionCreateManyPermissionInput = {
+    id?: string
+    roleId: string
+  }
+
+  export type RolePermissionUpdateWithoutPermissionInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    role?: RoleUpdateOneRequiredWithoutPermissionsNestedInput
+  }
+
+  export type RolePermissionUncheckedUpdateWithoutPermissionInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    roleId?: StringFieldUpdateOperationsInput | string
+  }
+
+  export type RolePermissionUncheckedUpdateManyWithoutPermissionInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    roleId?: StringFieldUpdateOperationsInput | string
+  }
+
+  export type ProjectStakeholderCreateManyStakeholderInput = {
+    id?: string
+    projectId: string
+    createdAt?: Date | string
+  }
+
+  export type ProjectStakeholderUpdateWithoutStakeholderInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    project?: ProjectUpdateOneRequiredWithoutStakeholdersNestedInput
+  }
+
+  export type ProjectStakeholderUncheckedUpdateWithoutStakeholderInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    projectId?: StringFieldUpdateOperationsInput | string
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
+  export type ProjectStakeholderUncheckedUpdateManyWithoutStakeholderInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    projectId?: StringFieldUpdateOperationsInput | string
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
+
+
+  /**
+   * Batch Payload for updateMany & deleteMany & createMany
+   */
+
+  export type BatchPayload = {
+    count: number
+  }
+
+  /**
+   * DMMF
+   */
+  export const dmmf: runtime.BaseDMMF
+}

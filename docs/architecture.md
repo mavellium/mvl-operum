@@ -712,6 +712,44 @@ Objetivo: sair do Vercel/Neon e hospedar tudo em VPS Hostinger com Docker.
 
 ### Fase 1 — Notification Service (concluída)
 
+---
+
+### Fase 2 — Auth Service + File Service + API Gateway (concluída)
+
+Objetivo: centralizar autenticação, uploads e criar o ponto de entrada único da API.
+
+**Serviços criados:**
+
+1. **`auth-service/`** (NestJS :4001) — autenticação centralizada
+   - Prisma schema próprio: `Tenant`, `User`
+   - Redis session store: chave `session:{jti}`, TTL 7d
+   - Endpoints: `/auth/login`, `/auth/register`, `/auth/logout`, `/auth/me`, `/auth/verify`, `/auth/tenants/:subdomain`, `/auth/password/*`
+   - Feature flag no monolito: `AUTH_SERVICE_URL`
+
+2. **`api-gateway/`** (Express :4000) — proxy + autenticação JWT
+   - Valida JWT RS256 (com fallback HS256 em dev)
+   - Verifica sessão ativa no Redis
+   - Injeta headers: `X-User-ID`, `X-Tenant-ID`, `X-User-Role`
+   - Rate limiting: 200 req/s por IP
+   - CORS configurável via `ALLOWED_ORIGINS`
+   - Roteamento: `/auth/*` → auth-service, `/files/*` → file-service, `/notifications/*` → notification-service
+
+3. **`file-service/`** (NestJS :4005) — uploads via MinIO
+   - Prisma schema próprio: `Attachment`
+   - Endpoints: `POST /files/upload`, `DELETE /files/:id`, `GET /files/:id/url`, `POST /files/avatar`, `POST /files/logo`
+   - Feature flag no monolito: `FILE_SERVICE_URL`
+
+**Monolito atualizado:**
+- `app/actions/auth.ts` — proxy para auth-service quando `AUTH_SERVICE_URL` definido
+- `app/api/uploads/route.ts` — proxy para file-service quando `FILE_SERVICE_URL` definido
+- `lib/authClient.ts` — cliente HTTP para auth-service
+
+**Docker Compose atualizado:** `api-gateway`, `auth-service` e `file-service` adicionados à stack.
+
+**CI/CD:** pipelines de staging e produção buildando e publicando as 3 novas imagens.
+
+**Marco:** auth-service operacional. API Gateway como ponto de entrada externo. Uploads via file-service. Monolito delega auth e storage via feature flags.
+
 Objetivo: extrair o primeiro microserviço usando o padrão Strangler Fig.
 
 **Por que notificações primeiro:** zero dependências inbound, CRUD puro, bounded context perfeito.

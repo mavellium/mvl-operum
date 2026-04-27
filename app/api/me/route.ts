@@ -1,7 +1,6 @@
 import { NextResponse } from 'next/server'
 import { decrypt } from '@/lib/session'
-import prisma from '@/lib/prisma'
-import { getProjectsWhereManager } from '@/services/projectRoleService'
+import { authApi, projectsApi } from '@/lib/api-client'
 
 export async function GET(request: Request) {
   const cookieHeader = request.headers.get('cookie') ?? ''
@@ -12,26 +11,25 @@ export async function GET(request: Request) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
   }
 
-  const user = await prisma.user.findUnique({
-    where: { id: session.userId as string },
-    select: { id: true, name: true, email: true, role: true, isActive: true, tokenVersion: true, avatarUrl: true },
-  })
+  try {
+    const user = await authApi.me()
 
-  if (!user) {
+    if (!user.isActive) {
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+    }
+
+    const projectManagerIn = await projectsApi
+      .getUserProjects(user.id)
+      .catch(() => []) as Array<{ projectId?: string; id?: string; role?: string }>
+
+    const managerProjects = projectManagerIn
+      .filter(p => /gerente/i.test(p.role ?? ''))
+      .map(p => p.projectId ?? p.id ?? '')
+
+    return NextResponse.json({
+      user: { id: user.id, name: user.name, email: user.email, role: user.role, avatarUrl: user.avatarUrl, projectManagerIn: managerProjects },
+    })
+  } catch {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
   }
-
-  if (user.isActive === false) {
-    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
-  }
-
-  if (session.tokenVersion !== undefined && user.tokenVersion !== session.tokenVersion) {
-    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
-  }
-
-  const projectManagerIn = await getProjectsWhereManager(user.id)
-
-  return NextResponse.json({
-    user: { id: user.id, name: user.name, email: user.email, role: user.role, avatarUrl: user.avatarUrl, projectManagerIn },
-  })
 }

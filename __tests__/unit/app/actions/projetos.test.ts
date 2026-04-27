@@ -1,32 +1,21 @@
+// @vitest-environment node
 import { describe, it, expect, vi, beforeEach } from 'vitest'
 
 vi.mock('@/lib/dal', () => ({
   verifySession: vi.fn(),
 }))
 
-vi.mock('@/services/projectService', () => ({
-  createProject: vi.fn(),
-  findAllByTenant: vi.fn(),
-  findById: vi.fn(),
-  updateProject: vi.fn(),
-  deleteProject: vi.fn(),
-  addMember: vi.fn(),
-  removeMember: vi.fn(),
-  getMembersWithDetails: vi.fn(),
-  updateUserProject: vi.fn(),
-  getUserProjectsWithDetails: vi.fn(),
-}))
-
-vi.mock('@/lib/prisma', () => ({ default: {} }))
-
-vi.mock('@/services/projectRoleService', () => ({
-  setProjectManagerRole: vi.fn(),
-  removeProjectRole: vi.fn(),
-  countProjectManagers: vi.fn(),
-}))
-
-vi.mock('@/services/roleService', () => ({
-  getOrCreateRole: vi.fn(),
+vi.mock('@/lib/api-client', () => ({
+  projectsApi: {
+    list: vi.fn(),
+    get: vi.fn(),
+    create: vi.fn(),
+    update: vi.fn(),
+    delete: vi.fn(),
+    addMember: vi.fn(),
+    upsertMacroFases: vi.fn(),
+  },
+  adminApi: {},
 }))
 
 vi.mock('next/cache', () => ({
@@ -34,7 +23,7 @@ vi.mock('next/cache', () => ({
 }))
 
 import { verifySession } from '@/lib/dal'
-import { createProject, findAllByTenant, findById, updateProject, deleteProject } from '@/services/projectService'
+import { projectsApi } from '@/lib/api-client'
 import {
   createProjetoAction,
   getProjetosAction,
@@ -53,7 +42,7 @@ describe('Projeto Actions', () => {
   describe('createProjetoAction', () => {
     it('should create project and return success', async () => {
       vi.mocked(verifySession).mockResolvedValue(mockSession)
-      vi.mocked(createProject).mockResolvedValue({ id: 'p1', name: 'Novo Projeto', tenantId: 't1' } as never)
+      vi.mocked(projectsApi.create).mockResolvedValue({ id: 'p1', name: 'Novo Projeto' })
 
       const result = await createProjetoAction({}, { name: 'Novo Projeto' })
       expect(result).toHaveProperty('projeto')
@@ -61,7 +50,7 @@ describe('Projeto Actions', () => {
 
     it('should return error on failure', async () => {
       vi.mocked(verifySession).mockResolvedValue(mockSession)
-      vi.mocked(createProject).mockRejectedValue(new Error('Validation error'))
+      vi.mocked(projectsApi.create).mockRejectedValue(new Error('Validation error'))
 
       const result = await createProjetoAction({}, { name: '' })
       expect(result).toHaveProperty('error')
@@ -77,11 +66,13 @@ describe('Projeto Actions', () => {
 
   describe('getProjetosAction', () => {
     it('should return list of projects for tenant', async () => {
-      vi.mocked(verifySession).mockResolvedValue(mockSession)
-      vi.mocked(findAllByTenant).mockResolvedValue([
-        { id: 'p1', name: 'Projeto 1' },
-        { id: 'p2', name: 'Projeto 2' },
-      ] as never)
+      vi.mocked(projectsApi.list).mockResolvedValue({
+        items: [
+          { id: 'p1', name: 'Projeto 1' },
+          { id: 'p2', name: 'Projeto 2' },
+        ],
+        total: 2,
+      })
 
       const result = await getProjetosAction()
       expect(Array.isArray(result)).toBe(true)
@@ -89,7 +80,7 @@ describe('Projeto Actions', () => {
     })
 
     it('should return empty array on error', async () => {
-      vi.mocked(verifySession).mockRejectedValue(new Error('Auth error'))
+      vi.mocked(projectsApi.list).mockRejectedValue(new Error('Auth error'))
 
       const result = await getProjetosAction()
       expect(Array.isArray(result)).toBe(true)
@@ -100,7 +91,7 @@ describe('Projeto Actions', () => {
   describe('getProjetoAction', () => {
     it('should return single project by id', async () => {
       vi.mocked(verifySession).mockResolvedValue(mockSession)
-      vi.mocked(findById).mockResolvedValue({ id: 'p1', name: 'Projeto 1', description: 'Description' } as never)
+      vi.mocked(projectsApi.get).mockResolvedValue({ id: 'p1', name: 'Projeto 1', description: 'Description' })
 
       const result = await getProjetoAction('p1')
       expect(result).toHaveProperty('projeto')
@@ -109,7 +100,7 @@ describe('Projeto Actions', () => {
 
     it('should return error if project not found', async () => {
       vi.mocked(verifySession).mockResolvedValue(mockSession)
-      vi.mocked(findById).mockResolvedValue(null)
+      vi.mocked(projectsApi.get).mockResolvedValue(null as never)
 
       const result = await getProjetoAction('nonexistent')
       expect(result).toHaveProperty('error')
@@ -119,7 +110,7 @@ describe('Projeto Actions', () => {
   describe('updateProjetoAction', () => {
     it('should update project and return success', async () => {
       vi.mocked(verifySession).mockResolvedValue(mockSession)
-      vi.mocked(updateProject).mockResolvedValue({ id: 'p1', name: 'Updated Name' } as never)
+      vi.mocked(projectsApi.update).mockResolvedValue({ id: 'p1', name: 'Updated Name' })
 
       const result = await updateProjetoAction({}, 'p1', { name: 'Updated Name' })
       expect(result).toHaveProperty('projeto')
@@ -127,7 +118,7 @@ describe('Projeto Actions', () => {
 
     it('should return error on update failure', async () => {
       vi.mocked(verifySession).mockResolvedValue(mockSession)
-      vi.mocked(updateProject).mockRejectedValue(new Error('Not found'))
+      vi.mocked(projectsApi.update).mockRejectedValue(new Error('Not found'))
 
       const result = await updateProjetoAction({}, 'nonexistent', { name: 'Test' })
       expect(result).toHaveProperty('error')
@@ -137,7 +128,7 @@ describe('Projeto Actions', () => {
   describe('deleteProjetoAction', () => {
     it('should delete project and return success', async () => {
       vi.mocked(verifySession).mockResolvedValue(mockSession)
-      vi.mocked(deleteProject).mockResolvedValue({ id: 'p1' } as never)
+      vi.mocked(projectsApi.delete).mockResolvedValue(undefined)
 
       const result = await deleteProjetoAction('p1')
       expect(result).toHaveProperty('success')
@@ -146,7 +137,7 @@ describe('Projeto Actions', () => {
 
     it('should return error on delete failure', async () => {
       vi.mocked(verifySession).mockResolvedValue(mockSession)
-      vi.mocked(deleteProject).mockRejectedValue(new Error('Not found'))
+      vi.mocked(projectsApi.delete).mockRejectedValue(new Error('Not found'))
 
       const result = await deleteProjetoAction('nonexistent')
       expect(result).toHaveProperty('error')

@@ -1,32 +1,18 @@
 // @vitest-environment node
-import { describe, it, expect, vi, beforeEach } from 'vitest'
+import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest'
+
+vi.hoisted(() => {
+  process.env.FILE_SERVICE_URL = 'http://file-service'
+})
 
 vi.mock('@/lib/routeAuth', () => ({
   verifyRouteSession: vi.fn(),
 }))
-vi.mock('@/services/fileUploadService', () => ({
-  deleteUpload: vi.fn(),
-  ValidationError: class ValidationError extends Error {
-    constructor(message: string) { super(message); this.name = 'ValidationError' }
-  },
-}))
-vi.mock('@/lib/prisma', () => ({
-  default: {
-    attachment: { findUnique: vi.fn() },
-  },
-}))
-vi.mock('@/lib/session', () => ({
-  decrypt: vi.fn(),
-}))
 
 import { DELETE } from '@/app/api/uploads/route'
-import { deleteUpload } from '@/services/fileUploadService'
 import { verifyRouteSession } from '@/lib/routeAuth'
-import prisma from '@/lib/prisma'
 
-const mockDeleteUpload = deleteUpload as ReturnType<typeof vi.fn>
 const mockVerifyRoute = verifyRouteSession as ReturnType<typeof vi.fn>
-const mockPrisma = prisma as { attachment: { findUnique: ReturnType<typeof vi.fn> } }
 
 function makeRequest(url: string, cookies = 'session=tok') {
   return new Request(url, {
@@ -35,9 +21,15 @@ function makeRequest(url: string, cookies = 'session=tok') {
   })
 }
 
+const originalFetch = global.fetch
+
 beforeEach(() => {
   vi.clearAllMocks()
   mockVerifyRoute.mockResolvedValue({ userId: 'u1', tenantId: 't1' })
+})
+
+afterEach(() => {
+  global.fetch = originalFetch
 })
 
 describe('DELETE /api/uploads', () => {
@@ -53,30 +45,24 @@ describe('DELETE /api/uploads', () => {
   })
 
   it('returns 404 when attachment not found', async () => {
-    mockPrisma.attachment.findUnique.mockResolvedValue(null)
+    global.fetch = vi.fn().mockResolvedValue(
+      new Response(JSON.stringify({ message: 'Not found' }), { status: 404 }),
+    )
     const res = await DELETE(makeRequest('http://localhost/api/uploads?id=missing'))
     expect(res.status).toBe(404)
   })
 
   it('returns 403 when user is not the card owner', async () => {
-    mockPrisma.attachment.findUnique.mockResolvedValue({
-      id: 'a1',
-      cardId: 'c1',
-      card: { responsibles: [] },
-    })
-    mockDeleteUpload.mockRejectedValue(Object.assign(new Error('Forbidden'), { status: 403 }))
+    global.fetch = vi.fn().mockResolvedValue(
+      new Response(JSON.stringify({ message: 'Forbidden' }), { status: 403 }),
+    )
     const res = await DELETE(makeRequest('http://localhost/api/uploads?id=a1'))
     expect(res.status).toBe(403)
   })
 
   it('returns 204 and removes attachment when owner', async () => {
-    mockPrisma.attachment.findUnique.mockResolvedValue({
-      id: 'a1',
-      cardId: 'c1',
-    })
-    mockDeleteUpload.mockResolvedValue(undefined)
+    global.fetch = vi.fn().mockResolvedValue(new Response(null, { status: 204 }))
     const res = await DELETE(makeRequest('http://localhost/api/uploads?id=a1'))
-    expect(mockDeleteUpload).toHaveBeenCalledWith('a1', 'u1')
     expect(res.status).toBe(204)
   })
 })

@@ -35,7 +35,7 @@ export default async function ProjetoDepartamentosPage({ params }: { params: Pro
       <main className="max-w-3xl mx-auto px-4 py-8">
         <div className="mb-6">
           <h1 className="text-xl font-bold text-gray-900">Departamentos</h1>
-          <p className="text-sm text-gray-500 mt-1">Gerencie as áreas e departamentos da equipe do projeto.</p>
+          <p className="text-sm text-gray-500 mt-1">Gerencie as áreas e departamentos da organização.</p>
         </div>
 
         <ProjetoDepartamentosClient

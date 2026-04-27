@@ -119,6 +119,41 @@ jobs:
           docker push "$IMAGE:${{ github.sha }}"
           docker push "$IMAGE:prod"
 
+      - name: Build and push auth-service image
+        run: |
+          IMAGE=ghcr.io/${{ steps.meta.outputs.owner }}/auth-service
+          docker build -t "$IMAGE:${{ github.sha }}" -t "$IMAGE:prod" ./auth-service
+          docker push "$IMAGE:${{ github.sha }}"
+          docker push "$IMAGE:prod"
+
+      - name: Build and push api-gateway image
+        run: |
+          IMAGE=ghcr.io/${{ steps.meta.outputs.owner }}/api-gateway
+          docker build -t "$IMAGE:${{ github.sha }}" -t "$IMAGE:prod" ./api-gateway
+          docker push "$IMAGE:${{ github.sha }}"
+          docker push "$IMAGE:prod"
+
+      - name: Build and push file-service image
+        run: |
+          IMAGE=ghcr.io/${{ steps.meta.outputs.owner }}/file-service
+          docker build -t "$IMAGE:${{ github.sha }}" -t "$IMAGE:prod" ./file-service
+          docker push "$IMAGE:${{ github.sha }}"
+          docker push "$IMAGE:prod"
+
+      - name: Build and push project-service image
+        run: |
+          IMAGE=ghcr.io/${{ steps.meta.outputs.owner }}/project-service
+          docker build -t "$IMAGE:${{ github.sha }}" -t "$IMAGE:prod" ./project-service
+          docker push "$IMAGE:${{ github.sha }}"
+          docker push "$IMAGE:prod"
+
+      - name: Build and push sprint-service image
+        run: |
+          IMAGE=ghcr.io/${{ steps.meta.outputs.owner }}/sprint-service
+          docker build -t "$IMAGE:${{ github.sha }}" -t "$IMAGE:prod" ./sprint-service
+          docker push "$IMAGE:${{ github.sha }}"
+          docker push "$IMAGE:prod"
+
       - uses: actions/checkout@v4
 
       - name: Scan app image for vulnerabilities (Trivy)
@@ -134,6 +169,51 @@ jobs:
         uses: aquasecurity/trivy-action@v0.35.0
         with:
           image-ref: ghcr.io/${{ steps.meta.outputs.owner }}/notification-service:${{ github.sha }}
+          format: table
+          exit-code: '1'
+          severity: CRITICAL,HIGH
+          trivyignores: .trivyignore
+
+      - name: Scan auth-service image (Trivy)
+        uses: aquasecurity/trivy-action@v0.35.0
+        with:
+          image-ref: ghcr.io/${{ steps.meta.outputs.owner }}/auth-service:${{ github.sha }}
+          format: table
+          exit-code: '1'
+          severity: CRITICAL,HIGH
+          trivyignores: .trivyignore
+
+      - name: Scan api-gateway image (Trivy)
+        uses: aquasecurity/trivy-action@v0.35.0
+        with:
+          image-ref: ghcr.io/${{ steps.meta.outputs.owner }}/api-gateway:${{ github.sha }}
+          format: table
+          exit-code: '1'
+          severity: CRITICAL,HIGH
+          trivyignores: .trivyignore
+
+      - name: Scan file-service image (Trivy)
+        uses: aquasecurity/trivy-action@v0.35.0
+        with:
+          image-ref: ghcr.io/${{ steps.meta.outputs.owner }}/file-service:${{ github.sha }}
+          format: table
+          exit-code: '1'
+          severity: CRITICAL,HIGH
+          trivyignores: .trivyignore
+
+      - name: Scan project-service image (Trivy)
+        uses: aquasecurity/trivy-action@v0.35.0
+        with:
+          image-ref: ghcr.io/${{ steps.meta.outputs.owner }}/project-service:${{ github.sha }}
+          format: table
+          exit-code: '1'
+          severity: CRITICAL,HIGH
+          trivyignores: .trivyignore
+
+      - name: Scan sprint-service image (Trivy)
+        uses: aquasecurity/trivy-action@v0.35.0
+        with:
+          image-ref: ghcr.io/${{ steps.meta.outputs.owner }}/sprint-service:${{ github.sha }}
           format: table
           exit-code: '1'
           severity: CRITICAL,HIGH

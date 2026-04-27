@@ -32,7 +32,7 @@ RUN addgroup --system --gid 1001 nodejs \
 # Install production deps fresh in runner — avoids broken pnpm symlinks from COPY.
 # pnpm-lock.yaml is removed after install so Trivy doesn't scan it for false positives.
 COPY package.json pnpm-lock.yaml pnpm-workspace.yaml ./
-RUN pnpm install --frozen-lockfile --prod \
+RUN pnpm install --frozen-lockfile --prod --shamefully-hoist \
  && rm -f pnpm-lock.yaml pnpm-workspace.yaml \
  && chown -R nestjs:nodejs /pnpm \
  && chmod -R 750 /pnpm

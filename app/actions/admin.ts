@@ -2,13 +2,7 @@
 
 import { verifySession } from '@/lib/dal'
 import { revalidatePath } from 'next/cache'
-import {
-  listAllUsers,
-  adminCreateUser,
-  adminUpdateUser,
-  toggleUserActive,
-  setUserRole,
-} from '@/services/adminService'
+import { adminApi } from '@/lib/api-client'
 
 async function requireAdmin() {
   const session = await verifySession()
@@ -20,8 +14,8 @@ async function requireAdmin() {
 
 export async function listUsersAction() {
   try {
-    const { tenantId } = await requireAdmin()
-    const users = await listAllUsers(tenantId)
+    await requireAdmin()
+    const users = await adminApi.listUsers()
     return { users }
   } catch (err) {
     return { error: err instanceof Error ? err.message : 'Erro ao listar usuários' }
@@ -46,8 +40,8 @@ export async function adminCreateUserAction(data: {
   notes?: string
 }) {
   try {
-    const { tenantId } = await requireAdmin()
-    const user = await adminCreateUser({ ...data, tenantId })
+    await requireAdmin()
+    const user = await adminApi.createUser(data as Record<string, unknown>)
     revalidatePath('/admin/users')
     return { user }
   } catch (err) {
@@ -78,7 +72,7 @@ export async function adminUpdateUserAction(
 ) {
   try {
     await requireAdmin()
-    const user = await adminUpdateUser(userId, data)
+    const user = await adminApi.updateUser(userId, data as Record<string, unknown>)
     revalidatePath('/admin/users')
     return { user }
   } catch (err) {
@@ -89,7 +83,7 @@ export async function adminUpdateUserAction(
 export async function toggleUserActiveAction(userId: string, active: boolean) {
   try {
     await requireAdmin()
-    const user = await toggleUserActive(userId, active)
+    const user = await adminApi.toggleActive(userId, active)
     revalidatePath('/admin/users')
     return { user }
   } catch (err) {
@@ -103,7 +97,7 @@ export async function setUserRoleAction(userId: string, role: string) {
   }
   try {
     await requireAdmin()
-    const user = await setUserRole(userId, role)
+    const user = await adminApi.setRole(userId, role)
     revalidatePath('/admin/users')
     return { user }
   } catch (err) {

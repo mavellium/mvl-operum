@@ -2,20 +2,7 @@
 
 import { verifySession } from '@/lib/dal'
 import { revalidatePath } from 'next/cache'
-import type { UpdateProjectInput, MacroFaseInput } from '@/lib/validation/projectSchemas'
-import {
-  createProject,
-  findAllByTenant,
-  findById,
-  updateProject,
-  deleteProject,
-  addMember,
-  removeMember,
-  getMembersWithDetails,
-  updateUserProject,
-  getUserProjectsWithDetails,
-} from '@/services/projectService'
-import { setProjectManagerRole } from '@/services/projectRoleService'
+import { projectsApi } from '@/lib/api-client'
 
 export async function createProjectAction(
   _prevState: unknown,
@@ -23,22 +10,21 @@ export async function createProjectAction(
 ) {
   try {
     const { tenantId } = await verifySession()
-    const project = await createProject({ name: input.name, description: input.description, tenantId })
+    const project = await projectsApi.create({ name: input.name, description: input.description, tenantId }) as Record<string, unknown>
     if (input.initialMemberId) {
-      await addMember(project.id, input.initialMemberId)
-      await setProjectManagerRole(input.initialMemberId, project.id, tenantId)
+      await projectsApi.addMember(project.id as string, { userId: input.initialMemberId })
     }
     revalidatePath('/projetos')
     return { project }
   } catch (err) {
-    return { error: err instanceof Error ? err.message : 'Error creating project' }
+    return { error: err instanceof Error ? err.message : 'Erro ao criar projeto' }
   }
 }
 
 export async function getProjectsAction() {
   try {
-    const { tenantId } = await verifySession()
-    return await findAllByTenant(tenantId)
+    const result = await projectsApi.list()
+    return result.items
   } catch {
     return []
   }
@@ -47,71 +33,68 @@ export async function getProjectsAction() {
 export async function getProjectAction(id: string) {
   try {
     await verifySession()
-    const project = await findById(id)
-    if (!project) {
-      return { error: 'Project not found' }
-    }
+    const project = await projectsApi.get(id)
     return { project }
   } catch (err) {
-    return { error: err instanceof Error ? err.message : 'Error fetching project' }
+    return { error: err instanceof Error ? err.message : 'Projeto não encontrado' }
   }
 }
 
 export async function updateProjectAction(
   _prevState: unknown,
   id: string,
-  data: UpdateProjectInput & { macroFases?: MacroFaseInput[] },
+  data: Record<string, unknown>,
 ) {
   try {
     await verifySession()
-    const project = await updateProject(id, data)
+    const project = await projectsApi.update(id, data)
     revalidatePath('/projetos')
     revalidatePath(`/projetos/${id}`)
     return { project }
   } catch (err) {
-    return { error: err instanceof Error ? err.message : 'Error updating project' }
+    return { error: err instanceof Error ? err.message : 'Erro ao atualizar projeto' }
   }
 }
 
 export async function deleteProjectAction(id: string) {
   try {
     await verifySession()
-    await deleteProject(id)
+    await projectsApi.delete(id)
     revalidatePath('/projetos')
     return { success: true }
   } catch (err) {
-    return { error: err instanceof Error ? err.message : 'Error deleting project' }
+    return { error: err instanceof Error ? err.message : 'Erro ao remover projeto' }
   }
 }
 
 export async function addMemberAction(projectId: string, userId: string) {
   try {
     await verifySession()
-    await addMember(projectId, userId)
+    await projectsApi.addMember(projectId, { userId })
     revalidatePath(`/projetos/${projectId}/membros`)
     revalidatePath(`/projetos/${projectId}`)
     return { success: true }
   } catch (err) {
-    return { error: err instanceof Error ? err.message : 'Error adding member' }
+    return { error: err instanceof Error ? err.message : 'Erro ao adicionar membro' }
   }
 }
 
 export async function removeMemberAction(projectId: string, userId: string) {
   try {
     await verifySession()
-    await removeMember(projectId, userId)
+    await projectsApi.removeMember(projectId, userId)
     revalidatePath(`/projetos/${projectId}/membros`)
     revalidatePath(`/projetos/${projectId}`)
     return { success: true }
   } catch (err) {
-    return { error: err instanceof Error ? err.message : 'Error removing member' }
+    return { error: err instanceof Error ? err.message : 'Erro ao remover membro' }
   }
 }
 
 export async function getMembersAction(projectId: string) {
   try {
     await verifySession()
-    return await getMembersWithDetails(projectId)
+    return await projectsApi.getMembers(projectId)
   } catch {
     return []
   }
@@ -120,35 +103,24 @@ export async function getMembersAction(projectId: string) {
 export async function updateUserProjectAction(
   userId: string,
   projectId: string,
-  data: {
-    projectRole?: string
-    roles?: string[]
-    departments?: string[]
-    hourlyRate?: number | null
-    active?: boolean
-  },
+  data: Record<string, unknown>,
 ) {
   try {
-    const { tenantId } = await verifySession()
-    const member = await updateUserProject(userId, projectId, { ...data, tenantId })
+    await verifySession()
+    await projectsApi.addMember(projectId, { userId, ...data })
     revalidatePath(`/projetos/${projectId}/membros`)
     revalidatePath(`/projetos/${projectId}`)
     revalidatePath('/admin/users')
-    return { member }
+    return { success: true }
   } catch (err) {
-    return { error: err instanceof Error ? err.message : 'Error updating member' }
+    return { error: err instanceof Error ? err.message : 'Erro ao atualizar membro' }
   }
 }
 
 export async function getUserProjectsAction(userId: string) {
   try {
     await verifySession()
-    const rows = await getUserProjectsWithDetails(userId)
-    return rows.map(r => ({
-      ...r,
-      startDate: r.startDate.toISOString(),
-      endDate: r.endDate?.toISOString() ?? null,
-    }))
+    return await projectsApi.getUserProjects(userId)
   } catch {
     return []
   }

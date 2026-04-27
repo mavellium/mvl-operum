@@ -1,26 +1,28 @@
 'use server'
 
 import { verifySession } from '@/lib/dal'
-import { createRole, findAllByTenant, updateRole, assignPermission, removePermission, getOrCreateRole, softDeleteRole } from '@/services/roleService'
 import { revalidatePath } from 'next/cache'
+import { rolesApi } from '@/lib/api-client'
 
 export async function createRoleAction(
   _prevState: unknown,
   input: { name: string; scope: 'TENANT' | 'PROJETO'; description?: string },
 ) {
   try {
-    const { tenantId } = await verifySession()
-    const role = await createRole({ ...input, tenantId })
+    await verifySession()
+    const role = await rolesApi.create(input as Record<string, unknown>)
     return { role }
   } catch (err) {
-    return { error: err instanceof Error ? err.message : 'Error creating role' }
+    return { error: err instanceof Error ? err.message : 'Erro ao criar role' }
   }
 }
 
 export async function getRolesAction(scope?: 'TENANT' | 'PROJETO') {
   try {
-    const { tenantId } = await verifySession()
-    return await findAllByTenant(tenantId, { scope })
+    await verifySession()
+    const roles = await rolesApi.list() as Array<Record<string, unknown>>
+    if (scope) return roles.filter(r => r.scope === scope)
+    return roles
   } catch {
     return []
   }
@@ -29,60 +31,63 @@ export async function getRolesAction(scope?: 'TENANT' | 'PROJETO') {
 export async function updateRoleAction(_prevState: unknown, id: string, data: Record<string, unknown>) {
   try {
     await verifySession()
-    const role = await updateRole(id, data)
+    const role = await rolesApi.update(id, data)
     return { role }
   } catch (err) {
-    return { error: err instanceof Error ? err.message : 'Error updating role' }
+    return { error: err instanceof Error ? err.message : 'Erro ao atualizar role' }
   }
 }
 
 export async function assignPermissionAction(roleId: string, permissionId: string) {
   try {
     await verifySession()
-    await assignPermission(roleId, permissionId)
+    await rolesApi.assignPermission(roleId, permissionId)
     return { success: true }
   } catch (err) {
-    return { error: err instanceof Error ? err.message : 'Error assigning permission' }
+    return { error: err instanceof Error ? err.message : 'Erro ao atribuir permissão' }
   }
 }
 
 export async function removePermissionAction(roleId: string, permissionId: string) {
   try {
     await verifySession()
-    await removePermission(roleId, permissionId)
+    await rolesApi.removePermission(roleId, permissionId)
     return { success: true }
   } catch (err) {
-    return { error: err instanceof Error ? err.message : 'Error removing permission' }
+    return { error: err instanceof Error ? err.message : 'Erro ao remover permissão' }
   }
 }
 
 export async function getOrCreateRoleAction(name: string) {
   try {
-    const { tenantId } = await verifySession()
-    const role = await getOrCreateRole(name, tenantId)
+    await verifySession()
+    const roles = await rolesApi.list() as Array<{ id: string; name: string }>
+    const existing = roles.find(r => r.name.toLowerCase() === name.toLowerCase())
+    if (existing) return { role: existing }
+    const role = await rolesApi.create({ name, scope: 'TENANT', nameKey: name.toLowerCase().trim().replace(/\s+/g, '-').replace(/[^a-z0-9-]/g, '') })
     revalidatePath('/projetos')
     return { role }
   } catch (err) {
-    return { error: err instanceof Error ? err.message : 'Error saving role' }
+    return { error: err instanceof Error ? err.message : 'Erro ao salvar role' }
   }
 }
 
 export async function updateRoleNameAction(id: string, name: string) {
   try {
     await verifySession()
-    const role = await updateRole(id, { name: name.trim() })
+    const role = await rolesApi.update(id, { name: name.trim() })
     return { role }
   } catch (err) {
-    return { error: err instanceof Error ? err.message : 'Error updating role' }
+    return { error: err instanceof Error ? err.message : 'Erro ao atualizar role' }
   }
 }
 
 export async function deleteRoleAction(id: string) {
   try {
     await verifySession()
-    await softDeleteRole(id)
+    await rolesApi.delete(id)
     return { success: true }
   } catch (err) {
-    return { error: err instanceof Error ? err.message : 'Error deleting role' }
+    return { error: err instanceof Error ? err.message : 'Erro ao remover role' }
   }
 }

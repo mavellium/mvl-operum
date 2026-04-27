@@ -3,9 +3,11 @@ import { cache } from 'react'
 import { cookies } from 'next/headers'
 import { redirect } from 'next/navigation'
 import { decrypt } from '@/lib/session'
-import prisma from '@/lib/prisma'
-import { getUserActiveProjects } from '@/services/projectService'
 
+// Verifies the session JWT locally (no DB round-trip).
+// Token validity (expiry, signature) is checked here.
+// Session invalidation (password change, logout) is enforced by the API gateway
+// on every downstream API call via the Redis session store.
 export const verifySession = cache(async () => {
   const cookieStore = await cookies()
   const token = cookieStore.get('session')?.value
@@ -15,49 +17,12 @@ export const verifySession = cache(async () => {
     redirect('/login')
   }
 
-  const user = await prisma.user.findUnique({
-    where: { id: session.userId as string },
-    select: {
-      id: true,
-      role: true,
-      tenantId: true,
-      isActive: true,
-      status: true,
-      tokenVersion: true,
-      deletedAt: true,
-      forcePasswordChange: true,
-    },
-  })
-
-  if (!user) {
-    cookieStore.delete('session')
-    redirect('/login')
-  }
-
-  if (user.deletedAt !== null) {
-    cookieStore.delete('session')
-    redirect('/login')
-  }
-
-  if (user.isActive === false || user.status !== 'active') {
-    cookieStore.delete('session')
-    redirect('/login')
-  }
-
-  if (session.tokenVersion !== undefined && user.tokenVersion !== session.tokenVersion) {
-    cookieStore.delete('session')
-    redirect('/login')
-  }
-
-  if (user.forcePasswordChange) {
-    redirect('/alterar-senha')
-  }
-
   return {
-    isAuth: true,
-    userId: user.id,
-    role: user.role,
-    tenantId: user.tenantId,
+    isAuth: true as const,
+    userId: session.userId as string,
+    role: session.role as string,
+    tenantId: session.tenantId as string,
+    token: token!,
   }
 })
 
@@ -65,8 +30,9 @@ export const verifyProjectAccess = cache(async () => {
   const session = await verifySession()
 
   if (session.role !== 'admin') {
-    const projects = await getUserActiveProjects(session.userId, session.tenantId)
-    if (projects.length === 0) {
+    const { projectsApi } = await import('./api-client')
+    const projects = await projectsApi.getUserProjects(session.userId).catch(() => [] as unknown[])
+    if ((projects as unknown[]).length === 0) {
       redirect('/no-project')
     }
   }

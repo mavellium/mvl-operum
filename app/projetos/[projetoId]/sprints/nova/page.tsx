@@ -61,14 +61,19 @@ function NovaSprintForm() {
         setError(result.error ?? 'Erro ao criar sprint')
         return
       }
-      router.push(`/sprints/${result.sprint.id}`)
+      const projectId = form.projectId || presetProjetoId
+      router.push(projectId
+        ? `/projetos/${projectId}/sprints/${result.sprint.id}`
+        : `/sprints/${result.sprint.id}`)
     })
   }
+
+  const backHref = presetProjetoId ? `/projetos/${presetProjetoId}/sprints` : '/projetos'
 
   return (
     <div className="min-h-screen bg-gray-50">
       <header className="bg-white border-b border-gray-200 px-6 py-4 flex items-center gap-4">
-        <Link href="/sprints" className="text-gray-400 hover:text-gray-600 transition-colors">
+        <Link href={backHref} className="text-gray-400 hover:text-gray-600 transition-colors">
           <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
           </svg>
@@ -131,7 +136,7 @@ function NovaSprintForm() {
             {error && <p className="text-sm text-red-600">{error}</p>}
             <div className="flex gap-3 pt-2">
               <Link
-                href="/sprints"
+                href={backHref}
                 className="flex-1 text-center px-4 py-2.5 border border-gray-200 text-gray-600 text-sm font-medium rounded-xl hover:bg-gray-50"
               >
                 Cancelar

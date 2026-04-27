@@ -4,6 +4,7 @@
   "private": true,
   "scripts": {
     "dev": "next dev",
+    "dev:all": "concurrently --kill-others-on-fail -n \"next,gateway,auth,project,sprint,notify,files\" -c \"blue,magenta,green,yellow,cyan,white,red\" \"pnpm dev\" \"pnpm --dir api-gateway start:dev\" \"pnpm --dir auth-service start:dev\" \"pnpm --dir project-service start:dev\" \"pnpm --dir sprint-service start:dev\" \"pnpm --dir notification-service start:dev\" \"pnpm --dir file-service start:dev\"",
     "build": "next build",
     "start": "next start",
     "lint": "eslint",
@@ -16,9 +17,9 @@
     "@aws-sdk/client-s3": "^3.699.0",
     "@aws-sdk/s3-request-presigner": "^3.699.0",
     "@hello-pangea/dnd": "^18.0.1",
-    "@prisma/adapter-pg": "^7.5.0",
-    "@prisma/client": "^7.7.0",
-    "@prisma/client-runtime-utils": "^7.7.0",
+    "@prisma/adapter-pg": "7.7.0",
+    "@prisma/client": "7.7.0",
+    "@prisma/client-runtime-utils": "7.7.0",
     "bcrypt": "^6.0.0",
     "bcryptjs": "^3.0.3",
     "bullmq": "^5.30.1",
@@ -31,6 +32,7 @@
     "pg": "^8.20.0",
     "react": "19.2.4",
     "react-dom": "19.2.4",
+    "react-to-print": "^3.3.0",
     "recharts": "^3.8.1",
     "server-only": "^0.0.1",
     "uuid": "^13.0.0",
@@ -51,12 +53,13 @@
     "@types/uuid": "^10.0.0",
     "@vitejs/plugin-react": "^6.0.1",
     "@vitest/coverage-v8": "^4.1.2",
+    "concurrently": "^9.2.1",
     "eslint": "^9",
     "eslint-config-next": "16.2.1",
     "jsdom": "^29.0.1",
     "msw": "^2.12.14",
     "postcss": "^8.5.8",
-    "prisma": "^7.7.0",
+    "prisma": "7.7.0",
     "tailwindcss": "^4.2.2",
     "tsconfig-paths": "^4.2.0",
     "tsx": "^4.21.0",
@@ -66,7 +69,10 @@
   },
   "pnpm": {
     "overrides": {
-      "picomatch": ">=4.0.4"
+      "picomatch": ">=4.0.4",
+      "@prisma/adapter-pg": "7.7.0",
+      "@prisma/client": "7.7.0",
+      "@prisma/client-runtime-utils": "7.7.0"
     }
   }
 }

@@ -52,7 +52,7 @@ export default function AvatarUpload({ name, avatarUrl: initialAvatarUrl, onChan
       setAvatarUrl(result.avatarUrl)
       onChange?.(result.avatarUrl)
     } else if ('error' in result) {
-      setError(result.error ?? 'Erro ao fazer upload')
+      setError(result.error || 'Erro ao fazer upload')
     }
     setUploading(false)
   }

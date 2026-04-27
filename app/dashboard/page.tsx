@@ -25,7 +25,7 @@ export default async function DashboardPage() {
     return (
       <div className="min-h-screen flex flex-col items-center justify-center gap-4">
         <p className="text-gray-500">{result.error}</p>
-        <Link href="/sprints" className="text-blue-600 hover:underline text-sm">Voltar às sprints</Link>
+        <Link href="/projetos" className="text-blue-600 hover:underline text-sm">Voltar às sprints</Link>
       </div>
     )
   }
@@ -35,7 +35,7 @@ export default async function DashboardPage() {
   return (
     <div className="min-h-screen bg-gray-50">
       <header className="bg-white border-b border-gray-200 px-6 py-4 flex items-center gap-4">
-        <Link href="/sprints" className="text-gray-400 hover:text-gray-600 transition-colors">
+        <Link href="/projetos" className="text-gray-400 hover:text-gray-600 transition-colors">
           <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
           </svg>

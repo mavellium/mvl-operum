@@ -8,6 +8,13 @@ const __dirname = fileURLToPath(new URL('.', import.meta.url))
 
 export default defineConfig({
   plugins: [react(), tsconfigPaths()],
+  resolve: {
+    alias: {
+      'server-only': resolve(__dirname, '__mocks__/server-only.ts'),
+      'next/headers': resolve(__dirname, '__mocks__/next-headers.ts'),
+      'next/navigation': resolve(__dirname, '__mocks__/next-navigation.ts'),
+    },
+  },
   test: {
     environment: 'jsdom',
     globals: true,

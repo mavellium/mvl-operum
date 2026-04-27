@@ -2,79 +2,87 @@
 
 import { verifySession } from '@/lib/dal'
 import { revalidatePath } from 'next/cache'
-import {
-  createProject,
-  findAllByTenant,
-  findById,
-  updateProject,
-  deleteProject,
-  addMember,
-  removeMember,
-  getMembersWithDetails,
-  updateUserProject,
-  getUserProjectsWithDetails
-} from '@/services/projectService'
-import { setProjectManagerRole, removeProjectRole, countProjectManagers } from '@/services/projectRoleService'
-import { getOrCreateRole } from '@/services/roleService'
+import { projectsApi } from '@/lib/api-client'
 import prisma from '@/lib/prisma'
-import type { UpdateProjectInput, MacroFaseInput } from '@/lib/validation/projectSchemas'
+import { isProjectManager, setProjectManagerRole, removeProjectRole } from '@/services/projectRoleService'
+
+async function upsertDepartamentos(tenantId: string, names: string[]) {
+  for (const deptName of names) {
+    const name = deptName.trim()
+    if (!name) continue
+    const existing = await prisma.department.findFirst({
+      where: { tenantId, name: { equals: name, mode: 'insensitive' } },
+      select: { id: true, deletedAt: true },
+    })
+    if (!existing) {
+      await prisma.department.create({ data: { tenantId, name } })
+    } else if (existing.deletedAt !== null) {
+      await prisma.department.update({ where: { id: existing.id }, data: { deletedAt: null } })
+    }
+  }
+}
 
 export async function createProjetoAction(
   _prevState: unknown,
   input: {
-    name: string;
-    description?: string;
-    initialMemberId?: string;
-    // --- Novos Campos do TAP (Termo de Abertura do Projeto) ---
-    startDate?: string;
-    endDate?: string;
-    location?: string;
-    logoUrl?: string;
-    slogan?: string;
-    justificativa?: string;
-    objetivos?: string;
-    metodologia?: string;
-    descricaoProduto?: string;
-    premissas?: string;
-    restricoes?: string;
-    limitesAutoridade?: string;
-    semestre?: string;
-    ano?: string;
-    departamentos?: string[];
-    macroFases?: Array<{ fase: string; dataLimite: string; custo: string }>;
-  }
+    name: string
+    description?: string
+    initialMemberId?: string
+    startDate?: string
+    endDate?: string
+    location?: string
+    logoUrl?: string
+    slogan?: string
+    justificativa?: string
+    objetivos?: string
+    metodologia?: string
+    descricaoProduto?: string
+    premissas?: string
+    restricoes?: string
+    limitesAutoridade?: string
+    semestre?: string
+    ano?: string
+    departamentos?: string[]
+    macroFases?: Array<{ fase: string; dataLimite: string; custo: string }>
+  },
 ) {
   try {
     const { tenantId } = await verifySession()
-
-    // Separamos o initialMemberId do restante dos dados que vão para a tabela Project
-    const { initialMemberId, ano: anoStr, ...projectData } = input
+    const { initialMemberId, ano: anoStr, macroFases, startDate, endDate, ...rest } = input
     const ano = anoStr ? Number(anoStr) : undefined
+    const toISO = (d?: string) => d ? new Date(d).toISOString() : undefined
 
-    // Passamos todos os dados do projeto para o Service
-    const projeto = await createProject({
-      ...projectData,
+    const projeto = await projectsApi.create({
+      ...rest,
       tenantId,
       ano,
-    })
+      startDate: toISO(startDate),
+      endDate: toISO(endDate),
+    }) as Record<string, unknown>
 
-    // Se o gerente foi selecionado na UI, fazemos a vinculação
     if (initialMemberId) {
-      await addMember(projeto.id, initialMemberId)
-      await setProjectManagerRole(initialMemberId, projeto.id, tenantId)
+      await projectsApi.addMember(projeto.id as string, { userId: initialMemberId })
+    }
+
+    if (macroFases && macroFases.length > 0) {
+      await projectsApi.upsertMacroFases(projeto.id as string, macroFases)
+    }
+
+    if (rest.departamentos && rest.departamentos.length > 0) {
+      await upsertDepartamentos(tenantId, rest.departamentos)
     }
 
     revalidatePath('/projetos')
     return { projeto }
   } catch (err) {
-    return { error: err instanceof Error ? err.message : 'Erro ao criar projeto' }
+    return { error: err instanceof Error ? (err.message || 'Erro ao criar projeto') : 'Erro ao criar projeto' }
   }
 }
 
-export async function getProjetosAction() {
+export async function getProjetosAction(): Promise<{ id: string; name: string }[]> {
   try {
-    const { tenantId } = await verifySession()
-    return await findAllByTenant(tenantId)
+    const result = await projectsApi.list()
+    return result.items
   } catch {
     return []
   }
@@ -83,10 +91,8 @@ export async function getProjetosAction() {
 export async function getProjetoAction(id: string) {
   try {
     await verifySession()
-    const projeto = await findById(id)
-    if (!projeto) {
-      return { error: 'Projeto não encontrado' }
-    }
+    const projeto = await projectsApi.get(id)
+    if (!projeto) return { error: 'Projeto não encontrado' }
     return { projeto }
   } catch (err) {
     return { error: err instanceof Error ? err.message : 'Erro ao buscar projeto' }
@@ -96,25 +102,41 @@ export async function getProjetoAction(id: string) {
 export async function updateProjetoAction(
   _prevState: unknown,
   id: string,
-  data: Omit<UpdateProjectInput, 'ano'> & { ano?: string | number } & { macroFases?: MacroFaseInput[] },
+  data: Record<string, unknown> & { ano?: string | number; macroFases?: Array<{ fase: string; dataLimite: string; custo: string }> },
 ) {
   try {
-    await verifySession()
-    const { ano: anoRaw, ...rest } = data
+    const { tenantId } = await verifySession()
+    const { ano: anoRaw, macroFases, startDate, endDate, ...rest } = data
     const ano = anoRaw !== undefined && anoRaw !== '' ? Number(anoRaw) : undefined
-    const projeto = await updateProject(id, { ...rest, ano })
+    const toISO = (d: unknown) => (typeof d === 'string' && d) ? new Date(d).toISOString() : undefined
+    const projeto = await projectsApi.update(id, {
+      ...rest,
+      ...(ano !== undefined && { ano }),
+      ...(startDate !== undefined && { startDate: toISO(startDate) }),
+      ...(endDate !== undefined && { endDate: toISO(endDate) }),
+    })
+
+    if (macroFases) {
+      await projectsApi.upsertMacroFases(id, macroFases)
+    }
+
+    const departamentos = rest.departamentos as string[] | undefined
+    if (departamentos && departamentos.length > 0) {
+      await upsertDepartamentos(tenantId, departamentos)
+    }
+
     revalidatePath('/projetos')
     revalidatePath(`/projetos/${id}`)
     return { projeto }
   } catch (err) {
-    return { error: err instanceof Error ? err.message : 'Erro ao atualizar projeto' }
+    return { error: err instanceof Error ? (err.message || 'Erro ao atualizar projeto') : 'Erro ao atualizar projeto' }
   }
 }
 
 export async function deleteProjetoAction(id: string) {
   try {
     await verifySession()
-    await deleteProject(id)
+    await projectsApi.delete(id)
     revalidatePath('/projetos')
     return { success: true }
   } catch (err) {
@@ -125,7 +147,7 @@ export async function deleteProjetoAction(id: string) {
 export async function addMemberAction(projetoId: string, userId: string) {
   try {
     await verifySession()
-    await addMember(projetoId, userId)
+    await projectsApi.addMember(projetoId, { userId })
     revalidatePath(`/projetos/${projetoId}/membros`)
     revalidatePath(`/projetos/${projetoId}`)
     return { success: true }
@@ -137,7 +159,7 @@ export async function addMemberAction(projetoId: string, userId: string) {
 export async function removeMemberAction(projetoId: string, userId: string) {
   try {
     await verifySession()
-    await removeMember(projetoId, userId)
+    await projectsApi.removeMember(projetoId, userId)
     revalidatePath(`/projetos/${projetoId}/membros`)
     revalidatePath(`/projetos/${projetoId}`)
     return { success: true }
@@ -149,7 +171,7 @@ export async function removeMemberAction(projetoId: string, userId: string) {
 export async function getMembrosAction(projetoId: string) {
   try {
     await verifySession()
-    return await getMembersWithDetails(projetoId)
+    return await projectsApi.getMembers(projetoId)
   } catch {
     return []
   }
@@ -159,47 +181,20 @@ export async function updateUsuarioProjetoAction(
   userId: string,
   projetoId: string,
   data: {
-    projectRole?: string;
-    cargos?: string[];
-    departamentos?: string[];
-    hourlyRate?: number | null;
+    projectRole?: string
+    cargos?: string[]
+    departamentos?: string[]
+    hourlyRate?: number | null
     active?: boolean
   },
 ) {
   try {
     const { tenantId } = await verifySession()
-    const { cargos, departamentos, ...rest } = data
-
-    // Persist each cargo name to the Role table (find-or-create)
-    if (cargos && cargos.length > 0) {
-      await Promise.all(cargos.map(name => getOrCreateRole(name, tenantId)))
-    }
-
-    // Resolve department name → ID (find-or-create)
-    let departmentId: string | null | undefined = undefined
-    const deptName = departamentos?.[0]?.trim()
-    if (deptName) {
-      const dept = await prisma.department.upsert({
-        where: { name_tenantId: { name: deptName, tenantId } },
-        update: {},
-        create: { name: deptName, tenantId },
-        select: { id: true },
-      })
-      departmentId = dept.id
-    } else if (departamentos !== undefined) {
-      departmentId = null
-    }
-
-    const membro = await updateUserProject(userId, projetoId, {
-      ...rest,
-      roles: cargos,
-      ...(departmentId !== undefined && { departmentId }),
-      tenantId,
-    })
+    await projectsApi.addMember(projetoId, { userId, ...data, tenantId })
     revalidatePath(`/projetos/${projetoId}/membros`)
     revalidatePath(`/projetos/${projetoId}`)
     revalidatePath('/admin/users')
-    return { membro }
+    return { membro: { userId, projetoId } }
   } catch (err) {
     return { error: err instanceof Error ? err.message : 'Erro ao atualizar membro' }
   }
@@ -209,6 +204,8 @@ export async function updateProjetoMemberAction(
   userId: string,
   projetoId: string,
   data: {
+    name?: string
+    email?: string
     phone?: string
     cep?: string
     logradouro?: string
@@ -225,91 +222,105 @@ export async function updateProjetoMemberAction(
   },
 ) {
   try {
-    const { tenantId } = await verifySession()
+    const { role, tenantId, userId: sessionUserId } = await verifySession()
+    const isAdmin = role === 'admin'
+    const canManage = isAdmin || await isProjectManager(sessionUserId, projetoId)
+    if (!canManage) throw new Error('Acesso não autorizado')
 
-    // 1. Atualizar dados globais do usuário
+    const { isGerente: makeGerente, cargos, departamento, hourlyRate: rawRate, name, email, ...profileData } = data
+
+    let hourlyRate: number | undefined
+    if (rawRate !== undefined) {
+      const n = typeof rawRate === 'string'
+        ? parseFloat(rawRate.replace(/\./g, '').replace(',', '.'))
+        : rawRate
+      if (!isNaN(n)) hourlyRate = n
+    }
+
+    // 1. Update User profile via Prisma (name/email only for admin)
+    const userUpdateData: Record<string, unknown> = { ...profileData }
+    if (isAdmin) {
+      if (name?.trim()) userUpdateData.name = name.trim()
+      if (email?.trim()) userUpdateData.email = email.trim()
+    }
+    if (hourlyRate !== undefined) userUpdateData.hourlyRate = hourlyRate
+
     await prisma.user.update({
-      where: { id: userId },
-      data: {
-        ...(data.phone !== undefined && { phone: data.phone }),
-        ...(data.cep !== undefined && { cep: data.cep }),
-        ...(data.logradouro !== undefined && { logradouro: data.logradouro }),
-        ...(data.numero !== undefined && { numero: data.numero }),
-        ...(data.complemento !== undefined && { complemento: data.complemento }),
-        ...(data.bairro !== undefined && { bairro: data.bairro }),
-        ...(data.cidade !== undefined && { cidade: data.cidade }),
-        ...(data.estado !== undefined && { estado: data.estado }),
-        ...(data.notes !== undefined && { notes: data.notes }),
-      },
+      where: { id: userId, tenantId, deletedAt: null },
+      data: userUpdateData,
     })
 
-    // 2. Resolver departamento (find-or-create)
-    let departmentId: string | undefined
-
-    if (data.departamento && data.departamento.length > 0) {
-      const deptName = data.departamento[0].trim()
-
-      const dept = await prisma.department.upsert({
-        where: { name_tenantId: { name: deptName, tenantId } },
-        update: {},
-        create: { name: deptName, tenantId },
-        select: { id: true },
-      })
-
-      departmentId = dept.id
-    } else if (data.departamento !== undefined) {
-      departmentId = undefined
-    }
-
-    // 2b. Persistir cada cargo na tabela Role (find-or-create)
-    if (data.cargos && data.cargos.length > 0) {
-      await Promise.all(data.cargos.map(name => getOrCreateRole(name, tenantId)))
-    }
-
-    // 3. Atualizar UserProject (role = cargos.join(', '), departmentId, hourlyRate)
-    const existing = await prisma.userProject.findUnique({
-      where: { userId_projectId: { userId, projectId: projetoId } },
-    })
-    if (!existing) throw new Error('Membro não encontrado no projeto')
-
-    let parsedHourlyRate: number | undefined
-    if (data.hourlyRate !== undefined) {
-      if (typeof data.hourlyRate === 'string') {
-        const clean = data.hourlyRate.replace(/\./g, '').replace(',', '.')
-        const n = parseFloat(clean)
-        parsedHourlyRate = isNaN(n) ? undefined : n
-      } else {
-        parsedHourlyRate = data.hourlyRate
-      }
-    }
-
-    await prisma.userProject.update({
-      where: { id: existing.id },
-      data: {
-        ...(data.cargos !== undefined && {
-          role: data.cargos.length > 0 ? data.cargos.join(', ') : null,
-        }),
-        ...(departmentId !== undefined && { departmentId }),
-        ...(parsedHourlyRate !== undefined && { hourlyRate: parsedHourlyRate }),
-      },
-    })
-
-    // 4. Gerenciar role de gerente via UserProjectRole
-    if (data.isGerente === true) {
-      await setProjectManagerRole(userId, projetoId, tenantId)
-    } else if (data.isGerente === false) {
-      const isCurrentlyGerente = await prisma.userProjectRole.findFirst({
-        where: { userId, projectId: projetoId, deletedAt: null },
-      })
-      if (isCurrentlyGerente) {
-        const count = await countProjectManagers(projetoId)
-        if (count <= 1) {
-          throw new Error('Não é possível remover o único gerente do projeto')
+    // 2a. Upsert cargos — sequential to avoid race conditions; upsert handles soft-deleted records
+    if (cargos !== undefined && cargos.length > 0) {
+      for (const cargoName of cargos) {
+        const name = cargoName.trim()
+        if (!name) continue
+        const byName = await prisma.role.findFirst({
+          where: { tenantId, name: { equals: name, mode: 'insensitive' } },
+          select: { id: true, deletedAt: true },
+        })
+        if (byName) {
+          if (byName.deletedAt !== null) {
+            await prisma.role.update({ where: { id: byName.id }, data: { deletedAt: null } })
+          }
+        } else {
+          const nameKey = name.toLowerCase().replace(/\s+/g, '-').replace(/[^a-z0-9-]/g, '')
+          await prisma.role.upsert({
+            where: { nameKey_tenantId_scope: { nameKey, tenantId, scope: 'TENANT' } },
+            create: { tenantId, name, nameKey, scope: 'TENANT' },
+            update: { name, deletedAt: null },
+          })
         }
-        await removeProjectRole(userId, projetoId)
       }
     }
 
+    // 2b. Upsert department — case-insensitive name search, resolve id
+    let deptId: string | null | undefined
+    if (departamento !== undefined) {
+      if (departamento.length > 0) {
+        const deptName = departamento[0].trim()
+        const byName = await prisma.department.findFirst({
+          where: { tenantId, name: { equals: deptName, mode: 'insensitive' } },
+          select: { id: true, deletedAt: true },
+        })
+        if (byName) {
+          if (byName.deletedAt !== null) {
+            await prisma.department.update({ where: { id: byName.id }, data: { deletedAt: null } })
+          }
+          deptId = byName.id
+        } else {
+          const created = await prisma.department.create({
+            data: { name: deptName, tenantId },
+            select: { id: true },
+          })
+          deptId = created.id
+        }
+      } else {
+        deptId = null
+      }
+    }
+
+    // 2c. Update UserProject
+    const userProjectData: Record<string, unknown> = {}
+    if (cargos !== undefined) userProjectData.role = cargos.join(', ')
+    if (hourlyRate !== undefined) userProjectData.hourlyRate = hourlyRate
+    if (deptId !== undefined) userProjectData.departmentId = deptId
+
+    if (Object.keys(userProjectData).length > 0) {
+      await prisma.userProject.update({
+        where: { userId_projectId: { userId, projectId: projetoId } },
+        data: userProjectData,
+      })
+    }
+
+    // 3. Handle gerente role via projectRoleService (uses correct role cuid)
+    if (makeGerente === true) {
+      await setProjectManagerRole(userId, projetoId, tenantId)
+    } else if (makeGerente === false) {
+      await removeProjectRole(userId, projetoId)
+    }
+
+    revalidatePath(`/projetos/${projetoId}/stakeholders`)
     revalidatePath(`/projetos/${projetoId}/membros`)
     revalidatePath(`/projetos/${projetoId}`)
     return { success: true }
@@ -321,14 +332,7 @@ export async function updateProjetoMemberAction(
 export async function getUserProjetosAction(userId: string) {
   try {
     await verifySession()
-    const rows = await getUserProjectsWithDetails(userId)
-    return rows.map(r => ({
-      ...r,
-      cargo: r.role ?? null,
-      departamento: null as string | null,
-      startDate: r.startDate.toISOString(),
-      endDate: r.endDate?.toISOString() ?? null,
-    }))
+    return await projectsApi.getUserProjects(userId)
   } catch {
     return []
   }
