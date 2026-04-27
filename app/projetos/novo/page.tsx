@@ -8,6 +8,7 @@ import { getDepartmentsAction } from '@/app/actions/departments'
 import AvatarUpload from '@/components/profile/AvatarUpload'
 import MultiCreatableSelect from '@/components/ui/MultiCreatableSelect'
 import Link from 'next/link'
+import ExpandableTextarea from '@/components/ui/ExpandableTextarea'
 
 interface Usuario {
   id: string
@@ -44,6 +45,23 @@ export default function NovoProjetoPage() {
     </Suspense>
   )
 }
+
+const formatCurrency = (value: string) => {
+    if (!value) return '';
+    
+    // Remove tudo que não é número
+    const rawValue = value.replace(/\D/g, '');
+    if (rawValue === '') return '';
+
+    // Converte para decimal (ex: digitou 1000 -> vira 10.00)
+    const numberValue = parseInt(rawValue, 10) / 100;
+
+    // Formata para o padrão pt-BR (1.000,00)
+    return numberValue.toLocaleString('pt-BR', {
+      minimumFractionDigits: 2,
+      maximumFractionDigits: 2
+    });
+  };
 
 function ProjetoFormContent() {
   const router = useRouter()
@@ -95,29 +113,29 @@ function ProjetoFormContent() {
       }
       const p = result.projeto
       setForm({
-        name:              p.name              ?? '',
-        slogan:            p.slogan            ?? '',
-        startDate:         p.startDate ? new Date(p.startDate).toISOString().split('T')[0] : '',
-        endDate:           p.endDate   ? new Date(p.endDate).toISOString().split('T')[0]   : '',
-        location:          p.location          ?? '',
-        logoUrl:           p.logoUrl           ?? '',
-        initialMemberId:   '',
-        justificativa:     p.justificativa     ?? '',
-        objetivos:         p.objetivos         ?? '',
-        metodologia:       p.metodologia       ?? '',
-        descricaoProduto:  p.descricaoProduto  ?? '',
-        premissas:         p.premissas         ?? '',
-        restricoes:        p.restricoes        ?? '',
+        name: p.name ?? '',
+        slogan: p.slogan ?? '',
+        startDate: p.startDate ? new Date(p.startDate).toISOString().split('T')[0] : '',
+        endDate: p.endDate ? new Date(p.endDate).toISOString().split('T')[0] : '',
+        location: p.location ?? '',
+        logoUrl: p.logoUrl ?? '',
+        initialMemberId: '',
+        justificativa: p.justificativa ?? '',
+        objetivos: p.objetivos ?? '',
+        metodologia: p.metodologia ?? '',
+        descricaoProduto: p.descricaoProduto ?? '',
+        premissas: p.premissas ?? '',
+        restricoes: p.restricoes ?? '',
         limitesAutoridade: p.limitesAutoridade ?? '',
-        semestre:          p.semestre          ?? '',
-        ano:               p.ano ? String(p.ano) : '',
-        departamentos:     p.departamentos     ?? [],
+        semestre: p.semestre ?? '',
+        ano: p.ano ? String(p.ano) : '',
+        departamentos: p.departamentos ?? [],
       })
       if (p.macroFases?.length) {
         setMacroFases(p.macroFases.map(f => ({
-          fase:       f.fase,
+          fase: f.fase,
           dataLimite: f.dataLimite ?? '',
-          custo:      f.custo      ?? '',
+          custo: f.custo ?? '',
         })))
       }
       setIsLoadingEdit(false)
@@ -166,17 +184,17 @@ function ProjetoFormContent() {
         : await createProjetoAction(undefined, { ...form, macroFases })
 
       if ('error' in result) {
-        setError(result.error ?? 'Erro ao salvar projeto')
+        setError(result.error || 'Erro ao salvar projeto')
         return
       }
       router.push(`/projetos/${result.projeto.id}`)
     })
   }
 
-  const pageTitle    = editId ? 'Editar Projeto'                    : 'Termo de Abertura'
+  const pageTitle = editId ? 'Editar Projeto' : 'Termo de Abertura'
   const pageSubtitle = editId ? 'Atualize as diretrizes do projeto' : 'Configure as diretrizes do novo projeto'
-  const submitLabel  = isPending
-    ? (editId ? 'Salvando...'       : 'Criando Projeto...')
+  const submitLabel = isPending
+    ? (editId ? 'Salvando...' : 'Criando Projeto...')
     : (editId ? 'Salvar Alterações' : 'Salvar Projeto')
 
   const inputClass = "w-full px-4 py-3 bg-slate-50/50 border border-slate-200/60 rounded-xl text-sm focus:bg-white focus:outline-none focus:ring-4 focus:ring-blue-500/10 focus:border-blue-500 transition-all duration-200 placeholder:text-slate-400 text-slate-800 font-medium"
@@ -357,24 +375,25 @@ function ProjetoFormContent() {
 
               <div className="space-y-6">
                 {[
-                  { name: 'justificativa',    label: 'Justificativa do Projeto',           placeholder: 'Qual problema este projeto resolve? Por que é necessário?' },
-                  { name: 'objetivos',         label: 'Objetivo(s) Principal(is)',          placeholder: 'O que caracteriza o sucesso deste projeto?' },
-                  { name: 'descricaoProduto',  label: 'Descrição do Produto/Serviço',      placeholder: 'Detalhe técnico ou funcional do que será entregue...' },
-                  { name: 'metodologia',       label: 'Metodologia / Abordagem',           placeholder: 'Ex: Desenvolvimento Ágil usando Scrum quinzenal.' },
-                  { name: 'premissas',         label: 'Premissas',                         placeholder: 'Cenários assumidos como verdadeiros para o planejamento...' },
-                  { name: 'restricoes',        label: 'Restrições',                        placeholder: 'Limites de orçamento, tempo ou recursos obrigatórios...' },
+                  { name: 'justificativa', label: 'Justificativa do Projeto', placeholder: 'Qual problema este projeto resolve? Por que é necessário?' },
+                  { name: 'objetivos', label: 'Objetivo(s) Principal(is)', placeholder: 'O que caracteriza o sucesso deste projeto?' },
+                  { name: 'descricaoProduto', label: 'Descrição do Produto/Serviço', placeholder: 'Detalhe técnico ou funcional do que será entregue...' },
+                  { name: 'metodologia', label: 'Metodologia / Abordagem', placeholder: 'Ex: Desenvolvimento Ágil usando Scrum quinzenal.' },
+                  { name: 'premissas', label: 'Premissas', placeholder: 'Cenários assumidos como verdadeiros para o planejamento...' },
+                  { name: 'restricoes', label: 'Restrições', placeholder: 'Limites de orçamento, tempo ou recursos obrigatórios...' },
                   { name: 'limitesAutoridade', label: 'Limites de Autoridade do Gerente', placeholder: 'Até que ponto o gerente pode tomar decisões financeiras e de escopo sem aprovação extra?' },
                 ].map(field => (
                   <div key={field.name}>
                     <label className={labelClass}>{field.label}</label>
-                    <textarea
+
+                    <ExpandableTextarea
                       name={field.name}
-                      value={form[field.name as keyof typeof form]}
+                      value={(form[field.name as keyof typeof form] as string) || ''}
                       onChange={handleChange}
-                      rows={3}
                       placeholder={field.placeholder}
-                      className={`${inputClass} resize-none min-h-[100px] leading-relaxed`}
+                      className={`${inputClass} resize-none leading-relaxed rounded-xl pb-10`}
                     />
+
                   </div>
                 ))}
               </div>
@@ -416,7 +435,14 @@ function ProjetoFormContent() {
                         <td className="p-3">
                           <div className="relative flex items-center">
                             <span className="absolute left-3 text-slate-400 text-sm font-bold">R$</span>
-                            <input type="text" value={fase.custo} onChange={e => updateMacroFase(idx, 'custo', e.target.value)} placeholder="0,00" className="w-full pl-9 pr-3 py-2.5 bg-transparent border border-transparent hover:border-slate-200 focus:border-blue-500 focus:bg-white focus:ring-4 focus:ring-blue-500/10 rounded-lg text-sm text-right font-bold text-slate-800 transition-all outline-none" />
+                            <input
+                              type="text"
+                              value={fase.custo}
+                              // 👇 A MÁGICA ACONTECE AQUI
+                              onChange={e => updateMacroFase(idx, 'custo', formatCurrency(e.target.value))}
+                              placeholder="0,00"
+                              className="w-full pl-9 pr-3 py-2.5 bg-transparent border border-transparent hover:border-slate-200 focus:border-blue-500 focus:bg-white focus:ring-4 focus:ring-blue-500/10 rounded-lg text-sm text-right font-bold text-slate-800 transition-all outline-none"
+                            />
                           </div>
                         </td>
                         <td className="p-3 text-center">

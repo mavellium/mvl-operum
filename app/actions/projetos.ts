@@ -6,6 +6,22 @@ import { projectsApi } from '@/lib/api-client'
 import prisma from '@/lib/prisma'
 import { isProjectManager, setProjectManagerRole, removeProjectRole } from '@/services/projectRoleService'
 
+async function upsertDepartamentos(tenantId: string, names: string[]) {
+  for (const deptName of names) {
+    const name = deptName.trim()
+    if (!name) continue
+    const existing = await prisma.department.findFirst({
+      where: { tenantId, name: { equals: name, mode: 'insensitive' } },
+      select: { id: true, deletedAt: true },
+    })
+    if (!existing) {
+      await prisma.department.create({ data: { tenantId, name } })
+    } else if (existing.deletedAt !== null) {
+      await prisma.department.update({ where: { id: existing.id }, data: { deletedAt: null } })
+    }
+  }
+}
+
 export async function createProjetoAction(
   _prevState: unknown,
   input: {
@@ -52,10 +68,14 @@ export async function createProjetoAction(
       await projectsApi.upsertMacroFases(projeto.id as string, macroFases)
     }
 
+    if (rest.departamentos && rest.departamentos.length > 0) {
+      await upsertDepartamentos(tenantId, rest.departamentos)
+    }
+
     revalidatePath('/projetos')
     return { projeto }
   } catch (err) {
-    return { error: err instanceof Error ? err.message : 'Erro ao criar projeto' }
+    return { error: err instanceof Error ? (err.message || 'Erro ao criar projeto') : 'Erro ao criar projeto' }
   }
 }
 
@@ -85,7 +105,7 @@ export async function updateProjetoAction(
   data: Record<string, unknown> & { ano?: string | number; macroFases?: Array<{ fase: string; dataLimite: string; custo: string }> },
 ) {
   try {
-    await verifySession()
+    const { tenantId } = await verifySession()
     const { ano: anoRaw, macroFases, startDate, endDate, ...rest } = data
     const ano = anoRaw !== undefined && anoRaw !== '' ? Number(anoRaw) : undefined
     const toISO = (d: unknown) => (typeof d === 'string' && d) ? new Date(d).toISOString() : undefined
@@ -100,11 +120,16 @@ export async function updateProjetoAction(
       await projectsApi.upsertMacroFases(id, macroFases)
     }
 
+    const departamentos = rest.departamentos as string[] | undefined
+    if (departamentos && departamentos.length > 0) {
+      await upsertDepartamentos(tenantId, departamentos)
+    }
+
     revalidatePath('/projetos')
     revalidatePath(`/projetos/${id}`)
     return { projeto }
   } catch (err) {
-    return { error: err instanceof Error ? err.message : 'Erro ao atualizar projeto' }
+    return { error: err instanceof Error ? (err.message || 'Erro ao atualizar projeto') : 'Erro ao atualizar projeto' }
   }
 }
 

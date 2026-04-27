@@ -46,3 +46,8 @@ services:
       - "4005:4005"
     environment:
       - DATABASE_URL=postgresql://${DB_USER:-mvluser}:${DB_PASSWORD:-M4v3ll1um}@postgres:5432/${DB_NAME:-mvloperum}?schema=public
+
+  minio:
+    ports:
+      - "9000:9000"   # S3 API — used by Next.js running outside Docker
+      - "9001:9001"   # MinIO console (web UI)

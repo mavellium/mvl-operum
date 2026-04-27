@@ -4,7 +4,7 @@ import { redirect } from 'next/navigation'
 export default async function AdminLayout({ children }: { children: React.ReactNode }) {
   const { role } = await verifySession()
   if (role !== 'admin') {
-    redirect('/sprints')
+    redirect('/projetos')
   }
   return <>{children}</>
 }

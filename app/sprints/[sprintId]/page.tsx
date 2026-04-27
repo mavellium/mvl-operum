@@ -23,7 +23,7 @@ export default async function SprintPage({ params, searchParams }: Props) {
     return (
       <div className="min-h-screen flex flex-col items-center justify-center gap-4">
         <p className="text-gray-500">{result.error}</p>
-        <Link href="/sprints" className="text-blue-600 hover:underline text-sm">Voltar às sprints</Link>
+        <Link href="/projetos" className="text-blue-600 hover:underline text-sm">Voltar aos projetos</Link>
       </div>
     )
   }

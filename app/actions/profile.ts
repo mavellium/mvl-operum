@@ -81,6 +81,9 @@ export async function uploadAvatarAction(formData: FormData) {
 
     return { avatarUrl: publicUrl(key) }
   } catch (err) {
-    return { error: err instanceof Error ? err.message : 'Erro ao fazer upload' }
+    console.error('[uploadAvatarAction]', err)
+    const code = (err as Record<string, unknown>)?.Code ?? (err as Record<string, unknown>)?.name
+    const msg = err instanceof Error ? err.message : undefined
+    return { error: msg || (code ? `Erro S3: ${code}` : 'Erro ao fazer upload') }
   }
 }

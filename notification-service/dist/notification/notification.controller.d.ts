@@ -3,13 +3,13 @@ export declare class NotificationController {
     private readonly service;
     constructor(service: NotificationService);
     create(body: unknown): Promise<{
-        type: import("../../lib/generated/prisma").$Enums.NotificationType;
-        message: string;
+        id: string;
         userId: string;
+        type: import("../../lib/generated/prisma").$Enums.NotificationType;
         title: string;
+        message: string;
         reference: string | null;
         referenceType: string | null;
-        id: string;
         status: import("../../lib/generated/prisma").$Enums.NotificationStatus;
         deletedAt: Date | null;
         createdAt: Date;
@@ -17,13 +17,13 @@ export declare class NotificationController {
         updatedAt: Date;
     }>;
     findAll(userId: string, status?: string, limit?: string): Promise<{
-        type: import("../../lib/generated/prisma").$Enums.NotificationType;
-        message: string;
+        id: string;
         userId: string;
+        type: import("../../lib/generated/prisma").$Enums.NotificationType;
         title: string;
+        message: string;
         reference: string | null;
         referenceType: string | null;
-        id: string;
         status: import("../../lib/generated/prisma").$Enums.NotificationStatus;
         deletedAt: Date | null;
         createdAt: Date;
@@ -34,13 +34,13 @@ export declare class NotificationController {
         count: number;
     }>;
     findOne(id: string): Promise<{
-        type: import("../../lib/generated/prisma").$Enums.NotificationType;
-        message: string;
+        id: string;
         userId: string;
+        type: import("../../lib/generated/prisma").$Enums.NotificationType;
         title: string;
+        message: string;
         reference: string | null;
         referenceType: string | null;
-        id: string;
         status: import("../../lib/generated/prisma").$Enums.NotificationStatus;
         deletedAt: Date | null;
         createdAt: Date;
@@ -48,13 +48,13 @@ export declare class NotificationController {
         updatedAt: Date;
     }>;
     markAsRead(id: string): Promise<{
-        type: import("../../lib/generated/prisma").$Enums.NotificationType;
-        message: string;
+        id: string;
         userId: string;
+        type: import("../../lib/generated/prisma").$Enums.NotificationType;
         title: string;
+        message: string;
         reference: string | null;
         referenceType: string | null;
-        id: string;
         status: import("../../lib/generated/prisma").$Enums.NotificationStatus;
         deletedAt: Date | null;
         createdAt: Date;
@@ -62,13 +62,13 @@ export declare class NotificationController {
         updatedAt: Date;
     }>;
     markAsArchived(id: string): Promise<{
-        type: import("../../lib/generated/prisma").$Enums.NotificationType;
-        message: string;
+        id: string;
         userId: string;
+        type: import("../../lib/generated/prisma").$Enums.NotificationType;
         title: string;
+        message: string;
         reference: string | null;
         referenceType: string | null;
-        id: string;
         status: import("../../lib/generated/prisma").$Enums.NotificationStatus;
         deletedAt: Date | null;
         createdAt: Date;
