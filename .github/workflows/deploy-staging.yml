@@ -272,7 +272,8 @@ jobs:
             echo "Attempt $i/40 — waiting 15s..."
             sleep 15
           done
-          echo "Staging did not become ready in time — skipping DAST"
+          echo "Staging did not become ready in time"
+          exit 1
 
       - name: OWASP ZAP Baseline Scan
         uses: zaproxy/action-baseline@v0.14.0
