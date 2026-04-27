@@ -22,13 +22,13 @@ app.use((req, res, next) => {
   const allowedOrigins = (process.env.ALLOWED_ORIGINS ?? '').split(',').filter(Boolean)
   const origin = req.headers.origin
 
-  if (!origin || allowedOrigins.length === 0 || allowedOrigins.includes(origin)) {
-    res.setHeader('Access-Control-Allow-Origin', origin ?? '*')
+  if (origin && allowedOrigins.includes(origin)) {
+    res.setHeader('Access-Control-Allow-Origin', origin)
+    res.setHeader('Access-Control-Allow-Credentials', 'true')
   }
 
   res.setHeader('Access-Control-Allow-Methods', 'GET,POST,PUT,PATCH,DELETE,OPTIONS')
   res.setHeader('Access-Control-Allow-Headers', 'Content-Type,Authorization,X-Tenant-ID,X-Internal-Api-Key')
-  res.setHeader('Access-Control-Allow-Credentials', 'true')
 
   if (req.method === 'OPTIONS') {
     return res.sendStatus(204)
