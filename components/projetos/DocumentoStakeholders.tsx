@@ -50,18 +50,15 @@ export default function DocumentoStakeholders() {
   const [data, setData] = useState<DocumentData | null>(null)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
-  const [editable, setEditable] = useState<EditableFields>(DEFAULTS)
-
-  // Load from localStorage on mount
-  useEffect(() => {
-    if (!projetoId) return
+  const [editable, setEditable] = useState<EditableFields>(() => {
+    if (!projetoId || typeof window === 'undefined') return DEFAULTS
     try {
       const saved = localStorage.getItem(storageKey(projetoId))
-      if (saved) setEditable(JSON.parse(saved))
+      return saved ? (JSON.parse(saved) as EditableFields) : DEFAULTS
     } catch {
-      // ignore
+      return DEFAULTS
     }
-  }, [projetoId])
+  })
 
   // Persist to localStorage on every change
   useEffect(() => {
@@ -75,8 +72,6 @@ export default function DocumentoStakeholders() {
 
   useEffect(() => {
     if (!projetoId) return
-    setLoading(true)
-    setError(null)
     fetch(`/api/projects/${projetoId}/documento`)
       .then(r =>
         r.ok ? r.json() : r.json().then((e: { error?: string }) => Promise.reject(e.error)),

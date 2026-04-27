@@ -35,7 +35,7 @@ import { projectsApi } from '@/lib/api-client'
 
 const mockRegister = authServiceRegister as ReturnType<typeof vi.fn>
 const mockLogin = authServiceLogin as ReturnType<typeof vi.fn>
-const mockLogout = authServiceLogout as ReturnType<typeof vi.fn>
+const _mockLogout = authServiceLogout as ReturnType<typeof vi.fn>
 const mockEncrypt = encrypt as ReturnType<typeof vi.fn>
 const mockCookies = cookies as ReturnType<typeof vi.fn>
 const mockHeaders = headers as ReturnType<typeof vi.fn>
