@@ -54,6 +54,9 @@ let ProjectController = class ProjectController {
     removeMember(projectId, userId, tenantId) {
         return this.projectService.removeMember(projectId, tenantId, userId);
     }
+    reorderMembers(projectId, tenantId, body) {
+        return this.projectService.reorderMembers(projectId, tenantId, body.orderedUserIds);
+    }
     listMacroFases(id, tenantId) {
         return this.projectService.listMacroFases(id, tenantId);
     }
@@ -140,6 +143,16 @@ __decorate([
     __metadata("design:paramtypes", [String, String, String]),
     __metadata("design:returntype", void 0)
 ], ProjectController.prototype, "removeMember", null);
+__decorate([
+    (0, common_1.Patch)(':id/members/reorder'),
+    (0, common_1.HttpCode)(common_1.HttpStatus.NO_CONTENT),
+    __param(0, (0, common_1.Param)('id')),
+    __param(1, (0, common_1.Headers)('x-tenant-id')),
+    __param(2, (0, common_1.Body)()),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [String, String, Object]),
+    __metadata("design:returntype", void 0)
+], ProjectController.prototype, "reorderMembers", null);
 __decorate([
     (0, common_1.Get)(':id/macro-fases'),
     __param(0, (0, common_1.Param)('id')),

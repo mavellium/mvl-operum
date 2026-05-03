@@ -48,6 +48,7 @@ export declare class ProjectController {
         userId: string;
         projectId: string;
         departmentId: string | null;
+        order: number;
     })[]>;
     findOne(id: string, tenantId: string): Promise<{
         members: {
@@ -60,6 +61,7 @@ export declare class ProjectController {
             userId: string;
             projectId: string;
             departmentId: string | null;
+            order: number;
         }[];
         macroFases: {
             id: string;
@@ -96,6 +98,7 @@ export declare class ProjectController {
             id: string;
             createdAt: Date;
             projectId: string;
+            order: number;
             stakeholderId: string;
         })[];
     } & {
@@ -184,6 +187,7 @@ export declare class ProjectController {
         userId: string;
         projectId: string;
         departmentId: string | null;
+        order: number;
     }[]>;
     addMember(projectId: string, tenantId: string, body: {
         userId: string;
@@ -200,8 +204,12 @@ export declare class ProjectController {
         userId: string;
         projectId: string;
         departmentId: string | null;
+        order: number;
     }>;
     removeMember(projectId: string, userId: string, tenantId: string): Promise<void>;
+    reorderMembers(projectId: string, tenantId: string, body: {
+        orderedUserIds: string[];
+    }): Promise<void>;
     listMacroFases(id: string, tenantId: string): Promise<{
         id: string;
         createdAt: Date;

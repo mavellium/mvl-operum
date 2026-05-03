@@ -73,7 +73,14 @@ let StakeholderService = class StakeholderService {
         return prisma_1.prisma.projectStakeholder.findMany({
             where: { projectId },
             include: { stakeholder: true },
+            orderBy: { order: 'asc' },
         });
+    }
+    async reorderStakeholders(projectId, orderedIds) {
+        await Promise.all(orderedIds.map((stakeholderId, index) => prisma_1.prisma.projectStakeholder.updateMany({
+            where: { projectId, stakeholderId },
+            data: { order: index },
+        })));
     }
 };
 exports.StakeholderService = StakeholderService;

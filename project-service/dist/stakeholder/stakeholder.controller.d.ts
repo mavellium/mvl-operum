@@ -54,6 +54,7 @@ export declare class StakeholderController {
             id: string;
             createdAt: Date;
             projectId: string;
+            order: number;
             stakeholderId: string;
         })[];
     } & {
@@ -146,13 +147,18 @@ export declare class StakeholderController {
         id: string;
         createdAt: Date;
         projectId: string;
+        order: number;
         stakeholderId: string;
     })[]>;
     linkProject(stakeholderId: string, projectId: string, tenantId: string): Promise<{
         id: string;
         createdAt: Date;
         projectId: string;
+        order: number;
         stakeholderId: string;
     }>;
     unlinkProject(stakeholderId: string, projectId: string, tenantId: string): Promise<void>;
+    reorder(projectId: string, body: {
+        orderedIds: string[];
+    }): Promise<void>;
 }
