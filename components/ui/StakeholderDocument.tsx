@@ -55,7 +55,7 @@ const StakeholderDocument = forwardRef<HTMLDivElement, DocumentProps>(
         <table className="w-full border-collapse border border-black text-sm mb-8">
           <tbody>
             <tr>
-              <td colSpan={4} className="border border-black p-2 text-center font-bold bg-gray-50">
+              <td colSpan={4} className="border border-black p-2 text-left font-bold bg-gray-50">
                 Stakeholder externo - {projeto.departamento} - {projeto.semestreAno}
               </td>
             </tr>

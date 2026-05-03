@@ -61,12 +61,12 @@ export async function GET(
           },
           department: { select: { name: true } },
         },
-        orderBy: { startDate: 'asc' },
+        orderBy: { order: 'asc' },
       }),
       prisma.projectStakeholder.findMany({
         where: { projectId: projetoId },
         include: { stakeholder: true },
-        orderBy: { stakeholder: { name: 'asc' } },
+        orderBy: { order: 'asc' },
       }),
       prisma.userProjectRole.findMany({
         where: {
@@ -86,10 +86,11 @@ export async function GET(
     const gerenteUsers = gerenteUserIds.length
       ? await prisma.user.findMany({
           where: { id: { in: gerenteUserIds } },
-          select: { name: true },
+          select: { name: true, signatureUrl: true },
         })
       : []
     const gerenteProjeto = gerenteUsers.map(u => u.name).join(' e ')
+    const signatureUrl = gerenteUsers[0]?.signatureUrl ?? null
 
     const dept = project.departamentos?.[0] ?? ''
     const semestreLabel =
@@ -109,6 +110,7 @@ export async function GET(
       dataCriacao: project.startDate ? formatDate(project.startDate) : '',
       dataAprovacao: project.startDate ? formatDate(project.startDate) : '',
       logoUrl: project.logoUrl,
+      signatureUrl,
     }
 
     const membros: Stakeholder[] = userProjects

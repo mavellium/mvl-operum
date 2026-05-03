@@ -14,6 +14,7 @@ export interface ProjetoHeader {
   dataCriacao: string
   dataAprovacao: string
   logoUrl?: string | null
+  signatureUrl?: string | null
 }
 
 export interface Stakeholder {
@@ -71,7 +72,7 @@ const StakeholderDocument = forwardRef<HTMLDivElement, Props>(
               </div>
             )}
           </div>
-          <div className="flex-1 text-center">
+          <div className="flex-1 text-left">
             <p
               className="font-bold uppercase tracking-wide"
               style={{ fontSize: '11pt' }}
@@ -90,21 +91,19 @@ const StakeholderDocument = forwardRef<HTMLDivElement, Props>(
           }}
         >
           <tbody>
-            {/* Linha 1 — categoria (fundo cinza) */}
             <tr>
               <td
-                colSpan={4}
-                className="font-semibold text-center bg-gray-200"
+                colSpan={2}
+                className="font-bold text-left bg-gray-200"
                 style={{ border: '1px solid black', padding: '3px 6px' }}
               >
                 {header.categoria}
               </td>
             </tr>
 
-            {/* Linha 2 — Nome do projeto */}
             <tr>
               <td
-                colSpan={4}
+                colSpan={2}
                 style={{ border: '1px solid black', padding: '3px 6px' }}
               >
                 <span className="font-bold">Nome do projeto:</span>{' '}
@@ -112,10 +111,9 @@ const StakeholderDocument = forwardRef<HTMLDivElement, Props>(
               </td>
             </tr>
 
-            {/* Linha 3 — Gerente */}
             <tr>
               <td
-                colSpan={4}
+                colSpan={2}
                 style={{ border: '1px solid black', padding: '3px 6px' }}
               >
                 <span className="font-bold">Gerente do projeto:</span>{' '}
@@ -123,10 +121,9 @@ const StakeholderDocument = forwardRef<HTMLDivElement, Props>(
               </td>
             </tr>
 
-            {/* Linha 4 — Elaborado por */}
             <tr>
               <td
-                colSpan={4}
+                colSpan={2}
                 style={{ border: '1px solid black', padding: '3px 6px' }}
               >
                 <span className="font-bold">Elaborado por:</span>{' '}
@@ -134,36 +131,45 @@ const StakeholderDocument = forwardRef<HTMLDivElement, Props>(
               </td>
             </tr>
 
-            {/* Linha 5 — Aprovado por + Versão */}
             <tr>
               <td
-                colSpan={3}
                 style={{ border: '1px solid black', padding: '3px 6px', width: '75%' }}
               >
                 <span className="font-bold">Aprovado por:</span>{' '}
                 {header.aprovadoPor}
               </td>
               <td
-                style={{ border: '1px solid black', padding: '3px 6px', width: '25%' }}
+                style={{ border: '1px solid black', padding: '3px 6px', width: '25%', whiteSpace: 'nowrap' }}
               >
                 <span className="font-bold">Versão:</span>{' '}
                 {header.versao}
               </td>
             </tr>
 
-            {/* Linha 6 — Assinatura + Data de aprovação */}
+            {/* Linha 6 — Assinatura + Data de aprovação (Ajustada para ficar rigorosamente em linha) */}
             <tr>
               <td
-                colSpan={3}
-                style={{ border: '1px solid black', padding: '3px 6px', height: '14mm' }}
+                style={{ border: '1px solid black', padding: '3px 6px', height: '14mm', width: '75%', verticalAlign: 'middle' }}
               >
-                <span className="font-bold">Assinatura:</span>
+                <div className="flex items-center gap-2 h-full">
+                  <span className="font-bold">Assinatura:</span>
+                  {header.signatureUrl && (
+                    // eslint-disable-next-line @next/next/no-img-element
+                    <img
+                      src={header.signatureUrl}
+                      alt="Assinatura"
+                      style={{ maxHeight: '12mm', maxWidth: '60mm', objectFit: 'contain' }}
+                    />
+                  )}
+                </div>
               </td>
               <td
-                style={{ border: '1px solid black', padding: '3px 6px' }}
+                style={{ border: '1px solid black', padding: '3px 6px', width: '25%', verticalAlign: 'middle', whiteSpace: 'nowrap' }}
               >
-                <span className="font-bold">Data de aprovação:</span>{' '}
-                {header.dataAprovacao}
+                <div className="flex flex-row items-center gap-1">
+                  <span className="font-bold">Data de aprovação:</span>
+                  <span>{header.dataAprovacao}</span>
+                </div>
               </td>
             </tr>
           </tbody>
@@ -179,7 +185,7 @@ const StakeholderDocument = forwardRef<HTMLDivElement, Props>(
         >
           <thead>
             <tr className="bg-gray-200">
-              {['Ref.', 'Nome', 'Empresa/Equipe', 'Cargo/Competência', 'E-mail', 'Telefone/Fax', 'Endereço', 'Observações'].map(
+              {['Ref.', 'Nome', 'Empresa/Equipe', 'Cargo/Competência', 'e-mail', 'Telefone/Fax', 'Endereço', 'Observações'].map(
                 col => (
                   <th
                     key={col}
@@ -188,6 +194,7 @@ const StakeholderDocument = forwardRef<HTMLDivElement, Props>(
                       border: '1px solid black',
                       padding: '3px 4px',
                       fontSize: '8pt',
+                      fontStyle: col === 'e-mail' ? 'italic' : 'normal',
                     }}
                   >
                     {col}
@@ -215,8 +222,8 @@ const StakeholderDocument = forwardRef<HTMLDivElement, Props>(
                       border: '1px solid black',
                       padding: '3px 4px',
                       fontSize: '8pt',
-                      verticalAlign: 'top',
-                      textAlign: i === 0 ? 'center' : 'left',
+                      verticalAlign: 'middle',
+                      textAlign: 'center',
                       whiteSpace: i === 7 ? 'pre-wrap' : 'normal',
                     }}
                   >
