@@ -37,7 +37,16 @@
       "Bash(docker exec *)",
       "PowerShell(docker exec mvl-operum-postgres-1 cat /var/lib/postgresql/data/pg_hba.conf)",
       "PowerShell(Get-NetTCPConnection -LocalPort 5432 | Select-Object LocalAddress, LocalPort, OwningProcess | ForEach-Object { $proc = Get-Process -Id $_.OwningProcess -ErrorAction SilentlyContinue; [PSCustomObject]@{Address=$_.LocalAddress; Port=$_.LocalPort; PID=$_.OwningProcess; Process=$proc.Name} })",
-      "PowerShell(netstat -ano)"
+      "PowerShell(netstat -ano)",
+      "Bash(pnpm prisma *)",
+      "Bash(pnpm test:run --reporter=verbose)",
+      "Bash(python3 -c \"import sys,json; d=json.load\\(sys.stdin\\); print\\('version:', d.get\\('version'\\)\\); print\\('main:', d.get\\('main'\\)\\); e=d.get\\('exports',{}\\); print\\('exports:', list\\(e.keys\\(\\)\\)[:5] if isinstance\\(e,dict\\) else e\\)\")",
+      "Bash(docker-compose -f docker-compose.yml -f docker-compose.dev.yml up --build project-service -d)",
+      "Bash(powershell -Command \"Get-NetTCPConnection -LocalPort 4002 -ErrorAction SilentlyContinue | Select-Object State,OwningProcess\")",
+      "Bash(powershell -Command \"Get-Process -Id 17672 | Select-Object Id,ProcessName,Path,CommandLine\")",
+      "Bash(docker --context default ps)",
+      "Bash(wsl bash *)",
+      "Bash(git diff *)"
     ],
     "additionalDirectories": [
       "c:\\temp\\ClaudeCode\\kanban-board\\app\\dashboard\\sprint",
