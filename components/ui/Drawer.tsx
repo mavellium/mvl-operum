@@ -22,6 +22,7 @@ export default function Drawer({
   const [mounted, setMounted] = useState(false)
   const firstFocusRef = useRef<HTMLButtonElement>(null)
 
+  // eslint-disable-next-line react-hooks/set-state-in-effect
   useEffect(() => { setMounted(true) }, [])
 
   useEffect(() => {
