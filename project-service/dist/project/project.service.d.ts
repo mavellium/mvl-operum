@@ -82,6 +82,7 @@ export declare class ProjectService {
             userId: string;
             projectId: string;
             departmentId: string | null;
+            order: number;
         }[];
         macroFases: {
             id: string;
@@ -118,6 +119,7 @@ export declare class ProjectService {
             id: string;
             createdAt: Date;
             projectId: string;
+            order: number;
             stakeholderId: string;
         })[];
     } & {
@@ -206,7 +208,9 @@ export declare class ProjectService {
         userId: string;
         projectId: string;
         departmentId: string | null;
+        order: number;
     }[]>;
+    reorderMembers(projectId: string, tenantId: string, orderedUserIds: string[]): Promise<void>;
     addMember(projectId: string, tenantId: string, userId: string, data: {
         role?: string;
         departmentId?: string;
@@ -221,6 +225,7 @@ export declare class ProjectService {
         userId: string;
         projectId: string;
         departmentId: string | null;
+        order: number;
     }>;
     removeMember(projectId: string, tenantId: string, userId: string): Promise<void>;
     getUserActiveProjects(userId: string, tenantId: string): Promise<({
@@ -239,6 +244,7 @@ export declare class ProjectService {
         userId: string;
         projectId: string;
         departmentId: string | null;
+        order: number;
     })[]>;
     listMacroFases(projectId: string, tenantId: string): Promise<{
         id: string;

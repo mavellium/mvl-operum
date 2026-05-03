@@ -87,6 +87,7 @@ export declare class StakeholderService {
             id: string;
             createdAt: Date;
             projectId: string;
+            order: number;
             stakeholderId: string;
         })[];
     } & {
@@ -157,6 +158,7 @@ export declare class StakeholderService {
         id: string;
         createdAt: Date;
         projectId: string;
+        order: number;
         stakeholderId: string;
     }>;
     unlinkProject(stakeholderId: string, projectId: string, tenantId: string): Promise<void>;
@@ -186,6 +188,8 @@ export declare class StakeholderService {
         id: string;
         createdAt: Date;
         projectId: string;
+        order: number;
         stakeholderId: string;
     })[]>;
+    reorderStakeholders(projectId: string, orderedIds: string[]): Promise<void>;
 }

@@ -61,6 +61,35 @@ export async function changePasswordAction(prevState: ProfileActionState, formDa
   }
 }
 
+export async function uploadSignatureAction(formData: FormData) {
+  try {
+    const { userId } = await verifySession()
+    const file = formData.get('file') as File
+    if (!file || file.size === 0) throw new Error('Arquivo inválido')
+
+    const ext = file.name.split('.').pop()?.toLowerCase() ?? 'png'
+    const key = `signatures/${userId}/signature-${Date.now()}.${ext}`
+
+    await s3.send(
+      new PutObjectCommand({
+        Bucket: BUCKET,
+        Key: key,
+        Body: Buffer.from(await file.arrayBuffer()),
+        ContentType: file.type,
+      }),
+    )
+
+    const signatureUrl = publicUrl(key)
+    await authApi.updateProfile({ signatureUrl })
+    revalidatePath('/perfil')
+    return { signatureUrl }
+  } catch (err) {
+    console.error('[uploadSignatureAction]', err)
+    const msg = err instanceof Error ? err.message : undefined
+    return { error: msg || 'Erro ao fazer upload da assinatura' }
+  }
+}
+
 export async function uploadAvatarAction(formData: FormData) {
   try {
     const { userId } = await verifySession()

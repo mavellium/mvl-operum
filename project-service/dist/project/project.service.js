@@ -92,7 +92,15 @@ let ProjectService = class ProjectService {
         await this.findOne(projectId, tenantId);
         return prisma_1.prisma.userProject.findMany({
             where: { projectId, active: true },
+            orderBy: { order: 'asc' },
         });
+    }
+    async reorderMembers(projectId, tenantId, orderedUserIds) {
+        await this.findOne(projectId, tenantId);
+        await Promise.all(orderedUserIds.map((userId, index) => prisma_1.prisma.userProject.updateMany({
+            where: { projectId, userId },
+            data: { order: index },
+        })));
     }
     async addMember(projectId, tenantId, userId, data) {
         await this.findOne(projectId, tenantId);

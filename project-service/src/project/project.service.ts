@@ -94,7 +94,20 @@ export class ProjectService {
     await this.findOne(projectId, tenantId)
     return prisma.userProject.findMany({
       where: { projectId, active: true },
+      orderBy: { order: 'asc' },
     })
+  }
+
+  async reorderMembers(projectId: string, tenantId: string, orderedUserIds: string[]) {
+    await this.findOne(projectId, tenantId)
+    await Promise.all(
+      orderedUserIds.map((userId, index) =>
+        prisma.userProject.updateMany({
+          where: { projectId, userId },
+          data: { order: index },
+        }),
+      ),
+    )
   }
 
   async addMember(projectId: string, tenantId: string, userId: string, data: { role?: string; departmentId?: string; hourlyRate?: number }) {

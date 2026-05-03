@@ -85,6 +85,16 @@ export class ProjectController {
     return this.projectService.removeMember(projectId, tenantId, userId)
   }
 
+  @Patch(':id/members/reorder')
+  @HttpCode(HttpStatus.NO_CONTENT)
+  reorderMembers(
+    @Param('id') projectId: string,
+    @Headers('x-tenant-id') tenantId: string,
+    @Body() body: { orderedUserIds: string[] },
+  ) {
+    return this.projectService.reorderMembers(projectId, tenantId, body.orderedUserIds)
+  }
+
   @Get(':id/macro-fases')
   listMacroFases(@Param('id') id: string, @Headers('x-tenant-id') tenantId: string) {
     return this.projectService.listMacroFases(id, tenantId)

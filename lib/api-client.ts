@@ -38,7 +38,7 @@ async function request<T>(path: string, init: RequestInit = {}): Promise<T> {
 // ── Auth ──────────────────────────────────────────────────
 
 export const authApi = {
-  me: () => request<{ id: string; name: string; email: string; role: string; tenantId: string; avatarUrl?: string; cargo?: string; departamento?: string; hourlyRate?: number; isActive: boolean; forcePasswordChange: boolean; phone?: string; cep?: string; logradouro?: string; numero?: string; complemento?: string; bairro?: string; cidade?: string; estado?: string; notes?: string }>('/auth/me'),
+  me: () => request<{ id: string; name: string; email: string; role: string; tenantId: string; avatarUrl?: string; signatureUrl?: string; cargo?: string; departamento?: string; hourlyRate?: number; isActive: boolean; forcePasswordChange: boolean; phone?: string; cep?: string; logradouro?: string; numero?: string; complemento?: string; bairro?: string; cidade?: string; estado?: string; notes?: string }>('/auth/me'),
 
   updateProfile: (data: Record<string, unknown>) =>
     request('/auth/me', { method: 'PATCH', body: JSON.stringify(data) }),
@@ -102,6 +102,9 @@ export const projectsApi = {
 
   removeMember: (projectId: string, userId: string) =>
     request(`/projects/${projectId}/members/${userId}`, { method: 'DELETE' }),
+
+  reorderMembers: (projectId: string, orderedUserIds: string[]) =>
+    request(`/projects/${projectId}/members/reorder`, { method: 'PATCH', body: JSON.stringify({ orderedUserIds }) }),
 
   listMacroFases: (projectId: string) => request<unknown[]>(`/projects/${projectId}/macro-fases`),
 
@@ -195,6 +198,9 @@ export const stakeholdersApi = {
 
   unlinkProject: (stakeholderId: string, projectId: string) =>
     request(`/stakeholders/${stakeholderId}/projects/${projectId}`, { method: 'DELETE' }),
+
+  reorderByProject: (projectId: string, orderedIds: string[]) =>
+    request(`/stakeholders/by-project/${projectId}/reorder`, { method: 'PATCH', body: JSON.stringify({ orderedIds }) }),
 }
 
 // ── Sprints ───────────────────────────────────────────────

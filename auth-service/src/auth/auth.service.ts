@@ -133,11 +133,21 @@ export class AuthService {
         role: true,
         tenantId: true,
         avatarUrl: true,
+        signatureUrl: true,
         cargo: true,
         departamento: true,
         hourlyRate: true,
         isActive: true,
         forcePasswordChange: true,
+        phone: true,
+        cep: true,
+        logradouro: true,
+        numero: true,
+        complemento: true,
+        bairro: true,
+        cidade: true,
+        estado: true,
+        notes: true,
         createdAt: true,
       },
     })
@@ -248,6 +258,7 @@ export class AuthService {
     estado?: string
     notes?: string
     avatarUrl?: string
+    signatureUrl?: string
   }) {
     const user = await prisma.user.findUnique({ where: { id: userId } })
     if (!user) throw new NotFoundException('Usuário não encontrado')
@@ -255,7 +266,7 @@ export class AuthService {
       where: { id: userId },
       data,
       select: {
-        id: true, name: true, email: true, role: true, tenantId: true, avatarUrl: true,
+        id: true, name: true, email: true, role: true, tenantId: true, avatarUrl: true, signatureUrl: true,
         cargo: true, departamento: true, hourlyRate: true, isActive: true, forcePasswordChange: true,
         phone: true, cep: true, logradouro: true, numero: true, complemento: true,
         bairro: true, cidade: true, estado: true, notes: true,

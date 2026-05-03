@@ -144,6 +144,7 @@ model UserProject {
   hourlyRate   Float?
   startDate    DateTime    @default(now())
   endDate      DateTime?
+  order        Int         @default(0)
   user         User        @relation(fields: [userId], references: [id], onDelete: Cascade)
   project      Project     @relation(fields: [projectId], references: [id], onDelete: Cascade)
   department   Department? @relation(fields: [departmentId], references: [id], onDelete: SetNull)
@@ -248,6 +249,7 @@ model ProjectStakeholder {
   projectId     String
   stakeholderId String
   createdAt     DateTime @default(now())
+  order         Int      @default(0)
 
   project     Project     @relation(fields: [projectId], references: [id], onDelete: Cascade)
   stakeholder Stakeholder @relation(fields: [stakeholderId], references: [id], onDelete: Cascade)

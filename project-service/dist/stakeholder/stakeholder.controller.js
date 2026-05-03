@@ -49,6 +49,9 @@ let StakeholderController = class StakeholderController {
     unlinkProject(stakeholderId, projectId, tenantId) {
         return this.stakeholderService.unlinkProject(stakeholderId, projectId, tenantId);
     }
+    reorder(projectId, body) {
+        return this.stakeholderService.reorderStakeholders(projectId, body.orderedIds);
+    }
 };
 exports.StakeholderController = StakeholderController;
 __decorate([
@@ -118,6 +121,15 @@ __decorate([
     __metadata("design:paramtypes", [String, String, String]),
     __metadata("design:returntype", void 0)
 ], StakeholderController.prototype, "unlinkProject", null);
+__decorate([
+    (0, common_1.Patch)('by-project/:projectId/reorder'),
+    (0, common_1.HttpCode)(common_1.HttpStatus.NO_CONTENT),
+    __param(0, (0, common_1.Param)('projectId')),
+    __param(1, (0, common_1.Body)()),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [String, Object]),
+    __metadata("design:returntype", void 0)
+], StakeholderController.prototype, "reorder", null);
 exports.StakeholderController = StakeholderController = __decorate([
     (0, common_1.Controller)('stakeholders'),
     __metadata("design:paramtypes", [stakeholder_service_1.StakeholderService])
