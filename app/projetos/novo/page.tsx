@@ -76,6 +76,9 @@ function ProjetoFormContent() {
   const [usuarios, setUsuarios] = useState<Usuario[]>([])
   const [departamentosExistentes, setDepartamentosExistentes] = useState<string[]>([])
   const [error, setError] = useState('')
+  const [draftRestored, setDraftRestored] = useState(false)
+
+  const DRAFT_KEY = 'projeto-draft'
 
   const currentYear = new Date().getFullYear()
   const years = Array.from({ length: 10 }, (_, i) => currentYear - i)
@@ -101,6 +104,34 @@ function ProjetoFormContent() {
       }
     })
   }, [])
+
+  // Restore draft on mount (new projects only)
+  useEffect(() => {
+    if (editId) return
+    try {
+      const raw = localStorage.getItem(DRAFT_KEY)
+      if (!raw) return
+      const draft = JSON.parse(raw) as { form: typeof form; macroFases: MacroFase[] }
+      if (draft.form && draft.macroFases) {
+        setForm(draft.form)
+        setMacroFases(draft.macroFases)
+        setDraftRestored(true)
+      }
+    } catch {
+      // ignore
+    }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [])
+
+  // Auto-save draft on every change (new projects only)
+  useEffect(() => {
+    if (editId) return
+    try {
+      localStorage.setItem(DRAFT_KEY, JSON.stringify({ form, macroFases }))
+    } catch {
+      // ignore
+    }
+  }, [editId, form, macroFases])
 
   // Prefill em modo edição
   useEffect(() => {
@@ -187,6 +218,7 @@ function ProjetoFormContent() {
         setError(result.error || 'Erro ao salvar projeto')
         return
       }
+      try { localStorage.removeItem(DRAFT_KEY) } catch { /* ignore */ }
       router.push(`/projetos/${result.projeto.id}`)
     })
   }
@@ -261,6 +293,24 @@ function ProjetoFormContent() {
             })}
           </div>
         </div>
+
+        {draftRestored && (
+          <div className="mb-4 p-4 bg-amber-50 border border-amber-200 rounded-2xl text-sm text-amber-800 font-semibold flex items-center justify-between gap-3 animate-in fade-in slide-in-from-top-2">
+            <span>Rascunho recuperado — deseja continuar de onde parou?</span>
+            <button
+              type="button"
+              onClick={() => {
+                try { localStorage.removeItem(DRAFT_KEY) } catch { /* ignore */ }
+                setForm({ name: '', slogan: '', startDate: '', endDate: '', location: '', logoUrl: '', initialMemberId: '', justificativa: '', objetivos: '', metodologia: '', descricaoProduto: '', premissas: '', restricoes: '', limitesAutoridade: '', semestre: '', ano: '', departamentos: [] })
+                setMacroFases([{ fase: '', dataLimite: '', custo: '' }])
+                setDraftRestored(false)
+              }}
+              className="shrink-0 px-3 py-1 text-xs bg-amber-100 hover:bg-amber-200 rounded-lg transition-colors"
+            >
+              Descartar rascunho
+            </button>
+          </div>
+        )}
 
         {error && (
           <div className="mb-8 p-4 bg-red-50/80 border border-red-200 rounded-2xl text-sm text-red-600 font-semibold flex items-center gap-3 animate-in fade-in slide-in-from-top-2">
