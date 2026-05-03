@@ -26,7 +26,7 @@ export default async function ProjetoStakeholdersPage({ params }: { params: Prom
       prisma.projectStakeholder.findMany({
         where: { projectId: projetoId },
         include: { stakeholder: true },
-        orderBy: { stakeholder: { name: 'asc' } },
+        orderBy: { order: 'asc' },
       }),
       prisma.stakeholder.findMany({
         where: { tenantId, isActive: true },
@@ -53,11 +53,12 @@ export default async function ProjetoStakeholdersPage({ params }: { params: Prom
               notes: true,
               deletedAt: true,
               isActive: true,
+              signatureUrl: true,
             },
           },
           department: { select: { name: true } },
         },
-        orderBy: { startDate: 'asc' },
+        orderBy: { order: 'asc' },
       }),
       prisma.user.findMany({
         where: { tenantId, deletedAt: null, isActive: true },
@@ -142,6 +143,7 @@ export default async function ProjetoStakeholdersPage({ params }: { params: Prom
           hourlyRate: up.hourlyRate,
           startDate: up.startDate.toISOString(),
           userRole: up.user.role,
+          signatureUrl: up.user.signatureUrl,
         }
       }),
   )

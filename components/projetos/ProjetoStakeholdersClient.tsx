@@ -15,6 +15,7 @@ import {
   Users,
   Briefcase,
   DollarSign,
+  GripVertical,
 } from 'lucide-react'
 import AvatarUpload from '@/components/profile/AvatarUpload'
 import AddressFields, { type AddressValues, emptyAddress } from '@/components/ui/AddressFields'
@@ -23,6 +24,9 @@ import {
   updateStakeholderAction,
   bindStakeholderAction,
   unbindStakeholderAction,
+  reorderStakeholdersAction,
+  reorderMembersAction,
+  uploadMemberSignatureAction,
 } from '@/app/actions/stakeholders'
 import { addMemberAction, removeMemberAction } from '@/app/actions/projects'
 import { updateProjetoMemberAction } from '@/app/actions/projetos'
@@ -53,6 +57,7 @@ export type StakeholderUnificado = {
   hourlyRate?: number | null
   startDate?: string
   userRole?: string
+  signatureUrl?: string | null
   // Externo (Stakeholder)
   stakeholderId?: string
   tenantId?: string
@@ -297,6 +302,87 @@ function MultiCreatableSelect({
   )
 }
 
+// ─── MemberSignatureUpload ────────────────────────────────────────────────────
+
+function MemberSignatureUpload({
+  userId,
+  initialUrl,
+  onUpdate,
+}: {
+  userId: string
+  initialUrl: string | null
+  onUpdate: (url: string) => void
+}) {
+  const inputRef = useRef<HTMLInputElement>(null)
+  const [url, setUrl] = useState(initialUrl)
+  const [uploading, setUploading] = useState(false)
+  const [error, setError] = useState<string | null>(null)
+
+  async function handleChange(e: React.ChangeEvent<HTMLInputElement>) {
+    const file = e.target.files?.[0]
+    if (!file) return
+
+    const ALLOWED = ['image/png', 'image/jpeg', 'image/jpg']
+    if (!ALLOWED.includes(file.type)) {
+      setError('Apenas PNG e JPEG são aceitos')
+      e.target.value = ''
+      return
+    }
+    if (file.size > 2 * 1024 * 1024) {
+      setError('Arquivo excede 2 MB')
+      e.target.value = ''
+      return
+    }
+
+    setUploading(true)
+    setError(null)
+    const fd = new FormData()
+    fd.append('file', file)
+    const result = await uploadMemberSignatureAction(fd, userId)
+    if ('signatureUrl' in result && result.signatureUrl) {
+      setUrl(result.signatureUrl)
+      onUpdate(result.signatureUrl)
+    } else if ('error' in result) {
+      setError(result.error ?? 'Erro ao enviar')
+    }
+    setUploading(false)
+    e.target.value = ''
+  }
+
+  return (
+    <div data-testid="member-signature-upload" className="flex flex-col gap-2">
+      <label className="block text-xs font-medium text-gray-600">Assinatura Digital</label>
+      <p className="text-[11px] text-gray-400">
+        Aparecerá na documentação do projeto. PNG ou JPEG, máx. 2 MB.
+      </p>
+      {url && (
+        // eslint-disable-next-line @next/next/no-img-element
+        <img
+          src={url}
+          alt="Assinatura atual"
+          className="max-h-12 max-w-[180px] object-contain border border-gray-100 rounded p-1 bg-gray-50"
+        />
+      )}
+      <button
+        type="button"
+        disabled={uploading}
+        onClick={() => inputRef.current?.click()}
+        className="px-3 py-1.5 text-xs font-semibold bg-slate-900 text-white rounded-lg hover:bg-slate-700 disabled:opacity-50 transition-colors self-start"
+      >
+        {uploading ? 'Enviando…' : url ? 'Alterar assinatura' : 'Enviar assinatura'}
+      </button>
+      <input
+        ref={inputRef}
+        type="file"
+        accept="image/png,image/jpeg"
+        className="hidden"
+        onChange={handleChange}
+      />
+      {error && <p className="text-xs text-red-500 font-medium">{error}</p>}
+    </div>
+  )
+}
+
 // ─── Main Component ───────────────────────────────────────────────────────────
 
 export default function ProjetoStakeholdersClient({
@@ -330,6 +416,12 @@ export default function ProjetoStakeholdersClient({
 
   const [, startTransition] = useTransition()
   const addMenuRef = useRef<HTMLDivElement>(null)
+
+  // Drag and drop state
+  const [draggedIndex, setDraggedIndex] = useState<number | null>(null)
+  const [dragOverIndex, setDragOverIndex] = useState<number | null>(null)
+  const [isReordering, setIsReordering] = useState(false)
+  const [reorderError, setReorderError] = useState<string | null>(null)
 
   useEffect(() => {
     function handleClickOutside(e: MouseEvent) {
@@ -620,6 +712,66 @@ export default function ProjetoStakeholdersClient({
     else handleUnbindExterno(s)
   }
 
+  // ── Drag and Drop
+  function handleDragStart(index: number) {
+    if (!isAdmin) return
+    setDraggedIndex(index)
+  }
+
+  function handleDragOver(e: React.DragEvent, index: number) {
+    e.preventDefault()
+    if (!isAdmin || draggedIndex === null || draggedIndex === index) return
+    setDragOverIndex(index)
+  }
+
+  function handleDrop(e: React.DragEvent, dropIndex: number) {
+    e.preventDefault()
+    if (!isAdmin || draggedIndex === null || draggedIndex === dropIndex) {
+      setDraggedIndex(null)
+      setDragOverIndex(null)
+      return
+    }
+
+    const newOrder = [...projeto]
+    const [movedItem] = newOrder.splice(draggedIndex, 1)
+    newOrder.splice(dropIndex, 0, movedItem)
+
+    setProjeto(newOrder)
+    setDraggedIndex(null)
+    setDragOverIndex(null)
+
+    // Salvar nova ordem no backend
+    setIsReordering(true)
+    startTransition(async () => {
+      const internalIds = newOrder
+        .filter(s => s.tipo === 'interno')
+        .map(s => s.userId!)
+        .filter(Boolean)
+      const externalIds = newOrder
+        .filter(s => s.tipo === 'externo')
+        .map(s => s.stakeholderId!)
+        .filter(Boolean)
+
+      const results = await Promise.all([
+        internalIds.length ? reorderMembersAction(projetoId, internalIds) : Promise.resolve({ success: true }),
+        externalIds.length ? reorderStakeholdersAction(projetoId, externalIds) : Promise.resolve({ success: true }),
+      ])
+      setIsReordering(false)
+      const failed = results.find(r => 'error' in r)
+      if (failed) {
+        setProjeto(initialStakeholders)
+        setReorderError('Falha ao salvar a nova ordem. A ordenação foi revertida.')
+      } else {
+        setReorderError(null)
+      }
+    })
+  }
+
+  function handleDragEnd() {
+    setDraggedIndex(null)
+    setDragOverIndex(null)
+  }
+
   // ── Save
   async function handleSave() {
     setFormError(null)
@@ -892,6 +1044,11 @@ export default function ProjetoStakeholdersClient({
           />
         </div>
 
+        {/* Reorder error feedback */}
+        {reorderError && (
+          <p className="mx-4 mt-3 text-xs text-red-600 bg-red-50 px-3 py-2 rounded-lg">{reorderError}</p>
+        )}
+
         {/* List */}
         {filteredProjeto.length === 0 ? (
           <div className="px-5 py-10 text-center">
@@ -907,12 +1064,26 @@ export default function ProjetoStakeholdersClient({
             </p>
           </div>
         ) : (
-          <ul className="space-y-2 overflow-y-auto max-h-[600px] px-2 py-2">
-            {filteredProjeto.map(s => (
+          <ul className={`space-y-2 overflow-y-auto max-h-[600px] px-2 py-2${isReordering ? ' opacity-70' : ''}`}>
+            {filteredProjeto.map((s, index) => (
               <li
                 key={s.id}
-                className="group flex items-center justify-between gap-3 p-3 rounded-xl bg-white border border-slate-200 shadow-sm hover:shadow-md hover:border-slate-300 transition-all duration-200"
+                draggable={isAdmin}
+                onDragStart={() => handleDragStart(index)}
+                onDragOver={(e) => handleDragOver(e, index)}
+                onDrop={(e) => handleDrop(e, index)}
+                onDragEnd={handleDragEnd}
+                className={`group flex items-center justify-between gap-3 p-3 rounded-xl bg-white border shadow-sm hover:shadow-md transition-all duration-200${
+                  draggedIndex === index ? ' opacity-50 border-dashed border-blue-400' : ''
+                }${
+                  dragOverIndex === index && draggedIndex !== index ? ' border-blue-400 border-t-4' : ' border-slate-200 hover:border-slate-300'
+                }${isAdmin ? ' cursor-move' : ''}`}
               >
+                {isAdmin && (
+                  <div className="text-slate-300 hover:text-slate-500 transition-colors" title="Arrastar para reordenar">
+                    <GripVertical className="w-4 h-4" />
+                  </div>
+                )}
                 <div className="flex items-center gap-3 flex-1 min-w-0">
                   <Avatar name={s.name} url={s.avatarUrl} size="lg" />
                   <div className="flex flex-col min-w-0 gap-0.5">
@@ -1289,6 +1460,19 @@ export default function ProjetoStakeholdersClient({
                     disabled={!isAdmin}
                   />
                 </div>
+
+                {selected?.isGerente && selected.userId && (
+                  <MemberSignatureUpload
+                    userId={selected.userId}
+                    initialUrl={selected.signatureUrl ?? null}
+                    onUpdate={url => {
+                      setSelected(prev => prev ? { ...prev, signatureUrl: url } : prev)
+                      setProjeto(prev =>
+                        prev.map(x => x.id === selected.id ? { ...x, signatureUrl: url } : x),
+                      )
+                    }}
+                  />
+                )}
               </>
             )}
 

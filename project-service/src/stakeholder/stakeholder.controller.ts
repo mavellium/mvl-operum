@@ -70,4 +70,13 @@ export class StakeholderController {
   ) {
     return this.stakeholderService.unlinkProject(stakeholderId, projectId, tenantId)
   }
+
+  @Patch('by-project/:projectId/reorder')
+  @HttpCode(HttpStatus.NO_CONTENT)
+  reorder(
+    @Param('projectId') projectId: string,
+    @Body() body: { orderedIds: string[] },
+  ) {
+    return this.stakeholderService.reorderStakeholders(projectId, body.orderedIds)
+  }
 }
