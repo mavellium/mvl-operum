@@ -201,7 +201,8 @@ exports.Prisma.UserProjectScalarFieldEnum = {
   departmentId: 'departmentId',
   hourlyRate: 'hourlyRate',
   startDate: 'startDate',
-  endDate: 'endDate'
+  endDate: 'endDate',
+  order: 'order'
 };
 
 exports.Prisma.RoleScalarFieldEnum = {
@@ -269,7 +270,8 @@ exports.Prisma.ProjectStakeholderScalarFieldEnum = {
   id: 'id',
   projectId: 'projectId',
   stakeholderId: 'stakeholderId',
-  createdAt: 'createdAt'
+  createdAt: 'createdAt',
+  order: 'order'
 };
 
 exports.Prisma.SortOrder = {

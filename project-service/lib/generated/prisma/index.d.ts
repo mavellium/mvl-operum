@@ -9421,10 +9421,12 @@ export namespace Prisma {
 
   export type UserProjectAvgAggregateOutputType = {
     hourlyRate: number | null
+    order: number | null
   }
 
   export type UserProjectSumAggregateOutputType = {
     hourlyRate: number | null
+    order: number | null
   }
 
   export type UserProjectMinAggregateOutputType = {
@@ -9437,6 +9439,7 @@ export namespace Prisma {
     hourlyRate: number | null
     startDate: Date | null
     endDate: Date | null
+    order: number | null
   }
 
   export type UserProjectMaxAggregateOutputType = {
@@ -9449,6 +9452,7 @@ export namespace Prisma {
     hourlyRate: number | null
     startDate: Date | null
     endDate: Date | null
+    order: number | null
   }
 
   export type UserProjectCountAggregateOutputType = {
@@ -9461,16 +9465,19 @@ export namespace Prisma {
     hourlyRate: number
     startDate: number
     endDate: number
+    order: number
     _all: number
   }
 
 
   export type UserProjectAvgAggregateInputType = {
     hourlyRate?: true
+    order?: true
   }
 
   export type UserProjectSumAggregateInputType = {
     hourlyRate?: true
+    order?: true
   }
 
   export type UserProjectMinAggregateInputType = {
@@ -9483,6 +9490,7 @@ export namespace Prisma {
     hourlyRate?: true
     startDate?: true
     endDate?: true
+    order?: true
   }
 
   export type UserProjectMaxAggregateInputType = {
@@ -9495,6 +9503,7 @@ export namespace Prisma {
     hourlyRate?: true
     startDate?: true
     endDate?: true
+    order?: true
   }
 
   export type UserProjectCountAggregateInputType = {
@@ -9507,6 +9516,7 @@ export namespace Prisma {
     hourlyRate?: true
     startDate?: true
     endDate?: true
+    order?: true
     _all?: true
   }
 
@@ -9606,6 +9616,7 @@ export namespace Prisma {
     hourlyRate: number | null
     startDate: Date
     endDate: Date | null
+    order: number
     _count: UserProjectCountAggregateOutputType | null
     _avg: UserProjectAvgAggregateOutputType | null
     _sum: UserProjectSumAggregateOutputType | null
@@ -9637,6 +9648,7 @@ export namespace Prisma {
     hourlyRate?: boolean
     startDate?: boolean
     endDate?: boolean
+    order?: boolean
     user?: boolean | UserDefaultArgs<ExtArgs>
     project?: boolean | ProjectDefaultArgs<ExtArgs>
     department?: boolean | UserProject$departmentArgs<ExtArgs>
@@ -9652,6 +9664,7 @@ export namespace Prisma {
     hourlyRate?: boolean
     startDate?: boolean
     endDate?: boolean
+    order?: boolean
     user?: boolean | UserDefaultArgs<ExtArgs>
     project?: boolean | ProjectDefaultArgs<ExtArgs>
     department?: boolean | UserProject$departmentArgs<ExtArgs>
@@ -9667,6 +9680,7 @@ export namespace Prisma {
     hourlyRate?: boolean
     startDate?: boolean
     endDate?: boolean
+    order?: boolean
     user?: boolean | UserDefaultArgs<ExtArgs>
     project?: boolean | ProjectDefaultArgs<ExtArgs>
     department?: boolean | UserProject$departmentArgs<ExtArgs>
@@ -9682,9 +9696,10 @@ export namespace Prisma {
     hourlyRate?: boolean
     startDate?: boolean
     endDate?: boolean
+    order?: boolean
   }
 
-  export type UserProjectOmit<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetOmit<"id" | "userId" | "projectId" | "active" | "role" | "departmentId" | "hourlyRate" | "startDate" | "endDate", ExtArgs["result"]["userProject"]>
+  export type UserProjectOmit<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetOmit<"id" | "userId" | "projectId" | "active" | "role" | "departmentId" | "hourlyRate" | "startDate" | "endDate" | "order", ExtArgs["result"]["userProject"]>
   export type UserProjectInclude<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
     user?: boolean | UserDefaultArgs<ExtArgs>
     project?: boolean | ProjectDefaultArgs<ExtArgs>
@@ -9718,6 +9733,7 @@ export namespace Prisma {
       hourlyRate: number | null
       startDate: Date
       endDate: Date | null
+      order: number
     }, ExtArgs["result"]["userProject"]>
     composites: {}
   }
@@ -10153,6 +10169,7 @@ export namespace Prisma {
     readonly hourlyRate: FieldRef<"UserProject", 'Float'>
     readonly startDate: FieldRef<"UserProject", 'DateTime'>
     readonly endDate: FieldRef<"UserProject", 'DateTime'>
+    readonly order: FieldRef<"UserProject", 'Int'>
   }
     
 
@@ -16309,8 +16326,18 @@ export namespace Prisma {
 
   export type AggregateProjectStakeholder = {
     _count: ProjectStakeholderCountAggregateOutputType | null
+    _avg: ProjectStakeholderAvgAggregateOutputType | null
+    _sum: ProjectStakeholderSumAggregateOutputType | null
     _min: ProjectStakeholderMinAggregateOutputType | null
     _max: ProjectStakeholderMaxAggregateOutputType | null
+  }
+
+  export type ProjectStakeholderAvgAggregateOutputType = {
+    order: number | null
+  }
+
+  export type ProjectStakeholderSumAggregateOutputType = {
+    order: number | null
   }
 
   export type ProjectStakeholderMinAggregateOutputType = {
@@ -16318,6 +16345,7 @@ export namespace Prisma {
     projectId: string | null
     stakeholderId: string | null
     createdAt: Date | null
+    order: number | null
   }
 
   export type ProjectStakeholderMaxAggregateOutputType = {
@@ -16325,6 +16353,7 @@ export namespace Prisma {
     projectId: string | null
     stakeholderId: string | null
     createdAt: Date | null
+    order: number | null
   }
 
   export type ProjectStakeholderCountAggregateOutputType = {
@@ -16332,15 +16361,25 @@ export namespace Prisma {
     projectId: number
     stakeholderId: number
     createdAt: number
+    order: number
     _all: number
   }
 
+
+  export type ProjectStakeholderAvgAggregateInputType = {
+    order?: true
+  }
+
+  export type ProjectStakeholderSumAggregateInputType = {
+    order?: true
+  }
 
   export type ProjectStakeholderMinAggregateInputType = {
     id?: true
     projectId?: true
     stakeholderId?: true
     createdAt?: true
+    order?: true
   }
 
   export type ProjectStakeholderMaxAggregateInputType = {
@@ -16348,6 +16387,7 @@ export namespace Prisma {
     projectId?: true
     stakeholderId?: true
     createdAt?: true
+    order?: true
   }
 
   export type ProjectStakeholderCountAggregateInputType = {
@@ -16355,6 +16395,7 @@ export namespace Prisma {
     projectId?: true
     stakeholderId?: true
     createdAt?: true
+    order?: true
     _all?: true
   }
 
@@ -16396,6 +16437,18 @@ export namespace Prisma {
     /**
      * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
      * 
+     * Select which fields to average
+    **/
+    _avg?: ProjectStakeholderAvgAggregateInputType
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Select which fields to sum
+    **/
+    _sum?: ProjectStakeholderSumAggregateInputType
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
      * Select which fields to find the minimum value
     **/
     _min?: ProjectStakeholderMinAggregateInputType
@@ -16426,6 +16479,8 @@ export namespace Prisma {
     take?: number
     skip?: number
     _count?: ProjectStakeholderCountAggregateInputType | true
+    _avg?: ProjectStakeholderAvgAggregateInputType
+    _sum?: ProjectStakeholderSumAggregateInputType
     _min?: ProjectStakeholderMinAggregateInputType
     _max?: ProjectStakeholderMaxAggregateInputType
   }
@@ -16435,7 +16490,10 @@ export namespace Prisma {
     projectId: string
     stakeholderId: string
     createdAt: Date
+    order: number
     _count: ProjectStakeholderCountAggregateOutputType | null
+    _avg: ProjectStakeholderAvgAggregateOutputType | null
+    _sum: ProjectStakeholderSumAggregateOutputType | null
     _min: ProjectStakeholderMinAggregateOutputType | null
     _max: ProjectStakeholderMaxAggregateOutputType | null
   }
@@ -16459,6 +16517,7 @@ export namespace Prisma {
     projectId?: boolean
     stakeholderId?: boolean
     createdAt?: boolean
+    order?: boolean
     project?: boolean | ProjectDefaultArgs<ExtArgs>
     stakeholder?: boolean | StakeholderDefaultArgs<ExtArgs>
   }, ExtArgs["result"]["projectStakeholder"]>
@@ -16468,6 +16527,7 @@ export namespace Prisma {
     projectId?: boolean
     stakeholderId?: boolean
     createdAt?: boolean
+    order?: boolean
     project?: boolean | ProjectDefaultArgs<ExtArgs>
     stakeholder?: boolean | StakeholderDefaultArgs<ExtArgs>
   }, ExtArgs["result"]["projectStakeholder"]>
@@ -16477,6 +16537,7 @@ export namespace Prisma {
     projectId?: boolean
     stakeholderId?: boolean
     createdAt?: boolean
+    order?: boolean
     project?: boolean | ProjectDefaultArgs<ExtArgs>
     stakeholder?: boolean | StakeholderDefaultArgs<ExtArgs>
   }, ExtArgs["result"]["projectStakeholder"]>
@@ -16486,9 +16547,10 @@ export namespace Prisma {
     projectId?: boolean
     stakeholderId?: boolean
     createdAt?: boolean
+    order?: boolean
   }
 
-  export type ProjectStakeholderOmit<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetOmit<"id" | "projectId" | "stakeholderId" | "createdAt", ExtArgs["result"]["projectStakeholder"]>
+  export type ProjectStakeholderOmit<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetOmit<"id" | "projectId" | "stakeholderId" | "createdAt" | "order", ExtArgs["result"]["projectStakeholder"]>
   export type ProjectStakeholderInclude<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
     project?: boolean | ProjectDefaultArgs<ExtArgs>
     stakeholder?: boolean | StakeholderDefaultArgs<ExtArgs>
@@ -16513,6 +16575,7 @@ export namespace Prisma {
       projectId: string
       stakeholderId: string
       createdAt: Date
+      order: number
     }, ExtArgs["result"]["projectStakeholder"]>
     composites: {}
   }
@@ -16942,6 +17005,7 @@ export namespace Prisma {
     readonly projectId: FieldRef<"ProjectStakeholder", 'String'>
     readonly stakeholderId: FieldRef<"ProjectStakeholder", 'String'>
     readonly createdAt: FieldRef<"ProjectStakeholder", 'DateTime'>
+    readonly order: FieldRef<"ProjectStakeholder", 'Int'>
   }
     
 
@@ -17474,7 +17538,8 @@ export namespace Prisma {
     departmentId: 'departmentId',
     hourlyRate: 'hourlyRate',
     startDate: 'startDate',
-    endDate: 'endDate'
+    endDate: 'endDate',
+    order: 'order'
   };
 
   export type UserProjectScalarFieldEnum = (typeof UserProjectScalarFieldEnum)[keyof typeof UserProjectScalarFieldEnum]
@@ -17560,7 +17625,8 @@ export namespace Prisma {
     id: 'id',
     projectId: 'projectId',
     stakeholderId: 'stakeholderId',
-    createdAt: 'createdAt'
+    createdAt: 'createdAt',
+    order: 'order'
   };
 
   export type ProjectStakeholderScalarFieldEnum = (typeof ProjectStakeholderScalarFieldEnum)[keyof typeof ProjectStakeholderScalarFieldEnum]
@@ -18210,6 +18276,7 @@ export namespace Prisma {
     hourlyRate?: FloatNullableFilter<"UserProject"> | number | null
     startDate?: DateTimeFilter<"UserProject"> | Date | string
     endDate?: DateTimeNullableFilter<"UserProject"> | Date | string | null
+    order?: IntFilter<"UserProject"> | number
     user?: XOR<UserScalarRelationFilter, UserWhereInput>
     project?: XOR<ProjectScalarRelationFilter, ProjectWhereInput>
     department?: XOR<DepartmentNullableScalarRelationFilter, DepartmentWhereInput> | null
@@ -18225,6 +18292,7 @@ export namespace Prisma {
     hourlyRate?: SortOrderInput | SortOrder
     startDate?: SortOrder
     endDate?: SortOrderInput | SortOrder
+    order?: SortOrder
     user?: UserOrderByWithRelationInput
     project?: ProjectOrderByWithRelationInput
     department?: DepartmentOrderByWithRelationInput
@@ -18244,6 +18312,7 @@ export namespace Prisma {
     hourlyRate?: FloatNullableFilter<"UserProject"> | number | null
     startDate?: DateTimeFilter<"UserProject"> | Date | string
     endDate?: DateTimeNullableFilter<"UserProject"> | Date | string | null
+    order?: IntFilter<"UserProject"> | number
     user?: XOR<UserScalarRelationFilter, UserWhereInput>
     project?: XOR<ProjectScalarRelationFilter, ProjectWhereInput>
     department?: XOR<DepartmentNullableScalarRelationFilter, DepartmentWhereInput> | null
@@ -18259,6 +18328,7 @@ export namespace Prisma {
     hourlyRate?: SortOrderInput | SortOrder
     startDate?: SortOrder
     endDate?: SortOrderInput | SortOrder
+    order?: SortOrder
     _count?: UserProjectCountOrderByAggregateInput
     _avg?: UserProjectAvgOrderByAggregateInput
     _max?: UserProjectMaxOrderByAggregateInput
@@ -18279,6 +18349,7 @@ export namespace Prisma {
     hourlyRate?: FloatNullableWithAggregatesFilter<"UserProject"> | number | null
     startDate?: DateTimeWithAggregatesFilter<"UserProject"> | Date | string
     endDate?: DateTimeNullableWithAggregatesFilter<"UserProject"> | Date | string | null
+    order?: IntWithAggregatesFilter<"UserProject"> | number
   }
 
   export type RoleWhereInput = {
@@ -18691,6 +18762,7 @@ export namespace Prisma {
     projectId?: StringFilter<"ProjectStakeholder"> | string
     stakeholderId?: StringFilter<"ProjectStakeholder"> | string
     createdAt?: DateTimeFilter<"ProjectStakeholder"> | Date | string
+    order?: IntFilter<"ProjectStakeholder"> | number
     project?: XOR<ProjectScalarRelationFilter, ProjectWhereInput>
     stakeholder?: XOR<StakeholderScalarRelationFilter, StakeholderWhereInput>
   }
@@ -18700,6 +18772,7 @@ export namespace Prisma {
     projectId?: SortOrder
     stakeholderId?: SortOrder
     createdAt?: SortOrder
+    order?: SortOrder
     project?: ProjectOrderByWithRelationInput
     stakeholder?: StakeholderOrderByWithRelationInput
   }
@@ -18713,6 +18786,7 @@ export namespace Prisma {
     projectId?: StringFilter<"ProjectStakeholder"> | string
     stakeholderId?: StringFilter<"ProjectStakeholder"> | string
     createdAt?: DateTimeFilter<"ProjectStakeholder"> | Date | string
+    order?: IntFilter<"ProjectStakeholder"> | number
     project?: XOR<ProjectScalarRelationFilter, ProjectWhereInput>
     stakeholder?: XOR<StakeholderScalarRelationFilter, StakeholderWhereInput>
   }, "id" | "projectId_stakeholderId">
@@ -18722,9 +18796,12 @@ export namespace Prisma {
     projectId?: SortOrder
     stakeholderId?: SortOrder
     createdAt?: SortOrder
+    order?: SortOrder
     _count?: ProjectStakeholderCountOrderByAggregateInput
+    _avg?: ProjectStakeholderAvgOrderByAggregateInput
     _max?: ProjectStakeholderMaxOrderByAggregateInput
     _min?: ProjectStakeholderMinOrderByAggregateInput
+    _sum?: ProjectStakeholderSumOrderByAggregateInput
   }
 
   export type ProjectStakeholderScalarWhereWithAggregatesInput = {
@@ -18735,6 +18812,7 @@ export namespace Prisma {
     projectId?: StringWithAggregatesFilter<"ProjectStakeholder"> | string
     stakeholderId?: StringWithAggregatesFilter<"ProjectStakeholder"> | string
     createdAt?: DateTimeWithAggregatesFilter<"ProjectStakeholder"> | Date | string
+    order?: IntWithAggregatesFilter<"ProjectStakeholder"> | number
   }
 
   export type TenantCreateInput = {
@@ -19295,6 +19373,7 @@ export namespace Prisma {
     hourlyRate?: number | null
     startDate?: Date | string
     endDate?: Date | string | null
+    order?: number
     user: UserCreateNestedOneWithoutProjectsInput
     project: ProjectCreateNestedOneWithoutMembersInput
     department?: DepartmentCreateNestedOneWithoutUserProjectsInput
@@ -19310,6 +19389,7 @@ export namespace Prisma {
     hourlyRate?: number | null
     startDate?: Date | string
     endDate?: Date | string | null
+    order?: number
   }
 
   export type UserProjectUpdateInput = {
@@ -19319,6 +19399,7 @@ export namespace Prisma {
     hourlyRate?: NullableFloatFieldUpdateOperationsInput | number | null
     startDate?: DateTimeFieldUpdateOperationsInput | Date | string
     endDate?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    order?: IntFieldUpdateOperationsInput | number
     user?: UserUpdateOneRequiredWithoutProjectsNestedInput
     project?: ProjectUpdateOneRequiredWithoutMembersNestedInput
     department?: DepartmentUpdateOneWithoutUserProjectsNestedInput
@@ -19334,6 +19415,7 @@ export namespace Prisma {
     hourlyRate?: NullableFloatFieldUpdateOperationsInput | number | null
     startDate?: DateTimeFieldUpdateOperationsInput | Date | string
     endDate?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    order?: IntFieldUpdateOperationsInput | number
   }
 
   export type UserProjectCreateManyInput = {
@@ -19346,6 +19428,7 @@ export namespace Prisma {
     hourlyRate?: number | null
     startDate?: Date | string
     endDate?: Date | string | null
+    order?: number
   }
 
   export type UserProjectUpdateManyMutationInput = {
@@ -19355,6 +19438,7 @@ export namespace Prisma {
     hourlyRate?: NullableFloatFieldUpdateOperationsInput | number | null
     startDate?: DateTimeFieldUpdateOperationsInput | Date | string
     endDate?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    order?: IntFieldUpdateOperationsInput | number
   }
 
   export type UserProjectUncheckedUpdateManyInput = {
@@ -19367,6 +19451,7 @@ export namespace Prisma {
     hourlyRate?: NullableFloatFieldUpdateOperationsInput | number | null
     startDate?: DateTimeFieldUpdateOperationsInput | Date | string
     endDate?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    order?: IntFieldUpdateOperationsInput | number
   }
 
   export type RoleCreateInput = {
@@ -19808,6 +19893,7 @@ export namespace Prisma {
   export type ProjectStakeholderCreateInput = {
     id?: string
     createdAt?: Date | string
+    order?: number
     project: ProjectCreateNestedOneWithoutStakeholdersInput
     stakeholder: StakeholderCreateNestedOneWithoutProjectsInput
   }
@@ -19817,11 +19903,13 @@ export namespace Prisma {
     projectId: string
     stakeholderId: string
     createdAt?: Date | string
+    order?: number
   }
 
   export type ProjectStakeholderUpdateInput = {
     id?: StringFieldUpdateOperationsInput | string
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    order?: IntFieldUpdateOperationsInput | number
     project?: ProjectUpdateOneRequiredWithoutStakeholdersNestedInput
     stakeholder?: StakeholderUpdateOneRequiredWithoutProjectsNestedInput
   }
@@ -19831,6 +19919,7 @@ export namespace Prisma {
     projectId?: StringFieldUpdateOperationsInput | string
     stakeholderId?: StringFieldUpdateOperationsInput | string
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    order?: IntFieldUpdateOperationsInput | number
   }
 
   export type ProjectStakeholderCreateManyInput = {
@@ -19838,11 +19927,13 @@ export namespace Prisma {
     projectId: string
     stakeholderId: string
     createdAt?: Date | string
+    order?: number
   }
 
   export type ProjectStakeholderUpdateManyMutationInput = {
     id?: StringFieldUpdateOperationsInput | string
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    order?: IntFieldUpdateOperationsInput | number
   }
 
   export type ProjectStakeholderUncheckedUpdateManyInput = {
@@ -19850,6 +19941,7 @@ export namespace Prisma {
     projectId?: StringFieldUpdateOperationsInput | string
     stakeholderId?: StringFieldUpdateOperationsInput | string
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    order?: IntFieldUpdateOperationsInput | number
   }
 
   export type StringFilter<$PrismaModel = never> = {
@@ -20442,6 +20534,17 @@ export namespace Prisma {
     departmentId?: SortOrder
   }
 
+  export type IntFilter<$PrismaModel = never> = {
+    equals?: number | IntFieldRefInput<$PrismaModel>
+    in?: number[] | ListIntFieldRefInput<$PrismaModel>
+    notIn?: number[] | ListIntFieldRefInput<$PrismaModel>
+    lt?: number | IntFieldRefInput<$PrismaModel>
+    lte?: number | IntFieldRefInput<$PrismaModel>
+    gt?: number | IntFieldRefInput<$PrismaModel>
+    gte?: number | IntFieldRefInput<$PrismaModel>
+    not?: NestedIntFilter<$PrismaModel> | number
+  }
+
   export type DepartmentNullableScalarRelationFilter = {
     is?: DepartmentWhereInput | null
     isNot?: DepartmentWhereInput | null
@@ -20462,10 +20565,12 @@ export namespace Prisma {
     hourlyRate?: SortOrder
     startDate?: SortOrder
     endDate?: SortOrder
+    order?: SortOrder
   }
 
   export type UserProjectAvgOrderByAggregateInput = {
     hourlyRate?: SortOrder
+    order?: SortOrder
   }
 
   export type UserProjectMaxOrderByAggregateInput = {
@@ -20478,6 +20583,7 @@ export namespace Prisma {
     hourlyRate?: SortOrder
     startDate?: SortOrder
     endDate?: SortOrder
+    order?: SortOrder
   }
 
   export type UserProjectMinOrderByAggregateInput = {
@@ -20490,10 +20596,28 @@ export namespace Prisma {
     hourlyRate?: SortOrder
     startDate?: SortOrder
     endDate?: SortOrder
+    order?: SortOrder
   }
 
   export type UserProjectSumOrderByAggregateInput = {
     hourlyRate?: SortOrder
+    order?: SortOrder
+  }
+
+  export type IntWithAggregatesFilter<$PrismaModel = never> = {
+    equals?: number | IntFieldRefInput<$PrismaModel>
+    in?: number[] | ListIntFieldRefInput<$PrismaModel>
+    notIn?: number[] | ListIntFieldRefInput<$PrismaModel>
+    lt?: number | IntFieldRefInput<$PrismaModel>
+    lte?: number | IntFieldRefInput<$PrismaModel>
+    gt?: number | IntFieldRefInput<$PrismaModel>
+    gte?: number | IntFieldRefInput<$PrismaModel>
+    not?: NestedIntWithAggregatesFilter<$PrismaModel> | number
+    _count?: NestedIntFilter<$PrismaModel>
+    _avg?: NestedFloatFilter<$PrismaModel>
+    _sum?: NestedIntFilter<$PrismaModel>
+    _min?: NestedIntFilter<$PrismaModel>
+    _max?: NestedIntFilter<$PrismaModel>
   }
 
   export type EnumRoleScopeFilter<$PrismaModel = never> = {
@@ -20752,6 +20876,11 @@ export namespace Prisma {
     projectId?: SortOrder
     stakeholderId?: SortOrder
     createdAt?: SortOrder
+    order?: SortOrder
+  }
+
+  export type ProjectStakeholderAvgOrderByAggregateInput = {
+    order?: SortOrder
   }
 
   export type ProjectStakeholderMaxOrderByAggregateInput = {
@@ -20759,6 +20888,7 @@ export namespace Prisma {
     projectId?: SortOrder
     stakeholderId?: SortOrder
     createdAt?: SortOrder
+    order?: SortOrder
   }
 
   export type ProjectStakeholderMinOrderByAggregateInput = {
@@ -20766,6 +20896,11 @@ export namespace Prisma {
     projectId?: SortOrder
     stakeholderId?: SortOrder
     createdAt?: SortOrder
+    order?: SortOrder
+  }
+
+  export type ProjectStakeholderSumOrderByAggregateInput = {
+    order?: SortOrder
   }
 
   export type ProjectCreateNestedManyWithoutTenantInput = {
@@ -21455,6 +21590,14 @@ export namespace Prisma {
     connect?: DepartmentWhereUniqueInput
   }
 
+  export type IntFieldUpdateOperationsInput = {
+    set?: number
+    increment?: number
+    decrement?: number
+    multiply?: number
+    divide?: number
+  }
+
   export type UserUpdateOneRequiredWithoutProjectsNestedInput = {
     create?: XOR<UserCreateWithoutProjectsInput, UserUncheckedCreateWithoutProjectsInput>
     connectOrCreate?: UserCreateOrConnectWithoutProjectsInput
@@ -22003,6 +22146,33 @@ export namespace Prisma {
     _max?: NestedFloatNullableFilter<$PrismaModel>
   }
 
+  export type NestedIntWithAggregatesFilter<$PrismaModel = never> = {
+    equals?: number | IntFieldRefInput<$PrismaModel>
+    in?: number[] | ListIntFieldRefInput<$PrismaModel>
+    notIn?: number[] | ListIntFieldRefInput<$PrismaModel>
+    lt?: number | IntFieldRefInput<$PrismaModel>
+    lte?: number | IntFieldRefInput<$PrismaModel>
+    gt?: number | IntFieldRefInput<$PrismaModel>
+    gte?: number | IntFieldRefInput<$PrismaModel>
+    not?: NestedIntWithAggregatesFilter<$PrismaModel> | number
+    _count?: NestedIntFilter<$PrismaModel>
+    _avg?: NestedFloatFilter<$PrismaModel>
+    _sum?: NestedIntFilter<$PrismaModel>
+    _min?: NestedIntFilter<$PrismaModel>
+    _max?: NestedIntFilter<$PrismaModel>
+  }
+
+  export type NestedFloatFilter<$PrismaModel = never> = {
+    equals?: number | FloatFieldRefInput<$PrismaModel>
+    in?: number[] | ListFloatFieldRefInput<$PrismaModel>
+    notIn?: number[] | ListFloatFieldRefInput<$PrismaModel>
+    lt?: number | FloatFieldRefInput<$PrismaModel>
+    lte?: number | FloatFieldRefInput<$PrismaModel>
+    gt?: number | FloatFieldRefInput<$PrismaModel>
+    gte?: number | FloatFieldRefInput<$PrismaModel>
+    not?: NestedFloatFilter<$PrismaModel> | number
+  }
+
   export type NestedEnumRoleScopeFilter<$PrismaModel = never> = {
     equals?: $Enums.RoleScope | EnumRoleScopeFieldRefInput<$PrismaModel>
     in?: $Enums.RoleScope[] | ListEnumRoleScopeFieldRefInput<$PrismaModel>
@@ -22369,6 +22539,7 @@ export namespace Prisma {
     hourlyRate?: number | null
     startDate?: Date | string
     endDate?: Date | string | null
+    order?: number
     project: ProjectCreateNestedOneWithoutMembersInput
     department?: DepartmentCreateNestedOneWithoutUserProjectsInput
   }
@@ -22382,6 +22553,7 @@ export namespace Prisma {
     hourlyRate?: number | null
     startDate?: Date | string
     endDate?: Date | string | null
+    order?: number
   }
 
   export type UserProjectCreateOrConnectWithoutUserInput = {
@@ -22471,6 +22643,7 @@ export namespace Prisma {
     hourlyRate?: FloatNullableFilter<"UserProject"> | number | null
     startDate?: DateTimeFilter<"UserProject"> | Date | string
     endDate?: DateTimeNullableFilter<"UserProject"> | Date | string | null
+    order?: IntFilter<"UserProject"> | number
   }
 
   export type UserDepartmentUpsertWithWhereUniqueWithoutUserInput = {
@@ -22565,6 +22738,7 @@ export namespace Prisma {
     hourlyRate?: number | null
     startDate?: Date | string
     endDate?: Date | string | null
+    order?: number
     user: UserCreateNestedOneWithoutProjectsInput
     department?: DepartmentCreateNestedOneWithoutUserProjectsInput
   }
@@ -22578,6 +22752,7 @@ export namespace Prisma {
     hourlyRate?: number | null
     startDate?: Date | string
     endDate?: Date | string | null
+    order?: number
   }
 
   export type UserProjectCreateOrConnectWithoutProjectInput = {
@@ -22649,6 +22824,7 @@ export namespace Prisma {
   export type ProjectStakeholderCreateWithoutProjectInput = {
     id?: string
     createdAt?: Date | string
+    order?: number
     stakeholder: StakeholderCreateNestedOneWithoutProjectsInput
   }
 
@@ -22656,6 +22832,7 @@ export namespace Prisma {
     id?: string
     stakeholderId: string
     createdAt?: Date | string
+    order?: number
   }
 
   export type ProjectStakeholderCreateOrConnectWithoutProjectInput = {
@@ -22790,6 +22967,7 @@ export namespace Prisma {
     projectId?: StringFilter<"ProjectStakeholder"> | string
     stakeholderId?: StringFilter<"ProjectStakeholder"> | string
     createdAt?: DateTimeFilter<"ProjectStakeholder"> | Date | string
+    order?: IntFilter<"ProjectStakeholder"> | number
   }
 
   export type ProjectCreateWithoutMacroFasesInput = {
@@ -22982,6 +23160,7 @@ export namespace Prisma {
     hourlyRate?: number | null
     startDate?: Date | string
     endDate?: Date | string | null
+    order?: number
     user: UserCreateNestedOneWithoutProjectsInput
     project: ProjectCreateNestedOneWithoutMembersInput
   }
@@ -22995,6 +23174,7 @@ export namespace Prisma {
     hourlyRate?: number | null
     startDate?: Date | string
     endDate?: Date | string | null
+    order?: number
   }
 
   export type UserProjectCreateOrConnectWithoutDepartmentInput = {
@@ -24036,6 +24216,7 @@ export namespace Prisma {
   export type ProjectStakeholderCreateWithoutStakeholderInput = {
     id?: string
     createdAt?: Date | string
+    order?: number
     project: ProjectCreateNestedOneWithoutStakeholdersInput
   }
 
@@ -24043,6 +24224,7 @@ export namespace Prisma {
     id?: string
     projectId: string
     createdAt?: Date | string
+    order?: number
   }
 
   export type ProjectStakeholderCreateOrConnectWithoutStakeholderInput = {
@@ -24674,6 +24856,7 @@ export namespace Prisma {
     hourlyRate?: number | null
     startDate?: Date | string
     endDate?: Date | string | null
+    order?: number
   }
 
   export type UserDepartmentCreateManyUserInput = {
@@ -24697,6 +24880,7 @@ export namespace Prisma {
     hourlyRate?: NullableFloatFieldUpdateOperationsInput | number | null
     startDate?: DateTimeFieldUpdateOperationsInput | Date | string
     endDate?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    order?: IntFieldUpdateOperationsInput | number
     project?: ProjectUpdateOneRequiredWithoutMembersNestedInput
     department?: DepartmentUpdateOneWithoutUserProjectsNestedInput
   }
@@ -24710,6 +24894,7 @@ export namespace Prisma {
     hourlyRate?: NullableFloatFieldUpdateOperationsInput | number | null
     startDate?: DateTimeFieldUpdateOperationsInput | Date | string
     endDate?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    order?: IntFieldUpdateOperationsInput | number
   }
 
   export type UserProjectUncheckedUpdateManyWithoutUserInput = {
@@ -24721,6 +24906,7 @@ export namespace Prisma {
     hourlyRate?: NullableFloatFieldUpdateOperationsInput | number | null
     startDate?: DateTimeFieldUpdateOperationsInput | Date | string
     endDate?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    order?: IntFieldUpdateOperationsInput | number
   }
 
   export type UserDepartmentUpdateWithoutUserInput = {
@@ -24774,6 +24960,7 @@ export namespace Prisma {
     hourlyRate?: number | null
     startDate?: Date | string
     endDate?: Date | string | null
+    order?: number
   }
 
   export type UserProjectRoleCreateManyProjectInput = {
@@ -24798,6 +24985,7 @@ export namespace Prisma {
     id?: string
     stakeholderId: string
     createdAt?: Date | string
+    order?: number
   }
 
   export type UserProjectUpdateWithoutProjectInput = {
@@ -24807,6 +24995,7 @@ export namespace Prisma {
     hourlyRate?: NullableFloatFieldUpdateOperationsInput | number | null
     startDate?: DateTimeFieldUpdateOperationsInput | Date | string
     endDate?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    order?: IntFieldUpdateOperationsInput | number
     user?: UserUpdateOneRequiredWithoutProjectsNestedInput
     department?: DepartmentUpdateOneWithoutUserProjectsNestedInput
   }
@@ -24820,6 +25009,7 @@ export namespace Prisma {
     hourlyRate?: NullableFloatFieldUpdateOperationsInput | number | null
     startDate?: DateTimeFieldUpdateOperationsInput | Date | string
     endDate?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    order?: IntFieldUpdateOperationsInput | number
   }
 
   export type UserProjectUncheckedUpdateManyWithoutProjectInput = {
@@ -24831,6 +25021,7 @@ export namespace Prisma {
     hourlyRate?: NullableFloatFieldUpdateOperationsInput | number | null
     startDate?: DateTimeFieldUpdateOperationsInput | Date | string
     endDate?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    order?: IntFieldUpdateOperationsInput | number
   }
 
   export type UserProjectRoleUpdateWithoutProjectInput = {
@@ -24890,6 +25081,7 @@ export namespace Prisma {
   export type ProjectStakeholderUpdateWithoutProjectInput = {
     id?: StringFieldUpdateOperationsInput | string
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    order?: IntFieldUpdateOperationsInput | number
     stakeholder?: StakeholderUpdateOneRequiredWithoutProjectsNestedInput
   }
 
@@ -24897,12 +25089,14 @@ export namespace Prisma {
     id?: StringFieldUpdateOperationsInput | string
     stakeholderId?: StringFieldUpdateOperationsInput | string
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    order?: IntFieldUpdateOperationsInput | number
   }
 
   export type ProjectStakeholderUncheckedUpdateManyWithoutProjectInput = {
     id?: StringFieldUpdateOperationsInput | string
     stakeholderId?: StringFieldUpdateOperationsInput | string
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    order?: IntFieldUpdateOperationsInput | number
   }
 
   export type UserDepartmentCreateManyDepartmentInput = {
@@ -24919,6 +25113,7 @@ export namespace Prisma {
     hourlyRate?: number | null
     startDate?: Date | string
     endDate?: Date | string | null
+    order?: number
   }
 
   export type UserDepartmentUpdateWithoutDepartmentInput = {
@@ -24943,6 +25138,7 @@ export namespace Prisma {
     hourlyRate?: NullableFloatFieldUpdateOperationsInput | number | null
     startDate?: DateTimeFieldUpdateOperationsInput | Date | string
     endDate?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    order?: IntFieldUpdateOperationsInput | number
     user?: UserUpdateOneRequiredWithoutProjectsNestedInput
     project?: ProjectUpdateOneRequiredWithoutMembersNestedInput
   }
@@ -24956,6 +25152,7 @@ export namespace Prisma {
     hourlyRate?: NullableFloatFieldUpdateOperationsInput | number | null
     startDate?: DateTimeFieldUpdateOperationsInput | Date | string
     endDate?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    order?: IntFieldUpdateOperationsInput | number
   }
 
   export type UserProjectUncheckedUpdateManyWithoutDepartmentInput = {
@@ -24967,6 +25164,7 @@ export namespace Prisma {
     hourlyRate?: NullableFloatFieldUpdateOperationsInput | number | null
     startDate?: DateTimeFieldUpdateOperationsInput | Date | string
     endDate?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    order?: IntFieldUpdateOperationsInput | number
   }
 
   export type RolePermissionCreateManyRoleInput = {
@@ -25049,11 +25247,13 @@ export namespace Prisma {
     id?: string
     projectId: string
     createdAt?: Date | string
+    order?: number
   }
 
   export type ProjectStakeholderUpdateWithoutStakeholderInput = {
     id?: StringFieldUpdateOperationsInput | string
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    order?: IntFieldUpdateOperationsInput | number
     project?: ProjectUpdateOneRequiredWithoutStakeholdersNestedInput
   }
 
@@ -25061,12 +25261,14 @@ export namespace Prisma {
     id?: StringFieldUpdateOperationsInput | string
     projectId?: StringFieldUpdateOperationsInput | string
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    order?: IntFieldUpdateOperationsInput | number
   }
 
   export type ProjectStakeholderUncheckedUpdateManyWithoutStakeholderInput = {
     id?: StringFieldUpdateOperationsInput | string
     projectId?: StringFieldUpdateOperationsInput | string
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    order?: IntFieldUpdateOperationsInput | number
   }
 
 

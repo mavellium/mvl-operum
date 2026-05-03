@@ -29,32 +29,36 @@ export default function Modal({
   // eslint-disable-next-line react-hooks/set-state-in-effect
   useEffect(() => { setMounted(true) }, [])
 
+  // Scroll-lock e foco inicial — só depende de isOpen para não disparar a cada render do pai
   useEffect(() => {
     if (!isOpen) {
       document.body.style.overflow = 'unset'
       return
     }
 
-    // Trava o scroll do body quando o modal está aberto
     document.body.style.overflow = 'hidden'
 
+    // Prioriza campos de entrada; só cai em button/tabindex se não houver nenhum.
+    // querySelector usa ordem do DOM, não do seletor — por isso a busca é em duas etapas.
+    const focusTarget =
+      dialogRef.current?.querySelector<HTMLElement>('input, textarea, select') ??
+      dialogRef.current?.querySelector<HTMLElement>('button, [tabindex]:not([tabindex="-1"])')
+    const timer = setTimeout(() => focusTarget?.focus(), 10)
+
+    return () => {
+      clearTimeout(timer)
+      document.body.style.overflow = 'unset'
+    }
+  }, [isOpen])
+
+  // Listener de teclado separado — precisa de onClose atualizado mas não deve re-focar
+  useEffect(() => {
+    if (!isOpen) return
     const handleKey = (e: KeyboardEvent) => {
       if (e.key === 'Escape') onClose()
     }
     document.addEventListener('keydown', handleKey)
-    
-    // Foca no primeiro elemento clicável para acessibilidade
-    const focusable = dialogRef.current?.querySelector<HTMLElement>(
-      'button, input, textarea, select, [tabindex]:not([tabindex="-1"])'
-    )
-    if (focusable) {
-      setTimeout(() => focusable.focus(), 10)
-    }
-
-    return () => {
-      document.removeEventListener('keydown', handleKey)
-      document.body.style.overflow = 'unset'
-    }
+    return () => document.removeEventListener('keydown', handleKey)
   }, [isOpen, onClose])
 
   if (!isOpen || !mounted) return null
