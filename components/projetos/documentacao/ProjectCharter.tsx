@@ -129,6 +129,7 @@ export default function ProjectCharter() {
   // MacroFases (local state, synced with server)
   const [fases, setFases] = useState<MacroFase[]>([])
   const [faseSaving, setFaseSaving] = useState<Record<string, boolean>>({})
+  const [newestFaseId, setNewestFaseId] = useState<string | undefined>(undefined)
 
   // Versioning
   const [versions, setVersions] = useState<DocumentVersion[]>([])
@@ -235,6 +236,7 @@ export default function ProjectCharter() {
     if (r.ok) {
       const created: MacroFase = await r.json()
       setFases(prev => [...prev, created])
+      setNewestFaseId(created.id)
     }
   }
 
@@ -485,15 +487,11 @@ export default function ProjectCharter() {
             onChange={handleFaseChange}
             onAdd={handleAddFase}
             onRemove={handleRemoveFase}
+            autoFocusId={newestFaseId}
           />
         </FormSection>
 
         <FormSection title="7. Principais Envolvidos">
-          <div className="mb-2 text-sm text-slate-600 bg-slate-50 rounded-lg p-3">
-            <strong>Automático do banco:</strong>{' '}
-            {data?.gerente && <span className="font-medium">{data.gerente.name} (Gerente)</span>}
-            {data?.membros.length ? ', ' + data.membros.map(m => m.name).join(', ') : ''}
-          </div>
           <label className={labelClass}>Instituição / Professores / Outros (manual, uma linha por pessoa)</label>
           <textarea rows={3} className={textareaClass} value={fields.principaisEnvolvidos}
             onChange={e => setFields(f => ({ ...f, principaisEnvolvidos: e.target.value }))}
