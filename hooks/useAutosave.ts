@@ -23,7 +23,7 @@ interface UseAutosaveResult {
   draftDbId: string | null
 }
 
-const DEBOUNCE_MS = 0
+const DEBOUNCE_MS = 2500
 
 export function useAutosave({
   form,
