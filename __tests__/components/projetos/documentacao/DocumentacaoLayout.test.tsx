@@ -66,4 +66,16 @@ describe('DocumentacaoLayout', () => {
     const charterBtn = screen.getByRole('button', { name: /termo de abertura/i })
     expect(charterBtn.className).toContain('text-blue-700')
   })
+
+  it('container principal tem overflow-hidden para isolar o scroll global', () => {
+    render(<DocumentacaoLayout />)
+    const layout = screen.getByTestId('doc-layout')
+    expect(layout.className).toMatch(/overflow-hidden/)
+  })
+
+  it('área de conteúdo tem overflow-y-auto para scroll isolado do documento', () => {
+    render(<DocumentacaoLayout />)
+    const content = screen.getByTestId('doc-content')
+    expect(content.className).toMatch(/overflow-y-auto/)
+  })
 })

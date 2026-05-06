@@ -28,9 +28,9 @@ export default function DocumentacaoLayout() {
   }
 
   return (
-    <div className="flex flex-1 h-full overflow-hidden">
+    <div data-testid="doc-layout" className="flex flex-1 h-full overflow-hidden">
       <DocumentSidebar activeDoc={activeDoc} onSelect={handleSelect} />
-      <div className="flex-1 min-w-0 overflow-y-auto">
+      <div data-testid="doc-content" className="flex-1 min-w-0 overflow-y-auto">
         <ActiveComponent />
       </div>
     </div>
