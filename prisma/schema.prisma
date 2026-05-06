@@ -27,14 +27,14 @@ model Tenant {
   createdAt  DateTime     @default(now())
   updatedAt  DateTime     @updatedAt
 
-  users        User[]
-  tags         Tag[]
-  projects     Project[]
-  departments  Department[]
-  roles        Role[]
-  auditLogs    AuditLog[]
-
-  stakeholders Stakeholder[]
+  users         User[]
+  tags          Tag[]
+  projects      Project[]
+  departments   Department[]
+  roles         Role[]
+  auditLogs     AuditLog[]
+  stakeholders  Stakeholder[]
+  projectDrafts ProjectDraft[]
 }
 
 // ── Projects ──────────────────────────────────────────────
@@ -83,6 +83,7 @@ model Project {
 
   stakeholders      ProjectStakeholder[]
   documentVersions  DocumentVersion[]
+  drafts            ProjectDraft[]
 
   @@unique([name, tenantId])
 }
@@ -96,6 +97,17 @@ model ProjectMacroFase {
   custo       String?
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
+}
+
+model ProjectDraft {
+  id        String   @id @default(cuid())
+  tenantId  String
+  tenant    Tenant   @relation(fields: [tenantId], references: [id])
+  projectId String?
+  project   Project? @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  authorId  String
+  data      Json
+  savedAt   DateTime @default(now()) @updatedAt
 }
 
 // ── Departments ───────────────────────────────────────────
@@ -542,6 +554,11 @@ enum DocumentVersionStatus {
   REJECTED
 }
 
+enum DocumentType {
+  STAKEHOLDER
+  CHARTER
+}
+
 model DocumentVersion {
   id            String                @id @default(cuid())
   projectId     String
@@ -557,6 +574,7 @@ model DocumentVersion {
   approvedAt    DateTime?
   approvedById  String?
   approvedBy    User?                 @relation("DocumentVersionApprover", fields: [approvedById], references: [id])
+  documentType  DocumentType          @default(STAKEHOLDER)
   createdAt     DateTime              @default(now())
   updatedAt     DateTime              @updatedAt
 }
