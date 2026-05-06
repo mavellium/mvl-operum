@@ -20,13 +20,13 @@ export default async function ProjetoLayout({
   const canManageMembers = role === 'admin' || await isProjectManager(userId, projetoId)
 
   return (
-    <div className="flex flex-1">
+    <div className="flex flex-1 overflow-hidden">
       <ProjectSidebar
         projetoId={projetoId}
         projetoNome={projeto.name}
         canManageMembers={canManageMembers}
       />
-      <main className="flex-1 min-w-0">
+      <main className="flex-1 min-w-0 h-full overflow-hidden">
         {children}
       </main>
     </div>
