@@ -43,15 +43,6 @@ interface CurrencyInputProps {
 function CurrencyInput({ value, onChange, disabled, className, inputRef }: CurrencyInputProps) {
   const [cents, setCents] = useState(() => storedToCents(value))
 
-  // Sync when the row first mounts with a non-null value (e.g. page load)
-  const mounted = useRef(false)
-  useEffect(() => {
-    if (!mounted.current) {
-      mounted.current = true
-      setCents(storedToCents(value))
-    }
-  }, [value])
-
   function handleChange(e: React.ChangeEvent<HTMLInputElement>) {
     const digits = e.target.value.replace(/\D/g, '').slice(0, 13) // cap at 99 999 999 999,99
     const newCents = digits ? parseInt(digits, 10) : 0
