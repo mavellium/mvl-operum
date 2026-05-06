@@ -32,26 +32,25 @@ afterEach(() => {
 })
 
 describe('useAutosave', () => {
-  it('não deve chamar saveDraftAction antes de 2500ms', () => {
+  it('não deve chamar saveDraftAction sincronamente antes do timer disparar', () => {
     vi.mocked(saveDraftAction).mockResolvedValue({ draftId: 'd1' })
 
     renderHook(() =>
       useAutosave({ form: baseForm, macroFases: baseMacroFases, projectId: null, enabled: true })
     )
 
-    act(() => { vi.advanceTimersByTime(1000) })
-
+    // Sem avançar timers: o setTimeout(fn, 0) ainda não disparou
     expect(saveDraftAction).not.toHaveBeenCalled()
   })
 
-  it('deve chamar saveDraftAction após 2500ms e definir status como saved', async () => {
+  it('deve chamar saveDraftAction após o timer disparar e definir status como saved', async () => {
     vi.mocked(saveDraftAction).mockResolvedValue({ draftId: 'd1' })
 
     const { result } = renderHook(() =>
       useAutosave({ form: baseForm, macroFases: baseMacroFases, projectId: null, enabled: true })
     )
 
-    await act(async () => { vi.advanceTimersByTime(2500) })
+    await act(async () => { vi.advanceTimersByTime(1) })
 
     expect(saveDraftAction).toHaveBeenCalledOnce()
     expect(result.current.status).toBe('saved')
@@ -65,7 +64,7 @@ describe('useAutosave', () => {
       useAutosave({ form: baseForm, macroFases: baseMacroFases, projectId: null, enabled: true })
     )
 
-    await act(async () => { vi.advanceTimersByTime(2500) })
+    await act(async () => { vi.advanceTimersByTime(1) })
 
     expect(result.current.status).toBe('error')
   })
@@ -84,11 +83,12 @@ describe('useAutosave', () => {
       { initialProps: { name: 'a' } }
     )
 
-    act(() => { vi.advanceTimersByTime(1000) })
+    // Rerenders rápidos sem avançar timers: cada um cancela o timer anterior
     rerender({ name: 'ab' })
-    act(() => { vi.advanceTimersByTime(1000) })
     rerender({ name: 'abc' })
-    await act(async () => { vi.advanceTimersByTime(2500) })
+
+    // Só agora o timer dispara — deve chamar apenas uma vez
+    await act(async () => { vi.advanceTimersByTime(1) })
 
     expect(saveDraftAction).toHaveBeenCalledOnce()
   })
@@ -100,7 +100,7 @@ describe('useAutosave', () => {
       useAutosave({ form: baseForm, macroFases: baseMacroFases, projectId: null, enabled: false })
     )
 
-    await act(async () => { vi.advanceTimersByTime(3000) })
+    await act(async () => { vi.advanceTimersByTime(100) })
 
     expect(saveDraftAction).not.toHaveBeenCalled()
   })
@@ -112,7 +112,7 @@ describe('useAutosave', () => {
       useAutosave({ form: baseForm, macroFases: baseMacroFases, projectId: 'p1', enabled: true })
     )
 
-    await act(async () => { vi.advanceTimersByTime(2500) })
+    await act(async () => { vi.advanceTimersByTime(1) })
 
     expect(saveDraftAction).toHaveBeenCalledWith(
       expect.objectContaining({ projectId: 'p1' })
