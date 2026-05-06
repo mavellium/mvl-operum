@@ -44,6 +44,7 @@ jobs:
           path: ./
           base: ${{ (github.event.before != '' && github.event.before != '0000000000000000000000000000000000000000') && github.event.before || 'HEAD~1' }}
           head: HEAD
+          extra_args: --exclude-paths=.trufflehogignore
 
       - name: Initialize CodeQL
         uses: github/codeql-action/init@v3
