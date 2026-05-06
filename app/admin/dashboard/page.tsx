@@ -1,4 +1,5 @@
 import prisma from '@/lib/prisma'
+import { verifySession } from '@/lib/dal'
 import { getGlobalKPIs, getSprintsWithMetrics, getOverdueCards, getUserMetrics, getSprintMetrics } from '@/services/dashboardService'
 import KPICard from '@/components/dashboard/KPICard'
 import SprintCostChart from '@/components/dashboard/SprintCostChart'
@@ -19,7 +20,9 @@ function formatCurrency(v: number) {
 }
 
 async function getAdminDashboardData() {
-  const [kpis, sprintMetricsRaw, overdueCards, userMetrics, projetos] = await Promise.all([
+  const { tenantId } = await verifySession()
+
+  const [kpis, sprintMetricsRaw, overdueCards, userMetrics, projetos, pendingDrafts] = await Promise.all([
     getGlobalKPIs(),
     getSprintsWithMetrics(),
     getOverdueCards(),
@@ -34,6 +37,10 @@ async function getAdminDashboardData() {
         _count: { select: { sprints: true } },
       },
       orderBy: { createdAt: 'asc' },
+    }),
+    prisma.projectDraft.findMany({
+      where: { tenantId },
+      select: { projectId: true, savedAt: true },
     }),
   ])
 
@@ -85,7 +92,7 @@ async function getAdminDashboardData() {
   const activeProjetos = projetoMetrics.filter(p => p.status === 'ACTIVE')
   const concludedProjetos = projetoMetrics.filter(p => p.status === 'COMPLETED')
 
-  return { kpis, sprintMetrics, overdueCards, userMetrics, activeProjetos, concludedProjetos }
+  return { kpis, sprintMetrics, overdueCards, userMetrics, activeProjetos, concludedProjetos, pendingDrafts }
 }
 
 // eslint-disable-next-line @typescript-eslint/no-unused-vars
@@ -97,7 +104,8 @@ const STATUS_LABELS: Record<string, { label: string; cls: string }> = {
 }
 
 export default async function AdminDashboardPage() {
-  const { kpis, sprintMetrics, overdueCards, userMetrics, activeProjetos, concludedProjetos } = await getAdminDashboardData()
+  const { kpis, sprintMetrics, overdueCards, userMetrics, activeProjetos, concludedProjetos, pendingDrafts } = await getAdminDashboardData()
+  const draftProjectIds = new Set(pendingDrafts.map(d => d.projectId).filter(Boolean) as string[])
 
   return (
     <div className="min-h-screen bg-gray-50">
@@ -111,6 +119,18 @@ export default async function AdminDashboardPage() {
       </header>
 
       <main className="max-w-6xl mx-auto px-4 py-8 space-y-8">
+        {/* Rascunhos pendentes */}
+        {pendingDrafts.length > 0 && (
+          <div className="bg-amber-50 border border-amber-200 rounded-2xl p-4 flex items-center gap-3">
+            <svg className="w-5 h-5 text-amber-600 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+            </svg>
+            <span className="text-sm font-medium text-amber-800">
+              {pendingDrafts.length} projeto{pendingDrafts.length !== 1 ? 's' : ''} com alterações não salvas
+            </span>
+          </div>
+        )}
+
         {/* KPIs */}
         <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
           <KPICard label="Projetos actives" value={activeProjetos.length} color="blue" />
@@ -159,9 +179,16 @@ export default async function AdminDashboardPage() {
                   {activeProjetos.map(p => (
                     <tr key={p.id} className="border-b border-gray-50 last:border-0">
                       <td className="py-3">
-                        <Link href={`/projetos/${p.id}`} className="font-medium text-gray-900 hover:text-blue-600">
-                          {p.name}
-                        </Link>
+                        <div className="flex items-center gap-2">
+                          <Link href={`/projetos/${p.id}`} className="font-medium text-gray-900 hover:text-blue-600">
+                            {p.name}
+                          </Link>
+                          {draftProjectIds.has(p.id) && (
+                            <span className="inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-bold bg-amber-100 text-amber-700">
+                              Rascunho
+                            </span>
+                          )}
+                        </div>
                         {p.description && <p className="text-xs text-gray-400 truncate max-w-xs">{p.description}</p>}
                       </td>
                       <td className="py-3 text-center">

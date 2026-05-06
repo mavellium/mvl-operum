@@ -1,10 +1,12 @@
 'use client'
 
-import { useState, useTransition, useEffect, Suspense } from 'react'
+import { useState, useTransition, useEffect, useRef, Suspense } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
 import { createProjetoAction, updateProjetoAction, getProjetoAction } from '@/app/actions/projetos'
+import { deleteDraftAction, getDraftAction } from '@/app/actions/drafts'
 import { listUsersAction } from '@/app/actions/admin'
 import { getDepartmentsAction } from '@/app/actions/departments'
+import { useAutosave } from '@/hooks/useAutosave'
 import AvatarUpload from '@/components/profile/AvatarUpload'
 import MultiCreatableSelect from '@/components/ui/MultiCreatableSelect'
 import Link from 'next/link'
@@ -46,6 +48,13 @@ export default function NovoProjetoPage() {
   )
 }
 
+function formDataEqual(a: Record<string, unknown>, b: Record<string, unknown>): boolean {
+  const aKeys = Object.keys(a).sort()
+  const bKeys = Object.keys(b).sort()
+  if (aKeys.length !== bKeys.length) return false
+  return aKeys.every(k => JSON.stringify(a[k]) === JSON.stringify(b[k]))
+}
+
 const formatCurrency = (value: string) => {
     if (!value) return '';
     
@@ -76,9 +85,11 @@ function ProjetoFormContent() {
   const [usuarios, setUsuarios] = useState<Usuario[]>([])
   const [departamentosExistentes, setDepartamentosExistentes] = useState<string[]>([])
   const [error, setError] = useState('')
-  const [draftRestored, setDraftRestored] = useState(false)
-
-  const DRAFT_KEY = 'projeto-draft'
+  const [showDraftBanner, setShowDraftBanner] = useState(false)
+  const [activeDraftId, setActiveDraftId] = useState<string | null>(null)
+  const [userHasEdited, setUserHasEdited] = useState(false)
+  const publishedFormRef = useRef<typeof form | null>(null)
+  const publishedMacroFasesRef = useRef<MacroFase[] | null>(null)
 
   const currentYear = new Date().getFullYear()
   const years = Array.from({ length: 10 }, (_, i) => currentYear - i)
@@ -94,6 +105,13 @@ function ProjetoFormContent() {
 
   const [macroFases, setMacroFases] = useState<MacroFase[]>([{ fase: '', dataLimite: '', custo: '' }])
 
+  const { status: autosaveStatus, draftDbId } = useAutosave({
+    form: form as Record<string, unknown>,
+    macroFases,
+    projectId: editId,
+    enabled: !isLoadingEdit && userHasEdited,
+  })
+
   useEffect(() => {
     listUsersAction().then(r => {
       if ('users' in r && r.users) setUsuarios(r.users)
@@ -105,45 +123,48 @@ function ProjetoFormContent() {
     })
   }, [])
 
-  // Restore draft on mount (new projects only)
+  // Projeto novo: verificar rascunho pendente
   useEffect(() => {
     if (editId) return
-    try {
-      const raw = localStorage.getItem(DRAFT_KEY)
-      if (!raw) return
-      const draft = JSON.parse(raw) as { form: typeof form; macroFases: MacroFase[] }
-      if (draft.form && draft.macroFases) {
-        setForm(draft.form)
-        setMacroFases(draft.macroFases)
-        setDraftRestored(true)
-      }
-    } catch {
-      // ignore
+    const emptyForm = {
+      name: '', slogan: '', startDate: '', endDate: '', location: '',
+      logoUrl: '', initialMemberId: '',
+      justificativa: '', objetivos: '', metodologia: '', descricaoProduto: '',
+      premissas: '', restricoes: '', limitesAutoridade: '',
+      semestre: '', ano: '',
+      departamentos: [] as string[],
     }
+    const emptyFases: MacroFase[] = [{ fase: '', dataLimite: '', custo: '' }]
+    getDraftAction(null).then(result => {
+      if ('error' in result || !result.draft) return
+      const draftForm = result.draft.form as Record<string, unknown>
+      const draftFases = result.draft.macroFases
+      const isStale = formDataEqual(draftForm, emptyForm as Record<string, unknown>)
+      if (isStale) {
+        deleteDraftAction({ projectId: null, draftId: result.draftId })
+        return
+      }
+      publishedFormRef.current = emptyForm
+      publishedMacroFasesRef.current = emptyFases
+      setForm(draftForm as typeof form)
+      setMacroFases(draftFases)
+      setActiveDraftId(result.draftId)
+      setShowDraftBanner(true)
+    })
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
 
-  // Auto-save draft on every change (new projects only)
-  useEffect(() => {
-    if (editId) return
-    try {
-      localStorage.setItem(DRAFT_KEY, JSON.stringify({ form, macroFases }))
-    } catch {
-      // ignore
-    }
-  }, [editId, form, macroFases])
-
-  // Prefill em modo edição
+  // Prefill em modo edição + verificar rascunho pendente
   useEffect(() => {
     if (!editId) return
-    getProjetoAction(editId).then(result => {
+    getProjetoAction(editId).then(async result => {
       if ('error' in result || !result.projeto) {
         setError('Projeto não encontrado para edição.')
         setIsLoadingEdit(false)
         return
       }
       const p = result.projeto
-      setForm({
+      const publishedForm = {
         name: p.name ?? '',
         slogan: p.slogan ?? '',
         startDate: p.startDate ? new Date(p.startDate).toISOString().split('T')[0] : '',
@@ -161,33 +182,64 @@ function ProjetoFormContent() {
         semestre: p.semestre ?? '',
         ano: p.ano ? String(p.ano) : '',
         departamentos: p.departamentos ?? [],
-      })
-      if (p.macroFases?.length) {
-        setMacroFases(p.macroFases.map(f => ({
-          fase: f.fase,
-          dataLimite: f.dataLimite ?? '',
-          custo: f.custo ?? '',
-        })))
       }
+      setForm(publishedForm)
+      const publishedMacroFases = p.macroFases?.length
+        ? p.macroFases.map(f => ({ fase: f.fase, dataLimite: f.dataLimite ?? '', custo: f.custo ?? '' }))
+        : macroFases
+      if (p.macroFases?.length) setMacroFases(publishedMacroFases)
       setIsLoadingEdit(false)
+
+      const draftResult = await getDraftAction(editId)
+      if (!('error' in draftResult) && draftResult.draft) {
+        const draftForm = draftResult.draft.form as Record<string, unknown>
+        const draftFases = draftResult.draft.macroFases
+        const isStale =
+          formDataEqual(draftForm, publishedForm as Record<string, unknown>) &&
+          JSON.stringify(draftFases) === JSON.stringify(publishedMacroFases)
+        if (isStale) {
+          deleteDraftAction({ projectId: editId, draftId: draftResult.draftId })
+          return
+        }
+        publishedFormRef.current = publishedForm
+        publishedMacroFasesRef.current = publishedMacroFases
+        setForm(draftForm as typeof form)
+        setMacroFases(draftFases)
+        setActiveDraftId(draftResult.draftId)
+        setShowDraftBanner(true)
+      }
     })
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [editId])
+
+  const handleDiscardDraft = async () => {
+    const idToDelete = activeDraftId ?? draftDbId ?? undefined
+    if (idToDelete) await deleteDraftAction({ projectId: editId, draftId: idToDelete })
+    if (publishedFormRef.current) setForm(publishedFormRef.current)
+    if (publishedMacroFasesRef.current) setMacroFases(publishedMacroFasesRef.current)
+    setShowDraftBanner(false)
+    setActiveDraftId(null)
+    setUserHasEdited(false)
+  }
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
     const { name, value } = e.target
     setForm(prev => ({ ...prev, [name]: value }))
     if (error && name === 'name') setError('')
+    setUserHasEdited(true)
   }
 
-  const addMacroFase = () => setMacroFases([...macroFases, { fase: '', dataLimite: '', custo: '' }])
+  const addMacroFase = () => { setMacroFases([...macroFases, { fase: '', dataLimite: '', custo: '' }]); setUserHasEdited(true) }
   const updateMacroFase = (index: number, field: keyof MacroFase, value: string) => {
     const newFases = [...macroFases]
     newFases[index][field] = value
     setMacroFases(newFases)
+    setUserHasEdited(true)
   }
   const removeMacroFase = (index: number) => {
     if (macroFases.length === 1) return
     setMacroFases(macroFases.filter((_, i) => i !== index))
+    setUserHasEdited(true)
   }
 
   const calculateTotal = () => {
@@ -218,7 +270,8 @@ function ProjetoFormContent() {
         setError(result.error || 'Erro ao salvar projeto')
         return
       }
-      try { localStorage.removeItem(DRAFT_KEY) } catch { /* ignore */ }
+      const draftIdToDelete = draftDbId ?? activeDraftId ?? undefined
+      await deleteDraftAction({ projectId: editId, draftId: draftIdToDelete })
       router.push(`/projetos/${result.projeto.id}`)
     })
   }
@@ -252,7 +305,16 @@ function ProjetoFormContent() {
               <p className="text-xs text-slate-500 font-medium mt-0.5">{pageSubtitle}</p>
             </div>
           </div>
-          <div className="flex gap-3">
+          <div className="flex items-center gap-3">
+            {autosaveStatus === 'saving' && (
+              <span className="text-xs text-slate-400 font-medium">Salvando rascunho...</span>
+            )}
+            {autosaveStatus === 'saved' && (
+              <span className="text-xs text-slate-500 font-medium">Rascunho salvo</span>
+            )}
+            {autosaveStatus === 'error' && (
+              <span className="text-xs text-red-500 font-medium">Falha no rascunho</span>
+            )}
             <Link href="/projetos" className="px-5 py-2.5 text-sm font-semibold text-slate-600 bg-white border border-slate-200/80 rounded-xl hover:bg-slate-50 hover:text-slate-900 transition-all shadow-sm">
               Cancelar
             </Link>
@@ -294,20 +356,22 @@ function ProjetoFormContent() {
           </div>
         </div>
 
-        {draftRestored && (
-          <div className="mb-4 p-4 bg-amber-50 border border-amber-200 rounded-2xl text-sm text-amber-800 font-semibold flex items-center justify-between gap-3 animate-in fade-in slide-in-from-top-2">
-            <span>Rascunho recuperado — deseja continuar de onde parou?</span>
+        {showDraftBanner && (
+          <div className="mb-8 flex items-center justify-between gap-4 px-5 py-3.5 bg-amber-50 border border-amber-200 rounded-2xl animate-in fade-in slide-in-from-top-2">
+            <div className="flex items-center gap-2.5">
+              <svg className="w-4 h-4 text-amber-600 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+              </svg>
+              <span className="text-sm font-medium text-amber-800">
+                Você tem alterações não salvas. O formulário foi carregado com o rascunho mais recente.
+              </span>
+            </div>
             <button
               type="button"
-              onClick={() => {
-                try { localStorage.removeItem(DRAFT_KEY) } catch { /* ignore */ }
-                setForm({ name: '', slogan: '', startDate: '', endDate: '', location: '', logoUrl: '', initialMemberId: '', justificativa: '', objetivos: '', metodologia: '', descricaoProduto: '', premissas: '', restricoes: '', limitesAutoridade: '', semestre: '', ano: '', departamentos: [] })
-                setMacroFases([{ fase: '', dataLimite: '', custo: '' }])
-                setDraftRestored(false)
-              }}
-              className="shrink-0 px-3 py-1 text-xs bg-amber-100 hover:bg-amber-200 rounded-lg transition-colors"
+              onClick={handleDiscardDraft}
+              className="shrink-0 text-sm font-semibold text-amber-700 hover:text-amber-900 underline underline-offset-2 transition-colors"
             >
-              Descartar rascunho
+              Descartar
             </button>
           </div>
         )}
