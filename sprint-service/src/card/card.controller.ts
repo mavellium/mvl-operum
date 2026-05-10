@@ -5,6 +5,7 @@ import {
   Patch,
   Delete,
   Param,
+  Query,
   Body,
   Headers,
   HttpCode,
@@ -20,6 +21,12 @@ export class CardController {
   @Get('sprints/:sprintId/cards')
   listBySprint(@Param('sprintId') sprintId: string) {
     return this.cardService.listBySprint(sprintId)
+  }
+
+  @Get('cards/backlog')
+  listBacklog(@Query('projectId') projectId: string) {
+    if (!projectId) throw new BadRequestException('projectId é obrigatório')
+    return this.cardService.listBacklog(projectId)
   }
 
   @Get('cards/:id')

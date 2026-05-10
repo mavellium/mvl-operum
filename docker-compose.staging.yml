@@ -3,6 +3,7 @@
 
 services:
   app:
+    image: ghcr.io/${GHCR_OWNER}/app:staging
     deploy:
       resources:
         limits:
@@ -23,6 +24,7 @@ services:
       - "traefik.http.routers.mvl-staging.service=app-${COMPOSE_PROJECT_NAME}"
 
   api-gateway:
+    image: ghcr.io/${GHCR_OWNER}/api-gateway:staging
     deploy:
       resources:
         limits:
@@ -39,6 +41,7 @@ services:
       - "traefik.http.routers.api-staging.service=api-gateway-${COMPOSE_PROJECT_NAME}"
 
   auth-service:
+    image: ghcr.io/${GHCR_OWNER}/auth-service:staging
     deploy:
       resources:
         limits:
@@ -47,6 +50,7 @@ services:
       - .env
 
   file-service:
+    image: ghcr.io/${GHCR_OWNER}/file-service:staging
     deploy:
       resources:
         limits:
@@ -55,12 +59,19 @@ services:
       - .env
 
   notification-service:
+    image: ghcr.io/${GHCR_OWNER}/notification-service:staging
     deploy:
       resources:
         limits:
           memory: 256M
     env_file:
       - .env
+
+  project-service:
+    image: ghcr.io/${GHCR_OWNER}/project-service:staging
+
+  sprint-service:
+    image: ghcr.io/${GHCR_OWNER}/sprint-service:staging
 
   postgres:
     volumes:

@@ -28,6 +28,8 @@ export default async function SprintPage({ params, searchParams }: Props) {
     )
   }
 
+  const projectId = (result.sprint as { projectId?: string }).projectId ?? ''
+
   return (
     <SprintBoard
       sprint={{
@@ -35,6 +37,8 @@ export default async function SprintPage({ params, searchParams }: Props) {
         status: result.sprint.status as 'PLANNED' | 'ACTIVE' | 'COMPLETED',
       }}
       columns={result.columns}
+      backlogCards={result.backlogCards}
+      projectId={projectId}
       users={result.users}
       tags={result.tags}
       currentUser={currentUser}

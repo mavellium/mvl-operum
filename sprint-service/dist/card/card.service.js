@@ -15,9 +15,11 @@ exports.CreateCardSchema = zod_1.z.object({
     description: zod_1.z.string().optional(),
     color: zod_1.z.string().optional(),
     position: zod_1.z.number().int().optional(),
-    sprintId: zod_1.z.string(),
-    sprintColumnId: zod_1.z.string().optional(),
-    sprintPosition: zod_1.z.number().int().optional(),
+    sprintId: zod_1.z.string().nullable().optional(),
+    sprintColumnId: zod_1.z.string().nullable().optional(),
+    sprintPosition: zod_1.z.number().int().nullable().optional(),
+    status: zod_1.z.string().optional(),
+    projectId: zod_1.z.string().nullable().optional(),
     priority: zod_1.z.string().optional(),
     startDate: zod_1.z.string().datetime().optional(),
     endDate: zod_1.z.string().datetime().optional(),
@@ -33,6 +35,18 @@ let CardService = class CardService {
                 attachments: { where: { deletedAt: null } },
             },
             orderBy: [{ sprintColumnId: 'asc' }, { position: 'asc' }],
+        });
+    }
+    async listBacklog(projectId) {
+        return prisma_1.prisma.card.findMany({
+            where: { projectId, status: 'Backlog', sprintId: null, deletedAt: null },
+            include: {
+                tags: { include: { tag: true } },
+                responsibles: { include: { user: true } },
+                attachments: { where: { deletedAt: null } },
+                timeEntries: { where: { deletedAt: null } },
+            },
+            orderBy: { position: 'asc' },
         });
     }
     async findOne(id) {

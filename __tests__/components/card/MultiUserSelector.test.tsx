@@ -61,4 +61,35 @@ describe('MultiUserSelector', () => {
     await user.click(screen.getByRole('button', { name: /remover Ana/i }))
     expect(mockRemove).toHaveBeenCalledWith('c1', 'u1')
   })
+
+  it('does not crash when responsible has no user object (defensive)', async () => {
+    mockGetResponsibles.mockResolvedValue({
+      responsibles: [{ userId: 'u1', user: null }],
+    })
+    expect(() => render(<MultiUserSelector cardId="c1" users={users} />)).not.toThrow()
+    await waitFor(() => expect(screen.queryByText('Carregando...')).not.toBeInTheDocument())
+  })
+
+  it('calls onResponsiblesChange callback after adding a member', async () => {
+    const user = userEvent.setup()
+    const onResponsiblesChange = vi.fn()
+    render(<MultiUserSelector cardId="c1" users={users} onResponsiblesChange={onResponsiblesChange} />)
+    await waitFor(() => screen.getByRole('combobox', { name: /adicionar responsável/i }))
+    await user.selectOptions(screen.getByRole('combobox', { name: /adicionar responsável/i }), 'u1')
+    expect(onResponsiblesChange).toHaveBeenCalledWith(
+      expect.arrayContaining([expect.objectContaining({ userId: 'u1' })])
+    )
+  })
+
+  it('calls onResponsiblesChange callback after removing a member', async () => {
+    const user = userEvent.setup()
+    const onResponsiblesChange = vi.fn()
+    mockGetResponsibles.mockResolvedValue({
+      responsibles: [{ userId: 'u1', user: { id: 'u1', name: 'Ana', cargo: 'Dev', avatarUrl: null } }],
+    })
+    render(<MultiUserSelector cardId="c1" users={users} onResponsiblesChange={onResponsiblesChange} />)
+    await waitFor(() => screen.getByRole('button', { name: /remover Ana/i }))
+    await user.click(screen.getByRole('button', { name: /remover Ana/i }))
+    expect(onResponsiblesChange).toHaveBeenCalledWith([])
+  })
 })

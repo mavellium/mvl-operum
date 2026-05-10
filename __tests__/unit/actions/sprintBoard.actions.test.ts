@@ -17,6 +17,7 @@ vi.mock('@/lib/api-client', () => ({
   },
   cardsApi: {
     update: vi.fn(),
+    listBacklog: vi.fn(),
   },
 }))
 
@@ -39,8 +40,9 @@ describe('getSprintBoardAction', () => {
     vi.mocked(sprintsApi.listColumns).mockResolvedValue([{ id: 'sc1', title: 'A Fazer', position: 0 }])
     vi.mocked(adminApi.listAllUsers).mockResolvedValue([])
     vi.mocked(tagsApi.list).mockResolvedValue([])
+    vi.mocked(cardsApi.listBacklog).mockResolvedValue([])
 
-    const result = await getSprintBoardAction('s1')
+    const result = await getSprintBoardAction('s1', 'proj1')
     expect(result).toHaveProperty('sprint')
     expect(result).toHaveProperty('columns')
   })
@@ -51,8 +53,9 @@ describe('getSprintBoardAction', () => {
     vi.mocked(sprintsApi.listColumns).mockResolvedValue([])
     vi.mocked(adminApi.listAllUsers).mockResolvedValue([])
     vi.mocked(tagsApi.list).mockResolvedValue([])
+    vi.mocked(cardsApi.listBacklog).mockResolvedValue([])
 
-    const result = await getSprintBoardAction('s1')
+    const result = await getSprintBoardAction('s1', 'proj1')
     expect(result).toHaveProperty('error')
   })
 })
@@ -70,12 +73,21 @@ describe('addSprintColumnAction', () => {
 })
 
 describe('moveCardInSprintAction', () => {
-  it('calls cardsApi.update with new column and position', async () => {
+  it('calls cardsApi.update with new column, position, sprintId and status', async () => {
     mockVerify.mockResolvedValue({ userId: 'u1' })
     vi.mocked(cardsApi.update).mockResolvedValue(undefined)
 
-    const result = await moveCardInSprintAction('c1', 'sc2', 2)
-    expect(cardsApi.update).toHaveBeenCalledWith('c1', { sprintColumnId: 'sc2', sprintPosition: 2 })
+    const result = await moveCardInSprintAction('c1', 'sc2', 2, {
+      isBacklog: false,
+      currentSprintId: 's1',
+      destStatus: 'A fazer',
+    })
+    expect(cardsApi.update).toHaveBeenCalledWith('c1', {
+      sprintColumnId: 'sc2',
+      sprintPosition: 2,
+      sprintId: 's1',
+      status: 'A fazer',
+    })
     expect(result).toHaveProperty('success', true)
   })
 })

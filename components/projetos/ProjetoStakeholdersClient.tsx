@@ -55,6 +55,8 @@ export type StakeholderUnificado = {
   departamento?: string[]
   isGerente?: boolean
   hourlyRate?: number | null
+  remuneracao?: number | null
+  horasDiarias?: number | null
   startDate?: string
   userRole?: string
   signatureUrl?: string | null
@@ -116,7 +118,8 @@ type FormState = {
   cargos: string[]
   departamento: string[]
   isGerente: boolean
-  hourlyRate: string
+  remuneracao: string
+  horasDiarias: string
   password: string
   forcePasswordChange: boolean
 }
@@ -135,7 +138,8 @@ const emptyForm: FormState = {
   cargos: [],
   departamento: [],
   isGerente: false,
-  hourlyRate: '',
+  remuneracao: '',
+  horasDiarias: '',
   password: '',
   forcePasswordChange: true,
 }
@@ -485,7 +489,8 @@ export default function ProjetoStakeholdersClient({
       cargos: [],
       departamento: [],
       isGerente: false,
-      hourlyRate: '',
+      remuneracao: '',
+      horasDiarias: '',
       password: '',
       forcePasswordChange: false,
     })
@@ -512,10 +517,11 @@ export default function ProjetoStakeholdersClient({
       cargos: s.cargos ?? [],
       departamento: s.departamento ?? [],
       isGerente: s.isGerente ?? false,
-      hourlyRate:
-        s.hourlyRate != null
-          ? s.hourlyRate.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })
+      remuneracao:
+        s.remuneracao != null
+          ? s.remuneracao.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })
           : '',
+      horasDiarias: s.horasDiarias != null ? String(s.horasDiarias) : '',
       password: '',
       forcePasswordChange: false,
     })
@@ -935,7 +941,8 @@ export default function ProjetoStakeholdersClient({
         cidade: formState.address.cidade || undefined,
         estado: formState.address.estado || undefined,
         notes: formState.notes || undefined,
-        hourlyRate: isAdmin ? (parseBRLFloat(formState.hourlyRate) ?? undefined) : undefined,
+        remuneracao: isAdmin ? (parseBRLFloat(formState.remuneracao) ?? undefined) : undefined,
+        horasDiarias: isAdmin ? (parseFloat(formState.horasDiarias) || undefined) : undefined,
         cargos: formState.cargos,
         departamento: formState.departamento,
         isGerente: formState.isGerente,
@@ -962,7 +969,8 @@ export default function ProjetoStakeholdersClient({
                 cargos: formState.cargos,
                 departamento: formState.departamento,
                 isGerente: formState.isGerente,
-                hourlyRate: isAdmin ? (parseBRLFloat(formState.hourlyRate) ?? x.hourlyRate) : x.hourlyRate,
+                remuneracao: isAdmin ? (parseBRLFloat(formState.remuneracao) ?? x.remuneracao) : x.remuneracao,
+                horasDiarias: isAdmin ? (parseFloat(formState.horasDiarias) || x.horasDiarias) : x.horasDiarias,
               }
             : x,
         ),
@@ -971,11 +979,11 @@ export default function ProjetoStakeholdersClient({
     }
   }
 
-  const handleCurrencyChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleRemuneracaoChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const value = e.target.value.replace(/\D/g, '')
-    if (!value) { setField('hourlyRate', ''); return }
+    if (!value) { setField('remuneracao', ''); return }
     const numberValue = parseInt(value, 10) / 100
-    setField('hourlyRate', numberValue.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 }))
+    setField('remuneracao', numberValue.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 }))
   }
 
   const col3Title = isCreating && addMode === 'interno'
@@ -1114,10 +1122,10 @@ export default function ProjetoStakeholdersClient({
                         <Building2 className="w-3 h-3 shrink-0" />{s.departamento.join(', ')}
                       </span>
                     )}
-                    {s.tipo === 'interno' && s.hourlyRate != null && s.hourlyRate > 0 && (
+                    {s.tipo === 'interno' && (s.remuneracao ?? s.hourlyRate) != null && (s.remuneracao ?? s.hourlyRate)! > 0 && (
                       <span className="flex items-center gap-1 text-[11px] text-emerald-600 font-semibold">
                         <DollarSign className="w-3 h-3 shrink-0" />
-                        {s.hourlyRate.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}/h
+                        {(s.remuneracao ?? s.hourlyRate)!.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}{s.remuneracao ? '/mês' : '/h'}
                       </span>
                     )}
                     {s.email && (
@@ -1398,22 +1406,74 @@ export default function ProjetoStakeholdersClient({
             {/* Campos específicos de Interno */}
             {selected?.tipo === 'interno' && (
               <>
+                {/* Remuneração + Horas por dia */}
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                   <div>
-                    <label className="block text-xs font-medium text-gray-600 mb-1">Valor/hora</label>
+                    <label htmlFor="field-remuneracao" className="block text-xs font-medium text-gray-600 mb-1">Remuneração mensal</label>
                     <div className="relative">
                       <span className="absolute inset-y-0 left-0 pl-3 flex items-center text-sm font-medium text-gray-500 pointer-events-none">R$</span>
                       <input
+                        id="field-remuneracao"
                         type="text"
-                        value={formState.hourlyRate}
-                        onChange={handleCurrencyChange}
+                        value={formState.remuneracao}
+                        onChange={handleRemuneracaoChange}
                         disabled={!isAdmin}
                         placeholder="0,00"
                         className={`${inputCls} pl-10 ${disabledCls}`}
                       />
                     </div>
                   </div>
-                  <div className="flex items-center gap-3 pt-5">
+                  <div>
+                    <label htmlFor="field-horas-diarias" className="block text-xs font-medium text-gray-600 mb-1">Horas por dia</label>
+                    <input
+                      id="field-horas-diarias"
+                      type="number"
+                      min="0"
+                      step="0.5"
+                      value={formState.horasDiarias}
+                      onChange={e => setField('horasDiarias', e.target.value)}
+                      disabled={!isAdmin}
+                      placeholder="8"
+                      className={`${inputCls} ${disabledCls}`}
+                    />
+                  </div>
+                </div>
+
+                {/* Valores calculados */}
+                {(() => {
+                  const remNum = parseBRLFloat(formState.remuneracao) ?? 0
+                  const horasNum = parseFloat(formState.horasDiarias) || 0
+                  const valid = horasNum > 0
+                  const fmtBRL = (v: number) =>
+                    v.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL', minimumFractionDigits: 2, maximumFractionDigits: 2 })
+                  const valorDia = valid ? remNum / 30 : null
+                  const valorHora = valid ? (remNum / 30) / horasNum : null
+                  const valorMinuto = valid ? (remNum / 30) / horasNum / 60 : null
+                  return (
+                    <div className="grid grid-cols-3 gap-3">
+                      <div>
+                        <p className="text-xs font-medium text-gray-500 mb-1">Valor/dia</p>
+                        <p data-testid="valor-dia" className="text-sm font-semibold text-gray-700 bg-gray-50 border border-gray-200 rounded-xl px-3 py-2">
+                          {valorDia !== null ? fmtBRL(valorDia) : '—'}
+                        </p>
+                      </div>
+                      <div>
+                        <p className="text-xs font-medium text-gray-500 mb-1">Valor/hora</p>
+                        <p data-testid="valor-hora" className="text-sm font-semibold text-gray-700 bg-gray-50 border border-gray-200 rounded-xl px-3 py-2">
+                          {valorHora !== null ? fmtBRL(valorHora) : '—'}
+                        </p>
+                      </div>
+                      <div>
+                        <p className="text-xs font-medium text-gray-500 mb-1">Valor/minuto</p>
+                        <p data-testid="valor-minuto" className="text-sm font-semibold text-gray-700 bg-gray-50 border border-gray-200 rounded-xl px-3 py-2">
+                          {valorMinuto !== null ? fmtBRL(valorMinuto) : '—'}
+                        </p>
+                      </div>
+                    </div>
+                  )
+                })()}
+
+                <div className="flex items-center justify-between py-1">
                     <div>
                       <span className="text-xs font-medium text-gray-600">Gerente do Projeto</span>
                       <p className="text-[10px] text-gray-400">Concede acesso de gerência</p>
@@ -1436,7 +1496,6 @@ export default function ProjetoStakeholdersClient({
                     >
                       <span className={`inline-block h-4 w-4 transform rounded-full bg-white shadow transition-transform ${formState.isGerente ? 'translate-x-6' : 'translate-x-1'}`} />
                     </button>
-                  </div>
                 </div>
 
                 <div>

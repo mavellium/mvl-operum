@@ -22,6 +22,11 @@ let CardController = class CardController {
     listBySprint(sprintId) {
         return this.cardService.listBySprint(sprintId);
     }
+    listBacklog(projectId) {
+        if (!projectId)
+            throw new common_1.BadRequestException('projectId é obrigatório');
+        return this.cardService.listBacklog(projectId);
+    }
     findOne(id) {
         return this.cardService.findOne(id);
     }
@@ -72,6 +77,13 @@ __decorate([
     __metadata("design:paramtypes", [String]),
     __metadata("design:returntype", void 0)
 ], CardController.prototype, "listBySprint", null);
+__decorate([
+    (0, common_1.Get)('cards/backlog'),
+    __param(0, (0, common_1.Query)('projectId')),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [String]),
+    __metadata("design:returntype", void 0)
+], CardController.prototype, "listBacklog", null);
 __decorate([
     (0, common_1.Get)('cards/:id'),
     __param(0, (0, common_1.Param)('id')),

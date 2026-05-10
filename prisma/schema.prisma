@@ -77,6 +77,7 @@ model Project {
   updatedAt   DateTime      @updatedAt
 
   sprints         Sprint[]
+  cards           Card[]
   members         UserProject[]
   usuariosRole    UserProjectRole[]
   macroFases      ProjectMacroFase[]
@@ -148,6 +149,8 @@ model UserProject {
   role         String?
   departmentId String?
   hourlyRate   Float?
+  remuneracao  Float?
+  horasDiarias Float?
   startDate    DateTime    @default(now())
   endDate      DateTime?
   order        Int         @default(0)
@@ -354,11 +357,14 @@ model Card {
   description    String        @default("")
   color          String        @default("#6b7280")
   position       Int           @default(0)
-  sprintId       String
-  sprint         Sprint        @relation(fields: [sprintId], references: [id], onDelete: Cascade)
+  sprintId       String?
+  sprint         Sprint?       @relation(fields: [sprintId], references: [id], onDelete: SetNull)
   sprintColumnId String?
   sprintColumn   SprintColumn? @relation("SprintColumnCards", fields: [sprintColumnId], references: [id], onDelete: SetNull)
   sprintPosition Int?
+  status         String        @default("Backlog")
+  projectId      String?
+  project        Project?      @relation(fields: [projectId], references: [id])
   priority       String        @default("media")
   tagsImport     String        @default("")
   startDate      DateTime?
@@ -366,6 +372,21 @@ model Card {
   deletedAt      DateTime?
   createdAt      DateTime      @default(now())
   updatedAt      DateTime      @updatedAt
+
+  // Orçado
+  orcado_min    Int?
+  orcado_horas  Float?
+  orcado_dias   Float?
+  orcado_total  Float?
+  data_prevista DateTime?
+
+  // Realizado
+  realizado_min    Int?
+  realizado_horas  Float?
+  realizado_dias   Float?
+  realizado_total  Float?
+  data_realizacao  DateTime?
+  situacao_status  String?
 
   tags         CardTag[]
   attachments  Attachment[]

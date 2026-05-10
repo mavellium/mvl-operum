@@ -5,6 +5,7 @@ import { isProjectManager } from '@/services/projectRoleService'
 import { findAllByProjeto } from '@/services/sprintService'
 import { getSprintMetrics } from '@/services/dashboardService'
 import EmptyState from '@/components/ui/EmptyState'
+import DeleteSprintButton from '@/components/sprint/DeleteSprintButton'
 import Link from 'next/link'
 
 export const dynamic = 'force-dynamic'
@@ -111,17 +112,16 @@ export default async function ProjetoSprintsPage({
                 : 0
 
               return (
-                // O Card inteiro virou um Link com efeitos de hover
-                <Link
+                <div
                   key={sprint.id}
-                  href={`/sprints/${sprint.id}`}
-                  className="block bg-white rounded-xl shadow-sm border border-gray-100 p-5 hover:shadow-md hover:border-blue-200 transition-all group"
+                  className="group/sprint relative bg-white rounded-xl shadow-sm border border-gray-100 hover:shadow-md hover:border-blue-200 transition-all"
                 >
+                  <Link href={`/sprints/${sprint.id}`} className="block p-5">
                   {/* Topo do Card: Título, Status e Datas */}
                   <div className="flex items-start justify-between gap-3 mb-3">
                     <div className="flex-1 min-w-0">
                       <div className="flex items-center gap-2 mb-1">
-                        <h2 className="font-bold text-gray-900 text-lg leading-tight group-hover:text-blue-700 transition-colors truncate">
+                        <h2 className="font-bold text-gray-900 text-lg leading-tight group-hover/sprint:text-blue-700 transition-colors truncate">
                           {sprint.name}
                         </h2>
                         <span className={`inline-flex items-center px-2 py-0.5 rounded-full text-[11px] font-medium border ${sc.cls}`}>
@@ -135,7 +135,7 @@ export default async function ProjetoSprintsPage({
                       )}
                     </div>
                     {/* Ícone de seta que aparece no hover */}
-                    <svg className="w-5 h-5 text-gray-300 group-hover:text-blue-400 transition-colors shrink-0 mt-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <svg className="w-5 h-5 text-gray-300 group-hover/sprint:text-blue-400 transition-colors shrink-0 mt-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
                     </svg>
                   </div>
@@ -170,7 +170,6 @@ export default async function ProjetoSprintsPage({
                   </div>
 
                   {/* Rodapé: Qualidade, Dificuldade e Alertas de Atraso */}
-                  {/* Se qualidade/dificuldade não existirem no seu banco para essa tela, eles simplesmente não aparecerão */}
                   {('qualidade' in sprint || 'dificuldade' in sprint || metrics.cardsAtrasados > 0) && (
                     <div className="flex gap-4 mt-3 pt-3 border-t border-gray-50">
                       {sprint.qualidade != null && (
@@ -201,7 +200,13 @@ export default async function ProjetoSprintsPage({
                       )}
                     </div>
                   )}
-                </Link>
+                  </Link>
+                  {canEdit && (
+                    <div className="absolute top-3.5 right-12">
+                      <DeleteSprintButton sprintId={sprint.id} sprintName={sprint.name} projectId={projetoId} />
+                    </div>
+                  )}
+                </div>
               )
             })}
           </div>

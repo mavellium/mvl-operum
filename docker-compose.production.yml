@@ -4,6 +4,7 @@
 services:
 
   app:
+    image: ghcr.io/${GHCR_OWNER}/app:prod
     deploy:
       resources:
         limits:
@@ -23,6 +24,7 @@ services:
       - "traefik.http.routers.mvl-prod.middlewares=app-ratelimit@file,secure-headers@file"
 
   api-gateway:
+    image: ghcr.io/${GHCR_OWNER}/api-gateway:prod
     deploy:
       resources:
         limits:
@@ -40,6 +42,7 @@ services:
       - "traefik.http.routers.api-prod.middlewares=secure-headers@file"
 
   auth-service:
+    image: ghcr.io/${GHCR_OWNER}/auth-service:prod
     deploy:
       resources:
         limits:
@@ -48,6 +51,7 @@ services:
       - .env
 
   file-service:
+    image: ghcr.io/${GHCR_OWNER}/file-service:prod
     deploy:
       resources:
         limits:
@@ -56,12 +60,19 @@ services:
       - .env
 
   notification-service:
+    image: ghcr.io/${GHCR_OWNER}/notification-service:prod
     deploy:
       resources:
         limits:
           memory: 512M
     env_file:
       - .env
+
+  project-service:
+    image: ghcr.io/${GHCR_OWNER}/project-service:prod
+
+  sprint-service:
+    image: ghcr.io/${GHCR_OWNER}/sprint-service:prod
 
   postgres:
     volumes:

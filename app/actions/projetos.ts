@@ -215,7 +215,8 @@ export async function updateProjetoMemberAction(
     cidade?: string
     estado?: string
     notes?: string
-    hourlyRate?: number | string
+    remuneracao?: number | string
+    horasDiarias?: number | string
     cargos?: string[]
     departamento?: string[]
     isGerente?: boolean
@@ -227,15 +228,26 @@ export async function updateProjetoMemberAction(
     const canManage = isAdmin || await isProjectManager(sessionUserId, projetoId)
     if (!canManage) throw new Error('Acesso não autorizado')
 
-    const { isGerente: makeGerente, cargos, departamento, hourlyRate: rawRate, name, email, ...profileData } = data
+    const { isGerente: makeGerente, cargos, departamento, remuneracao: rawRemuneracao, horasDiarias: rawHorasDiarias, name, email, ...profileData } = data
 
-    let hourlyRate: number | undefined
-    if (rawRate !== undefined) {
-      const n = typeof rawRate === 'string'
-        ? parseFloat(rawRate.replace(/\./g, '').replace(',', '.'))
-        : rawRate
-      if (!isNaN(n)) hourlyRate = n
+    let remuneracao: number | undefined
+    if (rawRemuneracao !== undefined) {
+      const n = typeof rawRemuneracao === 'string'
+        ? parseFloat(rawRemuneracao.replace(/\./g, '').replace(',', '.'))
+        : rawRemuneracao
+      if (!isNaN(n)) remuneracao = n
     }
+
+    let horasDiarias: number | undefined
+    if (rawHorasDiarias !== undefined) {
+      const h = Number(rawHorasDiarias)
+      if (!isNaN(h) && h > 0) horasDiarias = h
+    }
+
+    const hourlyRate =
+      remuneracao !== undefined && horasDiarias !== undefined
+        ? remuneracao / 30 / horasDiarias
+        : undefined
 
     // 1. Update User profile via Prisma (name/email only for admin)
     const userUpdateData: Record<string, unknown> = { ...profileData }
@@ -243,8 +255,6 @@ export async function updateProjetoMemberAction(
       if (name?.trim()) userUpdateData.name = name.trim()
       if (email?.trim()) userUpdateData.email = email.trim()
     }
-    if (hourlyRate !== undefined) userUpdateData.hourlyRate = hourlyRate
-
     await prisma.user.update({
       where: { id: userId, tenantId, deletedAt: null },
       data: userUpdateData,
@@ -303,6 +313,8 @@ export async function updateProjetoMemberAction(
     // 2c. Update UserProject
     const userProjectData: Record<string, unknown> = {}
     if (cargos !== undefined) userProjectData.role = cargos.join(', ')
+    if (remuneracao !== undefined) userProjectData.remuneracao = remuneracao
+    if (horasDiarias !== undefined) userProjectData.horasDiarias = horasDiarias
     if (hourlyRate !== undefined) userProjectData.hourlyRate = hourlyRate
     if (deptId !== undefined) userProjectData.departmentId = deptId
 

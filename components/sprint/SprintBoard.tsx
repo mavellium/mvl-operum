@@ -13,6 +13,7 @@ import {
   deleteSprintColumnAction,
   reorderSprintColumnsAction,
   createCardInSprintAction,
+  createBacklogCardAction,
   updateCardInSprintAction,
   deleteCardInSprintAction,
 } from '@/app/actions/sprintBoard'
@@ -53,14 +54,38 @@ interface Sprint {
 interface SprintBoardProps {
   sprint: Sprint
   columns: SprintColumnData[]
+  backlogCards?: SprintCard[]
+  projectId: string
   users?: { id: string; name: string; email: string; avatarUrl?: string | null }[]
   tags?: { id: string; name: string; color: string }[]
   currentUser?: { id: string; name: string; email: string; avatarUrl?: string | null } | null
   initialCardId?: string | null
 }
 
+const BACKLOG_COLUMN_ID = 'BACKLOG'
+const DEFAULT_SPRINT_COLUMNS = ['A fazer', 'Em andamento', 'Teste', 'Concluído']
+
+function buildInitialColumns(serverColumns: SprintColumnData[], backlogCards: SprintCard[]): SprintColumnData[] {
+  const backlogColumn: SprintColumnData = { id: BACKLOG_COLUMN_ID, title: 'Backlog', position: -1, cards: backlogCards }
+
+  const sprintCols = serverColumns.map(c => ({ ...c, cards: c.cards ?? [] }))
+  for (const title of DEFAULT_SPRINT_COLUMNS) {
+    if (!sprintCols.some(c => c.title.toLowerCase() === title.toLowerCase())) {
+      sprintCols.push({ id: `virtual-${title.toLowerCase().replace(/\s+/g, '-')}`, title, position: sprintCols.length, cards: [] })
+    }
+  }
+  sprintCols.sort((a, b) => {
+    const aV = a.id.startsWith('virtual-'), bV = b.id.startsWith('virtual-')
+    if (aV && !bV) return 1
+    if (!aV && bV) return -1
+    return a.position - b.position
+  })
+
+  return [backlogColumn, ...sprintCols]
+}
+
 function toColumnType(col: SprintColumnData): ColumnType {
-  return { id: col.id, title: col.title, cardIds: col.cards.map(c => c.id) }
+  return { id: col.id, title: col.title, cardIds: (col.cards ?? []).map(c => c.id) }
 }
 
 function toCardType(card: SprintCard, sprintId: string): CardType {
@@ -90,8 +115,8 @@ function toCardType(card: SprintCard, sprintId: string): CardType {
   }
 }
 
-export default function SprintBoard({ sprint, columns: initialColumns, users, tags, currentUser, initialCardId }: SprintBoardProps) {
-  const [columns, setColumns] = useState(initialColumns)
+export default function SprintBoard({ sprint, columns: initialColumns, backlogCards = [], projectId, users, tags, currentUser, initialCardId }: SprintBoardProps) {
+  const [columns, setColumns] = useState(() => buildInitialColumns(initialColumns, backlogCards))
   const [newColTitle, setNewColTitle] = useState('')
   const [addingCol, setAddingCol] = useState(false)
   const [openCardId, setOpenCardId] = useState<string | null>(initialCardId ?? null)
@@ -105,6 +130,22 @@ export default function SprintBoard({ sprint, columns: initialColumns, users, ta
   const [scrollLeft, setScrollLeft] = useState(0)
 
   const isImageBg = boardBg.startsWith('url')
+
+  // Cria as colunas padrão no banco quando a sprint não tem nenhuma coluna real
+  useEffect(() => {
+    const virtualCols = columns.filter(c => c.id !== BACKLOG_COLUMN_ID && c.id.startsWith('virtual-'))
+    if (virtualCols.length === 0) return
+
+    let cancelled = false
+    ;(async () => {
+      for (const col of virtualCols) {
+        if (cancelled) break
+        await ensureRealColumn(col)
+      }
+    })()
+    return () => { cancelled = true }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [sprint.id])
 
   useEffect(() => {
     if (!openCardId) return
@@ -135,17 +176,29 @@ export default function SprintBoard({ sprint, columns: initialColumns, users, ta
     scrollContainerRef.current.scrollLeft = scrollLeft - walk
   }
 
+  async function ensureRealColumn(col: SprintColumnData): Promise<SprintColumnData> {
+    if (!col.id.startsWith('virtual-')) return col
+    const result = await addSprintColumnAction(sprint.id, col.title)
+    if (!result || 'error' in result || !result.column) return col
+    const realCol = { ...col, id: result.column.id }
+    setColumns(prev => prev.map(c => c.id === col.id ? realCol : c))
+    return realCol
+  }
+
   async function handleDragEnd(result: DropResult) {
     const { destination, source, draggableId, type } = result
     if (!destination) return
     if (destination.droppableId === source.droppableId && destination.index === source.index) return
 
     if (type === 'COLUMN') {
+      // Backlog column is always fixed at position 0 — skip reorder if it's involved
+      if (source.index === 0 || destination.index === 0) return
       const newOrder = [...columns]
       const [moved] = newOrder.splice(source.index, 1)
       newOrder.splice(destination.index, 0, moved)
       setColumns(newOrder)
-      await reorderSprintColumnsAction(sprint.id, newOrder.map(c => c.id))
+      const sprintColIds = newOrder.filter(c => c.id !== BACKLOG_COLUMN_ID && !c.id.startsWith('virtual-')).map(c => c.id)
+      await reorderSprintColumnsAction(sprint.id, sprintColIds)
       return
     }
 
@@ -158,7 +211,20 @@ export default function SprintBoard({ sprint, columns: initialColumns, users, ta
     dstCol.cards.splice(destination.index, 0, movedCard)
     setColumns(newColumns)
 
-    await moveCardInSprintAction(draggableId, destination.droppableId, destination.index)
+    const isBacklogDest = destination.droppableId === BACKLOG_COLUMN_ID
+    let finalDestColId = destination.droppableId
+
+    if (!isBacklogDest && dstCol.id.startsWith('virtual-')) {
+      const realCol = await ensureRealColumn(dstCol)
+      finalDestColId = realCol.id
+    }
+
+    await moveCardInSprintAction(draggableId, finalDestColId, destination.index, {
+      isBacklog: isBacklogDest,
+      currentSprintId: sprint.id,
+      destStatus: isBacklogDest ? 'Backlog' : dstCol.title,
+      projectId,
+    })
   }
 
   async function handleAddColumn() {
@@ -182,9 +248,42 @@ export default function SprintBoard({ sprint, columns: initialColumns, users, ta
   }
 
   async function handleAddCard(columnId: string, data: { title: string; description: string; color: CardColor; priority?: string }) {
+    if (columnId === BACKLOG_COLUMN_ID) {
+      const result = await createBacklogCardAction({
+        projectId,
+        title: data.title,
+        description: data.description,
+        color: data.color,
+        priority: data.priority,
+      })
+      if ('card' in result && result.card) {
+        const newCard: SprintCard = {
+          id: result.card.id,
+          title: result.card.title,
+          description: result.card.description,
+          color: result.card.color,
+          tags: [],
+          attachments: [],
+          timeEntries: [],
+        }
+        setColumns(cols => cols.map(col =>
+          col.id === BACKLOG_COLUMN_ID ? { ...col, cards: [...col.cards, newCard] } : col
+        ))
+      }
+      return
+    }
+
+    let realColumnId = columnId
+    if (columnId.startsWith('virtual-')) {
+      const col = columns.find(c => c.id === columnId)
+      if (col) {
+        const realCol = await ensureRealColumn(col)
+        realColumnId = realCol.id
+      }
+    }
     const result = await createCardInSprintAction({
       sprintId: sprint.id,
-      sprintColumnId: columnId,
+      sprintColumnId: realColumnId,
       title: data.title,
       description: data.description,
       color: data.color,
@@ -260,23 +359,33 @@ export default function SprintBoard({ sprint, columns: initialColumns, users, ta
                   {...provided.droppableProps}
                   className="flex h-full items-start space-x-4"
                 >
-                  {columns.map((col, index) => (
-                    <div key={col.id} className="h-full">
-                      <ColumnComponent
-                        column={toColumnType(col)}
-                        cards={col.cards.map(c => toCardType(c, sprint.id))}
-                        index={index}
-                        onRenameColumn={handleRenameColumn}
-                        onDeleteColumn={handleDeleteColumn}
-                        onAddCard={(colId) => setAddingCardToColumn(colId)}
-                        onUpdateCard={handleUpdateCard}
-                        onDeleteCard={handleDeleteCard}
-                        users={users}
-                        boardTags={tags}
-                        onCardClick={(cardId) => setOpenCardId(cardId)}
-                      />
-                    </div>
-                  ))}
+                  {columns.map((col, index) => {
+                    const isBacklog = col.id === BACKLOG_COLUMN_ID
+                    const isVirtual = col.id.startsWith('virtual-')
+                    return (
+                      <div
+                        key={col.id}
+                        className={`h-full ${isBacklog ? 'opacity-95' : ''}`}
+                        title={isBacklog ? 'Backlog Universal — cards sem sprint associada' : undefined}
+                      >
+                        <ColumnComponent
+                          column={toColumnType(col)}
+                          cards={col.cards.map(c => toCardType(c, sprint.id))}
+                          index={index}
+                          isBacklog={isBacklog}
+                          isVirtual={isVirtual}
+                          onRenameColumn={isBacklog ? undefined : handleRenameColumn}
+                          onDeleteColumn={isBacklog ? undefined : handleDeleteColumn}
+                          onAddCard={(colId) => setAddingCardToColumn(colId)}
+                          onUpdateCard={handleUpdateCard}
+                          onDeleteCard={handleDeleteCard}
+                          users={users}
+                          boardTags={tags}
+                          onCardClick={(cardId) => setOpenCardId(cardId)}
+                        />
+                      </div>
+                    )
+                  })}
                   {provided.placeholder}
 
                   <div className="w-72 shrink-0 h-full">
@@ -405,6 +514,16 @@ export default function SprintBoard({ sprint, columns: initialColumns, users, ta
               content: c.content,
               createdAt: new Date(c.createdAt),
             }))}
+            onResponsiblesChange={(cardId, responsibles) => {
+              setColumns(prev => prev.map(col => ({
+                ...col,
+                cards: col.cards.map(c =>
+                  c.id === cardId
+                    ? { ...c, responsibles: responsibles.map(r => ({ user: r.user })) }
+                    : c
+                ),
+              })))
+            }}
           />
         )
       })()}

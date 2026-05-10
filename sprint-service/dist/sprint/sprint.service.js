@@ -68,7 +68,16 @@ let SprintService = class SprintService {
         });
     }
     async remove(id) {
-        await this.findOne(id);
+        const sprint = await this.findOne(id);
+        await prisma_1.prisma.card.updateMany({
+            where: { sprintId: id, status: { not: 'Concluído' }, deletedAt: null },
+            data: {
+                sprintId: null,
+                sprintColumnId: null,
+                status: 'Backlog',
+                projectId: sprint.projectId,
+            },
+        });
         await prisma_1.prisma.sprint.update({ where: { id }, data: { deletedAt: new Date() } });
     }
     async listColumns(sprintId) {
@@ -76,6 +85,18 @@ let SprintService = class SprintService {
         return prisma_1.prisma.sprintColumn.findMany({
             where: { sprintId, deletedAt: null },
             orderBy: { position: 'asc' },
+            include: {
+                cards: {
+                    where: { deletedAt: null },
+                    orderBy: { sprintPosition: 'asc' },
+                    include: {
+                        tags: { include: { tag: true } },
+                        responsibles: { include: { user: true } },
+                        attachments: { where: { deletedAt: null } },
+                        timeEntries: { where: { deletedAt: null } },
+                    },
+                },
+            },
         });
     }
     async createColumn(sprintId, dto) {

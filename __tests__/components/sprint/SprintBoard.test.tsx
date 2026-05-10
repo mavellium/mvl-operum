@@ -104,54 +104,54 @@ beforeEach(() => vi.clearAllMocks())
 
 describe('SprintBoard', () => {
   it('renders sprint name in header', () => {
-    render(<SprintBoard sprint={sprint} columns={columns} />)
+    render(<SprintBoard sprint={sprint} columns={columns} projectId="proj1" />)
     expect(screen.getByText('Sprint 1')).toBeInTheDocument()
   })
 
   it('renders all columns', () => {
-    render(<SprintBoard sprint={sprint} columns={columns} />)
+    render(<SprintBoard sprint={sprint} columns={columns} projectId="proj1" />)
     expect(screen.getByText('A Fazer')).toBeInTheDocument()
     expect(screen.getByText('Concluído')).toBeInTheDocument()
   })
 
   it('renders cards in columns', () => {
-    render(<SprintBoard sprint={sprint} columns={columns} />)
+    render(<SprintBoard sprint={sprint} columns={columns} projectId="proj1" />)
     expect(screen.getByText('Task 1')).toBeInTheDocument()
   })
 
   it('renders add column button', () => {
-    render(<SprintBoard sprint={sprint} columns={columns} />)
+    render(<SprintBoard sprint={sprint} columns={columns} projectId="proj1" />)
     expect(screen.getByText(/nova coluna/i)).toBeInTheDocument()
   })
 
   it('renders status badge', () => {
-    render(<SprintBoard sprint={sprint} columns={columns} />)
+    render(<SprintBoard sprint={sprint} columns={columns} projectId="proj1" />)
     expect(screen.getByText('Ativa')).toBeInTheDocument()
   })
 
   it('renders delete column button for each column', () => {
-    render(<SprintBoard sprint={sprint} columns={columns} />)
+    render(<SprintBoard sprint={sprint} columns={columns} projectId="proj1" />)
     expect(screen.getByRole('button', { name: /excluir coluna a fazer/i })).toBeInTheDocument()
   })
 
   it('renders card with tags', () => {
-    render(<SprintBoard sprint={sprint} columns={columns} users={users} tags={tags} />)
+    render(<SprintBoard sprint={sprint} columns={columns} projectId="proj1" users={users} tags={tags} />)
     expect(screen.getByText('Bug')).toBeInTheDocument()
   })
 
   it('column header has inline editable title', () => {
-    render(<SprintBoard sprint={sprint} columns={columns} />)
+    render(<SprintBoard sprint={sprint} columns={columns} projectId="proj1" />)
     const titles = screen.getAllByText('A Fazer')
     expect(titles.length).toBeGreaterThanOrEqual(1)
   })
 
   it('renders board action menu button', () => {
-    render(<SprintBoard sprint={sprint} columns={columns} />)
+    render(<SprintBoard sprint={sprint} columns={columns} projectId="proj1" />)
     expect(screen.getByRole('button', { name: /board actions/i })).toBeInTheDocument()
   })
 
   it('opens CSV import modal via action menu', () => {
-    render(<SprintBoard sprint={sprint} columns={columns} />)
+    render(<SprintBoard sprint={sprint} columns={columns} projectId="proj1" />)
     fireEvent.click(screen.getByRole('button', { name: /board actions/i }))
     fireEvent.click(screen.getByText(/importar csv/i))
     expect(screen.getAllByText(/importar csv/i).length).toBeGreaterThanOrEqual(1)
