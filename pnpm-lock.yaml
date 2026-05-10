@@ -9,6 +9,20 @@ overrides:
   '@prisma/adapter-pg': 7.7.0
   '@prisma/client': 7.7.0
   '@prisma/client-runtime-utils': 7.7.0
+  hono@<4.12.12: '>=4.12.12'
+  hono@>=4.0.0 <=4.12.11: '>=4.12.12'
+  '@hono/node-server@<1.19.13': '>=1.19.13'
+  hono@<4.12.14: '>=4.12.14'
+  postcss@<8.5.10: '>=8.5.10'
+  uuid@>=13.0.0 <13.0.1: '>=13.0.1'
+  uuid@>=11.0.0 <11.1.1: '>=11.1.1'
+  hono@<4.12.16: '>=4.12.16'
+  fast-xml-builder@<=1.1.6: '>=1.1.7'
+  fast-xml-builder@=1.1.5: '>=1.1.6'
+  fast-uri@<=3.1.0: '>=3.1.1'
+  fast-uri@<=3.1.1: '>=3.1.2'
+  fast-xml-parser@<5.7.0: '>=5.7.0'
+  hono@<4.12.18: '>=4.12.18'
 
 importers:
 
@@ -78,8 +92,8 @@ importers:
         specifier: ^0.0.1
         version: 0.0.1
       uuid:
-        specifier: ^13.0.0
-        version: 13.0.0
+        specifier: '>=13.0.1'
+        version: 14.0.0
       zod:
         specifier: ^4.3.6
         version: 4.3.6
@@ -142,8 +156,8 @@ importers:
         specifier: ^2.12.14
         version: 2.13.0(@types/node@20.19.39)(typescript@5.9.3)
       postcss:
-        specifier: ^8.5.8
-        version: 8.5.8
+        specifier: '>=8.5.10'
+        version: 8.5.14
       prisma:
         specifier: 7.7.0
         version: 7.7.0(@types/react-dom@19.2.3(@types/react@19.2.14))(@types/react@19.2.14)(react-dom@19.2.4(react@19.2.4))(react@19.2.4)(typescript@5.9.3)
@@ -700,11 +714,11 @@ packages:
       react: ^18.0.0 || ^19.0.0
       react-dom: ^18.0.0 || ^19.0.0
 
-  '@hono/node-server@1.19.11':
-    resolution: {integrity: sha512-dr8/3zEaB+p0D2n/IUrlPF1HZm586qgJNXK1a9fhg/PzdtkK7Ksd5l312tJX2yBuALqDYBlG20QEbayqPyxn+g==}
-    engines: {node: '>=18.14.1'}
+  '@hono/node-server@2.0.2':
+    resolution: {integrity: sha512-tXlTi1h/4V7sDe7i97IVP+9re9ZU7wXZZggnR5ucCRclf1+AX6YhGStrR5w8bLj+3Mlyl0pKfBh9gqTqqnGKfQ==}
+    engines: {node: '>=20'}
     peerDependencies:
-      hono: ^4
+      hono: '>=4.12.18'
 
   '@humanfs/core@0.19.1':
     resolution: {integrity: sha512-5DyQ4+1JEUzejeK1JGICcideyfUbGixgS9jNgex5nqkW+cY7WZhxBigmieN5Qnw9ZosSNVC9KQKyb+GUaGyKUA==}
@@ -1035,6 +1049,9 @@ packages:
     engines: {node: '>= 10'}
     cpu: [x64]
     os: [win32]
+
+  '@nodable/entities@2.1.0':
+    resolution: {integrity: sha512-nyT7T3nbMyBI/lvr6L5TyWbFJAI9FTgVRakNoBqCD+PmID8DzFrrNdLLtHMwMszOtqZa8PAOV24ZqDnQrhQINA==}
 
   '@nodelib/fs.scandir@2.1.5':
     resolution: {integrity: sha512-vq24Bq3ym5HEQm2NKCr3yXDwjc7vTsEThRDnkp2DK9p1uqLR+DHurm/NOTo0KG7HYHU7eppKZj3MyqYuMBf62g==}
@@ -2590,14 +2607,14 @@ packages:
   fast-levenshtein@2.0.6:
     resolution: {integrity: sha512-DCXu6Ifhqcks7TZKY3Hxp3y6qphY5SJZmrWMDrKcERSOXWQdMhU9Ig/PYrzyw/ul9jOIyh0N4M0tbC5hodg8dw==}
 
-  fast-uri@3.1.0:
-    resolution: {integrity: sha512-iPeeDKJSWf4IEOasVVrknXpaBV0IApz/gp7S2bb7Z4Lljbl2MGJRqInZiUrQwV16cpzw/D3S5j5Julj/gT52AA==}
+  fast-uri@3.1.2:
+    resolution: {integrity: sha512-rVjf7ArG3LTk+FS6Yw81V1DLuZl1bRbNrev6Tmd/9RaroeeRRJhAt7jg/6YFxbvAQXUCavSoZhPPj6oOx+5KjQ==}
 
-  fast-xml-builder@1.1.5:
-    resolution: {integrity: sha512-4TJn/8FKLeslLAH3dnohXqE3QSoxkhvaMzepOIZytwJXZO69Bfz0HBdDHzOTOon6G59Zrk6VQ2bEiv1t61rfkA==}
+  fast-xml-builder@1.2.0:
+    resolution: {integrity: sha512-00aAWieqff+ZJhsXA4g1g7M8k+7AYoMUUHF+/zFb5U6Uv/P0Vl4QZo84/IcufzYalLuEj9928bXN9PbbFzMF0Q==}
 
-  fast-xml-parser@5.5.8:
-    resolution: {integrity: sha512-Z7Fh2nVQSb2d+poDViM063ix2ZGt9jmY1nWhPfHBOK2Hgnb/OW3P4Et3P/81SEej0J7QbWtJqxO05h8QYfK7LQ==}
+  fast-xml-parser@5.7.3:
+    resolution: {integrity: sha512-C0AaNuC+mscy6vrAQKAc/rMq+zAPHodfHGZu4sGVehvAQt/JLG1O5zEcYcXSY5zSqr4YVgxsB+pHXTq0i7eDlg==}
     hasBin: true
 
   fastq@1.20.1:
@@ -2767,8 +2784,8 @@ packages:
   hermes-parser@0.25.1:
     resolution: {integrity: sha512-6pEjquH3rqaI6cYAXYPcz9MS4rY6R4ngRgrgfDshRptUZIc3lw0MCIJIGDj9++mfySOuPTHB4nrSW99BCvOPIA==}
 
-  hono@4.12.11:
-    resolution: {integrity: sha512-r4xbIa3mGGGoH9nN4A14DOg2wx7y2oQyJEb5O57C/xzETG/qx4c7CVDQ5WMeKHZ7ORk2W0hZ/sQKXTav3cmYBA==}
+  hono@4.12.18:
+    resolution: {integrity: sha512-RWzP96k/yv0PQfyXnWjs6zot20TqfpfsNXhOnev8d1InAxubW93L11/oNUc3tQqn2G0bSdAOBpX+2uDFHV7kdQ==}
     engines: {node: '>=16.9.0'}
 
   html-encoding-sniffer@6.0.0:
@@ -3423,12 +3440,8 @@ packages:
     resolution: {integrity: sha512-/+5VFTchJDoVj3bhoqi6UeymcD00DAwb1nJwamzPvHEszJ4FpF6SNNbUbOS8yI56qHzdV8eK0qEfOSiodkTdxg==}
     engines: {node: '>= 0.4'}
 
-  postcss@8.4.31:
-    resolution: {integrity: sha512-PS08Iboia9mts/2ygV3eLpY5ghnUcfLV/EXTOW1E2qYxJKGGBUtNjN76FYHnMs36RmARn41bC0AZmn+rR0OVpQ==}
-    engines: {node: ^10 || ^12 || >=14}
-
-  postcss@8.5.8:
-    resolution: {integrity: sha512-OW/rX8O/jXnm82Ey1k44pObPtdblfiuWnrd8X7GJ7emImCOstunGbXUpp7HdBrFQX6rJzn3sPT397Wp5aCwCHg==}
+  postcss@8.5.14:
+    resolution: {integrity: sha512-SoSL4+OSEtR99LHFZQiJLkT59C5B1amGO1NzTwj7TT1qCUgUO6hxOvzkOYxD+vMrXBM3XJIKzokoERdqQq/Zmg==}
     engines: {node: ^10 || ^12 || >=14}
 
   postgres-array@2.0.0:
@@ -3983,12 +3996,8 @@ packages:
     peerDependencies:
       react: ^16.8.0 || ^17.0.0 || ^18.0.0 || ^19.0.0
 
-  uuid@11.1.0:
-    resolution: {integrity: sha512-0/A9rDy9P7cJ+8w1c9WD9V//9Wj15Ce2MPz8Ri6032usz+NfePxx5AcN3bN+r6ZL6jEo066/yNYB3tn4pQEx+A==}
-    hasBin: true
-
-  uuid@13.0.0:
-    resolution: {integrity: sha512-XQegIaBTVUjSHliKqcnFqYypAd4S+WCYt5NIeRs6w/UAry7z8Y9j5ZwRRL4kzq9U3sD6v+85er9FvkEaBpji2w==}
+  uuid@14.0.0:
+    resolution: {integrity: sha512-Qo+uWgilfSmAhXCMav1uYFynlQO7fMFiMVZsQqZRMIXp0O7rR7qjkj+cPvBHLgBqi960QCoo/PH2/6ZtVqKvrg==}
     hasBin: true
 
   valibot@1.2.0:
@@ -4142,6 +4151,10 @@ packages:
   xml-name-validator@5.0.0:
     resolution: {integrity: sha512-EvGK8EJ3DhaHfbRlETOWAS5pO9MZITeauHKJyb8wyajUfQUenkIg2MvLDTZ4T/TgIcm3HU0TFBgWWboAZ30UHg==}
     engines: {node: '>=18'}
+
+  xml-naming@0.1.0:
+    resolution: {integrity: sha512-k8KO9hrMyNk6tUWqUfkTEZbezRRpONVOzUTnc97VnCvyj6Tf9lyUR9EDAIeiVLv56jsMcoXEwjW8Kv5yPY52lw==}
+    engines: {node: '>=16.0.0'}
 
   xmlchars@2.2.0:
     resolution: {integrity: sha512-JZnDKK8B0RCDw84FNdDAIpZK+JuJw+s7Lz8nksI7SIuU3UXJJslUthsi+uWBUYOwPFwW7W7PRLRfUKpxjtjFCw==}
@@ -4666,7 +4679,7 @@ snapshots:
   '@aws-sdk/xml-builder@3.972.18':
     dependencies:
       '@smithy/types': 4.14.1
-      fast-xml-parser: 5.5.8
+      fast-xml-parser: 5.7.3
       tslib: 2.8.1
 
   '@aws/lambda-invoke-store@0.2.4': {}
@@ -4967,9 +4980,9 @@ snapshots:
     transitivePeerDependencies:
       - '@types/react'
 
-  '@hono/node-server@1.19.11(hono@4.12.11)':
+  '@hono/node-server@2.0.2(hono@4.12.18)':
     dependencies:
-      hono: 4.12.11
+      hono: 4.12.18
 
   '@humanfs/core@0.19.1': {}
 
@@ -5207,6 +5220,8 @@ snapshots:
   '@next/swc-win32-x64-msvc@16.2.3':
     optional: true
 
+  '@nodable/entities@2.1.0': {}
+
   '@nodelib/fs.scandir@2.1.5':
     dependencies:
       '@nodelib/fs.stat': 2.0.5
@@ -5268,13 +5283,13 @@ snapshots:
       '@electric-sql/pglite': 0.4.1
       '@electric-sql/pglite-socket': 0.1.1(@electric-sql/pglite@0.4.1)
       '@electric-sql/pglite-tools': 0.3.1(@electric-sql/pglite@0.4.1)
-      '@hono/node-server': 1.19.11(hono@4.12.11)
+      '@hono/node-server': 2.0.2(hono@4.12.18)
       '@prisma/get-platform': 7.2.0
       '@prisma/query-plan-executor': 7.2.0
       '@prisma/streams-local': 0.1.2
       foreground-child: 3.3.1
       get-port-please: 3.2.0
-      hono: 4.12.11
+      hono: 4.12.18
       http-status-codes: 2.3.0
       pathe: 2.0.3
       proper-lockfile: 4.1.2
@@ -5862,7 +5877,7 @@ snapshots:
       '@alloc/quick-lru': 5.2.0
       '@tailwindcss/node': 4.2.2
       '@tailwindcss/oxide': 4.2.2
-      postcss: 8.5.8
+      postcss: 8.5.14
       tailwindcss: 4.2.2
 
   '@testing-library/dom@10.4.1':
@@ -6200,7 +6215,7 @@ snapshots:
   ajv@8.18.0:
     dependencies:
       fast-deep-equal: 3.1.3
-      fast-uri: 3.1.0
+      fast-uri: 3.1.2
       json-schema-traverse: 1.0.0
       require-from-string: 2.0.2
 
@@ -6362,7 +6377,7 @@ snapshots:
       node-abort-controller: 3.1.1
       semver: 7.7.4
       tslib: 2.8.1
-      uuid: 11.1.0
+      uuid: 14.0.0
     transitivePeerDependencies:
       - supports-color
 
@@ -7003,15 +7018,17 @@ snapshots:
 
   fast-levenshtein@2.0.6: {}
 
-  fast-uri@3.1.0: {}
+  fast-uri@3.1.2: {}
 
-  fast-xml-builder@1.1.5:
+  fast-xml-builder@1.2.0:
     dependencies:
       path-expression-matcher: 1.5.0
+      xml-naming: 0.1.0
 
-  fast-xml-parser@5.5.8:
+  fast-xml-parser@5.7.3:
     dependencies:
-      fast-xml-builder: 1.1.5
+      '@nodable/entities': 2.1.0
+      fast-xml-builder: 1.2.0
       path-expression-matcher: 1.5.0
       strnum: 2.2.3
 
@@ -7176,7 +7193,7 @@ snapshots:
     dependencies:
       hermes-estree: 0.25.1
 
-  hono@4.12.11: {}
+  hono@4.12.18: {}
 
   html-encoding-sniffer@6.0.0:
     dependencies:
@@ -7644,7 +7661,7 @@ snapshots:
       '@swc/helpers': 0.5.15
       baseline-browser-mapping: 2.10.15
       caniuse-lite: 1.0.30001786
-      postcss: 8.4.31
+      postcss: 8.5.14
       react: 19.2.4
       react-dom: 19.2.4(react@19.2.4)
       styled-jsx: 5.1.6(@babel/core@7.29.0)(react@19.2.4)
@@ -7832,13 +7849,7 @@ snapshots:
 
   possible-typed-array-names@1.1.0: {}
 
-  postcss@8.4.31:
-    dependencies:
-      nanoid: 3.3.11
-      picocolors: 1.1.1
-      source-map-js: 1.2.1
-
-  postcss@8.5.8:
+  postcss@8.5.14:
     dependencies:
       nanoid: 3.3.11
       picocolors: 1.1.1
@@ -8486,9 +8497,7 @@ snapshots:
     dependencies:
       react: 19.2.4
 
-  uuid@11.1.0: {}
-
-  uuid@13.0.0: {}
+  uuid@14.0.0: {}
 
   valibot@1.2.0(typescript@5.9.3):
     optionalDependencies:
@@ -8525,7 +8534,7 @@ snapshots:
     dependencies:
       lightningcss: 1.32.0
       picomatch: 4.0.4
-      postcss: 8.5.8
+      postcss: 8.5.14
       rolldown: 1.0.0-rc.12(@emnapi/core@1.9.2)(@emnapi/runtime@1.9.2)
       tinyglobby: 0.2.15
     optionalDependencies:
@@ -8648,6 +8657,8 @@ snapshots:
       strip-ansi: 6.0.1
 
   xml-name-validator@5.0.0: {}
+
+  xml-naming@0.1.0: {}
 
   xmlchars@2.2.0: {}
 
