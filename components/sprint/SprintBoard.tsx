@@ -58,6 +58,7 @@ interface Sprint {
 interface SprintBoardProps {
   sprint: Sprint
   columns: SprintColumnData[]
+  backlogCards?: SprintCard[]
   users?: { id: string; name: string; email: string; avatarUrl?: string | null }[]
   tags?: { id: string; name: string; color: string }[]
   currentUser?: { id: string; name: string; email: string; avatarUrl?: string | null } | null
@@ -96,7 +97,7 @@ function toCardType(card: SprintCard, sprintId: string): CardType {
   }
 }
 
-export default function SprintBoard({ sprint, columns: initialColumns, users, tags, currentUser, initialCardId, projectId }: SprintBoardProps) {
+export default function SprintBoard({ sprint, columns: initialColumns, backlogCards: initialBacklogCards, users, tags, currentUser, initialCardId, projectId }: SprintBoardProps) {
   const [columns, setColumns] = useState(initialColumns)
   const [newColTitle, setNewColTitle] = useState('')
   const [addingCol, setAddingCol] = useState(false)
@@ -104,7 +105,7 @@ export default function SprintBoard({ sprint, columns: initialColumns, users, ta
   const [cardComments, setCardComments] = useState<{ id: string; user: { id: string; name: string; avatarUrl: string | null }; content: string; createdAt: Date }[]>([])
   const [addingCardToColumn, setAddingCardToColumn] = useState<string | null>(null)
   const [boardBg, setBoardBg] = useState('bg-gradient-to-br from-slate-900 via-blue-950 to-slate-900')
-  const [backlogCards, setBacklogCards] = useState<SprintCard[]>([])
+  const [backlogCards, setBacklogCards] = useState<SprintCard[]>(initialBacklogCards ?? [])
   const [addingBacklogCard, setAddingBacklogCard] = useState(false)
   const [newBacklogTitle, setNewBacklogTitle] = useState('')
   const [pendingMove, setPendingMove] = useState<{
@@ -132,11 +133,11 @@ export default function SprintBoard({ sprint, columns: initialColumns, users, ta
   }, [openCardId])
 
   useEffect(() => {
-    if (!projectId) return
+    if (!projectId || initialBacklogCards) return
     getProjectBacklogAction(projectId).then(result => {
       if (Array.isArray(result)) setBacklogCards(result as SprintCard[])
     })
-  }, [projectId])
+  }, [projectId, initialBacklogCards])
 
   const handleMouseDown = (e: React.MouseEvent) => {
     if (e.button !== 0) return 
