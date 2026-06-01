@@ -4,29 +4,25 @@ import { verifySession } from '@/lib/dal'
 import { revalidatePath } from 'next/cache'
 import { sprintsApi, cardsApi, tagsApi, adminApi } from '@/lib/api-client'
 
-type SprintCard = { id: string; title: string; description: string; color: string; priority?: string | null; sprintPosition?: number | null; tags?: { tagId: string; tag: { id?: string; name: string; color: string } }[]; attachments?: { id: string; fileName: string; fileType: string; filePath: string; fileSize: number; isCover?: boolean; uploadedAt: string | Date }[]; timeEntries?: { duration: number }[]; responsibles?: { user: { id: string; name: string; avatarUrl: string | null } }[] }
+type BacklogCard = { id: string; title: string; description: string; color: string; priority?: string | null; tags?: unknown[]; attachments?: unknown[]; responsibles?: unknown[] }
 
 type SprintBoardData = {
-  sprint: { id: string; name: string; status: string; startDate: Date | string | null; endDate: Date | string | null; description?: string | null; qualidade?: number | null; dificuldade?: number | null }
-  columns: { id: string; title: string; position: number; cards: SprintCard[] }[]
-  backlogCards: SprintCard[]
+  sprint: { id: string; name: string; status: string; projectId?: string | null; startDate: Date | string | null; endDate: Date | string | null; description?: string | null; qualidade?: number | null; dificuldade?: number | null }
+  columns: { id: string; title: string; position: number; cards: { id: string; title: string; description: string; color: string; priority?: string | null; sprintPosition?: number | null; tags?: { tagId: string; tag: { id?: string; name: string; color: string } }[]; attachments?: { id: string; fileName: string; fileType: string; filePath: string; fileSize: number; isCover?: boolean; uploadedAt: string | Date }[]; timeEntries?: { duration: number }[]; responsibles?: { user: { id: string; name: string; avatarUrl: string | null } }[] }[] }[]
   users: { id: string; name: string; email: string; avatarUrl?: string | null }[]
   tags: { id: string; name: string; color: string }[]
 }
 
-export async function getSprintBoardAction(sprintId: string, projectId?: string): Promise<SprintBoardData | { error: string }> {
+export async function getSprintBoardAction(sprintId: string): Promise<SprintBoardData | { error: string }> {
   try {
     await verifySession()
-    const sprint = await sprintsApi.get(sprintId)
-    const resolvedProjectId = projectId ?? (sprint as { projectId?: string }).projectId ?? ''
-
-    const [columns, users, tags, backlogCards] = await Promise.all([
+    const [sprint, columns, users, tags] = await Promise.all([
+      sprintsApi.get(sprintId),
       sprintsApi.listColumns(sprintId),
       adminApi.listAllUsers(),
       tagsApi.list(),
-      resolvedProjectId ? cardsApi.listBacklog(resolvedProjectId) : Promise.resolve([]),
     ])
-    return { sprint, columns, backlogCards, users, tags } as unknown as SprintBoardData
+    return { sprint, columns, users, tags } as unknown as SprintBoardData
   } catch (err) {
     return { error: err instanceof Error ? err.message : 'Erro ao carregar sprint board' }
   }
@@ -46,31 +42,26 @@ export async function addSprintColumnAction(sprintId: string, title: string) {
 
 export async function moveCardInSprintAction(
   cardId: string,
-  destColumnId: string,
+  sprintColumnId: string,
   sprintPosition: number,
-  opts: { isBacklog: boolean; currentSprintId: string; destStatus: string; projectId?: string },
+  reason?: string,
 ) {
   try {
     await verifySession()
-    if (opts.isBacklog) {
-      await cardsApi.update(cardId, {
-        sprintColumnId: null,
-        sprintPosition,
-        sprintId: null,
-        status: 'Backlog',
-        projectId: opts.projectId ?? null,
-      })
-    } else {
-      await cardsApi.update(cardId, {
-        sprintColumnId: destColumnId,
-        sprintPosition,
-        sprintId: opts.currentSprintId,
-        status: opts.destStatus,
-      })
-    }
+    await cardsApi.update(cardId, { sprintColumnId, sprintPosition, ...(reason ? { reason } : {}) })
     return { success: true }
   } catch (err) {
     return { error: err instanceof Error ? err.message : 'Erro ao mover card' }
+  }
+}
+
+export async function getCardMovementsAction(cardId: string) {
+  try {
+    await verifySession()
+    const movements = await cardsApi.listMovements(cardId)
+    return { movements }
+  } catch (err) {
+    return { error: err instanceof Error ? err.message : 'Erro ao carregar movimentações' }
   }
 }
 
@@ -157,25 +148,45 @@ export async function deleteCardInSprintAction(sprintId: string, cardId: string)
   }
 }
 
-export async function createBacklogCardAction(input: {
-  projectId: string
-  title: string
-  description?: string
-  color?: string
-  priority?: string
-}) {
+export async function getProjectBacklogAction(projectId: string): Promise<BacklogCard[] | { error: string }> {
   try {
     await verifySession()
-    const card = await cardsApi.create({
-      title: input.title,
-      description: input.description ?? '',
-      color: input.color ?? '#3b82f6',
-      priority: input.priority ?? 'media',
-      projectId: input.projectId,
-      status: 'Backlog',
-      sprintId: null,
-      sprintColumnId: null,
-    })
+    const cards = await cardsApi.listBacklog(projectId)
+    return cards
+  } catch (err) {
+    return { error: err instanceof Error ? err.message : 'Erro ao carregar backlog' }
+  }
+}
+
+export async function moveCardToSprintAction(
+  cardId: string,
+  sprintId: string,
+  columnId: string,
+  position: number,
+) {
+  try {
+    await verifySession()
+    await cardsApi.update(cardId, { sprintId, sprintColumnId: columnId, sprintPosition: position })
+    return { success: true }
+  } catch (err) {
+    return { error: err instanceof Error ? err.message : 'Erro ao mover card para sprint' }
+  }
+}
+
+export async function moveCardToBacklogAction(cardId: string) {
+  try {
+    await verifySession()
+    await cardsApi.update(cardId, { sprintId: null, sprintColumnId: null, sprintPosition: null })
+    return { success: true }
+  } catch (err) {
+    return { error: err instanceof Error ? err.message : 'Erro ao mover card para backlog' }
+  }
+}
+
+export async function createBacklogCardAction(projectId: string, title: string) {
+  try {
+    await verifySession()
+    const card = await cardsApi.create({ projectId, title, description: '' })
     return { card }
   } catch (err) {
     return { error: err instanceof Error ? err.message : 'Erro ao criar card no backlog' }

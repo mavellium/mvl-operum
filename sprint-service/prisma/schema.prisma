@@ -32,46 +32,10 @@ model User {
   comments         Comment[]
   dashboardMetrics DashboardMetric[]
   sprintFeedbacks  SprintFeedback[]
-  userProjects     UserProject[]
-  notifications    Notification[]
 
-  tags Tag[]
+  tags Tag[] 
 
   @@unique([email, tenantId])
-}
-
-model UserProject {
-  id           String  @id @default(cuid())
-  userId       String
-  projectId    String
-  active       Boolean @default(true)
-  horasDiarias Float?
-  remuneracao  Float?
-  user         User    @relation(fields: [userId], references: [id], onDelete: Cascade)
-
-  @@unique([userId, projectId])
-}
-
-enum NotificationStatus {
-  UNREAD
-  READ
-  ARCHIVED
-}
-
-model Notification {
-  id            String             @id @default(cuid())
-  userId        String
-  user          User               @relation(fields: [userId], references: [id], onDelete: Cascade)
-  type          String
-  title         String
-  message       String
-  reference     String?
-  referenceType String?
-  status        NotificationStatus @default(UNREAD)
-  deletedAt     DateTime?
-  createdAt     DateTime           @default(now())
-  readAt        DateTime?
-  updatedAt     DateTime           @updatedAt
 }
 
 model Project {
@@ -139,9 +103,8 @@ model Card {
   sprintColumnId String?
   sprintColumn   SprintColumn? @relation("SprintColumnCards", fields: [sprintColumnId], references: [id], onDelete: SetNull)
   sprintPosition Int?
-  status         String        @default("Backlog")
   projectId      String?
-  project        Project?      @relation(fields: [projectId], references: [id])
+  project        Project?      @relation(fields: [projectId], references: [id], onDelete: SetNull)
   priority       String        @default("media")
   tagsImport     String        @default("")
   startDate      DateTime?
@@ -150,26 +113,25 @@ model Card {
   createdAt      DateTime      @default(now())
   updatedAt      DateTime      @updatedAt
 
-  // Orçado
-  orcado_min    Int?
-  orcado_horas  Float?
-  orcado_dias   Float?
-  orcado_total  Float?
-  data_prevista DateTime?
-
-  // Realizado
-  realizado_min    Int?
-  realizado_horas  Float?
-  realizado_dias   Float?
-  realizado_total  Float?
-  data_realizacao  DateTime?
-  situacao_status  String?
-
   tags         CardTag[]
   attachments  Attachment[]
   timeEntries  TimeEntry[]
   responsibles CardResponsible[]
   comments     Comment[]
+  movements    CardMovement[]
+}
+
+model CardMovement {
+  id              String   @id @default(cuid())
+  cardId          String
+  card            Card     @relation(fields: [cardId], references: [id], onDelete: Cascade)
+  userId          String?
+  fromColumnId    String?
+  fromColumnTitle String?
+  toColumnId      String?
+  toColumnTitle   String?
+  reason          String?
+  movedAt         DateTime @default(now())
 }
 
 model Tag {

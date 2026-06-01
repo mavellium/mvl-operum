@@ -24,16 +24,6 @@ export type Tenant = $Result.DefaultSelection<Prisma.$TenantPayload>
  */
 export type User = $Result.DefaultSelection<Prisma.$UserPayload>
 /**
- * Model UserProject
- * 
- */
-export type UserProject = $Result.DefaultSelection<Prisma.$UserProjectPayload>
-/**
- * Model Notification
- * 
- */
-export type Notification = $Result.DefaultSelection<Prisma.$NotificationPayload>
-/**
  * Model Project
  * 
  */
@@ -53,6 +43,11 @@ export type SprintColumn = $Result.DefaultSelection<Prisma.$SprintColumnPayload>
  * 
  */
 export type Card = $Result.DefaultSelection<Prisma.$CardPayload>
+/**
+ * Model CardMovement
+ * 
+ */
+export type CardMovement = $Result.DefaultSelection<Prisma.$CardMovementPayload>
 /**
  * Model Tag
  * 
@@ -103,16 +98,7 @@ export type AuditLog = $Result.DefaultSelection<Prisma.$AuditLogPayload>
  * Enums
  */
 export namespace $Enums {
-  export const NotificationStatus: {
-  UNREAD: 'UNREAD',
-  READ: 'READ',
-  ARCHIVED: 'ARCHIVED'
-};
-
-export type NotificationStatus = (typeof NotificationStatus)[keyof typeof NotificationStatus]
-
-
-export const SprintStatus: {
+  export const SprintStatus: {
   PLANNED: 'PLANNED',
   ACTIVE: 'ACTIVE',
   COMPLETED: 'COMPLETED'
@@ -129,10 +115,6 @@ export const CommentType: {
 export type CommentType = (typeof CommentType)[keyof typeof CommentType]
 
 }
-
-export type NotificationStatus = $Enums.NotificationStatus
-
-export const NotificationStatus: typeof $Enums.NotificationStatus
 
 export type SprintStatus = $Enums.SprintStatus
 
@@ -284,26 +266,6 @@ export class PrismaClient<
   get user(): Prisma.UserDelegate<ExtArgs, ClientOptions>;
 
   /**
-   * `prisma.userProject`: Exposes CRUD operations for the **UserProject** model.
-    * Example usage:
-    * ```ts
-    * // Fetch zero or more UserProjects
-    * const userProjects = await prisma.userProject.findMany()
-    * ```
-    */
-  get userProject(): Prisma.UserProjectDelegate<ExtArgs, ClientOptions>;
-
-  /**
-   * `prisma.notification`: Exposes CRUD operations for the **Notification** model.
-    * Example usage:
-    * ```ts
-    * // Fetch zero or more Notifications
-    * const notifications = await prisma.notification.findMany()
-    * ```
-    */
-  get notification(): Prisma.NotificationDelegate<ExtArgs, ClientOptions>;
-
-  /**
    * `prisma.project`: Exposes CRUD operations for the **Project** model.
     * Example usage:
     * ```ts
@@ -342,6 +304,16 @@ export class PrismaClient<
     * ```
     */
   get card(): Prisma.CardDelegate<ExtArgs, ClientOptions>;
+
+  /**
+   * `prisma.cardMovement`: Exposes CRUD operations for the **CardMovement** model.
+    * Example usage:
+    * ```ts
+    * // Fetch zero or more CardMovements
+    * const cardMovements = await prisma.cardMovement.findMany()
+    * ```
+    */
+  get cardMovement(): Prisma.CardMovementDelegate<ExtArgs, ClientOptions>;
 
   /**
    * `prisma.tag`: Exposes CRUD operations for the **Tag** model.
@@ -868,12 +840,11 @@ export namespace Prisma {
   export const ModelName: {
     Tenant: 'Tenant',
     User: 'User',
-    UserProject: 'UserProject',
-    Notification: 'Notification',
     Project: 'Project',
     Sprint: 'Sprint',
     SprintColumn: 'SprintColumn',
     Card: 'Card',
+    CardMovement: 'CardMovement',
     Tag: 'Tag',
     CardTag: 'CardTag',
     CardResponsible: 'CardResponsible',
@@ -898,7 +869,7 @@ export namespace Prisma {
       omit: GlobalOmitOptions
     }
     meta: {
-      modelProps: "tenant" | "user" | "userProject" | "notification" | "project" | "sprint" | "sprintColumn" | "card" | "tag" | "cardTag" | "cardResponsible" | "comment" | "attachment" | "timeEntry" | "dashboardMetric" | "sprintFeedback" | "auditLog"
+      modelProps: "tenant" | "user" | "project" | "sprint" | "sprintColumn" | "card" | "cardMovement" | "tag" | "cardTag" | "cardResponsible" | "comment" | "attachment" | "timeEntry" | "dashboardMetric" | "sprintFeedback" | "auditLog"
       txIsolationLevel: Prisma.TransactionIsolationLevel
     }
     model: {
@@ -1047,154 +1018,6 @@ export namespace Prisma {
           count: {
             args: Prisma.UserCountArgs<ExtArgs>
             result: $Utils.Optional<UserCountAggregateOutputType> | number
-          }
-        }
-      }
-      UserProject: {
-        payload: Prisma.$UserProjectPayload<ExtArgs>
-        fields: Prisma.UserProjectFieldRefs
-        operations: {
-          findUnique: {
-            args: Prisma.UserProjectFindUniqueArgs<ExtArgs>
-            result: $Utils.PayloadToResult<Prisma.$UserProjectPayload> | null
-          }
-          findUniqueOrThrow: {
-            args: Prisma.UserProjectFindUniqueOrThrowArgs<ExtArgs>
-            result: $Utils.PayloadToResult<Prisma.$UserProjectPayload>
-          }
-          findFirst: {
-            args: Prisma.UserProjectFindFirstArgs<ExtArgs>
-            result: $Utils.PayloadToResult<Prisma.$UserProjectPayload> | null
-          }
-          findFirstOrThrow: {
-            args: Prisma.UserProjectFindFirstOrThrowArgs<ExtArgs>
-            result: $Utils.PayloadToResult<Prisma.$UserProjectPayload>
-          }
-          findMany: {
-            args: Prisma.UserProjectFindManyArgs<ExtArgs>
-            result: $Utils.PayloadToResult<Prisma.$UserProjectPayload>[]
-          }
-          create: {
-            args: Prisma.UserProjectCreateArgs<ExtArgs>
-            result: $Utils.PayloadToResult<Prisma.$UserProjectPayload>
-          }
-          createMany: {
-            args: Prisma.UserProjectCreateManyArgs<ExtArgs>
-            result: BatchPayload
-          }
-          createManyAndReturn: {
-            args: Prisma.UserProjectCreateManyAndReturnArgs<ExtArgs>
-            result: $Utils.PayloadToResult<Prisma.$UserProjectPayload>[]
-          }
-          delete: {
-            args: Prisma.UserProjectDeleteArgs<ExtArgs>
-            result: $Utils.PayloadToResult<Prisma.$UserProjectPayload>
-          }
-          update: {
-            args: Prisma.UserProjectUpdateArgs<ExtArgs>
-            result: $Utils.PayloadToResult<Prisma.$UserProjectPayload>
-          }
-          deleteMany: {
-            args: Prisma.UserProjectDeleteManyArgs<ExtArgs>
-            result: BatchPayload
-          }
-          updateMany: {
-            args: Prisma.UserProjectUpdateManyArgs<ExtArgs>
-            result: BatchPayload
-          }
-          updateManyAndReturn: {
-            args: Prisma.UserProjectUpdateManyAndReturnArgs<ExtArgs>
-            result: $Utils.PayloadToResult<Prisma.$UserProjectPayload>[]
-          }
-          upsert: {
-            args: Prisma.UserProjectUpsertArgs<ExtArgs>
-            result: $Utils.PayloadToResult<Prisma.$UserProjectPayload>
-          }
-          aggregate: {
-            args: Prisma.UserProjectAggregateArgs<ExtArgs>
-            result: $Utils.Optional<AggregateUserProject>
-          }
-          groupBy: {
-            args: Prisma.UserProjectGroupByArgs<ExtArgs>
-            result: $Utils.Optional<UserProjectGroupByOutputType>[]
-          }
-          count: {
-            args: Prisma.UserProjectCountArgs<ExtArgs>
-            result: $Utils.Optional<UserProjectCountAggregateOutputType> | number
-          }
-        }
-      }
-      Notification: {
-        payload: Prisma.$NotificationPayload<ExtArgs>
-        fields: Prisma.NotificationFieldRefs
-        operations: {
-          findUnique: {
-            args: Prisma.NotificationFindUniqueArgs<ExtArgs>
-            result: $Utils.PayloadToResult<Prisma.$NotificationPayload> | null
-          }
-          findUniqueOrThrow: {
-            args: Prisma.NotificationFindUniqueOrThrowArgs<ExtArgs>
-            result: $Utils.PayloadToResult<Prisma.$NotificationPayload>
-          }
-          findFirst: {
-            args: Prisma.NotificationFindFirstArgs<ExtArgs>
-            result: $Utils.PayloadToResult<Prisma.$NotificationPayload> | null
-          }
-          findFirstOrThrow: {
-            args: Prisma.NotificationFindFirstOrThrowArgs<ExtArgs>
-            result: $Utils.PayloadToResult<Prisma.$NotificationPayload>
-          }
-          findMany: {
-            args: Prisma.NotificationFindManyArgs<ExtArgs>
-            result: $Utils.PayloadToResult<Prisma.$NotificationPayload>[]
-          }
-          create: {
-            args: Prisma.NotificationCreateArgs<ExtArgs>
-            result: $Utils.PayloadToResult<Prisma.$NotificationPayload>
-          }
-          createMany: {
-            args: Prisma.NotificationCreateManyArgs<ExtArgs>
-            result: BatchPayload
-          }
-          createManyAndReturn: {
-            args: Prisma.NotificationCreateManyAndReturnArgs<ExtArgs>
-            result: $Utils.PayloadToResult<Prisma.$NotificationPayload>[]
-          }
-          delete: {
-            args: Prisma.NotificationDeleteArgs<ExtArgs>
-            result: $Utils.PayloadToResult<Prisma.$NotificationPayload>
-          }
-          update: {
-            args: Prisma.NotificationUpdateArgs<ExtArgs>
-            result: $Utils.PayloadToResult<Prisma.$NotificationPayload>
-          }
-          deleteMany: {
-            args: Prisma.NotificationDeleteManyArgs<ExtArgs>
-            result: BatchPayload
-          }
-          updateMany: {
-            args: Prisma.NotificationUpdateManyArgs<ExtArgs>
-            result: BatchPayload
-          }
-          updateManyAndReturn: {
-            args: Prisma.NotificationUpdateManyAndReturnArgs<ExtArgs>
-            result: $Utils.PayloadToResult<Prisma.$NotificationPayload>[]
-          }
-          upsert: {
-            args: Prisma.NotificationUpsertArgs<ExtArgs>
-            result: $Utils.PayloadToResult<Prisma.$NotificationPayload>
-          }
-          aggregate: {
-            args: Prisma.NotificationAggregateArgs<ExtArgs>
-            result: $Utils.Optional<AggregateNotification>
-          }
-          groupBy: {
-            args: Prisma.NotificationGroupByArgs<ExtArgs>
-            result: $Utils.Optional<NotificationGroupByOutputType>[]
-          }
-          count: {
-            args: Prisma.NotificationCountArgs<ExtArgs>
-            result: $Utils.Optional<NotificationCountAggregateOutputType> | number
           }
         }
       }
@@ -1491,6 +1314,80 @@ export namespace Prisma {
           count: {
             args: Prisma.CardCountArgs<ExtArgs>
             result: $Utils.Optional<CardCountAggregateOutputType> | number
+          }
+        }
+      }
+      CardMovement: {
+        payload: Prisma.$CardMovementPayload<ExtArgs>
+        fields: Prisma.CardMovementFieldRefs
+        operations: {
+          findUnique: {
+            args: Prisma.CardMovementFindUniqueArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$CardMovementPayload> | null
+          }
+          findUniqueOrThrow: {
+            args: Prisma.CardMovementFindUniqueOrThrowArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$CardMovementPayload>
+          }
+          findFirst: {
+            args: Prisma.CardMovementFindFirstArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$CardMovementPayload> | null
+          }
+          findFirstOrThrow: {
+            args: Prisma.CardMovementFindFirstOrThrowArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$CardMovementPayload>
+          }
+          findMany: {
+            args: Prisma.CardMovementFindManyArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$CardMovementPayload>[]
+          }
+          create: {
+            args: Prisma.CardMovementCreateArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$CardMovementPayload>
+          }
+          createMany: {
+            args: Prisma.CardMovementCreateManyArgs<ExtArgs>
+            result: BatchPayload
+          }
+          createManyAndReturn: {
+            args: Prisma.CardMovementCreateManyAndReturnArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$CardMovementPayload>[]
+          }
+          delete: {
+            args: Prisma.CardMovementDeleteArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$CardMovementPayload>
+          }
+          update: {
+            args: Prisma.CardMovementUpdateArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$CardMovementPayload>
+          }
+          deleteMany: {
+            args: Prisma.CardMovementDeleteManyArgs<ExtArgs>
+            result: BatchPayload
+          }
+          updateMany: {
+            args: Prisma.CardMovementUpdateManyArgs<ExtArgs>
+            result: BatchPayload
+          }
+          updateManyAndReturn: {
+            args: Prisma.CardMovementUpdateManyAndReturnArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$CardMovementPayload>[]
+          }
+          upsert: {
+            args: Prisma.CardMovementUpsertArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$CardMovementPayload>
+          }
+          aggregate: {
+            args: Prisma.CardMovementAggregateArgs<ExtArgs>
+            result: $Utils.Optional<AggregateCardMovement>
+          }
+          groupBy: {
+            args: Prisma.CardMovementGroupByArgs<ExtArgs>
+            result: $Utils.Optional<CardMovementGroupByOutputType>[]
+          }
+          count: {
+            args: Prisma.CardMovementCountArgs<ExtArgs>
+            result: $Utils.Optional<CardMovementCountAggregateOutputType> | number
           }
         }
       }
@@ -2270,12 +2167,11 @@ export namespace Prisma {
   export type GlobalOmitConfig = {
     tenant?: TenantOmit
     user?: UserOmit
-    userProject?: UserProjectOmit
-    notification?: NotificationOmit
     project?: ProjectOmit
     sprint?: SprintOmit
     sprintColumn?: SprintColumnOmit
     card?: CardOmit
+    cardMovement?: CardMovementOmit
     tag?: TagOmit
     cardTag?: CardTagOmit
     cardResponsible?: CardResponsibleOmit
@@ -2402,8 +2298,6 @@ export namespace Prisma {
     comments: number
     dashboardMetrics: number
     sprintFeedbacks: number
-    userProjects: number
-    notifications: number
     tags: number
   }
 
@@ -2414,8 +2308,6 @@ export namespace Prisma {
     comments?: boolean | UserCountOutputTypeCountCommentsArgs
     dashboardMetrics?: boolean | UserCountOutputTypeCountDashboardMetricsArgs
     sprintFeedbacks?: boolean | UserCountOutputTypeCountSprintFeedbacksArgs
-    userProjects?: boolean | UserCountOutputTypeCountUserProjectsArgs
-    notifications?: boolean | UserCountOutputTypeCountNotificationsArgs
     tags?: boolean | UserCountOutputTypeCountTagsArgs
   }
 
@@ -2470,20 +2362,6 @@ export namespace Prisma {
    */
   export type UserCountOutputTypeCountSprintFeedbacksArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
     where?: SprintFeedbackWhereInput
-  }
-
-  /**
-   * UserCountOutputType without action
-   */
-  export type UserCountOutputTypeCountUserProjectsArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
-    where?: UserProjectWhereInput
-  }
-
-  /**
-   * UserCountOutputType without action
-   */
-  export type UserCountOutputTypeCountNotificationsArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
-    where?: NotificationWhereInput
   }
 
   /**
@@ -2633,6 +2511,7 @@ export namespace Prisma {
     timeEntries: number
     responsibles: number
     comments: number
+    movements: number
   }
 
   export type CardCountOutputTypeSelect<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
@@ -2641,6 +2520,7 @@ export namespace Prisma {
     timeEntries?: boolean | CardCountOutputTypeCountTimeEntriesArgs
     responsibles?: boolean | CardCountOutputTypeCountResponsiblesArgs
     comments?: boolean | CardCountOutputTypeCountCommentsArgs
+    movements?: boolean | CardCountOutputTypeCountMovementsArgs
   }
 
   // Custom InputTypes
@@ -2687,6 +2567,13 @@ export namespace Prisma {
    */
   export type CardCountOutputTypeCountCommentsArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
     where?: CommentWhereInput
+  }
+
+  /**
+   * CardCountOutputType without action
+   */
+  export type CardCountOutputTypeCountMovementsArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    where?: CardMovementWhereInput
   }
 
 
@@ -3962,8 +3849,6 @@ export namespace Prisma {
     comments?: boolean | User$commentsArgs<ExtArgs>
     dashboardMetrics?: boolean | User$dashboardMetricsArgs<ExtArgs>
     sprintFeedbacks?: boolean | User$sprintFeedbacksArgs<ExtArgs>
-    userProjects?: boolean | User$userProjectsArgs<ExtArgs>
-    notifications?: boolean | User$notificationsArgs<ExtArgs>
     tags?: boolean | User$tagsArgs<ExtArgs>
     _count?: boolean | UserCountOutputTypeDefaultArgs<ExtArgs>
   }, ExtArgs["result"]["user"]>
@@ -3997,8 +3882,6 @@ export namespace Prisma {
     comments?: boolean | User$commentsArgs<ExtArgs>
     dashboardMetrics?: boolean | User$dashboardMetricsArgs<ExtArgs>
     sprintFeedbacks?: boolean | User$sprintFeedbacksArgs<ExtArgs>
-    userProjects?: boolean | User$userProjectsArgs<ExtArgs>
-    notifications?: boolean | User$notificationsArgs<ExtArgs>
     tags?: boolean | User$tagsArgs<ExtArgs>
     _count?: boolean | UserCountOutputTypeDefaultArgs<ExtArgs>
   }
@@ -4014,8 +3897,6 @@ export namespace Prisma {
       comments: Prisma.$CommentPayload<ExtArgs>[]
       dashboardMetrics: Prisma.$DashboardMetricPayload<ExtArgs>[]
       sprintFeedbacks: Prisma.$SprintFeedbackPayload<ExtArgs>[]
-      userProjects: Prisma.$UserProjectPayload<ExtArgs>[]
-      notifications: Prisma.$NotificationPayload<ExtArgs>[]
       tags: Prisma.$TagPayload<ExtArgs>[]
     }
     scalars: $Extensions.GetPayloadResult<{
@@ -4423,8 +4304,6 @@ export namespace Prisma {
     comments<T extends User$commentsArgs<ExtArgs> = {}>(args?: Subset<T, User$commentsArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$CommentPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
     dashboardMetrics<T extends User$dashboardMetricsArgs<ExtArgs> = {}>(args?: Subset<T, User$dashboardMetricsArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$DashboardMetricPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
     sprintFeedbacks<T extends User$sprintFeedbacksArgs<ExtArgs> = {}>(args?: Subset<T, User$sprintFeedbacksArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$SprintFeedbackPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
-    userProjects<T extends User$userProjectsArgs<ExtArgs> = {}>(args?: Subset<T, User$userProjectsArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$UserProjectPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
-    notifications<T extends User$notificationsArgs<ExtArgs> = {}>(args?: Subset<T, User$notificationsArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$NotificationPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
     tags<T extends User$tagsArgs<ExtArgs> = {}>(args?: Subset<T, User$tagsArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$TagPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
     /**
      * Attaches callbacks for the resolution and/or rejection of the Promise.
@@ -4996,54 +4875,6 @@ export namespace Prisma {
   }
 
   /**
-   * User.userProjects
-   */
-  export type User$userProjectsArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
-    /**
-     * Select specific fields to fetch from the UserProject
-     */
-    select?: UserProjectSelect<ExtArgs> | null
-    /**
-     * Omit specific fields from the UserProject
-     */
-    omit?: UserProjectOmit<ExtArgs> | null
-    /**
-     * Choose, which related nodes to fetch as well
-     */
-    include?: UserProjectInclude<ExtArgs> | null
-    where?: UserProjectWhereInput
-    orderBy?: UserProjectOrderByWithRelationInput | UserProjectOrderByWithRelationInput[]
-    cursor?: UserProjectWhereUniqueInput
-    take?: number
-    skip?: number
-    distinct?: UserProjectScalarFieldEnum | UserProjectScalarFieldEnum[]
-  }
-
-  /**
-   * User.notifications
-   */
-  export type User$notificationsArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
-    /**
-     * Select specific fields to fetch from the Notification
-     */
-    select?: NotificationSelect<ExtArgs> | null
-    /**
-     * Omit specific fields from the Notification
-     */
-    omit?: NotificationOmit<ExtArgs> | null
-    /**
-     * Choose, which related nodes to fetch as well
-     */
-    include?: NotificationInclude<ExtArgs> | null
-    where?: NotificationWhereInput
-    orderBy?: NotificationOrderByWithRelationInput | NotificationOrderByWithRelationInput[]
-    cursor?: NotificationWhereUniqueInput
-    take?: number
-    skip?: number
-    distinct?: NotificationScalarFieldEnum | NotificationScalarFieldEnum[]
-  }
-
-  /**
    * User.tags
    */
   export type User$tagsArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
@@ -5083,2274 +4914,6 @@ export namespace Prisma {
      * Choose, which related nodes to fetch as well
      */
     include?: UserInclude<ExtArgs> | null
-  }
-
-
-  /**
-   * Model UserProject
-   */
-
-  export type AggregateUserProject = {
-    _count: UserProjectCountAggregateOutputType | null
-    _avg: UserProjectAvgAggregateOutputType | null
-    _sum: UserProjectSumAggregateOutputType | null
-    _min: UserProjectMinAggregateOutputType | null
-    _max: UserProjectMaxAggregateOutputType | null
-  }
-
-  export type UserProjectAvgAggregateOutputType = {
-    horasDiarias: number | null
-    remuneracao: number | null
-  }
-
-  export type UserProjectSumAggregateOutputType = {
-    horasDiarias: number | null
-    remuneracao: number | null
-  }
-
-  export type UserProjectMinAggregateOutputType = {
-    id: string | null
-    userId: string | null
-    projectId: string | null
-    active: boolean | null
-    horasDiarias: number | null
-    remuneracao: number | null
-  }
-
-  export type UserProjectMaxAggregateOutputType = {
-    id: string | null
-    userId: string | null
-    projectId: string | null
-    active: boolean | null
-    horasDiarias: number | null
-    remuneracao: number | null
-  }
-
-  export type UserProjectCountAggregateOutputType = {
-    id: number
-    userId: number
-    projectId: number
-    active: number
-    horasDiarias: number
-    remuneracao: number
-    _all: number
-  }
-
-
-  export type UserProjectAvgAggregateInputType = {
-    horasDiarias?: true
-    remuneracao?: true
-  }
-
-  export type UserProjectSumAggregateInputType = {
-    horasDiarias?: true
-    remuneracao?: true
-  }
-
-  export type UserProjectMinAggregateInputType = {
-    id?: true
-    userId?: true
-    projectId?: true
-    active?: true
-    horasDiarias?: true
-    remuneracao?: true
-  }
-
-  export type UserProjectMaxAggregateInputType = {
-    id?: true
-    userId?: true
-    projectId?: true
-    active?: true
-    horasDiarias?: true
-    remuneracao?: true
-  }
-
-  export type UserProjectCountAggregateInputType = {
-    id?: true
-    userId?: true
-    projectId?: true
-    active?: true
-    horasDiarias?: true
-    remuneracao?: true
-    _all?: true
-  }
-
-  export type UserProjectAggregateArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
-    /**
-     * Filter which UserProject to aggregate.
-     */
-    where?: UserProjectWhereInput
-    /**
-     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
-     * 
-     * Determine the order of UserProjects to fetch.
-     */
-    orderBy?: UserProjectOrderByWithRelationInput | UserProjectOrderByWithRelationInput[]
-    /**
-     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
-     * 
-     * Sets the start position
-     */
-    cursor?: UserProjectWhereUniqueInput
-    /**
-     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
-     * 
-     * Take `±n` UserProjects from the position of the cursor.
-     */
-    take?: number
-    /**
-     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
-     * 
-     * Skip the first `n` UserProjects.
-     */
-    skip?: number
-    /**
-     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
-     * 
-     * Count returned UserProjects
-    **/
-    _count?: true | UserProjectCountAggregateInputType
-    /**
-     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
-     * 
-     * Select which fields to average
-    **/
-    _avg?: UserProjectAvgAggregateInputType
-    /**
-     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
-     * 
-     * Select which fields to sum
-    **/
-    _sum?: UserProjectSumAggregateInputType
-    /**
-     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
-     * 
-     * Select which fields to find the minimum value
-    **/
-    _min?: UserProjectMinAggregateInputType
-    /**
-     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
-     * 
-     * Select which fields to find the maximum value
-    **/
-    _max?: UserProjectMaxAggregateInputType
-  }
-
-  export type GetUserProjectAggregateType<T extends UserProjectAggregateArgs> = {
-        [P in keyof T & keyof AggregateUserProject]: P extends '_count' | 'count'
-      ? T[P] extends true
-        ? number
-        : GetScalarType<T[P], AggregateUserProject[P]>
-      : GetScalarType<T[P], AggregateUserProject[P]>
-  }
-
-
-
-
-  export type UserProjectGroupByArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
-    where?: UserProjectWhereInput
-    orderBy?: UserProjectOrderByWithAggregationInput | UserProjectOrderByWithAggregationInput[]
-    by: UserProjectScalarFieldEnum[] | UserProjectScalarFieldEnum
-    having?: UserProjectScalarWhereWithAggregatesInput
-    take?: number
-    skip?: number
-    _count?: UserProjectCountAggregateInputType | true
-    _avg?: UserProjectAvgAggregateInputType
-    _sum?: UserProjectSumAggregateInputType
-    _min?: UserProjectMinAggregateInputType
-    _max?: UserProjectMaxAggregateInputType
-  }
-
-  export type UserProjectGroupByOutputType = {
-    id: string
-    userId: string
-    projectId: string
-    active: boolean
-    horasDiarias: number | null
-    remuneracao: number | null
-    _count: UserProjectCountAggregateOutputType | null
-    _avg: UserProjectAvgAggregateOutputType | null
-    _sum: UserProjectSumAggregateOutputType | null
-    _min: UserProjectMinAggregateOutputType | null
-    _max: UserProjectMaxAggregateOutputType | null
-  }
-
-  type GetUserProjectGroupByPayload<T extends UserProjectGroupByArgs> = Prisma.PrismaPromise<
-    Array<
-      PickEnumerable<UserProjectGroupByOutputType, T['by']> &
-        {
-          [P in ((keyof T) & (keyof UserProjectGroupByOutputType))]: P extends '_count'
-            ? T[P] extends boolean
-              ? number
-              : GetScalarType<T[P], UserProjectGroupByOutputType[P]>
-            : GetScalarType<T[P], UserProjectGroupByOutputType[P]>
-        }
-      >
-    >
-
-
-  export type UserProjectSelect<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetSelect<{
-    id?: boolean
-    userId?: boolean
-    projectId?: boolean
-    active?: boolean
-    horasDiarias?: boolean
-    remuneracao?: boolean
-    user?: boolean | UserDefaultArgs<ExtArgs>
-  }, ExtArgs["result"]["userProject"]>
-
-  export type UserProjectSelectCreateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetSelect<{
-    id?: boolean
-    userId?: boolean
-    projectId?: boolean
-    active?: boolean
-    horasDiarias?: boolean
-    remuneracao?: boolean
-    user?: boolean | UserDefaultArgs<ExtArgs>
-  }, ExtArgs["result"]["userProject"]>
-
-  export type UserProjectSelectUpdateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetSelect<{
-    id?: boolean
-    userId?: boolean
-    projectId?: boolean
-    active?: boolean
-    horasDiarias?: boolean
-    remuneracao?: boolean
-    user?: boolean | UserDefaultArgs<ExtArgs>
-  }, ExtArgs["result"]["userProject"]>
-
-  export type UserProjectSelectScalar = {
-    id?: boolean
-    userId?: boolean
-    projectId?: boolean
-    active?: boolean
-    horasDiarias?: boolean
-    remuneracao?: boolean
-  }
-
-  export type UserProjectOmit<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetOmit<"id" | "userId" | "projectId" | "active" | "horasDiarias" | "remuneracao", ExtArgs["result"]["userProject"]>
-  export type UserProjectInclude<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
-    user?: boolean | UserDefaultArgs<ExtArgs>
-  }
-  export type UserProjectIncludeCreateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
-    user?: boolean | UserDefaultArgs<ExtArgs>
-  }
-  export type UserProjectIncludeUpdateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
-    user?: boolean | UserDefaultArgs<ExtArgs>
-  }
-
-  export type $UserProjectPayload<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
-    name: "UserProject"
-    objects: {
-      user: Prisma.$UserPayload<ExtArgs>
-    }
-    scalars: $Extensions.GetPayloadResult<{
-      id: string
-      userId: string
-      projectId: string
-      active: boolean
-      horasDiarias: number | null
-      remuneracao: number | null
-    }, ExtArgs["result"]["userProject"]>
-    composites: {}
-  }
-
-  type UserProjectGetPayload<S extends boolean | null | undefined | UserProjectDefaultArgs> = $Result.GetResult<Prisma.$UserProjectPayload, S>
-
-  type UserProjectCountArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> =
-    Omit<UserProjectFindManyArgs, 'select' | 'include' | 'distinct' | 'omit'> & {
-      select?: UserProjectCountAggregateInputType | true
-    }
-
-  export interface UserProjectDelegate<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs, GlobalOmitOptions = {}> {
-    [K: symbol]: { types: Prisma.TypeMap<ExtArgs>['model']['UserProject'], meta: { name: 'UserProject' } }
-    /**
-     * Find zero or one UserProject that matches the filter.
-     * @param {UserProjectFindUniqueArgs} args - Arguments to find a UserProject
-     * @example
-     * // Get one UserProject
-     * const userProject = await prisma.userProject.findUnique({
-     *   where: {
-     *     // ... provide filter here
-     *   }
-     * })
-     */
-    findUnique<T extends UserProjectFindUniqueArgs>(args: SelectSubset<T, UserProjectFindUniqueArgs<ExtArgs>>): Prisma__UserProjectClient<$Result.GetResult<Prisma.$UserProjectPayload<ExtArgs>, T, "findUnique", GlobalOmitOptions> | null, null, ExtArgs, GlobalOmitOptions>
-
-    /**
-     * Find one UserProject that matches the filter or throw an error with `error.code='P2025'`
-     * if no matches were found.
-     * @param {UserProjectFindUniqueOrThrowArgs} args - Arguments to find a UserProject
-     * @example
-     * // Get one UserProject
-     * const userProject = await prisma.userProject.findUniqueOrThrow({
-     *   where: {
-     *     // ... provide filter here
-     *   }
-     * })
-     */
-    findUniqueOrThrow<T extends UserProjectFindUniqueOrThrowArgs>(args: SelectSubset<T, UserProjectFindUniqueOrThrowArgs<ExtArgs>>): Prisma__UserProjectClient<$Result.GetResult<Prisma.$UserProjectPayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
-
-    /**
-     * Find the first UserProject that matches the filter.
-     * Note, that providing `undefined` is treated as the value not being there.
-     * Read more here: https://pris.ly/d/null-undefined
-     * @param {UserProjectFindFirstArgs} args - Arguments to find a UserProject
-     * @example
-     * // Get one UserProject
-     * const userProject = await prisma.userProject.findFirst({
-     *   where: {
-     *     // ... provide filter here
-     *   }
-     * })
-     */
-    findFirst<T extends UserProjectFindFirstArgs>(args?: SelectSubset<T, UserProjectFindFirstArgs<ExtArgs>>): Prisma__UserProjectClient<$Result.GetResult<Prisma.$UserProjectPayload<ExtArgs>, T, "findFirst", GlobalOmitOptions> | null, null, ExtArgs, GlobalOmitOptions>
-
-    /**
-     * Find the first UserProject that matches the filter or
-     * throw `PrismaKnownClientError` with `P2025` code if no matches were found.
-     * Note, that providing `undefined` is treated as the value not being there.
-     * Read more here: https://pris.ly/d/null-undefined
-     * @param {UserProjectFindFirstOrThrowArgs} args - Arguments to find a UserProject
-     * @example
-     * // Get one UserProject
-     * const userProject = await prisma.userProject.findFirstOrThrow({
-     *   where: {
-     *     // ... provide filter here
-     *   }
-     * })
-     */
-    findFirstOrThrow<T extends UserProjectFindFirstOrThrowArgs>(args?: SelectSubset<T, UserProjectFindFirstOrThrowArgs<ExtArgs>>): Prisma__UserProjectClient<$Result.GetResult<Prisma.$UserProjectPayload<ExtArgs>, T, "findFirstOrThrow", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
-
-    /**
-     * Find zero or more UserProjects that matches the filter.
-     * Note, that providing `undefined` is treated as the value not being there.
-     * Read more here: https://pris.ly/d/null-undefined
-     * @param {UserProjectFindManyArgs} args - Arguments to filter and select certain fields only.
-     * @example
-     * // Get all UserProjects
-     * const userProjects = await prisma.userProject.findMany()
-     * 
-     * // Get first 10 UserProjects
-     * const userProjects = await prisma.userProject.findMany({ take: 10 })
-     * 
-     * // Only select the `id`
-     * const userProjectWithIdOnly = await prisma.userProject.findMany({ select: { id: true } })
-     * 
-     */
-    findMany<T extends UserProjectFindManyArgs>(args?: SelectSubset<T, UserProjectFindManyArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$UserProjectPayload<ExtArgs>, T, "findMany", GlobalOmitOptions>>
-
-    /**
-     * Create a UserProject.
-     * @param {UserProjectCreateArgs} args - Arguments to create a UserProject.
-     * @example
-     * // Create one UserProject
-     * const UserProject = await prisma.userProject.create({
-     *   data: {
-     *     // ... data to create a UserProject
-     *   }
-     * })
-     * 
-     */
-    create<T extends UserProjectCreateArgs>(args: SelectSubset<T, UserProjectCreateArgs<ExtArgs>>): Prisma__UserProjectClient<$Result.GetResult<Prisma.$UserProjectPayload<ExtArgs>, T, "create", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
-
-    /**
-     * Create many UserProjects.
-     * @param {UserProjectCreateManyArgs} args - Arguments to create many UserProjects.
-     * @example
-     * // Create many UserProjects
-     * const userProject = await prisma.userProject.createMany({
-     *   data: [
-     *     // ... provide data here
-     *   ]
-     * })
-     *     
-     */
-    createMany<T extends UserProjectCreateManyArgs>(args?: SelectSubset<T, UserProjectCreateManyArgs<ExtArgs>>): Prisma.PrismaPromise<BatchPayload>
-
-    /**
-     * Create many UserProjects and returns the data saved in the database.
-     * @param {UserProjectCreateManyAndReturnArgs} args - Arguments to create many UserProjects.
-     * @example
-     * // Create many UserProjects
-     * const userProject = await prisma.userProject.createManyAndReturn({
-     *   data: [
-     *     // ... provide data here
-     *   ]
-     * })
-     * 
-     * // Create many UserProjects and only return the `id`
-     * const userProjectWithIdOnly = await prisma.userProject.createManyAndReturn({
-     *   select: { id: true },
-     *   data: [
-     *     // ... provide data here
-     *   ]
-     * })
-     * Note, that providing `undefined` is treated as the value not being there.
-     * Read more here: https://pris.ly/d/null-undefined
-     * 
-     */
-    createManyAndReturn<T extends UserProjectCreateManyAndReturnArgs>(args?: SelectSubset<T, UserProjectCreateManyAndReturnArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$UserProjectPayload<ExtArgs>, T, "createManyAndReturn", GlobalOmitOptions>>
-
-    /**
-     * Delete a UserProject.
-     * @param {UserProjectDeleteArgs} args - Arguments to delete one UserProject.
-     * @example
-     * // Delete one UserProject
-     * const UserProject = await prisma.userProject.delete({
-     *   where: {
-     *     // ... filter to delete one UserProject
-     *   }
-     * })
-     * 
-     */
-    delete<T extends UserProjectDeleteArgs>(args: SelectSubset<T, UserProjectDeleteArgs<ExtArgs>>): Prisma__UserProjectClient<$Result.GetResult<Prisma.$UserProjectPayload<ExtArgs>, T, "delete", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
-
-    /**
-     * Update one UserProject.
-     * @param {UserProjectUpdateArgs} args - Arguments to update one UserProject.
-     * @example
-     * // Update one UserProject
-     * const userProject = await prisma.userProject.update({
-     *   where: {
-     *     // ... provide filter here
-     *   },
-     *   data: {
-     *     // ... provide data here
-     *   }
-     * })
-     * 
-     */
-    update<T extends UserProjectUpdateArgs>(args: SelectSubset<T, UserProjectUpdateArgs<ExtArgs>>): Prisma__UserProjectClient<$Result.GetResult<Prisma.$UserProjectPayload<ExtArgs>, T, "update", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
-
-    /**
-     * Delete zero or more UserProjects.
-     * @param {UserProjectDeleteManyArgs} args - Arguments to filter UserProjects to delete.
-     * @example
-     * // Delete a few UserProjects
-     * const { count } = await prisma.userProject.deleteMany({
-     *   where: {
-     *     // ... provide filter here
-     *   }
-     * })
-     * 
-     */
-    deleteMany<T extends UserProjectDeleteManyArgs>(args?: SelectSubset<T, UserProjectDeleteManyArgs<ExtArgs>>): Prisma.PrismaPromise<BatchPayload>
-
-    /**
-     * Update zero or more UserProjects.
-     * Note, that providing `undefined` is treated as the value not being there.
-     * Read more here: https://pris.ly/d/null-undefined
-     * @param {UserProjectUpdateManyArgs} args - Arguments to update one or more rows.
-     * @example
-     * // Update many UserProjects
-     * const userProject = await prisma.userProject.updateMany({
-     *   where: {
-     *     // ... provide filter here
-     *   },
-     *   data: {
-     *     // ... provide data here
-     *   }
-     * })
-     * 
-     */
-    updateMany<T extends UserProjectUpdateManyArgs>(args: SelectSubset<T, UserProjectUpdateManyArgs<ExtArgs>>): Prisma.PrismaPromise<BatchPayload>
-
-    /**
-     * Update zero or more UserProjects and returns the data updated in the database.
-     * @param {UserProjectUpdateManyAndReturnArgs} args - Arguments to update many UserProjects.
-     * @example
-     * // Update many UserProjects
-     * const userProject = await prisma.userProject.updateManyAndReturn({
-     *   where: {
-     *     // ... provide filter here
-     *   },
-     *   data: [
-     *     // ... provide data here
-     *   ]
-     * })
-     * 
-     * // Update zero or more UserProjects and only return the `id`
-     * const userProjectWithIdOnly = await prisma.userProject.updateManyAndReturn({
-     *   select: { id: true },
-     *   where: {
-     *     // ... provide filter here
-     *   },
-     *   data: [
-     *     // ... provide data here
-     *   ]
-     * })
-     * Note, that providing `undefined` is treated as the value not being there.
-     * Read more here: https://pris.ly/d/null-undefined
-     * 
-     */
-    updateManyAndReturn<T extends UserProjectUpdateManyAndReturnArgs>(args: SelectSubset<T, UserProjectUpdateManyAndReturnArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$UserProjectPayload<ExtArgs>, T, "updateManyAndReturn", GlobalOmitOptions>>
-
-    /**
-     * Create or update one UserProject.
-     * @param {UserProjectUpsertArgs} args - Arguments to update or create a UserProject.
-     * @example
-     * // Update or create a UserProject
-     * const userProject = await prisma.userProject.upsert({
-     *   create: {
-     *     // ... data to create a UserProject
-     *   },
-     *   update: {
-     *     // ... in case it already exists, update
-     *   },
-     *   where: {
-     *     // ... the filter for the UserProject we want to update
-     *   }
-     * })
-     */
-    upsert<T extends UserProjectUpsertArgs>(args: SelectSubset<T, UserProjectUpsertArgs<ExtArgs>>): Prisma__UserProjectClient<$Result.GetResult<Prisma.$UserProjectPayload<ExtArgs>, T, "upsert", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
-
-
-    /**
-     * Count the number of UserProjects.
-     * Note, that providing `undefined` is treated as the value not being there.
-     * Read more here: https://pris.ly/d/null-undefined
-     * @param {UserProjectCountArgs} args - Arguments to filter UserProjects to count.
-     * @example
-     * // Count the number of UserProjects
-     * const count = await prisma.userProject.count({
-     *   where: {
-     *     // ... the filter for the UserProjects we want to count
-     *   }
-     * })
-    **/
-    count<T extends UserProjectCountArgs>(
-      args?: Subset<T, UserProjectCountArgs>,
-    ): Prisma.PrismaPromise<
-      T extends $Utils.Record<'select', any>
-        ? T['select'] extends true
-          ? number
-          : GetScalarType<T['select'], UserProjectCountAggregateOutputType>
-        : number
-    >
-
-    /**
-     * Allows you to perform aggregations operations on a UserProject.
-     * Note, that providing `undefined` is treated as the value not being there.
-     * Read more here: https://pris.ly/d/null-undefined
-     * @param {UserProjectAggregateArgs} args - Select which aggregations you would like to apply and on what fields.
-     * @example
-     * // Ordered by age ascending
-     * // Where email contains prisma.io
-     * // Limited to the 10 users
-     * const aggregations = await prisma.user.aggregate({
-     *   _avg: {
-     *     age: true,
-     *   },
-     *   where: {
-     *     email: {
-     *       contains: "prisma.io",
-     *     },
-     *   },
-     *   orderBy: {
-     *     age: "asc",
-     *   },
-     *   take: 10,
-     * })
-    **/
-    aggregate<T extends UserProjectAggregateArgs>(args: Subset<T, UserProjectAggregateArgs>): Prisma.PrismaPromise<GetUserProjectAggregateType<T>>
-
-    /**
-     * Group by UserProject.
-     * Note, that providing `undefined` is treated as the value not being there.
-     * Read more here: https://pris.ly/d/null-undefined
-     * @param {UserProjectGroupByArgs} args - Group by arguments.
-     * @example
-     * // Group by city, order by createdAt, get count
-     * const result = await prisma.user.groupBy({
-     *   by: ['city', 'createdAt'],
-     *   orderBy: {
-     *     createdAt: true
-     *   },
-     *   _count: {
-     *     _all: true
-     *   },
-     * })
-     * 
-    **/
-    groupBy<
-      T extends UserProjectGroupByArgs,
-      HasSelectOrTake extends Or<
-        Extends<'skip', Keys<T>>,
-        Extends<'take', Keys<T>>
-      >,
-      OrderByArg extends True extends HasSelectOrTake
-        ? { orderBy: UserProjectGroupByArgs['orderBy'] }
-        : { orderBy?: UserProjectGroupByArgs['orderBy'] },
-      OrderFields extends ExcludeUnderscoreKeys<Keys<MaybeTupleToUnion<T['orderBy']>>>,
-      ByFields extends MaybeTupleToUnion<T['by']>,
-      ByValid extends Has<ByFields, OrderFields>,
-      HavingFields extends GetHavingFields<T['having']>,
-      HavingValid extends Has<ByFields, HavingFields>,
-      ByEmpty extends T['by'] extends never[] ? True : False,
-      InputErrors extends ByEmpty extends True
-      ? `Error: "by" must not be empty.`
-      : HavingValid extends False
-      ? {
-          [P in HavingFields]: P extends ByFields
-            ? never
-            : P extends string
-            ? `Error: Field "${P}" used in "having" needs to be provided in "by".`
-            : [
-                Error,
-                'Field ',
-                P,
-                ` in "having" needs to be provided in "by"`,
-              ]
-        }[HavingFields]
-      : 'take' extends Keys<T>
-      ? 'orderBy' extends Keys<T>
-        ? ByValid extends True
-          ? {}
-          : {
-              [P in OrderFields]: P extends ByFields
-                ? never
-                : `Error: Field "${P}" in "orderBy" needs to be provided in "by"`
-            }[OrderFields]
-        : 'Error: If you provide "take", you also need to provide "orderBy"'
-      : 'skip' extends Keys<T>
-      ? 'orderBy' extends Keys<T>
-        ? ByValid extends True
-          ? {}
-          : {
-              [P in OrderFields]: P extends ByFields
-                ? never
-                : `Error: Field "${P}" in "orderBy" needs to be provided in "by"`
-            }[OrderFields]
-        : 'Error: If you provide "skip", you also need to provide "orderBy"'
-      : ByValid extends True
-      ? {}
-      : {
-          [P in OrderFields]: P extends ByFields
-            ? never
-            : `Error: Field "${P}" in "orderBy" needs to be provided in "by"`
-        }[OrderFields]
-    >(args: SubsetIntersection<T, UserProjectGroupByArgs, OrderByArg> & InputErrors): {} extends InputErrors ? GetUserProjectGroupByPayload<T> : Prisma.PrismaPromise<InputErrors>
-  /**
-   * Fields of the UserProject model
-   */
-  readonly fields: UserProjectFieldRefs;
-  }
-
-  /**
-   * The delegate class that acts as a "Promise-like" for UserProject.
-   * Why is this prefixed with `Prisma__`?
-   * Because we want to prevent naming conflicts as mentioned in
-   * https://github.com/prisma/prisma-client-js/issues/707
-   */
-  export interface Prisma__UserProjectClient<T, Null = never, ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs, GlobalOmitOptions = {}> extends Prisma.PrismaPromise<T> {
-    readonly [Symbol.toStringTag]: "PrismaPromise"
-    user<T extends UserDefaultArgs<ExtArgs> = {}>(args?: Subset<T, UserDefaultArgs<ExtArgs>>): Prisma__UserClient<$Result.GetResult<Prisma.$UserPayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions> | Null, Null, ExtArgs, GlobalOmitOptions>
-    /**
-     * Attaches callbacks for the resolution and/or rejection of the Promise.
-     * @param onfulfilled The callback to execute when the Promise is resolved.
-     * @param onrejected The callback to execute when the Promise is rejected.
-     * @returns A Promise for the completion of which ever callback is executed.
-     */
-    then<TResult1 = T, TResult2 = never>(onfulfilled?: ((value: T) => TResult1 | PromiseLike<TResult1>) | undefined | null, onrejected?: ((reason: any) => TResult2 | PromiseLike<TResult2>) | undefined | null): $Utils.JsPromise<TResult1 | TResult2>
-    /**
-     * Attaches a callback for only the rejection of the Promise.
-     * @param onrejected The callback to execute when the Promise is rejected.
-     * @returns A Promise for the completion of the callback.
-     */
-    catch<TResult = never>(onrejected?: ((reason: any) => TResult | PromiseLike<TResult>) | undefined | null): $Utils.JsPromise<T | TResult>
-    /**
-     * Attaches a callback that is invoked when the Promise is settled (fulfilled or rejected). The
-     * resolved value cannot be modified from the callback.
-     * @param onfinally The callback to execute when the Promise is settled (fulfilled or rejected).
-     * @returns A Promise for the completion of the callback.
-     */
-    finally(onfinally?: (() => void) | undefined | null): $Utils.JsPromise<T>
-  }
-
-
-
-
-  /**
-   * Fields of the UserProject model
-   */
-  interface UserProjectFieldRefs {
-    readonly id: FieldRef<"UserProject", 'String'>
-    readonly userId: FieldRef<"UserProject", 'String'>
-    readonly projectId: FieldRef<"UserProject", 'String'>
-    readonly active: FieldRef<"UserProject", 'Boolean'>
-    readonly horasDiarias: FieldRef<"UserProject", 'Float'>
-    readonly remuneracao: FieldRef<"UserProject", 'Float'>
-  }
-    
-
-  // Custom InputTypes
-  /**
-   * UserProject findUnique
-   */
-  export type UserProjectFindUniqueArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
-    /**
-     * Select specific fields to fetch from the UserProject
-     */
-    select?: UserProjectSelect<ExtArgs> | null
-    /**
-     * Omit specific fields from the UserProject
-     */
-    omit?: UserProjectOmit<ExtArgs> | null
-    /**
-     * Choose, which related nodes to fetch as well
-     */
-    include?: UserProjectInclude<ExtArgs> | null
-    /**
-     * Filter, which UserProject to fetch.
-     */
-    where: UserProjectWhereUniqueInput
-  }
-
-  /**
-   * UserProject findUniqueOrThrow
-   */
-  export type UserProjectFindUniqueOrThrowArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
-    /**
-     * Select specific fields to fetch from the UserProject
-     */
-    select?: UserProjectSelect<ExtArgs> | null
-    /**
-     * Omit specific fields from the UserProject
-     */
-    omit?: UserProjectOmit<ExtArgs> | null
-    /**
-     * Choose, which related nodes to fetch as well
-     */
-    include?: UserProjectInclude<ExtArgs> | null
-    /**
-     * Filter, which UserProject to fetch.
-     */
-    where: UserProjectWhereUniqueInput
-  }
-
-  /**
-   * UserProject findFirst
-   */
-  export type UserProjectFindFirstArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
-    /**
-     * Select specific fields to fetch from the UserProject
-     */
-    select?: UserProjectSelect<ExtArgs> | null
-    /**
-     * Omit specific fields from the UserProject
-     */
-    omit?: UserProjectOmit<ExtArgs> | null
-    /**
-     * Choose, which related nodes to fetch as well
-     */
-    include?: UserProjectInclude<ExtArgs> | null
-    /**
-     * Filter, which UserProject to fetch.
-     */
-    where?: UserProjectWhereInput
-    /**
-     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
-     * 
-     * Determine the order of UserProjects to fetch.
-     */
-    orderBy?: UserProjectOrderByWithRelationInput | UserProjectOrderByWithRelationInput[]
-    /**
-     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
-     * 
-     * Sets the position for searching for UserProjects.
-     */
-    cursor?: UserProjectWhereUniqueInput
-    /**
-     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
-     * 
-     * Take `±n` UserProjects from the position of the cursor.
-     */
-    take?: number
-    /**
-     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
-     * 
-     * Skip the first `n` UserProjects.
-     */
-    skip?: number
-    /**
-     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/distinct Distinct Docs}
-     * 
-     * Filter by unique combinations of UserProjects.
-     */
-    distinct?: UserProjectScalarFieldEnum | UserProjectScalarFieldEnum[]
-  }
-
-  /**
-   * UserProject findFirstOrThrow
-   */
-  export type UserProjectFindFirstOrThrowArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
-    /**
-     * Select specific fields to fetch from the UserProject
-     */
-    select?: UserProjectSelect<ExtArgs> | null
-    /**
-     * Omit specific fields from the UserProject
-     */
-    omit?: UserProjectOmit<ExtArgs> | null
-    /**
-     * Choose, which related nodes to fetch as well
-     */
-    include?: UserProjectInclude<ExtArgs> | null
-    /**
-     * Filter, which UserProject to fetch.
-     */
-    where?: UserProjectWhereInput
-    /**
-     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
-     * 
-     * Determine the order of UserProjects to fetch.
-     */
-    orderBy?: UserProjectOrderByWithRelationInput | UserProjectOrderByWithRelationInput[]
-    /**
-     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
-     * 
-     * Sets the position for searching for UserProjects.
-     */
-    cursor?: UserProjectWhereUniqueInput
-    /**
-     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
-     * 
-     * Take `±n` UserProjects from the position of the cursor.
-     */
-    take?: number
-    /**
-     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
-     * 
-     * Skip the first `n` UserProjects.
-     */
-    skip?: number
-    /**
-     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/distinct Distinct Docs}
-     * 
-     * Filter by unique combinations of UserProjects.
-     */
-    distinct?: UserProjectScalarFieldEnum | UserProjectScalarFieldEnum[]
-  }
-
-  /**
-   * UserProject findMany
-   */
-  export type UserProjectFindManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
-    /**
-     * Select specific fields to fetch from the UserProject
-     */
-    select?: UserProjectSelect<ExtArgs> | null
-    /**
-     * Omit specific fields from the UserProject
-     */
-    omit?: UserProjectOmit<ExtArgs> | null
-    /**
-     * Choose, which related nodes to fetch as well
-     */
-    include?: UserProjectInclude<ExtArgs> | null
-    /**
-     * Filter, which UserProjects to fetch.
-     */
-    where?: UserProjectWhereInput
-    /**
-     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
-     * 
-     * Determine the order of UserProjects to fetch.
-     */
-    orderBy?: UserProjectOrderByWithRelationInput | UserProjectOrderByWithRelationInput[]
-    /**
-     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
-     * 
-     * Sets the position for listing UserProjects.
-     */
-    cursor?: UserProjectWhereUniqueInput
-    /**
-     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
-     * 
-     * Take `±n` UserProjects from the position of the cursor.
-     */
-    take?: number
-    /**
-     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
-     * 
-     * Skip the first `n` UserProjects.
-     */
-    skip?: number
-    /**
-     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/distinct Distinct Docs}
-     * 
-     * Filter by unique combinations of UserProjects.
-     */
-    distinct?: UserProjectScalarFieldEnum | UserProjectScalarFieldEnum[]
-  }
-
-  /**
-   * UserProject create
-   */
-  export type UserProjectCreateArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
-    /**
-     * Select specific fields to fetch from the UserProject
-     */
-    select?: UserProjectSelect<ExtArgs> | null
-    /**
-     * Omit specific fields from the UserProject
-     */
-    omit?: UserProjectOmit<ExtArgs> | null
-    /**
-     * Choose, which related nodes to fetch as well
-     */
-    include?: UserProjectInclude<ExtArgs> | null
-    /**
-     * The data needed to create a UserProject.
-     */
-    data: XOR<UserProjectCreateInput, UserProjectUncheckedCreateInput>
-  }
-
-  /**
-   * UserProject createMany
-   */
-  export type UserProjectCreateManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
-    /**
-     * The data used to create many UserProjects.
-     */
-    data: UserProjectCreateManyInput | UserProjectCreateManyInput[]
-    skipDuplicates?: boolean
-  }
-
-  /**
-   * UserProject createManyAndReturn
-   */
-  export type UserProjectCreateManyAndReturnArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
-    /**
-     * Select specific fields to fetch from the UserProject
-     */
-    select?: UserProjectSelectCreateManyAndReturn<ExtArgs> | null
-    /**
-     * Omit specific fields from the UserProject
-     */
-    omit?: UserProjectOmit<ExtArgs> | null
-    /**
-     * The data used to create many UserProjects.
-     */
-    data: UserProjectCreateManyInput | UserProjectCreateManyInput[]
-    skipDuplicates?: boolean
-    /**
-     * Choose, which related nodes to fetch as well
-     */
-    include?: UserProjectIncludeCreateManyAndReturn<ExtArgs> | null
-  }
-
-  /**
-   * UserProject update
-   */
-  export type UserProjectUpdateArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
-    /**
-     * Select specific fields to fetch from the UserProject
-     */
-    select?: UserProjectSelect<ExtArgs> | null
-    /**
-     * Omit specific fields from the UserProject
-     */
-    omit?: UserProjectOmit<ExtArgs> | null
-    /**
-     * Choose, which related nodes to fetch as well
-     */
-    include?: UserProjectInclude<ExtArgs> | null
-    /**
-     * The data needed to update a UserProject.
-     */
-    data: XOR<UserProjectUpdateInput, UserProjectUncheckedUpdateInput>
-    /**
-     * Choose, which UserProject to update.
-     */
-    where: UserProjectWhereUniqueInput
-  }
-
-  /**
-   * UserProject updateMany
-   */
-  export type UserProjectUpdateManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
-    /**
-     * The data used to update UserProjects.
-     */
-    data: XOR<UserProjectUpdateManyMutationInput, UserProjectUncheckedUpdateManyInput>
-    /**
-     * Filter which UserProjects to update
-     */
-    where?: UserProjectWhereInput
-    /**
-     * Limit how many UserProjects to update.
-     */
-    limit?: number
-  }
-
-  /**
-   * UserProject updateManyAndReturn
-   */
-  export type UserProjectUpdateManyAndReturnArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
-    /**
-     * Select specific fields to fetch from the UserProject
-     */
-    select?: UserProjectSelectUpdateManyAndReturn<ExtArgs> | null
-    /**
-     * Omit specific fields from the UserProject
-     */
-    omit?: UserProjectOmit<ExtArgs> | null
-    /**
-     * The data used to update UserProjects.
-     */
-    data: XOR<UserProjectUpdateManyMutationInput, UserProjectUncheckedUpdateManyInput>
-    /**
-     * Filter which UserProjects to update
-     */
-    where?: UserProjectWhereInput
-    /**
-     * Limit how many UserProjects to update.
-     */
-    limit?: number
-    /**
-     * Choose, which related nodes to fetch as well
-     */
-    include?: UserProjectIncludeUpdateManyAndReturn<ExtArgs> | null
-  }
-
-  /**
-   * UserProject upsert
-   */
-  export type UserProjectUpsertArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
-    /**
-     * Select specific fields to fetch from the UserProject
-     */
-    select?: UserProjectSelect<ExtArgs> | null
-    /**
-     * Omit specific fields from the UserProject
-     */
-    omit?: UserProjectOmit<ExtArgs> | null
-    /**
-     * Choose, which related nodes to fetch as well
-     */
-    include?: UserProjectInclude<ExtArgs> | null
-    /**
-     * The filter to search for the UserProject to update in case it exists.
-     */
-    where: UserProjectWhereUniqueInput
-    /**
-     * In case the UserProject found by the `where` argument doesn't exist, create a new UserProject with this data.
-     */
-    create: XOR<UserProjectCreateInput, UserProjectUncheckedCreateInput>
-    /**
-     * In case the UserProject was found with the provided `where` argument, update it with this data.
-     */
-    update: XOR<UserProjectUpdateInput, UserProjectUncheckedUpdateInput>
-  }
-
-  /**
-   * UserProject delete
-   */
-  export type UserProjectDeleteArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
-    /**
-     * Select specific fields to fetch from the UserProject
-     */
-    select?: UserProjectSelect<ExtArgs> | null
-    /**
-     * Omit specific fields from the UserProject
-     */
-    omit?: UserProjectOmit<ExtArgs> | null
-    /**
-     * Choose, which related nodes to fetch as well
-     */
-    include?: UserProjectInclude<ExtArgs> | null
-    /**
-     * Filter which UserProject to delete.
-     */
-    where: UserProjectWhereUniqueInput
-  }
-
-  /**
-   * UserProject deleteMany
-   */
-  export type UserProjectDeleteManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
-    /**
-     * Filter which UserProjects to delete
-     */
-    where?: UserProjectWhereInput
-    /**
-     * Limit how many UserProjects to delete.
-     */
-    limit?: number
-  }
-
-  /**
-   * UserProject without action
-   */
-  export type UserProjectDefaultArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
-    /**
-     * Select specific fields to fetch from the UserProject
-     */
-    select?: UserProjectSelect<ExtArgs> | null
-    /**
-     * Omit specific fields from the UserProject
-     */
-    omit?: UserProjectOmit<ExtArgs> | null
-    /**
-     * Choose, which related nodes to fetch as well
-     */
-    include?: UserProjectInclude<ExtArgs> | null
-  }
-
-
-  /**
-   * Model Notification
-   */
-
-  export type AggregateNotification = {
-    _count: NotificationCountAggregateOutputType | null
-    _min: NotificationMinAggregateOutputType | null
-    _max: NotificationMaxAggregateOutputType | null
-  }
-
-  export type NotificationMinAggregateOutputType = {
-    id: string | null
-    userId: string | null
-    type: string | null
-    title: string | null
-    message: string | null
-    reference: string | null
-    referenceType: string | null
-    status: $Enums.NotificationStatus | null
-    deletedAt: Date | null
-    createdAt: Date | null
-    readAt: Date | null
-    updatedAt: Date | null
-  }
-
-  export type NotificationMaxAggregateOutputType = {
-    id: string | null
-    userId: string | null
-    type: string | null
-    title: string | null
-    message: string | null
-    reference: string | null
-    referenceType: string | null
-    status: $Enums.NotificationStatus | null
-    deletedAt: Date | null
-    createdAt: Date | null
-    readAt: Date | null
-    updatedAt: Date | null
-  }
-
-  export type NotificationCountAggregateOutputType = {
-    id: number
-    userId: number
-    type: number
-    title: number
-    message: number
-    reference: number
-    referenceType: number
-    status: number
-    deletedAt: number
-    createdAt: number
-    readAt: number
-    updatedAt: number
-    _all: number
-  }
-
-
-  export type NotificationMinAggregateInputType = {
-    id?: true
-    userId?: true
-    type?: true
-    title?: true
-    message?: true
-    reference?: true
-    referenceType?: true
-    status?: true
-    deletedAt?: true
-    createdAt?: true
-    readAt?: true
-    updatedAt?: true
-  }
-
-  export type NotificationMaxAggregateInputType = {
-    id?: true
-    userId?: true
-    type?: true
-    title?: true
-    message?: true
-    reference?: true
-    referenceType?: true
-    status?: true
-    deletedAt?: true
-    createdAt?: true
-    readAt?: true
-    updatedAt?: true
-  }
-
-  export type NotificationCountAggregateInputType = {
-    id?: true
-    userId?: true
-    type?: true
-    title?: true
-    message?: true
-    reference?: true
-    referenceType?: true
-    status?: true
-    deletedAt?: true
-    createdAt?: true
-    readAt?: true
-    updatedAt?: true
-    _all?: true
-  }
-
-  export type NotificationAggregateArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
-    /**
-     * Filter which Notification to aggregate.
-     */
-    where?: NotificationWhereInput
-    /**
-     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
-     * 
-     * Determine the order of Notifications to fetch.
-     */
-    orderBy?: NotificationOrderByWithRelationInput | NotificationOrderByWithRelationInput[]
-    /**
-     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
-     * 
-     * Sets the start position
-     */
-    cursor?: NotificationWhereUniqueInput
-    /**
-     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
-     * 
-     * Take `±n` Notifications from the position of the cursor.
-     */
-    take?: number
-    /**
-     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
-     * 
-     * Skip the first `n` Notifications.
-     */
-    skip?: number
-    /**
-     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
-     * 
-     * Count returned Notifications
-    **/
-    _count?: true | NotificationCountAggregateInputType
-    /**
-     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
-     * 
-     * Select which fields to find the minimum value
-    **/
-    _min?: NotificationMinAggregateInputType
-    /**
-     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
-     * 
-     * Select which fields to find the maximum value
-    **/
-    _max?: NotificationMaxAggregateInputType
-  }
-
-  export type GetNotificationAggregateType<T extends NotificationAggregateArgs> = {
-        [P in keyof T & keyof AggregateNotification]: P extends '_count' | 'count'
-      ? T[P] extends true
-        ? number
-        : GetScalarType<T[P], AggregateNotification[P]>
-      : GetScalarType<T[P], AggregateNotification[P]>
-  }
-
-
-
-
-  export type NotificationGroupByArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
-    where?: NotificationWhereInput
-    orderBy?: NotificationOrderByWithAggregationInput | NotificationOrderByWithAggregationInput[]
-    by: NotificationScalarFieldEnum[] | NotificationScalarFieldEnum
-    having?: NotificationScalarWhereWithAggregatesInput
-    take?: number
-    skip?: number
-    _count?: NotificationCountAggregateInputType | true
-    _min?: NotificationMinAggregateInputType
-    _max?: NotificationMaxAggregateInputType
-  }
-
-  export type NotificationGroupByOutputType = {
-    id: string
-    userId: string
-    type: string
-    title: string
-    message: string
-    reference: string | null
-    referenceType: string | null
-    status: $Enums.NotificationStatus
-    deletedAt: Date | null
-    createdAt: Date
-    readAt: Date | null
-    updatedAt: Date
-    _count: NotificationCountAggregateOutputType | null
-    _min: NotificationMinAggregateOutputType | null
-    _max: NotificationMaxAggregateOutputType | null
-  }
-
-  type GetNotificationGroupByPayload<T extends NotificationGroupByArgs> = Prisma.PrismaPromise<
-    Array<
-      PickEnumerable<NotificationGroupByOutputType, T['by']> &
-        {
-          [P in ((keyof T) & (keyof NotificationGroupByOutputType))]: P extends '_count'
-            ? T[P] extends boolean
-              ? number
-              : GetScalarType<T[P], NotificationGroupByOutputType[P]>
-            : GetScalarType<T[P], NotificationGroupByOutputType[P]>
-        }
-      >
-    >
-
-
-  export type NotificationSelect<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetSelect<{
-    id?: boolean
-    userId?: boolean
-    type?: boolean
-    title?: boolean
-    message?: boolean
-    reference?: boolean
-    referenceType?: boolean
-    status?: boolean
-    deletedAt?: boolean
-    createdAt?: boolean
-    readAt?: boolean
-    updatedAt?: boolean
-    user?: boolean | UserDefaultArgs<ExtArgs>
-  }, ExtArgs["result"]["notification"]>
-
-  export type NotificationSelectCreateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetSelect<{
-    id?: boolean
-    userId?: boolean
-    type?: boolean
-    title?: boolean
-    message?: boolean
-    reference?: boolean
-    referenceType?: boolean
-    status?: boolean
-    deletedAt?: boolean
-    createdAt?: boolean
-    readAt?: boolean
-    updatedAt?: boolean
-    user?: boolean | UserDefaultArgs<ExtArgs>
-  }, ExtArgs["result"]["notification"]>
-
-  export type NotificationSelectUpdateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetSelect<{
-    id?: boolean
-    userId?: boolean
-    type?: boolean
-    title?: boolean
-    message?: boolean
-    reference?: boolean
-    referenceType?: boolean
-    status?: boolean
-    deletedAt?: boolean
-    createdAt?: boolean
-    readAt?: boolean
-    updatedAt?: boolean
-    user?: boolean | UserDefaultArgs<ExtArgs>
-  }, ExtArgs["result"]["notification"]>
-
-  export type NotificationSelectScalar = {
-    id?: boolean
-    userId?: boolean
-    type?: boolean
-    title?: boolean
-    message?: boolean
-    reference?: boolean
-    referenceType?: boolean
-    status?: boolean
-    deletedAt?: boolean
-    createdAt?: boolean
-    readAt?: boolean
-    updatedAt?: boolean
-  }
-
-  export type NotificationOmit<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetOmit<"id" | "userId" | "type" | "title" | "message" | "reference" | "referenceType" | "status" | "deletedAt" | "createdAt" | "readAt" | "updatedAt", ExtArgs["result"]["notification"]>
-  export type NotificationInclude<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
-    user?: boolean | UserDefaultArgs<ExtArgs>
-  }
-  export type NotificationIncludeCreateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
-    user?: boolean | UserDefaultArgs<ExtArgs>
-  }
-  export type NotificationIncludeUpdateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
-    user?: boolean | UserDefaultArgs<ExtArgs>
-  }
-
-  export type $NotificationPayload<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
-    name: "Notification"
-    objects: {
-      user: Prisma.$UserPayload<ExtArgs>
-    }
-    scalars: $Extensions.GetPayloadResult<{
-      id: string
-      userId: string
-      type: string
-      title: string
-      message: string
-      reference: string | null
-      referenceType: string | null
-      status: $Enums.NotificationStatus
-      deletedAt: Date | null
-      createdAt: Date
-      readAt: Date | null
-      updatedAt: Date
-    }, ExtArgs["result"]["notification"]>
-    composites: {}
-  }
-
-  type NotificationGetPayload<S extends boolean | null | undefined | NotificationDefaultArgs> = $Result.GetResult<Prisma.$NotificationPayload, S>
-
-  type NotificationCountArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> =
-    Omit<NotificationFindManyArgs, 'select' | 'include' | 'distinct' | 'omit'> & {
-      select?: NotificationCountAggregateInputType | true
-    }
-
-  export interface NotificationDelegate<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs, GlobalOmitOptions = {}> {
-    [K: symbol]: { types: Prisma.TypeMap<ExtArgs>['model']['Notification'], meta: { name: 'Notification' } }
-    /**
-     * Find zero or one Notification that matches the filter.
-     * @param {NotificationFindUniqueArgs} args - Arguments to find a Notification
-     * @example
-     * // Get one Notification
-     * const notification = await prisma.notification.findUnique({
-     *   where: {
-     *     // ... provide filter here
-     *   }
-     * })
-     */
-    findUnique<T extends NotificationFindUniqueArgs>(args: SelectSubset<T, NotificationFindUniqueArgs<ExtArgs>>): Prisma__NotificationClient<$Result.GetResult<Prisma.$NotificationPayload<ExtArgs>, T, "findUnique", GlobalOmitOptions> | null, null, ExtArgs, GlobalOmitOptions>
-
-    /**
-     * Find one Notification that matches the filter or throw an error with `error.code='P2025'`
-     * if no matches were found.
-     * @param {NotificationFindUniqueOrThrowArgs} args - Arguments to find a Notification
-     * @example
-     * // Get one Notification
-     * const notification = await prisma.notification.findUniqueOrThrow({
-     *   where: {
-     *     // ... provide filter here
-     *   }
-     * })
-     */
-    findUniqueOrThrow<T extends NotificationFindUniqueOrThrowArgs>(args: SelectSubset<T, NotificationFindUniqueOrThrowArgs<ExtArgs>>): Prisma__NotificationClient<$Result.GetResult<Prisma.$NotificationPayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
-
-    /**
-     * Find the first Notification that matches the filter.
-     * Note, that providing `undefined` is treated as the value not being there.
-     * Read more here: https://pris.ly/d/null-undefined
-     * @param {NotificationFindFirstArgs} args - Arguments to find a Notification
-     * @example
-     * // Get one Notification
-     * const notification = await prisma.notification.findFirst({
-     *   where: {
-     *     // ... provide filter here
-     *   }
-     * })
-     */
-    findFirst<T extends NotificationFindFirstArgs>(args?: SelectSubset<T, NotificationFindFirstArgs<ExtArgs>>): Prisma__NotificationClient<$Result.GetResult<Prisma.$NotificationPayload<ExtArgs>, T, "findFirst", GlobalOmitOptions> | null, null, ExtArgs, GlobalOmitOptions>
-
-    /**
-     * Find the first Notification that matches the filter or
-     * throw `PrismaKnownClientError` with `P2025` code if no matches were found.
-     * Note, that providing `undefined` is treated as the value not being there.
-     * Read more here: https://pris.ly/d/null-undefined
-     * @param {NotificationFindFirstOrThrowArgs} args - Arguments to find a Notification
-     * @example
-     * // Get one Notification
-     * const notification = await prisma.notification.findFirstOrThrow({
-     *   where: {
-     *     // ... provide filter here
-     *   }
-     * })
-     */
-    findFirstOrThrow<T extends NotificationFindFirstOrThrowArgs>(args?: SelectSubset<T, NotificationFindFirstOrThrowArgs<ExtArgs>>): Prisma__NotificationClient<$Result.GetResult<Prisma.$NotificationPayload<ExtArgs>, T, "findFirstOrThrow", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
-
-    /**
-     * Find zero or more Notifications that matches the filter.
-     * Note, that providing `undefined` is treated as the value not being there.
-     * Read more here: https://pris.ly/d/null-undefined
-     * @param {NotificationFindManyArgs} args - Arguments to filter and select certain fields only.
-     * @example
-     * // Get all Notifications
-     * const notifications = await prisma.notification.findMany()
-     * 
-     * // Get first 10 Notifications
-     * const notifications = await prisma.notification.findMany({ take: 10 })
-     * 
-     * // Only select the `id`
-     * const notificationWithIdOnly = await prisma.notification.findMany({ select: { id: true } })
-     * 
-     */
-    findMany<T extends NotificationFindManyArgs>(args?: SelectSubset<T, NotificationFindManyArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$NotificationPayload<ExtArgs>, T, "findMany", GlobalOmitOptions>>
-
-    /**
-     * Create a Notification.
-     * @param {NotificationCreateArgs} args - Arguments to create a Notification.
-     * @example
-     * // Create one Notification
-     * const Notification = await prisma.notification.create({
-     *   data: {
-     *     // ... data to create a Notification
-     *   }
-     * })
-     * 
-     */
-    create<T extends NotificationCreateArgs>(args: SelectSubset<T, NotificationCreateArgs<ExtArgs>>): Prisma__NotificationClient<$Result.GetResult<Prisma.$NotificationPayload<ExtArgs>, T, "create", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
-
-    /**
-     * Create many Notifications.
-     * @param {NotificationCreateManyArgs} args - Arguments to create many Notifications.
-     * @example
-     * // Create many Notifications
-     * const notification = await prisma.notification.createMany({
-     *   data: [
-     *     // ... provide data here
-     *   ]
-     * })
-     *     
-     */
-    createMany<T extends NotificationCreateManyArgs>(args?: SelectSubset<T, NotificationCreateManyArgs<ExtArgs>>): Prisma.PrismaPromise<BatchPayload>
-
-    /**
-     * Create many Notifications and returns the data saved in the database.
-     * @param {NotificationCreateManyAndReturnArgs} args - Arguments to create many Notifications.
-     * @example
-     * // Create many Notifications
-     * const notification = await prisma.notification.createManyAndReturn({
-     *   data: [
-     *     // ... provide data here
-     *   ]
-     * })
-     * 
-     * // Create many Notifications and only return the `id`
-     * const notificationWithIdOnly = await prisma.notification.createManyAndReturn({
-     *   select: { id: true },
-     *   data: [
-     *     // ... provide data here
-     *   ]
-     * })
-     * Note, that providing `undefined` is treated as the value not being there.
-     * Read more here: https://pris.ly/d/null-undefined
-     * 
-     */
-    createManyAndReturn<T extends NotificationCreateManyAndReturnArgs>(args?: SelectSubset<T, NotificationCreateManyAndReturnArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$NotificationPayload<ExtArgs>, T, "createManyAndReturn", GlobalOmitOptions>>
-
-    /**
-     * Delete a Notification.
-     * @param {NotificationDeleteArgs} args - Arguments to delete one Notification.
-     * @example
-     * // Delete one Notification
-     * const Notification = await prisma.notification.delete({
-     *   where: {
-     *     // ... filter to delete one Notification
-     *   }
-     * })
-     * 
-     */
-    delete<T extends NotificationDeleteArgs>(args: SelectSubset<T, NotificationDeleteArgs<ExtArgs>>): Prisma__NotificationClient<$Result.GetResult<Prisma.$NotificationPayload<ExtArgs>, T, "delete", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
-
-    /**
-     * Update one Notification.
-     * @param {NotificationUpdateArgs} args - Arguments to update one Notification.
-     * @example
-     * // Update one Notification
-     * const notification = await prisma.notification.update({
-     *   where: {
-     *     // ... provide filter here
-     *   },
-     *   data: {
-     *     // ... provide data here
-     *   }
-     * })
-     * 
-     */
-    update<T extends NotificationUpdateArgs>(args: SelectSubset<T, NotificationUpdateArgs<ExtArgs>>): Prisma__NotificationClient<$Result.GetResult<Prisma.$NotificationPayload<ExtArgs>, T, "update", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
-
-    /**
-     * Delete zero or more Notifications.
-     * @param {NotificationDeleteManyArgs} args - Arguments to filter Notifications to delete.
-     * @example
-     * // Delete a few Notifications
-     * const { count } = await prisma.notification.deleteMany({
-     *   where: {
-     *     // ... provide filter here
-     *   }
-     * })
-     * 
-     */
-    deleteMany<T extends NotificationDeleteManyArgs>(args?: SelectSubset<T, NotificationDeleteManyArgs<ExtArgs>>): Prisma.PrismaPromise<BatchPayload>
-
-    /**
-     * Update zero or more Notifications.
-     * Note, that providing `undefined` is treated as the value not being there.
-     * Read more here: https://pris.ly/d/null-undefined
-     * @param {NotificationUpdateManyArgs} args - Arguments to update one or more rows.
-     * @example
-     * // Update many Notifications
-     * const notification = await prisma.notification.updateMany({
-     *   where: {
-     *     // ... provide filter here
-     *   },
-     *   data: {
-     *     // ... provide data here
-     *   }
-     * })
-     * 
-     */
-    updateMany<T extends NotificationUpdateManyArgs>(args: SelectSubset<T, NotificationUpdateManyArgs<ExtArgs>>): Prisma.PrismaPromise<BatchPayload>
-
-    /**
-     * Update zero or more Notifications and returns the data updated in the database.
-     * @param {NotificationUpdateManyAndReturnArgs} args - Arguments to update many Notifications.
-     * @example
-     * // Update many Notifications
-     * const notification = await prisma.notification.updateManyAndReturn({
-     *   where: {
-     *     // ... provide filter here
-     *   },
-     *   data: [
-     *     // ... provide data here
-     *   ]
-     * })
-     * 
-     * // Update zero or more Notifications and only return the `id`
-     * const notificationWithIdOnly = await prisma.notification.updateManyAndReturn({
-     *   select: { id: true },
-     *   where: {
-     *     // ... provide filter here
-     *   },
-     *   data: [
-     *     // ... provide data here
-     *   ]
-     * })
-     * Note, that providing `undefined` is treated as the value not being there.
-     * Read more here: https://pris.ly/d/null-undefined
-     * 
-     */
-    updateManyAndReturn<T extends NotificationUpdateManyAndReturnArgs>(args: SelectSubset<T, NotificationUpdateManyAndReturnArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$NotificationPayload<ExtArgs>, T, "updateManyAndReturn", GlobalOmitOptions>>
-
-    /**
-     * Create or update one Notification.
-     * @param {NotificationUpsertArgs} args - Arguments to update or create a Notification.
-     * @example
-     * // Update or create a Notification
-     * const notification = await prisma.notification.upsert({
-     *   create: {
-     *     // ... data to create a Notification
-     *   },
-     *   update: {
-     *     // ... in case it already exists, update
-     *   },
-     *   where: {
-     *     // ... the filter for the Notification we want to update
-     *   }
-     * })
-     */
-    upsert<T extends NotificationUpsertArgs>(args: SelectSubset<T, NotificationUpsertArgs<ExtArgs>>): Prisma__NotificationClient<$Result.GetResult<Prisma.$NotificationPayload<ExtArgs>, T, "upsert", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
-
-
-    /**
-     * Count the number of Notifications.
-     * Note, that providing `undefined` is treated as the value not being there.
-     * Read more here: https://pris.ly/d/null-undefined
-     * @param {NotificationCountArgs} args - Arguments to filter Notifications to count.
-     * @example
-     * // Count the number of Notifications
-     * const count = await prisma.notification.count({
-     *   where: {
-     *     // ... the filter for the Notifications we want to count
-     *   }
-     * })
-    **/
-    count<T extends NotificationCountArgs>(
-      args?: Subset<T, NotificationCountArgs>,
-    ): Prisma.PrismaPromise<
-      T extends $Utils.Record<'select', any>
-        ? T['select'] extends true
-          ? number
-          : GetScalarType<T['select'], NotificationCountAggregateOutputType>
-        : number
-    >
-
-    /**
-     * Allows you to perform aggregations operations on a Notification.
-     * Note, that providing `undefined` is treated as the value not being there.
-     * Read more here: https://pris.ly/d/null-undefined
-     * @param {NotificationAggregateArgs} args - Select which aggregations you would like to apply and on what fields.
-     * @example
-     * // Ordered by age ascending
-     * // Where email contains prisma.io
-     * // Limited to the 10 users
-     * const aggregations = await prisma.user.aggregate({
-     *   _avg: {
-     *     age: true,
-     *   },
-     *   where: {
-     *     email: {
-     *       contains: "prisma.io",
-     *     },
-     *   },
-     *   orderBy: {
-     *     age: "asc",
-     *   },
-     *   take: 10,
-     * })
-    **/
-    aggregate<T extends NotificationAggregateArgs>(args: Subset<T, NotificationAggregateArgs>): Prisma.PrismaPromise<GetNotificationAggregateType<T>>
-
-    /**
-     * Group by Notification.
-     * Note, that providing `undefined` is treated as the value not being there.
-     * Read more here: https://pris.ly/d/null-undefined
-     * @param {NotificationGroupByArgs} args - Group by arguments.
-     * @example
-     * // Group by city, order by createdAt, get count
-     * const result = await prisma.user.groupBy({
-     *   by: ['city', 'createdAt'],
-     *   orderBy: {
-     *     createdAt: true
-     *   },
-     *   _count: {
-     *     _all: true
-     *   },
-     * })
-     * 
-    **/
-    groupBy<
-      T extends NotificationGroupByArgs,
-      HasSelectOrTake extends Or<
-        Extends<'skip', Keys<T>>,
-        Extends<'take', Keys<T>>
-      >,
-      OrderByArg extends True extends HasSelectOrTake
-        ? { orderBy: NotificationGroupByArgs['orderBy'] }
-        : { orderBy?: NotificationGroupByArgs['orderBy'] },
-      OrderFields extends ExcludeUnderscoreKeys<Keys<MaybeTupleToUnion<T['orderBy']>>>,
-      ByFields extends MaybeTupleToUnion<T['by']>,
-      ByValid extends Has<ByFields, OrderFields>,
-      HavingFields extends GetHavingFields<T['having']>,
-      HavingValid extends Has<ByFields, HavingFields>,
-      ByEmpty extends T['by'] extends never[] ? True : False,
-      InputErrors extends ByEmpty extends True
-      ? `Error: "by" must not be empty.`
-      : HavingValid extends False
-      ? {
-          [P in HavingFields]: P extends ByFields
-            ? never
-            : P extends string
-            ? `Error: Field "${P}" used in "having" needs to be provided in "by".`
-            : [
-                Error,
-                'Field ',
-                P,
-                ` in "having" needs to be provided in "by"`,
-              ]
-        }[HavingFields]
-      : 'take' extends Keys<T>
-      ? 'orderBy' extends Keys<T>
-        ? ByValid extends True
-          ? {}
-          : {
-              [P in OrderFields]: P extends ByFields
-                ? never
-                : `Error: Field "${P}" in "orderBy" needs to be provided in "by"`
-            }[OrderFields]
-        : 'Error: If you provide "take", you also need to provide "orderBy"'
-      : 'skip' extends Keys<T>
-      ? 'orderBy' extends Keys<T>
-        ? ByValid extends True
-          ? {}
-          : {
-              [P in OrderFields]: P extends ByFields
-                ? never
-                : `Error: Field "${P}" in "orderBy" needs to be provided in "by"`
-            }[OrderFields]
-        : 'Error: If you provide "skip", you also need to provide "orderBy"'
-      : ByValid extends True
-      ? {}
-      : {
-          [P in OrderFields]: P extends ByFields
-            ? never
-            : `Error: Field "${P}" in "orderBy" needs to be provided in "by"`
-        }[OrderFields]
-    >(args: SubsetIntersection<T, NotificationGroupByArgs, OrderByArg> & InputErrors): {} extends InputErrors ? GetNotificationGroupByPayload<T> : Prisma.PrismaPromise<InputErrors>
-  /**
-   * Fields of the Notification model
-   */
-  readonly fields: NotificationFieldRefs;
-  }
-
-  /**
-   * The delegate class that acts as a "Promise-like" for Notification.
-   * Why is this prefixed with `Prisma__`?
-   * Because we want to prevent naming conflicts as mentioned in
-   * https://github.com/prisma/prisma-client-js/issues/707
-   */
-  export interface Prisma__NotificationClient<T, Null = never, ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs, GlobalOmitOptions = {}> extends Prisma.PrismaPromise<T> {
-    readonly [Symbol.toStringTag]: "PrismaPromise"
-    user<T extends UserDefaultArgs<ExtArgs> = {}>(args?: Subset<T, UserDefaultArgs<ExtArgs>>): Prisma__UserClient<$Result.GetResult<Prisma.$UserPayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions> | Null, Null, ExtArgs, GlobalOmitOptions>
-    /**
-     * Attaches callbacks for the resolution and/or rejection of the Promise.
-     * @param onfulfilled The callback to execute when the Promise is resolved.
-     * @param onrejected The callback to execute when the Promise is rejected.
-     * @returns A Promise for the completion of which ever callback is executed.
-     */
-    then<TResult1 = T, TResult2 = never>(onfulfilled?: ((value: T) => TResult1 | PromiseLike<TResult1>) | undefined | null, onrejected?: ((reason: any) => TResult2 | PromiseLike<TResult2>) | undefined | null): $Utils.JsPromise<TResult1 | TResult2>
-    /**
-     * Attaches a callback for only the rejection of the Promise.
-     * @param onrejected The callback to execute when the Promise is rejected.
-     * @returns A Promise for the completion of the callback.
-     */
-    catch<TResult = never>(onrejected?: ((reason: any) => TResult | PromiseLike<TResult>) | undefined | null): $Utils.JsPromise<T | TResult>
-    /**
-     * Attaches a callback that is invoked when the Promise is settled (fulfilled or rejected). The
-     * resolved value cannot be modified from the callback.
-     * @param onfinally The callback to execute when the Promise is settled (fulfilled or rejected).
-     * @returns A Promise for the completion of the callback.
-     */
-    finally(onfinally?: (() => void) | undefined | null): $Utils.JsPromise<T>
-  }
-
-
-
-
-  /**
-   * Fields of the Notification model
-   */
-  interface NotificationFieldRefs {
-    readonly id: FieldRef<"Notification", 'String'>
-    readonly userId: FieldRef<"Notification", 'String'>
-    readonly type: FieldRef<"Notification", 'String'>
-    readonly title: FieldRef<"Notification", 'String'>
-    readonly message: FieldRef<"Notification", 'String'>
-    readonly reference: FieldRef<"Notification", 'String'>
-    readonly referenceType: FieldRef<"Notification", 'String'>
-    readonly status: FieldRef<"Notification", 'NotificationStatus'>
-    readonly deletedAt: FieldRef<"Notification", 'DateTime'>
-    readonly createdAt: FieldRef<"Notification", 'DateTime'>
-    readonly readAt: FieldRef<"Notification", 'DateTime'>
-    readonly updatedAt: FieldRef<"Notification", 'DateTime'>
-  }
-    
-
-  // Custom InputTypes
-  /**
-   * Notification findUnique
-   */
-  export type NotificationFindUniqueArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
-    /**
-     * Select specific fields to fetch from the Notification
-     */
-    select?: NotificationSelect<ExtArgs> | null
-    /**
-     * Omit specific fields from the Notification
-     */
-    omit?: NotificationOmit<ExtArgs> | null
-    /**
-     * Choose, which related nodes to fetch as well
-     */
-    include?: NotificationInclude<ExtArgs> | null
-    /**
-     * Filter, which Notification to fetch.
-     */
-    where: NotificationWhereUniqueInput
-  }
-
-  /**
-   * Notification findUniqueOrThrow
-   */
-  export type NotificationFindUniqueOrThrowArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
-    /**
-     * Select specific fields to fetch from the Notification
-     */
-    select?: NotificationSelect<ExtArgs> | null
-    /**
-     * Omit specific fields from the Notification
-     */
-    omit?: NotificationOmit<ExtArgs> | null
-    /**
-     * Choose, which related nodes to fetch as well
-     */
-    include?: NotificationInclude<ExtArgs> | null
-    /**
-     * Filter, which Notification to fetch.
-     */
-    where: NotificationWhereUniqueInput
-  }
-
-  /**
-   * Notification findFirst
-   */
-  export type NotificationFindFirstArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
-    /**
-     * Select specific fields to fetch from the Notification
-     */
-    select?: NotificationSelect<ExtArgs> | null
-    /**
-     * Omit specific fields from the Notification
-     */
-    omit?: NotificationOmit<ExtArgs> | null
-    /**
-     * Choose, which related nodes to fetch as well
-     */
-    include?: NotificationInclude<ExtArgs> | null
-    /**
-     * Filter, which Notification to fetch.
-     */
-    where?: NotificationWhereInput
-    /**
-     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
-     * 
-     * Determine the order of Notifications to fetch.
-     */
-    orderBy?: NotificationOrderByWithRelationInput | NotificationOrderByWithRelationInput[]
-    /**
-     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
-     * 
-     * Sets the position for searching for Notifications.
-     */
-    cursor?: NotificationWhereUniqueInput
-    /**
-     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
-     * 
-     * Take `±n` Notifications from the position of the cursor.
-     */
-    take?: number
-    /**
-     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
-     * 
-     * Skip the first `n` Notifications.
-     */
-    skip?: number
-    /**
-     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/distinct Distinct Docs}
-     * 
-     * Filter by unique combinations of Notifications.
-     */
-    distinct?: NotificationScalarFieldEnum | NotificationScalarFieldEnum[]
-  }
-
-  /**
-   * Notification findFirstOrThrow
-   */
-  export type NotificationFindFirstOrThrowArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
-    /**
-     * Select specific fields to fetch from the Notification
-     */
-    select?: NotificationSelect<ExtArgs> | null
-    /**
-     * Omit specific fields from the Notification
-     */
-    omit?: NotificationOmit<ExtArgs> | null
-    /**
-     * Choose, which related nodes to fetch as well
-     */
-    include?: NotificationInclude<ExtArgs> | null
-    /**
-     * Filter, which Notification to fetch.
-     */
-    where?: NotificationWhereInput
-    /**
-     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
-     * 
-     * Determine the order of Notifications to fetch.
-     */
-    orderBy?: NotificationOrderByWithRelationInput | NotificationOrderByWithRelationInput[]
-    /**
-     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
-     * 
-     * Sets the position for searching for Notifications.
-     */
-    cursor?: NotificationWhereUniqueInput
-    /**
-     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
-     * 
-     * Take `±n` Notifications from the position of the cursor.
-     */
-    take?: number
-    /**
-     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
-     * 
-     * Skip the first `n` Notifications.
-     */
-    skip?: number
-    /**
-     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/distinct Distinct Docs}
-     * 
-     * Filter by unique combinations of Notifications.
-     */
-    distinct?: NotificationScalarFieldEnum | NotificationScalarFieldEnum[]
-  }
-
-  /**
-   * Notification findMany
-   */
-  export type NotificationFindManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
-    /**
-     * Select specific fields to fetch from the Notification
-     */
-    select?: NotificationSelect<ExtArgs> | null
-    /**
-     * Omit specific fields from the Notification
-     */
-    omit?: NotificationOmit<ExtArgs> | null
-    /**
-     * Choose, which related nodes to fetch as well
-     */
-    include?: NotificationInclude<ExtArgs> | null
-    /**
-     * Filter, which Notifications to fetch.
-     */
-    where?: NotificationWhereInput
-    /**
-     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
-     * 
-     * Determine the order of Notifications to fetch.
-     */
-    orderBy?: NotificationOrderByWithRelationInput | NotificationOrderByWithRelationInput[]
-    /**
-     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
-     * 
-     * Sets the position for listing Notifications.
-     */
-    cursor?: NotificationWhereUniqueInput
-    /**
-     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
-     * 
-     * Take `±n` Notifications from the position of the cursor.
-     */
-    take?: number
-    /**
-     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
-     * 
-     * Skip the first `n` Notifications.
-     */
-    skip?: number
-    /**
-     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/distinct Distinct Docs}
-     * 
-     * Filter by unique combinations of Notifications.
-     */
-    distinct?: NotificationScalarFieldEnum | NotificationScalarFieldEnum[]
-  }
-
-  /**
-   * Notification create
-   */
-  export type NotificationCreateArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
-    /**
-     * Select specific fields to fetch from the Notification
-     */
-    select?: NotificationSelect<ExtArgs> | null
-    /**
-     * Omit specific fields from the Notification
-     */
-    omit?: NotificationOmit<ExtArgs> | null
-    /**
-     * Choose, which related nodes to fetch as well
-     */
-    include?: NotificationInclude<ExtArgs> | null
-    /**
-     * The data needed to create a Notification.
-     */
-    data: XOR<NotificationCreateInput, NotificationUncheckedCreateInput>
-  }
-
-  /**
-   * Notification createMany
-   */
-  export type NotificationCreateManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
-    /**
-     * The data used to create many Notifications.
-     */
-    data: NotificationCreateManyInput | NotificationCreateManyInput[]
-    skipDuplicates?: boolean
-  }
-
-  /**
-   * Notification createManyAndReturn
-   */
-  export type NotificationCreateManyAndReturnArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
-    /**
-     * Select specific fields to fetch from the Notification
-     */
-    select?: NotificationSelectCreateManyAndReturn<ExtArgs> | null
-    /**
-     * Omit specific fields from the Notification
-     */
-    omit?: NotificationOmit<ExtArgs> | null
-    /**
-     * The data used to create many Notifications.
-     */
-    data: NotificationCreateManyInput | NotificationCreateManyInput[]
-    skipDuplicates?: boolean
-    /**
-     * Choose, which related nodes to fetch as well
-     */
-    include?: NotificationIncludeCreateManyAndReturn<ExtArgs> | null
-  }
-
-  /**
-   * Notification update
-   */
-  export type NotificationUpdateArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
-    /**
-     * Select specific fields to fetch from the Notification
-     */
-    select?: NotificationSelect<ExtArgs> | null
-    /**
-     * Omit specific fields from the Notification
-     */
-    omit?: NotificationOmit<ExtArgs> | null
-    /**
-     * Choose, which related nodes to fetch as well
-     */
-    include?: NotificationInclude<ExtArgs> | null
-    /**
-     * The data needed to update a Notification.
-     */
-    data: XOR<NotificationUpdateInput, NotificationUncheckedUpdateInput>
-    /**
-     * Choose, which Notification to update.
-     */
-    where: NotificationWhereUniqueInput
-  }
-
-  /**
-   * Notification updateMany
-   */
-  export type NotificationUpdateManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
-    /**
-     * The data used to update Notifications.
-     */
-    data: XOR<NotificationUpdateManyMutationInput, NotificationUncheckedUpdateManyInput>
-    /**
-     * Filter which Notifications to update
-     */
-    where?: NotificationWhereInput
-    /**
-     * Limit how many Notifications to update.
-     */
-    limit?: number
-  }
-
-  /**
-   * Notification updateManyAndReturn
-   */
-  export type NotificationUpdateManyAndReturnArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
-    /**
-     * Select specific fields to fetch from the Notification
-     */
-    select?: NotificationSelectUpdateManyAndReturn<ExtArgs> | null
-    /**
-     * Omit specific fields from the Notification
-     */
-    omit?: NotificationOmit<ExtArgs> | null
-    /**
-     * The data used to update Notifications.
-     */
-    data: XOR<NotificationUpdateManyMutationInput, NotificationUncheckedUpdateManyInput>
-    /**
-     * Filter which Notifications to update
-     */
-    where?: NotificationWhereInput
-    /**
-     * Limit how many Notifications to update.
-     */
-    limit?: number
-    /**
-     * Choose, which related nodes to fetch as well
-     */
-    include?: NotificationIncludeUpdateManyAndReturn<ExtArgs> | null
-  }
-
-  /**
-   * Notification upsert
-   */
-  export type NotificationUpsertArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
-    /**
-     * Select specific fields to fetch from the Notification
-     */
-    select?: NotificationSelect<ExtArgs> | null
-    /**
-     * Omit specific fields from the Notification
-     */
-    omit?: NotificationOmit<ExtArgs> | null
-    /**
-     * Choose, which related nodes to fetch as well
-     */
-    include?: NotificationInclude<ExtArgs> | null
-    /**
-     * The filter to search for the Notification to update in case it exists.
-     */
-    where: NotificationWhereUniqueInput
-    /**
-     * In case the Notification found by the `where` argument doesn't exist, create a new Notification with this data.
-     */
-    create: XOR<NotificationCreateInput, NotificationUncheckedCreateInput>
-    /**
-     * In case the Notification was found with the provided `where` argument, update it with this data.
-     */
-    update: XOR<NotificationUpdateInput, NotificationUncheckedUpdateInput>
-  }
-
-  /**
-   * Notification delete
-   */
-  export type NotificationDeleteArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
-    /**
-     * Select specific fields to fetch from the Notification
-     */
-    select?: NotificationSelect<ExtArgs> | null
-    /**
-     * Omit specific fields from the Notification
-     */
-    omit?: NotificationOmit<ExtArgs> | null
-    /**
-     * Choose, which related nodes to fetch as well
-     */
-    include?: NotificationInclude<ExtArgs> | null
-    /**
-     * Filter which Notification to delete.
-     */
-    where: NotificationWhereUniqueInput
-  }
-
-  /**
-   * Notification deleteMany
-   */
-  export type NotificationDeleteManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
-    /**
-     * Filter which Notifications to delete
-     */
-    where?: NotificationWhereInput
-    /**
-     * Limit how many Notifications to delete.
-     */
-    limit?: number
-  }
-
-  /**
-   * Notification without action
-   */
-  export type NotificationDefaultArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
-    /**
-     * Select specific fields to fetch from the Notification
-     */
-    select?: NotificationSelect<ExtArgs> | null
-    /**
-     * Omit specific fields from the Notification
-     */
-    omit?: NotificationOmit<ExtArgs> | null
-    /**
-     * Choose, which related nodes to fetch as well
-     */
-    include?: NotificationInclude<ExtArgs> | null
   }
 
 
@@ -10964,27 +8527,11 @@ export namespace Prisma {
   export type CardAvgAggregateOutputType = {
     position: number | null
     sprintPosition: number | null
-    orcado_min: number | null
-    orcado_horas: number | null
-    orcado_dias: number | null
-    orcado_total: number | null
-    realizado_min: number | null
-    realizado_horas: number | null
-    realizado_dias: number | null
-    realizado_total: number | null
   }
 
   export type CardSumAggregateOutputType = {
     position: number | null
     sprintPosition: number | null
-    orcado_min: number | null
-    orcado_horas: number | null
-    orcado_dias: number | null
-    orcado_total: number | null
-    realizado_min: number | null
-    realizado_horas: number | null
-    realizado_dias: number | null
-    realizado_total: number | null
   }
 
   export type CardMinAggregateOutputType = {
@@ -10996,7 +8543,6 @@ export namespace Prisma {
     sprintId: string | null
     sprintColumnId: string | null
     sprintPosition: number | null
-    status: string | null
     projectId: string | null
     priority: string | null
     tagsImport: string | null
@@ -11005,17 +8551,6 @@ export namespace Prisma {
     deletedAt: Date | null
     createdAt: Date | null
     updatedAt: Date | null
-    orcado_min: number | null
-    orcado_horas: number | null
-    orcado_dias: number | null
-    orcado_total: number | null
-    data_prevista: Date | null
-    realizado_min: number | null
-    realizado_horas: number | null
-    realizado_dias: number | null
-    realizado_total: number | null
-    data_realizacao: Date | null
-    situacao_status: string | null
   }
 
   export type CardMaxAggregateOutputType = {
@@ -11027,7 +8562,6 @@ export namespace Prisma {
     sprintId: string | null
     sprintColumnId: string | null
     sprintPosition: number | null
-    status: string | null
     projectId: string | null
     priority: string | null
     tagsImport: string | null
@@ -11036,17 +8570,6 @@ export namespace Prisma {
     deletedAt: Date | null
     createdAt: Date | null
     updatedAt: Date | null
-    orcado_min: number | null
-    orcado_horas: number | null
-    orcado_dias: number | null
-    orcado_total: number | null
-    data_prevista: Date | null
-    realizado_min: number | null
-    realizado_horas: number | null
-    realizado_dias: number | null
-    realizado_total: number | null
-    data_realizacao: Date | null
-    situacao_status: string | null
   }
 
   export type CardCountAggregateOutputType = {
@@ -11058,7 +8581,6 @@ export namespace Prisma {
     sprintId: number
     sprintColumnId: number
     sprintPosition: number
-    status: number
     projectId: number
     priority: number
     tagsImport: number
@@ -11067,17 +8589,6 @@ export namespace Prisma {
     deletedAt: number
     createdAt: number
     updatedAt: number
-    orcado_min: number
-    orcado_horas: number
-    orcado_dias: number
-    orcado_total: number
-    data_prevista: number
-    realizado_min: number
-    realizado_horas: number
-    realizado_dias: number
-    realizado_total: number
-    data_realizacao: number
-    situacao_status: number
     _all: number
   }
 
@@ -11085,27 +8596,11 @@ export namespace Prisma {
   export type CardAvgAggregateInputType = {
     position?: true
     sprintPosition?: true
-    orcado_min?: true
-    orcado_horas?: true
-    orcado_dias?: true
-    orcado_total?: true
-    realizado_min?: true
-    realizado_horas?: true
-    realizado_dias?: true
-    realizado_total?: true
   }
 
   export type CardSumAggregateInputType = {
     position?: true
     sprintPosition?: true
-    orcado_min?: true
-    orcado_horas?: true
-    orcado_dias?: true
-    orcado_total?: true
-    realizado_min?: true
-    realizado_horas?: true
-    realizado_dias?: true
-    realizado_total?: true
   }
 
   export type CardMinAggregateInputType = {
@@ -11117,7 +8612,6 @@ export namespace Prisma {
     sprintId?: true
     sprintColumnId?: true
     sprintPosition?: true
-    status?: true
     projectId?: true
     priority?: true
     tagsImport?: true
@@ -11126,17 +8620,6 @@ export namespace Prisma {
     deletedAt?: true
     createdAt?: true
     updatedAt?: true
-    orcado_min?: true
-    orcado_horas?: true
-    orcado_dias?: true
-    orcado_total?: true
-    data_prevista?: true
-    realizado_min?: true
-    realizado_horas?: true
-    realizado_dias?: true
-    realizado_total?: true
-    data_realizacao?: true
-    situacao_status?: true
   }
 
   export type CardMaxAggregateInputType = {
@@ -11148,7 +8631,6 @@ export namespace Prisma {
     sprintId?: true
     sprintColumnId?: true
     sprintPosition?: true
-    status?: true
     projectId?: true
     priority?: true
     tagsImport?: true
@@ -11157,17 +8639,6 @@ export namespace Prisma {
     deletedAt?: true
     createdAt?: true
     updatedAt?: true
-    orcado_min?: true
-    orcado_horas?: true
-    orcado_dias?: true
-    orcado_total?: true
-    data_prevista?: true
-    realizado_min?: true
-    realizado_horas?: true
-    realizado_dias?: true
-    realizado_total?: true
-    data_realizacao?: true
-    situacao_status?: true
   }
 
   export type CardCountAggregateInputType = {
@@ -11179,7 +8650,6 @@ export namespace Prisma {
     sprintId?: true
     sprintColumnId?: true
     sprintPosition?: true
-    status?: true
     projectId?: true
     priority?: true
     tagsImport?: true
@@ -11188,17 +8658,6 @@ export namespace Prisma {
     deletedAt?: true
     createdAt?: true
     updatedAt?: true
-    orcado_min?: true
-    orcado_horas?: true
-    orcado_dias?: true
-    orcado_total?: true
-    data_prevista?: true
-    realizado_min?: true
-    realizado_horas?: true
-    realizado_dias?: true
-    realizado_total?: true
-    data_realizacao?: true
-    situacao_status?: true
     _all?: true
   }
 
@@ -11297,7 +8756,6 @@ export namespace Prisma {
     sprintId: string | null
     sprintColumnId: string | null
     sprintPosition: number | null
-    status: string
     projectId: string | null
     priority: string
     tagsImport: string
@@ -11306,17 +8764,6 @@ export namespace Prisma {
     deletedAt: Date | null
     createdAt: Date
     updatedAt: Date
-    orcado_min: number | null
-    orcado_horas: number | null
-    orcado_dias: number | null
-    orcado_total: number | null
-    data_prevista: Date | null
-    realizado_min: number | null
-    realizado_horas: number | null
-    realizado_dias: number | null
-    realizado_total: number | null
-    data_realizacao: Date | null
-    situacao_status: string | null
     _count: CardCountAggregateOutputType | null
     _avg: CardAvgAggregateOutputType | null
     _sum: CardSumAggregateOutputType | null
@@ -11347,7 +8794,6 @@ export namespace Prisma {
     sprintId?: boolean
     sprintColumnId?: boolean
     sprintPosition?: boolean
-    status?: boolean
     projectId?: boolean
     priority?: boolean
     tagsImport?: boolean
@@ -11356,17 +8802,6 @@ export namespace Prisma {
     deletedAt?: boolean
     createdAt?: boolean
     updatedAt?: boolean
-    orcado_min?: boolean
-    orcado_horas?: boolean
-    orcado_dias?: boolean
-    orcado_total?: boolean
-    data_prevista?: boolean
-    realizado_min?: boolean
-    realizado_horas?: boolean
-    realizado_dias?: boolean
-    realizado_total?: boolean
-    data_realizacao?: boolean
-    situacao_status?: boolean
     sprint?: boolean | Card$sprintArgs<ExtArgs>
     sprintColumn?: boolean | Card$sprintColumnArgs<ExtArgs>
     project?: boolean | Card$projectArgs<ExtArgs>
@@ -11375,6 +8810,7 @@ export namespace Prisma {
     timeEntries?: boolean | Card$timeEntriesArgs<ExtArgs>
     responsibles?: boolean | Card$responsiblesArgs<ExtArgs>
     comments?: boolean | Card$commentsArgs<ExtArgs>
+    movements?: boolean | Card$movementsArgs<ExtArgs>
     _count?: boolean | CardCountOutputTypeDefaultArgs<ExtArgs>
   }, ExtArgs["result"]["card"]>
 
@@ -11387,7 +8823,6 @@ export namespace Prisma {
     sprintId?: boolean
     sprintColumnId?: boolean
     sprintPosition?: boolean
-    status?: boolean
     projectId?: boolean
     priority?: boolean
     tagsImport?: boolean
@@ -11396,17 +8831,6 @@ export namespace Prisma {
     deletedAt?: boolean
     createdAt?: boolean
     updatedAt?: boolean
-    orcado_min?: boolean
-    orcado_horas?: boolean
-    orcado_dias?: boolean
-    orcado_total?: boolean
-    data_prevista?: boolean
-    realizado_min?: boolean
-    realizado_horas?: boolean
-    realizado_dias?: boolean
-    realizado_total?: boolean
-    data_realizacao?: boolean
-    situacao_status?: boolean
     sprint?: boolean | Card$sprintArgs<ExtArgs>
     sprintColumn?: boolean | Card$sprintColumnArgs<ExtArgs>
     project?: boolean | Card$projectArgs<ExtArgs>
@@ -11421,7 +8845,6 @@ export namespace Prisma {
     sprintId?: boolean
     sprintColumnId?: boolean
     sprintPosition?: boolean
-    status?: boolean
     projectId?: boolean
     priority?: boolean
     tagsImport?: boolean
@@ -11430,17 +8853,6 @@ export namespace Prisma {
     deletedAt?: boolean
     createdAt?: boolean
     updatedAt?: boolean
-    orcado_min?: boolean
-    orcado_horas?: boolean
-    orcado_dias?: boolean
-    orcado_total?: boolean
-    data_prevista?: boolean
-    realizado_min?: boolean
-    realizado_horas?: boolean
-    realizado_dias?: boolean
-    realizado_total?: boolean
-    data_realizacao?: boolean
-    situacao_status?: boolean
     sprint?: boolean | Card$sprintArgs<ExtArgs>
     sprintColumn?: boolean | Card$sprintColumnArgs<ExtArgs>
     project?: boolean | Card$projectArgs<ExtArgs>
@@ -11455,7 +8867,6 @@ export namespace Prisma {
     sprintId?: boolean
     sprintColumnId?: boolean
     sprintPosition?: boolean
-    status?: boolean
     projectId?: boolean
     priority?: boolean
     tagsImport?: boolean
@@ -11464,20 +8875,9 @@ export namespace Prisma {
     deletedAt?: boolean
     createdAt?: boolean
     updatedAt?: boolean
-    orcado_min?: boolean
-    orcado_horas?: boolean
-    orcado_dias?: boolean
-    orcado_total?: boolean
-    data_prevista?: boolean
-    realizado_min?: boolean
-    realizado_horas?: boolean
-    realizado_dias?: boolean
-    realizado_total?: boolean
-    data_realizacao?: boolean
-    situacao_status?: boolean
   }
 
-  export type CardOmit<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetOmit<"id" | "title" | "description" | "color" | "position" | "sprintId" | "sprintColumnId" | "sprintPosition" | "status" | "projectId" | "priority" | "tagsImport" | "startDate" | "endDate" | "deletedAt" | "createdAt" | "updatedAt" | "orcado_min" | "orcado_horas" | "orcado_dias" | "orcado_total" | "data_prevista" | "realizado_min" | "realizado_horas" | "realizado_dias" | "realizado_total" | "data_realizacao" | "situacao_status", ExtArgs["result"]["card"]>
+  export type CardOmit<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetOmit<"id" | "title" | "description" | "color" | "position" | "sprintId" | "sprintColumnId" | "sprintPosition" | "projectId" | "priority" | "tagsImport" | "startDate" | "endDate" | "deletedAt" | "createdAt" | "updatedAt", ExtArgs["result"]["card"]>
   export type CardInclude<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
     sprint?: boolean | Card$sprintArgs<ExtArgs>
     sprintColumn?: boolean | Card$sprintColumnArgs<ExtArgs>
@@ -11487,6 +8887,7 @@ export namespace Prisma {
     timeEntries?: boolean | Card$timeEntriesArgs<ExtArgs>
     responsibles?: boolean | Card$responsiblesArgs<ExtArgs>
     comments?: boolean | Card$commentsArgs<ExtArgs>
+    movements?: boolean | Card$movementsArgs<ExtArgs>
     _count?: boolean | CardCountOutputTypeDefaultArgs<ExtArgs>
   }
   export type CardIncludeCreateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
@@ -11511,6 +8912,7 @@ export namespace Prisma {
       timeEntries: Prisma.$TimeEntryPayload<ExtArgs>[]
       responsibles: Prisma.$CardResponsiblePayload<ExtArgs>[]
       comments: Prisma.$CommentPayload<ExtArgs>[]
+      movements: Prisma.$CardMovementPayload<ExtArgs>[]
     }
     scalars: $Extensions.GetPayloadResult<{
       id: string
@@ -11521,7 +8923,6 @@ export namespace Prisma {
       sprintId: string | null
       sprintColumnId: string | null
       sprintPosition: number | null
-      status: string
       projectId: string | null
       priority: string
       tagsImport: string
@@ -11530,17 +8931,6 @@ export namespace Prisma {
       deletedAt: Date | null
       createdAt: Date
       updatedAt: Date
-      orcado_min: number | null
-      orcado_horas: number | null
-      orcado_dias: number | null
-      orcado_total: number | null
-      data_prevista: Date | null
-      realizado_min: number | null
-      realizado_horas: number | null
-      realizado_dias: number | null
-      realizado_total: number | null
-      data_realizacao: Date | null
-      situacao_status: string | null
     }, ExtArgs["result"]["card"]>
     composites: {}
   }
@@ -11943,6 +9333,7 @@ export namespace Prisma {
     timeEntries<T extends Card$timeEntriesArgs<ExtArgs> = {}>(args?: Subset<T, Card$timeEntriesArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$TimeEntryPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
     responsibles<T extends Card$responsiblesArgs<ExtArgs> = {}>(args?: Subset<T, Card$responsiblesArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$CardResponsiblePayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
     comments<T extends Card$commentsArgs<ExtArgs> = {}>(args?: Subset<T, Card$commentsArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$CommentPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
+    movements<T extends Card$movementsArgs<ExtArgs> = {}>(args?: Subset<T, Card$movementsArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$CardMovementPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
     /**
      * Attaches callbacks for the resolution and/or rejection of the Promise.
      * @param onfulfilled The callback to execute when the Promise is resolved.
@@ -11980,7 +9371,6 @@ export namespace Prisma {
     readonly sprintId: FieldRef<"Card", 'String'>
     readonly sprintColumnId: FieldRef<"Card", 'String'>
     readonly sprintPosition: FieldRef<"Card", 'Int'>
-    readonly status: FieldRef<"Card", 'String'>
     readonly projectId: FieldRef<"Card", 'String'>
     readonly priority: FieldRef<"Card", 'String'>
     readonly tagsImport: FieldRef<"Card", 'String'>
@@ -11989,17 +9379,6 @@ export namespace Prisma {
     readonly deletedAt: FieldRef<"Card", 'DateTime'>
     readonly createdAt: FieldRef<"Card", 'DateTime'>
     readonly updatedAt: FieldRef<"Card", 'DateTime'>
-    readonly orcado_min: FieldRef<"Card", 'Int'>
-    readonly orcado_horas: FieldRef<"Card", 'Float'>
-    readonly orcado_dias: FieldRef<"Card", 'Float'>
-    readonly orcado_total: FieldRef<"Card", 'Float'>
-    readonly data_prevista: FieldRef<"Card", 'DateTime'>
-    readonly realizado_min: FieldRef<"Card", 'Int'>
-    readonly realizado_horas: FieldRef<"Card", 'Float'>
-    readonly realizado_dias: FieldRef<"Card", 'Float'>
-    readonly realizado_total: FieldRef<"Card", 'Float'>
-    readonly data_realizacao: FieldRef<"Card", 'DateTime'>
-    readonly situacao_status: FieldRef<"Card", 'String'>
   }
     
 
@@ -12578,6 +9957,30 @@ export namespace Prisma {
   }
 
   /**
+   * Card.movements
+   */
+  export type Card$movementsArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the CardMovement
+     */
+    select?: CardMovementSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the CardMovement
+     */
+    omit?: CardMovementOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: CardMovementInclude<ExtArgs> | null
+    where?: CardMovementWhereInput
+    orderBy?: CardMovementOrderByWithRelationInput | CardMovementOrderByWithRelationInput[]
+    cursor?: CardMovementWhereUniqueInput
+    take?: number
+    skip?: number
+    distinct?: CardMovementScalarFieldEnum | CardMovementScalarFieldEnum[]
+  }
+
+  /**
    * Card without action
    */
   export type CardDefaultArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
@@ -12593,6 +9996,1121 @@ export namespace Prisma {
      * Choose, which related nodes to fetch as well
      */
     include?: CardInclude<ExtArgs> | null
+  }
+
+
+  /**
+   * Model CardMovement
+   */
+
+  export type AggregateCardMovement = {
+    _count: CardMovementCountAggregateOutputType | null
+    _min: CardMovementMinAggregateOutputType | null
+    _max: CardMovementMaxAggregateOutputType | null
+  }
+
+  export type CardMovementMinAggregateOutputType = {
+    id: string | null
+    cardId: string | null
+    userId: string | null
+    fromColumnId: string | null
+    fromColumnTitle: string | null
+    toColumnId: string | null
+    toColumnTitle: string | null
+    reason: string | null
+    movedAt: Date | null
+  }
+
+  export type CardMovementMaxAggregateOutputType = {
+    id: string | null
+    cardId: string | null
+    userId: string | null
+    fromColumnId: string | null
+    fromColumnTitle: string | null
+    toColumnId: string | null
+    toColumnTitle: string | null
+    reason: string | null
+    movedAt: Date | null
+  }
+
+  export type CardMovementCountAggregateOutputType = {
+    id: number
+    cardId: number
+    userId: number
+    fromColumnId: number
+    fromColumnTitle: number
+    toColumnId: number
+    toColumnTitle: number
+    reason: number
+    movedAt: number
+    _all: number
+  }
+
+
+  export type CardMovementMinAggregateInputType = {
+    id?: true
+    cardId?: true
+    userId?: true
+    fromColumnId?: true
+    fromColumnTitle?: true
+    toColumnId?: true
+    toColumnTitle?: true
+    reason?: true
+    movedAt?: true
+  }
+
+  export type CardMovementMaxAggregateInputType = {
+    id?: true
+    cardId?: true
+    userId?: true
+    fromColumnId?: true
+    fromColumnTitle?: true
+    toColumnId?: true
+    toColumnTitle?: true
+    reason?: true
+    movedAt?: true
+  }
+
+  export type CardMovementCountAggregateInputType = {
+    id?: true
+    cardId?: true
+    userId?: true
+    fromColumnId?: true
+    fromColumnTitle?: true
+    toColumnId?: true
+    toColumnTitle?: true
+    reason?: true
+    movedAt?: true
+    _all?: true
+  }
+
+  export type CardMovementAggregateArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Filter which CardMovement to aggregate.
+     */
+    where?: CardMovementWhereInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+     * 
+     * Determine the order of CardMovements to fetch.
+     */
+    orderBy?: CardMovementOrderByWithRelationInput | CardMovementOrderByWithRelationInput[]
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+     * 
+     * Sets the start position
+     */
+    cursor?: CardMovementWhereUniqueInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Take `±n` CardMovements from the position of the cursor.
+     */
+    take?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Skip the first `n` CardMovements.
+     */
+    skip?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Count returned CardMovements
+    **/
+    _count?: true | CardMovementCountAggregateInputType
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Select which fields to find the minimum value
+    **/
+    _min?: CardMovementMinAggregateInputType
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Select which fields to find the maximum value
+    **/
+    _max?: CardMovementMaxAggregateInputType
+  }
+
+  export type GetCardMovementAggregateType<T extends CardMovementAggregateArgs> = {
+        [P in keyof T & keyof AggregateCardMovement]: P extends '_count' | 'count'
+      ? T[P] extends true
+        ? number
+        : GetScalarType<T[P], AggregateCardMovement[P]>
+      : GetScalarType<T[P], AggregateCardMovement[P]>
+  }
+
+
+
+
+  export type CardMovementGroupByArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    where?: CardMovementWhereInput
+    orderBy?: CardMovementOrderByWithAggregationInput | CardMovementOrderByWithAggregationInput[]
+    by: CardMovementScalarFieldEnum[] | CardMovementScalarFieldEnum
+    having?: CardMovementScalarWhereWithAggregatesInput
+    take?: number
+    skip?: number
+    _count?: CardMovementCountAggregateInputType | true
+    _min?: CardMovementMinAggregateInputType
+    _max?: CardMovementMaxAggregateInputType
+  }
+
+  export type CardMovementGroupByOutputType = {
+    id: string
+    cardId: string
+    userId: string | null
+    fromColumnId: string | null
+    fromColumnTitle: string | null
+    toColumnId: string | null
+    toColumnTitle: string | null
+    reason: string | null
+    movedAt: Date
+    _count: CardMovementCountAggregateOutputType | null
+    _min: CardMovementMinAggregateOutputType | null
+    _max: CardMovementMaxAggregateOutputType | null
+  }
+
+  type GetCardMovementGroupByPayload<T extends CardMovementGroupByArgs> = Prisma.PrismaPromise<
+    Array<
+      PickEnumerable<CardMovementGroupByOutputType, T['by']> &
+        {
+          [P in ((keyof T) & (keyof CardMovementGroupByOutputType))]: P extends '_count'
+            ? T[P] extends boolean
+              ? number
+              : GetScalarType<T[P], CardMovementGroupByOutputType[P]>
+            : GetScalarType<T[P], CardMovementGroupByOutputType[P]>
+        }
+      >
+    >
+
+
+  export type CardMovementSelect<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetSelect<{
+    id?: boolean
+    cardId?: boolean
+    userId?: boolean
+    fromColumnId?: boolean
+    fromColumnTitle?: boolean
+    toColumnId?: boolean
+    toColumnTitle?: boolean
+    reason?: boolean
+    movedAt?: boolean
+    card?: boolean | CardDefaultArgs<ExtArgs>
+  }, ExtArgs["result"]["cardMovement"]>
+
+  export type CardMovementSelectCreateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetSelect<{
+    id?: boolean
+    cardId?: boolean
+    userId?: boolean
+    fromColumnId?: boolean
+    fromColumnTitle?: boolean
+    toColumnId?: boolean
+    toColumnTitle?: boolean
+    reason?: boolean
+    movedAt?: boolean
+    card?: boolean | CardDefaultArgs<ExtArgs>
+  }, ExtArgs["result"]["cardMovement"]>
+
+  export type CardMovementSelectUpdateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetSelect<{
+    id?: boolean
+    cardId?: boolean
+    userId?: boolean
+    fromColumnId?: boolean
+    fromColumnTitle?: boolean
+    toColumnId?: boolean
+    toColumnTitle?: boolean
+    reason?: boolean
+    movedAt?: boolean
+    card?: boolean | CardDefaultArgs<ExtArgs>
+  }, ExtArgs["result"]["cardMovement"]>
+
+  export type CardMovementSelectScalar = {
+    id?: boolean
+    cardId?: boolean
+    userId?: boolean
+    fromColumnId?: boolean
+    fromColumnTitle?: boolean
+    toColumnId?: boolean
+    toColumnTitle?: boolean
+    reason?: boolean
+    movedAt?: boolean
+  }
+
+  export type CardMovementOmit<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetOmit<"id" | "cardId" | "userId" | "fromColumnId" | "fromColumnTitle" | "toColumnId" | "toColumnTitle" | "reason" | "movedAt", ExtArgs["result"]["cardMovement"]>
+  export type CardMovementInclude<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    card?: boolean | CardDefaultArgs<ExtArgs>
+  }
+  export type CardMovementIncludeCreateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    card?: boolean | CardDefaultArgs<ExtArgs>
+  }
+  export type CardMovementIncludeUpdateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    card?: boolean | CardDefaultArgs<ExtArgs>
+  }
+
+  export type $CardMovementPayload<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    name: "CardMovement"
+    objects: {
+      card: Prisma.$CardPayload<ExtArgs>
+    }
+    scalars: $Extensions.GetPayloadResult<{
+      id: string
+      cardId: string
+      userId: string | null
+      fromColumnId: string | null
+      fromColumnTitle: string | null
+      toColumnId: string | null
+      toColumnTitle: string | null
+      reason: string | null
+      movedAt: Date
+    }, ExtArgs["result"]["cardMovement"]>
+    composites: {}
+  }
+
+  type CardMovementGetPayload<S extends boolean | null | undefined | CardMovementDefaultArgs> = $Result.GetResult<Prisma.$CardMovementPayload, S>
+
+  type CardMovementCountArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> =
+    Omit<CardMovementFindManyArgs, 'select' | 'include' | 'distinct' | 'omit'> & {
+      select?: CardMovementCountAggregateInputType | true
+    }
+
+  export interface CardMovementDelegate<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs, GlobalOmitOptions = {}> {
+    [K: symbol]: { types: Prisma.TypeMap<ExtArgs>['model']['CardMovement'], meta: { name: 'CardMovement' } }
+    /**
+     * Find zero or one CardMovement that matches the filter.
+     * @param {CardMovementFindUniqueArgs} args - Arguments to find a CardMovement
+     * @example
+     * // Get one CardMovement
+     * const cardMovement = await prisma.cardMovement.findUnique({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     */
+    findUnique<T extends CardMovementFindUniqueArgs>(args: SelectSubset<T, CardMovementFindUniqueArgs<ExtArgs>>): Prisma__CardMovementClient<$Result.GetResult<Prisma.$CardMovementPayload<ExtArgs>, T, "findUnique", GlobalOmitOptions> | null, null, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Find one CardMovement that matches the filter or throw an error with `error.code='P2025'`
+     * if no matches were found.
+     * @param {CardMovementFindUniqueOrThrowArgs} args - Arguments to find a CardMovement
+     * @example
+     * // Get one CardMovement
+     * const cardMovement = await prisma.cardMovement.findUniqueOrThrow({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     */
+    findUniqueOrThrow<T extends CardMovementFindUniqueOrThrowArgs>(args: SelectSubset<T, CardMovementFindUniqueOrThrowArgs<ExtArgs>>): Prisma__CardMovementClient<$Result.GetResult<Prisma.$CardMovementPayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Find the first CardMovement that matches the filter.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {CardMovementFindFirstArgs} args - Arguments to find a CardMovement
+     * @example
+     * // Get one CardMovement
+     * const cardMovement = await prisma.cardMovement.findFirst({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     */
+    findFirst<T extends CardMovementFindFirstArgs>(args?: SelectSubset<T, CardMovementFindFirstArgs<ExtArgs>>): Prisma__CardMovementClient<$Result.GetResult<Prisma.$CardMovementPayload<ExtArgs>, T, "findFirst", GlobalOmitOptions> | null, null, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Find the first CardMovement that matches the filter or
+     * throw `PrismaKnownClientError` with `P2025` code if no matches were found.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {CardMovementFindFirstOrThrowArgs} args - Arguments to find a CardMovement
+     * @example
+     * // Get one CardMovement
+     * const cardMovement = await prisma.cardMovement.findFirstOrThrow({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     */
+    findFirstOrThrow<T extends CardMovementFindFirstOrThrowArgs>(args?: SelectSubset<T, CardMovementFindFirstOrThrowArgs<ExtArgs>>): Prisma__CardMovementClient<$Result.GetResult<Prisma.$CardMovementPayload<ExtArgs>, T, "findFirstOrThrow", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Find zero or more CardMovements that matches the filter.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {CardMovementFindManyArgs} args - Arguments to filter and select certain fields only.
+     * @example
+     * // Get all CardMovements
+     * const cardMovements = await prisma.cardMovement.findMany()
+     * 
+     * // Get first 10 CardMovements
+     * const cardMovements = await prisma.cardMovement.findMany({ take: 10 })
+     * 
+     * // Only select the `id`
+     * const cardMovementWithIdOnly = await prisma.cardMovement.findMany({ select: { id: true } })
+     * 
+     */
+    findMany<T extends CardMovementFindManyArgs>(args?: SelectSubset<T, CardMovementFindManyArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$CardMovementPayload<ExtArgs>, T, "findMany", GlobalOmitOptions>>
+
+    /**
+     * Create a CardMovement.
+     * @param {CardMovementCreateArgs} args - Arguments to create a CardMovement.
+     * @example
+     * // Create one CardMovement
+     * const CardMovement = await prisma.cardMovement.create({
+     *   data: {
+     *     // ... data to create a CardMovement
+     *   }
+     * })
+     * 
+     */
+    create<T extends CardMovementCreateArgs>(args: SelectSubset<T, CardMovementCreateArgs<ExtArgs>>): Prisma__CardMovementClient<$Result.GetResult<Prisma.$CardMovementPayload<ExtArgs>, T, "create", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Create many CardMovements.
+     * @param {CardMovementCreateManyArgs} args - Arguments to create many CardMovements.
+     * @example
+     * // Create many CardMovements
+     * const cardMovement = await prisma.cardMovement.createMany({
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     *     
+     */
+    createMany<T extends CardMovementCreateManyArgs>(args?: SelectSubset<T, CardMovementCreateManyArgs<ExtArgs>>): Prisma.PrismaPromise<BatchPayload>
+
+    /**
+     * Create many CardMovements and returns the data saved in the database.
+     * @param {CardMovementCreateManyAndReturnArgs} args - Arguments to create many CardMovements.
+     * @example
+     * // Create many CardMovements
+     * const cardMovement = await prisma.cardMovement.createManyAndReturn({
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     * 
+     * // Create many CardMovements and only return the `id`
+     * const cardMovementWithIdOnly = await prisma.cardMovement.createManyAndReturn({
+     *   select: { id: true },
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * 
+     */
+    createManyAndReturn<T extends CardMovementCreateManyAndReturnArgs>(args?: SelectSubset<T, CardMovementCreateManyAndReturnArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$CardMovementPayload<ExtArgs>, T, "createManyAndReturn", GlobalOmitOptions>>
+
+    /**
+     * Delete a CardMovement.
+     * @param {CardMovementDeleteArgs} args - Arguments to delete one CardMovement.
+     * @example
+     * // Delete one CardMovement
+     * const CardMovement = await prisma.cardMovement.delete({
+     *   where: {
+     *     // ... filter to delete one CardMovement
+     *   }
+     * })
+     * 
+     */
+    delete<T extends CardMovementDeleteArgs>(args: SelectSubset<T, CardMovementDeleteArgs<ExtArgs>>): Prisma__CardMovementClient<$Result.GetResult<Prisma.$CardMovementPayload<ExtArgs>, T, "delete", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Update one CardMovement.
+     * @param {CardMovementUpdateArgs} args - Arguments to update one CardMovement.
+     * @example
+     * // Update one CardMovement
+     * const cardMovement = await prisma.cardMovement.update({
+     *   where: {
+     *     // ... provide filter here
+     *   },
+     *   data: {
+     *     // ... provide data here
+     *   }
+     * })
+     * 
+     */
+    update<T extends CardMovementUpdateArgs>(args: SelectSubset<T, CardMovementUpdateArgs<ExtArgs>>): Prisma__CardMovementClient<$Result.GetResult<Prisma.$CardMovementPayload<ExtArgs>, T, "update", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Delete zero or more CardMovements.
+     * @param {CardMovementDeleteManyArgs} args - Arguments to filter CardMovements to delete.
+     * @example
+     * // Delete a few CardMovements
+     * const { count } = await prisma.cardMovement.deleteMany({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     * 
+     */
+    deleteMany<T extends CardMovementDeleteManyArgs>(args?: SelectSubset<T, CardMovementDeleteManyArgs<ExtArgs>>): Prisma.PrismaPromise<BatchPayload>
+
+    /**
+     * Update zero or more CardMovements.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {CardMovementUpdateManyArgs} args - Arguments to update one or more rows.
+     * @example
+     * // Update many CardMovements
+     * const cardMovement = await prisma.cardMovement.updateMany({
+     *   where: {
+     *     // ... provide filter here
+     *   },
+     *   data: {
+     *     // ... provide data here
+     *   }
+     * })
+     * 
+     */
+    updateMany<T extends CardMovementUpdateManyArgs>(args: SelectSubset<T, CardMovementUpdateManyArgs<ExtArgs>>): Prisma.PrismaPromise<BatchPayload>
+
+    /**
+     * Update zero or more CardMovements and returns the data updated in the database.
+     * @param {CardMovementUpdateManyAndReturnArgs} args - Arguments to update many CardMovements.
+     * @example
+     * // Update many CardMovements
+     * const cardMovement = await prisma.cardMovement.updateManyAndReturn({
+     *   where: {
+     *     // ... provide filter here
+     *   },
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     * 
+     * // Update zero or more CardMovements and only return the `id`
+     * const cardMovementWithIdOnly = await prisma.cardMovement.updateManyAndReturn({
+     *   select: { id: true },
+     *   where: {
+     *     // ... provide filter here
+     *   },
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * 
+     */
+    updateManyAndReturn<T extends CardMovementUpdateManyAndReturnArgs>(args: SelectSubset<T, CardMovementUpdateManyAndReturnArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$CardMovementPayload<ExtArgs>, T, "updateManyAndReturn", GlobalOmitOptions>>
+
+    /**
+     * Create or update one CardMovement.
+     * @param {CardMovementUpsertArgs} args - Arguments to update or create a CardMovement.
+     * @example
+     * // Update or create a CardMovement
+     * const cardMovement = await prisma.cardMovement.upsert({
+     *   create: {
+     *     // ... data to create a CardMovement
+     *   },
+     *   update: {
+     *     // ... in case it already exists, update
+     *   },
+     *   where: {
+     *     // ... the filter for the CardMovement we want to update
+     *   }
+     * })
+     */
+    upsert<T extends CardMovementUpsertArgs>(args: SelectSubset<T, CardMovementUpsertArgs<ExtArgs>>): Prisma__CardMovementClient<$Result.GetResult<Prisma.$CardMovementPayload<ExtArgs>, T, "upsert", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+
+    /**
+     * Count the number of CardMovements.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {CardMovementCountArgs} args - Arguments to filter CardMovements to count.
+     * @example
+     * // Count the number of CardMovements
+     * const count = await prisma.cardMovement.count({
+     *   where: {
+     *     // ... the filter for the CardMovements we want to count
+     *   }
+     * })
+    **/
+    count<T extends CardMovementCountArgs>(
+      args?: Subset<T, CardMovementCountArgs>,
+    ): Prisma.PrismaPromise<
+      T extends $Utils.Record<'select', any>
+        ? T['select'] extends true
+          ? number
+          : GetScalarType<T['select'], CardMovementCountAggregateOutputType>
+        : number
+    >
+
+    /**
+     * Allows you to perform aggregations operations on a CardMovement.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {CardMovementAggregateArgs} args - Select which aggregations you would like to apply and on what fields.
+     * @example
+     * // Ordered by age ascending
+     * // Where email contains prisma.io
+     * // Limited to the 10 users
+     * const aggregations = await prisma.user.aggregate({
+     *   _avg: {
+     *     age: true,
+     *   },
+     *   where: {
+     *     email: {
+     *       contains: "prisma.io",
+     *     },
+     *   },
+     *   orderBy: {
+     *     age: "asc",
+     *   },
+     *   take: 10,
+     * })
+    **/
+    aggregate<T extends CardMovementAggregateArgs>(args: Subset<T, CardMovementAggregateArgs>): Prisma.PrismaPromise<GetCardMovementAggregateType<T>>
+
+    /**
+     * Group by CardMovement.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {CardMovementGroupByArgs} args - Group by arguments.
+     * @example
+     * // Group by city, order by createdAt, get count
+     * const result = await prisma.user.groupBy({
+     *   by: ['city', 'createdAt'],
+     *   orderBy: {
+     *     createdAt: true
+     *   },
+     *   _count: {
+     *     _all: true
+     *   },
+     * })
+     * 
+    **/
+    groupBy<
+      T extends CardMovementGroupByArgs,
+      HasSelectOrTake extends Or<
+        Extends<'skip', Keys<T>>,
+        Extends<'take', Keys<T>>
+      >,
+      OrderByArg extends True extends HasSelectOrTake
+        ? { orderBy: CardMovementGroupByArgs['orderBy'] }
+        : { orderBy?: CardMovementGroupByArgs['orderBy'] },
+      OrderFields extends ExcludeUnderscoreKeys<Keys<MaybeTupleToUnion<T['orderBy']>>>,
+      ByFields extends MaybeTupleToUnion<T['by']>,
+      ByValid extends Has<ByFields, OrderFields>,
+      HavingFields extends GetHavingFields<T['having']>,
+      HavingValid extends Has<ByFields, HavingFields>,
+      ByEmpty extends T['by'] extends never[] ? True : False,
+      InputErrors extends ByEmpty extends True
+      ? `Error: "by" must not be empty.`
+      : HavingValid extends False
+      ? {
+          [P in HavingFields]: P extends ByFields
+            ? never
+            : P extends string
+            ? `Error: Field "${P}" used in "having" needs to be provided in "by".`
+            : [
+                Error,
+                'Field ',
+                P,
+                ` in "having" needs to be provided in "by"`,
+              ]
+        }[HavingFields]
+      : 'take' extends Keys<T>
+      ? 'orderBy' extends Keys<T>
+        ? ByValid extends True
+          ? {}
+          : {
+              [P in OrderFields]: P extends ByFields
+                ? never
+                : `Error: Field "${P}" in "orderBy" needs to be provided in "by"`
+            }[OrderFields]
+        : 'Error: If you provide "take", you also need to provide "orderBy"'
+      : 'skip' extends Keys<T>
+      ? 'orderBy' extends Keys<T>
+        ? ByValid extends True
+          ? {}
+          : {
+              [P in OrderFields]: P extends ByFields
+                ? never
+                : `Error: Field "${P}" in "orderBy" needs to be provided in "by"`
+            }[OrderFields]
+        : 'Error: If you provide "skip", you also need to provide "orderBy"'
+      : ByValid extends True
+      ? {}
+      : {
+          [P in OrderFields]: P extends ByFields
+            ? never
+            : `Error: Field "${P}" in "orderBy" needs to be provided in "by"`
+        }[OrderFields]
+    >(args: SubsetIntersection<T, CardMovementGroupByArgs, OrderByArg> & InputErrors): {} extends InputErrors ? GetCardMovementGroupByPayload<T> : Prisma.PrismaPromise<InputErrors>
+  /**
+   * Fields of the CardMovement model
+   */
+  readonly fields: CardMovementFieldRefs;
+  }
+
+  /**
+   * The delegate class that acts as a "Promise-like" for CardMovement.
+   * Why is this prefixed with `Prisma__`?
+   * Because we want to prevent naming conflicts as mentioned in
+   * https://github.com/prisma/prisma-client-js/issues/707
+   */
+  export interface Prisma__CardMovementClient<T, Null = never, ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs, GlobalOmitOptions = {}> extends Prisma.PrismaPromise<T> {
+    readonly [Symbol.toStringTag]: "PrismaPromise"
+    card<T extends CardDefaultArgs<ExtArgs> = {}>(args?: Subset<T, CardDefaultArgs<ExtArgs>>): Prisma__CardClient<$Result.GetResult<Prisma.$CardPayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions> | Null, Null, ExtArgs, GlobalOmitOptions>
+    /**
+     * Attaches callbacks for the resolution and/or rejection of the Promise.
+     * @param onfulfilled The callback to execute when the Promise is resolved.
+     * @param onrejected The callback to execute when the Promise is rejected.
+     * @returns A Promise for the completion of which ever callback is executed.
+     */
+    then<TResult1 = T, TResult2 = never>(onfulfilled?: ((value: T) => TResult1 | PromiseLike<TResult1>) | undefined | null, onrejected?: ((reason: any) => TResult2 | PromiseLike<TResult2>) | undefined | null): $Utils.JsPromise<TResult1 | TResult2>
+    /**
+     * Attaches a callback for only the rejection of the Promise.
+     * @param onrejected The callback to execute when the Promise is rejected.
+     * @returns A Promise for the completion of the callback.
+     */
+    catch<TResult = never>(onrejected?: ((reason: any) => TResult | PromiseLike<TResult>) | undefined | null): $Utils.JsPromise<T | TResult>
+    /**
+     * Attaches a callback that is invoked when the Promise is settled (fulfilled or rejected). The
+     * resolved value cannot be modified from the callback.
+     * @param onfinally The callback to execute when the Promise is settled (fulfilled or rejected).
+     * @returns A Promise for the completion of the callback.
+     */
+    finally(onfinally?: (() => void) | undefined | null): $Utils.JsPromise<T>
+  }
+
+
+
+
+  /**
+   * Fields of the CardMovement model
+   */
+  interface CardMovementFieldRefs {
+    readonly id: FieldRef<"CardMovement", 'String'>
+    readonly cardId: FieldRef<"CardMovement", 'String'>
+    readonly userId: FieldRef<"CardMovement", 'String'>
+    readonly fromColumnId: FieldRef<"CardMovement", 'String'>
+    readonly fromColumnTitle: FieldRef<"CardMovement", 'String'>
+    readonly toColumnId: FieldRef<"CardMovement", 'String'>
+    readonly toColumnTitle: FieldRef<"CardMovement", 'String'>
+    readonly reason: FieldRef<"CardMovement", 'String'>
+    readonly movedAt: FieldRef<"CardMovement", 'DateTime'>
+  }
+    
+
+  // Custom InputTypes
+  /**
+   * CardMovement findUnique
+   */
+  export type CardMovementFindUniqueArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the CardMovement
+     */
+    select?: CardMovementSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the CardMovement
+     */
+    omit?: CardMovementOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: CardMovementInclude<ExtArgs> | null
+    /**
+     * Filter, which CardMovement to fetch.
+     */
+    where: CardMovementWhereUniqueInput
+  }
+
+  /**
+   * CardMovement findUniqueOrThrow
+   */
+  export type CardMovementFindUniqueOrThrowArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the CardMovement
+     */
+    select?: CardMovementSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the CardMovement
+     */
+    omit?: CardMovementOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: CardMovementInclude<ExtArgs> | null
+    /**
+     * Filter, which CardMovement to fetch.
+     */
+    where: CardMovementWhereUniqueInput
+  }
+
+  /**
+   * CardMovement findFirst
+   */
+  export type CardMovementFindFirstArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the CardMovement
+     */
+    select?: CardMovementSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the CardMovement
+     */
+    omit?: CardMovementOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: CardMovementInclude<ExtArgs> | null
+    /**
+     * Filter, which CardMovement to fetch.
+     */
+    where?: CardMovementWhereInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+     * 
+     * Determine the order of CardMovements to fetch.
+     */
+    orderBy?: CardMovementOrderByWithRelationInput | CardMovementOrderByWithRelationInput[]
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+     * 
+     * Sets the position for searching for CardMovements.
+     */
+    cursor?: CardMovementWhereUniqueInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Take `±n` CardMovements from the position of the cursor.
+     */
+    take?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Skip the first `n` CardMovements.
+     */
+    skip?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/distinct Distinct Docs}
+     * 
+     * Filter by unique combinations of CardMovements.
+     */
+    distinct?: CardMovementScalarFieldEnum | CardMovementScalarFieldEnum[]
+  }
+
+  /**
+   * CardMovement findFirstOrThrow
+   */
+  export type CardMovementFindFirstOrThrowArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the CardMovement
+     */
+    select?: CardMovementSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the CardMovement
+     */
+    omit?: CardMovementOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: CardMovementInclude<ExtArgs> | null
+    /**
+     * Filter, which CardMovement to fetch.
+     */
+    where?: CardMovementWhereInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+     * 
+     * Determine the order of CardMovements to fetch.
+     */
+    orderBy?: CardMovementOrderByWithRelationInput | CardMovementOrderByWithRelationInput[]
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+     * 
+     * Sets the position for searching for CardMovements.
+     */
+    cursor?: CardMovementWhereUniqueInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Take `±n` CardMovements from the position of the cursor.
+     */
+    take?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Skip the first `n` CardMovements.
+     */
+    skip?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/distinct Distinct Docs}
+     * 
+     * Filter by unique combinations of CardMovements.
+     */
+    distinct?: CardMovementScalarFieldEnum | CardMovementScalarFieldEnum[]
+  }
+
+  /**
+   * CardMovement findMany
+   */
+  export type CardMovementFindManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the CardMovement
+     */
+    select?: CardMovementSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the CardMovement
+     */
+    omit?: CardMovementOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: CardMovementInclude<ExtArgs> | null
+    /**
+     * Filter, which CardMovements to fetch.
+     */
+    where?: CardMovementWhereInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+     * 
+     * Determine the order of CardMovements to fetch.
+     */
+    orderBy?: CardMovementOrderByWithRelationInput | CardMovementOrderByWithRelationInput[]
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+     * 
+     * Sets the position for listing CardMovements.
+     */
+    cursor?: CardMovementWhereUniqueInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Take `±n` CardMovements from the position of the cursor.
+     */
+    take?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Skip the first `n` CardMovements.
+     */
+    skip?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/distinct Distinct Docs}
+     * 
+     * Filter by unique combinations of CardMovements.
+     */
+    distinct?: CardMovementScalarFieldEnum | CardMovementScalarFieldEnum[]
+  }
+
+  /**
+   * CardMovement create
+   */
+  export type CardMovementCreateArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the CardMovement
+     */
+    select?: CardMovementSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the CardMovement
+     */
+    omit?: CardMovementOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: CardMovementInclude<ExtArgs> | null
+    /**
+     * The data needed to create a CardMovement.
+     */
+    data: XOR<CardMovementCreateInput, CardMovementUncheckedCreateInput>
+  }
+
+  /**
+   * CardMovement createMany
+   */
+  export type CardMovementCreateManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * The data used to create many CardMovements.
+     */
+    data: CardMovementCreateManyInput | CardMovementCreateManyInput[]
+    skipDuplicates?: boolean
+  }
+
+  /**
+   * CardMovement createManyAndReturn
+   */
+  export type CardMovementCreateManyAndReturnArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the CardMovement
+     */
+    select?: CardMovementSelectCreateManyAndReturn<ExtArgs> | null
+    /**
+     * Omit specific fields from the CardMovement
+     */
+    omit?: CardMovementOmit<ExtArgs> | null
+    /**
+     * The data used to create many CardMovements.
+     */
+    data: CardMovementCreateManyInput | CardMovementCreateManyInput[]
+    skipDuplicates?: boolean
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: CardMovementIncludeCreateManyAndReturn<ExtArgs> | null
+  }
+
+  /**
+   * CardMovement update
+   */
+  export type CardMovementUpdateArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the CardMovement
+     */
+    select?: CardMovementSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the CardMovement
+     */
+    omit?: CardMovementOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: CardMovementInclude<ExtArgs> | null
+    /**
+     * The data needed to update a CardMovement.
+     */
+    data: XOR<CardMovementUpdateInput, CardMovementUncheckedUpdateInput>
+    /**
+     * Choose, which CardMovement to update.
+     */
+    where: CardMovementWhereUniqueInput
+  }
+
+  /**
+   * CardMovement updateMany
+   */
+  export type CardMovementUpdateManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * The data used to update CardMovements.
+     */
+    data: XOR<CardMovementUpdateManyMutationInput, CardMovementUncheckedUpdateManyInput>
+    /**
+     * Filter which CardMovements to update
+     */
+    where?: CardMovementWhereInput
+    /**
+     * Limit how many CardMovements to update.
+     */
+    limit?: number
+  }
+
+  /**
+   * CardMovement updateManyAndReturn
+   */
+  export type CardMovementUpdateManyAndReturnArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the CardMovement
+     */
+    select?: CardMovementSelectUpdateManyAndReturn<ExtArgs> | null
+    /**
+     * Omit specific fields from the CardMovement
+     */
+    omit?: CardMovementOmit<ExtArgs> | null
+    /**
+     * The data used to update CardMovements.
+     */
+    data: XOR<CardMovementUpdateManyMutationInput, CardMovementUncheckedUpdateManyInput>
+    /**
+     * Filter which CardMovements to update
+     */
+    where?: CardMovementWhereInput
+    /**
+     * Limit how many CardMovements to update.
+     */
+    limit?: number
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: CardMovementIncludeUpdateManyAndReturn<ExtArgs> | null
+  }
+
+  /**
+   * CardMovement upsert
+   */
+  export type CardMovementUpsertArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the CardMovement
+     */
+    select?: CardMovementSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the CardMovement
+     */
+    omit?: CardMovementOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: CardMovementInclude<ExtArgs> | null
+    /**
+     * The filter to search for the CardMovement to update in case it exists.
+     */
+    where: CardMovementWhereUniqueInput
+    /**
+     * In case the CardMovement found by the `where` argument doesn't exist, create a new CardMovement with this data.
+     */
+    create: XOR<CardMovementCreateInput, CardMovementUncheckedCreateInput>
+    /**
+     * In case the CardMovement was found with the provided `where` argument, update it with this data.
+     */
+    update: XOR<CardMovementUpdateInput, CardMovementUncheckedUpdateInput>
+  }
+
+  /**
+   * CardMovement delete
+   */
+  export type CardMovementDeleteArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the CardMovement
+     */
+    select?: CardMovementSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the CardMovement
+     */
+    omit?: CardMovementOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: CardMovementInclude<ExtArgs> | null
+    /**
+     * Filter which CardMovement to delete.
+     */
+    where: CardMovementWhereUniqueInput
+  }
+
+  /**
+   * CardMovement deleteMany
+   */
+  export type CardMovementDeleteManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Filter which CardMovements to delete
+     */
+    where?: CardMovementWhereInput
+    /**
+     * Limit how many CardMovements to delete.
+     */
+    limit?: number
+  }
+
+  /**
+   * CardMovement without action
+   */
+  export type CardMovementDefaultArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the CardMovement
+     */
+    select?: CardMovementSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the CardMovement
+     */
+    omit?: CardMovementOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: CardMovementInclude<ExtArgs> | null
   }
 
 
@@ -22680,36 +21198,6 @@ export namespace Prisma {
   export type UserScalarFieldEnum = (typeof UserScalarFieldEnum)[keyof typeof UserScalarFieldEnum]
 
 
-  export const UserProjectScalarFieldEnum: {
-    id: 'id',
-    userId: 'userId',
-    projectId: 'projectId',
-    active: 'active',
-    horasDiarias: 'horasDiarias',
-    remuneracao: 'remuneracao'
-  };
-
-  export type UserProjectScalarFieldEnum = (typeof UserProjectScalarFieldEnum)[keyof typeof UserProjectScalarFieldEnum]
-
-
-  export const NotificationScalarFieldEnum: {
-    id: 'id',
-    userId: 'userId',
-    type: 'type',
-    title: 'title',
-    message: 'message',
-    reference: 'reference',
-    referenceType: 'referenceType',
-    status: 'status',
-    deletedAt: 'deletedAt',
-    createdAt: 'createdAt',
-    readAt: 'readAt',
-    updatedAt: 'updatedAt'
-  };
-
-  export type NotificationScalarFieldEnum = (typeof NotificationScalarFieldEnum)[keyof typeof NotificationScalarFieldEnum]
-
-
   export const ProjectScalarFieldEnum: {
     id: 'id',
     tenantId: 'tenantId',
@@ -22760,7 +21248,6 @@ export namespace Prisma {
     sprintId: 'sprintId',
     sprintColumnId: 'sprintColumnId',
     sprintPosition: 'sprintPosition',
-    status: 'status',
     projectId: 'projectId',
     priority: 'priority',
     tagsImport: 'tagsImport',
@@ -22768,21 +21255,25 @@ export namespace Prisma {
     endDate: 'endDate',
     deletedAt: 'deletedAt',
     createdAt: 'createdAt',
-    updatedAt: 'updatedAt',
-    orcado_min: 'orcado_min',
-    orcado_horas: 'orcado_horas',
-    orcado_dias: 'orcado_dias',
-    orcado_total: 'orcado_total',
-    data_prevista: 'data_prevista',
-    realizado_min: 'realizado_min',
-    realizado_horas: 'realizado_horas',
-    realizado_dias: 'realizado_dias',
-    realizado_total: 'realizado_total',
-    data_realizacao: 'data_realizacao',
-    situacao_status: 'situacao_status'
+    updatedAt: 'updatedAt'
   };
 
   export type CardScalarFieldEnum = (typeof CardScalarFieldEnum)[keyof typeof CardScalarFieldEnum]
+
+
+  export const CardMovementScalarFieldEnum: {
+    id: 'id',
+    cardId: 'cardId',
+    userId: 'userId',
+    fromColumnId: 'fromColumnId',
+    fromColumnTitle: 'fromColumnTitle',
+    toColumnId: 'toColumnId',
+    toColumnTitle: 'toColumnTitle',
+    reason: 'reason',
+    movedAt: 'movedAt'
+  };
+
+  export type CardMovementScalarFieldEnum = (typeof CardMovementScalarFieldEnum)[keyof typeof CardMovementScalarFieldEnum]
 
 
   export const TagScalarFieldEnum: {
@@ -22979,9 +21470,16 @@ export namespace Prisma {
 
 
   /**
-   * Reference to a field of type 'Boolean'
+   * Reference to a field of type 'SprintStatus'
    */
-  export type BooleanFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'Boolean'>
+  export type EnumSprintStatusFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'SprintStatus'>
+    
+
+
+  /**
+   * Reference to a field of type 'SprintStatus[]'
+   */
+  export type ListEnumSprintStatusFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'SprintStatus[]'>
     
 
 
@@ -22996,34 +21494,6 @@ export namespace Prisma {
    * Reference to a field of type 'Float[]'
    */
   export type ListFloatFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'Float[]'>
-    
-
-
-  /**
-   * Reference to a field of type 'NotificationStatus'
-   */
-  export type EnumNotificationStatusFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'NotificationStatus'>
-    
-
-
-  /**
-   * Reference to a field of type 'NotificationStatus[]'
-   */
-  export type ListEnumNotificationStatusFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'NotificationStatus[]'>
-    
-
-
-  /**
-   * Reference to a field of type 'SprintStatus'
-   */
-  export type EnumSprintStatusFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'SprintStatus'>
-    
-
-
-  /**
-   * Reference to a field of type 'SprintStatus[]'
-   */
-  export type ListEnumSprintStatusFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'SprintStatus[]'>
     
 
 
@@ -23066,6 +21536,13 @@ export namespace Prisma {
    * Reference to a field of type 'QueryMode'
    */
   export type EnumQueryModeFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'QueryMode'>
+    
+
+
+  /**
+   * Reference to a field of type 'Boolean'
+   */
+  export type BooleanFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'Boolean'>
     
   /**
    * Deep Input Types
@@ -23141,8 +21618,6 @@ export namespace Prisma {
     comments?: CommentListRelationFilter
     dashboardMetrics?: DashboardMetricListRelationFilter
     sprintFeedbacks?: SprintFeedbackListRelationFilter
-    userProjects?: UserProjectListRelationFilter
-    notifications?: NotificationListRelationFilter
     tags?: TagListRelationFilter
   }
 
@@ -23157,8 +21632,6 @@ export namespace Prisma {
     comments?: CommentOrderByRelationAggregateInput
     dashboardMetrics?: DashboardMetricOrderByRelationAggregateInput
     sprintFeedbacks?: SprintFeedbackOrderByRelationAggregateInput
-    userProjects?: UserProjectOrderByRelationAggregateInput
-    notifications?: NotificationOrderByRelationAggregateInput
     tags?: TagOrderByRelationAggregateInput
   }
 
@@ -23177,8 +21650,6 @@ export namespace Prisma {
     comments?: CommentListRelationFilter
     dashboardMetrics?: DashboardMetricListRelationFilter
     sprintFeedbacks?: SprintFeedbackListRelationFilter
-    userProjects?: UserProjectListRelationFilter
-    notifications?: NotificationListRelationFilter
     tags?: TagListRelationFilter
   }, "id" | "email_tenantId">
 
@@ -23200,159 +21671,6 @@ export namespace Prisma {
     tenantId?: StringWithAggregatesFilter<"User"> | string
     name?: StringWithAggregatesFilter<"User"> | string
     email?: StringWithAggregatesFilter<"User"> | string
-  }
-
-  export type UserProjectWhereInput = {
-    AND?: UserProjectWhereInput | UserProjectWhereInput[]
-    OR?: UserProjectWhereInput[]
-    NOT?: UserProjectWhereInput | UserProjectWhereInput[]
-    id?: StringFilter<"UserProject"> | string
-    userId?: StringFilter<"UserProject"> | string
-    projectId?: StringFilter<"UserProject"> | string
-    active?: BoolFilter<"UserProject"> | boolean
-    horasDiarias?: FloatNullableFilter<"UserProject"> | number | null
-    remuneracao?: FloatNullableFilter<"UserProject"> | number | null
-    user?: XOR<UserScalarRelationFilter, UserWhereInput>
-  }
-
-  export type UserProjectOrderByWithRelationInput = {
-    id?: SortOrder
-    userId?: SortOrder
-    projectId?: SortOrder
-    active?: SortOrder
-    horasDiarias?: SortOrderInput | SortOrder
-    remuneracao?: SortOrderInput | SortOrder
-    user?: UserOrderByWithRelationInput
-  }
-
-  export type UserProjectWhereUniqueInput = Prisma.AtLeast<{
-    id?: string
-    userId_projectId?: UserProjectUserIdProjectIdCompoundUniqueInput
-    AND?: UserProjectWhereInput | UserProjectWhereInput[]
-    OR?: UserProjectWhereInput[]
-    NOT?: UserProjectWhereInput | UserProjectWhereInput[]
-    userId?: StringFilter<"UserProject"> | string
-    projectId?: StringFilter<"UserProject"> | string
-    active?: BoolFilter<"UserProject"> | boolean
-    horasDiarias?: FloatNullableFilter<"UserProject"> | number | null
-    remuneracao?: FloatNullableFilter<"UserProject"> | number | null
-    user?: XOR<UserScalarRelationFilter, UserWhereInput>
-  }, "id" | "userId_projectId">
-
-  export type UserProjectOrderByWithAggregationInput = {
-    id?: SortOrder
-    userId?: SortOrder
-    projectId?: SortOrder
-    active?: SortOrder
-    horasDiarias?: SortOrderInput | SortOrder
-    remuneracao?: SortOrderInput | SortOrder
-    _count?: UserProjectCountOrderByAggregateInput
-    _avg?: UserProjectAvgOrderByAggregateInput
-    _max?: UserProjectMaxOrderByAggregateInput
-    _min?: UserProjectMinOrderByAggregateInput
-    _sum?: UserProjectSumOrderByAggregateInput
-  }
-
-  export type UserProjectScalarWhereWithAggregatesInput = {
-    AND?: UserProjectScalarWhereWithAggregatesInput | UserProjectScalarWhereWithAggregatesInput[]
-    OR?: UserProjectScalarWhereWithAggregatesInput[]
-    NOT?: UserProjectScalarWhereWithAggregatesInput | UserProjectScalarWhereWithAggregatesInput[]
-    id?: StringWithAggregatesFilter<"UserProject"> | string
-    userId?: StringWithAggregatesFilter<"UserProject"> | string
-    projectId?: StringWithAggregatesFilter<"UserProject"> | string
-    active?: BoolWithAggregatesFilter<"UserProject"> | boolean
-    horasDiarias?: FloatNullableWithAggregatesFilter<"UserProject"> | number | null
-    remuneracao?: FloatNullableWithAggregatesFilter<"UserProject"> | number | null
-  }
-
-  export type NotificationWhereInput = {
-    AND?: NotificationWhereInput | NotificationWhereInput[]
-    OR?: NotificationWhereInput[]
-    NOT?: NotificationWhereInput | NotificationWhereInput[]
-    id?: StringFilter<"Notification"> | string
-    userId?: StringFilter<"Notification"> | string
-    type?: StringFilter<"Notification"> | string
-    title?: StringFilter<"Notification"> | string
-    message?: StringFilter<"Notification"> | string
-    reference?: StringNullableFilter<"Notification"> | string | null
-    referenceType?: StringNullableFilter<"Notification"> | string | null
-    status?: EnumNotificationStatusFilter<"Notification"> | $Enums.NotificationStatus
-    deletedAt?: DateTimeNullableFilter<"Notification"> | Date | string | null
-    createdAt?: DateTimeFilter<"Notification"> | Date | string
-    readAt?: DateTimeNullableFilter<"Notification"> | Date | string | null
-    updatedAt?: DateTimeFilter<"Notification"> | Date | string
-    user?: XOR<UserScalarRelationFilter, UserWhereInput>
-  }
-
-  export type NotificationOrderByWithRelationInput = {
-    id?: SortOrder
-    userId?: SortOrder
-    type?: SortOrder
-    title?: SortOrder
-    message?: SortOrder
-    reference?: SortOrderInput | SortOrder
-    referenceType?: SortOrderInput | SortOrder
-    status?: SortOrder
-    deletedAt?: SortOrderInput | SortOrder
-    createdAt?: SortOrder
-    readAt?: SortOrderInput | SortOrder
-    updatedAt?: SortOrder
-    user?: UserOrderByWithRelationInput
-  }
-
-  export type NotificationWhereUniqueInput = Prisma.AtLeast<{
-    id?: string
-    AND?: NotificationWhereInput | NotificationWhereInput[]
-    OR?: NotificationWhereInput[]
-    NOT?: NotificationWhereInput | NotificationWhereInput[]
-    userId?: StringFilter<"Notification"> | string
-    type?: StringFilter<"Notification"> | string
-    title?: StringFilter<"Notification"> | string
-    message?: StringFilter<"Notification"> | string
-    reference?: StringNullableFilter<"Notification"> | string | null
-    referenceType?: StringNullableFilter<"Notification"> | string | null
-    status?: EnumNotificationStatusFilter<"Notification"> | $Enums.NotificationStatus
-    deletedAt?: DateTimeNullableFilter<"Notification"> | Date | string | null
-    createdAt?: DateTimeFilter<"Notification"> | Date | string
-    readAt?: DateTimeNullableFilter<"Notification"> | Date | string | null
-    updatedAt?: DateTimeFilter<"Notification"> | Date | string
-    user?: XOR<UserScalarRelationFilter, UserWhereInput>
-  }, "id">
-
-  export type NotificationOrderByWithAggregationInput = {
-    id?: SortOrder
-    userId?: SortOrder
-    type?: SortOrder
-    title?: SortOrder
-    message?: SortOrder
-    reference?: SortOrderInput | SortOrder
-    referenceType?: SortOrderInput | SortOrder
-    status?: SortOrder
-    deletedAt?: SortOrderInput | SortOrder
-    createdAt?: SortOrder
-    readAt?: SortOrderInput | SortOrder
-    updatedAt?: SortOrder
-    _count?: NotificationCountOrderByAggregateInput
-    _max?: NotificationMaxOrderByAggregateInput
-    _min?: NotificationMinOrderByAggregateInput
-  }
-
-  export type NotificationScalarWhereWithAggregatesInput = {
-    AND?: NotificationScalarWhereWithAggregatesInput | NotificationScalarWhereWithAggregatesInput[]
-    OR?: NotificationScalarWhereWithAggregatesInput[]
-    NOT?: NotificationScalarWhereWithAggregatesInput | NotificationScalarWhereWithAggregatesInput[]
-    id?: StringWithAggregatesFilter<"Notification"> | string
-    userId?: StringWithAggregatesFilter<"Notification"> | string
-    type?: StringWithAggregatesFilter<"Notification"> | string
-    title?: StringWithAggregatesFilter<"Notification"> | string
-    message?: StringWithAggregatesFilter<"Notification"> | string
-    reference?: StringNullableWithAggregatesFilter<"Notification"> | string | null
-    referenceType?: StringNullableWithAggregatesFilter<"Notification"> | string | null
-    status?: EnumNotificationStatusWithAggregatesFilter<"Notification"> | $Enums.NotificationStatus
-    deletedAt?: DateTimeNullableWithAggregatesFilter<"Notification"> | Date | string | null
-    createdAt?: DateTimeWithAggregatesFilter<"Notification"> | Date | string
-    readAt?: DateTimeNullableWithAggregatesFilter<"Notification"> | Date | string | null
-    updatedAt?: DateTimeWithAggregatesFilter<"Notification"> | Date | string
   }
 
   export type ProjectWhereInput = {
@@ -23597,7 +21915,6 @@ export namespace Prisma {
     sprintId?: StringNullableFilter<"Card"> | string | null
     sprintColumnId?: StringNullableFilter<"Card"> | string | null
     sprintPosition?: IntNullableFilter<"Card"> | number | null
-    status?: StringFilter<"Card"> | string
     projectId?: StringNullableFilter<"Card"> | string | null
     priority?: StringFilter<"Card"> | string
     tagsImport?: StringFilter<"Card"> | string
@@ -23606,17 +21923,6 @@ export namespace Prisma {
     deletedAt?: DateTimeNullableFilter<"Card"> | Date | string | null
     createdAt?: DateTimeFilter<"Card"> | Date | string
     updatedAt?: DateTimeFilter<"Card"> | Date | string
-    orcado_min?: IntNullableFilter<"Card"> | number | null
-    orcado_horas?: FloatNullableFilter<"Card"> | number | null
-    orcado_dias?: FloatNullableFilter<"Card"> | number | null
-    orcado_total?: FloatNullableFilter<"Card"> | number | null
-    data_prevista?: DateTimeNullableFilter<"Card"> | Date | string | null
-    realizado_min?: IntNullableFilter<"Card"> | number | null
-    realizado_horas?: FloatNullableFilter<"Card"> | number | null
-    realizado_dias?: FloatNullableFilter<"Card"> | number | null
-    realizado_total?: FloatNullableFilter<"Card"> | number | null
-    data_realizacao?: DateTimeNullableFilter<"Card"> | Date | string | null
-    situacao_status?: StringNullableFilter<"Card"> | string | null
     sprint?: XOR<SprintNullableScalarRelationFilter, SprintWhereInput> | null
     sprintColumn?: XOR<SprintColumnNullableScalarRelationFilter, SprintColumnWhereInput> | null
     project?: XOR<ProjectNullableScalarRelationFilter, ProjectWhereInput> | null
@@ -23625,6 +21931,7 @@ export namespace Prisma {
     timeEntries?: TimeEntryListRelationFilter
     responsibles?: CardResponsibleListRelationFilter
     comments?: CommentListRelationFilter
+    movements?: CardMovementListRelationFilter
   }
 
   export type CardOrderByWithRelationInput = {
@@ -23636,7 +21943,6 @@ export namespace Prisma {
     sprintId?: SortOrderInput | SortOrder
     sprintColumnId?: SortOrderInput | SortOrder
     sprintPosition?: SortOrderInput | SortOrder
-    status?: SortOrder
     projectId?: SortOrderInput | SortOrder
     priority?: SortOrder
     tagsImport?: SortOrder
@@ -23645,17 +21951,6 @@ export namespace Prisma {
     deletedAt?: SortOrderInput | SortOrder
     createdAt?: SortOrder
     updatedAt?: SortOrder
-    orcado_min?: SortOrderInput | SortOrder
-    orcado_horas?: SortOrderInput | SortOrder
-    orcado_dias?: SortOrderInput | SortOrder
-    orcado_total?: SortOrderInput | SortOrder
-    data_prevista?: SortOrderInput | SortOrder
-    realizado_min?: SortOrderInput | SortOrder
-    realizado_horas?: SortOrderInput | SortOrder
-    realizado_dias?: SortOrderInput | SortOrder
-    realizado_total?: SortOrderInput | SortOrder
-    data_realizacao?: SortOrderInput | SortOrder
-    situacao_status?: SortOrderInput | SortOrder
     sprint?: SprintOrderByWithRelationInput
     sprintColumn?: SprintColumnOrderByWithRelationInput
     project?: ProjectOrderByWithRelationInput
@@ -23664,6 +21959,7 @@ export namespace Prisma {
     timeEntries?: TimeEntryOrderByRelationAggregateInput
     responsibles?: CardResponsibleOrderByRelationAggregateInput
     comments?: CommentOrderByRelationAggregateInput
+    movements?: CardMovementOrderByRelationAggregateInput
   }
 
   export type CardWhereUniqueInput = Prisma.AtLeast<{
@@ -23678,7 +21974,6 @@ export namespace Prisma {
     sprintId?: StringNullableFilter<"Card"> | string | null
     sprintColumnId?: StringNullableFilter<"Card"> | string | null
     sprintPosition?: IntNullableFilter<"Card"> | number | null
-    status?: StringFilter<"Card"> | string
     projectId?: StringNullableFilter<"Card"> | string | null
     priority?: StringFilter<"Card"> | string
     tagsImport?: StringFilter<"Card"> | string
@@ -23687,17 +21982,6 @@ export namespace Prisma {
     deletedAt?: DateTimeNullableFilter<"Card"> | Date | string | null
     createdAt?: DateTimeFilter<"Card"> | Date | string
     updatedAt?: DateTimeFilter<"Card"> | Date | string
-    orcado_min?: IntNullableFilter<"Card"> | number | null
-    orcado_horas?: FloatNullableFilter<"Card"> | number | null
-    orcado_dias?: FloatNullableFilter<"Card"> | number | null
-    orcado_total?: FloatNullableFilter<"Card"> | number | null
-    data_prevista?: DateTimeNullableFilter<"Card"> | Date | string | null
-    realizado_min?: IntNullableFilter<"Card"> | number | null
-    realizado_horas?: FloatNullableFilter<"Card"> | number | null
-    realizado_dias?: FloatNullableFilter<"Card"> | number | null
-    realizado_total?: FloatNullableFilter<"Card"> | number | null
-    data_realizacao?: DateTimeNullableFilter<"Card"> | Date | string | null
-    situacao_status?: StringNullableFilter<"Card"> | string | null
     sprint?: XOR<SprintNullableScalarRelationFilter, SprintWhereInput> | null
     sprintColumn?: XOR<SprintColumnNullableScalarRelationFilter, SprintColumnWhereInput> | null
     project?: XOR<ProjectNullableScalarRelationFilter, ProjectWhereInput> | null
@@ -23706,6 +21990,7 @@ export namespace Prisma {
     timeEntries?: TimeEntryListRelationFilter
     responsibles?: CardResponsibleListRelationFilter
     comments?: CommentListRelationFilter
+    movements?: CardMovementListRelationFilter
   }, "id">
 
   export type CardOrderByWithAggregationInput = {
@@ -23717,7 +22002,6 @@ export namespace Prisma {
     sprintId?: SortOrderInput | SortOrder
     sprintColumnId?: SortOrderInput | SortOrder
     sprintPosition?: SortOrderInput | SortOrder
-    status?: SortOrder
     projectId?: SortOrderInput | SortOrder
     priority?: SortOrder
     tagsImport?: SortOrder
@@ -23726,17 +22010,6 @@ export namespace Prisma {
     deletedAt?: SortOrderInput | SortOrder
     createdAt?: SortOrder
     updatedAt?: SortOrder
-    orcado_min?: SortOrderInput | SortOrder
-    orcado_horas?: SortOrderInput | SortOrder
-    orcado_dias?: SortOrderInput | SortOrder
-    orcado_total?: SortOrderInput | SortOrder
-    data_prevista?: SortOrderInput | SortOrder
-    realizado_min?: SortOrderInput | SortOrder
-    realizado_horas?: SortOrderInput | SortOrder
-    realizado_dias?: SortOrderInput | SortOrder
-    realizado_total?: SortOrderInput | SortOrder
-    data_realizacao?: SortOrderInput | SortOrder
-    situacao_status?: SortOrderInput | SortOrder
     _count?: CardCountOrderByAggregateInput
     _avg?: CardAvgOrderByAggregateInput
     _max?: CardMaxOrderByAggregateInput
@@ -23756,7 +22029,6 @@ export namespace Prisma {
     sprintId?: StringNullableWithAggregatesFilter<"Card"> | string | null
     sprintColumnId?: StringNullableWithAggregatesFilter<"Card"> | string | null
     sprintPosition?: IntNullableWithAggregatesFilter<"Card"> | number | null
-    status?: StringWithAggregatesFilter<"Card"> | string
     projectId?: StringNullableWithAggregatesFilter<"Card"> | string | null
     priority?: StringWithAggregatesFilter<"Card"> | string
     tagsImport?: StringWithAggregatesFilter<"Card"> | string
@@ -23765,17 +22037,81 @@ export namespace Prisma {
     deletedAt?: DateTimeNullableWithAggregatesFilter<"Card"> | Date | string | null
     createdAt?: DateTimeWithAggregatesFilter<"Card"> | Date | string
     updatedAt?: DateTimeWithAggregatesFilter<"Card"> | Date | string
-    orcado_min?: IntNullableWithAggregatesFilter<"Card"> | number | null
-    orcado_horas?: FloatNullableWithAggregatesFilter<"Card"> | number | null
-    orcado_dias?: FloatNullableWithAggregatesFilter<"Card"> | number | null
-    orcado_total?: FloatNullableWithAggregatesFilter<"Card"> | number | null
-    data_prevista?: DateTimeNullableWithAggregatesFilter<"Card"> | Date | string | null
-    realizado_min?: IntNullableWithAggregatesFilter<"Card"> | number | null
-    realizado_horas?: FloatNullableWithAggregatesFilter<"Card"> | number | null
-    realizado_dias?: FloatNullableWithAggregatesFilter<"Card"> | number | null
-    realizado_total?: FloatNullableWithAggregatesFilter<"Card"> | number | null
-    data_realizacao?: DateTimeNullableWithAggregatesFilter<"Card"> | Date | string | null
-    situacao_status?: StringNullableWithAggregatesFilter<"Card"> | string | null
+  }
+
+  export type CardMovementWhereInput = {
+    AND?: CardMovementWhereInput | CardMovementWhereInput[]
+    OR?: CardMovementWhereInput[]
+    NOT?: CardMovementWhereInput | CardMovementWhereInput[]
+    id?: StringFilter<"CardMovement"> | string
+    cardId?: StringFilter<"CardMovement"> | string
+    userId?: StringNullableFilter<"CardMovement"> | string | null
+    fromColumnId?: StringNullableFilter<"CardMovement"> | string | null
+    fromColumnTitle?: StringNullableFilter<"CardMovement"> | string | null
+    toColumnId?: StringNullableFilter<"CardMovement"> | string | null
+    toColumnTitle?: StringNullableFilter<"CardMovement"> | string | null
+    reason?: StringNullableFilter<"CardMovement"> | string | null
+    movedAt?: DateTimeFilter<"CardMovement"> | Date | string
+    card?: XOR<CardScalarRelationFilter, CardWhereInput>
+  }
+
+  export type CardMovementOrderByWithRelationInput = {
+    id?: SortOrder
+    cardId?: SortOrder
+    userId?: SortOrderInput | SortOrder
+    fromColumnId?: SortOrderInput | SortOrder
+    fromColumnTitle?: SortOrderInput | SortOrder
+    toColumnId?: SortOrderInput | SortOrder
+    toColumnTitle?: SortOrderInput | SortOrder
+    reason?: SortOrderInput | SortOrder
+    movedAt?: SortOrder
+    card?: CardOrderByWithRelationInput
+  }
+
+  export type CardMovementWhereUniqueInput = Prisma.AtLeast<{
+    id?: string
+    AND?: CardMovementWhereInput | CardMovementWhereInput[]
+    OR?: CardMovementWhereInput[]
+    NOT?: CardMovementWhereInput | CardMovementWhereInput[]
+    cardId?: StringFilter<"CardMovement"> | string
+    userId?: StringNullableFilter<"CardMovement"> | string | null
+    fromColumnId?: StringNullableFilter<"CardMovement"> | string | null
+    fromColumnTitle?: StringNullableFilter<"CardMovement"> | string | null
+    toColumnId?: StringNullableFilter<"CardMovement"> | string | null
+    toColumnTitle?: StringNullableFilter<"CardMovement"> | string | null
+    reason?: StringNullableFilter<"CardMovement"> | string | null
+    movedAt?: DateTimeFilter<"CardMovement"> | Date | string
+    card?: XOR<CardScalarRelationFilter, CardWhereInput>
+  }, "id">
+
+  export type CardMovementOrderByWithAggregationInput = {
+    id?: SortOrder
+    cardId?: SortOrder
+    userId?: SortOrderInput | SortOrder
+    fromColumnId?: SortOrderInput | SortOrder
+    fromColumnTitle?: SortOrderInput | SortOrder
+    toColumnId?: SortOrderInput | SortOrder
+    toColumnTitle?: SortOrderInput | SortOrder
+    reason?: SortOrderInput | SortOrder
+    movedAt?: SortOrder
+    _count?: CardMovementCountOrderByAggregateInput
+    _max?: CardMovementMaxOrderByAggregateInput
+    _min?: CardMovementMinOrderByAggregateInput
+  }
+
+  export type CardMovementScalarWhereWithAggregatesInput = {
+    AND?: CardMovementScalarWhereWithAggregatesInput | CardMovementScalarWhereWithAggregatesInput[]
+    OR?: CardMovementScalarWhereWithAggregatesInput[]
+    NOT?: CardMovementScalarWhereWithAggregatesInput | CardMovementScalarWhereWithAggregatesInput[]
+    id?: StringWithAggregatesFilter<"CardMovement"> | string
+    cardId?: StringWithAggregatesFilter<"CardMovement"> | string
+    userId?: StringNullableWithAggregatesFilter<"CardMovement"> | string | null
+    fromColumnId?: StringNullableWithAggregatesFilter<"CardMovement"> | string | null
+    fromColumnTitle?: StringNullableWithAggregatesFilter<"CardMovement"> | string | null
+    toColumnId?: StringNullableWithAggregatesFilter<"CardMovement"> | string | null
+    toColumnTitle?: StringNullableWithAggregatesFilter<"CardMovement"> | string | null
+    reason?: StringNullableWithAggregatesFilter<"CardMovement"> | string | null
+    movedAt?: DateTimeWithAggregatesFilter<"CardMovement"> | Date | string
   }
 
   export type TagWhereInput = {
@@ -24478,8 +22814,6 @@ export namespace Prisma {
     comments?: CommentCreateNestedManyWithoutUserInput
     dashboardMetrics?: DashboardMetricCreateNestedManyWithoutUserInput
     sprintFeedbacks?: SprintFeedbackCreateNestedManyWithoutUserInput
-    userProjects?: UserProjectCreateNestedManyWithoutUserInput
-    notifications?: NotificationCreateNestedManyWithoutUserInput
     tags?: TagCreateNestedManyWithoutUserInput
   }
 
@@ -24494,8 +22828,6 @@ export namespace Prisma {
     comments?: CommentUncheckedCreateNestedManyWithoutUserInput
     dashboardMetrics?: DashboardMetricUncheckedCreateNestedManyWithoutUserInput
     sprintFeedbacks?: SprintFeedbackUncheckedCreateNestedManyWithoutUserInput
-    userProjects?: UserProjectUncheckedCreateNestedManyWithoutUserInput
-    notifications?: NotificationUncheckedCreateNestedManyWithoutUserInput
     tags?: TagUncheckedCreateNestedManyWithoutUserInput
   }
 
@@ -24510,8 +22842,6 @@ export namespace Prisma {
     comments?: CommentUpdateManyWithoutUserNestedInput
     dashboardMetrics?: DashboardMetricUpdateManyWithoutUserNestedInput
     sprintFeedbacks?: SprintFeedbackUpdateManyWithoutUserNestedInput
-    userProjects?: UserProjectUpdateManyWithoutUserNestedInput
-    notifications?: NotificationUpdateManyWithoutUserNestedInput
     tags?: TagUpdateManyWithoutUserNestedInput
   }
 
@@ -24526,8 +22856,6 @@ export namespace Prisma {
     comments?: CommentUncheckedUpdateManyWithoutUserNestedInput
     dashboardMetrics?: DashboardMetricUncheckedUpdateManyWithoutUserNestedInput
     sprintFeedbacks?: SprintFeedbackUncheckedUpdateManyWithoutUserNestedInput
-    userProjects?: UserProjectUncheckedUpdateManyWithoutUserNestedInput
-    notifications?: NotificationUncheckedUpdateManyWithoutUserNestedInput
     tags?: TagUncheckedUpdateManyWithoutUserNestedInput
   }
 
@@ -24550,172 +22878,6 @@ export namespace Prisma {
     tenantId?: StringFieldUpdateOperationsInput | string
     name?: StringFieldUpdateOperationsInput | string
     email?: StringFieldUpdateOperationsInput | string
-  }
-
-  export type UserProjectCreateInput = {
-    id?: string
-    projectId: string
-    active?: boolean
-    horasDiarias?: number | null
-    remuneracao?: number | null
-    user: UserCreateNestedOneWithoutUserProjectsInput
-  }
-
-  export type UserProjectUncheckedCreateInput = {
-    id?: string
-    userId: string
-    projectId: string
-    active?: boolean
-    horasDiarias?: number | null
-    remuneracao?: number | null
-  }
-
-  export type UserProjectUpdateInput = {
-    id?: StringFieldUpdateOperationsInput | string
-    projectId?: StringFieldUpdateOperationsInput | string
-    active?: BoolFieldUpdateOperationsInput | boolean
-    horasDiarias?: NullableFloatFieldUpdateOperationsInput | number | null
-    remuneracao?: NullableFloatFieldUpdateOperationsInput | number | null
-    user?: UserUpdateOneRequiredWithoutUserProjectsNestedInput
-  }
-
-  export type UserProjectUncheckedUpdateInput = {
-    id?: StringFieldUpdateOperationsInput | string
-    userId?: StringFieldUpdateOperationsInput | string
-    projectId?: StringFieldUpdateOperationsInput | string
-    active?: BoolFieldUpdateOperationsInput | boolean
-    horasDiarias?: NullableFloatFieldUpdateOperationsInput | number | null
-    remuneracao?: NullableFloatFieldUpdateOperationsInput | number | null
-  }
-
-  export type UserProjectCreateManyInput = {
-    id?: string
-    userId: string
-    projectId: string
-    active?: boolean
-    horasDiarias?: number | null
-    remuneracao?: number | null
-  }
-
-  export type UserProjectUpdateManyMutationInput = {
-    id?: StringFieldUpdateOperationsInput | string
-    projectId?: StringFieldUpdateOperationsInput | string
-    active?: BoolFieldUpdateOperationsInput | boolean
-    horasDiarias?: NullableFloatFieldUpdateOperationsInput | number | null
-    remuneracao?: NullableFloatFieldUpdateOperationsInput | number | null
-  }
-
-  export type UserProjectUncheckedUpdateManyInput = {
-    id?: StringFieldUpdateOperationsInput | string
-    userId?: StringFieldUpdateOperationsInput | string
-    projectId?: StringFieldUpdateOperationsInput | string
-    active?: BoolFieldUpdateOperationsInput | boolean
-    horasDiarias?: NullableFloatFieldUpdateOperationsInput | number | null
-    remuneracao?: NullableFloatFieldUpdateOperationsInput | number | null
-  }
-
-  export type NotificationCreateInput = {
-    id?: string
-    type: string
-    title: string
-    message: string
-    reference?: string | null
-    referenceType?: string | null
-    status?: $Enums.NotificationStatus
-    deletedAt?: Date | string | null
-    createdAt?: Date | string
-    readAt?: Date | string | null
-    updatedAt?: Date | string
-    user: UserCreateNestedOneWithoutNotificationsInput
-  }
-
-  export type NotificationUncheckedCreateInput = {
-    id?: string
-    userId: string
-    type: string
-    title: string
-    message: string
-    reference?: string | null
-    referenceType?: string | null
-    status?: $Enums.NotificationStatus
-    deletedAt?: Date | string | null
-    createdAt?: Date | string
-    readAt?: Date | string | null
-    updatedAt?: Date | string
-  }
-
-  export type NotificationUpdateInput = {
-    id?: StringFieldUpdateOperationsInput | string
-    type?: StringFieldUpdateOperationsInput | string
-    title?: StringFieldUpdateOperationsInput | string
-    message?: StringFieldUpdateOperationsInput | string
-    reference?: NullableStringFieldUpdateOperationsInput | string | null
-    referenceType?: NullableStringFieldUpdateOperationsInput | string | null
-    status?: EnumNotificationStatusFieldUpdateOperationsInput | $Enums.NotificationStatus
-    deletedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
-    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
-    readAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
-    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
-    user?: UserUpdateOneRequiredWithoutNotificationsNestedInput
-  }
-
-  export type NotificationUncheckedUpdateInput = {
-    id?: StringFieldUpdateOperationsInput | string
-    userId?: StringFieldUpdateOperationsInput | string
-    type?: StringFieldUpdateOperationsInput | string
-    title?: StringFieldUpdateOperationsInput | string
-    message?: StringFieldUpdateOperationsInput | string
-    reference?: NullableStringFieldUpdateOperationsInput | string | null
-    referenceType?: NullableStringFieldUpdateOperationsInput | string | null
-    status?: EnumNotificationStatusFieldUpdateOperationsInput | $Enums.NotificationStatus
-    deletedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
-    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
-    readAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
-    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
-  }
-
-  export type NotificationCreateManyInput = {
-    id?: string
-    userId: string
-    type: string
-    title: string
-    message: string
-    reference?: string | null
-    referenceType?: string | null
-    status?: $Enums.NotificationStatus
-    deletedAt?: Date | string | null
-    createdAt?: Date | string
-    readAt?: Date | string | null
-    updatedAt?: Date | string
-  }
-
-  export type NotificationUpdateManyMutationInput = {
-    id?: StringFieldUpdateOperationsInput | string
-    type?: StringFieldUpdateOperationsInput | string
-    title?: StringFieldUpdateOperationsInput | string
-    message?: StringFieldUpdateOperationsInput | string
-    reference?: NullableStringFieldUpdateOperationsInput | string | null
-    referenceType?: NullableStringFieldUpdateOperationsInput | string | null
-    status?: EnumNotificationStatusFieldUpdateOperationsInput | $Enums.NotificationStatus
-    deletedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
-    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
-    readAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
-    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
-  }
-
-  export type NotificationUncheckedUpdateManyInput = {
-    id?: StringFieldUpdateOperationsInput | string
-    userId?: StringFieldUpdateOperationsInput | string
-    type?: StringFieldUpdateOperationsInput | string
-    title?: StringFieldUpdateOperationsInput | string
-    message?: StringFieldUpdateOperationsInput | string
-    reference?: NullableStringFieldUpdateOperationsInput | string | null
-    referenceType?: NullableStringFieldUpdateOperationsInput | string | null
-    status?: EnumNotificationStatusFieldUpdateOperationsInput | $Enums.NotificationStatus
-    deletedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
-    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
-    readAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
-    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
   }
 
   export type ProjectCreateInput = {
@@ -24974,7 +23136,6 @@ export namespace Prisma {
     color?: string
     position?: number
     sprintPosition?: number | null
-    status?: string
     priority?: string
     tagsImport?: string
     startDate?: Date | string | null
@@ -24982,17 +23143,6 @@ export namespace Prisma {
     deletedAt?: Date | string | null
     createdAt?: Date | string
     updatedAt?: Date | string
-    orcado_min?: number | null
-    orcado_horas?: number | null
-    orcado_dias?: number | null
-    orcado_total?: number | null
-    data_prevista?: Date | string | null
-    realizado_min?: number | null
-    realizado_horas?: number | null
-    realizado_dias?: number | null
-    realizado_total?: number | null
-    data_realizacao?: Date | string | null
-    situacao_status?: string | null
     sprint?: SprintCreateNestedOneWithoutCardsInput
     sprintColumn?: SprintColumnCreateNestedOneWithoutCardsInput
     project?: ProjectCreateNestedOneWithoutCardsInput
@@ -25001,6 +23151,7 @@ export namespace Prisma {
     timeEntries?: TimeEntryCreateNestedManyWithoutCardInput
     responsibles?: CardResponsibleCreateNestedManyWithoutCardInput
     comments?: CommentCreateNestedManyWithoutCardInput
+    movements?: CardMovementCreateNestedManyWithoutCardInput
   }
 
   export type CardUncheckedCreateInput = {
@@ -25012,7 +23163,6 @@ export namespace Prisma {
     sprintId?: string | null
     sprintColumnId?: string | null
     sprintPosition?: number | null
-    status?: string
     projectId?: string | null
     priority?: string
     tagsImport?: string
@@ -25021,22 +23171,12 @@ export namespace Prisma {
     deletedAt?: Date | string | null
     createdAt?: Date | string
     updatedAt?: Date | string
-    orcado_min?: number | null
-    orcado_horas?: number | null
-    orcado_dias?: number | null
-    orcado_total?: number | null
-    data_prevista?: Date | string | null
-    realizado_min?: number | null
-    realizado_horas?: number | null
-    realizado_dias?: number | null
-    realizado_total?: number | null
-    data_realizacao?: Date | string | null
-    situacao_status?: string | null
     tags?: CardTagUncheckedCreateNestedManyWithoutCardInput
     attachments?: AttachmentUncheckedCreateNestedManyWithoutCardInput
     timeEntries?: TimeEntryUncheckedCreateNestedManyWithoutCardInput
     responsibles?: CardResponsibleUncheckedCreateNestedManyWithoutCardInput
     comments?: CommentUncheckedCreateNestedManyWithoutCardInput
+    movements?: CardMovementUncheckedCreateNestedManyWithoutCardInput
   }
 
   export type CardUpdateInput = {
@@ -25046,7 +23186,6 @@ export namespace Prisma {
     color?: StringFieldUpdateOperationsInput | string
     position?: IntFieldUpdateOperationsInput | number
     sprintPosition?: NullableIntFieldUpdateOperationsInput | number | null
-    status?: StringFieldUpdateOperationsInput | string
     priority?: StringFieldUpdateOperationsInput | string
     tagsImport?: StringFieldUpdateOperationsInput | string
     startDate?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
@@ -25054,17 +23193,6 @@ export namespace Prisma {
     deletedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
-    orcado_min?: NullableIntFieldUpdateOperationsInput | number | null
-    orcado_horas?: NullableFloatFieldUpdateOperationsInput | number | null
-    orcado_dias?: NullableFloatFieldUpdateOperationsInput | number | null
-    orcado_total?: NullableFloatFieldUpdateOperationsInput | number | null
-    data_prevista?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
-    realizado_min?: NullableIntFieldUpdateOperationsInput | number | null
-    realizado_horas?: NullableFloatFieldUpdateOperationsInput | number | null
-    realizado_dias?: NullableFloatFieldUpdateOperationsInput | number | null
-    realizado_total?: NullableFloatFieldUpdateOperationsInput | number | null
-    data_realizacao?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
-    situacao_status?: NullableStringFieldUpdateOperationsInput | string | null
     sprint?: SprintUpdateOneWithoutCardsNestedInput
     sprintColumn?: SprintColumnUpdateOneWithoutCardsNestedInput
     project?: ProjectUpdateOneWithoutCardsNestedInput
@@ -25073,6 +23201,7 @@ export namespace Prisma {
     timeEntries?: TimeEntryUpdateManyWithoutCardNestedInput
     responsibles?: CardResponsibleUpdateManyWithoutCardNestedInput
     comments?: CommentUpdateManyWithoutCardNestedInput
+    movements?: CardMovementUpdateManyWithoutCardNestedInput
   }
 
   export type CardUncheckedUpdateInput = {
@@ -25084,7 +23213,6 @@ export namespace Prisma {
     sprintId?: NullableStringFieldUpdateOperationsInput | string | null
     sprintColumnId?: NullableStringFieldUpdateOperationsInput | string | null
     sprintPosition?: NullableIntFieldUpdateOperationsInput | number | null
-    status?: StringFieldUpdateOperationsInput | string
     projectId?: NullableStringFieldUpdateOperationsInput | string | null
     priority?: StringFieldUpdateOperationsInput | string
     tagsImport?: StringFieldUpdateOperationsInput | string
@@ -25093,22 +23221,12 @@ export namespace Prisma {
     deletedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
-    orcado_min?: NullableIntFieldUpdateOperationsInput | number | null
-    orcado_horas?: NullableFloatFieldUpdateOperationsInput | number | null
-    orcado_dias?: NullableFloatFieldUpdateOperationsInput | number | null
-    orcado_total?: NullableFloatFieldUpdateOperationsInput | number | null
-    data_prevista?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
-    realizado_min?: NullableIntFieldUpdateOperationsInput | number | null
-    realizado_horas?: NullableFloatFieldUpdateOperationsInput | number | null
-    realizado_dias?: NullableFloatFieldUpdateOperationsInput | number | null
-    realizado_total?: NullableFloatFieldUpdateOperationsInput | number | null
-    data_realizacao?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
-    situacao_status?: NullableStringFieldUpdateOperationsInput | string | null
     tags?: CardTagUncheckedUpdateManyWithoutCardNestedInput
     attachments?: AttachmentUncheckedUpdateManyWithoutCardNestedInput
     timeEntries?: TimeEntryUncheckedUpdateManyWithoutCardNestedInput
     responsibles?: CardResponsibleUncheckedUpdateManyWithoutCardNestedInput
     comments?: CommentUncheckedUpdateManyWithoutCardNestedInput
+    movements?: CardMovementUncheckedUpdateManyWithoutCardNestedInput
   }
 
   export type CardCreateManyInput = {
@@ -25120,7 +23238,6 @@ export namespace Prisma {
     sprintId?: string | null
     sprintColumnId?: string | null
     sprintPosition?: number | null
-    status?: string
     projectId?: string | null
     priority?: string
     tagsImport?: string
@@ -25129,17 +23246,6 @@ export namespace Prisma {
     deletedAt?: Date | string | null
     createdAt?: Date | string
     updatedAt?: Date | string
-    orcado_min?: number | null
-    orcado_horas?: number | null
-    orcado_dias?: number | null
-    orcado_total?: number | null
-    data_prevista?: Date | string | null
-    realizado_min?: number | null
-    realizado_horas?: number | null
-    realizado_dias?: number | null
-    realizado_total?: number | null
-    data_realizacao?: Date | string | null
-    situacao_status?: string | null
   }
 
   export type CardUpdateManyMutationInput = {
@@ -25149,7 +23255,6 @@ export namespace Prisma {
     color?: StringFieldUpdateOperationsInput | string
     position?: IntFieldUpdateOperationsInput | number
     sprintPosition?: NullableIntFieldUpdateOperationsInput | number | null
-    status?: StringFieldUpdateOperationsInput | string
     priority?: StringFieldUpdateOperationsInput | string
     tagsImport?: StringFieldUpdateOperationsInput | string
     startDate?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
@@ -25157,17 +23262,6 @@ export namespace Prisma {
     deletedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
-    orcado_min?: NullableIntFieldUpdateOperationsInput | number | null
-    orcado_horas?: NullableFloatFieldUpdateOperationsInput | number | null
-    orcado_dias?: NullableFloatFieldUpdateOperationsInput | number | null
-    orcado_total?: NullableFloatFieldUpdateOperationsInput | number | null
-    data_prevista?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
-    realizado_min?: NullableIntFieldUpdateOperationsInput | number | null
-    realizado_horas?: NullableFloatFieldUpdateOperationsInput | number | null
-    realizado_dias?: NullableFloatFieldUpdateOperationsInput | number | null
-    realizado_total?: NullableFloatFieldUpdateOperationsInput | number | null
-    data_realizacao?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
-    situacao_status?: NullableStringFieldUpdateOperationsInput | string | null
   }
 
   export type CardUncheckedUpdateManyInput = {
@@ -25179,7 +23273,6 @@ export namespace Prisma {
     sprintId?: NullableStringFieldUpdateOperationsInput | string | null
     sprintColumnId?: NullableStringFieldUpdateOperationsInput | string | null
     sprintPosition?: NullableIntFieldUpdateOperationsInput | number | null
-    status?: StringFieldUpdateOperationsInput | string
     projectId?: NullableStringFieldUpdateOperationsInput | string | null
     priority?: StringFieldUpdateOperationsInput | string
     tagsImport?: StringFieldUpdateOperationsInput | string
@@ -25188,17 +23281,89 @@ export namespace Prisma {
     deletedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
-    orcado_min?: NullableIntFieldUpdateOperationsInput | number | null
-    orcado_horas?: NullableFloatFieldUpdateOperationsInput | number | null
-    orcado_dias?: NullableFloatFieldUpdateOperationsInput | number | null
-    orcado_total?: NullableFloatFieldUpdateOperationsInput | number | null
-    data_prevista?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
-    realizado_min?: NullableIntFieldUpdateOperationsInput | number | null
-    realizado_horas?: NullableFloatFieldUpdateOperationsInput | number | null
-    realizado_dias?: NullableFloatFieldUpdateOperationsInput | number | null
-    realizado_total?: NullableFloatFieldUpdateOperationsInput | number | null
-    data_realizacao?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
-    situacao_status?: NullableStringFieldUpdateOperationsInput | string | null
+  }
+
+  export type CardMovementCreateInput = {
+    id?: string
+    userId?: string | null
+    fromColumnId?: string | null
+    fromColumnTitle?: string | null
+    toColumnId?: string | null
+    toColumnTitle?: string | null
+    reason?: string | null
+    movedAt?: Date | string
+    card: CardCreateNestedOneWithoutMovementsInput
+  }
+
+  export type CardMovementUncheckedCreateInput = {
+    id?: string
+    cardId: string
+    userId?: string | null
+    fromColumnId?: string | null
+    fromColumnTitle?: string | null
+    toColumnId?: string | null
+    toColumnTitle?: string | null
+    reason?: string | null
+    movedAt?: Date | string
+  }
+
+  export type CardMovementUpdateInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    userId?: NullableStringFieldUpdateOperationsInput | string | null
+    fromColumnId?: NullableStringFieldUpdateOperationsInput | string | null
+    fromColumnTitle?: NullableStringFieldUpdateOperationsInput | string | null
+    toColumnId?: NullableStringFieldUpdateOperationsInput | string | null
+    toColumnTitle?: NullableStringFieldUpdateOperationsInput | string | null
+    reason?: NullableStringFieldUpdateOperationsInput | string | null
+    movedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    card?: CardUpdateOneRequiredWithoutMovementsNestedInput
+  }
+
+  export type CardMovementUncheckedUpdateInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    cardId?: StringFieldUpdateOperationsInput | string
+    userId?: NullableStringFieldUpdateOperationsInput | string | null
+    fromColumnId?: NullableStringFieldUpdateOperationsInput | string | null
+    fromColumnTitle?: NullableStringFieldUpdateOperationsInput | string | null
+    toColumnId?: NullableStringFieldUpdateOperationsInput | string | null
+    toColumnTitle?: NullableStringFieldUpdateOperationsInput | string | null
+    reason?: NullableStringFieldUpdateOperationsInput | string | null
+    movedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
+  export type CardMovementCreateManyInput = {
+    id?: string
+    cardId: string
+    userId?: string | null
+    fromColumnId?: string | null
+    fromColumnTitle?: string | null
+    toColumnId?: string | null
+    toColumnTitle?: string | null
+    reason?: string | null
+    movedAt?: Date | string
+  }
+
+  export type CardMovementUpdateManyMutationInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    userId?: NullableStringFieldUpdateOperationsInput | string | null
+    fromColumnId?: NullableStringFieldUpdateOperationsInput | string | null
+    fromColumnTitle?: NullableStringFieldUpdateOperationsInput | string | null
+    toColumnId?: NullableStringFieldUpdateOperationsInput | string | null
+    toColumnTitle?: NullableStringFieldUpdateOperationsInput | string | null
+    reason?: NullableStringFieldUpdateOperationsInput | string | null
+    movedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
+  export type CardMovementUncheckedUpdateManyInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    cardId?: StringFieldUpdateOperationsInput | string
+    userId?: NullableStringFieldUpdateOperationsInput | string | null
+    fromColumnId?: NullableStringFieldUpdateOperationsInput | string | null
+    fromColumnTitle?: NullableStringFieldUpdateOperationsInput | string | null
+    toColumnId?: NullableStringFieldUpdateOperationsInput | string | null
+    toColumnTitle?: NullableStringFieldUpdateOperationsInput | string | null
+    reason?: NullableStringFieldUpdateOperationsInput | string | null
+    movedAt?: DateTimeFieldUpdateOperationsInput | Date | string
   }
 
   export type TagCreateInput = {
@@ -25994,18 +24159,6 @@ export namespace Prisma {
     none?: SprintFeedbackWhereInput
   }
 
-  export type UserProjectListRelationFilter = {
-    every?: UserProjectWhereInput
-    some?: UserProjectWhereInput
-    none?: UserProjectWhereInput
-  }
-
-  export type NotificationListRelationFilter = {
-    every?: NotificationWhereInput
-    some?: NotificationWhereInput
-    none?: NotificationWhereInput
-  }
-
   export type TagListRelationFilter = {
     every?: TagWhereInput
     some?: TagWhereInput
@@ -26033,14 +24186,6 @@ export namespace Prisma {
   }
 
   export type SprintFeedbackOrderByRelationAggregateInput = {
-    _count?: SortOrder
-  }
-
-  export type UserProjectOrderByRelationAggregateInput = {
-    _count?: SortOrder
-  }
-
-  export type NotificationOrderByRelationAggregateInput = {
     _count?: SortOrder
   }
 
@@ -26074,188 +24219,6 @@ export namespace Prisma {
     email?: SortOrder
   }
 
-  export type BoolFilter<$PrismaModel = never> = {
-    equals?: boolean | BooleanFieldRefInput<$PrismaModel>
-    not?: NestedBoolFilter<$PrismaModel> | boolean
-  }
-
-  export type FloatNullableFilter<$PrismaModel = never> = {
-    equals?: number | FloatFieldRefInput<$PrismaModel> | null
-    in?: number[] | ListFloatFieldRefInput<$PrismaModel> | null
-    notIn?: number[] | ListFloatFieldRefInput<$PrismaModel> | null
-    lt?: number | FloatFieldRefInput<$PrismaModel>
-    lte?: number | FloatFieldRefInput<$PrismaModel>
-    gt?: number | FloatFieldRefInput<$PrismaModel>
-    gte?: number | FloatFieldRefInput<$PrismaModel>
-    not?: NestedFloatNullableFilter<$PrismaModel> | number | null
-  }
-
-  export type UserScalarRelationFilter = {
-    is?: UserWhereInput
-    isNot?: UserWhereInput
-  }
-
-  export type UserProjectUserIdProjectIdCompoundUniqueInput = {
-    userId: string
-    projectId: string
-  }
-
-  export type UserProjectCountOrderByAggregateInput = {
-    id?: SortOrder
-    userId?: SortOrder
-    projectId?: SortOrder
-    active?: SortOrder
-    horasDiarias?: SortOrder
-    remuneracao?: SortOrder
-  }
-
-  export type UserProjectAvgOrderByAggregateInput = {
-    horasDiarias?: SortOrder
-    remuneracao?: SortOrder
-  }
-
-  export type UserProjectMaxOrderByAggregateInput = {
-    id?: SortOrder
-    userId?: SortOrder
-    projectId?: SortOrder
-    active?: SortOrder
-    horasDiarias?: SortOrder
-    remuneracao?: SortOrder
-  }
-
-  export type UserProjectMinOrderByAggregateInput = {
-    id?: SortOrder
-    userId?: SortOrder
-    projectId?: SortOrder
-    active?: SortOrder
-    horasDiarias?: SortOrder
-    remuneracao?: SortOrder
-  }
-
-  export type UserProjectSumOrderByAggregateInput = {
-    horasDiarias?: SortOrder
-    remuneracao?: SortOrder
-  }
-
-  export type BoolWithAggregatesFilter<$PrismaModel = never> = {
-    equals?: boolean | BooleanFieldRefInput<$PrismaModel>
-    not?: NestedBoolWithAggregatesFilter<$PrismaModel> | boolean
-    _count?: NestedIntFilter<$PrismaModel>
-    _min?: NestedBoolFilter<$PrismaModel>
-    _max?: NestedBoolFilter<$PrismaModel>
-  }
-
-  export type FloatNullableWithAggregatesFilter<$PrismaModel = never> = {
-    equals?: number | FloatFieldRefInput<$PrismaModel> | null
-    in?: number[] | ListFloatFieldRefInput<$PrismaModel> | null
-    notIn?: number[] | ListFloatFieldRefInput<$PrismaModel> | null
-    lt?: number | FloatFieldRefInput<$PrismaModel>
-    lte?: number | FloatFieldRefInput<$PrismaModel>
-    gt?: number | FloatFieldRefInput<$PrismaModel>
-    gte?: number | FloatFieldRefInput<$PrismaModel>
-    not?: NestedFloatNullableWithAggregatesFilter<$PrismaModel> | number | null
-    _count?: NestedIntNullableFilter<$PrismaModel>
-    _avg?: NestedFloatNullableFilter<$PrismaModel>
-    _sum?: NestedFloatNullableFilter<$PrismaModel>
-    _min?: NestedFloatNullableFilter<$PrismaModel>
-    _max?: NestedFloatNullableFilter<$PrismaModel>
-  }
-
-  export type StringNullableFilter<$PrismaModel = never> = {
-    equals?: string | StringFieldRefInput<$PrismaModel> | null
-    in?: string[] | ListStringFieldRefInput<$PrismaModel> | null
-    notIn?: string[] | ListStringFieldRefInput<$PrismaModel> | null
-    lt?: string | StringFieldRefInput<$PrismaModel>
-    lte?: string | StringFieldRefInput<$PrismaModel>
-    gt?: string | StringFieldRefInput<$PrismaModel>
-    gte?: string | StringFieldRefInput<$PrismaModel>
-    contains?: string | StringFieldRefInput<$PrismaModel>
-    startsWith?: string | StringFieldRefInput<$PrismaModel>
-    endsWith?: string | StringFieldRefInput<$PrismaModel>
-    mode?: QueryMode
-    not?: NestedStringNullableFilter<$PrismaModel> | string | null
-  }
-
-  export type EnumNotificationStatusFilter<$PrismaModel = never> = {
-    equals?: $Enums.NotificationStatus | EnumNotificationStatusFieldRefInput<$PrismaModel>
-    in?: $Enums.NotificationStatus[] | ListEnumNotificationStatusFieldRefInput<$PrismaModel>
-    notIn?: $Enums.NotificationStatus[] | ListEnumNotificationStatusFieldRefInput<$PrismaModel>
-    not?: NestedEnumNotificationStatusFilter<$PrismaModel> | $Enums.NotificationStatus
-  }
-
-  export type NotificationCountOrderByAggregateInput = {
-    id?: SortOrder
-    userId?: SortOrder
-    type?: SortOrder
-    title?: SortOrder
-    message?: SortOrder
-    reference?: SortOrder
-    referenceType?: SortOrder
-    status?: SortOrder
-    deletedAt?: SortOrder
-    createdAt?: SortOrder
-    readAt?: SortOrder
-    updatedAt?: SortOrder
-  }
-
-  export type NotificationMaxOrderByAggregateInput = {
-    id?: SortOrder
-    userId?: SortOrder
-    type?: SortOrder
-    title?: SortOrder
-    message?: SortOrder
-    reference?: SortOrder
-    referenceType?: SortOrder
-    status?: SortOrder
-    deletedAt?: SortOrder
-    createdAt?: SortOrder
-    readAt?: SortOrder
-    updatedAt?: SortOrder
-  }
-
-  export type NotificationMinOrderByAggregateInput = {
-    id?: SortOrder
-    userId?: SortOrder
-    type?: SortOrder
-    title?: SortOrder
-    message?: SortOrder
-    reference?: SortOrder
-    referenceType?: SortOrder
-    status?: SortOrder
-    deletedAt?: SortOrder
-    createdAt?: SortOrder
-    readAt?: SortOrder
-    updatedAt?: SortOrder
-  }
-
-  export type StringNullableWithAggregatesFilter<$PrismaModel = never> = {
-    equals?: string | StringFieldRefInput<$PrismaModel> | null
-    in?: string[] | ListStringFieldRefInput<$PrismaModel> | null
-    notIn?: string[] | ListStringFieldRefInput<$PrismaModel> | null
-    lt?: string | StringFieldRefInput<$PrismaModel>
-    lte?: string | StringFieldRefInput<$PrismaModel>
-    gt?: string | StringFieldRefInput<$PrismaModel>
-    gte?: string | StringFieldRefInput<$PrismaModel>
-    contains?: string | StringFieldRefInput<$PrismaModel>
-    startsWith?: string | StringFieldRefInput<$PrismaModel>
-    endsWith?: string | StringFieldRefInput<$PrismaModel>
-    mode?: QueryMode
-    not?: NestedStringNullableWithAggregatesFilter<$PrismaModel> | string | null
-    _count?: NestedIntNullableFilter<$PrismaModel>
-    _min?: NestedStringNullableFilter<$PrismaModel>
-    _max?: NestedStringNullableFilter<$PrismaModel>
-  }
-
-  export type EnumNotificationStatusWithAggregatesFilter<$PrismaModel = never> = {
-    equals?: $Enums.NotificationStatus | EnumNotificationStatusFieldRefInput<$PrismaModel>
-    in?: $Enums.NotificationStatus[] | ListEnumNotificationStatusFieldRefInput<$PrismaModel>
-    notIn?: $Enums.NotificationStatus[] | ListEnumNotificationStatusFieldRefInput<$PrismaModel>
-    not?: NestedEnumNotificationStatusWithAggregatesFilter<$PrismaModel> | $Enums.NotificationStatus
-    _count?: NestedIntFilter<$PrismaModel>
-    _min?: NestedEnumNotificationStatusFilter<$PrismaModel>
-    _max?: NestedEnumNotificationStatusFilter<$PrismaModel>
-  }
-
   export type CardListRelationFilter = {
     every?: CardWhereInput
     some?: CardWhereInput
@@ -26284,11 +24247,37 @@ export namespace Prisma {
     name?: SortOrder
   }
 
+  export type StringNullableFilter<$PrismaModel = never> = {
+    equals?: string | StringFieldRefInput<$PrismaModel> | null
+    in?: string[] | ListStringFieldRefInput<$PrismaModel> | null
+    notIn?: string[] | ListStringFieldRefInput<$PrismaModel> | null
+    lt?: string | StringFieldRefInput<$PrismaModel>
+    lte?: string | StringFieldRefInput<$PrismaModel>
+    gt?: string | StringFieldRefInput<$PrismaModel>
+    gte?: string | StringFieldRefInput<$PrismaModel>
+    contains?: string | StringFieldRefInput<$PrismaModel>
+    startsWith?: string | StringFieldRefInput<$PrismaModel>
+    endsWith?: string | StringFieldRefInput<$PrismaModel>
+    mode?: QueryMode
+    not?: NestedStringNullableFilter<$PrismaModel> | string | null
+  }
+
   export type EnumSprintStatusFilter<$PrismaModel = never> = {
     equals?: $Enums.SprintStatus | EnumSprintStatusFieldRefInput<$PrismaModel>
     in?: $Enums.SprintStatus[] | ListEnumSprintStatusFieldRefInput<$PrismaModel>
     notIn?: $Enums.SprintStatus[] | ListEnumSprintStatusFieldRefInput<$PrismaModel>
     not?: NestedEnumSprintStatusFilter<$PrismaModel> | $Enums.SprintStatus
+  }
+
+  export type FloatNullableFilter<$PrismaModel = never> = {
+    equals?: number | FloatFieldRefInput<$PrismaModel> | null
+    in?: number[] | ListFloatFieldRefInput<$PrismaModel> | null
+    notIn?: number[] | ListFloatFieldRefInput<$PrismaModel> | null
+    lt?: number | FloatFieldRefInput<$PrismaModel>
+    lte?: number | FloatFieldRefInput<$PrismaModel>
+    gt?: number | FloatFieldRefInput<$PrismaModel>
+    gte?: number | FloatFieldRefInput<$PrismaModel>
+    not?: NestedFloatNullableFilter<$PrismaModel> | number | null
   }
 
   export type ProjectNullableScalarRelationFilter = {
@@ -26369,6 +24358,24 @@ export namespace Prisma {
     dificuldade?: SortOrder
   }
 
+  export type StringNullableWithAggregatesFilter<$PrismaModel = never> = {
+    equals?: string | StringFieldRefInput<$PrismaModel> | null
+    in?: string[] | ListStringFieldRefInput<$PrismaModel> | null
+    notIn?: string[] | ListStringFieldRefInput<$PrismaModel> | null
+    lt?: string | StringFieldRefInput<$PrismaModel>
+    lte?: string | StringFieldRefInput<$PrismaModel>
+    gt?: string | StringFieldRefInput<$PrismaModel>
+    gte?: string | StringFieldRefInput<$PrismaModel>
+    contains?: string | StringFieldRefInput<$PrismaModel>
+    startsWith?: string | StringFieldRefInput<$PrismaModel>
+    endsWith?: string | StringFieldRefInput<$PrismaModel>
+    mode?: QueryMode
+    not?: NestedStringNullableWithAggregatesFilter<$PrismaModel> | string | null
+    _count?: NestedIntNullableFilter<$PrismaModel>
+    _min?: NestedStringNullableFilter<$PrismaModel>
+    _max?: NestedStringNullableFilter<$PrismaModel>
+  }
+
   export type EnumSprintStatusWithAggregatesFilter<$PrismaModel = never> = {
     equals?: $Enums.SprintStatus | EnumSprintStatusFieldRefInput<$PrismaModel>
     in?: $Enums.SprintStatus[] | ListEnumSprintStatusFieldRefInput<$PrismaModel>
@@ -26377,6 +24384,22 @@ export namespace Prisma {
     _count?: NestedIntFilter<$PrismaModel>
     _min?: NestedEnumSprintStatusFilter<$PrismaModel>
     _max?: NestedEnumSprintStatusFilter<$PrismaModel>
+  }
+
+  export type FloatNullableWithAggregatesFilter<$PrismaModel = never> = {
+    equals?: number | FloatFieldRefInput<$PrismaModel> | null
+    in?: number[] | ListFloatFieldRefInput<$PrismaModel> | null
+    notIn?: number[] | ListFloatFieldRefInput<$PrismaModel> | null
+    lt?: number | FloatFieldRefInput<$PrismaModel>
+    lte?: number | FloatFieldRefInput<$PrismaModel>
+    gt?: number | FloatFieldRefInput<$PrismaModel>
+    gte?: number | FloatFieldRefInput<$PrismaModel>
+    not?: NestedFloatNullableWithAggregatesFilter<$PrismaModel> | number | null
+    _count?: NestedIntNullableFilter<$PrismaModel>
+    _avg?: NestedFloatNullableFilter<$PrismaModel>
+    _sum?: NestedFloatNullableFilter<$PrismaModel>
+    _min?: NestedFloatNullableFilter<$PrismaModel>
+    _max?: NestedFloatNullableFilter<$PrismaModel>
   }
 
   export type IntFilter<$PrismaModel = never> = {
@@ -26482,11 +24505,21 @@ export namespace Prisma {
     none?: AttachmentWhereInput
   }
 
+  export type CardMovementListRelationFilter = {
+    every?: CardMovementWhereInput
+    some?: CardMovementWhereInput
+    none?: CardMovementWhereInput
+  }
+
   export type CardTagOrderByRelationAggregateInput = {
     _count?: SortOrder
   }
 
   export type AttachmentOrderByRelationAggregateInput = {
+    _count?: SortOrder
+  }
+
+  export type CardMovementOrderByRelationAggregateInput = {
     _count?: SortOrder
   }
 
@@ -26499,7 +24532,6 @@ export namespace Prisma {
     sprintId?: SortOrder
     sprintColumnId?: SortOrder
     sprintPosition?: SortOrder
-    status?: SortOrder
     projectId?: SortOrder
     priority?: SortOrder
     tagsImport?: SortOrder
@@ -26508,30 +24540,11 @@ export namespace Prisma {
     deletedAt?: SortOrder
     createdAt?: SortOrder
     updatedAt?: SortOrder
-    orcado_min?: SortOrder
-    orcado_horas?: SortOrder
-    orcado_dias?: SortOrder
-    orcado_total?: SortOrder
-    data_prevista?: SortOrder
-    realizado_min?: SortOrder
-    realizado_horas?: SortOrder
-    realizado_dias?: SortOrder
-    realizado_total?: SortOrder
-    data_realizacao?: SortOrder
-    situacao_status?: SortOrder
   }
 
   export type CardAvgOrderByAggregateInput = {
     position?: SortOrder
     sprintPosition?: SortOrder
-    orcado_min?: SortOrder
-    orcado_horas?: SortOrder
-    orcado_dias?: SortOrder
-    orcado_total?: SortOrder
-    realizado_min?: SortOrder
-    realizado_horas?: SortOrder
-    realizado_dias?: SortOrder
-    realizado_total?: SortOrder
   }
 
   export type CardMaxOrderByAggregateInput = {
@@ -26543,7 +24556,6 @@ export namespace Prisma {
     sprintId?: SortOrder
     sprintColumnId?: SortOrder
     sprintPosition?: SortOrder
-    status?: SortOrder
     projectId?: SortOrder
     priority?: SortOrder
     tagsImport?: SortOrder
@@ -26552,17 +24564,6 @@ export namespace Prisma {
     deletedAt?: SortOrder
     createdAt?: SortOrder
     updatedAt?: SortOrder
-    orcado_min?: SortOrder
-    orcado_horas?: SortOrder
-    orcado_dias?: SortOrder
-    orcado_total?: SortOrder
-    data_prevista?: SortOrder
-    realizado_min?: SortOrder
-    realizado_horas?: SortOrder
-    realizado_dias?: SortOrder
-    realizado_total?: SortOrder
-    data_realizacao?: SortOrder
-    situacao_status?: SortOrder
   }
 
   export type CardMinOrderByAggregateInput = {
@@ -26574,7 +24575,6 @@ export namespace Prisma {
     sprintId?: SortOrder
     sprintColumnId?: SortOrder
     sprintPosition?: SortOrder
-    status?: SortOrder
     projectId?: SortOrder
     priority?: SortOrder
     tagsImport?: SortOrder
@@ -26583,30 +24583,11 @@ export namespace Prisma {
     deletedAt?: SortOrder
     createdAt?: SortOrder
     updatedAt?: SortOrder
-    orcado_min?: SortOrder
-    orcado_horas?: SortOrder
-    orcado_dias?: SortOrder
-    orcado_total?: SortOrder
-    data_prevista?: SortOrder
-    realizado_min?: SortOrder
-    realizado_horas?: SortOrder
-    realizado_dias?: SortOrder
-    realizado_total?: SortOrder
-    data_realizacao?: SortOrder
-    situacao_status?: SortOrder
   }
 
   export type CardSumOrderByAggregateInput = {
     position?: SortOrder
     sprintPosition?: SortOrder
-    orcado_min?: SortOrder
-    orcado_horas?: SortOrder
-    orcado_dias?: SortOrder
-    orcado_total?: SortOrder
-    realizado_min?: SortOrder
-    realizado_horas?: SortOrder
-    realizado_dias?: SortOrder
-    realizado_total?: SortOrder
   }
 
   export type IntNullableWithAggregatesFilter<$PrismaModel = never> = {
@@ -26623,6 +24604,52 @@ export namespace Prisma {
     _sum?: NestedIntNullableFilter<$PrismaModel>
     _min?: NestedIntNullableFilter<$PrismaModel>
     _max?: NestedIntNullableFilter<$PrismaModel>
+  }
+
+  export type CardScalarRelationFilter = {
+    is?: CardWhereInput
+    isNot?: CardWhereInput
+  }
+
+  export type CardMovementCountOrderByAggregateInput = {
+    id?: SortOrder
+    cardId?: SortOrder
+    userId?: SortOrder
+    fromColumnId?: SortOrder
+    fromColumnTitle?: SortOrder
+    toColumnId?: SortOrder
+    toColumnTitle?: SortOrder
+    reason?: SortOrder
+    movedAt?: SortOrder
+  }
+
+  export type CardMovementMaxOrderByAggregateInput = {
+    id?: SortOrder
+    cardId?: SortOrder
+    userId?: SortOrder
+    fromColumnId?: SortOrder
+    fromColumnTitle?: SortOrder
+    toColumnId?: SortOrder
+    toColumnTitle?: SortOrder
+    reason?: SortOrder
+    movedAt?: SortOrder
+  }
+
+  export type CardMovementMinOrderByAggregateInput = {
+    id?: SortOrder
+    cardId?: SortOrder
+    userId?: SortOrder
+    fromColumnId?: SortOrder
+    fromColumnTitle?: SortOrder
+    toColumnId?: SortOrder
+    toColumnTitle?: SortOrder
+    reason?: SortOrder
+    movedAt?: SortOrder
+  }
+
+  export type UserScalarRelationFilter = {
+    is?: UserWhereInput
+    isNot?: UserWhereInput
   }
 
   export type TagNameUserIdCompoundUniqueInput = {
@@ -26652,11 +24679,6 @@ export namespace Prisma {
     name?: SortOrder
     color?: SortOrder
     userId?: SortOrder
-  }
-
-  export type CardScalarRelationFilter = {
-    is?: CardWhereInput
-    isNot?: CardWhereInput
   }
 
   export type TagScalarRelationFilter = {
@@ -26804,6 +24826,11 @@ export namespace Prisma {
     _max?: NestedJsonNullableFilter<$PrismaModel>
   }
 
+  export type BoolFilter<$PrismaModel = never> = {
+    equals?: boolean | BooleanFieldRefInput<$PrismaModel>
+    not?: NestedBoolFilter<$PrismaModel> | boolean
+  }
+
   export type AttachmentCountOrderByAggregateInput = {
     id?: SortOrder
     cardId?: SortOrder
@@ -26846,6 +24873,14 @@ export namespace Prisma {
 
   export type AttachmentSumOrderByAggregateInput = {
     fileSize?: SortOrder
+  }
+
+  export type BoolWithAggregatesFilter<$PrismaModel = never> = {
+    equals?: boolean | BooleanFieldRefInput<$PrismaModel>
+    not?: NestedBoolWithAggregatesFilter<$PrismaModel> | boolean
+    _count?: NestedIntFilter<$PrismaModel>
+    _min?: NestedBoolFilter<$PrismaModel>
+    _max?: NestedBoolFilter<$PrismaModel>
   }
 
   export type TimeEntryCountOrderByAggregateInput = {
@@ -27166,20 +25201,6 @@ export namespace Prisma {
     connect?: SprintFeedbackWhereUniqueInput | SprintFeedbackWhereUniqueInput[]
   }
 
-  export type UserProjectCreateNestedManyWithoutUserInput = {
-    create?: XOR<UserProjectCreateWithoutUserInput, UserProjectUncheckedCreateWithoutUserInput> | UserProjectCreateWithoutUserInput[] | UserProjectUncheckedCreateWithoutUserInput[]
-    connectOrCreate?: UserProjectCreateOrConnectWithoutUserInput | UserProjectCreateOrConnectWithoutUserInput[]
-    createMany?: UserProjectCreateManyUserInputEnvelope
-    connect?: UserProjectWhereUniqueInput | UserProjectWhereUniqueInput[]
-  }
-
-  export type NotificationCreateNestedManyWithoutUserInput = {
-    create?: XOR<NotificationCreateWithoutUserInput, NotificationUncheckedCreateWithoutUserInput> | NotificationCreateWithoutUserInput[] | NotificationUncheckedCreateWithoutUserInput[]
-    connectOrCreate?: NotificationCreateOrConnectWithoutUserInput | NotificationCreateOrConnectWithoutUserInput[]
-    createMany?: NotificationCreateManyUserInputEnvelope
-    connect?: NotificationWhereUniqueInput | NotificationWhereUniqueInput[]
-  }
-
   export type TagCreateNestedManyWithoutUserInput = {
     create?: XOR<TagCreateWithoutUserInput, TagUncheckedCreateWithoutUserInput> | TagCreateWithoutUserInput[] | TagUncheckedCreateWithoutUserInput[]
     connectOrCreate?: TagCreateOrConnectWithoutUserInput | TagCreateOrConnectWithoutUserInput[]
@@ -27227,20 +25248,6 @@ export namespace Prisma {
     connectOrCreate?: SprintFeedbackCreateOrConnectWithoutUserInput | SprintFeedbackCreateOrConnectWithoutUserInput[]
     createMany?: SprintFeedbackCreateManyUserInputEnvelope
     connect?: SprintFeedbackWhereUniqueInput | SprintFeedbackWhereUniqueInput[]
-  }
-
-  export type UserProjectUncheckedCreateNestedManyWithoutUserInput = {
-    create?: XOR<UserProjectCreateWithoutUserInput, UserProjectUncheckedCreateWithoutUserInput> | UserProjectCreateWithoutUserInput[] | UserProjectUncheckedCreateWithoutUserInput[]
-    connectOrCreate?: UserProjectCreateOrConnectWithoutUserInput | UserProjectCreateOrConnectWithoutUserInput[]
-    createMany?: UserProjectCreateManyUserInputEnvelope
-    connect?: UserProjectWhereUniqueInput | UserProjectWhereUniqueInput[]
-  }
-
-  export type NotificationUncheckedCreateNestedManyWithoutUserInput = {
-    create?: XOR<NotificationCreateWithoutUserInput, NotificationUncheckedCreateWithoutUserInput> | NotificationCreateWithoutUserInput[] | NotificationUncheckedCreateWithoutUserInput[]
-    connectOrCreate?: NotificationCreateOrConnectWithoutUserInput | NotificationCreateOrConnectWithoutUserInput[]
-    createMany?: NotificationCreateManyUserInputEnvelope
-    connect?: NotificationWhereUniqueInput | NotificationWhereUniqueInput[]
   }
 
   export type TagUncheckedCreateNestedManyWithoutUserInput = {
@@ -27332,34 +25339,6 @@ export namespace Prisma {
     update?: SprintFeedbackUpdateWithWhereUniqueWithoutUserInput | SprintFeedbackUpdateWithWhereUniqueWithoutUserInput[]
     updateMany?: SprintFeedbackUpdateManyWithWhereWithoutUserInput | SprintFeedbackUpdateManyWithWhereWithoutUserInput[]
     deleteMany?: SprintFeedbackScalarWhereInput | SprintFeedbackScalarWhereInput[]
-  }
-
-  export type UserProjectUpdateManyWithoutUserNestedInput = {
-    create?: XOR<UserProjectCreateWithoutUserInput, UserProjectUncheckedCreateWithoutUserInput> | UserProjectCreateWithoutUserInput[] | UserProjectUncheckedCreateWithoutUserInput[]
-    connectOrCreate?: UserProjectCreateOrConnectWithoutUserInput | UserProjectCreateOrConnectWithoutUserInput[]
-    upsert?: UserProjectUpsertWithWhereUniqueWithoutUserInput | UserProjectUpsertWithWhereUniqueWithoutUserInput[]
-    createMany?: UserProjectCreateManyUserInputEnvelope
-    set?: UserProjectWhereUniqueInput | UserProjectWhereUniqueInput[]
-    disconnect?: UserProjectWhereUniqueInput | UserProjectWhereUniqueInput[]
-    delete?: UserProjectWhereUniqueInput | UserProjectWhereUniqueInput[]
-    connect?: UserProjectWhereUniqueInput | UserProjectWhereUniqueInput[]
-    update?: UserProjectUpdateWithWhereUniqueWithoutUserInput | UserProjectUpdateWithWhereUniqueWithoutUserInput[]
-    updateMany?: UserProjectUpdateManyWithWhereWithoutUserInput | UserProjectUpdateManyWithWhereWithoutUserInput[]
-    deleteMany?: UserProjectScalarWhereInput | UserProjectScalarWhereInput[]
-  }
-
-  export type NotificationUpdateManyWithoutUserNestedInput = {
-    create?: XOR<NotificationCreateWithoutUserInput, NotificationUncheckedCreateWithoutUserInput> | NotificationCreateWithoutUserInput[] | NotificationUncheckedCreateWithoutUserInput[]
-    connectOrCreate?: NotificationCreateOrConnectWithoutUserInput | NotificationCreateOrConnectWithoutUserInput[]
-    upsert?: NotificationUpsertWithWhereUniqueWithoutUserInput | NotificationUpsertWithWhereUniqueWithoutUserInput[]
-    createMany?: NotificationCreateManyUserInputEnvelope
-    set?: NotificationWhereUniqueInput | NotificationWhereUniqueInput[]
-    disconnect?: NotificationWhereUniqueInput | NotificationWhereUniqueInput[]
-    delete?: NotificationWhereUniqueInput | NotificationWhereUniqueInput[]
-    connect?: NotificationWhereUniqueInput | NotificationWhereUniqueInput[]
-    update?: NotificationUpdateWithWhereUniqueWithoutUserInput | NotificationUpdateWithWhereUniqueWithoutUserInput[]
-    updateMany?: NotificationUpdateManyWithWhereWithoutUserInput | NotificationUpdateManyWithWhereWithoutUserInput[]
-    deleteMany?: NotificationScalarWhereInput | NotificationScalarWhereInput[]
   }
 
   export type TagUpdateManyWithoutUserNestedInput = {
@@ -27460,34 +25439,6 @@ export namespace Prisma {
     deleteMany?: SprintFeedbackScalarWhereInput | SprintFeedbackScalarWhereInput[]
   }
 
-  export type UserProjectUncheckedUpdateManyWithoutUserNestedInput = {
-    create?: XOR<UserProjectCreateWithoutUserInput, UserProjectUncheckedCreateWithoutUserInput> | UserProjectCreateWithoutUserInput[] | UserProjectUncheckedCreateWithoutUserInput[]
-    connectOrCreate?: UserProjectCreateOrConnectWithoutUserInput | UserProjectCreateOrConnectWithoutUserInput[]
-    upsert?: UserProjectUpsertWithWhereUniqueWithoutUserInput | UserProjectUpsertWithWhereUniqueWithoutUserInput[]
-    createMany?: UserProjectCreateManyUserInputEnvelope
-    set?: UserProjectWhereUniqueInput | UserProjectWhereUniqueInput[]
-    disconnect?: UserProjectWhereUniqueInput | UserProjectWhereUniqueInput[]
-    delete?: UserProjectWhereUniqueInput | UserProjectWhereUniqueInput[]
-    connect?: UserProjectWhereUniqueInput | UserProjectWhereUniqueInput[]
-    update?: UserProjectUpdateWithWhereUniqueWithoutUserInput | UserProjectUpdateWithWhereUniqueWithoutUserInput[]
-    updateMany?: UserProjectUpdateManyWithWhereWithoutUserInput | UserProjectUpdateManyWithWhereWithoutUserInput[]
-    deleteMany?: UserProjectScalarWhereInput | UserProjectScalarWhereInput[]
-  }
-
-  export type NotificationUncheckedUpdateManyWithoutUserNestedInput = {
-    create?: XOR<NotificationCreateWithoutUserInput, NotificationUncheckedCreateWithoutUserInput> | NotificationCreateWithoutUserInput[] | NotificationUncheckedCreateWithoutUserInput[]
-    connectOrCreate?: NotificationCreateOrConnectWithoutUserInput | NotificationCreateOrConnectWithoutUserInput[]
-    upsert?: NotificationUpsertWithWhereUniqueWithoutUserInput | NotificationUpsertWithWhereUniqueWithoutUserInput[]
-    createMany?: NotificationCreateManyUserInputEnvelope
-    set?: NotificationWhereUniqueInput | NotificationWhereUniqueInput[]
-    disconnect?: NotificationWhereUniqueInput | NotificationWhereUniqueInput[]
-    delete?: NotificationWhereUniqueInput | NotificationWhereUniqueInput[]
-    connect?: NotificationWhereUniqueInput | NotificationWhereUniqueInput[]
-    update?: NotificationUpdateWithWhereUniqueWithoutUserInput | NotificationUpdateWithWhereUniqueWithoutUserInput[]
-    updateMany?: NotificationUpdateManyWithWhereWithoutUserInput | NotificationUpdateManyWithWhereWithoutUserInput[]
-    deleteMany?: NotificationScalarWhereInput | NotificationScalarWhereInput[]
-  }
-
   export type TagUncheckedUpdateManyWithoutUserNestedInput = {
     create?: XOR<TagCreateWithoutUserInput, TagUncheckedCreateWithoutUserInput> | TagCreateWithoutUserInput[] | TagUncheckedCreateWithoutUserInput[]
     connectOrCreate?: TagCreateOrConnectWithoutUserInput | TagCreateOrConnectWithoutUserInput[]
@@ -27500,54 +25451,6 @@ export namespace Prisma {
     update?: TagUpdateWithWhereUniqueWithoutUserInput | TagUpdateWithWhereUniqueWithoutUserInput[]
     updateMany?: TagUpdateManyWithWhereWithoutUserInput | TagUpdateManyWithWhereWithoutUserInput[]
     deleteMany?: TagScalarWhereInput | TagScalarWhereInput[]
-  }
-
-  export type UserCreateNestedOneWithoutUserProjectsInput = {
-    create?: XOR<UserCreateWithoutUserProjectsInput, UserUncheckedCreateWithoutUserProjectsInput>
-    connectOrCreate?: UserCreateOrConnectWithoutUserProjectsInput
-    connect?: UserWhereUniqueInput
-  }
-
-  export type BoolFieldUpdateOperationsInput = {
-    set?: boolean
-  }
-
-  export type NullableFloatFieldUpdateOperationsInput = {
-    set?: number | null
-    increment?: number
-    decrement?: number
-    multiply?: number
-    divide?: number
-  }
-
-  export type UserUpdateOneRequiredWithoutUserProjectsNestedInput = {
-    create?: XOR<UserCreateWithoutUserProjectsInput, UserUncheckedCreateWithoutUserProjectsInput>
-    connectOrCreate?: UserCreateOrConnectWithoutUserProjectsInput
-    upsert?: UserUpsertWithoutUserProjectsInput
-    connect?: UserWhereUniqueInput
-    update?: XOR<XOR<UserUpdateToOneWithWhereWithoutUserProjectsInput, UserUpdateWithoutUserProjectsInput>, UserUncheckedUpdateWithoutUserProjectsInput>
-  }
-
-  export type UserCreateNestedOneWithoutNotificationsInput = {
-    create?: XOR<UserCreateWithoutNotificationsInput, UserUncheckedCreateWithoutNotificationsInput>
-    connectOrCreate?: UserCreateOrConnectWithoutNotificationsInput
-    connect?: UserWhereUniqueInput
-  }
-
-  export type NullableStringFieldUpdateOperationsInput = {
-    set?: string | null
-  }
-
-  export type EnumNotificationStatusFieldUpdateOperationsInput = {
-    set?: $Enums.NotificationStatus
-  }
-
-  export type UserUpdateOneRequiredWithoutNotificationsNestedInput = {
-    create?: XOR<UserCreateWithoutNotificationsInput, UserUncheckedCreateWithoutNotificationsInput>
-    connectOrCreate?: UserCreateOrConnectWithoutNotificationsInput
-    upsert?: UserUpsertWithoutNotificationsInput
-    connect?: UserWhereUniqueInput
-    update?: XOR<XOR<UserUpdateToOneWithWhereWithoutNotificationsInput, UserUpdateWithoutNotificationsInput>, UserUncheckedUpdateWithoutNotificationsInput>
   }
 
   export type SprintCreateNestedManyWithoutProjectInput = {
@@ -27702,8 +25605,20 @@ export namespace Prisma {
     connect?: SprintFeedbackWhereUniqueInput | SprintFeedbackWhereUniqueInput[]
   }
 
+  export type NullableStringFieldUpdateOperationsInput = {
+    set?: string | null
+  }
+
   export type EnumSprintStatusFieldUpdateOperationsInput = {
     set?: $Enums.SprintStatus
+  }
+
+  export type NullableFloatFieldUpdateOperationsInput = {
+    set?: number | null
+    increment?: number
+    decrement?: number
+    multiply?: number
+    divide?: number
   }
 
   export type ProjectUpdateOneWithoutSprintsNestedInput = {
@@ -27955,6 +25870,13 @@ export namespace Prisma {
     connect?: CommentWhereUniqueInput | CommentWhereUniqueInput[]
   }
 
+  export type CardMovementCreateNestedManyWithoutCardInput = {
+    create?: XOR<CardMovementCreateWithoutCardInput, CardMovementUncheckedCreateWithoutCardInput> | CardMovementCreateWithoutCardInput[] | CardMovementUncheckedCreateWithoutCardInput[]
+    connectOrCreate?: CardMovementCreateOrConnectWithoutCardInput | CardMovementCreateOrConnectWithoutCardInput[]
+    createMany?: CardMovementCreateManyCardInputEnvelope
+    connect?: CardMovementWhereUniqueInput | CardMovementWhereUniqueInput[]
+  }
+
   export type CardTagUncheckedCreateNestedManyWithoutCardInput = {
     create?: XOR<CardTagCreateWithoutCardInput, CardTagUncheckedCreateWithoutCardInput> | CardTagCreateWithoutCardInput[] | CardTagUncheckedCreateWithoutCardInput[]
     connectOrCreate?: CardTagCreateOrConnectWithoutCardInput | CardTagCreateOrConnectWithoutCardInput[]
@@ -27988,6 +25910,13 @@ export namespace Prisma {
     connectOrCreate?: CommentCreateOrConnectWithoutCardInput | CommentCreateOrConnectWithoutCardInput[]
     createMany?: CommentCreateManyCardInputEnvelope
     connect?: CommentWhereUniqueInput | CommentWhereUniqueInput[]
+  }
+
+  export type CardMovementUncheckedCreateNestedManyWithoutCardInput = {
+    create?: XOR<CardMovementCreateWithoutCardInput, CardMovementUncheckedCreateWithoutCardInput> | CardMovementCreateWithoutCardInput[] | CardMovementUncheckedCreateWithoutCardInput[]
+    connectOrCreate?: CardMovementCreateOrConnectWithoutCardInput | CardMovementCreateOrConnectWithoutCardInput[]
+    createMany?: CardMovementCreateManyCardInputEnvelope
+    connect?: CardMovementWhereUniqueInput | CardMovementWhereUniqueInput[]
   }
 
   export type NullableIntFieldUpdateOperationsInput = {
@@ -28098,6 +26027,20 @@ export namespace Prisma {
     deleteMany?: CommentScalarWhereInput | CommentScalarWhereInput[]
   }
 
+  export type CardMovementUpdateManyWithoutCardNestedInput = {
+    create?: XOR<CardMovementCreateWithoutCardInput, CardMovementUncheckedCreateWithoutCardInput> | CardMovementCreateWithoutCardInput[] | CardMovementUncheckedCreateWithoutCardInput[]
+    connectOrCreate?: CardMovementCreateOrConnectWithoutCardInput | CardMovementCreateOrConnectWithoutCardInput[]
+    upsert?: CardMovementUpsertWithWhereUniqueWithoutCardInput | CardMovementUpsertWithWhereUniqueWithoutCardInput[]
+    createMany?: CardMovementCreateManyCardInputEnvelope
+    set?: CardMovementWhereUniqueInput | CardMovementWhereUniqueInput[]
+    disconnect?: CardMovementWhereUniqueInput | CardMovementWhereUniqueInput[]
+    delete?: CardMovementWhereUniqueInput | CardMovementWhereUniqueInput[]
+    connect?: CardMovementWhereUniqueInput | CardMovementWhereUniqueInput[]
+    update?: CardMovementUpdateWithWhereUniqueWithoutCardInput | CardMovementUpdateWithWhereUniqueWithoutCardInput[]
+    updateMany?: CardMovementUpdateManyWithWhereWithoutCardInput | CardMovementUpdateManyWithWhereWithoutCardInput[]
+    deleteMany?: CardMovementScalarWhereInput | CardMovementScalarWhereInput[]
+  }
+
   export type CardTagUncheckedUpdateManyWithoutCardNestedInput = {
     create?: XOR<CardTagCreateWithoutCardInput, CardTagUncheckedCreateWithoutCardInput> | CardTagCreateWithoutCardInput[] | CardTagUncheckedCreateWithoutCardInput[]
     connectOrCreate?: CardTagCreateOrConnectWithoutCardInput | CardTagCreateOrConnectWithoutCardInput[]
@@ -28166,6 +26109,34 @@ export namespace Prisma {
     update?: CommentUpdateWithWhereUniqueWithoutCardInput | CommentUpdateWithWhereUniqueWithoutCardInput[]
     updateMany?: CommentUpdateManyWithWhereWithoutCardInput | CommentUpdateManyWithWhereWithoutCardInput[]
     deleteMany?: CommentScalarWhereInput | CommentScalarWhereInput[]
+  }
+
+  export type CardMovementUncheckedUpdateManyWithoutCardNestedInput = {
+    create?: XOR<CardMovementCreateWithoutCardInput, CardMovementUncheckedCreateWithoutCardInput> | CardMovementCreateWithoutCardInput[] | CardMovementUncheckedCreateWithoutCardInput[]
+    connectOrCreate?: CardMovementCreateOrConnectWithoutCardInput | CardMovementCreateOrConnectWithoutCardInput[]
+    upsert?: CardMovementUpsertWithWhereUniqueWithoutCardInput | CardMovementUpsertWithWhereUniqueWithoutCardInput[]
+    createMany?: CardMovementCreateManyCardInputEnvelope
+    set?: CardMovementWhereUniqueInput | CardMovementWhereUniqueInput[]
+    disconnect?: CardMovementWhereUniqueInput | CardMovementWhereUniqueInput[]
+    delete?: CardMovementWhereUniqueInput | CardMovementWhereUniqueInput[]
+    connect?: CardMovementWhereUniqueInput | CardMovementWhereUniqueInput[]
+    update?: CardMovementUpdateWithWhereUniqueWithoutCardInput | CardMovementUpdateWithWhereUniqueWithoutCardInput[]
+    updateMany?: CardMovementUpdateManyWithWhereWithoutCardInput | CardMovementUpdateManyWithWhereWithoutCardInput[]
+    deleteMany?: CardMovementScalarWhereInput | CardMovementScalarWhereInput[]
+  }
+
+  export type CardCreateNestedOneWithoutMovementsInput = {
+    create?: XOR<CardCreateWithoutMovementsInput, CardUncheckedCreateWithoutMovementsInput>
+    connectOrCreate?: CardCreateOrConnectWithoutMovementsInput
+    connect?: CardWhereUniqueInput
+  }
+
+  export type CardUpdateOneRequiredWithoutMovementsNestedInput = {
+    create?: XOR<CardCreateWithoutMovementsInput, CardUncheckedCreateWithoutMovementsInput>
+    connectOrCreate?: CardCreateOrConnectWithoutMovementsInput
+    upsert?: CardUpsertWithoutMovementsInput
+    connect?: CardWhereUniqueInput
+    update?: XOR<XOR<CardUpdateToOneWithWhereWithoutMovementsInput, CardUpdateWithoutMovementsInput>, CardUncheckedUpdateWithoutMovementsInput>
   }
 
   export type UserCreateNestedOneWithoutTagsInput = {
@@ -28316,6 +26287,10 @@ export namespace Prisma {
     create?: XOR<CardCreateWithoutAttachmentsInput, CardUncheckedCreateWithoutAttachmentsInput>
     connectOrCreate?: CardCreateOrConnectWithoutAttachmentsInput
     connect?: CardWhereUniqueInput
+  }
+
+  export type BoolFieldUpdateOperationsInput = {
+    set?: boolean
   }
 
   export type CardUpdateOneRequiredWithoutAttachmentsNestedInput = {
@@ -28535,46 +26510,6 @@ export namespace Prisma {
     _max?: NestedDateTimeFilter<$PrismaModel>
   }
 
-  export type NestedBoolFilter<$PrismaModel = never> = {
-    equals?: boolean | BooleanFieldRefInput<$PrismaModel>
-    not?: NestedBoolFilter<$PrismaModel> | boolean
-  }
-
-  export type NestedFloatNullableFilter<$PrismaModel = never> = {
-    equals?: number | FloatFieldRefInput<$PrismaModel> | null
-    in?: number[] | ListFloatFieldRefInput<$PrismaModel> | null
-    notIn?: number[] | ListFloatFieldRefInput<$PrismaModel> | null
-    lt?: number | FloatFieldRefInput<$PrismaModel>
-    lte?: number | FloatFieldRefInput<$PrismaModel>
-    gt?: number | FloatFieldRefInput<$PrismaModel>
-    gte?: number | FloatFieldRefInput<$PrismaModel>
-    not?: NestedFloatNullableFilter<$PrismaModel> | number | null
-  }
-
-  export type NestedBoolWithAggregatesFilter<$PrismaModel = never> = {
-    equals?: boolean | BooleanFieldRefInput<$PrismaModel>
-    not?: NestedBoolWithAggregatesFilter<$PrismaModel> | boolean
-    _count?: NestedIntFilter<$PrismaModel>
-    _min?: NestedBoolFilter<$PrismaModel>
-    _max?: NestedBoolFilter<$PrismaModel>
-  }
-
-  export type NestedFloatNullableWithAggregatesFilter<$PrismaModel = never> = {
-    equals?: number | FloatFieldRefInput<$PrismaModel> | null
-    in?: number[] | ListFloatFieldRefInput<$PrismaModel> | null
-    notIn?: number[] | ListFloatFieldRefInput<$PrismaModel> | null
-    lt?: number | FloatFieldRefInput<$PrismaModel>
-    lte?: number | FloatFieldRefInput<$PrismaModel>
-    gt?: number | FloatFieldRefInput<$PrismaModel>
-    gte?: number | FloatFieldRefInput<$PrismaModel>
-    not?: NestedFloatNullableWithAggregatesFilter<$PrismaModel> | number | null
-    _count?: NestedIntNullableFilter<$PrismaModel>
-    _avg?: NestedFloatNullableFilter<$PrismaModel>
-    _sum?: NestedFloatNullableFilter<$PrismaModel>
-    _min?: NestedFloatNullableFilter<$PrismaModel>
-    _max?: NestedFloatNullableFilter<$PrismaModel>
-  }
-
   export type NestedStringNullableFilter<$PrismaModel = never> = {
     equals?: string | StringFieldRefInput<$PrismaModel> | null
     in?: string[] | ListStringFieldRefInput<$PrismaModel> | null
@@ -28589,11 +26524,22 @@ export namespace Prisma {
     not?: NestedStringNullableFilter<$PrismaModel> | string | null
   }
 
-  export type NestedEnumNotificationStatusFilter<$PrismaModel = never> = {
-    equals?: $Enums.NotificationStatus | EnumNotificationStatusFieldRefInput<$PrismaModel>
-    in?: $Enums.NotificationStatus[] | ListEnumNotificationStatusFieldRefInput<$PrismaModel>
-    notIn?: $Enums.NotificationStatus[] | ListEnumNotificationStatusFieldRefInput<$PrismaModel>
-    not?: NestedEnumNotificationStatusFilter<$PrismaModel> | $Enums.NotificationStatus
+  export type NestedEnumSprintStatusFilter<$PrismaModel = never> = {
+    equals?: $Enums.SprintStatus | EnumSprintStatusFieldRefInput<$PrismaModel>
+    in?: $Enums.SprintStatus[] | ListEnumSprintStatusFieldRefInput<$PrismaModel>
+    notIn?: $Enums.SprintStatus[] | ListEnumSprintStatusFieldRefInput<$PrismaModel>
+    not?: NestedEnumSprintStatusFilter<$PrismaModel> | $Enums.SprintStatus
+  }
+
+  export type NestedFloatNullableFilter<$PrismaModel = never> = {
+    equals?: number | FloatFieldRefInput<$PrismaModel> | null
+    in?: number[] | ListFloatFieldRefInput<$PrismaModel> | null
+    notIn?: number[] | ListFloatFieldRefInput<$PrismaModel> | null
+    lt?: number | FloatFieldRefInput<$PrismaModel>
+    lte?: number | FloatFieldRefInput<$PrismaModel>
+    gt?: number | FloatFieldRefInput<$PrismaModel>
+    gte?: number | FloatFieldRefInput<$PrismaModel>
+    not?: NestedFloatNullableFilter<$PrismaModel> | number | null
   }
 
   export type NestedStringNullableWithAggregatesFilter<$PrismaModel = never> = {
@@ -28613,23 +26559,6 @@ export namespace Prisma {
     _max?: NestedStringNullableFilter<$PrismaModel>
   }
 
-  export type NestedEnumNotificationStatusWithAggregatesFilter<$PrismaModel = never> = {
-    equals?: $Enums.NotificationStatus | EnumNotificationStatusFieldRefInput<$PrismaModel>
-    in?: $Enums.NotificationStatus[] | ListEnumNotificationStatusFieldRefInput<$PrismaModel>
-    notIn?: $Enums.NotificationStatus[] | ListEnumNotificationStatusFieldRefInput<$PrismaModel>
-    not?: NestedEnumNotificationStatusWithAggregatesFilter<$PrismaModel> | $Enums.NotificationStatus
-    _count?: NestedIntFilter<$PrismaModel>
-    _min?: NestedEnumNotificationStatusFilter<$PrismaModel>
-    _max?: NestedEnumNotificationStatusFilter<$PrismaModel>
-  }
-
-  export type NestedEnumSprintStatusFilter<$PrismaModel = never> = {
-    equals?: $Enums.SprintStatus | EnumSprintStatusFieldRefInput<$PrismaModel>
-    in?: $Enums.SprintStatus[] | ListEnumSprintStatusFieldRefInput<$PrismaModel>
-    notIn?: $Enums.SprintStatus[] | ListEnumSprintStatusFieldRefInput<$PrismaModel>
-    not?: NestedEnumSprintStatusFilter<$PrismaModel> | $Enums.SprintStatus
-  }
-
   export type NestedEnumSprintStatusWithAggregatesFilter<$PrismaModel = never> = {
     equals?: $Enums.SprintStatus | EnumSprintStatusFieldRefInput<$PrismaModel>
     in?: $Enums.SprintStatus[] | ListEnumSprintStatusFieldRefInput<$PrismaModel>
@@ -28638,6 +26567,22 @@ export namespace Prisma {
     _count?: NestedIntFilter<$PrismaModel>
     _min?: NestedEnumSprintStatusFilter<$PrismaModel>
     _max?: NestedEnumSprintStatusFilter<$PrismaModel>
+  }
+
+  export type NestedFloatNullableWithAggregatesFilter<$PrismaModel = never> = {
+    equals?: number | FloatFieldRefInput<$PrismaModel> | null
+    in?: number[] | ListFloatFieldRefInput<$PrismaModel> | null
+    notIn?: number[] | ListFloatFieldRefInput<$PrismaModel> | null
+    lt?: number | FloatFieldRefInput<$PrismaModel>
+    lte?: number | FloatFieldRefInput<$PrismaModel>
+    gt?: number | FloatFieldRefInput<$PrismaModel>
+    gte?: number | FloatFieldRefInput<$PrismaModel>
+    not?: NestedFloatNullableWithAggregatesFilter<$PrismaModel> | number | null
+    _count?: NestedIntNullableFilter<$PrismaModel>
+    _avg?: NestedFloatNullableFilter<$PrismaModel>
+    _sum?: NestedFloatNullableFilter<$PrismaModel>
+    _min?: NestedFloatNullableFilter<$PrismaModel>
+    _max?: NestedFloatNullableFilter<$PrismaModel>
   }
 
   export type NestedIntWithAggregatesFilter<$PrismaModel = never> = {
@@ -28721,6 +26666,19 @@ export namespace Prisma {
     gt?: InputJsonValue | JsonFieldRefInput<$PrismaModel>
     gte?: InputJsonValue | JsonFieldRefInput<$PrismaModel>
     not?: InputJsonValue | JsonFieldRefInput<$PrismaModel> | JsonNullValueFilter
+  }
+
+  export type NestedBoolFilter<$PrismaModel = never> = {
+    equals?: boolean | BooleanFieldRefInput<$PrismaModel>
+    not?: NestedBoolFilter<$PrismaModel> | boolean
+  }
+
+  export type NestedBoolWithAggregatesFilter<$PrismaModel = never> = {
+    equals?: boolean | BooleanFieldRefInput<$PrismaModel>
+    not?: NestedBoolWithAggregatesFilter<$PrismaModel> | boolean
+    _count?: NestedIntFilter<$PrismaModel>
+    _min?: NestedBoolFilter<$PrismaModel>
+    _max?: NestedBoolFilter<$PrismaModel>
   }
 
   export type NestedFloatWithAggregatesFilter<$PrismaModel = never> = {
@@ -28999,70 +26957,6 @@ export namespace Prisma {
     skipDuplicates?: boolean
   }
 
-  export type UserProjectCreateWithoutUserInput = {
-    id?: string
-    projectId: string
-    active?: boolean
-    horasDiarias?: number | null
-    remuneracao?: number | null
-  }
-
-  export type UserProjectUncheckedCreateWithoutUserInput = {
-    id?: string
-    projectId: string
-    active?: boolean
-    horasDiarias?: number | null
-    remuneracao?: number | null
-  }
-
-  export type UserProjectCreateOrConnectWithoutUserInput = {
-    where: UserProjectWhereUniqueInput
-    create: XOR<UserProjectCreateWithoutUserInput, UserProjectUncheckedCreateWithoutUserInput>
-  }
-
-  export type UserProjectCreateManyUserInputEnvelope = {
-    data: UserProjectCreateManyUserInput | UserProjectCreateManyUserInput[]
-    skipDuplicates?: boolean
-  }
-
-  export type NotificationCreateWithoutUserInput = {
-    id?: string
-    type: string
-    title: string
-    message: string
-    reference?: string | null
-    referenceType?: string | null
-    status?: $Enums.NotificationStatus
-    deletedAt?: Date | string | null
-    createdAt?: Date | string
-    readAt?: Date | string | null
-    updatedAt?: Date | string
-  }
-
-  export type NotificationUncheckedCreateWithoutUserInput = {
-    id?: string
-    type: string
-    title: string
-    message: string
-    reference?: string | null
-    referenceType?: string | null
-    status?: $Enums.NotificationStatus
-    deletedAt?: Date | string | null
-    createdAt?: Date | string
-    readAt?: Date | string | null
-    updatedAt?: Date | string
-  }
-
-  export type NotificationCreateOrConnectWithoutUserInput = {
-    where: NotificationWhereUniqueInput
-    create: XOR<NotificationCreateWithoutUserInput, NotificationUncheckedCreateWithoutUserInput>
-  }
-
-  export type NotificationCreateManyUserInputEnvelope = {
-    data: NotificationCreateManyUserInput | NotificationCreateManyUserInput[]
-    skipDuplicates?: boolean
-  }
-
   export type TagCreateWithoutUserInput = {
     id?: string
     tenantId: string
@@ -29275,68 +27169,6 @@ export namespace Prisma {
     updatedAt?: DateTimeFilter<"SprintFeedback"> | Date | string
   }
 
-  export type UserProjectUpsertWithWhereUniqueWithoutUserInput = {
-    where: UserProjectWhereUniqueInput
-    update: XOR<UserProjectUpdateWithoutUserInput, UserProjectUncheckedUpdateWithoutUserInput>
-    create: XOR<UserProjectCreateWithoutUserInput, UserProjectUncheckedCreateWithoutUserInput>
-  }
-
-  export type UserProjectUpdateWithWhereUniqueWithoutUserInput = {
-    where: UserProjectWhereUniqueInput
-    data: XOR<UserProjectUpdateWithoutUserInput, UserProjectUncheckedUpdateWithoutUserInput>
-  }
-
-  export type UserProjectUpdateManyWithWhereWithoutUserInput = {
-    where: UserProjectScalarWhereInput
-    data: XOR<UserProjectUpdateManyMutationInput, UserProjectUncheckedUpdateManyWithoutUserInput>
-  }
-
-  export type UserProjectScalarWhereInput = {
-    AND?: UserProjectScalarWhereInput | UserProjectScalarWhereInput[]
-    OR?: UserProjectScalarWhereInput[]
-    NOT?: UserProjectScalarWhereInput | UserProjectScalarWhereInput[]
-    id?: StringFilter<"UserProject"> | string
-    userId?: StringFilter<"UserProject"> | string
-    projectId?: StringFilter<"UserProject"> | string
-    active?: BoolFilter<"UserProject"> | boolean
-    horasDiarias?: FloatNullableFilter<"UserProject"> | number | null
-    remuneracao?: FloatNullableFilter<"UserProject"> | number | null
-  }
-
-  export type NotificationUpsertWithWhereUniqueWithoutUserInput = {
-    where: NotificationWhereUniqueInput
-    update: XOR<NotificationUpdateWithoutUserInput, NotificationUncheckedUpdateWithoutUserInput>
-    create: XOR<NotificationCreateWithoutUserInput, NotificationUncheckedCreateWithoutUserInput>
-  }
-
-  export type NotificationUpdateWithWhereUniqueWithoutUserInput = {
-    where: NotificationWhereUniqueInput
-    data: XOR<NotificationUpdateWithoutUserInput, NotificationUncheckedUpdateWithoutUserInput>
-  }
-
-  export type NotificationUpdateManyWithWhereWithoutUserInput = {
-    where: NotificationScalarWhereInput
-    data: XOR<NotificationUpdateManyMutationInput, NotificationUncheckedUpdateManyWithoutUserInput>
-  }
-
-  export type NotificationScalarWhereInput = {
-    AND?: NotificationScalarWhereInput | NotificationScalarWhereInput[]
-    OR?: NotificationScalarWhereInput[]
-    NOT?: NotificationScalarWhereInput | NotificationScalarWhereInput[]
-    id?: StringFilter<"Notification"> | string
-    userId?: StringFilter<"Notification"> | string
-    type?: StringFilter<"Notification"> | string
-    title?: StringFilter<"Notification"> | string
-    message?: StringFilter<"Notification"> | string
-    reference?: StringNullableFilter<"Notification"> | string | null
-    referenceType?: StringNullableFilter<"Notification"> | string | null
-    status?: EnumNotificationStatusFilter<"Notification"> | $Enums.NotificationStatus
-    deletedAt?: DateTimeNullableFilter<"Notification"> | Date | string | null
-    createdAt?: DateTimeFilter<"Notification"> | Date | string
-    readAt?: DateTimeNullableFilter<"Notification"> | Date | string | null
-    updatedAt?: DateTimeFilter<"Notification"> | Date | string
-  }
-
   export type TagUpsertWithWhereUniqueWithoutUserInput = {
     where: TagWhereUniqueInput
     update: XOR<TagUpdateWithoutUserInput, TagUncheckedUpdateWithoutUserInput>
@@ -29362,158 +27194,6 @@ export namespace Prisma {
     name?: StringFilter<"Tag"> | string
     color?: StringFilter<"Tag"> | string
     userId?: StringFilter<"Tag"> | string
-  }
-
-  export type UserCreateWithoutUserProjectsInput = {
-    id?: string
-    tenantId: string
-    name: string
-    email: string
-    sprints?: SprintCreateNestedManyWithoutCreatorInput
-    timeEntries?: TimeEntryCreateNestedManyWithoutUserInput
-    responsibleCards?: CardResponsibleCreateNestedManyWithoutUserInput
-    comments?: CommentCreateNestedManyWithoutUserInput
-    dashboardMetrics?: DashboardMetricCreateNestedManyWithoutUserInput
-    sprintFeedbacks?: SprintFeedbackCreateNestedManyWithoutUserInput
-    notifications?: NotificationCreateNestedManyWithoutUserInput
-    tags?: TagCreateNestedManyWithoutUserInput
-  }
-
-  export type UserUncheckedCreateWithoutUserProjectsInput = {
-    id?: string
-    tenantId: string
-    name: string
-    email: string
-    sprints?: SprintUncheckedCreateNestedManyWithoutCreatorInput
-    timeEntries?: TimeEntryUncheckedCreateNestedManyWithoutUserInput
-    responsibleCards?: CardResponsibleUncheckedCreateNestedManyWithoutUserInput
-    comments?: CommentUncheckedCreateNestedManyWithoutUserInput
-    dashboardMetrics?: DashboardMetricUncheckedCreateNestedManyWithoutUserInput
-    sprintFeedbacks?: SprintFeedbackUncheckedCreateNestedManyWithoutUserInput
-    notifications?: NotificationUncheckedCreateNestedManyWithoutUserInput
-    tags?: TagUncheckedCreateNestedManyWithoutUserInput
-  }
-
-  export type UserCreateOrConnectWithoutUserProjectsInput = {
-    where: UserWhereUniqueInput
-    create: XOR<UserCreateWithoutUserProjectsInput, UserUncheckedCreateWithoutUserProjectsInput>
-  }
-
-  export type UserUpsertWithoutUserProjectsInput = {
-    update: XOR<UserUpdateWithoutUserProjectsInput, UserUncheckedUpdateWithoutUserProjectsInput>
-    create: XOR<UserCreateWithoutUserProjectsInput, UserUncheckedCreateWithoutUserProjectsInput>
-    where?: UserWhereInput
-  }
-
-  export type UserUpdateToOneWithWhereWithoutUserProjectsInput = {
-    where?: UserWhereInput
-    data: XOR<UserUpdateWithoutUserProjectsInput, UserUncheckedUpdateWithoutUserProjectsInput>
-  }
-
-  export type UserUpdateWithoutUserProjectsInput = {
-    id?: StringFieldUpdateOperationsInput | string
-    tenantId?: StringFieldUpdateOperationsInput | string
-    name?: StringFieldUpdateOperationsInput | string
-    email?: StringFieldUpdateOperationsInput | string
-    sprints?: SprintUpdateManyWithoutCreatorNestedInput
-    timeEntries?: TimeEntryUpdateManyWithoutUserNestedInput
-    responsibleCards?: CardResponsibleUpdateManyWithoutUserNestedInput
-    comments?: CommentUpdateManyWithoutUserNestedInput
-    dashboardMetrics?: DashboardMetricUpdateManyWithoutUserNestedInput
-    sprintFeedbacks?: SprintFeedbackUpdateManyWithoutUserNestedInput
-    notifications?: NotificationUpdateManyWithoutUserNestedInput
-    tags?: TagUpdateManyWithoutUserNestedInput
-  }
-
-  export type UserUncheckedUpdateWithoutUserProjectsInput = {
-    id?: StringFieldUpdateOperationsInput | string
-    tenantId?: StringFieldUpdateOperationsInput | string
-    name?: StringFieldUpdateOperationsInput | string
-    email?: StringFieldUpdateOperationsInput | string
-    sprints?: SprintUncheckedUpdateManyWithoutCreatorNestedInput
-    timeEntries?: TimeEntryUncheckedUpdateManyWithoutUserNestedInput
-    responsibleCards?: CardResponsibleUncheckedUpdateManyWithoutUserNestedInput
-    comments?: CommentUncheckedUpdateManyWithoutUserNestedInput
-    dashboardMetrics?: DashboardMetricUncheckedUpdateManyWithoutUserNestedInput
-    sprintFeedbacks?: SprintFeedbackUncheckedUpdateManyWithoutUserNestedInput
-    notifications?: NotificationUncheckedUpdateManyWithoutUserNestedInput
-    tags?: TagUncheckedUpdateManyWithoutUserNestedInput
-  }
-
-  export type UserCreateWithoutNotificationsInput = {
-    id?: string
-    tenantId: string
-    name: string
-    email: string
-    sprints?: SprintCreateNestedManyWithoutCreatorInput
-    timeEntries?: TimeEntryCreateNestedManyWithoutUserInput
-    responsibleCards?: CardResponsibleCreateNestedManyWithoutUserInput
-    comments?: CommentCreateNestedManyWithoutUserInput
-    dashboardMetrics?: DashboardMetricCreateNestedManyWithoutUserInput
-    sprintFeedbacks?: SprintFeedbackCreateNestedManyWithoutUserInput
-    userProjects?: UserProjectCreateNestedManyWithoutUserInput
-    tags?: TagCreateNestedManyWithoutUserInput
-  }
-
-  export type UserUncheckedCreateWithoutNotificationsInput = {
-    id?: string
-    tenantId: string
-    name: string
-    email: string
-    sprints?: SprintUncheckedCreateNestedManyWithoutCreatorInput
-    timeEntries?: TimeEntryUncheckedCreateNestedManyWithoutUserInput
-    responsibleCards?: CardResponsibleUncheckedCreateNestedManyWithoutUserInput
-    comments?: CommentUncheckedCreateNestedManyWithoutUserInput
-    dashboardMetrics?: DashboardMetricUncheckedCreateNestedManyWithoutUserInput
-    sprintFeedbacks?: SprintFeedbackUncheckedCreateNestedManyWithoutUserInput
-    userProjects?: UserProjectUncheckedCreateNestedManyWithoutUserInput
-    tags?: TagUncheckedCreateNestedManyWithoutUserInput
-  }
-
-  export type UserCreateOrConnectWithoutNotificationsInput = {
-    where: UserWhereUniqueInput
-    create: XOR<UserCreateWithoutNotificationsInput, UserUncheckedCreateWithoutNotificationsInput>
-  }
-
-  export type UserUpsertWithoutNotificationsInput = {
-    update: XOR<UserUpdateWithoutNotificationsInput, UserUncheckedUpdateWithoutNotificationsInput>
-    create: XOR<UserCreateWithoutNotificationsInput, UserUncheckedCreateWithoutNotificationsInput>
-    where?: UserWhereInput
-  }
-
-  export type UserUpdateToOneWithWhereWithoutNotificationsInput = {
-    where?: UserWhereInput
-    data: XOR<UserUpdateWithoutNotificationsInput, UserUncheckedUpdateWithoutNotificationsInput>
-  }
-
-  export type UserUpdateWithoutNotificationsInput = {
-    id?: StringFieldUpdateOperationsInput | string
-    tenantId?: StringFieldUpdateOperationsInput | string
-    name?: StringFieldUpdateOperationsInput | string
-    email?: StringFieldUpdateOperationsInput | string
-    sprints?: SprintUpdateManyWithoutCreatorNestedInput
-    timeEntries?: TimeEntryUpdateManyWithoutUserNestedInput
-    responsibleCards?: CardResponsibleUpdateManyWithoutUserNestedInput
-    comments?: CommentUpdateManyWithoutUserNestedInput
-    dashboardMetrics?: DashboardMetricUpdateManyWithoutUserNestedInput
-    sprintFeedbacks?: SprintFeedbackUpdateManyWithoutUserNestedInput
-    userProjects?: UserProjectUpdateManyWithoutUserNestedInput
-    tags?: TagUpdateManyWithoutUserNestedInput
-  }
-
-  export type UserUncheckedUpdateWithoutNotificationsInput = {
-    id?: StringFieldUpdateOperationsInput | string
-    tenantId?: StringFieldUpdateOperationsInput | string
-    name?: StringFieldUpdateOperationsInput | string
-    email?: StringFieldUpdateOperationsInput | string
-    sprints?: SprintUncheckedUpdateManyWithoutCreatorNestedInput
-    timeEntries?: TimeEntryUncheckedUpdateManyWithoutUserNestedInput
-    responsibleCards?: CardResponsibleUncheckedUpdateManyWithoutUserNestedInput
-    comments?: CommentUncheckedUpdateManyWithoutUserNestedInput
-    dashboardMetrics?: DashboardMetricUncheckedUpdateManyWithoutUserNestedInput
-    sprintFeedbacks?: SprintFeedbackUncheckedUpdateManyWithoutUserNestedInput
-    userProjects?: UserProjectUncheckedUpdateManyWithoutUserNestedInput
-    tags?: TagUncheckedUpdateManyWithoutUserNestedInput
   }
 
   export type SprintCreateWithoutProjectInput = {
@@ -29571,7 +27251,6 @@ export namespace Prisma {
     color?: string
     position?: number
     sprintPosition?: number | null
-    status?: string
     priority?: string
     tagsImport?: string
     startDate?: Date | string | null
@@ -29579,17 +27258,6 @@ export namespace Prisma {
     deletedAt?: Date | string | null
     createdAt?: Date | string
     updatedAt?: Date | string
-    orcado_min?: number | null
-    orcado_horas?: number | null
-    orcado_dias?: number | null
-    orcado_total?: number | null
-    data_prevista?: Date | string | null
-    realizado_min?: number | null
-    realizado_horas?: number | null
-    realizado_dias?: number | null
-    realizado_total?: number | null
-    data_realizacao?: Date | string | null
-    situacao_status?: string | null
     sprint?: SprintCreateNestedOneWithoutCardsInput
     sprintColumn?: SprintColumnCreateNestedOneWithoutCardsInput
     tags?: CardTagCreateNestedManyWithoutCardInput
@@ -29597,6 +27265,7 @@ export namespace Prisma {
     timeEntries?: TimeEntryCreateNestedManyWithoutCardInput
     responsibles?: CardResponsibleCreateNestedManyWithoutCardInput
     comments?: CommentCreateNestedManyWithoutCardInput
+    movements?: CardMovementCreateNestedManyWithoutCardInput
   }
 
   export type CardUncheckedCreateWithoutProjectInput = {
@@ -29608,7 +27277,6 @@ export namespace Prisma {
     sprintId?: string | null
     sprintColumnId?: string | null
     sprintPosition?: number | null
-    status?: string
     priority?: string
     tagsImport?: string
     startDate?: Date | string | null
@@ -29616,22 +27284,12 @@ export namespace Prisma {
     deletedAt?: Date | string | null
     createdAt?: Date | string
     updatedAt?: Date | string
-    orcado_min?: number | null
-    orcado_horas?: number | null
-    orcado_dias?: number | null
-    orcado_total?: number | null
-    data_prevista?: Date | string | null
-    realizado_min?: number | null
-    realizado_horas?: number | null
-    realizado_dias?: number | null
-    realizado_total?: number | null
-    data_realizacao?: Date | string | null
-    situacao_status?: string | null
     tags?: CardTagUncheckedCreateNestedManyWithoutCardInput
     attachments?: AttachmentUncheckedCreateNestedManyWithoutCardInput
     timeEntries?: TimeEntryUncheckedCreateNestedManyWithoutCardInput
     responsibles?: CardResponsibleUncheckedCreateNestedManyWithoutCardInput
     comments?: CommentUncheckedCreateNestedManyWithoutCardInput
+    movements?: CardMovementUncheckedCreateNestedManyWithoutCardInput
   }
 
   export type CardCreateOrConnectWithoutProjectInput = {
@@ -29688,7 +27346,6 @@ export namespace Prisma {
     sprintId?: StringNullableFilter<"Card"> | string | null
     sprintColumnId?: StringNullableFilter<"Card"> | string | null
     sprintPosition?: IntNullableFilter<"Card"> | number | null
-    status?: StringFilter<"Card"> | string
     projectId?: StringNullableFilter<"Card"> | string | null
     priority?: StringFilter<"Card"> | string
     tagsImport?: StringFilter<"Card"> | string
@@ -29697,17 +27354,6 @@ export namespace Prisma {
     deletedAt?: DateTimeNullableFilter<"Card"> | Date | string | null
     createdAt?: DateTimeFilter<"Card"> | Date | string
     updatedAt?: DateTimeFilter<"Card"> | Date | string
-    orcado_min?: IntNullableFilter<"Card"> | number | null
-    orcado_horas?: FloatNullableFilter<"Card"> | number | null
-    orcado_dias?: FloatNullableFilter<"Card"> | number | null
-    orcado_total?: FloatNullableFilter<"Card"> | number | null
-    data_prevista?: DateTimeNullableFilter<"Card"> | Date | string | null
-    realizado_min?: IntNullableFilter<"Card"> | number | null
-    realizado_horas?: FloatNullableFilter<"Card"> | number | null
-    realizado_dias?: FloatNullableFilter<"Card"> | number | null
-    realizado_total?: FloatNullableFilter<"Card"> | number | null
-    data_realizacao?: DateTimeNullableFilter<"Card"> | Date | string | null
-    situacao_status?: StringNullableFilter<"Card"> | string | null
   }
 
   export type ProjectCreateWithoutSprintsInput = {
@@ -29739,8 +27385,6 @@ export namespace Prisma {
     comments?: CommentCreateNestedManyWithoutUserInput
     dashboardMetrics?: DashboardMetricCreateNestedManyWithoutUserInput
     sprintFeedbacks?: SprintFeedbackCreateNestedManyWithoutUserInput
-    userProjects?: UserProjectCreateNestedManyWithoutUserInput
-    notifications?: NotificationCreateNestedManyWithoutUserInput
     tags?: TagCreateNestedManyWithoutUserInput
   }
 
@@ -29754,8 +27398,6 @@ export namespace Prisma {
     comments?: CommentUncheckedCreateNestedManyWithoutUserInput
     dashboardMetrics?: DashboardMetricUncheckedCreateNestedManyWithoutUserInput
     sprintFeedbacks?: SprintFeedbackUncheckedCreateNestedManyWithoutUserInput
-    userProjects?: UserProjectUncheckedCreateNestedManyWithoutUserInput
-    notifications?: NotificationUncheckedCreateNestedManyWithoutUserInput
     tags?: TagUncheckedCreateNestedManyWithoutUserInput
   }
 
@@ -29771,7 +27413,6 @@ export namespace Prisma {
     color?: string
     position?: number
     sprintPosition?: number | null
-    status?: string
     priority?: string
     tagsImport?: string
     startDate?: Date | string | null
@@ -29779,17 +27420,6 @@ export namespace Prisma {
     deletedAt?: Date | string | null
     createdAt?: Date | string
     updatedAt?: Date | string
-    orcado_min?: number | null
-    orcado_horas?: number | null
-    orcado_dias?: number | null
-    orcado_total?: number | null
-    data_prevista?: Date | string | null
-    realizado_min?: number | null
-    realizado_horas?: number | null
-    realizado_dias?: number | null
-    realizado_total?: number | null
-    data_realizacao?: Date | string | null
-    situacao_status?: string | null
     sprintColumn?: SprintColumnCreateNestedOneWithoutCardsInput
     project?: ProjectCreateNestedOneWithoutCardsInput
     tags?: CardTagCreateNestedManyWithoutCardInput
@@ -29797,6 +27427,7 @@ export namespace Prisma {
     timeEntries?: TimeEntryCreateNestedManyWithoutCardInput
     responsibles?: CardResponsibleCreateNestedManyWithoutCardInput
     comments?: CommentCreateNestedManyWithoutCardInput
+    movements?: CardMovementCreateNestedManyWithoutCardInput
   }
 
   export type CardUncheckedCreateWithoutSprintInput = {
@@ -29807,7 +27438,6 @@ export namespace Prisma {
     position?: number
     sprintColumnId?: string | null
     sprintPosition?: number | null
-    status?: string
     projectId?: string | null
     priority?: string
     tagsImport?: string
@@ -29816,22 +27446,12 @@ export namespace Prisma {
     deletedAt?: Date | string | null
     createdAt?: Date | string
     updatedAt?: Date | string
-    orcado_min?: number | null
-    orcado_horas?: number | null
-    orcado_dias?: number | null
-    orcado_total?: number | null
-    data_prevista?: Date | string | null
-    realizado_min?: number | null
-    realizado_horas?: number | null
-    realizado_dias?: number | null
-    realizado_total?: number | null
-    data_realizacao?: Date | string | null
-    situacao_status?: string | null
     tags?: CardTagUncheckedCreateNestedManyWithoutCardInput
     attachments?: AttachmentUncheckedCreateNestedManyWithoutCardInput
     timeEntries?: TimeEntryUncheckedCreateNestedManyWithoutCardInput
     responsibles?: CardResponsibleUncheckedCreateNestedManyWithoutCardInput
     comments?: CommentUncheckedCreateNestedManyWithoutCardInput
+    movements?: CardMovementUncheckedCreateNestedManyWithoutCardInput
   }
 
   export type CardCreateOrConnectWithoutSprintInput = {
@@ -29984,8 +27604,6 @@ export namespace Prisma {
     comments?: CommentUpdateManyWithoutUserNestedInput
     dashboardMetrics?: DashboardMetricUpdateManyWithoutUserNestedInput
     sprintFeedbacks?: SprintFeedbackUpdateManyWithoutUserNestedInput
-    userProjects?: UserProjectUpdateManyWithoutUserNestedInput
-    notifications?: NotificationUpdateManyWithoutUserNestedInput
     tags?: TagUpdateManyWithoutUserNestedInput
   }
 
@@ -29999,8 +27617,6 @@ export namespace Prisma {
     comments?: CommentUncheckedUpdateManyWithoutUserNestedInput
     dashboardMetrics?: DashboardMetricUncheckedUpdateManyWithoutUserNestedInput
     sprintFeedbacks?: SprintFeedbackUncheckedUpdateManyWithoutUserNestedInput
-    userProjects?: UserProjectUncheckedUpdateManyWithoutUserNestedInput
-    notifications?: NotificationUncheckedUpdateManyWithoutUserNestedInput
     tags?: TagUncheckedUpdateManyWithoutUserNestedInput
   }
 
@@ -30131,7 +27747,6 @@ export namespace Prisma {
     color?: string
     position?: number
     sprintPosition?: number | null
-    status?: string
     priority?: string
     tagsImport?: string
     startDate?: Date | string | null
@@ -30139,17 +27754,6 @@ export namespace Prisma {
     deletedAt?: Date | string | null
     createdAt?: Date | string
     updatedAt?: Date | string
-    orcado_min?: number | null
-    orcado_horas?: number | null
-    orcado_dias?: number | null
-    orcado_total?: number | null
-    data_prevista?: Date | string | null
-    realizado_min?: number | null
-    realizado_horas?: number | null
-    realizado_dias?: number | null
-    realizado_total?: number | null
-    data_realizacao?: Date | string | null
-    situacao_status?: string | null
     sprint?: SprintCreateNestedOneWithoutCardsInput
     project?: ProjectCreateNestedOneWithoutCardsInput
     tags?: CardTagCreateNestedManyWithoutCardInput
@@ -30157,6 +27761,7 @@ export namespace Prisma {
     timeEntries?: TimeEntryCreateNestedManyWithoutCardInput
     responsibles?: CardResponsibleCreateNestedManyWithoutCardInput
     comments?: CommentCreateNestedManyWithoutCardInput
+    movements?: CardMovementCreateNestedManyWithoutCardInput
   }
 
   export type CardUncheckedCreateWithoutSprintColumnInput = {
@@ -30167,7 +27772,6 @@ export namespace Prisma {
     position?: number
     sprintId?: string | null
     sprintPosition?: number | null
-    status?: string
     projectId?: string | null
     priority?: string
     tagsImport?: string
@@ -30176,22 +27780,12 @@ export namespace Prisma {
     deletedAt?: Date | string | null
     createdAt?: Date | string
     updatedAt?: Date | string
-    orcado_min?: number | null
-    orcado_horas?: number | null
-    orcado_dias?: number | null
-    orcado_total?: number | null
-    data_prevista?: Date | string | null
-    realizado_min?: number | null
-    realizado_horas?: number | null
-    realizado_dias?: number | null
-    realizado_total?: number | null
-    data_realizacao?: Date | string | null
-    situacao_status?: string | null
     tags?: CardTagUncheckedCreateNestedManyWithoutCardInput
     attachments?: AttachmentUncheckedCreateNestedManyWithoutCardInput
     timeEntries?: TimeEntryUncheckedCreateNestedManyWithoutCardInput
     responsibles?: CardResponsibleUncheckedCreateNestedManyWithoutCardInput
     comments?: CommentUncheckedCreateNestedManyWithoutCardInput
+    movements?: CardMovementUncheckedCreateNestedManyWithoutCardInput
   }
 
   export type CardCreateOrConnectWithoutSprintColumnInput = {
@@ -30494,6 +28088,38 @@ export namespace Prisma {
     skipDuplicates?: boolean
   }
 
+  export type CardMovementCreateWithoutCardInput = {
+    id?: string
+    userId?: string | null
+    fromColumnId?: string | null
+    fromColumnTitle?: string | null
+    toColumnId?: string | null
+    toColumnTitle?: string | null
+    reason?: string | null
+    movedAt?: Date | string
+  }
+
+  export type CardMovementUncheckedCreateWithoutCardInput = {
+    id?: string
+    userId?: string | null
+    fromColumnId?: string | null
+    fromColumnTitle?: string | null
+    toColumnId?: string | null
+    toColumnTitle?: string | null
+    reason?: string | null
+    movedAt?: Date | string
+  }
+
+  export type CardMovementCreateOrConnectWithoutCardInput = {
+    where: CardMovementWhereUniqueInput
+    create: XOR<CardMovementCreateWithoutCardInput, CardMovementUncheckedCreateWithoutCardInput>
+  }
+
+  export type CardMovementCreateManyCardInputEnvelope = {
+    data: CardMovementCreateManyCardInput | CardMovementCreateManyCardInput[]
+    skipDuplicates?: boolean
+  }
+
   export type SprintUpsertWithoutCardsInput = {
     update: XOR<SprintUpdateWithoutCardsInput, SprintUncheckedUpdateWithoutCardsInput>
     create: XOR<SprintCreateWithoutCardsInput, SprintUncheckedCreateWithoutCardsInput>
@@ -30702,6 +28328,149 @@ export namespace Prisma {
     data: XOR<CommentUpdateManyMutationInput, CommentUncheckedUpdateManyWithoutCardInput>
   }
 
+  export type CardMovementUpsertWithWhereUniqueWithoutCardInput = {
+    where: CardMovementWhereUniqueInput
+    update: XOR<CardMovementUpdateWithoutCardInput, CardMovementUncheckedUpdateWithoutCardInput>
+    create: XOR<CardMovementCreateWithoutCardInput, CardMovementUncheckedCreateWithoutCardInput>
+  }
+
+  export type CardMovementUpdateWithWhereUniqueWithoutCardInput = {
+    where: CardMovementWhereUniqueInput
+    data: XOR<CardMovementUpdateWithoutCardInput, CardMovementUncheckedUpdateWithoutCardInput>
+  }
+
+  export type CardMovementUpdateManyWithWhereWithoutCardInput = {
+    where: CardMovementScalarWhereInput
+    data: XOR<CardMovementUpdateManyMutationInput, CardMovementUncheckedUpdateManyWithoutCardInput>
+  }
+
+  export type CardMovementScalarWhereInput = {
+    AND?: CardMovementScalarWhereInput | CardMovementScalarWhereInput[]
+    OR?: CardMovementScalarWhereInput[]
+    NOT?: CardMovementScalarWhereInput | CardMovementScalarWhereInput[]
+    id?: StringFilter<"CardMovement"> | string
+    cardId?: StringFilter<"CardMovement"> | string
+    userId?: StringNullableFilter<"CardMovement"> | string | null
+    fromColumnId?: StringNullableFilter<"CardMovement"> | string | null
+    fromColumnTitle?: StringNullableFilter<"CardMovement"> | string | null
+    toColumnId?: StringNullableFilter<"CardMovement"> | string | null
+    toColumnTitle?: StringNullableFilter<"CardMovement"> | string | null
+    reason?: StringNullableFilter<"CardMovement"> | string | null
+    movedAt?: DateTimeFilter<"CardMovement"> | Date | string
+  }
+
+  export type CardCreateWithoutMovementsInput = {
+    id?: string
+    title: string
+    description?: string
+    color?: string
+    position?: number
+    sprintPosition?: number | null
+    priority?: string
+    tagsImport?: string
+    startDate?: Date | string | null
+    endDate?: Date | string | null
+    deletedAt?: Date | string | null
+    createdAt?: Date | string
+    updatedAt?: Date | string
+    sprint?: SprintCreateNestedOneWithoutCardsInput
+    sprintColumn?: SprintColumnCreateNestedOneWithoutCardsInput
+    project?: ProjectCreateNestedOneWithoutCardsInput
+    tags?: CardTagCreateNestedManyWithoutCardInput
+    attachments?: AttachmentCreateNestedManyWithoutCardInput
+    timeEntries?: TimeEntryCreateNestedManyWithoutCardInput
+    responsibles?: CardResponsibleCreateNestedManyWithoutCardInput
+    comments?: CommentCreateNestedManyWithoutCardInput
+  }
+
+  export type CardUncheckedCreateWithoutMovementsInput = {
+    id?: string
+    title: string
+    description?: string
+    color?: string
+    position?: number
+    sprintId?: string | null
+    sprintColumnId?: string | null
+    sprintPosition?: number | null
+    projectId?: string | null
+    priority?: string
+    tagsImport?: string
+    startDate?: Date | string | null
+    endDate?: Date | string | null
+    deletedAt?: Date | string | null
+    createdAt?: Date | string
+    updatedAt?: Date | string
+    tags?: CardTagUncheckedCreateNestedManyWithoutCardInput
+    attachments?: AttachmentUncheckedCreateNestedManyWithoutCardInput
+    timeEntries?: TimeEntryUncheckedCreateNestedManyWithoutCardInput
+    responsibles?: CardResponsibleUncheckedCreateNestedManyWithoutCardInput
+    comments?: CommentUncheckedCreateNestedManyWithoutCardInput
+  }
+
+  export type CardCreateOrConnectWithoutMovementsInput = {
+    where: CardWhereUniqueInput
+    create: XOR<CardCreateWithoutMovementsInput, CardUncheckedCreateWithoutMovementsInput>
+  }
+
+  export type CardUpsertWithoutMovementsInput = {
+    update: XOR<CardUpdateWithoutMovementsInput, CardUncheckedUpdateWithoutMovementsInput>
+    create: XOR<CardCreateWithoutMovementsInput, CardUncheckedCreateWithoutMovementsInput>
+    where?: CardWhereInput
+  }
+
+  export type CardUpdateToOneWithWhereWithoutMovementsInput = {
+    where?: CardWhereInput
+    data: XOR<CardUpdateWithoutMovementsInput, CardUncheckedUpdateWithoutMovementsInput>
+  }
+
+  export type CardUpdateWithoutMovementsInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    title?: StringFieldUpdateOperationsInput | string
+    description?: StringFieldUpdateOperationsInput | string
+    color?: StringFieldUpdateOperationsInput | string
+    position?: IntFieldUpdateOperationsInput | number
+    sprintPosition?: NullableIntFieldUpdateOperationsInput | number | null
+    priority?: StringFieldUpdateOperationsInput | string
+    tagsImport?: StringFieldUpdateOperationsInput | string
+    startDate?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    endDate?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    deletedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    sprint?: SprintUpdateOneWithoutCardsNestedInput
+    sprintColumn?: SprintColumnUpdateOneWithoutCardsNestedInput
+    project?: ProjectUpdateOneWithoutCardsNestedInput
+    tags?: CardTagUpdateManyWithoutCardNestedInput
+    attachments?: AttachmentUpdateManyWithoutCardNestedInput
+    timeEntries?: TimeEntryUpdateManyWithoutCardNestedInput
+    responsibles?: CardResponsibleUpdateManyWithoutCardNestedInput
+    comments?: CommentUpdateManyWithoutCardNestedInput
+  }
+
+  export type CardUncheckedUpdateWithoutMovementsInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    title?: StringFieldUpdateOperationsInput | string
+    description?: StringFieldUpdateOperationsInput | string
+    color?: StringFieldUpdateOperationsInput | string
+    position?: IntFieldUpdateOperationsInput | number
+    sprintId?: NullableStringFieldUpdateOperationsInput | string | null
+    sprintColumnId?: NullableStringFieldUpdateOperationsInput | string | null
+    sprintPosition?: NullableIntFieldUpdateOperationsInput | number | null
+    projectId?: NullableStringFieldUpdateOperationsInput | string | null
+    priority?: StringFieldUpdateOperationsInput | string
+    tagsImport?: StringFieldUpdateOperationsInput | string
+    startDate?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    endDate?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    deletedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    tags?: CardTagUncheckedUpdateManyWithoutCardNestedInput
+    attachments?: AttachmentUncheckedUpdateManyWithoutCardNestedInput
+    timeEntries?: TimeEntryUncheckedUpdateManyWithoutCardNestedInput
+    responsibles?: CardResponsibleUncheckedUpdateManyWithoutCardNestedInput
+    comments?: CommentUncheckedUpdateManyWithoutCardNestedInput
+  }
+
   export type UserCreateWithoutTagsInput = {
     id?: string
     tenantId: string
@@ -30713,8 +28482,6 @@ export namespace Prisma {
     comments?: CommentCreateNestedManyWithoutUserInput
     dashboardMetrics?: DashboardMetricCreateNestedManyWithoutUserInput
     sprintFeedbacks?: SprintFeedbackCreateNestedManyWithoutUserInput
-    userProjects?: UserProjectCreateNestedManyWithoutUserInput
-    notifications?: NotificationCreateNestedManyWithoutUserInput
   }
 
   export type UserUncheckedCreateWithoutTagsInput = {
@@ -30728,8 +28495,6 @@ export namespace Prisma {
     comments?: CommentUncheckedCreateNestedManyWithoutUserInput
     dashboardMetrics?: DashboardMetricUncheckedCreateNestedManyWithoutUserInput
     sprintFeedbacks?: SprintFeedbackUncheckedCreateNestedManyWithoutUserInput
-    userProjects?: UserProjectUncheckedCreateNestedManyWithoutUserInput
-    notifications?: NotificationUncheckedCreateNestedManyWithoutUserInput
   }
 
   export type UserCreateOrConnectWithoutTagsInput = {
@@ -30777,8 +28542,6 @@ export namespace Prisma {
     comments?: CommentUpdateManyWithoutUserNestedInput
     dashboardMetrics?: DashboardMetricUpdateManyWithoutUserNestedInput
     sprintFeedbacks?: SprintFeedbackUpdateManyWithoutUserNestedInput
-    userProjects?: UserProjectUpdateManyWithoutUserNestedInput
-    notifications?: NotificationUpdateManyWithoutUserNestedInput
   }
 
   export type UserUncheckedUpdateWithoutTagsInput = {
@@ -30792,8 +28555,6 @@ export namespace Prisma {
     comments?: CommentUncheckedUpdateManyWithoutUserNestedInput
     dashboardMetrics?: DashboardMetricUncheckedUpdateManyWithoutUserNestedInput
     sprintFeedbacks?: SprintFeedbackUncheckedUpdateManyWithoutUserNestedInput
-    userProjects?: UserProjectUncheckedUpdateManyWithoutUserNestedInput
-    notifications?: NotificationUncheckedUpdateManyWithoutUserNestedInput
   }
 
   export type CardTagUpsertWithWhereUniqueWithoutTagInput = {
@@ -30819,7 +28580,6 @@ export namespace Prisma {
     color?: string
     position?: number
     sprintPosition?: number | null
-    status?: string
     priority?: string
     tagsImport?: string
     startDate?: Date | string | null
@@ -30827,17 +28587,6 @@ export namespace Prisma {
     deletedAt?: Date | string | null
     createdAt?: Date | string
     updatedAt?: Date | string
-    orcado_min?: number | null
-    orcado_horas?: number | null
-    orcado_dias?: number | null
-    orcado_total?: number | null
-    data_prevista?: Date | string | null
-    realizado_min?: number | null
-    realizado_horas?: number | null
-    realizado_dias?: number | null
-    realizado_total?: number | null
-    data_realizacao?: Date | string | null
-    situacao_status?: string | null
     sprint?: SprintCreateNestedOneWithoutCardsInput
     sprintColumn?: SprintColumnCreateNestedOneWithoutCardsInput
     project?: ProjectCreateNestedOneWithoutCardsInput
@@ -30845,6 +28594,7 @@ export namespace Prisma {
     timeEntries?: TimeEntryCreateNestedManyWithoutCardInput
     responsibles?: CardResponsibleCreateNestedManyWithoutCardInput
     comments?: CommentCreateNestedManyWithoutCardInput
+    movements?: CardMovementCreateNestedManyWithoutCardInput
   }
 
   export type CardUncheckedCreateWithoutTagsInput = {
@@ -30856,7 +28606,6 @@ export namespace Prisma {
     sprintId?: string | null
     sprintColumnId?: string | null
     sprintPosition?: number | null
-    status?: string
     projectId?: string | null
     priority?: string
     tagsImport?: string
@@ -30865,21 +28614,11 @@ export namespace Prisma {
     deletedAt?: Date | string | null
     createdAt?: Date | string
     updatedAt?: Date | string
-    orcado_min?: number | null
-    orcado_horas?: number | null
-    orcado_dias?: number | null
-    orcado_total?: number | null
-    data_prevista?: Date | string | null
-    realizado_min?: number | null
-    realizado_horas?: number | null
-    realizado_dias?: number | null
-    realizado_total?: number | null
-    data_realizacao?: Date | string | null
-    situacao_status?: string | null
     attachments?: AttachmentUncheckedCreateNestedManyWithoutCardInput
     timeEntries?: TimeEntryUncheckedCreateNestedManyWithoutCardInput
     responsibles?: CardResponsibleUncheckedCreateNestedManyWithoutCardInput
     comments?: CommentUncheckedCreateNestedManyWithoutCardInput
+    movements?: CardMovementUncheckedCreateNestedManyWithoutCardInput
   }
 
   export type CardCreateOrConnectWithoutTagsInput = {
@@ -30926,7 +28665,6 @@ export namespace Prisma {
     color?: StringFieldUpdateOperationsInput | string
     position?: IntFieldUpdateOperationsInput | number
     sprintPosition?: NullableIntFieldUpdateOperationsInput | number | null
-    status?: StringFieldUpdateOperationsInput | string
     priority?: StringFieldUpdateOperationsInput | string
     tagsImport?: StringFieldUpdateOperationsInput | string
     startDate?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
@@ -30934,17 +28672,6 @@ export namespace Prisma {
     deletedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
-    orcado_min?: NullableIntFieldUpdateOperationsInput | number | null
-    orcado_horas?: NullableFloatFieldUpdateOperationsInput | number | null
-    orcado_dias?: NullableFloatFieldUpdateOperationsInput | number | null
-    orcado_total?: NullableFloatFieldUpdateOperationsInput | number | null
-    data_prevista?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
-    realizado_min?: NullableIntFieldUpdateOperationsInput | number | null
-    realizado_horas?: NullableFloatFieldUpdateOperationsInput | number | null
-    realizado_dias?: NullableFloatFieldUpdateOperationsInput | number | null
-    realizado_total?: NullableFloatFieldUpdateOperationsInput | number | null
-    data_realizacao?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
-    situacao_status?: NullableStringFieldUpdateOperationsInput | string | null
     sprint?: SprintUpdateOneWithoutCardsNestedInput
     sprintColumn?: SprintColumnUpdateOneWithoutCardsNestedInput
     project?: ProjectUpdateOneWithoutCardsNestedInput
@@ -30952,6 +28679,7 @@ export namespace Prisma {
     timeEntries?: TimeEntryUpdateManyWithoutCardNestedInput
     responsibles?: CardResponsibleUpdateManyWithoutCardNestedInput
     comments?: CommentUpdateManyWithoutCardNestedInput
+    movements?: CardMovementUpdateManyWithoutCardNestedInput
   }
 
   export type CardUncheckedUpdateWithoutTagsInput = {
@@ -30963,7 +28691,6 @@ export namespace Prisma {
     sprintId?: NullableStringFieldUpdateOperationsInput | string | null
     sprintColumnId?: NullableStringFieldUpdateOperationsInput | string | null
     sprintPosition?: NullableIntFieldUpdateOperationsInput | number | null
-    status?: StringFieldUpdateOperationsInput | string
     projectId?: NullableStringFieldUpdateOperationsInput | string | null
     priority?: StringFieldUpdateOperationsInput | string
     tagsImport?: StringFieldUpdateOperationsInput | string
@@ -30972,21 +28699,11 @@ export namespace Prisma {
     deletedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
-    orcado_min?: NullableIntFieldUpdateOperationsInput | number | null
-    orcado_horas?: NullableFloatFieldUpdateOperationsInput | number | null
-    orcado_dias?: NullableFloatFieldUpdateOperationsInput | number | null
-    orcado_total?: NullableFloatFieldUpdateOperationsInput | number | null
-    data_prevista?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
-    realizado_min?: NullableIntFieldUpdateOperationsInput | number | null
-    realizado_horas?: NullableFloatFieldUpdateOperationsInput | number | null
-    realizado_dias?: NullableFloatFieldUpdateOperationsInput | number | null
-    realizado_total?: NullableFloatFieldUpdateOperationsInput | number | null
-    data_realizacao?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
-    situacao_status?: NullableStringFieldUpdateOperationsInput | string | null
     attachments?: AttachmentUncheckedUpdateManyWithoutCardNestedInput
     timeEntries?: TimeEntryUncheckedUpdateManyWithoutCardNestedInput
     responsibles?: CardResponsibleUncheckedUpdateManyWithoutCardNestedInput
     comments?: CommentUncheckedUpdateManyWithoutCardNestedInput
+    movements?: CardMovementUncheckedUpdateManyWithoutCardNestedInput
   }
 
   export type TagUpsertWithoutCardsInput = {
@@ -31023,7 +28740,6 @@ export namespace Prisma {
     color?: string
     position?: number
     sprintPosition?: number | null
-    status?: string
     priority?: string
     tagsImport?: string
     startDate?: Date | string | null
@@ -31031,17 +28747,6 @@ export namespace Prisma {
     deletedAt?: Date | string | null
     createdAt?: Date | string
     updatedAt?: Date | string
-    orcado_min?: number | null
-    orcado_horas?: number | null
-    orcado_dias?: number | null
-    orcado_total?: number | null
-    data_prevista?: Date | string | null
-    realizado_min?: number | null
-    realizado_horas?: number | null
-    realizado_dias?: number | null
-    realizado_total?: number | null
-    data_realizacao?: Date | string | null
-    situacao_status?: string | null
     sprint?: SprintCreateNestedOneWithoutCardsInput
     sprintColumn?: SprintColumnCreateNestedOneWithoutCardsInput
     project?: ProjectCreateNestedOneWithoutCardsInput
@@ -31049,6 +28754,7 @@ export namespace Prisma {
     attachments?: AttachmentCreateNestedManyWithoutCardInput
     timeEntries?: TimeEntryCreateNestedManyWithoutCardInput
     comments?: CommentCreateNestedManyWithoutCardInput
+    movements?: CardMovementCreateNestedManyWithoutCardInput
   }
 
   export type CardUncheckedCreateWithoutResponsiblesInput = {
@@ -31060,7 +28766,6 @@ export namespace Prisma {
     sprintId?: string | null
     sprintColumnId?: string | null
     sprintPosition?: number | null
-    status?: string
     projectId?: string | null
     priority?: string
     tagsImport?: string
@@ -31069,21 +28774,11 @@ export namespace Prisma {
     deletedAt?: Date | string | null
     createdAt?: Date | string
     updatedAt?: Date | string
-    orcado_min?: number | null
-    orcado_horas?: number | null
-    orcado_dias?: number | null
-    orcado_total?: number | null
-    data_prevista?: Date | string | null
-    realizado_min?: number | null
-    realizado_horas?: number | null
-    realizado_dias?: number | null
-    realizado_total?: number | null
-    data_realizacao?: Date | string | null
-    situacao_status?: string | null
     tags?: CardTagUncheckedCreateNestedManyWithoutCardInput
     attachments?: AttachmentUncheckedCreateNestedManyWithoutCardInput
     timeEntries?: TimeEntryUncheckedCreateNestedManyWithoutCardInput
     comments?: CommentUncheckedCreateNestedManyWithoutCardInput
+    movements?: CardMovementUncheckedCreateNestedManyWithoutCardInput
   }
 
   export type CardCreateOrConnectWithoutResponsiblesInput = {
@@ -31101,8 +28796,6 @@ export namespace Prisma {
     comments?: CommentCreateNestedManyWithoutUserInput
     dashboardMetrics?: DashboardMetricCreateNestedManyWithoutUserInput
     sprintFeedbacks?: SprintFeedbackCreateNestedManyWithoutUserInput
-    userProjects?: UserProjectCreateNestedManyWithoutUserInput
-    notifications?: NotificationCreateNestedManyWithoutUserInput
     tags?: TagCreateNestedManyWithoutUserInput
   }
 
@@ -31116,8 +28809,6 @@ export namespace Prisma {
     comments?: CommentUncheckedCreateNestedManyWithoutUserInput
     dashboardMetrics?: DashboardMetricUncheckedCreateNestedManyWithoutUserInput
     sprintFeedbacks?: SprintFeedbackUncheckedCreateNestedManyWithoutUserInput
-    userProjects?: UserProjectUncheckedCreateNestedManyWithoutUserInput
-    notifications?: NotificationUncheckedCreateNestedManyWithoutUserInput
     tags?: TagUncheckedCreateNestedManyWithoutUserInput
   }
 
@@ -31144,7 +28835,6 @@ export namespace Prisma {
     color?: StringFieldUpdateOperationsInput | string
     position?: IntFieldUpdateOperationsInput | number
     sprintPosition?: NullableIntFieldUpdateOperationsInput | number | null
-    status?: StringFieldUpdateOperationsInput | string
     priority?: StringFieldUpdateOperationsInput | string
     tagsImport?: StringFieldUpdateOperationsInput | string
     startDate?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
@@ -31152,17 +28842,6 @@ export namespace Prisma {
     deletedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
-    orcado_min?: NullableIntFieldUpdateOperationsInput | number | null
-    orcado_horas?: NullableFloatFieldUpdateOperationsInput | number | null
-    orcado_dias?: NullableFloatFieldUpdateOperationsInput | number | null
-    orcado_total?: NullableFloatFieldUpdateOperationsInput | number | null
-    data_prevista?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
-    realizado_min?: NullableIntFieldUpdateOperationsInput | number | null
-    realizado_horas?: NullableFloatFieldUpdateOperationsInput | number | null
-    realizado_dias?: NullableFloatFieldUpdateOperationsInput | number | null
-    realizado_total?: NullableFloatFieldUpdateOperationsInput | number | null
-    data_realizacao?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
-    situacao_status?: NullableStringFieldUpdateOperationsInput | string | null
     sprint?: SprintUpdateOneWithoutCardsNestedInput
     sprintColumn?: SprintColumnUpdateOneWithoutCardsNestedInput
     project?: ProjectUpdateOneWithoutCardsNestedInput
@@ -31170,6 +28849,7 @@ export namespace Prisma {
     attachments?: AttachmentUpdateManyWithoutCardNestedInput
     timeEntries?: TimeEntryUpdateManyWithoutCardNestedInput
     comments?: CommentUpdateManyWithoutCardNestedInput
+    movements?: CardMovementUpdateManyWithoutCardNestedInput
   }
 
   export type CardUncheckedUpdateWithoutResponsiblesInput = {
@@ -31181,7 +28861,6 @@ export namespace Prisma {
     sprintId?: NullableStringFieldUpdateOperationsInput | string | null
     sprintColumnId?: NullableStringFieldUpdateOperationsInput | string | null
     sprintPosition?: NullableIntFieldUpdateOperationsInput | number | null
-    status?: StringFieldUpdateOperationsInput | string
     projectId?: NullableStringFieldUpdateOperationsInput | string | null
     priority?: StringFieldUpdateOperationsInput | string
     tagsImport?: StringFieldUpdateOperationsInput | string
@@ -31190,21 +28869,11 @@ export namespace Prisma {
     deletedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
-    orcado_min?: NullableIntFieldUpdateOperationsInput | number | null
-    orcado_horas?: NullableFloatFieldUpdateOperationsInput | number | null
-    orcado_dias?: NullableFloatFieldUpdateOperationsInput | number | null
-    orcado_total?: NullableFloatFieldUpdateOperationsInput | number | null
-    data_prevista?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
-    realizado_min?: NullableIntFieldUpdateOperationsInput | number | null
-    realizado_horas?: NullableFloatFieldUpdateOperationsInput | number | null
-    realizado_dias?: NullableFloatFieldUpdateOperationsInput | number | null
-    realizado_total?: NullableFloatFieldUpdateOperationsInput | number | null
-    data_realizacao?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
-    situacao_status?: NullableStringFieldUpdateOperationsInput | string | null
     tags?: CardTagUncheckedUpdateManyWithoutCardNestedInput
     attachments?: AttachmentUncheckedUpdateManyWithoutCardNestedInput
     timeEntries?: TimeEntryUncheckedUpdateManyWithoutCardNestedInput
     comments?: CommentUncheckedUpdateManyWithoutCardNestedInput
+    movements?: CardMovementUncheckedUpdateManyWithoutCardNestedInput
   }
 
   export type UserUpsertWithoutResponsibleCardsInput = {
@@ -31228,8 +28897,6 @@ export namespace Prisma {
     comments?: CommentUpdateManyWithoutUserNestedInput
     dashboardMetrics?: DashboardMetricUpdateManyWithoutUserNestedInput
     sprintFeedbacks?: SprintFeedbackUpdateManyWithoutUserNestedInput
-    userProjects?: UserProjectUpdateManyWithoutUserNestedInput
-    notifications?: NotificationUpdateManyWithoutUserNestedInput
     tags?: TagUpdateManyWithoutUserNestedInput
   }
 
@@ -31243,8 +28910,6 @@ export namespace Prisma {
     comments?: CommentUncheckedUpdateManyWithoutUserNestedInput
     dashboardMetrics?: DashboardMetricUncheckedUpdateManyWithoutUserNestedInput
     sprintFeedbacks?: SprintFeedbackUncheckedUpdateManyWithoutUserNestedInput
-    userProjects?: UserProjectUncheckedUpdateManyWithoutUserNestedInput
-    notifications?: NotificationUncheckedUpdateManyWithoutUserNestedInput
     tags?: TagUncheckedUpdateManyWithoutUserNestedInput
   }
 
@@ -31255,7 +28920,6 @@ export namespace Prisma {
     color?: string
     position?: number
     sprintPosition?: number | null
-    status?: string
     priority?: string
     tagsImport?: string
     startDate?: Date | string | null
@@ -31263,17 +28927,6 @@ export namespace Prisma {
     deletedAt?: Date | string | null
     createdAt?: Date | string
     updatedAt?: Date | string
-    orcado_min?: number | null
-    orcado_horas?: number | null
-    orcado_dias?: number | null
-    orcado_total?: number | null
-    data_prevista?: Date | string | null
-    realizado_min?: number | null
-    realizado_horas?: number | null
-    realizado_dias?: number | null
-    realizado_total?: number | null
-    data_realizacao?: Date | string | null
-    situacao_status?: string | null
     sprint?: SprintCreateNestedOneWithoutCardsInput
     sprintColumn?: SprintColumnCreateNestedOneWithoutCardsInput
     project?: ProjectCreateNestedOneWithoutCardsInput
@@ -31281,6 +28934,7 @@ export namespace Prisma {
     attachments?: AttachmentCreateNestedManyWithoutCardInput
     timeEntries?: TimeEntryCreateNestedManyWithoutCardInput
     responsibles?: CardResponsibleCreateNestedManyWithoutCardInput
+    movements?: CardMovementCreateNestedManyWithoutCardInput
   }
 
   export type CardUncheckedCreateWithoutCommentsInput = {
@@ -31292,7 +28946,6 @@ export namespace Prisma {
     sprintId?: string | null
     sprintColumnId?: string | null
     sprintPosition?: number | null
-    status?: string
     projectId?: string | null
     priority?: string
     tagsImport?: string
@@ -31301,21 +28954,11 @@ export namespace Prisma {
     deletedAt?: Date | string | null
     createdAt?: Date | string
     updatedAt?: Date | string
-    orcado_min?: number | null
-    orcado_horas?: number | null
-    orcado_dias?: number | null
-    orcado_total?: number | null
-    data_prevista?: Date | string | null
-    realizado_min?: number | null
-    realizado_horas?: number | null
-    realizado_dias?: number | null
-    realizado_total?: number | null
-    data_realizacao?: Date | string | null
-    situacao_status?: string | null
     tags?: CardTagUncheckedCreateNestedManyWithoutCardInput
     attachments?: AttachmentUncheckedCreateNestedManyWithoutCardInput
     timeEntries?: TimeEntryUncheckedCreateNestedManyWithoutCardInput
     responsibles?: CardResponsibleUncheckedCreateNestedManyWithoutCardInput
+    movements?: CardMovementUncheckedCreateNestedManyWithoutCardInput
   }
 
   export type CardCreateOrConnectWithoutCommentsInput = {
@@ -31333,8 +28976,6 @@ export namespace Prisma {
     responsibleCards?: CardResponsibleCreateNestedManyWithoutUserInput
     dashboardMetrics?: DashboardMetricCreateNestedManyWithoutUserInput
     sprintFeedbacks?: SprintFeedbackCreateNestedManyWithoutUserInput
-    userProjects?: UserProjectCreateNestedManyWithoutUserInput
-    notifications?: NotificationCreateNestedManyWithoutUserInput
     tags?: TagCreateNestedManyWithoutUserInput
   }
 
@@ -31348,8 +28989,6 @@ export namespace Prisma {
     responsibleCards?: CardResponsibleUncheckedCreateNestedManyWithoutUserInput
     dashboardMetrics?: DashboardMetricUncheckedCreateNestedManyWithoutUserInput
     sprintFeedbacks?: SprintFeedbackUncheckedCreateNestedManyWithoutUserInput
-    userProjects?: UserProjectUncheckedCreateNestedManyWithoutUserInput
-    notifications?: NotificationUncheckedCreateNestedManyWithoutUserInput
     tags?: TagUncheckedCreateNestedManyWithoutUserInput
   }
 
@@ -31376,7 +29015,6 @@ export namespace Prisma {
     color?: StringFieldUpdateOperationsInput | string
     position?: IntFieldUpdateOperationsInput | number
     sprintPosition?: NullableIntFieldUpdateOperationsInput | number | null
-    status?: StringFieldUpdateOperationsInput | string
     priority?: StringFieldUpdateOperationsInput | string
     tagsImport?: StringFieldUpdateOperationsInput | string
     startDate?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
@@ -31384,17 +29022,6 @@ export namespace Prisma {
     deletedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
-    orcado_min?: NullableIntFieldUpdateOperationsInput | number | null
-    orcado_horas?: NullableFloatFieldUpdateOperationsInput | number | null
-    orcado_dias?: NullableFloatFieldUpdateOperationsInput | number | null
-    orcado_total?: NullableFloatFieldUpdateOperationsInput | number | null
-    data_prevista?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
-    realizado_min?: NullableIntFieldUpdateOperationsInput | number | null
-    realizado_horas?: NullableFloatFieldUpdateOperationsInput | number | null
-    realizado_dias?: NullableFloatFieldUpdateOperationsInput | number | null
-    realizado_total?: NullableFloatFieldUpdateOperationsInput | number | null
-    data_realizacao?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
-    situacao_status?: NullableStringFieldUpdateOperationsInput | string | null
     sprint?: SprintUpdateOneWithoutCardsNestedInput
     sprintColumn?: SprintColumnUpdateOneWithoutCardsNestedInput
     project?: ProjectUpdateOneWithoutCardsNestedInput
@@ -31402,6 +29029,7 @@ export namespace Prisma {
     attachments?: AttachmentUpdateManyWithoutCardNestedInput
     timeEntries?: TimeEntryUpdateManyWithoutCardNestedInput
     responsibles?: CardResponsibleUpdateManyWithoutCardNestedInput
+    movements?: CardMovementUpdateManyWithoutCardNestedInput
   }
 
   export type CardUncheckedUpdateWithoutCommentsInput = {
@@ -31413,7 +29041,6 @@ export namespace Prisma {
     sprintId?: NullableStringFieldUpdateOperationsInput | string | null
     sprintColumnId?: NullableStringFieldUpdateOperationsInput | string | null
     sprintPosition?: NullableIntFieldUpdateOperationsInput | number | null
-    status?: StringFieldUpdateOperationsInput | string
     projectId?: NullableStringFieldUpdateOperationsInput | string | null
     priority?: StringFieldUpdateOperationsInput | string
     tagsImport?: StringFieldUpdateOperationsInput | string
@@ -31422,21 +29049,11 @@ export namespace Prisma {
     deletedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
-    orcado_min?: NullableIntFieldUpdateOperationsInput | number | null
-    orcado_horas?: NullableFloatFieldUpdateOperationsInput | number | null
-    orcado_dias?: NullableFloatFieldUpdateOperationsInput | number | null
-    orcado_total?: NullableFloatFieldUpdateOperationsInput | number | null
-    data_prevista?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
-    realizado_min?: NullableIntFieldUpdateOperationsInput | number | null
-    realizado_horas?: NullableFloatFieldUpdateOperationsInput | number | null
-    realizado_dias?: NullableFloatFieldUpdateOperationsInput | number | null
-    realizado_total?: NullableFloatFieldUpdateOperationsInput | number | null
-    data_realizacao?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
-    situacao_status?: NullableStringFieldUpdateOperationsInput | string | null
     tags?: CardTagUncheckedUpdateManyWithoutCardNestedInput
     attachments?: AttachmentUncheckedUpdateManyWithoutCardNestedInput
     timeEntries?: TimeEntryUncheckedUpdateManyWithoutCardNestedInput
     responsibles?: CardResponsibleUncheckedUpdateManyWithoutCardNestedInput
+    movements?: CardMovementUncheckedUpdateManyWithoutCardNestedInput
   }
 
   export type UserUpsertWithoutCommentsInput = {
@@ -31460,8 +29077,6 @@ export namespace Prisma {
     responsibleCards?: CardResponsibleUpdateManyWithoutUserNestedInput
     dashboardMetrics?: DashboardMetricUpdateManyWithoutUserNestedInput
     sprintFeedbacks?: SprintFeedbackUpdateManyWithoutUserNestedInput
-    userProjects?: UserProjectUpdateManyWithoutUserNestedInput
-    notifications?: NotificationUpdateManyWithoutUserNestedInput
     tags?: TagUpdateManyWithoutUserNestedInput
   }
 
@@ -31475,8 +29090,6 @@ export namespace Prisma {
     responsibleCards?: CardResponsibleUncheckedUpdateManyWithoutUserNestedInput
     dashboardMetrics?: DashboardMetricUncheckedUpdateManyWithoutUserNestedInput
     sprintFeedbacks?: SprintFeedbackUncheckedUpdateManyWithoutUserNestedInput
-    userProjects?: UserProjectUncheckedUpdateManyWithoutUserNestedInput
-    notifications?: NotificationUncheckedUpdateManyWithoutUserNestedInput
     tags?: TagUncheckedUpdateManyWithoutUserNestedInput
   }
 
@@ -31487,7 +29100,6 @@ export namespace Prisma {
     color?: string
     position?: number
     sprintPosition?: number | null
-    status?: string
     priority?: string
     tagsImport?: string
     startDate?: Date | string | null
@@ -31495,17 +29107,6 @@ export namespace Prisma {
     deletedAt?: Date | string | null
     createdAt?: Date | string
     updatedAt?: Date | string
-    orcado_min?: number | null
-    orcado_horas?: number | null
-    orcado_dias?: number | null
-    orcado_total?: number | null
-    data_prevista?: Date | string | null
-    realizado_min?: number | null
-    realizado_horas?: number | null
-    realizado_dias?: number | null
-    realizado_total?: number | null
-    data_realizacao?: Date | string | null
-    situacao_status?: string | null
     sprint?: SprintCreateNestedOneWithoutCardsInput
     sprintColumn?: SprintColumnCreateNestedOneWithoutCardsInput
     project?: ProjectCreateNestedOneWithoutCardsInput
@@ -31513,6 +29114,7 @@ export namespace Prisma {
     timeEntries?: TimeEntryCreateNestedManyWithoutCardInput
     responsibles?: CardResponsibleCreateNestedManyWithoutCardInput
     comments?: CommentCreateNestedManyWithoutCardInput
+    movements?: CardMovementCreateNestedManyWithoutCardInput
   }
 
   export type CardUncheckedCreateWithoutAttachmentsInput = {
@@ -31524,7 +29126,6 @@ export namespace Prisma {
     sprintId?: string | null
     sprintColumnId?: string | null
     sprintPosition?: number | null
-    status?: string
     projectId?: string | null
     priority?: string
     tagsImport?: string
@@ -31533,21 +29134,11 @@ export namespace Prisma {
     deletedAt?: Date | string | null
     createdAt?: Date | string
     updatedAt?: Date | string
-    orcado_min?: number | null
-    orcado_horas?: number | null
-    orcado_dias?: number | null
-    orcado_total?: number | null
-    data_prevista?: Date | string | null
-    realizado_min?: number | null
-    realizado_horas?: number | null
-    realizado_dias?: number | null
-    realizado_total?: number | null
-    data_realizacao?: Date | string | null
-    situacao_status?: string | null
     tags?: CardTagUncheckedCreateNestedManyWithoutCardInput
     timeEntries?: TimeEntryUncheckedCreateNestedManyWithoutCardInput
     responsibles?: CardResponsibleUncheckedCreateNestedManyWithoutCardInput
     comments?: CommentUncheckedCreateNestedManyWithoutCardInput
+    movements?: CardMovementUncheckedCreateNestedManyWithoutCardInput
   }
 
   export type CardCreateOrConnectWithoutAttachmentsInput = {
@@ -31573,7 +29164,6 @@ export namespace Prisma {
     color?: StringFieldUpdateOperationsInput | string
     position?: IntFieldUpdateOperationsInput | number
     sprintPosition?: NullableIntFieldUpdateOperationsInput | number | null
-    status?: StringFieldUpdateOperationsInput | string
     priority?: StringFieldUpdateOperationsInput | string
     tagsImport?: StringFieldUpdateOperationsInput | string
     startDate?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
@@ -31581,17 +29171,6 @@ export namespace Prisma {
     deletedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
-    orcado_min?: NullableIntFieldUpdateOperationsInput | number | null
-    orcado_horas?: NullableFloatFieldUpdateOperationsInput | number | null
-    orcado_dias?: NullableFloatFieldUpdateOperationsInput | number | null
-    orcado_total?: NullableFloatFieldUpdateOperationsInput | number | null
-    data_prevista?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
-    realizado_min?: NullableIntFieldUpdateOperationsInput | number | null
-    realizado_horas?: NullableFloatFieldUpdateOperationsInput | number | null
-    realizado_dias?: NullableFloatFieldUpdateOperationsInput | number | null
-    realizado_total?: NullableFloatFieldUpdateOperationsInput | number | null
-    data_realizacao?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
-    situacao_status?: NullableStringFieldUpdateOperationsInput | string | null
     sprint?: SprintUpdateOneWithoutCardsNestedInput
     sprintColumn?: SprintColumnUpdateOneWithoutCardsNestedInput
     project?: ProjectUpdateOneWithoutCardsNestedInput
@@ -31599,6 +29178,7 @@ export namespace Prisma {
     timeEntries?: TimeEntryUpdateManyWithoutCardNestedInput
     responsibles?: CardResponsibleUpdateManyWithoutCardNestedInput
     comments?: CommentUpdateManyWithoutCardNestedInput
+    movements?: CardMovementUpdateManyWithoutCardNestedInput
   }
 
   export type CardUncheckedUpdateWithoutAttachmentsInput = {
@@ -31610,7 +29190,6 @@ export namespace Prisma {
     sprintId?: NullableStringFieldUpdateOperationsInput | string | null
     sprintColumnId?: NullableStringFieldUpdateOperationsInput | string | null
     sprintPosition?: NullableIntFieldUpdateOperationsInput | number | null
-    status?: StringFieldUpdateOperationsInput | string
     projectId?: NullableStringFieldUpdateOperationsInput | string | null
     priority?: StringFieldUpdateOperationsInput | string
     tagsImport?: StringFieldUpdateOperationsInput | string
@@ -31619,21 +29198,11 @@ export namespace Prisma {
     deletedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
-    orcado_min?: NullableIntFieldUpdateOperationsInput | number | null
-    orcado_horas?: NullableFloatFieldUpdateOperationsInput | number | null
-    orcado_dias?: NullableFloatFieldUpdateOperationsInput | number | null
-    orcado_total?: NullableFloatFieldUpdateOperationsInput | number | null
-    data_prevista?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
-    realizado_min?: NullableIntFieldUpdateOperationsInput | number | null
-    realizado_horas?: NullableFloatFieldUpdateOperationsInput | number | null
-    realizado_dias?: NullableFloatFieldUpdateOperationsInput | number | null
-    realizado_total?: NullableFloatFieldUpdateOperationsInput | number | null
-    data_realizacao?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
-    situacao_status?: NullableStringFieldUpdateOperationsInput | string | null
     tags?: CardTagUncheckedUpdateManyWithoutCardNestedInput
     timeEntries?: TimeEntryUncheckedUpdateManyWithoutCardNestedInput
     responsibles?: CardResponsibleUncheckedUpdateManyWithoutCardNestedInput
     comments?: CommentUncheckedUpdateManyWithoutCardNestedInput
+    movements?: CardMovementUncheckedUpdateManyWithoutCardNestedInput
   }
 
   export type UserCreateWithoutTimeEntriesInput = {
@@ -31646,8 +29215,6 @@ export namespace Prisma {
     comments?: CommentCreateNestedManyWithoutUserInput
     dashboardMetrics?: DashboardMetricCreateNestedManyWithoutUserInput
     sprintFeedbacks?: SprintFeedbackCreateNestedManyWithoutUserInput
-    userProjects?: UserProjectCreateNestedManyWithoutUserInput
-    notifications?: NotificationCreateNestedManyWithoutUserInput
     tags?: TagCreateNestedManyWithoutUserInput
   }
 
@@ -31661,8 +29228,6 @@ export namespace Prisma {
     comments?: CommentUncheckedCreateNestedManyWithoutUserInput
     dashboardMetrics?: DashboardMetricUncheckedCreateNestedManyWithoutUserInput
     sprintFeedbacks?: SprintFeedbackUncheckedCreateNestedManyWithoutUserInput
-    userProjects?: UserProjectUncheckedCreateNestedManyWithoutUserInput
-    notifications?: NotificationUncheckedCreateNestedManyWithoutUserInput
     tags?: TagUncheckedCreateNestedManyWithoutUserInput
   }
 
@@ -31678,7 +29243,6 @@ export namespace Prisma {
     color?: string
     position?: number
     sprintPosition?: number | null
-    status?: string
     priority?: string
     tagsImport?: string
     startDate?: Date | string | null
@@ -31686,17 +29250,6 @@ export namespace Prisma {
     deletedAt?: Date | string | null
     createdAt?: Date | string
     updatedAt?: Date | string
-    orcado_min?: number | null
-    orcado_horas?: number | null
-    orcado_dias?: number | null
-    orcado_total?: number | null
-    data_prevista?: Date | string | null
-    realizado_min?: number | null
-    realizado_horas?: number | null
-    realizado_dias?: number | null
-    realizado_total?: number | null
-    data_realizacao?: Date | string | null
-    situacao_status?: string | null
     sprint?: SprintCreateNestedOneWithoutCardsInput
     sprintColumn?: SprintColumnCreateNestedOneWithoutCardsInput
     project?: ProjectCreateNestedOneWithoutCardsInput
@@ -31704,6 +29257,7 @@ export namespace Prisma {
     attachments?: AttachmentCreateNestedManyWithoutCardInput
     responsibles?: CardResponsibleCreateNestedManyWithoutCardInput
     comments?: CommentCreateNestedManyWithoutCardInput
+    movements?: CardMovementCreateNestedManyWithoutCardInput
   }
 
   export type CardUncheckedCreateWithoutTimeEntriesInput = {
@@ -31715,7 +29269,6 @@ export namespace Prisma {
     sprintId?: string | null
     sprintColumnId?: string | null
     sprintPosition?: number | null
-    status?: string
     projectId?: string | null
     priority?: string
     tagsImport?: string
@@ -31724,21 +29277,11 @@ export namespace Prisma {
     deletedAt?: Date | string | null
     createdAt?: Date | string
     updatedAt?: Date | string
-    orcado_min?: number | null
-    orcado_horas?: number | null
-    orcado_dias?: number | null
-    orcado_total?: number | null
-    data_prevista?: Date | string | null
-    realizado_min?: number | null
-    realizado_horas?: number | null
-    realizado_dias?: number | null
-    realizado_total?: number | null
-    data_realizacao?: Date | string | null
-    situacao_status?: string | null
     tags?: CardTagUncheckedCreateNestedManyWithoutCardInput
     attachments?: AttachmentUncheckedCreateNestedManyWithoutCardInput
     responsibles?: CardResponsibleUncheckedCreateNestedManyWithoutCardInput
     comments?: CommentUncheckedCreateNestedManyWithoutCardInput
+    movements?: CardMovementUncheckedCreateNestedManyWithoutCardInput
   }
 
   export type CardCreateOrConnectWithoutTimeEntriesInput = {
@@ -31767,8 +29310,6 @@ export namespace Prisma {
     comments?: CommentUpdateManyWithoutUserNestedInput
     dashboardMetrics?: DashboardMetricUpdateManyWithoutUserNestedInput
     sprintFeedbacks?: SprintFeedbackUpdateManyWithoutUserNestedInput
-    userProjects?: UserProjectUpdateManyWithoutUserNestedInput
-    notifications?: NotificationUpdateManyWithoutUserNestedInput
     tags?: TagUpdateManyWithoutUserNestedInput
   }
 
@@ -31782,8 +29323,6 @@ export namespace Prisma {
     comments?: CommentUncheckedUpdateManyWithoutUserNestedInput
     dashboardMetrics?: DashboardMetricUncheckedUpdateManyWithoutUserNestedInput
     sprintFeedbacks?: SprintFeedbackUncheckedUpdateManyWithoutUserNestedInput
-    userProjects?: UserProjectUncheckedUpdateManyWithoutUserNestedInput
-    notifications?: NotificationUncheckedUpdateManyWithoutUserNestedInput
     tags?: TagUncheckedUpdateManyWithoutUserNestedInput
   }
 
@@ -31805,7 +29344,6 @@ export namespace Prisma {
     color?: StringFieldUpdateOperationsInput | string
     position?: IntFieldUpdateOperationsInput | number
     sprintPosition?: NullableIntFieldUpdateOperationsInput | number | null
-    status?: StringFieldUpdateOperationsInput | string
     priority?: StringFieldUpdateOperationsInput | string
     tagsImport?: StringFieldUpdateOperationsInput | string
     startDate?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
@@ -31813,17 +29351,6 @@ export namespace Prisma {
     deletedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
-    orcado_min?: NullableIntFieldUpdateOperationsInput | number | null
-    orcado_horas?: NullableFloatFieldUpdateOperationsInput | number | null
-    orcado_dias?: NullableFloatFieldUpdateOperationsInput | number | null
-    orcado_total?: NullableFloatFieldUpdateOperationsInput | number | null
-    data_prevista?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
-    realizado_min?: NullableIntFieldUpdateOperationsInput | number | null
-    realizado_horas?: NullableFloatFieldUpdateOperationsInput | number | null
-    realizado_dias?: NullableFloatFieldUpdateOperationsInput | number | null
-    realizado_total?: NullableFloatFieldUpdateOperationsInput | number | null
-    data_realizacao?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
-    situacao_status?: NullableStringFieldUpdateOperationsInput | string | null
     sprint?: SprintUpdateOneWithoutCardsNestedInput
     sprintColumn?: SprintColumnUpdateOneWithoutCardsNestedInput
     project?: ProjectUpdateOneWithoutCardsNestedInput
@@ -31831,6 +29358,7 @@ export namespace Prisma {
     attachments?: AttachmentUpdateManyWithoutCardNestedInput
     responsibles?: CardResponsibleUpdateManyWithoutCardNestedInput
     comments?: CommentUpdateManyWithoutCardNestedInput
+    movements?: CardMovementUpdateManyWithoutCardNestedInput
   }
 
   export type CardUncheckedUpdateWithoutTimeEntriesInput = {
@@ -31842,7 +29370,6 @@ export namespace Prisma {
     sprintId?: NullableStringFieldUpdateOperationsInput | string | null
     sprintColumnId?: NullableStringFieldUpdateOperationsInput | string | null
     sprintPosition?: NullableIntFieldUpdateOperationsInput | number | null
-    status?: StringFieldUpdateOperationsInput | string
     projectId?: NullableStringFieldUpdateOperationsInput | string | null
     priority?: StringFieldUpdateOperationsInput | string
     tagsImport?: StringFieldUpdateOperationsInput | string
@@ -31851,21 +29378,11 @@ export namespace Prisma {
     deletedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
-    orcado_min?: NullableIntFieldUpdateOperationsInput | number | null
-    orcado_horas?: NullableFloatFieldUpdateOperationsInput | number | null
-    orcado_dias?: NullableFloatFieldUpdateOperationsInput | number | null
-    orcado_total?: NullableFloatFieldUpdateOperationsInput | number | null
-    data_prevista?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
-    realizado_min?: NullableIntFieldUpdateOperationsInput | number | null
-    realizado_horas?: NullableFloatFieldUpdateOperationsInput | number | null
-    realizado_dias?: NullableFloatFieldUpdateOperationsInput | number | null
-    realizado_total?: NullableFloatFieldUpdateOperationsInput | number | null
-    data_realizacao?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
-    situacao_status?: NullableStringFieldUpdateOperationsInput | string | null
     tags?: CardTagUncheckedUpdateManyWithoutCardNestedInput
     attachments?: AttachmentUncheckedUpdateManyWithoutCardNestedInput
     responsibles?: CardResponsibleUncheckedUpdateManyWithoutCardNestedInput
     comments?: CommentUncheckedUpdateManyWithoutCardNestedInput
+    movements?: CardMovementUncheckedUpdateManyWithoutCardNestedInput
   }
 
   export type SprintCreateWithoutDashboardMetricsInput = {
@@ -31921,8 +29438,6 @@ export namespace Prisma {
     responsibleCards?: CardResponsibleCreateNestedManyWithoutUserInput
     comments?: CommentCreateNestedManyWithoutUserInput
     sprintFeedbacks?: SprintFeedbackCreateNestedManyWithoutUserInput
-    userProjects?: UserProjectCreateNestedManyWithoutUserInput
-    notifications?: NotificationCreateNestedManyWithoutUserInput
     tags?: TagCreateNestedManyWithoutUserInput
   }
 
@@ -31936,8 +29451,6 @@ export namespace Prisma {
     responsibleCards?: CardResponsibleUncheckedCreateNestedManyWithoutUserInput
     comments?: CommentUncheckedCreateNestedManyWithoutUserInput
     sprintFeedbacks?: SprintFeedbackUncheckedCreateNestedManyWithoutUserInput
-    userProjects?: UserProjectUncheckedCreateNestedManyWithoutUserInput
-    notifications?: NotificationUncheckedCreateNestedManyWithoutUserInput
     tags?: TagUncheckedCreateNestedManyWithoutUserInput
   }
 
@@ -32016,8 +29529,6 @@ export namespace Prisma {
     responsibleCards?: CardResponsibleUpdateManyWithoutUserNestedInput
     comments?: CommentUpdateManyWithoutUserNestedInput
     sprintFeedbacks?: SprintFeedbackUpdateManyWithoutUserNestedInput
-    userProjects?: UserProjectUpdateManyWithoutUserNestedInput
-    notifications?: NotificationUpdateManyWithoutUserNestedInput
     tags?: TagUpdateManyWithoutUserNestedInput
   }
 
@@ -32031,8 +29542,6 @@ export namespace Prisma {
     responsibleCards?: CardResponsibleUncheckedUpdateManyWithoutUserNestedInput
     comments?: CommentUncheckedUpdateManyWithoutUserNestedInput
     sprintFeedbacks?: SprintFeedbackUncheckedUpdateManyWithoutUserNestedInput
-    userProjects?: UserProjectUncheckedUpdateManyWithoutUserNestedInput
-    notifications?: NotificationUncheckedUpdateManyWithoutUserNestedInput
     tags?: TagUncheckedUpdateManyWithoutUserNestedInput
   }
 
@@ -32089,8 +29598,6 @@ export namespace Prisma {
     responsibleCards?: CardResponsibleCreateNestedManyWithoutUserInput
     comments?: CommentCreateNestedManyWithoutUserInput
     dashboardMetrics?: DashboardMetricCreateNestedManyWithoutUserInput
-    userProjects?: UserProjectCreateNestedManyWithoutUserInput
-    notifications?: NotificationCreateNestedManyWithoutUserInput
     tags?: TagCreateNestedManyWithoutUserInput
   }
 
@@ -32104,8 +29611,6 @@ export namespace Prisma {
     responsibleCards?: CardResponsibleUncheckedCreateNestedManyWithoutUserInput
     comments?: CommentUncheckedCreateNestedManyWithoutUserInput
     dashboardMetrics?: DashboardMetricUncheckedCreateNestedManyWithoutUserInput
-    userProjects?: UserProjectUncheckedCreateNestedManyWithoutUserInput
-    notifications?: NotificationUncheckedCreateNestedManyWithoutUserInput
     tags?: TagUncheckedCreateNestedManyWithoutUserInput
   }
 
@@ -32184,8 +29689,6 @@ export namespace Prisma {
     responsibleCards?: CardResponsibleUpdateManyWithoutUserNestedInput
     comments?: CommentUpdateManyWithoutUserNestedInput
     dashboardMetrics?: DashboardMetricUpdateManyWithoutUserNestedInput
-    userProjects?: UserProjectUpdateManyWithoutUserNestedInput
-    notifications?: NotificationUpdateManyWithoutUserNestedInput
     tags?: TagUpdateManyWithoutUserNestedInput
   }
 
@@ -32199,8 +29702,6 @@ export namespace Prisma {
     responsibleCards?: CardResponsibleUncheckedUpdateManyWithoutUserNestedInput
     comments?: CommentUncheckedUpdateManyWithoutUserNestedInput
     dashboardMetrics?: DashboardMetricUncheckedUpdateManyWithoutUserNestedInput
-    userProjects?: UserProjectUncheckedUpdateManyWithoutUserNestedInput
-    notifications?: NotificationUncheckedUpdateManyWithoutUserNestedInput
     tags?: TagUncheckedUpdateManyWithoutUserNestedInput
   }
 
@@ -32355,28 +29856,6 @@ export namespace Prisma {
     qualidade: number
     dificuldade: number
     createdAt?: Date | string
-    updatedAt?: Date | string
-  }
-
-  export type UserProjectCreateManyUserInput = {
-    id?: string
-    projectId: string
-    active?: boolean
-    horasDiarias?: number | null
-    remuneracao?: number | null
-  }
-
-  export type NotificationCreateManyUserInput = {
-    id?: string
-    type: string
-    title: string
-    message: string
-    reference?: string | null
-    referenceType?: string | null
-    status?: $Enums.NotificationStatus
-    deletedAt?: Date | string | null
-    createdAt?: Date | string
-    readAt?: Date | string | null
     updatedAt?: Date | string
   }
 
@@ -32593,72 +30072,6 @@ export namespace Prisma {
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
   }
 
-  export type UserProjectUpdateWithoutUserInput = {
-    id?: StringFieldUpdateOperationsInput | string
-    projectId?: StringFieldUpdateOperationsInput | string
-    active?: BoolFieldUpdateOperationsInput | boolean
-    horasDiarias?: NullableFloatFieldUpdateOperationsInput | number | null
-    remuneracao?: NullableFloatFieldUpdateOperationsInput | number | null
-  }
-
-  export type UserProjectUncheckedUpdateWithoutUserInput = {
-    id?: StringFieldUpdateOperationsInput | string
-    projectId?: StringFieldUpdateOperationsInput | string
-    active?: BoolFieldUpdateOperationsInput | boolean
-    horasDiarias?: NullableFloatFieldUpdateOperationsInput | number | null
-    remuneracao?: NullableFloatFieldUpdateOperationsInput | number | null
-  }
-
-  export type UserProjectUncheckedUpdateManyWithoutUserInput = {
-    id?: StringFieldUpdateOperationsInput | string
-    projectId?: StringFieldUpdateOperationsInput | string
-    active?: BoolFieldUpdateOperationsInput | boolean
-    horasDiarias?: NullableFloatFieldUpdateOperationsInput | number | null
-    remuneracao?: NullableFloatFieldUpdateOperationsInput | number | null
-  }
-
-  export type NotificationUpdateWithoutUserInput = {
-    id?: StringFieldUpdateOperationsInput | string
-    type?: StringFieldUpdateOperationsInput | string
-    title?: StringFieldUpdateOperationsInput | string
-    message?: StringFieldUpdateOperationsInput | string
-    reference?: NullableStringFieldUpdateOperationsInput | string | null
-    referenceType?: NullableStringFieldUpdateOperationsInput | string | null
-    status?: EnumNotificationStatusFieldUpdateOperationsInput | $Enums.NotificationStatus
-    deletedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
-    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
-    readAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
-    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
-  }
-
-  export type NotificationUncheckedUpdateWithoutUserInput = {
-    id?: StringFieldUpdateOperationsInput | string
-    type?: StringFieldUpdateOperationsInput | string
-    title?: StringFieldUpdateOperationsInput | string
-    message?: StringFieldUpdateOperationsInput | string
-    reference?: NullableStringFieldUpdateOperationsInput | string | null
-    referenceType?: NullableStringFieldUpdateOperationsInput | string | null
-    status?: EnumNotificationStatusFieldUpdateOperationsInput | $Enums.NotificationStatus
-    deletedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
-    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
-    readAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
-    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
-  }
-
-  export type NotificationUncheckedUpdateManyWithoutUserInput = {
-    id?: StringFieldUpdateOperationsInput | string
-    type?: StringFieldUpdateOperationsInput | string
-    title?: StringFieldUpdateOperationsInput | string
-    message?: StringFieldUpdateOperationsInput | string
-    reference?: NullableStringFieldUpdateOperationsInput | string | null
-    referenceType?: NullableStringFieldUpdateOperationsInput | string | null
-    status?: EnumNotificationStatusFieldUpdateOperationsInput | $Enums.NotificationStatus
-    deletedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
-    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
-    readAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
-    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
-  }
-
   export type TagUpdateWithoutUserInput = {
     id?: StringFieldUpdateOperationsInput | string
     tenantId?: StringFieldUpdateOperationsInput | string
@@ -32706,7 +30119,6 @@ export namespace Prisma {
     sprintId?: string | null
     sprintColumnId?: string | null
     sprintPosition?: number | null
-    status?: string
     priority?: string
     tagsImport?: string
     startDate?: Date | string | null
@@ -32714,17 +30126,6 @@ export namespace Prisma {
     deletedAt?: Date | string | null
     createdAt?: Date | string
     updatedAt?: Date | string
-    orcado_min?: number | null
-    orcado_horas?: number | null
-    orcado_dias?: number | null
-    orcado_total?: number | null
-    data_prevista?: Date | string | null
-    realizado_min?: number | null
-    realizado_horas?: number | null
-    realizado_dias?: number | null
-    realizado_total?: number | null
-    data_realizacao?: Date | string | null
-    situacao_status?: string | null
   }
 
   export type SprintUpdateWithoutProjectInput = {
@@ -32787,7 +30188,6 @@ export namespace Prisma {
     color?: StringFieldUpdateOperationsInput | string
     position?: IntFieldUpdateOperationsInput | number
     sprintPosition?: NullableIntFieldUpdateOperationsInput | number | null
-    status?: StringFieldUpdateOperationsInput | string
     priority?: StringFieldUpdateOperationsInput | string
     tagsImport?: StringFieldUpdateOperationsInput | string
     startDate?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
@@ -32795,17 +30195,6 @@ export namespace Prisma {
     deletedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
-    orcado_min?: NullableIntFieldUpdateOperationsInput | number | null
-    orcado_horas?: NullableFloatFieldUpdateOperationsInput | number | null
-    orcado_dias?: NullableFloatFieldUpdateOperationsInput | number | null
-    orcado_total?: NullableFloatFieldUpdateOperationsInput | number | null
-    data_prevista?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
-    realizado_min?: NullableIntFieldUpdateOperationsInput | number | null
-    realizado_horas?: NullableFloatFieldUpdateOperationsInput | number | null
-    realizado_dias?: NullableFloatFieldUpdateOperationsInput | number | null
-    realizado_total?: NullableFloatFieldUpdateOperationsInput | number | null
-    data_realizacao?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
-    situacao_status?: NullableStringFieldUpdateOperationsInput | string | null
     sprint?: SprintUpdateOneWithoutCardsNestedInput
     sprintColumn?: SprintColumnUpdateOneWithoutCardsNestedInput
     tags?: CardTagUpdateManyWithoutCardNestedInput
@@ -32813,6 +30202,7 @@ export namespace Prisma {
     timeEntries?: TimeEntryUpdateManyWithoutCardNestedInput
     responsibles?: CardResponsibleUpdateManyWithoutCardNestedInput
     comments?: CommentUpdateManyWithoutCardNestedInput
+    movements?: CardMovementUpdateManyWithoutCardNestedInput
   }
 
   export type CardUncheckedUpdateWithoutProjectInput = {
@@ -32824,7 +30214,6 @@ export namespace Prisma {
     sprintId?: NullableStringFieldUpdateOperationsInput | string | null
     sprintColumnId?: NullableStringFieldUpdateOperationsInput | string | null
     sprintPosition?: NullableIntFieldUpdateOperationsInput | number | null
-    status?: StringFieldUpdateOperationsInput | string
     priority?: StringFieldUpdateOperationsInput | string
     tagsImport?: StringFieldUpdateOperationsInput | string
     startDate?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
@@ -32832,22 +30221,12 @@ export namespace Prisma {
     deletedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
-    orcado_min?: NullableIntFieldUpdateOperationsInput | number | null
-    orcado_horas?: NullableFloatFieldUpdateOperationsInput | number | null
-    orcado_dias?: NullableFloatFieldUpdateOperationsInput | number | null
-    orcado_total?: NullableFloatFieldUpdateOperationsInput | number | null
-    data_prevista?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
-    realizado_min?: NullableIntFieldUpdateOperationsInput | number | null
-    realizado_horas?: NullableFloatFieldUpdateOperationsInput | number | null
-    realizado_dias?: NullableFloatFieldUpdateOperationsInput | number | null
-    realizado_total?: NullableFloatFieldUpdateOperationsInput | number | null
-    data_realizacao?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
-    situacao_status?: NullableStringFieldUpdateOperationsInput | string | null
     tags?: CardTagUncheckedUpdateManyWithoutCardNestedInput
     attachments?: AttachmentUncheckedUpdateManyWithoutCardNestedInput
     timeEntries?: TimeEntryUncheckedUpdateManyWithoutCardNestedInput
     responsibles?: CardResponsibleUncheckedUpdateManyWithoutCardNestedInput
     comments?: CommentUncheckedUpdateManyWithoutCardNestedInput
+    movements?: CardMovementUncheckedUpdateManyWithoutCardNestedInput
   }
 
   export type CardUncheckedUpdateManyWithoutProjectInput = {
@@ -32859,7 +30238,6 @@ export namespace Prisma {
     sprintId?: NullableStringFieldUpdateOperationsInput | string | null
     sprintColumnId?: NullableStringFieldUpdateOperationsInput | string | null
     sprintPosition?: NullableIntFieldUpdateOperationsInput | number | null
-    status?: StringFieldUpdateOperationsInput | string
     priority?: StringFieldUpdateOperationsInput | string
     tagsImport?: StringFieldUpdateOperationsInput | string
     startDate?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
@@ -32867,17 +30245,6 @@ export namespace Prisma {
     deletedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
-    orcado_min?: NullableIntFieldUpdateOperationsInput | number | null
-    orcado_horas?: NullableFloatFieldUpdateOperationsInput | number | null
-    orcado_dias?: NullableFloatFieldUpdateOperationsInput | number | null
-    orcado_total?: NullableFloatFieldUpdateOperationsInput | number | null
-    data_prevista?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
-    realizado_min?: NullableIntFieldUpdateOperationsInput | number | null
-    realizado_horas?: NullableFloatFieldUpdateOperationsInput | number | null
-    realizado_dias?: NullableFloatFieldUpdateOperationsInput | number | null
-    realizado_total?: NullableFloatFieldUpdateOperationsInput | number | null
-    data_realizacao?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
-    situacao_status?: NullableStringFieldUpdateOperationsInput | string | null
   }
 
   export type CardCreateManySprintInput = {
@@ -32888,7 +30255,6 @@ export namespace Prisma {
     position?: number
     sprintColumnId?: string | null
     sprintPosition?: number | null
-    status?: string
     projectId?: string | null
     priority?: string
     tagsImport?: string
@@ -32897,17 +30263,6 @@ export namespace Prisma {
     deletedAt?: Date | string | null
     createdAt?: Date | string
     updatedAt?: Date | string
-    orcado_min?: number | null
-    orcado_horas?: number | null
-    orcado_dias?: number | null
-    orcado_total?: number | null
-    data_prevista?: Date | string | null
-    realizado_min?: number | null
-    realizado_horas?: number | null
-    realizado_dias?: number | null
-    realizado_total?: number | null
-    data_realizacao?: Date | string | null
-    situacao_status?: string | null
   }
 
   export type SprintColumnCreateManySprintInput = {
@@ -32948,7 +30303,6 @@ export namespace Prisma {
     color?: StringFieldUpdateOperationsInput | string
     position?: IntFieldUpdateOperationsInput | number
     sprintPosition?: NullableIntFieldUpdateOperationsInput | number | null
-    status?: StringFieldUpdateOperationsInput | string
     priority?: StringFieldUpdateOperationsInput | string
     tagsImport?: StringFieldUpdateOperationsInput | string
     startDate?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
@@ -32956,17 +30310,6 @@ export namespace Prisma {
     deletedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
-    orcado_min?: NullableIntFieldUpdateOperationsInput | number | null
-    orcado_horas?: NullableFloatFieldUpdateOperationsInput | number | null
-    orcado_dias?: NullableFloatFieldUpdateOperationsInput | number | null
-    orcado_total?: NullableFloatFieldUpdateOperationsInput | number | null
-    data_prevista?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
-    realizado_min?: NullableIntFieldUpdateOperationsInput | number | null
-    realizado_horas?: NullableFloatFieldUpdateOperationsInput | number | null
-    realizado_dias?: NullableFloatFieldUpdateOperationsInput | number | null
-    realizado_total?: NullableFloatFieldUpdateOperationsInput | number | null
-    data_realizacao?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
-    situacao_status?: NullableStringFieldUpdateOperationsInput | string | null
     sprintColumn?: SprintColumnUpdateOneWithoutCardsNestedInput
     project?: ProjectUpdateOneWithoutCardsNestedInput
     tags?: CardTagUpdateManyWithoutCardNestedInput
@@ -32974,6 +30317,7 @@ export namespace Prisma {
     timeEntries?: TimeEntryUpdateManyWithoutCardNestedInput
     responsibles?: CardResponsibleUpdateManyWithoutCardNestedInput
     comments?: CommentUpdateManyWithoutCardNestedInput
+    movements?: CardMovementUpdateManyWithoutCardNestedInput
   }
 
   export type CardUncheckedUpdateWithoutSprintInput = {
@@ -32984,7 +30328,6 @@ export namespace Prisma {
     position?: IntFieldUpdateOperationsInput | number
     sprintColumnId?: NullableStringFieldUpdateOperationsInput | string | null
     sprintPosition?: NullableIntFieldUpdateOperationsInput | number | null
-    status?: StringFieldUpdateOperationsInput | string
     projectId?: NullableStringFieldUpdateOperationsInput | string | null
     priority?: StringFieldUpdateOperationsInput | string
     tagsImport?: StringFieldUpdateOperationsInput | string
@@ -32993,22 +30336,12 @@ export namespace Prisma {
     deletedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
-    orcado_min?: NullableIntFieldUpdateOperationsInput | number | null
-    orcado_horas?: NullableFloatFieldUpdateOperationsInput | number | null
-    orcado_dias?: NullableFloatFieldUpdateOperationsInput | number | null
-    orcado_total?: NullableFloatFieldUpdateOperationsInput | number | null
-    data_prevista?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
-    realizado_min?: NullableIntFieldUpdateOperationsInput | number | null
-    realizado_horas?: NullableFloatFieldUpdateOperationsInput | number | null
-    realizado_dias?: NullableFloatFieldUpdateOperationsInput | number | null
-    realizado_total?: NullableFloatFieldUpdateOperationsInput | number | null
-    data_realizacao?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
-    situacao_status?: NullableStringFieldUpdateOperationsInput | string | null
     tags?: CardTagUncheckedUpdateManyWithoutCardNestedInput
     attachments?: AttachmentUncheckedUpdateManyWithoutCardNestedInput
     timeEntries?: TimeEntryUncheckedUpdateManyWithoutCardNestedInput
     responsibles?: CardResponsibleUncheckedUpdateManyWithoutCardNestedInput
     comments?: CommentUncheckedUpdateManyWithoutCardNestedInput
+    movements?: CardMovementUncheckedUpdateManyWithoutCardNestedInput
   }
 
   export type CardUncheckedUpdateManyWithoutSprintInput = {
@@ -33019,7 +30352,6 @@ export namespace Prisma {
     position?: IntFieldUpdateOperationsInput | number
     sprintColumnId?: NullableStringFieldUpdateOperationsInput | string | null
     sprintPosition?: NullableIntFieldUpdateOperationsInput | number | null
-    status?: StringFieldUpdateOperationsInput | string
     projectId?: NullableStringFieldUpdateOperationsInput | string | null
     priority?: StringFieldUpdateOperationsInput | string
     tagsImport?: StringFieldUpdateOperationsInput | string
@@ -33028,17 +30360,6 @@ export namespace Prisma {
     deletedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
-    orcado_min?: NullableIntFieldUpdateOperationsInput | number | null
-    orcado_horas?: NullableFloatFieldUpdateOperationsInput | number | null
-    orcado_dias?: NullableFloatFieldUpdateOperationsInput | number | null
-    orcado_total?: NullableFloatFieldUpdateOperationsInput | number | null
-    data_prevista?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
-    realizado_min?: NullableIntFieldUpdateOperationsInput | number | null
-    realizado_horas?: NullableFloatFieldUpdateOperationsInput | number | null
-    realizado_dias?: NullableFloatFieldUpdateOperationsInput | number | null
-    realizado_total?: NullableFloatFieldUpdateOperationsInput | number | null
-    data_realizacao?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
-    situacao_status?: NullableStringFieldUpdateOperationsInput | string | null
   }
 
   export type SprintColumnUpdateWithoutSprintInput = {
@@ -33144,7 +30465,6 @@ export namespace Prisma {
     position?: number
     sprintId?: string | null
     sprintPosition?: number | null
-    status?: string
     projectId?: string | null
     priority?: string
     tagsImport?: string
@@ -33153,17 +30473,6 @@ export namespace Prisma {
     deletedAt?: Date | string | null
     createdAt?: Date | string
     updatedAt?: Date | string
-    orcado_min?: number | null
-    orcado_horas?: number | null
-    orcado_dias?: number | null
-    orcado_total?: number | null
-    data_prevista?: Date | string | null
-    realizado_min?: number | null
-    realizado_horas?: number | null
-    realizado_dias?: number | null
-    realizado_total?: number | null
-    data_realizacao?: Date | string | null
-    situacao_status?: string | null
   }
 
   export type CardUpdateWithoutSprintColumnInput = {
@@ -33173,7 +30482,6 @@ export namespace Prisma {
     color?: StringFieldUpdateOperationsInput | string
     position?: IntFieldUpdateOperationsInput | number
     sprintPosition?: NullableIntFieldUpdateOperationsInput | number | null
-    status?: StringFieldUpdateOperationsInput | string
     priority?: StringFieldUpdateOperationsInput | string
     tagsImport?: StringFieldUpdateOperationsInput | string
     startDate?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
@@ -33181,17 +30489,6 @@ export namespace Prisma {
     deletedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
-    orcado_min?: NullableIntFieldUpdateOperationsInput | number | null
-    orcado_horas?: NullableFloatFieldUpdateOperationsInput | number | null
-    orcado_dias?: NullableFloatFieldUpdateOperationsInput | number | null
-    orcado_total?: NullableFloatFieldUpdateOperationsInput | number | null
-    data_prevista?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
-    realizado_min?: NullableIntFieldUpdateOperationsInput | number | null
-    realizado_horas?: NullableFloatFieldUpdateOperationsInput | number | null
-    realizado_dias?: NullableFloatFieldUpdateOperationsInput | number | null
-    realizado_total?: NullableFloatFieldUpdateOperationsInput | number | null
-    data_realizacao?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
-    situacao_status?: NullableStringFieldUpdateOperationsInput | string | null
     sprint?: SprintUpdateOneWithoutCardsNestedInput
     project?: ProjectUpdateOneWithoutCardsNestedInput
     tags?: CardTagUpdateManyWithoutCardNestedInput
@@ -33199,6 +30496,7 @@ export namespace Prisma {
     timeEntries?: TimeEntryUpdateManyWithoutCardNestedInput
     responsibles?: CardResponsibleUpdateManyWithoutCardNestedInput
     comments?: CommentUpdateManyWithoutCardNestedInput
+    movements?: CardMovementUpdateManyWithoutCardNestedInput
   }
 
   export type CardUncheckedUpdateWithoutSprintColumnInput = {
@@ -33209,7 +30507,6 @@ export namespace Prisma {
     position?: IntFieldUpdateOperationsInput | number
     sprintId?: NullableStringFieldUpdateOperationsInput | string | null
     sprintPosition?: NullableIntFieldUpdateOperationsInput | number | null
-    status?: StringFieldUpdateOperationsInput | string
     projectId?: NullableStringFieldUpdateOperationsInput | string | null
     priority?: StringFieldUpdateOperationsInput | string
     tagsImport?: StringFieldUpdateOperationsInput | string
@@ -33218,22 +30515,12 @@ export namespace Prisma {
     deletedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
-    orcado_min?: NullableIntFieldUpdateOperationsInput | number | null
-    orcado_horas?: NullableFloatFieldUpdateOperationsInput | number | null
-    orcado_dias?: NullableFloatFieldUpdateOperationsInput | number | null
-    orcado_total?: NullableFloatFieldUpdateOperationsInput | number | null
-    data_prevista?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
-    realizado_min?: NullableIntFieldUpdateOperationsInput | number | null
-    realizado_horas?: NullableFloatFieldUpdateOperationsInput | number | null
-    realizado_dias?: NullableFloatFieldUpdateOperationsInput | number | null
-    realizado_total?: NullableFloatFieldUpdateOperationsInput | number | null
-    data_realizacao?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
-    situacao_status?: NullableStringFieldUpdateOperationsInput | string | null
     tags?: CardTagUncheckedUpdateManyWithoutCardNestedInput
     attachments?: AttachmentUncheckedUpdateManyWithoutCardNestedInput
     timeEntries?: TimeEntryUncheckedUpdateManyWithoutCardNestedInput
     responsibles?: CardResponsibleUncheckedUpdateManyWithoutCardNestedInput
     comments?: CommentUncheckedUpdateManyWithoutCardNestedInput
+    movements?: CardMovementUncheckedUpdateManyWithoutCardNestedInput
   }
 
   export type CardUncheckedUpdateManyWithoutSprintColumnInput = {
@@ -33244,7 +30531,6 @@ export namespace Prisma {
     position?: IntFieldUpdateOperationsInput | number
     sprintId?: NullableStringFieldUpdateOperationsInput | string | null
     sprintPosition?: NullableIntFieldUpdateOperationsInput | number | null
-    status?: StringFieldUpdateOperationsInput | string
     projectId?: NullableStringFieldUpdateOperationsInput | string | null
     priority?: StringFieldUpdateOperationsInput | string
     tagsImport?: StringFieldUpdateOperationsInput | string
@@ -33253,17 +30539,6 @@ export namespace Prisma {
     deletedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
-    orcado_min?: NullableIntFieldUpdateOperationsInput | number | null
-    orcado_horas?: NullableFloatFieldUpdateOperationsInput | number | null
-    orcado_dias?: NullableFloatFieldUpdateOperationsInput | number | null
-    orcado_total?: NullableFloatFieldUpdateOperationsInput | number | null
-    data_prevista?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
-    realizado_min?: NullableIntFieldUpdateOperationsInput | number | null
-    realizado_horas?: NullableFloatFieldUpdateOperationsInput | number | null
-    realizado_dias?: NullableFloatFieldUpdateOperationsInput | number | null
-    realizado_total?: NullableFloatFieldUpdateOperationsInput | number | null
-    data_realizacao?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
-    situacao_status?: NullableStringFieldUpdateOperationsInput | string | null
   }
 
   export type CardTagCreateManyCardInput = {
@@ -33308,6 +30583,17 @@ export namespace Prisma {
     deletedAt?: Date | string | null
     createdAt?: Date | string
     updatedAt?: Date | string
+  }
+
+  export type CardMovementCreateManyCardInput = {
+    id?: string
+    userId?: string | null
+    fromColumnId?: string | null
+    fromColumnTitle?: string | null
+    toColumnId?: string | null
+    toColumnTitle?: string | null
+    reason?: string | null
+    movedAt?: Date | string
   }
 
   export type CardTagUpdateWithoutCardInput = {
@@ -33440,6 +30726,39 @@ export namespace Prisma {
     deletedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
+  export type CardMovementUpdateWithoutCardInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    userId?: NullableStringFieldUpdateOperationsInput | string | null
+    fromColumnId?: NullableStringFieldUpdateOperationsInput | string | null
+    fromColumnTitle?: NullableStringFieldUpdateOperationsInput | string | null
+    toColumnId?: NullableStringFieldUpdateOperationsInput | string | null
+    toColumnTitle?: NullableStringFieldUpdateOperationsInput | string | null
+    reason?: NullableStringFieldUpdateOperationsInput | string | null
+    movedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
+  export type CardMovementUncheckedUpdateWithoutCardInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    userId?: NullableStringFieldUpdateOperationsInput | string | null
+    fromColumnId?: NullableStringFieldUpdateOperationsInput | string | null
+    fromColumnTitle?: NullableStringFieldUpdateOperationsInput | string | null
+    toColumnId?: NullableStringFieldUpdateOperationsInput | string | null
+    toColumnTitle?: NullableStringFieldUpdateOperationsInput | string | null
+    reason?: NullableStringFieldUpdateOperationsInput | string | null
+    movedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
+  export type CardMovementUncheckedUpdateManyWithoutCardInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    userId?: NullableStringFieldUpdateOperationsInput | string | null
+    fromColumnId?: NullableStringFieldUpdateOperationsInput | string | null
+    fromColumnTitle?: NullableStringFieldUpdateOperationsInput | string | null
+    toColumnId?: NullableStringFieldUpdateOperationsInput | string | null
+    toColumnTitle?: NullableStringFieldUpdateOperationsInput | string | null
+    reason?: NullableStringFieldUpdateOperationsInput | string | null
+    movedAt?: DateTimeFieldUpdateOperationsInput | Date | string
   }
 
   export type CardTagCreateManyTagInput = {

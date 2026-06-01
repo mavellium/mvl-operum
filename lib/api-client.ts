@@ -254,7 +254,9 @@ export const cardsApi = {
   get: (id: string) => request<Record<string, unknown>>(`/cards/${id}`),
 
   listBacklog: (projectId: string) =>
-    request<unknown[]>(`/cards/backlog?projectId=${projectId}`),
+    request<{ id: string; title: string; description: string; color: string; priority?: string | null; tags?: unknown[]; attachments?: unknown[]; responsibles?: unknown[] }[]>(
+      `/cards/backlog?projectId=${encodeURIComponent(projectId)}`
+    ),
 
   create: (data: Record<string, unknown>) =>
     request<{ id: string; title: string; description: string; color: string; priority?: string | null }>('/cards', { method: 'POST', body: JSON.stringify(data) }),
@@ -307,6 +309,9 @@ export const cardsApi = {
 
   search: (q: string) =>
     request<unknown[]>(`/cards/search?q=${encodeURIComponent(q)}`),
+
+  listMovements: (cardId: string) =>
+    request<{ id: string; cardId: string; userId: string | null; fromColumnId: string | null; fromColumnTitle: string | null; toColumnId: string | null; toColumnTitle: string | null; reason: string | null; movedAt: string }[]>(`/cards/${cardId}/movements`),
 }
 
 // ── Tags ──────────────────────────────────────────────────
