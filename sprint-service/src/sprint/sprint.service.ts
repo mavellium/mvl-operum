@@ -71,16 +71,11 @@ export class SprintService {
   }
 
   async remove(id: string) {
-    const sprint = await this.findOne(id)
-    // Devolver cards incompletos ao Backlog Universal antes de deletar a sprint
+    await this.findOne(id)
+    // Devolver todos os cards ao backlog ao deletar a sprint
     await prisma.card.updateMany({
-      where: { sprintId: id, status: { not: 'Concluído' }, deletedAt: null },
-      data: {
-        sprintId: null,
-        sprintColumnId: null,
-        status: 'Backlog',
-        projectId: sprint.projectId,
-      },
+      where: { sprintId: id, deletedAt: null },
+      data: { sprintId: null, sprintColumnId: null, sprintPosition: null },
     })
     await prisma.sprint.update({ where: { id }, data: { deletedAt: new Date() } })
   }
