@@ -25,6 +25,8 @@ import { sprintsApi, adminApi, tagsApi, cardsApi } from '@/lib/api-client'
 import {
   getSprintBoardAction,
   moveCardInSprintAction,
+  moveCardToSprintAction,
+  moveCardToBacklogAction,
 } from '@/app/actions/sprintBoard'
 
 const mockVerify = verifySession as ReturnType<typeof vi.fn>
@@ -81,81 +83,68 @@ describe('getSprintBoardAction — query híbrida', () => {
   })
 })
 
-// ── Teste 2: Mutação de Entrada (Backlog → Sprint) ─────────
+// ── Teste 2: moveCardInSprintAction (coluna → coluna) ──────
 
-describe('moveCardInSprintAction — Backlog → coluna da sprint', () => {
-  it('atualiza sprintId E status quando destino não é BACKLOG', async () => {
+describe('moveCardInSprintAction — coluna da sprint → coluna da sprint', () => {
+  it('chama cardsApi.update com sprintColumnId e sprintPosition', async () => {
     mockVerify.mockResolvedValue({ userId: 'u1' })
     vi.mocked(cardsApi.update).mockResolvedValue(undefined)
 
-    const result = await moveCardInSprintAction('card-1', 'col-a-fazer', 0, {
-      isBacklog: false,
-      currentSprintId: 'sprint-1',
-      destStatus: 'A fazer',
-    })
+    const result = await moveCardInSprintAction('card-1', 'col-a-fazer', 0)
 
     expect(cardsApi.update).toHaveBeenCalledWith('card-1', {
       sprintColumnId: 'col-a-fazer',
       sprintPosition: 0,
-      sprintId: 'sprint-1',
-      status: 'A fazer',
     })
     expect(result).toHaveProperty('success', true)
   })
 
-  it('atualiza status corretamente para "Em andamento"', async () => {
+  it('inclui reason quando fornecido (movimentação retroativa)', async () => {
     mockVerify.mockResolvedValue({ userId: 'u1' })
     vi.mocked(cardsApi.update).mockResolvedValue(undefined)
 
-    await moveCardInSprintAction('card-2', 'col-em-andamento', 1, {
-      isBacklog: false,
-      currentSprintId: 'sprint-1',
-      destStatus: 'Em andamento',
-    })
+    await moveCardInSprintAction('card-2', 'col-backlog', 1, 'Bug encontrado em produção')
 
-    expect(cardsApi.update).toHaveBeenCalledWith('card-2', expect.objectContaining({
-      sprintId: 'sprint-1',
-      status: 'Em andamento',
-    }))
+    expect(cardsApi.update).toHaveBeenCalledWith('card-2', {
+      sprintColumnId: 'col-backlog',
+      sprintPosition: 1,
+      reason: 'Bug encontrado em produção',
+    })
   })
 })
 
-// ── Teste 3: Mutação de Saída (Sprint → Backlog) ───────────
+// ── Teste 3: moveCardToSprintAction (Backlog → Sprint) ─────
 
-describe('moveCardInSprintAction — coluna da sprint → Backlog', () => {
-  it('define sprintId como null e status como Backlog quando destino é BACKLOG', async () => {
+describe('moveCardToSprintAction — Backlog → coluna da sprint', () => {
+  it('atualiza sprintId, sprintColumnId e sprintPosition', async () => {
     mockVerify.mockResolvedValue({ userId: 'u1' })
     vi.mocked(cardsApi.update).mockResolvedValue(undefined)
 
-    const result = await moveCardInSprintAction('card-3', 'BACKLOG', 0, {
-      isBacklog: true,
-      currentSprintId: 'sprint-1',
-      destStatus: 'Backlog',
-      projectId: 'proj-1',
-    })
+    const result = await moveCardToSprintAction('card-3', 'sprint-1', 'col-a-fazer', 0)
 
     expect(cardsApi.update).toHaveBeenCalledWith('card-3', {
-      sprintColumnId: null,
+      sprintId: 'sprint-1',
+      sprintColumnId: 'col-a-fazer',
       sprintPosition: 0,
-      sprintId: null,
-      status: 'Backlog',
-      projectId: 'proj-1',
     })
     expect(result).toHaveProperty('success', true)
   })
+})
 
-  it('não passa o currentSprintId quando o destino é BACKLOG', async () => {
+// ── Teste 4: moveCardToBacklogAction (Sprint → Backlog) ────
+
+describe('moveCardToBacklogAction — coluna da sprint → Backlog', () => {
+  it('define sprintId, sprintColumnId e sprintPosition como null', async () => {
     mockVerify.mockResolvedValue({ userId: 'u1' })
     vi.mocked(cardsApi.update).mockResolvedValue(undefined)
 
-    await moveCardInSprintAction('card-4', 'BACKLOG', 2, {
-      isBacklog: true,
-      currentSprintId: 'sprint-99',
-      destStatus: 'Backlog',
-    })
+    const result = await moveCardToBacklogAction('card-4')
 
-    const callArg = vi.mocked(cardsApi.update).mock.calls[0][1]
-    expect(callArg).toHaveProperty('sprintId', null)
-    expect(callArg).not.toHaveProperty('sprintId', 'sprint-99')
+    expect(cardsApi.update).toHaveBeenCalledWith('card-4', {
+      sprintId: null,
+      sprintColumnId: null,
+      sprintPosition: null,
+    })
+    expect(result).toHaveProperty('success', true)
   })
 })

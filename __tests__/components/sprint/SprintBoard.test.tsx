@@ -19,6 +19,12 @@ vi.mock('@/app/actions/sprintBoard', () => ({
   deleteSprintColumnAction: vi.fn(),
   reorderSprintColumnsAction: vi.fn(),
   updateCardInSprintAction: vi.fn(),
+  deleteCardInSprintAction: vi.fn(),
+  getProjectBacklogAction: vi.fn().mockResolvedValue([]),
+  moveCardToSprintAction: vi.fn(),
+  moveCardToBacklogAction: vi.fn(),
+  createBacklogCardAction: vi.fn(),
+  getCardMovementsAction: vi.fn().mockResolvedValue({ movements: [] }),
 }))
 
 vi.mock('@/app/actions/tags', () => ({

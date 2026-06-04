@@ -56,6 +56,7 @@ type RightPanelMode = 'comments' | 'timer' | 'properties' | 'movements'
 
 export default function CardModal({
   isOpen, onClose, onSubmit, initialCard, users, boardTags, attachments = [],
+  onAttachmentUpload, onAttachmentDelete, onAttachmentSetCover,
   comments = [], onAddComment
 }: CardModalProps) {
   

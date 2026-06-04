@@ -73,21 +73,27 @@ describe('addSprintColumnAction', () => {
 })
 
 describe('moveCardInSprintAction', () => {
-  it('calls cardsApi.update with new column, position, sprintId and status', async () => {
+  it('calls cardsApi.update with sprintColumnId and sprintPosition', async () => {
     mockVerify.mockResolvedValue({ userId: 'u1' })
     vi.mocked(cardsApi.update).mockResolvedValue(undefined)
 
-    const result = await moveCardInSprintAction('c1', 'sc2', 2, {
-      isBacklog: false,
-      currentSprintId: 's1',
-      destStatus: 'A fazer',
-    })
+    const result = await moveCardInSprintAction('c1', 'sc2', 2)
     expect(cardsApi.update).toHaveBeenCalledWith('c1', {
       sprintColumnId: 'sc2',
       sprintPosition: 2,
-      sprintId: 's1',
-      status: 'A fazer',
     })
     expect(result).toHaveProperty('success', true)
+  })
+
+  it('includes reason when moving backwards', async () => {
+    mockVerify.mockResolvedValue({ userId: 'u1' })
+    vi.mocked(cardsApi.update).mockResolvedValue(undefined)
+
+    await moveCardInSprintAction('c1', 'sc1', 0, 'Revisão necessária')
+    expect(cardsApi.update).toHaveBeenCalledWith('c1', {
+      sprintColumnId: 'sc1',
+      sprintPosition: 0,
+      reason: 'Revisão necessária',
+    })
   })
 })
