@@ -1,9 +1,9 @@
 packages:
   - "."
 
-allowBuilds:
-  '@prisma/engines': false
-  msw: false
-  prisma: false
-  sharp: false
-  unrs-resolver: false
+# Packages allowed to run install/build scripts (native addons that need compilation).
+# Generated via: pnpm approve-builds
+onlyBuiltDependencies:
+  - bcrypt
+  - esbuild
+  - msgpackr-extract
