@@ -2,6 +2,7 @@
   "name": "kanban-board",
   "version": "0.1.0",
   "private": true,
+  "packageManager": "pnpm@11.5.0",
   "scripts": {
     "dev": "next dev",
     "dev:all": "concurrently --kill-others-on-fail -n \"next,gateway,auth,project,sprint,notify,files\" -c \"blue,magenta,green,yellow,cyan,white,red\" \"pnpm dev\" \"pnpm --dir api-gateway start:dev\" \"pnpm --dir auth-service start:dev\" \"pnpm --dir project-service start:dev\" \"pnpm --dir sprint-service start:dev\" \"pnpm --dir notification-service start:dev\" \"pnpm --dir file-service start:dev\"",
