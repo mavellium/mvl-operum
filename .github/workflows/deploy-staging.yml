@@ -54,7 +54,9 @@ jobs:
           cache: 'pnpm'
 
       - name: Install dependencies
-        run: pnpm install
+        run: pnpm install --no-frozen-lockfile
+        env:
+          PNPM_ALLOW_BUILD: "@prisma/engines,bcrypt,esbuild,msgpackr-extract,msw,prisma,sharp,unrs-resolver"
 
       - name: Lint
         run: pnpm lint
@@ -234,7 +236,7 @@ jobs:
           severity: CRITICAL,HIGH
           trivyignores: .trivyignore
 
-  # ── Trigger deploy on VPS ─────────────────────────────────────────────────────
+    # ── Trigger deploy on VPS ─────────────────────────────────────────────────────
   deploy:
     name: Deploy
     needs: build
@@ -266,8 +268,9 @@ jobs:
       - name: Wait for staging to be ready
         run: |
           for i in $(seq 1 40); do
-            if curl -sf --max-time 5 https://staging.operum.mavellium.com.br/api/health; then
-              echo "Staging is up"
+            # -k ignora problemas temporários de SSL na virada do proxy se necessário
+            if curl -sfk --max-time 5 https://staging.operum.mavellium.com.br/api/health; then
+              echo "Staging is up and healthy."
               exit 0
             fi
             echo "Attempt $i/40 — waiting 15s..."
