@@ -4,9 +4,6 @@ settings:
   autoInstallPeers: true
   excludeLinksFromLockfile: false
 
-overrides:
-  picomatch: '>=4.0.4'
-
 importers:
 
   .:
@@ -45,7 +42,7 @@ importers:
         specifier: ^8.13.0
         version: 8.20.0
       picomatch:
-        specifier: '>=4.0.4'
+        specifier: 4.0.4
         version: 4.0.4
       reflect-metadata:
         specifier: ^0.2.0
