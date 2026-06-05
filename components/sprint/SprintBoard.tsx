@@ -1,7 +1,7 @@
 'use client'
 
 import { useState, useEffect, useRef } from 'react'
-import { DragDropContext, Droppable, Draggable, DropResult } from '@hello-pangea/dnd'
+import { DragDropContext, Droppable, DropResult } from '@hello-pangea/dnd'
 import SprintHeader from './SprintHeader'
 import ColumnComponent from '@/components/board/Column'
 import CardComponent from '@/components/card/Card'

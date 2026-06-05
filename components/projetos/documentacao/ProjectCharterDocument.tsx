@@ -123,6 +123,7 @@ const ProjectCharterDocument = forwardRef<HTMLDivElement, CharterDocumentProps>(
                 style={{ ...cell, width: 72, textAlign: 'center', verticalAlign: 'middle', padding: 6 }}
               >
                 {logoUrl
+                  // eslint-disable-next-line @next/next/no-img-element
                   ? <img src={logoUrl} alt="Logo" style={{ maxHeight: 56, maxWidth: 64, objectFit: 'contain' }} />
                   : <div style={{ width: 56, height: 56, background: '#e2e8f0', borderRadius: 3 }} />
                 }
@@ -175,6 +176,7 @@ const ProjectCharterDocument = forwardRef<HTMLDivElement, CharterDocumentProps>(
                 <span style={{ fontWeight: 'bold', fontSize: '8pt', color: '#475569' }}>Assinatura do Gerente</span>
                 <br />
                 {gerenteSignatureUrl
+                  // eslint-disable-next-line @next/next/no-img-element
                   ? <img src={gerenteSignatureUrl} alt="Assinatura" style={{ maxHeight: 36, maxWidth: 160, marginTop: 3, objectFit: 'contain' }} />
                   : <span style={{ color: '#94a3b8', fontStyle: 'italic' }}>—</span>
                 }

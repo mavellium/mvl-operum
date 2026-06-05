@@ -20,11 +20,10 @@ export default function AvatarUpload({ name, avatarUrl: initialAvatarUrl, onChan
   const [showMenu, setShowMenu] = useState(false)
   const [error, setError] = useState<string | null>(null)
 
-  // Sincroniza o estado interno quando o pai atualiza a prop após prefill assíncrono
+  // Sincroniza quando o pai atualiza a prop após prefill assíncrono
   // (ex: modo edição onde a URL só chega depois de uma Server Action)
-  useEffect(() => {
-    setAvatarUrl(initialAvatarUrl)
-  }, [initialAvatarUrl])
+  // eslint-disable-next-line react-hooks/set-state-in-effect
+  useEffect(() => { setAvatarUrl(initialAvatarUrl) }, [initialAvatarUrl])
 
   // Fecha o menu ao clicar fora
   useEffect(() => {

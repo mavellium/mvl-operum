@@ -154,11 +154,13 @@ export default function DocumentoStakeholders() {
     [projetoId],
   )
 
+  // eslint-disable-next-line react-hooks/set-state-in-effect
   useEffect(() => { loadVersions() }, [loadVersions])
 
   // ── Busca com debounce no drawer ────────────────────────────────────────────
 
   useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     if (historyOpen) loadVersions(debouncedSearch)
   }, [debouncedSearch, historyOpen, loadVersions])
 

@@ -21,10 +21,6 @@ export default function InlineEdit({ value, onSave, className = '', inputClassNa
     }
   }, [isEditing])
 
-  useEffect(() => {
-    setDraft(value)
-  }, [value])
-
   const save = () => {
     const trimmed = draft.trim()
     if (trimmed && trimmed !== value) onSave(trimmed)
@@ -56,7 +52,7 @@ export default function InlineEdit({ value, onSave, className = '', inputClassNa
 
   return (
     <span
-      onClick={() => setIsEditing(true)}
+      onClick={() => { setDraft(value); setIsEditing(true) }}
       className={`cursor-pointer hover:bg-black/5 rounded px-1 py-0.5 transition-colors ${className}`}
       title="Clique para editar"
     >
