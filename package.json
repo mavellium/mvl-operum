@@ -67,17 +67,5 @@
     "typescript": "^5",
     "vite-tsconfig-paths": "^6.1.1",
     "vitest": "^4.1.2"
-  },
-  "pnpm": {
-    "onlyBuiltDependencies": [
-      "@prisma/engines",
-      "bcrypt",
-      "esbuild",
-      "msgpackr-extract",
-      "msw",
-      "prisma",
-      "sharp",
-      "unrs-resolver"
-    ]
   }
 }
