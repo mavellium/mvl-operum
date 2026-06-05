@@ -6,7 +6,7 @@ RUN corepack enable
 
 FROM base AS deps
 WORKDIR /app
-COPY package.json pnpm-lock.yaml pnpm-workspace.yaml ./
+COPY package.json pnpm-lock.yaml pnpm-workspace.yaml pnpm.yaml ./
 RUN pnpm install --frozen-lockfile --ignore-scripts
 
 FROM base AS builder
@@ -24,9 +24,9 @@ ENV NODE_ENV=production
 RUN addgroup --system --gid 1001 nodejs \
  && adduser  --system --uid 1001 nestjs
 
-COPY package.json pnpm-lock.yaml pnpm-workspace.yaml ./
+COPY package.json pnpm-lock.yaml pnpm-workspace.yaml pnpm.yaml ./
 RUN pnpm install --frozen-lockfile --prod --ignore-scripts --shamefully-hoist \
- && rm -f pnpm-lock.yaml pnpm-workspace.yaml \
+ && rm -f pnpm-lock.yaml pnpm-workspace.yaml pnpm.yaml \
  && chown -R nestjs:nodejs /pnpm \
  && chmod -R 750 /pnpm
 
