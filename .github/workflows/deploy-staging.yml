@@ -241,18 +241,31 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Trigger staging deploy
+        env:
+          STAGING_WEBHOOK_URL: ${{ secrets.STAGING_WEBHOOK_URL }}
+          DEPLOY_WEBHOOK_SECRET: ${{ secrets.DEPLOY_WEBHOOK_SECRET }}
         run: |
-          curl -sf --max-time 300 \
+          if [ -z "$STAGING_WEBHOOK_URL" ]; then
+            echo "::warning::STAGING_WEBHOOK_URL not configured — skipping deploy trigger"
+            exit 0
+          fi
+          curl -sf \
+            --connect-timeout 30 \
+            --max-time 120 \
+            --retry 2 \
+            --retry-delay 15 \
+            --retry-connrefused \
             -X POST \
             -H "Content-Type: application/json" \
-            -H "X-Deploy-Token: ${{ secrets.DEPLOY_WEBHOOK_SECRET }}" \
-            -d '{"sha":"${{ github.sha }}","env":"staging"}' \
-            "${{ secrets.STAGING_WEBHOOK_URL }}"
+            -H "X-Deploy-Token: $DEPLOY_WEBHOOK_SECRET" \
+            -d "{\"sha\":\"${{ github.sha }}\",\"env\":\"staging\"}" \
+            "$STAGING_WEBHOOK_URL"
 
   # ── DAST — scan after deploy ──────────────────────────────────────────────────
   dast:
     name: DAST (ZAP)
     needs: deploy
+    if: needs.deploy.result == 'success'
     runs-on: ubuntu-latest
     permissions:
       contents: read
