@@ -28,7 +28,7 @@ RUN addgroup --system --gid 1001 nodejs \
  && adduser  --system --uid 1001 gateway
 
 COPY package.json pnpm-lock.yaml pnpm-workspace.yaml ./
-RUN pnpm install --frozen-lockfile --prod \
+RUN pnpm install --frozen-lockfile --prod --ignore-scripts \
  && rm -f pnpm-lock.yaml pnpm-workspace.yaml \
  && chown -R gateway:nodejs /pnpm \
  && chmod -R 750 /pnpm

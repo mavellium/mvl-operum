@@ -171,8 +171,6 @@ jobs:
           cache-from: type=registry,ref=ghcr.io/${{ steps.meta.outputs.owner }}/sprint-service:staging
           cache-to: type=inline
 
-      - uses: actions/checkout@v4
-
       - name: Scan app image for vulnerabilities (Trivy)
         uses: aquasecurity/trivy-action@v0.35.0
         with:

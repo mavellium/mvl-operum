@@ -22,7 +22,7 @@ RUN npm install -g prisma@7.7.0 \
 FROM base AS deps
 WORKDIR /app
 # Both files are required explicitly — no glob that silently skips the lockfile.
-COPY package.json pnpm-lock.yaml pnpm.yaml ./
+COPY package.json pnpm-lock.yaml pnpm-workspace.yaml pnpm.yaml ./
 # --frozen-lockfile: fails loudly if lockfile is missing or out of sync.
 # --ignore-scripts: skips postinstall (prisma generate) — we run it explicitly in builder.
 RUN pnpm install --frozen-lockfile --ignore-scripts
