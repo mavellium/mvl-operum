@@ -83,12 +83,17 @@ COPY --from=builder --chown=nextjs:nodejs /app/prisma.config.ts ./prisma.config.
 # symlinks), so it can be merged into the standalone bundle with a plain directory copy.
 # Ownership is chowned on the source before copying (cp -a preserves it) and scoped
 # to nextjs:nodejs — world-execute removed (750 vs 755) — same posture as before.
-RUN npm install prisma@7.7.0 --no-save --prefix /tmp/prisma-cli \
- && chown -R nextjs:nodejs /tmp/prisma-cli/node_modules \
- && chmod -R 750 /tmp/prisma-cli/node_modules \
- && cp -a /tmp/prisma-cli/node_modules/. ./node_modules/ \
- && rm -rf /tmp/prisma-cli
-ENV PATH="/app/node_modules/.bin:$PATH"
+# Instala o Prisma isoladamente para evitar o merge destrutivo do `cp` no Alpine.
+# O symlink garante que o Node resolva 'prisma/config' a partir do ./node_modules local.
+RUN mkdir -p /app/prisma-cli \
+ && npm install prisma@7.7.0 --no-save --prefix /app/prisma-cli \
+ && chown -R nextjs:nodejs /app/prisma-cli \
+ && chmod -R 750 /app/prisma-cli \
+ && ln -s /app/prisma-cli/node_modules/prisma ./node_modules/prisma
+
+ENV PATH="/app/prisma-cli/node_modules/.bin:/app/node_modules/.bin:$PATH"
+
+
 
 USER nextjs
 
