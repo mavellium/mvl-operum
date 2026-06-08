@@ -48,6 +48,26 @@ export const authApi = {
 
   alterarSenha: (password: string) =>
     request('/auth/password/alterar', { method: 'POST', body: JSON.stringify({ password }) }),
+
+  getMyTenants: () =>
+    request<{ userId: string; tenantId: string; tenantName: string; tenantSubdomain: string; role: string; isCurrent: boolean }[]>('/auth/my-tenants'),
+
+  switchTenant: (targetTenantId: string) => {
+    if (!targetTenantId?.trim()) throw new Error('targetTenantId is required')
+    return request<{ token: string; user: { id: string; name: string; email: string; role: string; tenantId: string } }>(
+      '/auth/switch-tenant',
+      { method: 'POST', body: JSON.stringify({ targetTenantId: targetTenantId.trim() }) },
+    )
+  },
+
+  joinTenant: (tenantId: string, password: string) => {
+    if (!tenantId?.trim()) throw new Error('tenantId is required')
+    if (!password || password.length < 8) throw new Error('A senha deve ter pelo menos 8 caracteres')
+    return request<{ ok: boolean }>(
+      '/auth/join-tenant',
+      { method: 'POST', body: JSON.stringify({ tenantId: tenantId.trim(), password }) },
+    )
+  },
 }
 
 type AdminUser = { id: string; name: string; email: string; role: string; avatarUrl?: string | null; isActive?: boolean; phone?: string; cep?: string; logradouro?: string; numero?: string; complemento?: string; bairro?: string; cidade?: string; estado?: string; notes?: string }

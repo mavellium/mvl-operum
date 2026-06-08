@@ -8,11 +8,11 @@ import Link from 'next/link'
 export const dynamic = 'force-dynamic'
 
 export default async function AdminTenantsPage() {
-  const { role } = await verifySession()
+  const { role, userId } = await verifySession()
   if (role !== 'admin') redirect('/projetos')
 
   const [tenants, myTenants] = await Promise.all([
-    listTenants(),
+    listTenants(userId),
     getMyTenantsAction(),
   ])
   const myTenantIds = myTenants.map(t => t.tenantId)

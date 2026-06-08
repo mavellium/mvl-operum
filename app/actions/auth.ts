@@ -15,7 +15,9 @@ import {
   authServiceValidateCode,
   authServiceResetPassword,
 } from '@/lib/authClient'
-import { projectsApi } from '@/lib/api-client'
+import { projectsApi, authApi } from '@/lib/api-client'
+import { verifySession } from '@/lib/dal'
+import { revalidatePath } from 'next/cache'
 
 const SESSION_DURATION_MS = 7 * 24 * 60 * 60 * 1000 // 7 days
 
@@ -189,4 +191,48 @@ export async function resetPasswordAction(_prevState: unknown, formData: FormDat
   } catch (err) {
     return { error: err instanceof Error ? err.message : 'Código inválido ou expirado' }
   }
+}
+
+export async function getMyTenantsAction() {
+  await verifySession() // redirects to /login if not authenticated
+  try {
+    return await authApi.getMyTenants()
+  } catch {
+    return []
+  }
+}
+
+// CUID v1/v2 format — prevents arbitrary string injection downstream
+const CUID_RE = /^c[a-z0-9]{20,}$/i
+
+export async function switchTenantAction(targetTenantId: string) {
+  if (!targetTenantId?.trim() || !CUID_RE.test(targetTenantId)) return
+
+  const { token: oldToken } = await verifySession()
+
+  // Verify the user actually has a membership in the target tenant before switching.
+  // This is a client-side guard; auth-service enforces the same check server-side.
+  const myTenants = await authApi.getMyTenants().catch(() => [])
+  const isMember = myTenants.some(t => t.tenantId === targetTenantId)
+  if (!isMember) return
+
+  // Invalidate old session in Redis (fire-and-forget, but log failures)
+  authServiceLogout(oldToken).catch((err: unknown) => {
+    console.warn('[switchTenantAction] failed to invalidate old session:', err instanceof Error ? err.message : err)
+  })
+
+  const result = await authApi.switchTenant(targetTenantId)
+
+  const cookieStore = await cookies()
+  const expiresAt = new Date(Date.now() + SESSION_DURATION_MS)
+  cookieStore.set('session', result.token, {
+    httpOnly: true,
+    secure: process.env.NODE_ENV === 'production',
+    sameSite: 'strict',
+    expires: expiresAt,
+    path: '/',
+  })
+
+  revalidatePath('/', 'layout')
+  redirect('/projetos')
 }

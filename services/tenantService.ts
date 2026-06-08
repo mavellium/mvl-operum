@@ -58,3 +58,18 @@ export async function updateTenant(id: string, input: UpdateTenantInput) {
     data: parsed.data,
   })
 }
+
+export async function listTenants(callerUserId: string) {
+  const caller = await prisma.user.findUnique({
+    where: { id: callerUserId },
+    select: { role: true },
+  })
+  if (caller?.role !== 'admin') {
+    throw new Error('Acesso restrito a administradores')
+  }
+  return prisma.tenant.findMany({
+    where: { deletedAt: null },
+    include: { _count: { select: { users: true, projects: true } } },
+    orderBy: { createdAt: 'desc' },
+  })
+}

@@ -2,7 +2,8 @@
 
 import { verifySession } from '@/lib/dal'
 import { revalidatePath } from 'next/cache'
-import { adminApi } from '@/lib/api-client'
+import { adminApi, authApi } from '@/lib/api-client'
+import { createTenant, updateTenant, ConflictError } from '@/services/tenantService'
 
 async function requireAdmin() {
   const session = await verifySession()
@@ -102,5 +103,57 @@ export async function setUserRoleAction(userId: string, role: string) {
     return { user }
   } catch (err) {
     return { error: err instanceof Error ? err.message : 'Erro ao alterar role do usuário' }
+  }
+}
+
+const VALID_STATUSES = ['ACTIVE', 'INACTIVE', 'SUSPENDED', 'REMOVED'] as const
+type TenantStatus = typeof VALID_STATUSES[number]
+
+export async function createTenantAction(data: { name: string; subdomain: string }) {
+  try {
+    await requireAdmin()
+    const tenant = await createTenant(data)
+    revalidatePath('/admin/tenants')
+    return { tenant }
+  } catch (err) {
+    if (err instanceof ConflictError) return { error: 'Subdomínio já está em uso' }
+    return { error: err instanceof Error ? err.message : 'Erro ao criar workspace' }
+  }
+}
+
+export async function updateTenantStatusAction(id: string, status: TenantStatus) {
+  if (!VALID_STATUSES.includes(status)) {
+    return { error: 'Status inválido' }
+  }
+  try {
+    await requireAdmin()
+    await updateTenant(id, { status })
+    revalidatePath('/admin/tenants')
+    return {}
+  } catch (err) {
+    return { error: err instanceof Error ? err.message : 'Erro ao atualizar status' }
+  }
+}
+
+export async function updateTenantNameAction(id: string, name: string) {
+  if (!name?.trim()) return { error: 'Nome não pode ser vazio' }
+  try {
+    await requireAdmin()
+    await updateTenant(id, { name: name.trim() })
+    revalidatePath('/admin/tenants')
+    return {}
+  } catch (err) {
+    return { error: err instanceof Error ? err.message : 'Erro ao atualizar nome' }
+  }
+}
+
+export async function joinTenantAction(tenantId: string, password: string) {
+  try {
+    await requireAdmin()
+    await authApi.joinTenant(tenantId, password)
+    revalidatePath('/admin/tenants')
+    return {}
+  } catch (err) {
+    return { error: err instanceof Error ? err.message : 'Erro ao entrar no workspace' }
   }
 }
