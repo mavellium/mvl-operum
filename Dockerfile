@@ -50,15 +50,9 @@ ENV NEXT_TELEMETRY_DISABLED=1
 RUN addgroup --system --gid 1001 nodejs \
  && adduser  --system --uid 1001 nextjs
 
-# Prisma CLI for the migrate service.
-# Ownership is scoped to nextjs:nodejs — world-execute removed (750 vs 755).
-RUN pnpm add --global prisma@7.7.0 \
- && chown -R nextjs:nodejs /pnpm \
- && chmod -R 750 /pnpm
-
 # Schema-engine binary baked in from the engine-dl stage (npm install to a
 # writable dir). PRISMA_SCHEMA_ENGINE_BINARY overrides the default search paths
-# so the global prisma CLI uses this binary instead of looking in /pnpm/global.
+# so the prisma CLI uses this binary instead of trying to download one.
 COPY --from=engine-dl /tmp/schema-engine-linux-musl-openssl-3.0.x /usr/local/bin/prisma-schema-engine
 RUN chmod 750 /usr/local/bin/prisma-schema-engine \
  && chown nextjs:nodejs /usr/local/bin/prisma-schema-engine
@@ -76,6 +70,20 @@ COPY --from=builder --chown=nextjs:nodejs /app/lib/generated ./lib/generated
 # chown so the nextjs user can read them without world-readable permissions.
 COPY --from=builder --chown=nextjs:nodejs /app/prisma ./prisma
 COPY --from=builder --chown=nextjs:nodejs /app/prisma.config.ts ./prisma.config.ts
+
+# Prisma CLI for the migrate service — installed LOCALLY into ./node_modules
+# (not --global). prisma.config.ts does `import { defineConfig } from "prisma/config"`,
+# a subpath of the `prisma` package; Node can only resolve that from /app/node_modules,
+# never from a global pnpm store. Plain npm produces a flat node_modules (no pnpm
+# symlinks), so it can be merged into the standalone bundle with a plain directory copy.
+# Ownership is chowned on the source before copying (cp -a preserves it) and scoped
+# to nextjs:nodejs — world-execute removed (750 vs 755) — same posture as before.
+RUN npm install prisma@7.7.0 --no-save --prefix /tmp/prisma-cli \
+ && chown -R nextjs:nodejs /tmp/prisma-cli/node_modules \
+ && chmod -R 750 /tmp/prisma-cli/node_modules \
+ && cp -a /tmp/prisma-cli/node_modules/. ./node_modules/ \
+ && rm -rf /tmp/prisma-cli
+ENV PATH="/app/node_modules/.bin:$PATH"
 
 USER nextjs
 
