@@ -42,7 +42,12 @@ RUN pnpm exec prisma generate
 RUN pnpm build
 
 # ── Stage 3: Runner ───────────────────────────────────────────────────────────
-FROM base AS runner
+# node:22-alpine directly (not base) — base enables corepack which shims npm.
+# The shim reads packageManager from the standalone package.json and refuses to
+# run npm install, breaking the prisma CLI setup below. The runner doesn't use
+# pnpm, so corepack is not needed here.
+FROM node:22-alpine AS runner
+RUN apk add --no-cache libc6-compat
 WORKDIR /app
 ENV NODE_ENV=production
 ENV NEXT_TELEMETRY_DISABLED=1
