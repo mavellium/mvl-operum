@@ -64,7 +64,11 @@
       "Read(//c/temp/ClaudeCode/kanban-board/**)",
       "Bash(npm test *)",
       "Bash(cd \"/c/temp/ClaudeCode/mvl-operum\" && grep -n \"paths\\\\|baseUrl\\\\|sprint-service\" tsconfig.json 2>/dev/null | head -10)",
-      "Read(//c/c/temp/ClaudeCode/mvl-operum/**)"
+      "Read(//c/c/temp/ClaudeCode/mvl-operum/**)",
+      "Bash(pnpm install *)",
+      "Bash(pnpm update *)",
+      "Bash(docker run --rm node:22-alpine sh -c ' *)",
+      "Bash(git checkout *)"
     ],
     "additionalDirectories": [
       "c:\\temp\\ClaudeCode\\kanban-board\\app\\dashboard\\sprint",

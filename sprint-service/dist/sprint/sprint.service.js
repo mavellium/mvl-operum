@@ -68,15 +68,10 @@ let SprintService = class SprintService {
         });
     }
     async remove(id) {
-        const sprint = await this.findOne(id);
+        await this.findOne(id);
         await prisma_1.prisma.card.updateMany({
-            where: { sprintId: id, status: { not: 'Concluído' }, deletedAt: null },
-            data: {
-                sprintId: null,
-                sprintColumnId: null,
-                status: 'Backlog',
-                projectId: sprint.projectId,
-            },
+            where: { sprintId: id, deletedAt: null },
+            data: { sprintId: null, sprintColumnId: null, sprintPosition: null },
         });
         await prisma_1.prisma.sprint.update({ where: { id }, data: { deletedAt: new Date() } });
     }

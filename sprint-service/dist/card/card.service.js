@@ -15,17 +15,41 @@ exports.CreateCardSchema = zod_1.z.object({
     description: zod_1.z.string().optional(),
     color: zod_1.z.string().optional(),
     position: zod_1.z.number().int().optional(),
-    sprintId: zod_1.z.string().nullable().optional(),
-    sprintColumnId: zod_1.z.string().nullable().optional(),
-    sprintPosition: zod_1.z.number().int().nullable().optional(),
-    status: zod_1.z.string().optional(),
-    projectId: zod_1.z.string().nullable().optional(),
+    sprintId: zod_1.z.string().optional(),
+    sprintColumnId: zod_1.z.string().optional(),
+    sprintPosition: zod_1.z.number().int().optional(),
+    projectId: zod_1.z.string().optional(),
     priority: zod_1.z.string().optional(),
     startDate: zod_1.z.string().datetime().optional(),
     endDate: zod_1.z.string().datetime().optional(),
 });
-exports.UpdateCardSchema = exports.CreateCardSchema.partial();
+exports.UpdateCardSchema = zod_1.z.object({
+    title: zod_1.z.string().min(1).optional(),
+    description: zod_1.z.string().optional(),
+    color: zod_1.z.string().optional(),
+    position: zod_1.z.number().int().optional(),
+    sprintId: zod_1.z.string().nullable().optional(),
+    sprintColumnId: zod_1.z.string().nullable().optional(),
+    sprintPosition: zod_1.z.number().int().nullable().optional(),
+    projectId: zod_1.z.string().optional(),
+    priority: zod_1.z.string().optional(),
+    startDate: zod_1.z.string().datetime().optional(),
+    endDate: zod_1.z.string().datetime().optional(),
+    reason: zod_1.z.string().optional(),
+    userId: zod_1.z.string().optional(),
+});
 let CardService = class CardService {
+    async listBacklog(projectId) {
+        return prisma_1.prisma.card.findMany({
+            where: { projectId, sprintId: null, deletedAt: null },
+            include: {
+                tags: { include: { tag: true } },
+                responsibles: true,
+                attachments: { where: { deletedAt: null } },
+            },
+            orderBy: { position: 'asc' },
+        });
+    }
     async listBySprint(sprintId) {
         return prisma_1.prisma.card.findMany({
             where: { sprintId, deletedAt: null },
@@ -35,18 +59,6 @@ let CardService = class CardService {
                 attachments: { where: { deletedAt: null } },
             },
             orderBy: [{ sprintColumnId: 'asc' }, { position: 'asc' }],
-        });
-    }
-    async listBacklog(projectId) {
-        return prisma_1.prisma.card.findMany({
-            where: { projectId, status: 'Backlog', sprintId: null, deletedAt: null },
-            include: {
-                tags: { include: { tag: true } },
-                responsibles: { include: { user: true } },
-                attachments: { where: { deletedAt: null } },
-                timeEntries: { where: { deletedAt: null } },
-            },
-            orderBy: { position: 'asc' },
         });
     }
     async findOne(id) {
@@ -74,14 +86,41 @@ let CardService = class CardService {
         });
     }
     async update(id, dto) {
-        await this.findOne(id);
+        const { reason, userId, ...cardData } = dto;
+        if (cardData.sprintColumnId !== undefined) {
+            const current = await this.findOne(id);
+            const currentColumnId = current.sprintColumnId;
+            if (cardData.sprintColumnId !== currentColumnId) {
+                const [fromCol, toCol] = await Promise.all([
+                    currentColumnId ? prisma_1.prisma.sprintColumn.findUnique({ where: { id: currentColumnId } }) : null,
+                    cardData.sprintColumnId ? prisma_1.prisma.sprintColumn.findUnique({ where: { id: cardData.sprintColumnId } }) : null,
+                ]);
+                await prisma_1.prisma.cardMovement.create({
+                    data: {
+                        cardId: id,
+                        userId: userId ?? null,
+                        fromColumnId: currentColumnId ?? null,
+                        fromColumnTitle: fromCol?.title ?? null,
+                        toColumnId: cardData.sprintColumnId ?? null,
+                        toColumnTitle: toCol?.title ?? null,
+                        reason: reason ?? null,
+                    },
+                });
+            }
+        }
         return prisma_1.prisma.card.update({
             where: { id },
             data: {
-                ...dto,
-                startDate: dto.startDate ? new Date(dto.startDate) : undefined,
-                endDate: dto.endDate ? new Date(dto.endDate) : undefined,
+                ...cardData,
+                startDate: cardData.startDate ? new Date(cardData.startDate) : undefined,
+                endDate: cardData.endDate ? new Date(cardData.endDate) : undefined,
             },
+        });
+    }
+    async listMovements(cardId) {
+        return prisma_1.prisma.cardMovement.findMany({
+            where: { cardId },
+            orderBy: { movedAt: 'asc' },
         });
     }
     async remove(id) {

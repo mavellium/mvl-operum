@@ -36,8 +36,11 @@ let CardController = class CardController {
             throw new common_1.BadRequestException(parsed.error.issues[0].message);
         return this.cardService.create(parsed.data);
     }
-    update(id, body) {
-        const parsed = card_service_1.UpdateCardSchema.safeParse(body);
+    listMovements(id) {
+        return this.cardService.listMovements(id);
+    }
+    update(id, body, userId) {
+        const parsed = card_service_1.UpdateCardSchema.safeParse({ ...body, userId });
         if (!parsed.success)
             throw new common_1.BadRequestException(parsed.error.issues[0].message);
         return this.cardService.update(id, parsed.data);
@@ -99,11 +102,19 @@ __decorate([
     __metadata("design:returntype", void 0)
 ], CardController.prototype, "create", null);
 __decorate([
+    (0, common_1.Get)('cards/:id/movements'),
+    __param(0, (0, common_1.Param)('id')),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [String]),
+    __metadata("design:returntype", void 0)
+], CardController.prototype, "listMovements", null);
+__decorate([
     (0, common_1.Patch)('cards/:id'),
     __param(0, (0, common_1.Param)('id')),
     __param(1, (0, common_1.Body)()),
+    __param(2, (0, common_1.Headers)('x-user-id')),
     __metadata("design:type", Function),
-    __metadata("design:paramtypes", [String, Object]),
+    __metadata("design:paramtypes", [String, Object, String]),
     __metadata("design:returntype", void 0)
 ], CardController.prototype, "update", null);
 __decorate([

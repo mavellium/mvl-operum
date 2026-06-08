@@ -34,7 +34,6 @@ export declare class SprintController {
             createdAt: Date;
             updatedAt: Date;
             description: string;
-            status: string;
             startDate: Date | null;
             endDate: Date | null;
             projectId: string | null;
@@ -104,20 +103,6 @@ export declare class SprintController {
     remove(id: string): Promise<void>;
     listColumns(sprintId: string): Promise<({
         cards: ({
-            timeEntries: {
-                id: string;
-                deletedAt: Date | null;
-                createdAt: Date;
-                updatedAt: Date;
-                userId: string;
-                description: string | null;
-                cardId: string;
-                startedAt: Date;
-                endedAt: Date | null;
-                duration: number;
-                isRunning: boolean;
-                isManual: boolean;
-            }[];
             tags: ({
                 tag: {
                     name: string;
@@ -141,6 +126,20 @@ export declare class SprintController {
                 isCover: boolean;
                 uploadedAt: Date;
             }[];
+            timeEntries: {
+                id: string;
+                deletedAt: Date | null;
+                createdAt: Date;
+                updatedAt: Date;
+                userId: string;
+                description: string | null;
+                cardId: string;
+                startedAt: Date;
+                endedAt: Date | null;
+                duration: number;
+                isRunning: boolean;
+                isManual: boolean;
+            }[];
             responsibles: ({
                 user: {
                     name: string;
@@ -158,7 +157,6 @@ export declare class SprintController {
             createdAt: Date;
             updatedAt: Date;
             description: string;
-            status: string;
             startDate: Date | null;
             endDate: Date | null;
             projectId: string | null;

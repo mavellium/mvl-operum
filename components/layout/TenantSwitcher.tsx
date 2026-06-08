@@ -1,0 +1,82 @@
+'use client'
+
+import { useEffect, useRef, useState, useTransition } from 'react'
+import { getMyTenantsAction, switchTenantAction } from '@/app/actions/auth'
+
+type TenantEntry = {
+  userId: string
+  tenantId: string
+  tenantName: string
+  tenantSubdomain: string
+  role: string
+  isCurrent: boolean
+}
+
+export default function TenantSwitcher() {
+  const [tenants, setTenants] = useState<TenantEntry[]>([])
+  const [open, setOpen] = useState(false)
+  const [isPending, startTransition] = useTransition()
+  const ref = useRef<HTMLDivElement>(null)
+
+  useEffect(() => {
+    getMyTenantsAction().then(setTenants).catch(() => {})
+  }, [])
+
+  useEffect(() => {
+    function handleClickOutside(e: MouseEvent) {
+      if (ref.current && !ref.current.contains(e.target as Node)) setOpen(false)
+    }
+    document.addEventListener('mousedown', handleClickOutside)
+    return () => document.removeEventListener('mousedown', handleClickOutside)
+  }, [])
+
+  const current = tenants.find(t => t.isCurrent)
+
+  if (tenants.length <= 1 && !current) return null
+
+  return (
+    <div className="relative" ref={ref}>
+      <button
+        onClick={() => setOpen(v => !v)}
+        disabled={isPending}
+        className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-sm font-medium text-gray-700 bg-gray-100 hover:bg-gray-200 transition-colors disabled:opacity-60 focus:outline-none focus:ring-2 focus:ring-blue-100"
+        title="Trocar de workspace"
+      >
+        <span className="max-w-[120px] truncate">{current?.tenantName ?? '...'}</span>
+        {tenants.length > 1 && (
+          isPending ? (
+            <svg className="w-3.5 h-3.5 animate-spin text-gray-500 shrink-0" fill="none" viewBox="0 0 24 24">
+              <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
+              <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8H4z" />
+            </svg>
+          ) : (
+            <svg className="w-3.5 h-3.5 text-gray-500 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+            </svg>
+          )
+        )}
+      </button>
+
+      {open && tenants.length > 1 && (
+        <div className="absolute left-0 top-full mt-2 w-56 bg-white rounded-xl shadow-lg border border-gray-100 py-1 z-50 animate-in fade-in slide-in-from-top-2">
+          <p className="px-3 pt-1 pb-1.5 text-xs font-semibold text-gray-400 uppercase tracking-wide">Trocar de workspace</p>
+          {tenants.map(t => (
+            <button
+              key={t.tenantId}
+              disabled={t.isCurrent || isPending}
+              onClick={() => {
+                setOpen(false)
+                startTransition(() => switchTenantAction(t.tenantId))
+              }}
+              className="w-full flex items-center gap-2.5 px-3 py-2 text-sm text-left hover:bg-gray-50 transition-colors disabled:cursor-default"
+            >
+              <span className={`w-2 h-2 rounded-full shrink-0 ${t.isCurrent ? 'bg-blue-500' : 'bg-gray-300'}`} />
+              <span className="flex-1 truncate text-gray-800">{t.tenantName}</span>
+              {t.isCurrent && <span className="text-xs text-blue-500 font-medium shrink-0">atual</span>}
+            </button>
+          ))}
+        </div>
+      )}
+    </div>
+  )
+}
