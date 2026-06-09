@@ -21,6 +21,8 @@ import {
   ResetPasswordSchema,
   AlterarSenhaSchema,
 } from './dto/password.dto'
+import { SwitchTenantSchema } from './dto/switch-tenant.dto'
+import { JoinTenantSchema } from './dto/join-tenant.dto'
 
 @Controller('auth')
 export class AuthController {
@@ -124,5 +126,33 @@ export class AuthController {
     if (!userId) throw new UnauthorizedException()
     const dto = AlterarSenhaSchema.parse(body)
     await this.authService.alterarSenha(userId, dto.password)
+  }
+
+  @Get('my-tenants')
+  async myTenants(@Headers('x-user-id') userId: string) {
+    if (!userId) throw new UnauthorizedException()
+    return this.authService.getMyTenants(userId)
+  }
+
+  @Post('switch-tenant')
+  @HttpCode(HttpStatus.OK)
+  async switchTenant(
+    @Headers('x-user-id') userId: string,
+    @Body() body: unknown,
+  ) {
+    if (!userId) throw new UnauthorizedException()
+    const dto = SwitchTenantSchema.parse(body)
+    return this.authService.switchTenant(userId, dto.targetTenantId)
+  }
+
+  @Post('join-tenant')
+  @HttpCode(HttpStatus.OK)
+  async joinTenant(
+    @Headers('x-user-id') userId: string,
+    @Body() body: unknown,
+  ) {
+    if (!userId) throw new UnauthorizedException()
+    const dto = JoinTenantSchema.parse(body)
+    return this.authService.joinTenant(userId, dto.tenantId, dto.password)
   }
 }

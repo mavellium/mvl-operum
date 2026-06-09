@@ -6,15 +6,15 @@ import Link from 'next/link'
 export const dynamic = 'force-dynamic'
 
 interface Props {
-  params: Promise<{ sprintId: string }>
+  params: Promise<{ projetoId: string; sprintId: string }>
   searchParams: Promise<{ card?: string }>
 }
 
 export default async function SprintPage({ params, searchParams }: Props) {
-  const { sprintId } = await params
+  const { projetoId, sprintId } = await params
   const { card: initialCardId } = await searchParams
   const [result, currentUser] = await Promise.all([
-    getSprintBoardAction(sprintId),
+    getSprintBoardAction(sprintId, projetoId),
     getCurrentUserAction(),
   ])
 
@@ -34,6 +34,8 @@ export default async function SprintPage({ params, searchParams }: Props) {
         status: result.sprint.status as 'PLANNED' | 'ACTIVE' | 'COMPLETED',
       }}
       columns={result.columns}
+      backlogCards={result.backlogCards}
+      projectId={projetoId}
       users={result.users}
       tags={result.tags}
       currentUser={currentUser}

@@ -4,6 +4,7 @@ import {
   ConflictException,
   NotFoundException,
   ForbiddenException,
+  Logger,
 } from '@nestjs/common'
 import { prisma } from '../prisma'
 import bcrypt from 'bcryptjs'
@@ -29,6 +30,8 @@ function generateCode(length = 8): string {
 
 @Injectable()
 export class AuthService {
+  private readonly logger = new Logger(AuthService.name)
+
   constructor(
     private readonly jwtService: JwtService,
     private readonly redis: RedisService,
@@ -296,5 +299,113 @@ export class AuthService {
       },
     })
     return { success: true }
+  }
+
+  // ── Multi-tenant user federation ─────────────────────────────────────────────
+  // Security model: one physical person can have separate User rows per tenant,
+  // all sharing the same verified email. Access between tenants is earned by
+  // explicitly calling joinTenant (which requires current auth + new password).
+  // switchTenant is only allowed to tenants where a matching User row exists,
+  // scoped strictly to the authenticated user's own email (userId → email lookup).
+
+  async getMyTenants(userId: string) {
+    const me = await prisma.user.findUnique({
+      where: { id: userId },
+      select: { email: true },
+    })
+    if (!me) throw new NotFoundException('Usuário não encontrado')
+
+    const users = await prisma.user.findMany({
+      where: { email: me.email, deletedAt: null, isActive: true },
+      include: { tenant: { select: { name: true, subdomain: true, status: true } } },
+    })
+
+    return users
+      .filter(u => u.tenant.status === 'ACTIVE')
+      .map(u => ({
+        userId: u.id,
+        tenantId: u.tenantId,
+        tenantName: u.tenant.name,
+        tenantSubdomain: u.tenant.subdomain,
+        role: u.role,
+        isCurrent: u.id === userId,
+      }))
+  }
+
+  async switchTenant(userId: string, targetTenantId: string) {
+    const me = await prisma.user.findUnique({
+      where: { id: userId },
+      select: { email: true },
+    })
+    if (!me) throw new UnauthorizedException('Usuário não encontrado')
+
+    // Defense-in-depth: require both email match AND active status
+    const target = await prisma.user.findFirst({
+      where: { email: me.email, tenantId: targetTenantId, deletedAt: null, isActive: true },
+    })
+    // Explicit email assertion — guards against any future query drift
+    if (!target || target.email !== me.email) {
+      throw new NotFoundException('Usuário não encontrado neste workspace')
+    }
+
+    const { token, jti } = await this.jwtService.sign({
+      userId: target.id,
+      tenantId: target.tenantId,
+      role: target.role,
+      tokenVersion: target.tokenVersion,
+    })
+
+    await this.redis.setSession(jti, {
+      userId: target.id,
+      tenantId: target.tenantId,
+      role: target.role,
+      tokenVersion: target.tokenVersion,
+    })
+
+    this.logger.log(`AUDIT switchTenant userId=${userId} → tenantId=${targetTenantId} newUserId=${target.id}`)
+
+    return {
+      token,
+      user: {
+        id: target.id,
+        name: target.name,
+        email: target.email,
+        role: target.role,
+        tenantId: target.tenantId,
+      },
+    }
+  }
+
+  async joinTenant(userId: string, targetTenantId: string, password: string) {
+    const me = await prisma.user.findUnique({
+      where: { id: userId },
+      select: { email: true, name: true },
+    })
+    if (!me) throw new UnauthorizedException('Usuário não encontrado')
+
+    const tenant = await prisma.tenant.findFirst({
+      where: { id: targetTenantId, status: 'ACTIVE', deletedAt: null },
+    })
+    if (!tenant) throw new NotFoundException('Workspace não encontrado ou inativo')
+
+    const existing = await prisma.user.findFirst({
+      where: { email: me.email, tenantId: targetTenantId, deletedAt: null },
+    })
+    if (existing) throw new ConflictException('Você já possui acesso a este workspace')
+
+    const passwordHash = await bcrypt.hash(password, BCRYPT_ROUNDS)
+    await prisma.user.create({
+      data: {
+        name: me.name,
+        email: me.email,
+        passwordHash,
+        tenantId: targetTenantId,
+        role: 'member',
+      },
+    })
+
+    this.logger.log(`AUDIT joinTenant userId=${userId} email=${me.email} tenantId=${targetTenantId}`)
+
+    return { ok: true }
   }
 }

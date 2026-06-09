@@ -2,7 +2,7 @@
 FROM node:22-alpine AS base
 RUN apk add --no-cache libc6-compat
 ENV PNPM_HOME="/pnpm"
-ENV PATH="$PNPM_HOME:$PATH"
+ENV PATH="$PNPM_HOME:$PNPM_HOME/bin:$PATH"
 RUN corepack enable
 
 # ── Stage 1: Install dependencies ─────────────────────────────────────────────
@@ -28,7 +28,7 @@ RUN addgroup --system --gid 1001 nodejs \
  && adduser  --system --uid 1001 gateway
 
 COPY package.json pnpm-lock.yaml pnpm-workspace.yaml ./
-RUN pnpm install --frozen-lockfile --prod \
+RUN pnpm install --frozen-lockfile --prod --ignore-scripts \
  && rm -f pnpm-lock.yaml pnpm-workspace.yaml \
  && chown -R gateway:nodejs /pnpm \
  && chmod -R 750 /pnpm

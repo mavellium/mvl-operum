@@ -44,6 +44,7 @@ model Project {
   name     String
 
   sprints Sprint[]
+  cards   Card[]
 }
 
 // ── Sprints ───────────────────────────────────────────────
@@ -97,11 +98,13 @@ model Card {
   description    String        @default("")
   color          String        @default("#6b7280")
   position       Int           @default(0)
-  sprintId       String
-  sprint         Sprint        @relation(fields: [sprintId], references: [id], onDelete: Cascade)
+  sprintId       String?
+  sprint         Sprint?       @relation(fields: [sprintId], references: [id], onDelete: SetNull)
   sprintColumnId String?
   sprintColumn   SprintColumn? @relation("SprintColumnCards", fields: [sprintColumnId], references: [id], onDelete: SetNull)
   sprintPosition Int?
+  projectId      String?
+  project        Project?      @relation(fields: [projectId], references: [id], onDelete: SetNull)
   priority       String        @default("media")
   tagsImport     String        @default("")
   startDate      DateTime?
@@ -115,6 +118,20 @@ model Card {
   timeEntries  TimeEntry[]
   responsibles CardResponsible[]
   comments     Comment[]
+  movements    CardMovement[]
+}
+
+model CardMovement {
+  id              String   @id @default(cuid())
+  cardId          String
+  card            Card     @relation(fields: [cardId], references: [id], onDelete: Cascade)
+  userId          String?
+  fromColumnId    String?
+  fromColumnTitle String?
+  toColumnId      String?
+  toColumnTitle   String?
+  reason          String?
+  movedAt         DateTime @default(now())
 }
 
 model Tag {

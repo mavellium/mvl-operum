@@ -142,6 +142,8 @@ model UserProject {
   role         String?
   departmentId String?
   hourlyRate   Float?
+  remuneracao  Float?
+  horasDiarias Float?
   startDate    DateTime    @default(now())
   endDate      DateTime?
   order        Int         @default(0)

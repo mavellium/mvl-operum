@@ -44,6 +44,11 @@ export type SprintColumn = $Result.DefaultSelection<Prisma.$SprintColumnPayload>
  */
 export type Card = $Result.DefaultSelection<Prisma.$CardPayload>
 /**
+ * Model CardMovement
+ * 
+ */
+export type CardMovement = $Result.DefaultSelection<Prisma.$CardMovementPayload>
+/**
  * Model Tag
  * 
  */
@@ -299,6 +304,16 @@ export class PrismaClient<
     * ```
     */
   get card(): Prisma.CardDelegate<ExtArgs, ClientOptions>;
+
+  /**
+   * `prisma.cardMovement`: Exposes CRUD operations for the **CardMovement** model.
+    * Example usage:
+    * ```ts
+    * // Fetch zero or more CardMovements
+    * const cardMovements = await prisma.cardMovement.findMany()
+    * ```
+    */
+  get cardMovement(): Prisma.CardMovementDelegate<ExtArgs, ClientOptions>;
 
   /**
    * `prisma.tag`: Exposes CRUD operations for the **Tag** model.
@@ -829,6 +844,7 @@ export namespace Prisma {
     Sprint: 'Sprint',
     SprintColumn: 'SprintColumn',
     Card: 'Card',
+    CardMovement: 'CardMovement',
     Tag: 'Tag',
     CardTag: 'CardTag',
     CardResponsible: 'CardResponsible',
@@ -853,7 +869,7 @@ export namespace Prisma {
       omit: GlobalOmitOptions
     }
     meta: {
-      modelProps: "tenant" | "user" | "project" | "sprint" | "sprintColumn" | "card" | "tag" | "cardTag" | "cardResponsible" | "comment" | "attachment" | "timeEntry" | "dashboardMetric" | "sprintFeedback" | "auditLog"
+      modelProps: "tenant" | "user" | "project" | "sprint" | "sprintColumn" | "card" | "cardMovement" | "tag" | "cardTag" | "cardResponsible" | "comment" | "attachment" | "timeEntry" | "dashboardMetric" | "sprintFeedback" | "auditLog"
       txIsolationLevel: Prisma.TransactionIsolationLevel
     }
     model: {
@@ -1298,6 +1314,80 @@ export namespace Prisma {
           count: {
             args: Prisma.CardCountArgs<ExtArgs>
             result: $Utils.Optional<CardCountAggregateOutputType> | number
+          }
+        }
+      }
+      CardMovement: {
+        payload: Prisma.$CardMovementPayload<ExtArgs>
+        fields: Prisma.CardMovementFieldRefs
+        operations: {
+          findUnique: {
+            args: Prisma.CardMovementFindUniqueArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$CardMovementPayload> | null
+          }
+          findUniqueOrThrow: {
+            args: Prisma.CardMovementFindUniqueOrThrowArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$CardMovementPayload>
+          }
+          findFirst: {
+            args: Prisma.CardMovementFindFirstArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$CardMovementPayload> | null
+          }
+          findFirstOrThrow: {
+            args: Prisma.CardMovementFindFirstOrThrowArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$CardMovementPayload>
+          }
+          findMany: {
+            args: Prisma.CardMovementFindManyArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$CardMovementPayload>[]
+          }
+          create: {
+            args: Prisma.CardMovementCreateArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$CardMovementPayload>
+          }
+          createMany: {
+            args: Prisma.CardMovementCreateManyArgs<ExtArgs>
+            result: BatchPayload
+          }
+          createManyAndReturn: {
+            args: Prisma.CardMovementCreateManyAndReturnArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$CardMovementPayload>[]
+          }
+          delete: {
+            args: Prisma.CardMovementDeleteArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$CardMovementPayload>
+          }
+          update: {
+            args: Prisma.CardMovementUpdateArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$CardMovementPayload>
+          }
+          deleteMany: {
+            args: Prisma.CardMovementDeleteManyArgs<ExtArgs>
+            result: BatchPayload
+          }
+          updateMany: {
+            args: Prisma.CardMovementUpdateManyArgs<ExtArgs>
+            result: BatchPayload
+          }
+          updateManyAndReturn: {
+            args: Prisma.CardMovementUpdateManyAndReturnArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$CardMovementPayload>[]
+          }
+          upsert: {
+            args: Prisma.CardMovementUpsertArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$CardMovementPayload>
+          }
+          aggregate: {
+            args: Prisma.CardMovementAggregateArgs<ExtArgs>
+            result: $Utils.Optional<AggregateCardMovement>
+          }
+          groupBy: {
+            args: Prisma.CardMovementGroupByArgs<ExtArgs>
+            result: $Utils.Optional<CardMovementGroupByOutputType>[]
+          }
+          count: {
+            args: Prisma.CardMovementCountArgs<ExtArgs>
+            result: $Utils.Optional<CardMovementCountAggregateOutputType> | number
           }
         }
       }
@@ -2081,6 +2171,7 @@ export namespace Prisma {
     sprint?: SprintOmit
     sprintColumn?: SprintColumnOmit
     card?: CardOmit
+    cardMovement?: CardMovementOmit
     tag?: TagOmit
     cardTag?: CardTagOmit
     cardResponsible?: CardResponsibleOmit
@@ -2287,10 +2378,12 @@ export namespace Prisma {
 
   export type ProjectCountOutputType = {
     sprints: number
+    cards: number
   }
 
   export type ProjectCountOutputTypeSelect<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
     sprints?: boolean | ProjectCountOutputTypeCountSprintsArgs
+    cards?: boolean | ProjectCountOutputTypeCountCardsArgs
   }
 
   // Custom InputTypes
@@ -2309,6 +2402,13 @@ export namespace Prisma {
    */
   export type ProjectCountOutputTypeCountSprintsArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
     where?: SprintWhereInput
+  }
+
+  /**
+   * ProjectCountOutputType without action
+   */
+  export type ProjectCountOutputTypeCountCardsArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    where?: CardWhereInput
   }
 
 
@@ -2411,6 +2511,7 @@ export namespace Prisma {
     timeEntries: number
     responsibles: number
     comments: number
+    movements: number
   }
 
   export type CardCountOutputTypeSelect<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
@@ -2419,6 +2520,7 @@ export namespace Prisma {
     timeEntries?: boolean | CardCountOutputTypeCountTimeEntriesArgs
     responsibles?: boolean | CardCountOutputTypeCountResponsiblesArgs
     comments?: boolean | CardCountOutputTypeCountCommentsArgs
+    movements?: boolean | CardCountOutputTypeCountMovementsArgs
   }
 
   // Custom InputTypes
@@ -2465,6 +2567,13 @@ export namespace Prisma {
    */
   export type CardCountOutputTypeCountCommentsArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
     where?: CommentWhereInput
+  }
+
+  /**
+   * CardCountOutputType without action
+   */
+  export type CardCountOutputTypeCountMovementsArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    where?: CardMovementWhereInput
   }
 
 
@@ -4957,6 +5066,7 @@ export namespace Prisma {
     tenantId?: boolean
     name?: boolean
     sprints?: boolean | Project$sprintsArgs<ExtArgs>
+    cards?: boolean | Project$cardsArgs<ExtArgs>
     _count?: boolean | ProjectCountOutputTypeDefaultArgs<ExtArgs>
   }, ExtArgs["result"]["project"]>
 
@@ -4981,6 +5091,7 @@ export namespace Prisma {
   export type ProjectOmit<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetOmit<"id" | "tenantId" | "name", ExtArgs["result"]["project"]>
   export type ProjectInclude<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
     sprints?: boolean | Project$sprintsArgs<ExtArgs>
+    cards?: boolean | Project$cardsArgs<ExtArgs>
     _count?: boolean | ProjectCountOutputTypeDefaultArgs<ExtArgs>
   }
   export type ProjectIncludeCreateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {}
@@ -4990,6 +5101,7 @@ export namespace Prisma {
     name: "Project"
     objects: {
       sprints: Prisma.$SprintPayload<ExtArgs>[]
+      cards: Prisma.$CardPayload<ExtArgs>[]
     }
     scalars: $Extensions.GetPayloadResult<{
       id: string
@@ -5390,6 +5502,7 @@ export namespace Prisma {
   export interface Prisma__ProjectClient<T, Null = never, ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs, GlobalOmitOptions = {}> extends Prisma.PrismaPromise<T> {
     readonly [Symbol.toStringTag]: "PrismaPromise"
     sprints<T extends Project$sprintsArgs<ExtArgs> = {}>(args?: Subset<T, Project$sprintsArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$SprintPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
+    cards<T extends Project$cardsArgs<ExtArgs> = {}>(args?: Subset<T, Project$cardsArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$CardPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
     /**
      * Attaches callbacks for the resolution and/or rejection of the Promise.
      * @param onfulfilled The callback to execute when the Promise is resolved.
@@ -5836,6 +5949,30 @@ export namespace Prisma {
     take?: number
     skip?: number
     distinct?: SprintScalarFieldEnum | SprintScalarFieldEnum[]
+  }
+
+  /**
+   * Project.cards
+   */
+  export type Project$cardsArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the Card
+     */
+    select?: CardSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the Card
+     */
+    omit?: CardOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: CardInclude<ExtArgs> | null
+    where?: CardWhereInput
+    orderBy?: CardOrderByWithRelationInput | CardOrderByWithRelationInput[]
+    cursor?: CardWhereUniqueInput
+    take?: number
+    skip?: number
+    distinct?: CardScalarFieldEnum | CardScalarFieldEnum[]
   }
 
   /**
@@ -8406,6 +8543,7 @@ export namespace Prisma {
     sprintId: string | null
     sprintColumnId: string | null
     sprintPosition: number | null
+    projectId: string | null
     priority: string | null
     tagsImport: string | null
     startDate: Date | null
@@ -8424,6 +8562,7 @@ export namespace Prisma {
     sprintId: string | null
     sprintColumnId: string | null
     sprintPosition: number | null
+    projectId: string | null
     priority: string | null
     tagsImport: string | null
     startDate: Date | null
@@ -8442,6 +8581,7 @@ export namespace Prisma {
     sprintId: number
     sprintColumnId: number
     sprintPosition: number
+    projectId: number
     priority: number
     tagsImport: number
     startDate: number
@@ -8472,6 +8612,7 @@ export namespace Prisma {
     sprintId?: true
     sprintColumnId?: true
     sprintPosition?: true
+    projectId?: true
     priority?: true
     tagsImport?: true
     startDate?: true
@@ -8490,6 +8631,7 @@ export namespace Prisma {
     sprintId?: true
     sprintColumnId?: true
     sprintPosition?: true
+    projectId?: true
     priority?: true
     tagsImport?: true
     startDate?: true
@@ -8508,6 +8650,7 @@ export namespace Prisma {
     sprintId?: true
     sprintColumnId?: true
     sprintPosition?: true
+    projectId?: true
     priority?: true
     tagsImport?: true
     startDate?: true
@@ -8610,9 +8753,10 @@ export namespace Prisma {
     description: string
     color: string
     position: number
-    sprintId: string
+    sprintId: string | null
     sprintColumnId: string | null
     sprintPosition: number | null
+    projectId: string | null
     priority: string
     tagsImport: string
     startDate: Date | null
@@ -8650,6 +8794,7 @@ export namespace Prisma {
     sprintId?: boolean
     sprintColumnId?: boolean
     sprintPosition?: boolean
+    projectId?: boolean
     priority?: boolean
     tagsImport?: boolean
     startDate?: boolean
@@ -8657,13 +8802,15 @@ export namespace Prisma {
     deletedAt?: boolean
     createdAt?: boolean
     updatedAt?: boolean
-    sprint?: boolean | SprintDefaultArgs<ExtArgs>
+    sprint?: boolean | Card$sprintArgs<ExtArgs>
     sprintColumn?: boolean | Card$sprintColumnArgs<ExtArgs>
+    project?: boolean | Card$projectArgs<ExtArgs>
     tags?: boolean | Card$tagsArgs<ExtArgs>
     attachments?: boolean | Card$attachmentsArgs<ExtArgs>
     timeEntries?: boolean | Card$timeEntriesArgs<ExtArgs>
     responsibles?: boolean | Card$responsiblesArgs<ExtArgs>
     comments?: boolean | Card$commentsArgs<ExtArgs>
+    movements?: boolean | Card$movementsArgs<ExtArgs>
     _count?: boolean | CardCountOutputTypeDefaultArgs<ExtArgs>
   }, ExtArgs["result"]["card"]>
 
@@ -8676,6 +8823,7 @@ export namespace Prisma {
     sprintId?: boolean
     sprintColumnId?: boolean
     sprintPosition?: boolean
+    projectId?: boolean
     priority?: boolean
     tagsImport?: boolean
     startDate?: boolean
@@ -8683,8 +8831,9 @@ export namespace Prisma {
     deletedAt?: boolean
     createdAt?: boolean
     updatedAt?: boolean
-    sprint?: boolean | SprintDefaultArgs<ExtArgs>
+    sprint?: boolean | Card$sprintArgs<ExtArgs>
     sprintColumn?: boolean | Card$sprintColumnArgs<ExtArgs>
+    project?: boolean | Card$projectArgs<ExtArgs>
   }, ExtArgs["result"]["card"]>
 
   export type CardSelectUpdateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetSelect<{
@@ -8696,6 +8845,7 @@ export namespace Prisma {
     sprintId?: boolean
     sprintColumnId?: boolean
     sprintPosition?: boolean
+    projectId?: boolean
     priority?: boolean
     tagsImport?: boolean
     startDate?: boolean
@@ -8703,8 +8853,9 @@ export namespace Prisma {
     deletedAt?: boolean
     createdAt?: boolean
     updatedAt?: boolean
-    sprint?: boolean | SprintDefaultArgs<ExtArgs>
+    sprint?: boolean | Card$sprintArgs<ExtArgs>
     sprintColumn?: boolean | Card$sprintColumnArgs<ExtArgs>
+    project?: boolean | Card$projectArgs<ExtArgs>
   }, ExtArgs["result"]["card"]>
 
   export type CardSelectScalar = {
@@ -8716,6 +8867,7 @@ export namespace Prisma {
     sprintId?: boolean
     sprintColumnId?: boolean
     sprintPosition?: boolean
+    projectId?: boolean
     priority?: boolean
     tagsImport?: boolean
     startDate?: boolean
@@ -8725,36 +8877,42 @@ export namespace Prisma {
     updatedAt?: boolean
   }
 
-  export type CardOmit<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetOmit<"id" | "title" | "description" | "color" | "position" | "sprintId" | "sprintColumnId" | "sprintPosition" | "priority" | "tagsImport" | "startDate" | "endDate" | "deletedAt" | "createdAt" | "updatedAt", ExtArgs["result"]["card"]>
+  export type CardOmit<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetOmit<"id" | "title" | "description" | "color" | "position" | "sprintId" | "sprintColumnId" | "sprintPosition" | "projectId" | "priority" | "tagsImport" | "startDate" | "endDate" | "deletedAt" | "createdAt" | "updatedAt", ExtArgs["result"]["card"]>
   export type CardInclude<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
-    sprint?: boolean | SprintDefaultArgs<ExtArgs>
+    sprint?: boolean | Card$sprintArgs<ExtArgs>
     sprintColumn?: boolean | Card$sprintColumnArgs<ExtArgs>
+    project?: boolean | Card$projectArgs<ExtArgs>
     tags?: boolean | Card$tagsArgs<ExtArgs>
     attachments?: boolean | Card$attachmentsArgs<ExtArgs>
     timeEntries?: boolean | Card$timeEntriesArgs<ExtArgs>
     responsibles?: boolean | Card$responsiblesArgs<ExtArgs>
     comments?: boolean | Card$commentsArgs<ExtArgs>
+    movements?: boolean | Card$movementsArgs<ExtArgs>
     _count?: boolean | CardCountOutputTypeDefaultArgs<ExtArgs>
   }
   export type CardIncludeCreateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
-    sprint?: boolean | SprintDefaultArgs<ExtArgs>
+    sprint?: boolean | Card$sprintArgs<ExtArgs>
     sprintColumn?: boolean | Card$sprintColumnArgs<ExtArgs>
+    project?: boolean | Card$projectArgs<ExtArgs>
   }
   export type CardIncludeUpdateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
-    sprint?: boolean | SprintDefaultArgs<ExtArgs>
+    sprint?: boolean | Card$sprintArgs<ExtArgs>
     sprintColumn?: boolean | Card$sprintColumnArgs<ExtArgs>
+    project?: boolean | Card$projectArgs<ExtArgs>
   }
 
   export type $CardPayload<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
     name: "Card"
     objects: {
-      sprint: Prisma.$SprintPayload<ExtArgs>
+      sprint: Prisma.$SprintPayload<ExtArgs> | null
       sprintColumn: Prisma.$SprintColumnPayload<ExtArgs> | null
+      project: Prisma.$ProjectPayload<ExtArgs> | null
       tags: Prisma.$CardTagPayload<ExtArgs>[]
       attachments: Prisma.$AttachmentPayload<ExtArgs>[]
       timeEntries: Prisma.$TimeEntryPayload<ExtArgs>[]
       responsibles: Prisma.$CardResponsiblePayload<ExtArgs>[]
       comments: Prisma.$CommentPayload<ExtArgs>[]
+      movements: Prisma.$CardMovementPayload<ExtArgs>[]
     }
     scalars: $Extensions.GetPayloadResult<{
       id: string
@@ -8762,9 +8920,10 @@ export namespace Prisma {
       description: string
       color: string
       position: number
-      sprintId: string
+      sprintId: string | null
       sprintColumnId: string | null
       sprintPosition: number | null
+      projectId: string | null
       priority: string
       tagsImport: string
       startDate: Date | null
@@ -9166,13 +9325,15 @@ export namespace Prisma {
    */
   export interface Prisma__CardClient<T, Null = never, ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs, GlobalOmitOptions = {}> extends Prisma.PrismaPromise<T> {
     readonly [Symbol.toStringTag]: "PrismaPromise"
-    sprint<T extends SprintDefaultArgs<ExtArgs> = {}>(args?: Subset<T, SprintDefaultArgs<ExtArgs>>): Prisma__SprintClient<$Result.GetResult<Prisma.$SprintPayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions> | Null, Null, ExtArgs, GlobalOmitOptions>
+    sprint<T extends Card$sprintArgs<ExtArgs> = {}>(args?: Subset<T, Card$sprintArgs<ExtArgs>>): Prisma__SprintClient<$Result.GetResult<Prisma.$SprintPayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions> | null, null, ExtArgs, GlobalOmitOptions>
     sprintColumn<T extends Card$sprintColumnArgs<ExtArgs> = {}>(args?: Subset<T, Card$sprintColumnArgs<ExtArgs>>): Prisma__SprintColumnClient<$Result.GetResult<Prisma.$SprintColumnPayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions> | null, null, ExtArgs, GlobalOmitOptions>
+    project<T extends Card$projectArgs<ExtArgs> = {}>(args?: Subset<T, Card$projectArgs<ExtArgs>>): Prisma__ProjectClient<$Result.GetResult<Prisma.$ProjectPayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions> | null, null, ExtArgs, GlobalOmitOptions>
     tags<T extends Card$tagsArgs<ExtArgs> = {}>(args?: Subset<T, Card$tagsArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$CardTagPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
     attachments<T extends Card$attachmentsArgs<ExtArgs> = {}>(args?: Subset<T, Card$attachmentsArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$AttachmentPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
     timeEntries<T extends Card$timeEntriesArgs<ExtArgs> = {}>(args?: Subset<T, Card$timeEntriesArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$TimeEntryPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
     responsibles<T extends Card$responsiblesArgs<ExtArgs> = {}>(args?: Subset<T, Card$responsiblesArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$CardResponsiblePayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
     comments<T extends Card$commentsArgs<ExtArgs> = {}>(args?: Subset<T, Card$commentsArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$CommentPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
+    movements<T extends Card$movementsArgs<ExtArgs> = {}>(args?: Subset<T, Card$movementsArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$CardMovementPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
     /**
      * Attaches callbacks for the resolution and/or rejection of the Promise.
      * @param onfulfilled The callback to execute when the Promise is resolved.
@@ -9210,6 +9371,7 @@ export namespace Prisma {
     readonly sprintId: FieldRef<"Card", 'String'>
     readonly sprintColumnId: FieldRef<"Card", 'String'>
     readonly sprintPosition: FieldRef<"Card", 'Int'>
+    readonly projectId: FieldRef<"Card", 'String'>
     readonly priority: FieldRef<"Card", 'String'>
     readonly tagsImport: FieldRef<"Card", 'String'>
     readonly startDate: FieldRef<"Card", 'DateTime'>
@@ -9618,6 +9780,25 @@ export namespace Prisma {
   }
 
   /**
+   * Card.sprint
+   */
+  export type Card$sprintArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the Sprint
+     */
+    select?: SprintSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the Sprint
+     */
+    omit?: SprintOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: SprintInclude<ExtArgs> | null
+    where?: SprintWhereInput
+  }
+
+  /**
    * Card.sprintColumn
    */
   export type Card$sprintColumnArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
@@ -9634,6 +9815,25 @@ export namespace Prisma {
      */
     include?: SprintColumnInclude<ExtArgs> | null
     where?: SprintColumnWhereInput
+  }
+
+  /**
+   * Card.project
+   */
+  export type Card$projectArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the Project
+     */
+    select?: ProjectSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the Project
+     */
+    omit?: ProjectOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: ProjectInclude<ExtArgs> | null
+    where?: ProjectWhereInput
   }
 
   /**
@@ -9757,6 +9957,30 @@ export namespace Prisma {
   }
 
   /**
+   * Card.movements
+   */
+  export type Card$movementsArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the CardMovement
+     */
+    select?: CardMovementSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the CardMovement
+     */
+    omit?: CardMovementOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: CardMovementInclude<ExtArgs> | null
+    where?: CardMovementWhereInput
+    orderBy?: CardMovementOrderByWithRelationInput | CardMovementOrderByWithRelationInput[]
+    cursor?: CardMovementWhereUniqueInput
+    take?: number
+    skip?: number
+    distinct?: CardMovementScalarFieldEnum | CardMovementScalarFieldEnum[]
+  }
+
+  /**
    * Card without action
    */
   export type CardDefaultArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
@@ -9772,6 +9996,1121 @@ export namespace Prisma {
      * Choose, which related nodes to fetch as well
      */
     include?: CardInclude<ExtArgs> | null
+  }
+
+
+  /**
+   * Model CardMovement
+   */
+
+  export type AggregateCardMovement = {
+    _count: CardMovementCountAggregateOutputType | null
+    _min: CardMovementMinAggregateOutputType | null
+    _max: CardMovementMaxAggregateOutputType | null
+  }
+
+  export type CardMovementMinAggregateOutputType = {
+    id: string | null
+    cardId: string | null
+    userId: string | null
+    fromColumnId: string | null
+    fromColumnTitle: string | null
+    toColumnId: string | null
+    toColumnTitle: string | null
+    reason: string | null
+    movedAt: Date | null
+  }
+
+  export type CardMovementMaxAggregateOutputType = {
+    id: string | null
+    cardId: string | null
+    userId: string | null
+    fromColumnId: string | null
+    fromColumnTitle: string | null
+    toColumnId: string | null
+    toColumnTitle: string | null
+    reason: string | null
+    movedAt: Date | null
+  }
+
+  export type CardMovementCountAggregateOutputType = {
+    id: number
+    cardId: number
+    userId: number
+    fromColumnId: number
+    fromColumnTitle: number
+    toColumnId: number
+    toColumnTitle: number
+    reason: number
+    movedAt: number
+    _all: number
+  }
+
+
+  export type CardMovementMinAggregateInputType = {
+    id?: true
+    cardId?: true
+    userId?: true
+    fromColumnId?: true
+    fromColumnTitle?: true
+    toColumnId?: true
+    toColumnTitle?: true
+    reason?: true
+    movedAt?: true
+  }
+
+  export type CardMovementMaxAggregateInputType = {
+    id?: true
+    cardId?: true
+    userId?: true
+    fromColumnId?: true
+    fromColumnTitle?: true
+    toColumnId?: true
+    toColumnTitle?: true
+    reason?: true
+    movedAt?: true
+  }
+
+  export type CardMovementCountAggregateInputType = {
+    id?: true
+    cardId?: true
+    userId?: true
+    fromColumnId?: true
+    fromColumnTitle?: true
+    toColumnId?: true
+    toColumnTitle?: true
+    reason?: true
+    movedAt?: true
+    _all?: true
+  }
+
+  export type CardMovementAggregateArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Filter which CardMovement to aggregate.
+     */
+    where?: CardMovementWhereInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+     * 
+     * Determine the order of CardMovements to fetch.
+     */
+    orderBy?: CardMovementOrderByWithRelationInput | CardMovementOrderByWithRelationInput[]
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+     * 
+     * Sets the start position
+     */
+    cursor?: CardMovementWhereUniqueInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Take `±n` CardMovements from the position of the cursor.
+     */
+    take?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Skip the first `n` CardMovements.
+     */
+    skip?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Count returned CardMovements
+    **/
+    _count?: true | CardMovementCountAggregateInputType
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Select which fields to find the minimum value
+    **/
+    _min?: CardMovementMinAggregateInputType
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Select which fields to find the maximum value
+    **/
+    _max?: CardMovementMaxAggregateInputType
+  }
+
+  export type GetCardMovementAggregateType<T extends CardMovementAggregateArgs> = {
+        [P in keyof T & keyof AggregateCardMovement]: P extends '_count' | 'count'
+      ? T[P] extends true
+        ? number
+        : GetScalarType<T[P], AggregateCardMovement[P]>
+      : GetScalarType<T[P], AggregateCardMovement[P]>
+  }
+
+
+
+
+  export type CardMovementGroupByArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    where?: CardMovementWhereInput
+    orderBy?: CardMovementOrderByWithAggregationInput | CardMovementOrderByWithAggregationInput[]
+    by: CardMovementScalarFieldEnum[] | CardMovementScalarFieldEnum
+    having?: CardMovementScalarWhereWithAggregatesInput
+    take?: number
+    skip?: number
+    _count?: CardMovementCountAggregateInputType | true
+    _min?: CardMovementMinAggregateInputType
+    _max?: CardMovementMaxAggregateInputType
+  }
+
+  export type CardMovementGroupByOutputType = {
+    id: string
+    cardId: string
+    userId: string | null
+    fromColumnId: string | null
+    fromColumnTitle: string | null
+    toColumnId: string | null
+    toColumnTitle: string | null
+    reason: string | null
+    movedAt: Date
+    _count: CardMovementCountAggregateOutputType | null
+    _min: CardMovementMinAggregateOutputType | null
+    _max: CardMovementMaxAggregateOutputType | null
+  }
+
+  type GetCardMovementGroupByPayload<T extends CardMovementGroupByArgs> = Prisma.PrismaPromise<
+    Array<
+      PickEnumerable<CardMovementGroupByOutputType, T['by']> &
+        {
+          [P in ((keyof T) & (keyof CardMovementGroupByOutputType))]: P extends '_count'
+            ? T[P] extends boolean
+              ? number
+              : GetScalarType<T[P], CardMovementGroupByOutputType[P]>
+            : GetScalarType<T[P], CardMovementGroupByOutputType[P]>
+        }
+      >
+    >
+
+
+  export type CardMovementSelect<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetSelect<{
+    id?: boolean
+    cardId?: boolean
+    userId?: boolean
+    fromColumnId?: boolean
+    fromColumnTitle?: boolean
+    toColumnId?: boolean
+    toColumnTitle?: boolean
+    reason?: boolean
+    movedAt?: boolean
+    card?: boolean | CardDefaultArgs<ExtArgs>
+  }, ExtArgs["result"]["cardMovement"]>
+
+  export type CardMovementSelectCreateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetSelect<{
+    id?: boolean
+    cardId?: boolean
+    userId?: boolean
+    fromColumnId?: boolean
+    fromColumnTitle?: boolean
+    toColumnId?: boolean
+    toColumnTitle?: boolean
+    reason?: boolean
+    movedAt?: boolean
+    card?: boolean | CardDefaultArgs<ExtArgs>
+  }, ExtArgs["result"]["cardMovement"]>
+
+  export type CardMovementSelectUpdateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetSelect<{
+    id?: boolean
+    cardId?: boolean
+    userId?: boolean
+    fromColumnId?: boolean
+    fromColumnTitle?: boolean
+    toColumnId?: boolean
+    toColumnTitle?: boolean
+    reason?: boolean
+    movedAt?: boolean
+    card?: boolean | CardDefaultArgs<ExtArgs>
+  }, ExtArgs["result"]["cardMovement"]>
+
+  export type CardMovementSelectScalar = {
+    id?: boolean
+    cardId?: boolean
+    userId?: boolean
+    fromColumnId?: boolean
+    fromColumnTitle?: boolean
+    toColumnId?: boolean
+    toColumnTitle?: boolean
+    reason?: boolean
+    movedAt?: boolean
+  }
+
+  export type CardMovementOmit<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetOmit<"id" | "cardId" | "userId" | "fromColumnId" | "fromColumnTitle" | "toColumnId" | "toColumnTitle" | "reason" | "movedAt", ExtArgs["result"]["cardMovement"]>
+  export type CardMovementInclude<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    card?: boolean | CardDefaultArgs<ExtArgs>
+  }
+  export type CardMovementIncludeCreateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    card?: boolean | CardDefaultArgs<ExtArgs>
+  }
+  export type CardMovementIncludeUpdateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    card?: boolean | CardDefaultArgs<ExtArgs>
+  }
+
+  export type $CardMovementPayload<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    name: "CardMovement"
+    objects: {
+      card: Prisma.$CardPayload<ExtArgs>
+    }
+    scalars: $Extensions.GetPayloadResult<{
+      id: string
+      cardId: string
+      userId: string | null
+      fromColumnId: string | null
+      fromColumnTitle: string | null
+      toColumnId: string | null
+      toColumnTitle: string | null
+      reason: string | null
+      movedAt: Date
+    }, ExtArgs["result"]["cardMovement"]>
+    composites: {}
+  }
+
+  type CardMovementGetPayload<S extends boolean | null | undefined | CardMovementDefaultArgs> = $Result.GetResult<Prisma.$CardMovementPayload, S>
+
+  type CardMovementCountArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> =
+    Omit<CardMovementFindManyArgs, 'select' | 'include' | 'distinct' | 'omit'> & {
+      select?: CardMovementCountAggregateInputType | true
+    }
+
+  export interface CardMovementDelegate<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs, GlobalOmitOptions = {}> {
+    [K: symbol]: { types: Prisma.TypeMap<ExtArgs>['model']['CardMovement'], meta: { name: 'CardMovement' } }
+    /**
+     * Find zero or one CardMovement that matches the filter.
+     * @param {CardMovementFindUniqueArgs} args - Arguments to find a CardMovement
+     * @example
+     * // Get one CardMovement
+     * const cardMovement = await prisma.cardMovement.findUnique({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     */
+    findUnique<T extends CardMovementFindUniqueArgs>(args: SelectSubset<T, CardMovementFindUniqueArgs<ExtArgs>>): Prisma__CardMovementClient<$Result.GetResult<Prisma.$CardMovementPayload<ExtArgs>, T, "findUnique", GlobalOmitOptions> | null, null, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Find one CardMovement that matches the filter or throw an error with `error.code='P2025'`
+     * if no matches were found.
+     * @param {CardMovementFindUniqueOrThrowArgs} args - Arguments to find a CardMovement
+     * @example
+     * // Get one CardMovement
+     * const cardMovement = await prisma.cardMovement.findUniqueOrThrow({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     */
+    findUniqueOrThrow<T extends CardMovementFindUniqueOrThrowArgs>(args: SelectSubset<T, CardMovementFindUniqueOrThrowArgs<ExtArgs>>): Prisma__CardMovementClient<$Result.GetResult<Prisma.$CardMovementPayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Find the first CardMovement that matches the filter.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {CardMovementFindFirstArgs} args - Arguments to find a CardMovement
+     * @example
+     * // Get one CardMovement
+     * const cardMovement = await prisma.cardMovement.findFirst({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     */
+    findFirst<T extends CardMovementFindFirstArgs>(args?: SelectSubset<T, CardMovementFindFirstArgs<ExtArgs>>): Prisma__CardMovementClient<$Result.GetResult<Prisma.$CardMovementPayload<ExtArgs>, T, "findFirst", GlobalOmitOptions> | null, null, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Find the first CardMovement that matches the filter or
+     * throw `PrismaKnownClientError` with `P2025` code if no matches were found.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {CardMovementFindFirstOrThrowArgs} args - Arguments to find a CardMovement
+     * @example
+     * // Get one CardMovement
+     * const cardMovement = await prisma.cardMovement.findFirstOrThrow({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     */
+    findFirstOrThrow<T extends CardMovementFindFirstOrThrowArgs>(args?: SelectSubset<T, CardMovementFindFirstOrThrowArgs<ExtArgs>>): Prisma__CardMovementClient<$Result.GetResult<Prisma.$CardMovementPayload<ExtArgs>, T, "findFirstOrThrow", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Find zero or more CardMovements that matches the filter.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {CardMovementFindManyArgs} args - Arguments to filter and select certain fields only.
+     * @example
+     * // Get all CardMovements
+     * const cardMovements = await prisma.cardMovement.findMany()
+     * 
+     * // Get first 10 CardMovements
+     * const cardMovements = await prisma.cardMovement.findMany({ take: 10 })
+     * 
+     * // Only select the `id`
+     * const cardMovementWithIdOnly = await prisma.cardMovement.findMany({ select: { id: true } })
+     * 
+     */
+    findMany<T extends CardMovementFindManyArgs>(args?: SelectSubset<T, CardMovementFindManyArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$CardMovementPayload<ExtArgs>, T, "findMany", GlobalOmitOptions>>
+
+    /**
+     * Create a CardMovement.
+     * @param {CardMovementCreateArgs} args - Arguments to create a CardMovement.
+     * @example
+     * // Create one CardMovement
+     * const CardMovement = await prisma.cardMovement.create({
+     *   data: {
+     *     // ... data to create a CardMovement
+     *   }
+     * })
+     * 
+     */
+    create<T extends CardMovementCreateArgs>(args: SelectSubset<T, CardMovementCreateArgs<ExtArgs>>): Prisma__CardMovementClient<$Result.GetResult<Prisma.$CardMovementPayload<ExtArgs>, T, "create", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Create many CardMovements.
+     * @param {CardMovementCreateManyArgs} args - Arguments to create many CardMovements.
+     * @example
+     * // Create many CardMovements
+     * const cardMovement = await prisma.cardMovement.createMany({
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     *     
+     */
+    createMany<T extends CardMovementCreateManyArgs>(args?: SelectSubset<T, CardMovementCreateManyArgs<ExtArgs>>): Prisma.PrismaPromise<BatchPayload>
+
+    /**
+     * Create many CardMovements and returns the data saved in the database.
+     * @param {CardMovementCreateManyAndReturnArgs} args - Arguments to create many CardMovements.
+     * @example
+     * // Create many CardMovements
+     * const cardMovement = await prisma.cardMovement.createManyAndReturn({
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     * 
+     * // Create many CardMovements and only return the `id`
+     * const cardMovementWithIdOnly = await prisma.cardMovement.createManyAndReturn({
+     *   select: { id: true },
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * 
+     */
+    createManyAndReturn<T extends CardMovementCreateManyAndReturnArgs>(args?: SelectSubset<T, CardMovementCreateManyAndReturnArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$CardMovementPayload<ExtArgs>, T, "createManyAndReturn", GlobalOmitOptions>>
+
+    /**
+     * Delete a CardMovement.
+     * @param {CardMovementDeleteArgs} args - Arguments to delete one CardMovement.
+     * @example
+     * // Delete one CardMovement
+     * const CardMovement = await prisma.cardMovement.delete({
+     *   where: {
+     *     // ... filter to delete one CardMovement
+     *   }
+     * })
+     * 
+     */
+    delete<T extends CardMovementDeleteArgs>(args: SelectSubset<T, CardMovementDeleteArgs<ExtArgs>>): Prisma__CardMovementClient<$Result.GetResult<Prisma.$CardMovementPayload<ExtArgs>, T, "delete", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Update one CardMovement.
+     * @param {CardMovementUpdateArgs} args - Arguments to update one CardMovement.
+     * @example
+     * // Update one CardMovement
+     * const cardMovement = await prisma.cardMovement.update({
+     *   where: {
+     *     // ... provide filter here
+     *   },
+     *   data: {
+     *     // ... provide data here
+     *   }
+     * })
+     * 
+     */
+    update<T extends CardMovementUpdateArgs>(args: SelectSubset<T, CardMovementUpdateArgs<ExtArgs>>): Prisma__CardMovementClient<$Result.GetResult<Prisma.$CardMovementPayload<ExtArgs>, T, "update", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Delete zero or more CardMovements.
+     * @param {CardMovementDeleteManyArgs} args - Arguments to filter CardMovements to delete.
+     * @example
+     * // Delete a few CardMovements
+     * const { count } = await prisma.cardMovement.deleteMany({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     * 
+     */
+    deleteMany<T extends CardMovementDeleteManyArgs>(args?: SelectSubset<T, CardMovementDeleteManyArgs<ExtArgs>>): Prisma.PrismaPromise<BatchPayload>
+
+    /**
+     * Update zero or more CardMovements.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {CardMovementUpdateManyArgs} args - Arguments to update one or more rows.
+     * @example
+     * // Update many CardMovements
+     * const cardMovement = await prisma.cardMovement.updateMany({
+     *   where: {
+     *     // ... provide filter here
+     *   },
+     *   data: {
+     *     // ... provide data here
+     *   }
+     * })
+     * 
+     */
+    updateMany<T extends CardMovementUpdateManyArgs>(args: SelectSubset<T, CardMovementUpdateManyArgs<ExtArgs>>): Prisma.PrismaPromise<BatchPayload>
+
+    /**
+     * Update zero or more CardMovements and returns the data updated in the database.
+     * @param {CardMovementUpdateManyAndReturnArgs} args - Arguments to update many CardMovements.
+     * @example
+     * // Update many CardMovements
+     * const cardMovement = await prisma.cardMovement.updateManyAndReturn({
+     *   where: {
+     *     // ... provide filter here
+     *   },
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     * 
+     * // Update zero or more CardMovements and only return the `id`
+     * const cardMovementWithIdOnly = await prisma.cardMovement.updateManyAndReturn({
+     *   select: { id: true },
+     *   where: {
+     *     // ... provide filter here
+     *   },
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * 
+     */
+    updateManyAndReturn<T extends CardMovementUpdateManyAndReturnArgs>(args: SelectSubset<T, CardMovementUpdateManyAndReturnArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$CardMovementPayload<ExtArgs>, T, "updateManyAndReturn", GlobalOmitOptions>>
+
+    /**
+     * Create or update one CardMovement.
+     * @param {CardMovementUpsertArgs} args - Arguments to update or create a CardMovement.
+     * @example
+     * // Update or create a CardMovement
+     * const cardMovement = await prisma.cardMovement.upsert({
+     *   create: {
+     *     // ... data to create a CardMovement
+     *   },
+     *   update: {
+     *     // ... in case it already exists, update
+     *   },
+     *   where: {
+     *     // ... the filter for the CardMovement we want to update
+     *   }
+     * })
+     */
+    upsert<T extends CardMovementUpsertArgs>(args: SelectSubset<T, CardMovementUpsertArgs<ExtArgs>>): Prisma__CardMovementClient<$Result.GetResult<Prisma.$CardMovementPayload<ExtArgs>, T, "upsert", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+
+    /**
+     * Count the number of CardMovements.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {CardMovementCountArgs} args - Arguments to filter CardMovements to count.
+     * @example
+     * // Count the number of CardMovements
+     * const count = await prisma.cardMovement.count({
+     *   where: {
+     *     // ... the filter for the CardMovements we want to count
+     *   }
+     * })
+    **/
+    count<T extends CardMovementCountArgs>(
+      args?: Subset<T, CardMovementCountArgs>,
+    ): Prisma.PrismaPromise<
+      T extends $Utils.Record<'select', any>
+        ? T['select'] extends true
+          ? number
+          : GetScalarType<T['select'], CardMovementCountAggregateOutputType>
+        : number
+    >
+
+    /**
+     * Allows you to perform aggregations operations on a CardMovement.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {CardMovementAggregateArgs} args - Select which aggregations you would like to apply and on what fields.
+     * @example
+     * // Ordered by age ascending
+     * // Where email contains prisma.io
+     * // Limited to the 10 users
+     * const aggregations = await prisma.user.aggregate({
+     *   _avg: {
+     *     age: true,
+     *   },
+     *   where: {
+     *     email: {
+     *       contains: "prisma.io",
+     *     },
+     *   },
+     *   orderBy: {
+     *     age: "asc",
+     *   },
+     *   take: 10,
+     * })
+    **/
+    aggregate<T extends CardMovementAggregateArgs>(args: Subset<T, CardMovementAggregateArgs>): Prisma.PrismaPromise<GetCardMovementAggregateType<T>>
+
+    /**
+     * Group by CardMovement.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {CardMovementGroupByArgs} args - Group by arguments.
+     * @example
+     * // Group by city, order by createdAt, get count
+     * const result = await prisma.user.groupBy({
+     *   by: ['city', 'createdAt'],
+     *   orderBy: {
+     *     createdAt: true
+     *   },
+     *   _count: {
+     *     _all: true
+     *   },
+     * })
+     * 
+    **/
+    groupBy<
+      T extends CardMovementGroupByArgs,
+      HasSelectOrTake extends Or<
+        Extends<'skip', Keys<T>>,
+        Extends<'take', Keys<T>>
+      >,
+      OrderByArg extends True extends HasSelectOrTake
+        ? { orderBy: CardMovementGroupByArgs['orderBy'] }
+        : { orderBy?: CardMovementGroupByArgs['orderBy'] },
+      OrderFields extends ExcludeUnderscoreKeys<Keys<MaybeTupleToUnion<T['orderBy']>>>,
+      ByFields extends MaybeTupleToUnion<T['by']>,
+      ByValid extends Has<ByFields, OrderFields>,
+      HavingFields extends GetHavingFields<T['having']>,
+      HavingValid extends Has<ByFields, HavingFields>,
+      ByEmpty extends T['by'] extends never[] ? True : False,
+      InputErrors extends ByEmpty extends True
+      ? `Error: "by" must not be empty.`
+      : HavingValid extends False
+      ? {
+          [P in HavingFields]: P extends ByFields
+            ? never
+            : P extends string
+            ? `Error: Field "${P}" used in "having" needs to be provided in "by".`
+            : [
+                Error,
+                'Field ',
+                P,
+                ` in "having" needs to be provided in "by"`,
+              ]
+        }[HavingFields]
+      : 'take' extends Keys<T>
+      ? 'orderBy' extends Keys<T>
+        ? ByValid extends True
+          ? {}
+          : {
+              [P in OrderFields]: P extends ByFields
+                ? never
+                : `Error: Field "${P}" in "orderBy" needs to be provided in "by"`
+            }[OrderFields]
+        : 'Error: If you provide "take", you also need to provide "orderBy"'
+      : 'skip' extends Keys<T>
+      ? 'orderBy' extends Keys<T>
+        ? ByValid extends True
+          ? {}
+          : {
+              [P in OrderFields]: P extends ByFields
+                ? never
+                : `Error: Field "${P}" in "orderBy" needs to be provided in "by"`
+            }[OrderFields]
+        : 'Error: If you provide "skip", you also need to provide "orderBy"'
+      : ByValid extends True
+      ? {}
+      : {
+          [P in OrderFields]: P extends ByFields
+            ? never
+            : `Error: Field "${P}" in "orderBy" needs to be provided in "by"`
+        }[OrderFields]
+    >(args: SubsetIntersection<T, CardMovementGroupByArgs, OrderByArg> & InputErrors): {} extends InputErrors ? GetCardMovementGroupByPayload<T> : Prisma.PrismaPromise<InputErrors>
+  /**
+   * Fields of the CardMovement model
+   */
+  readonly fields: CardMovementFieldRefs;
+  }
+
+  /**
+   * The delegate class that acts as a "Promise-like" for CardMovement.
+   * Why is this prefixed with `Prisma__`?
+   * Because we want to prevent naming conflicts as mentioned in
+   * https://github.com/prisma/prisma-client-js/issues/707
+   */
+  export interface Prisma__CardMovementClient<T, Null = never, ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs, GlobalOmitOptions = {}> extends Prisma.PrismaPromise<T> {
+    readonly [Symbol.toStringTag]: "PrismaPromise"
+    card<T extends CardDefaultArgs<ExtArgs> = {}>(args?: Subset<T, CardDefaultArgs<ExtArgs>>): Prisma__CardClient<$Result.GetResult<Prisma.$CardPayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions> | Null, Null, ExtArgs, GlobalOmitOptions>
+    /**
+     * Attaches callbacks for the resolution and/or rejection of the Promise.
+     * @param onfulfilled The callback to execute when the Promise is resolved.
+     * @param onrejected The callback to execute when the Promise is rejected.
+     * @returns A Promise for the completion of which ever callback is executed.
+     */
+    then<TResult1 = T, TResult2 = never>(onfulfilled?: ((value: T) => TResult1 | PromiseLike<TResult1>) | undefined | null, onrejected?: ((reason: any) => TResult2 | PromiseLike<TResult2>) | undefined | null): $Utils.JsPromise<TResult1 | TResult2>
+    /**
+     * Attaches a callback for only the rejection of the Promise.
+     * @param onrejected The callback to execute when the Promise is rejected.
+     * @returns A Promise for the completion of the callback.
+     */
+    catch<TResult = never>(onrejected?: ((reason: any) => TResult | PromiseLike<TResult>) | undefined | null): $Utils.JsPromise<T | TResult>
+    /**
+     * Attaches a callback that is invoked when the Promise is settled (fulfilled or rejected). The
+     * resolved value cannot be modified from the callback.
+     * @param onfinally The callback to execute when the Promise is settled (fulfilled or rejected).
+     * @returns A Promise for the completion of the callback.
+     */
+    finally(onfinally?: (() => void) | undefined | null): $Utils.JsPromise<T>
+  }
+
+
+
+
+  /**
+   * Fields of the CardMovement model
+   */
+  interface CardMovementFieldRefs {
+    readonly id: FieldRef<"CardMovement", 'String'>
+    readonly cardId: FieldRef<"CardMovement", 'String'>
+    readonly userId: FieldRef<"CardMovement", 'String'>
+    readonly fromColumnId: FieldRef<"CardMovement", 'String'>
+    readonly fromColumnTitle: FieldRef<"CardMovement", 'String'>
+    readonly toColumnId: FieldRef<"CardMovement", 'String'>
+    readonly toColumnTitle: FieldRef<"CardMovement", 'String'>
+    readonly reason: FieldRef<"CardMovement", 'String'>
+    readonly movedAt: FieldRef<"CardMovement", 'DateTime'>
+  }
+    
+
+  // Custom InputTypes
+  /**
+   * CardMovement findUnique
+   */
+  export type CardMovementFindUniqueArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the CardMovement
+     */
+    select?: CardMovementSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the CardMovement
+     */
+    omit?: CardMovementOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: CardMovementInclude<ExtArgs> | null
+    /**
+     * Filter, which CardMovement to fetch.
+     */
+    where: CardMovementWhereUniqueInput
+  }
+
+  /**
+   * CardMovement findUniqueOrThrow
+   */
+  export type CardMovementFindUniqueOrThrowArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the CardMovement
+     */
+    select?: CardMovementSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the CardMovement
+     */
+    omit?: CardMovementOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: CardMovementInclude<ExtArgs> | null
+    /**
+     * Filter, which CardMovement to fetch.
+     */
+    where: CardMovementWhereUniqueInput
+  }
+
+  /**
+   * CardMovement findFirst
+   */
+  export type CardMovementFindFirstArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the CardMovement
+     */
+    select?: CardMovementSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the CardMovement
+     */
+    omit?: CardMovementOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: CardMovementInclude<ExtArgs> | null
+    /**
+     * Filter, which CardMovement to fetch.
+     */
+    where?: CardMovementWhereInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+     * 
+     * Determine the order of CardMovements to fetch.
+     */
+    orderBy?: CardMovementOrderByWithRelationInput | CardMovementOrderByWithRelationInput[]
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+     * 
+     * Sets the position for searching for CardMovements.
+     */
+    cursor?: CardMovementWhereUniqueInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Take `±n` CardMovements from the position of the cursor.
+     */
+    take?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Skip the first `n` CardMovements.
+     */
+    skip?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/distinct Distinct Docs}
+     * 
+     * Filter by unique combinations of CardMovements.
+     */
+    distinct?: CardMovementScalarFieldEnum | CardMovementScalarFieldEnum[]
+  }
+
+  /**
+   * CardMovement findFirstOrThrow
+   */
+  export type CardMovementFindFirstOrThrowArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the CardMovement
+     */
+    select?: CardMovementSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the CardMovement
+     */
+    omit?: CardMovementOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: CardMovementInclude<ExtArgs> | null
+    /**
+     * Filter, which CardMovement to fetch.
+     */
+    where?: CardMovementWhereInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+     * 
+     * Determine the order of CardMovements to fetch.
+     */
+    orderBy?: CardMovementOrderByWithRelationInput | CardMovementOrderByWithRelationInput[]
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+     * 
+     * Sets the position for searching for CardMovements.
+     */
+    cursor?: CardMovementWhereUniqueInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Take `±n` CardMovements from the position of the cursor.
+     */
+    take?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Skip the first `n` CardMovements.
+     */
+    skip?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/distinct Distinct Docs}
+     * 
+     * Filter by unique combinations of CardMovements.
+     */
+    distinct?: CardMovementScalarFieldEnum | CardMovementScalarFieldEnum[]
+  }
+
+  /**
+   * CardMovement findMany
+   */
+  export type CardMovementFindManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the CardMovement
+     */
+    select?: CardMovementSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the CardMovement
+     */
+    omit?: CardMovementOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: CardMovementInclude<ExtArgs> | null
+    /**
+     * Filter, which CardMovements to fetch.
+     */
+    where?: CardMovementWhereInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+     * 
+     * Determine the order of CardMovements to fetch.
+     */
+    orderBy?: CardMovementOrderByWithRelationInput | CardMovementOrderByWithRelationInput[]
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+     * 
+     * Sets the position for listing CardMovements.
+     */
+    cursor?: CardMovementWhereUniqueInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Take `±n` CardMovements from the position of the cursor.
+     */
+    take?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Skip the first `n` CardMovements.
+     */
+    skip?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/distinct Distinct Docs}
+     * 
+     * Filter by unique combinations of CardMovements.
+     */
+    distinct?: CardMovementScalarFieldEnum | CardMovementScalarFieldEnum[]
+  }
+
+  /**
+   * CardMovement create
+   */
+  export type CardMovementCreateArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the CardMovement
+     */
+    select?: CardMovementSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the CardMovement
+     */
+    omit?: CardMovementOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: CardMovementInclude<ExtArgs> | null
+    /**
+     * The data needed to create a CardMovement.
+     */
+    data: XOR<CardMovementCreateInput, CardMovementUncheckedCreateInput>
+  }
+
+  /**
+   * CardMovement createMany
+   */
+  export type CardMovementCreateManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * The data used to create many CardMovements.
+     */
+    data: CardMovementCreateManyInput | CardMovementCreateManyInput[]
+    skipDuplicates?: boolean
+  }
+
+  /**
+   * CardMovement createManyAndReturn
+   */
+  export type CardMovementCreateManyAndReturnArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the CardMovement
+     */
+    select?: CardMovementSelectCreateManyAndReturn<ExtArgs> | null
+    /**
+     * Omit specific fields from the CardMovement
+     */
+    omit?: CardMovementOmit<ExtArgs> | null
+    /**
+     * The data used to create many CardMovements.
+     */
+    data: CardMovementCreateManyInput | CardMovementCreateManyInput[]
+    skipDuplicates?: boolean
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: CardMovementIncludeCreateManyAndReturn<ExtArgs> | null
+  }
+
+  /**
+   * CardMovement update
+   */
+  export type CardMovementUpdateArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the CardMovement
+     */
+    select?: CardMovementSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the CardMovement
+     */
+    omit?: CardMovementOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: CardMovementInclude<ExtArgs> | null
+    /**
+     * The data needed to update a CardMovement.
+     */
+    data: XOR<CardMovementUpdateInput, CardMovementUncheckedUpdateInput>
+    /**
+     * Choose, which CardMovement to update.
+     */
+    where: CardMovementWhereUniqueInput
+  }
+
+  /**
+   * CardMovement updateMany
+   */
+  export type CardMovementUpdateManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * The data used to update CardMovements.
+     */
+    data: XOR<CardMovementUpdateManyMutationInput, CardMovementUncheckedUpdateManyInput>
+    /**
+     * Filter which CardMovements to update
+     */
+    where?: CardMovementWhereInput
+    /**
+     * Limit how many CardMovements to update.
+     */
+    limit?: number
+  }
+
+  /**
+   * CardMovement updateManyAndReturn
+   */
+  export type CardMovementUpdateManyAndReturnArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the CardMovement
+     */
+    select?: CardMovementSelectUpdateManyAndReturn<ExtArgs> | null
+    /**
+     * Omit specific fields from the CardMovement
+     */
+    omit?: CardMovementOmit<ExtArgs> | null
+    /**
+     * The data used to update CardMovements.
+     */
+    data: XOR<CardMovementUpdateManyMutationInput, CardMovementUncheckedUpdateManyInput>
+    /**
+     * Filter which CardMovements to update
+     */
+    where?: CardMovementWhereInput
+    /**
+     * Limit how many CardMovements to update.
+     */
+    limit?: number
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: CardMovementIncludeUpdateManyAndReturn<ExtArgs> | null
+  }
+
+  /**
+   * CardMovement upsert
+   */
+  export type CardMovementUpsertArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the CardMovement
+     */
+    select?: CardMovementSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the CardMovement
+     */
+    omit?: CardMovementOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: CardMovementInclude<ExtArgs> | null
+    /**
+     * The filter to search for the CardMovement to update in case it exists.
+     */
+    where: CardMovementWhereUniqueInput
+    /**
+     * In case the CardMovement found by the `where` argument doesn't exist, create a new CardMovement with this data.
+     */
+    create: XOR<CardMovementCreateInput, CardMovementUncheckedCreateInput>
+    /**
+     * In case the CardMovement was found with the provided `where` argument, update it with this data.
+     */
+    update: XOR<CardMovementUpdateInput, CardMovementUncheckedUpdateInput>
+  }
+
+  /**
+   * CardMovement delete
+   */
+  export type CardMovementDeleteArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the CardMovement
+     */
+    select?: CardMovementSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the CardMovement
+     */
+    omit?: CardMovementOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: CardMovementInclude<ExtArgs> | null
+    /**
+     * Filter which CardMovement to delete.
+     */
+    where: CardMovementWhereUniqueInput
+  }
+
+  /**
+   * CardMovement deleteMany
+   */
+  export type CardMovementDeleteManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Filter which CardMovements to delete
+     */
+    where?: CardMovementWhereInput
+    /**
+     * Limit how many CardMovements to delete.
+     */
+    limit?: number
+  }
+
+  /**
+   * CardMovement without action
+   */
+  export type CardMovementDefaultArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the CardMovement
+     */
+    select?: CardMovementSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the CardMovement
+     */
+    omit?: CardMovementOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: CardMovementInclude<ExtArgs> | null
   }
 
 
@@ -19909,6 +21248,7 @@ export namespace Prisma {
     sprintId: 'sprintId',
     sprintColumnId: 'sprintColumnId',
     sprintPosition: 'sprintPosition',
+    projectId: 'projectId',
     priority: 'priority',
     tagsImport: 'tagsImport',
     startDate: 'startDate',
@@ -19919,6 +21259,21 @@ export namespace Prisma {
   };
 
   export type CardScalarFieldEnum = (typeof CardScalarFieldEnum)[keyof typeof CardScalarFieldEnum]
+
+
+  export const CardMovementScalarFieldEnum: {
+    id: 'id',
+    cardId: 'cardId',
+    userId: 'userId',
+    fromColumnId: 'fromColumnId',
+    fromColumnTitle: 'fromColumnTitle',
+    toColumnId: 'toColumnId',
+    toColumnTitle: 'toColumnTitle',
+    reason: 'reason',
+    movedAt: 'movedAt'
+  };
+
+  export type CardMovementScalarFieldEnum = (typeof CardMovementScalarFieldEnum)[keyof typeof CardMovementScalarFieldEnum]
 
 
   export const TagScalarFieldEnum: {
@@ -20326,6 +21681,7 @@ export namespace Prisma {
     tenantId?: StringFilter<"Project"> | string
     name?: StringFilter<"Project"> | string
     sprints?: SprintListRelationFilter
+    cards?: CardListRelationFilter
   }
 
   export type ProjectOrderByWithRelationInput = {
@@ -20333,6 +21689,7 @@ export namespace Prisma {
     tenantId?: SortOrder
     name?: SortOrder
     sprints?: SprintOrderByRelationAggregateInput
+    cards?: CardOrderByRelationAggregateInput
   }
 
   export type ProjectWhereUniqueInput = Prisma.AtLeast<{
@@ -20343,6 +21700,7 @@ export namespace Prisma {
     tenantId?: StringFilter<"Project"> | string
     name?: StringFilter<"Project"> | string
     sprints?: SprintListRelationFilter
+    cards?: CardListRelationFilter
   }, "id">
 
   export type ProjectOrderByWithAggregationInput = {
@@ -20554,9 +21912,10 @@ export namespace Prisma {
     description?: StringFilter<"Card"> | string
     color?: StringFilter<"Card"> | string
     position?: IntFilter<"Card"> | number
-    sprintId?: StringFilter<"Card"> | string
+    sprintId?: StringNullableFilter<"Card"> | string | null
     sprintColumnId?: StringNullableFilter<"Card"> | string | null
     sprintPosition?: IntNullableFilter<"Card"> | number | null
+    projectId?: StringNullableFilter<"Card"> | string | null
     priority?: StringFilter<"Card"> | string
     tagsImport?: StringFilter<"Card"> | string
     startDate?: DateTimeNullableFilter<"Card"> | Date | string | null
@@ -20564,13 +21923,15 @@ export namespace Prisma {
     deletedAt?: DateTimeNullableFilter<"Card"> | Date | string | null
     createdAt?: DateTimeFilter<"Card"> | Date | string
     updatedAt?: DateTimeFilter<"Card"> | Date | string
-    sprint?: XOR<SprintScalarRelationFilter, SprintWhereInput>
+    sprint?: XOR<SprintNullableScalarRelationFilter, SprintWhereInput> | null
     sprintColumn?: XOR<SprintColumnNullableScalarRelationFilter, SprintColumnWhereInput> | null
+    project?: XOR<ProjectNullableScalarRelationFilter, ProjectWhereInput> | null
     tags?: CardTagListRelationFilter
     attachments?: AttachmentListRelationFilter
     timeEntries?: TimeEntryListRelationFilter
     responsibles?: CardResponsibleListRelationFilter
     comments?: CommentListRelationFilter
+    movements?: CardMovementListRelationFilter
   }
 
   export type CardOrderByWithRelationInput = {
@@ -20579,9 +21940,10 @@ export namespace Prisma {
     description?: SortOrder
     color?: SortOrder
     position?: SortOrder
-    sprintId?: SortOrder
+    sprintId?: SortOrderInput | SortOrder
     sprintColumnId?: SortOrderInput | SortOrder
     sprintPosition?: SortOrderInput | SortOrder
+    projectId?: SortOrderInput | SortOrder
     priority?: SortOrder
     tagsImport?: SortOrder
     startDate?: SortOrderInput | SortOrder
@@ -20591,11 +21953,13 @@ export namespace Prisma {
     updatedAt?: SortOrder
     sprint?: SprintOrderByWithRelationInput
     sprintColumn?: SprintColumnOrderByWithRelationInput
+    project?: ProjectOrderByWithRelationInput
     tags?: CardTagOrderByRelationAggregateInput
     attachments?: AttachmentOrderByRelationAggregateInput
     timeEntries?: TimeEntryOrderByRelationAggregateInput
     responsibles?: CardResponsibleOrderByRelationAggregateInput
     comments?: CommentOrderByRelationAggregateInput
+    movements?: CardMovementOrderByRelationAggregateInput
   }
 
   export type CardWhereUniqueInput = Prisma.AtLeast<{
@@ -20607,9 +21971,10 @@ export namespace Prisma {
     description?: StringFilter<"Card"> | string
     color?: StringFilter<"Card"> | string
     position?: IntFilter<"Card"> | number
-    sprintId?: StringFilter<"Card"> | string
+    sprintId?: StringNullableFilter<"Card"> | string | null
     sprintColumnId?: StringNullableFilter<"Card"> | string | null
     sprintPosition?: IntNullableFilter<"Card"> | number | null
+    projectId?: StringNullableFilter<"Card"> | string | null
     priority?: StringFilter<"Card"> | string
     tagsImport?: StringFilter<"Card"> | string
     startDate?: DateTimeNullableFilter<"Card"> | Date | string | null
@@ -20617,13 +21982,15 @@ export namespace Prisma {
     deletedAt?: DateTimeNullableFilter<"Card"> | Date | string | null
     createdAt?: DateTimeFilter<"Card"> | Date | string
     updatedAt?: DateTimeFilter<"Card"> | Date | string
-    sprint?: XOR<SprintScalarRelationFilter, SprintWhereInput>
+    sprint?: XOR<SprintNullableScalarRelationFilter, SprintWhereInput> | null
     sprintColumn?: XOR<SprintColumnNullableScalarRelationFilter, SprintColumnWhereInput> | null
+    project?: XOR<ProjectNullableScalarRelationFilter, ProjectWhereInput> | null
     tags?: CardTagListRelationFilter
     attachments?: AttachmentListRelationFilter
     timeEntries?: TimeEntryListRelationFilter
     responsibles?: CardResponsibleListRelationFilter
     comments?: CommentListRelationFilter
+    movements?: CardMovementListRelationFilter
   }, "id">
 
   export type CardOrderByWithAggregationInput = {
@@ -20632,9 +21999,10 @@ export namespace Prisma {
     description?: SortOrder
     color?: SortOrder
     position?: SortOrder
-    sprintId?: SortOrder
+    sprintId?: SortOrderInput | SortOrder
     sprintColumnId?: SortOrderInput | SortOrder
     sprintPosition?: SortOrderInput | SortOrder
+    projectId?: SortOrderInput | SortOrder
     priority?: SortOrder
     tagsImport?: SortOrder
     startDate?: SortOrderInput | SortOrder
@@ -20658,9 +22026,10 @@ export namespace Prisma {
     description?: StringWithAggregatesFilter<"Card"> | string
     color?: StringWithAggregatesFilter<"Card"> | string
     position?: IntWithAggregatesFilter<"Card"> | number
-    sprintId?: StringWithAggregatesFilter<"Card"> | string
+    sprintId?: StringNullableWithAggregatesFilter<"Card"> | string | null
     sprintColumnId?: StringNullableWithAggregatesFilter<"Card"> | string | null
     sprintPosition?: IntNullableWithAggregatesFilter<"Card"> | number | null
+    projectId?: StringNullableWithAggregatesFilter<"Card"> | string | null
     priority?: StringWithAggregatesFilter<"Card"> | string
     tagsImport?: StringWithAggregatesFilter<"Card"> | string
     startDate?: DateTimeNullableWithAggregatesFilter<"Card"> | Date | string | null
@@ -20668,6 +22037,81 @@ export namespace Prisma {
     deletedAt?: DateTimeNullableWithAggregatesFilter<"Card"> | Date | string | null
     createdAt?: DateTimeWithAggregatesFilter<"Card"> | Date | string
     updatedAt?: DateTimeWithAggregatesFilter<"Card"> | Date | string
+  }
+
+  export type CardMovementWhereInput = {
+    AND?: CardMovementWhereInput | CardMovementWhereInput[]
+    OR?: CardMovementWhereInput[]
+    NOT?: CardMovementWhereInput | CardMovementWhereInput[]
+    id?: StringFilter<"CardMovement"> | string
+    cardId?: StringFilter<"CardMovement"> | string
+    userId?: StringNullableFilter<"CardMovement"> | string | null
+    fromColumnId?: StringNullableFilter<"CardMovement"> | string | null
+    fromColumnTitle?: StringNullableFilter<"CardMovement"> | string | null
+    toColumnId?: StringNullableFilter<"CardMovement"> | string | null
+    toColumnTitle?: StringNullableFilter<"CardMovement"> | string | null
+    reason?: StringNullableFilter<"CardMovement"> | string | null
+    movedAt?: DateTimeFilter<"CardMovement"> | Date | string
+    card?: XOR<CardScalarRelationFilter, CardWhereInput>
+  }
+
+  export type CardMovementOrderByWithRelationInput = {
+    id?: SortOrder
+    cardId?: SortOrder
+    userId?: SortOrderInput | SortOrder
+    fromColumnId?: SortOrderInput | SortOrder
+    fromColumnTitle?: SortOrderInput | SortOrder
+    toColumnId?: SortOrderInput | SortOrder
+    toColumnTitle?: SortOrderInput | SortOrder
+    reason?: SortOrderInput | SortOrder
+    movedAt?: SortOrder
+    card?: CardOrderByWithRelationInput
+  }
+
+  export type CardMovementWhereUniqueInput = Prisma.AtLeast<{
+    id?: string
+    AND?: CardMovementWhereInput | CardMovementWhereInput[]
+    OR?: CardMovementWhereInput[]
+    NOT?: CardMovementWhereInput | CardMovementWhereInput[]
+    cardId?: StringFilter<"CardMovement"> | string
+    userId?: StringNullableFilter<"CardMovement"> | string | null
+    fromColumnId?: StringNullableFilter<"CardMovement"> | string | null
+    fromColumnTitle?: StringNullableFilter<"CardMovement"> | string | null
+    toColumnId?: StringNullableFilter<"CardMovement"> | string | null
+    toColumnTitle?: StringNullableFilter<"CardMovement"> | string | null
+    reason?: StringNullableFilter<"CardMovement"> | string | null
+    movedAt?: DateTimeFilter<"CardMovement"> | Date | string
+    card?: XOR<CardScalarRelationFilter, CardWhereInput>
+  }, "id">
+
+  export type CardMovementOrderByWithAggregationInput = {
+    id?: SortOrder
+    cardId?: SortOrder
+    userId?: SortOrderInput | SortOrder
+    fromColumnId?: SortOrderInput | SortOrder
+    fromColumnTitle?: SortOrderInput | SortOrder
+    toColumnId?: SortOrderInput | SortOrder
+    toColumnTitle?: SortOrderInput | SortOrder
+    reason?: SortOrderInput | SortOrder
+    movedAt?: SortOrder
+    _count?: CardMovementCountOrderByAggregateInput
+    _max?: CardMovementMaxOrderByAggregateInput
+    _min?: CardMovementMinOrderByAggregateInput
+  }
+
+  export type CardMovementScalarWhereWithAggregatesInput = {
+    AND?: CardMovementScalarWhereWithAggregatesInput | CardMovementScalarWhereWithAggregatesInput[]
+    OR?: CardMovementScalarWhereWithAggregatesInput[]
+    NOT?: CardMovementScalarWhereWithAggregatesInput | CardMovementScalarWhereWithAggregatesInput[]
+    id?: StringWithAggregatesFilter<"CardMovement"> | string
+    cardId?: StringWithAggregatesFilter<"CardMovement"> | string
+    userId?: StringNullableWithAggregatesFilter<"CardMovement"> | string | null
+    fromColumnId?: StringNullableWithAggregatesFilter<"CardMovement"> | string | null
+    fromColumnTitle?: StringNullableWithAggregatesFilter<"CardMovement"> | string | null
+    toColumnId?: StringNullableWithAggregatesFilter<"CardMovement"> | string | null
+    toColumnTitle?: StringNullableWithAggregatesFilter<"CardMovement"> | string | null
+    reason?: StringNullableWithAggregatesFilter<"CardMovement"> | string | null
+    movedAt?: DateTimeWithAggregatesFilter<"CardMovement"> | Date | string
   }
 
   export type TagWhereInput = {
@@ -21441,6 +22885,7 @@ export namespace Prisma {
     tenantId: string
     name: string
     sprints?: SprintCreateNestedManyWithoutProjectInput
+    cards?: CardCreateNestedManyWithoutProjectInput
   }
 
   export type ProjectUncheckedCreateInput = {
@@ -21448,6 +22893,7 @@ export namespace Prisma {
     tenantId: string
     name: string
     sprints?: SprintUncheckedCreateNestedManyWithoutProjectInput
+    cards?: CardUncheckedCreateNestedManyWithoutProjectInput
   }
 
   export type ProjectUpdateInput = {
@@ -21455,6 +22901,7 @@ export namespace Prisma {
     tenantId?: StringFieldUpdateOperationsInput | string
     name?: StringFieldUpdateOperationsInput | string
     sprints?: SprintUpdateManyWithoutProjectNestedInput
+    cards?: CardUpdateManyWithoutProjectNestedInput
   }
 
   export type ProjectUncheckedUpdateInput = {
@@ -21462,6 +22909,7 @@ export namespace Prisma {
     tenantId?: StringFieldUpdateOperationsInput | string
     name?: StringFieldUpdateOperationsInput | string
     sprints?: SprintUncheckedUpdateManyWithoutProjectNestedInput
+    cards?: CardUncheckedUpdateManyWithoutProjectNestedInput
   }
 
   export type ProjectCreateManyInput = {
@@ -21695,13 +23143,15 @@ export namespace Prisma {
     deletedAt?: Date | string | null
     createdAt?: Date | string
     updatedAt?: Date | string
-    sprint: SprintCreateNestedOneWithoutCardsInput
+    sprint?: SprintCreateNestedOneWithoutCardsInput
     sprintColumn?: SprintColumnCreateNestedOneWithoutCardsInput
+    project?: ProjectCreateNestedOneWithoutCardsInput
     tags?: CardTagCreateNestedManyWithoutCardInput
     attachments?: AttachmentCreateNestedManyWithoutCardInput
     timeEntries?: TimeEntryCreateNestedManyWithoutCardInput
     responsibles?: CardResponsibleCreateNestedManyWithoutCardInput
     comments?: CommentCreateNestedManyWithoutCardInput
+    movements?: CardMovementCreateNestedManyWithoutCardInput
   }
 
   export type CardUncheckedCreateInput = {
@@ -21710,9 +23160,10 @@ export namespace Prisma {
     description?: string
     color?: string
     position?: number
-    sprintId: string
+    sprintId?: string | null
     sprintColumnId?: string | null
     sprintPosition?: number | null
+    projectId?: string | null
     priority?: string
     tagsImport?: string
     startDate?: Date | string | null
@@ -21725,6 +23176,7 @@ export namespace Prisma {
     timeEntries?: TimeEntryUncheckedCreateNestedManyWithoutCardInput
     responsibles?: CardResponsibleUncheckedCreateNestedManyWithoutCardInput
     comments?: CommentUncheckedCreateNestedManyWithoutCardInput
+    movements?: CardMovementUncheckedCreateNestedManyWithoutCardInput
   }
 
   export type CardUpdateInput = {
@@ -21741,13 +23193,15 @@ export namespace Prisma {
     deletedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
-    sprint?: SprintUpdateOneRequiredWithoutCardsNestedInput
+    sprint?: SprintUpdateOneWithoutCardsNestedInput
     sprintColumn?: SprintColumnUpdateOneWithoutCardsNestedInput
+    project?: ProjectUpdateOneWithoutCardsNestedInput
     tags?: CardTagUpdateManyWithoutCardNestedInput
     attachments?: AttachmentUpdateManyWithoutCardNestedInput
     timeEntries?: TimeEntryUpdateManyWithoutCardNestedInput
     responsibles?: CardResponsibleUpdateManyWithoutCardNestedInput
     comments?: CommentUpdateManyWithoutCardNestedInput
+    movements?: CardMovementUpdateManyWithoutCardNestedInput
   }
 
   export type CardUncheckedUpdateInput = {
@@ -21756,9 +23210,10 @@ export namespace Prisma {
     description?: StringFieldUpdateOperationsInput | string
     color?: StringFieldUpdateOperationsInput | string
     position?: IntFieldUpdateOperationsInput | number
-    sprintId?: StringFieldUpdateOperationsInput | string
+    sprintId?: NullableStringFieldUpdateOperationsInput | string | null
     sprintColumnId?: NullableStringFieldUpdateOperationsInput | string | null
     sprintPosition?: NullableIntFieldUpdateOperationsInput | number | null
+    projectId?: NullableStringFieldUpdateOperationsInput | string | null
     priority?: StringFieldUpdateOperationsInput | string
     tagsImport?: StringFieldUpdateOperationsInput | string
     startDate?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
@@ -21771,6 +23226,7 @@ export namespace Prisma {
     timeEntries?: TimeEntryUncheckedUpdateManyWithoutCardNestedInput
     responsibles?: CardResponsibleUncheckedUpdateManyWithoutCardNestedInput
     comments?: CommentUncheckedUpdateManyWithoutCardNestedInput
+    movements?: CardMovementUncheckedUpdateManyWithoutCardNestedInput
   }
 
   export type CardCreateManyInput = {
@@ -21779,9 +23235,10 @@ export namespace Prisma {
     description?: string
     color?: string
     position?: number
-    sprintId: string
+    sprintId?: string | null
     sprintColumnId?: string | null
     sprintPosition?: number | null
+    projectId?: string | null
     priority?: string
     tagsImport?: string
     startDate?: Date | string | null
@@ -21813,9 +23270,10 @@ export namespace Prisma {
     description?: StringFieldUpdateOperationsInput | string
     color?: StringFieldUpdateOperationsInput | string
     position?: IntFieldUpdateOperationsInput | number
-    sprintId?: StringFieldUpdateOperationsInput | string
+    sprintId?: NullableStringFieldUpdateOperationsInput | string | null
     sprintColumnId?: NullableStringFieldUpdateOperationsInput | string | null
     sprintPosition?: NullableIntFieldUpdateOperationsInput | number | null
+    projectId?: NullableStringFieldUpdateOperationsInput | string | null
     priority?: StringFieldUpdateOperationsInput | string
     tagsImport?: StringFieldUpdateOperationsInput | string
     startDate?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
@@ -21823,6 +23281,89 @@ export namespace Prisma {
     deletedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
+  export type CardMovementCreateInput = {
+    id?: string
+    userId?: string | null
+    fromColumnId?: string | null
+    fromColumnTitle?: string | null
+    toColumnId?: string | null
+    toColumnTitle?: string | null
+    reason?: string | null
+    movedAt?: Date | string
+    card: CardCreateNestedOneWithoutMovementsInput
+  }
+
+  export type CardMovementUncheckedCreateInput = {
+    id?: string
+    cardId: string
+    userId?: string | null
+    fromColumnId?: string | null
+    fromColumnTitle?: string | null
+    toColumnId?: string | null
+    toColumnTitle?: string | null
+    reason?: string | null
+    movedAt?: Date | string
+  }
+
+  export type CardMovementUpdateInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    userId?: NullableStringFieldUpdateOperationsInput | string | null
+    fromColumnId?: NullableStringFieldUpdateOperationsInput | string | null
+    fromColumnTitle?: NullableStringFieldUpdateOperationsInput | string | null
+    toColumnId?: NullableStringFieldUpdateOperationsInput | string | null
+    toColumnTitle?: NullableStringFieldUpdateOperationsInput | string | null
+    reason?: NullableStringFieldUpdateOperationsInput | string | null
+    movedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    card?: CardUpdateOneRequiredWithoutMovementsNestedInput
+  }
+
+  export type CardMovementUncheckedUpdateInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    cardId?: StringFieldUpdateOperationsInput | string
+    userId?: NullableStringFieldUpdateOperationsInput | string | null
+    fromColumnId?: NullableStringFieldUpdateOperationsInput | string | null
+    fromColumnTitle?: NullableStringFieldUpdateOperationsInput | string | null
+    toColumnId?: NullableStringFieldUpdateOperationsInput | string | null
+    toColumnTitle?: NullableStringFieldUpdateOperationsInput | string | null
+    reason?: NullableStringFieldUpdateOperationsInput | string | null
+    movedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
+  export type CardMovementCreateManyInput = {
+    id?: string
+    cardId: string
+    userId?: string | null
+    fromColumnId?: string | null
+    fromColumnTitle?: string | null
+    toColumnId?: string | null
+    toColumnTitle?: string | null
+    reason?: string | null
+    movedAt?: Date | string
+  }
+
+  export type CardMovementUpdateManyMutationInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    userId?: NullableStringFieldUpdateOperationsInput | string | null
+    fromColumnId?: NullableStringFieldUpdateOperationsInput | string | null
+    fromColumnTitle?: NullableStringFieldUpdateOperationsInput | string | null
+    toColumnId?: NullableStringFieldUpdateOperationsInput | string | null
+    toColumnTitle?: NullableStringFieldUpdateOperationsInput | string | null
+    reason?: NullableStringFieldUpdateOperationsInput | string | null
+    movedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
+  export type CardMovementUncheckedUpdateManyInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    cardId?: StringFieldUpdateOperationsInput | string
+    userId?: NullableStringFieldUpdateOperationsInput | string | null
+    fromColumnId?: NullableStringFieldUpdateOperationsInput | string | null
+    fromColumnTitle?: NullableStringFieldUpdateOperationsInput | string | null
+    toColumnId?: NullableStringFieldUpdateOperationsInput | string | null
+    toColumnTitle?: NullableStringFieldUpdateOperationsInput | string | null
+    reason?: NullableStringFieldUpdateOperationsInput | string | null
+    movedAt?: DateTimeFieldUpdateOperationsInput | Date | string
   }
 
   export type TagCreateInput = {
@@ -22678,6 +24219,16 @@ export namespace Prisma {
     email?: SortOrder
   }
 
+  export type CardListRelationFilter = {
+    every?: CardWhereInput
+    some?: CardWhereInput
+    none?: CardWhereInput
+  }
+
+  export type CardOrderByRelationAggregateInput = {
+    _count?: SortOrder
+  }
+
   export type ProjectCountOrderByAggregateInput = {
     id?: SortOrder
     tenantId?: SortOrder
@@ -22739,20 +24290,10 @@ export namespace Prisma {
     isNot?: UserWhereInput | null
   }
 
-  export type CardListRelationFilter = {
-    every?: CardWhereInput
-    some?: CardWhereInput
-    none?: CardWhereInput
-  }
-
   export type SprintColumnListRelationFilter = {
     every?: SprintColumnWhereInput
     some?: SprintColumnWhereInput
     none?: SprintColumnWhereInput
-  }
-
-  export type CardOrderByRelationAggregateInput = {
-    _count?: SortOrder
   }
 
   export type SprintColumnOrderByRelationAggregateInput = {
@@ -22942,6 +24483,11 @@ export namespace Prisma {
     not?: NestedIntNullableFilter<$PrismaModel> | number | null
   }
 
+  export type SprintNullableScalarRelationFilter = {
+    is?: SprintWhereInput | null
+    isNot?: SprintWhereInput | null
+  }
+
   export type SprintColumnNullableScalarRelationFilter = {
     is?: SprintColumnWhereInput | null
     isNot?: SprintColumnWhereInput | null
@@ -22959,11 +24505,21 @@ export namespace Prisma {
     none?: AttachmentWhereInput
   }
 
+  export type CardMovementListRelationFilter = {
+    every?: CardMovementWhereInput
+    some?: CardMovementWhereInput
+    none?: CardMovementWhereInput
+  }
+
   export type CardTagOrderByRelationAggregateInput = {
     _count?: SortOrder
   }
 
   export type AttachmentOrderByRelationAggregateInput = {
+    _count?: SortOrder
+  }
+
+  export type CardMovementOrderByRelationAggregateInput = {
     _count?: SortOrder
   }
 
@@ -22976,6 +24532,7 @@ export namespace Prisma {
     sprintId?: SortOrder
     sprintColumnId?: SortOrder
     sprintPosition?: SortOrder
+    projectId?: SortOrder
     priority?: SortOrder
     tagsImport?: SortOrder
     startDate?: SortOrder
@@ -22999,6 +24556,7 @@ export namespace Prisma {
     sprintId?: SortOrder
     sprintColumnId?: SortOrder
     sprintPosition?: SortOrder
+    projectId?: SortOrder
     priority?: SortOrder
     tagsImport?: SortOrder
     startDate?: SortOrder
@@ -23017,6 +24575,7 @@ export namespace Prisma {
     sprintId?: SortOrder
     sprintColumnId?: SortOrder
     sprintPosition?: SortOrder
+    projectId?: SortOrder
     priority?: SortOrder
     tagsImport?: SortOrder
     startDate?: SortOrder
@@ -23045,6 +24604,47 @@ export namespace Prisma {
     _sum?: NestedIntNullableFilter<$PrismaModel>
     _min?: NestedIntNullableFilter<$PrismaModel>
     _max?: NestedIntNullableFilter<$PrismaModel>
+  }
+
+  export type CardScalarRelationFilter = {
+    is?: CardWhereInput
+    isNot?: CardWhereInput
+  }
+
+  export type CardMovementCountOrderByAggregateInput = {
+    id?: SortOrder
+    cardId?: SortOrder
+    userId?: SortOrder
+    fromColumnId?: SortOrder
+    fromColumnTitle?: SortOrder
+    toColumnId?: SortOrder
+    toColumnTitle?: SortOrder
+    reason?: SortOrder
+    movedAt?: SortOrder
+  }
+
+  export type CardMovementMaxOrderByAggregateInput = {
+    id?: SortOrder
+    cardId?: SortOrder
+    userId?: SortOrder
+    fromColumnId?: SortOrder
+    fromColumnTitle?: SortOrder
+    toColumnId?: SortOrder
+    toColumnTitle?: SortOrder
+    reason?: SortOrder
+    movedAt?: SortOrder
+  }
+
+  export type CardMovementMinOrderByAggregateInput = {
+    id?: SortOrder
+    cardId?: SortOrder
+    userId?: SortOrder
+    fromColumnId?: SortOrder
+    fromColumnTitle?: SortOrder
+    toColumnId?: SortOrder
+    toColumnTitle?: SortOrder
+    reason?: SortOrder
+    movedAt?: SortOrder
   }
 
   export type UserScalarRelationFilter = {
@@ -23079,11 +24679,6 @@ export namespace Prisma {
     name?: SortOrder
     color?: SortOrder
     userId?: SortOrder
-  }
-
-  export type CardScalarRelationFilter = {
-    is?: CardWhereInput
-    isNot?: CardWhereInput
   }
 
   export type TagScalarRelationFilter = {
@@ -23865,11 +25460,25 @@ export namespace Prisma {
     connect?: SprintWhereUniqueInput | SprintWhereUniqueInput[]
   }
 
+  export type CardCreateNestedManyWithoutProjectInput = {
+    create?: XOR<CardCreateWithoutProjectInput, CardUncheckedCreateWithoutProjectInput> | CardCreateWithoutProjectInput[] | CardUncheckedCreateWithoutProjectInput[]
+    connectOrCreate?: CardCreateOrConnectWithoutProjectInput | CardCreateOrConnectWithoutProjectInput[]
+    createMany?: CardCreateManyProjectInputEnvelope
+    connect?: CardWhereUniqueInput | CardWhereUniqueInput[]
+  }
+
   export type SprintUncheckedCreateNestedManyWithoutProjectInput = {
     create?: XOR<SprintCreateWithoutProjectInput, SprintUncheckedCreateWithoutProjectInput> | SprintCreateWithoutProjectInput[] | SprintUncheckedCreateWithoutProjectInput[]
     connectOrCreate?: SprintCreateOrConnectWithoutProjectInput | SprintCreateOrConnectWithoutProjectInput[]
     createMany?: SprintCreateManyProjectInputEnvelope
     connect?: SprintWhereUniqueInput | SprintWhereUniqueInput[]
+  }
+
+  export type CardUncheckedCreateNestedManyWithoutProjectInput = {
+    create?: XOR<CardCreateWithoutProjectInput, CardUncheckedCreateWithoutProjectInput> | CardCreateWithoutProjectInput[] | CardUncheckedCreateWithoutProjectInput[]
+    connectOrCreate?: CardCreateOrConnectWithoutProjectInput | CardCreateOrConnectWithoutProjectInput[]
+    createMany?: CardCreateManyProjectInputEnvelope
+    connect?: CardWhereUniqueInput | CardWhereUniqueInput[]
   }
 
   export type SprintUpdateManyWithoutProjectNestedInput = {
@@ -23886,6 +25495,20 @@ export namespace Prisma {
     deleteMany?: SprintScalarWhereInput | SprintScalarWhereInput[]
   }
 
+  export type CardUpdateManyWithoutProjectNestedInput = {
+    create?: XOR<CardCreateWithoutProjectInput, CardUncheckedCreateWithoutProjectInput> | CardCreateWithoutProjectInput[] | CardUncheckedCreateWithoutProjectInput[]
+    connectOrCreate?: CardCreateOrConnectWithoutProjectInput | CardCreateOrConnectWithoutProjectInput[]
+    upsert?: CardUpsertWithWhereUniqueWithoutProjectInput | CardUpsertWithWhereUniqueWithoutProjectInput[]
+    createMany?: CardCreateManyProjectInputEnvelope
+    set?: CardWhereUniqueInput | CardWhereUniqueInput[]
+    disconnect?: CardWhereUniqueInput | CardWhereUniqueInput[]
+    delete?: CardWhereUniqueInput | CardWhereUniqueInput[]
+    connect?: CardWhereUniqueInput | CardWhereUniqueInput[]
+    update?: CardUpdateWithWhereUniqueWithoutProjectInput | CardUpdateWithWhereUniqueWithoutProjectInput[]
+    updateMany?: CardUpdateManyWithWhereWithoutProjectInput | CardUpdateManyWithWhereWithoutProjectInput[]
+    deleteMany?: CardScalarWhereInput | CardScalarWhereInput[]
+  }
+
   export type SprintUncheckedUpdateManyWithoutProjectNestedInput = {
     create?: XOR<SprintCreateWithoutProjectInput, SprintUncheckedCreateWithoutProjectInput> | SprintCreateWithoutProjectInput[] | SprintUncheckedCreateWithoutProjectInput[]
     connectOrCreate?: SprintCreateOrConnectWithoutProjectInput | SprintCreateOrConnectWithoutProjectInput[]
@@ -23898,6 +25521,20 @@ export namespace Prisma {
     update?: SprintUpdateWithWhereUniqueWithoutProjectInput | SprintUpdateWithWhereUniqueWithoutProjectInput[]
     updateMany?: SprintUpdateManyWithWhereWithoutProjectInput | SprintUpdateManyWithWhereWithoutProjectInput[]
     deleteMany?: SprintScalarWhereInput | SprintScalarWhereInput[]
+  }
+
+  export type CardUncheckedUpdateManyWithoutProjectNestedInput = {
+    create?: XOR<CardCreateWithoutProjectInput, CardUncheckedCreateWithoutProjectInput> | CardCreateWithoutProjectInput[] | CardUncheckedCreateWithoutProjectInput[]
+    connectOrCreate?: CardCreateOrConnectWithoutProjectInput | CardCreateOrConnectWithoutProjectInput[]
+    upsert?: CardUpsertWithWhereUniqueWithoutProjectInput | CardUpsertWithWhereUniqueWithoutProjectInput[]
+    createMany?: CardCreateManyProjectInputEnvelope
+    set?: CardWhereUniqueInput | CardWhereUniqueInput[]
+    disconnect?: CardWhereUniqueInput | CardWhereUniqueInput[]
+    delete?: CardWhereUniqueInput | CardWhereUniqueInput[]
+    connect?: CardWhereUniqueInput | CardWhereUniqueInput[]
+    update?: CardUpdateWithWhereUniqueWithoutProjectInput | CardUpdateWithWhereUniqueWithoutProjectInput[]
+    updateMany?: CardUpdateManyWithWhereWithoutProjectInput | CardUpdateManyWithWhereWithoutProjectInput[]
+    deleteMany?: CardScalarWhereInput | CardScalarWhereInput[]
   }
 
   export type ProjectCreateNestedOneWithoutSprintsInput = {
@@ -24192,6 +25829,12 @@ export namespace Prisma {
     connect?: SprintColumnWhereUniqueInput
   }
 
+  export type ProjectCreateNestedOneWithoutCardsInput = {
+    create?: XOR<ProjectCreateWithoutCardsInput, ProjectUncheckedCreateWithoutCardsInput>
+    connectOrCreate?: ProjectCreateOrConnectWithoutCardsInput
+    connect?: ProjectWhereUniqueInput
+  }
+
   export type CardTagCreateNestedManyWithoutCardInput = {
     create?: XOR<CardTagCreateWithoutCardInput, CardTagUncheckedCreateWithoutCardInput> | CardTagCreateWithoutCardInput[] | CardTagUncheckedCreateWithoutCardInput[]
     connectOrCreate?: CardTagCreateOrConnectWithoutCardInput | CardTagCreateOrConnectWithoutCardInput[]
@@ -24225,6 +25868,13 @@ export namespace Prisma {
     connectOrCreate?: CommentCreateOrConnectWithoutCardInput | CommentCreateOrConnectWithoutCardInput[]
     createMany?: CommentCreateManyCardInputEnvelope
     connect?: CommentWhereUniqueInput | CommentWhereUniqueInput[]
+  }
+
+  export type CardMovementCreateNestedManyWithoutCardInput = {
+    create?: XOR<CardMovementCreateWithoutCardInput, CardMovementUncheckedCreateWithoutCardInput> | CardMovementCreateWithoutCardInput[] | CardMovementUncheckedCreateWithoutCardInput[]
+    connectOrCreate?: CardMovementCreateOrConnectWithoutCardInput | CardMovementCreateOrConnectWithoutCardInput[]
+    createMany?: CardMovementCreateManyCardInputEnvelope
+    connect?: CardMovementWhereUniqueInput | CardMovementWhereUniqueInput[]
   }
 
   export type CardTagUncheckedCreateNestedManyWithoutCardInput = {
@@ -24262,6 +25912,13 @@ export namespace Prisma {
     connect?: CommentWhereUniqueInput | CommentWhereUniqueInput[]
   }
 
+  export type CardMovementUncheckedCreateNestedManyWithoutCardInput = {
+    create?: XOR<CardMovementCreateWithoutCardInput, CardMovementUncheckedCreateWithoutCardInput> | CardMovementCreateWithoutCardInput[] | CardMovementUncheckedCreateWithoutCardInput[]
+    connectOrCreate?: CardMovementCreateOrConnectWithoutCardInput | CardMovementCreateOrConnectWithoutCardInput[]
+    createMany?: CardMovementCreateManyCardInputEnvelope
+    connect?: CardMovementWhereUniqueInput | CardMovementWhereUniqueInput[]
+  }
+
   export type NullableIntFieldUpdateOperationsInput = {
     set?: number | null
     increment?: number
@@ -24270,10 +25927,12 @@ export namespace Prisma {
     divide?: number
   }
 
-  export type SprintUpdateOneRequiredWithoutCardsNestedInput = {
+  export type SprintUpdateOneWithoutCardsNestedInput = {
     create?: XOR<SprintCreateWithoutCardsInput, SprintUncheckedCreateWithoutCardsInput>
     connectOrCreate?: SprintCreateOrConnectWithoutCardsInput
     upsert?: SprintUpsertWithoutCardsInput
+    disconnect?: SprintWhereInput | boolean
+    delete?: SprintWhereInput | boolean
     connect?: SprintWhereUniqueInput
     update?: XOR<XOR<SprintUpdateToOneWithWhereWithoutCardsInput, SprintUpdateWithoutCardsInput>, SprintUncheckedUpdateWithoutCardsInput>
   }
@@ -24286,6 +25945,16 @@ export namespace Prisma {
     delete?: SprintColumnWhereInput | boolean
     connect?: SprintColumnWhereUniqueInput
     update?: XOR<XOR<SprintColumnUpdateToOneWithWhereWithoutCardsInput, SprintColumnUpdateWithoutCardsInput>, SprintColumnUncheckedUpdateWithoutCardsInput>
+  }
+
+  export type ProjectUpdateOneWithoutCardsNestedInput = {
+    create?: XOR<ProjectCreateWithoutCardsInput, ProjectUncheckedCreateWithoutCardsInput>
+    connectOrCreate?: ProjectCreateOrConnectWithoutCardsInput
+    upsert?: ProjectUpsertWithoutCardsInput
+    disconnect?: ProjectWhereInput | boolean
+    delete?: ProjectWhereInput | boolean
+    connect?: ProjectWhereUniqueInput
+    update?: XOR<XOR<ProjectUpdateToOneWithWhereWithoutCardsInput, ProjectUpdateWithoutCardsInput>, ProjectUncheckedUpdateWithoutCardsInput>
   }
 
   export type CardTagUpdateManyWithoutCardNestedInput = {
@@ -24358,6 +26027,20 @@ export namespace Prisma {
     deleteMany?: CommentScalarWhereInput | CommentScalarWhereInput[]
   }
 
+  export type CardMovementUpdateManyWithoutCardNestedInput = {
+    create?: XOR<CardMovementCreateWithoutCardInput, CardMovementUncheckedCreateWithoutCardInput> | CardMovementCreateWithoutCardInput[] | CardMovementUncheckedCreateWithoutCardInput[]
+    connectOrCreate?: CardMovementCreateOrConnectWithoutCardInput | CardMovementCreateOrConnectWithoutCardInput[]
+    upsert?: CardMovementUpsertWithWhereUniqueWithoutCardInput | CardMovementUpsertWithWhereUniqueWithoutCardInput[]
+    createMany?: CardMovementCreateManyCardInputEnvelope
+    set?: CardMovementWhereUniqueInput | CardMovementWhereUniqueInput[]
+    disconnect?: CardMovementWhereUniqueInput | CardMovementWhereUniqueInput[]
+    delete?: CardMovementWhereUniqueInput | CardMovementWhereUniqueInput[]
+    connect?: CardMovementWhereUniqueInput | CardMovementWhereUniqueInput[]
+    update?: CardMovementUpdateWithWhereUniqueWithoutCardInput | CardMovementUpdateWithWhereUniqueWithoutCardInput[]
+    updateMany?: CardMovementUpdateManyWithWhereWithoutCardInput | CardMovementUpdateManyWithWhereWithoutCardInput[]
+    deleteMany?: CardMovementScalarWhereInput | CardMovementScalarWhereInput[]
+  }
+
   export type CardTagUncheckedUpdateManyWithoutCardNestedInput = {
     create?: XOR<CardTagCreateWithoutCardInput, CardTagUncheckedCreateWithoutCardInput> | CardTagCreateWithoutCardInput[] | CardTagUncheckedCreateWithoutCardInput[]
     connectOrCreate?: CardTagCreateOrConnectWithoutCardInput | CardTagCreateOrConnectWithoutCardInput[]
@@ -24426,6 +26109,34 @@ export namespace Prisma {
     update?: CommentUpdateWithWhereUniqueWithoutCardInput | CommentUpdateWithWhereUniqueWithoutCardInput[]
     updateMany?: CommentUpdateManyWithWhereWithoutCardInput | CommentUpdateManyWithWhereWithoutCardInput[]
     deleteMany?: CommentScalarWhereInput | CommentScalarWhereInput[]
+  }
+
+  export type CardMovementUncheckedUpdateManyWithoutCardNestedInput = {
+    create?: XOR<CardMovementCreateWithoutCardInput, CardMovementUncheckedCreateWithoutCardInput> | CardMovementCreateWithoutCardInput[] | CardMovementUncheckedCreateWithoutCardInput[]
+    connectOrCreate?: CardMovementCreateOrConnectWithoutCardInput | CardMovementCreateOrConnectWithoutCardInput[]
+    upsert?: CardMovementUpsertWithWhereUniqueWithoutCardInput | CardMovementUpsertWithWhereUniqueWithoutCardInput[]
+    createMany?: CardMovementCreateManyCardInputEnvelope
+    set?: CardMovementWhereUniqueInput | CardMovementWhereUniqueInput[]
+    disconnect?: CardMovementWhereUniqueInput | CardMovementWhereUniqueInput[]
+    delete?: CardMovementWhereUniqueInput | CardMovementWhereUniqueInput[]
+    connect?: CardMovementWhereUniqueInput | CardMovementWhereUniqueInput[]
+    update?: CardMovementUpdateWithWhereUniqueWithoutCardInput | CardMovementUpdateWithWhereUniqueWithoutCardInput[]
+    updateMany?: CardMovementUpdateManyWithWhereWithoutCardInput | CardMovementUpdateManyWithWhereWithoutCardInput[]
+    deleteMany?: CardMovementScalarWhereInput | CardMovementScalarWhereInput[]
+  }
+
+  export type CardCreateNestedOneWithoutMovementsInput = {
+    create?: XOR<CardCreateWithoutMovementsInput, CardUncheckedCreateWithoutMovementsInput>
+    connectOrCreate?: CardCreateOrConnectWithoutMovementsInput
+    connect?: CardWhereUniqueInput
+  }
+
+  export type CardUpdateOneRequiredWithoutMovementsNestedInput = {
+    create?: XOR<CardCreateWithoutMovementsInput, CardUncheckedCreateWithoutMovementsInput>
+    connectOrCreate?: CardCreateOrConnectWithoutMovementsInput
+    upsert?: CardUpsertWithoutMovementsInput
+    connect?: CardWhereUniqueInput
+    update?: XOR<XOR<CardUpdateToOneWithWhereWithoutMovementsInput, CardUpdateWithoutMovementsInput>, CardUncheckedUpdateWithoutMovementsInput>
   }
 
   export type UserCreateNestedOneWithoutTagsInput = {
@@ -25533,6 +27244,64 @@ export namespace Prisma {
     skipDuplicates?: boolean
   }
 
+  export type CardCreateWithoutProjectInput = {
+    id?: string
+    title: string
+    description?: string
+    color?: string
+    position?: number
+    sprintPosition?: number | null
+    priority?: string
+    tagsImport?: string
+    startDate?: Date | string | null
+    endDate?: Date | string | null
+    deletedAt?: Date | string | null
+    createdAt?: Date | string
+    updatedAt?: Date | string
+    sprint?: SprintCreateNestedOneWithoutCardsInput
+    sprintColumn?: SprintColumnCreateNestedOneWithoutCardsInput
+    tags?: CardTagCreateNestedManyWithoutCardInput
+    attachments?: AttachmentCreateNestedManyWithoutCardInput
+    timeEntries?: TimeEntryCreateNestedManyWithoutCardInput
+    responsibles?: CardResponsibleCreateNestedManyWithoutCardInput
+    comments?: CommentCreateNestedManyWithoutCardInput
+    movements?: CardMovementCreateNestedManyWithoutCardInput
+  }
+
+  export type CardUncheckedCreateWithoutProjectInput = {
+    id?: string
+    title: string
+    description?: string
+    color?: string
+    position?: number
+    sprintId?: string | null
+    sprintColumnId?: string | null
+    sprintPosition?: number | null
+    priority?: string
+    tagsImport?: string
+    startDate?: Date | string | null
+    endDate?: Date | string | null
+    deletedAt?: Date | string | null
+    createdAt?: Date | string
+    updatedAt?: Date | string
+    tags?: CardTagUncheckedCreateNestedManyWithoutCardInput
+    attachments?: AttachmentUncheckedCreateNestedManyWithoutCardInput
+    timeEntries?: TimeEntryUncheckedCreateNestedManyWithoutCardInput
+    responsibles?: CardResponsibleUncheckedCreateNestedManyWithoutCardInput
+    comments?: CommentUncheckedCreateNestedManyWithoutCardInput
+    movements?: CardMovementUncheckedCreateNestedManyWithoutCardInput
+  }
+
+  export type CardCreateOrConnectWithoutProjectInput = {
+    where: CardWhereUniqueInput
+    create: XOR<CardCreateWithoutProjectInput, CardUncheckedCreateWithoutProjectInput>
+  }
+
+  export type CardCreateManyProjectInputEnvelope = {
+    data: CardCreateManyProjectInput | CardCreateManyProjectInput[]
+    skipDuplicates?: boolean
+  }
+
   export type SprintUpsertWithWhereUniqueWithoutProjectInput = {
     where: SprintWhereUniqueInput
     update: XOR<SprintUpdateWithoutProjectInput, SprintUncheckedUpdateWithoutProjectInput>
@@ -25549,16 +27318,56 @@ export namespace Prisma {
     data: XOR<SprintUpdateManyMutationInput, SprintUncheckedUpdateManyWithoutProjectInput>
   }
 
+  export type CardUpsertWithWhereUniqueWithoutProjectInput = {
+    where: CardWhereUniqueInput
+    update: XOR<CardUpdateWithoutProjectInput, CardUncheckedUpdateWithoutProjectInput>
+    create: XOR<CardCreateWithoutProjectInput, CardUncheckedCreateWithoutProjectInput>
+  }
+
+  export type CardUpdateWithWhereUniqueWithoutProjectInput = {
+    where: CardWhereUniqueInput
+    data: XOR<CardUpdateWithoutProjectInput, CardUncheckedUpdateWithoutProjectInput>
+  }
+
+  export type CardUpdateManyWithWhereWithoutProjectInput = {
+    where: CardScalarWhereInput
+    data: XOR<CardUpdateManyMutationInput, CardUncheckedUpdateManyWithoutProjectInput>
+  }
+
+  export type CardScalarWhereInput = {
+    AND?: CardScalarWhereInput | CardScalarWhereInput[]
+    OR?: CardScalarWhereInput[]
+    NOT?: CardScalarWhereInput | CardScalarWhereInput[]
+    id?: StringFilter<"Card"> | string
+    title?: StringFilter<"Card"> | string
+    description?: StringFilter<"Card"> | string
+    color?: StringFilter<"Card"> | string
+    position?: IntFilter<"Card"> | number
+    sprintId?: StringNullableFilter<"Card"> | string | null
+    sprintColumnId?: StringNullableFilter<"Card"> | string | null
+    sprintPosition?: IntNullableFilter<"Card"> | number | null
+    projectId?: StringNullableFilter<"Card"> | string | null
+    priority?: StringFilter<"Card"> | string
+    tagsImport?: StringFilter<"Card"> | string
+    startDate?: DateTimeNullableFilter<"Card"> | Date | string | null
+    endDate?: DateTimeNullableFilter<"Card"> | Date | string | null
+    deletedAt?: DateTimeNullableFilter<"Card"> | Date | string | null
+    createdAt?: DateTimeFilter<"Card"> | Date | string
+    updatedAt?: DateTimeFilter<"Card"> | Date | string
+  }
+
   export type ProjectCreateWithoutSprintsInput = {
     id?: string
     tenantId: string
     name: string
+    cards?: CardCreateNestedManyWithoutProjectInput
   }
 
   export type ProjectUncheckedCreateWithoutSprintsInput = {
     id?: string
     tenantId: string
     name: string
+    cards?: CardUncheckedCreateNestedManyWithoutProjectInput
   }
 
   export type ProjectCreateOrConnectWithoutSprintsInput = {
@@ -25612,11 +27421,13 @@ export namespace Prisma {
     createdAt?: Date | string
     updatedAt?: Date | string
     sprintColumn?: SprintColumnCreateNestedOneWithoutCardsInput
+    project?: ProjectCreateNestedOneWithoutCardsInput
     tags?: CardTagCreateNestedManyWithoutCardInput
     attachments?: AttachmentCreateNestedManyWithoutCardInput
     timeEntries?: TimeEntryCreateNestedManyWithoutCardInput
     responsibles?: CardResponsibleCreateNestedManyWithoutCardInput
     comments?: CommentCreateNestedManyWithoutCardInput
+    movements?: CardMovementCreateNestedManyWithoutCardInput
   }
 
   export type CardUncheckedCreateWithoutSprintInput = {
@@ -25627,6 +27438,7 @@ export namespace Prisma {
     position?: number
     sprintColumnId?: string | null
     sprintPosition?: number | null
+    projectId?: string | null
     priority?: string
     tagsImport?: string
     startDate?: Date | string | null
@@ -25639,6 +27451,7 @@ export namespace Prisma {
     timeEntries?: TimeEntryUncheckedCreateNestedManyWithoutCardInput
     responsibles?: CardResponsibleUncheckedCreateNestedManyWithoutCardInput
     comments?: CommentUncheckedCreateNestedManyWithoutCardInput
+    movements?: CardMovementUncheckedCreateNestedManyWithoutCardInput
   }
 
   export type CardCreateOrConnectWithoutSprintInput = {
@@ -25760,12 +27573,14 @@ export namespace Prisma {
     id?: StringFieldUpdateOperationsInput | string
     tenantId?: StringFieldUpdateOperationsInput | string
     name?: StringFieldUpdateOperationsInput | string
+    cards?: CardUpdateManyWithoutProjectNestedInput
   }
 
   export type ProjectUncheckedUpdateWithoutSprintsInput = {
     id?: StringFieldUpdateOperationsInput | string
     tenantId?: StringFieldUpdateOperationsInput | string
     name?: StringFieldUpdateOperationsInput | string
+    cards?: CardUncheckedUpdateManyWithoutProjectNestedInput
   }
 
   export type UserUpsertWithoutSprintsInput = {
@@ -25819,27 +27634,6 @@ export namespace Prisma {
   export type CardUpdateManyWithWhereWithoutSprintInput = {
     where: CardScalarWhereInput
     data: XOR<CardUpdateManyMutationInput, CardUncheckedUpdateManyWithoutSprintInput>
-  }
-
-  export type CardScalarWhereInput = {
-    AND?: CardScalarWhereInput | CardScalarWhereInput[]
-    OR?: CardScalarWhereInput[]
-    NOT?: CardScalarWhereInput | CardScalarWhereInput[]
-    id?: StringFilter<"Card"> | string
-    title?: StringFilter<"Card"> | string
-    description?: StringFilter<"Card"> | string
-    color?: StringFilter<"Card"> | string
-    position?: IntFilter<"Card"> | number
-    sprintId?: StringFilter<"Card"> | string
-    sprintColumnId?: StringNullableFilter<"Card"> | string | null
-    sprintPosition?: IntNullableFilter<"Card"> | number | null
-    priority?: StringFilter<"Card"> | string
-    tagsImport?: StringFilter<"Card"> | string
-    startDate?: DateTimeNullableFilter<"Card"> | Date | string | null
-    endDate?: DateTimeNullableFilter<"Card"> | Date | string | null
-    deletedAt?: DateTimeNullableFilter<"Card"> | Date | string | null
-    createdAt?: DateTimeFilter<"Card"> | Date | string
-    updatedAt?: DateTimeFilter<"Card"> | Date | string
   }
 
   export type SprintColumnUpsertWithWhereUniqueWithoutSprintInput = {
@@ -25960,12 +27754,14 @@ export namespace Prisma {
     deletedAt?: Date | string | null
     createdAt?: Date | string
     updatedAt?: Date | string
-    sprint: SprintCreateNestedOneWithoutCardsInput
+    sprint?: SprintCreateNestedOneWithoutCardsInput
+    project?: ProjectCreateNestedOneWithoutCardsInput
     tags?: CardTagCreateNestedManyWithoutCardInput
     attachments?: AttachmentCreateNestedManyWithoutCardInput
     timeEntries?: TimeEntryCreateNestedManyWithoutCardInput
     responsibles?: CardResponsibleCreateNestedManyWithoutCardInput
     comments?: CommentCreateNestedManyWithoutCardInput
+    movements?: CardMovementCreateNestedManyWithoutCardInput
   }
 
   export type CardUncheckedCreateWithoutSprintColumnInput = {
@@ -25974,8 +27770,9 @@ export namespace Prisma {
     description?: string
     color?: string
     position?: number
-    sprintId: string
+    sprintId?: string | null
     sprintPosition?: number | null
+    projectId?: string | null
     priority?: string
     tagsImport?: string
     startDate?: Date | string | null
@@ -25988,6 +27785,7 @@ export namespace Prisma {
     timeEntries?: TimeEntryUncheckedCreateNestedManyWithoutCardInput
     responsibles?: CardResponsibleUncheckedCreateNestedManyWithoutCardInput
     comments?: CommentUncheckedCreateNestedManyWithoutCardInput
+    movements?: CardMovementUncheckedCreateNestedManyWithoutCardInput
   }
 
   export type CardCreateOrConnectWithoutSprintColumnInput = {
@@ -26133,6 +27931,25 @@ export namespace Prisma {
     create: XOR<SprintColumnCreateWithoutCardsInput, SprintColumnUncheckedCreateWithoutCardsInput>
   }
 
+  export type ProjectCreateWithoutCardsInput = {
+    id?: string
+    tenantId: string
+    name: string
+    sprints?: SprintCreateNestedManyWithoutProjectInput
+  }
+
+  export type ProjectUncheckedCreateWithoutCardsInput = {
+    id?: string
+    tenantId: string
+    name: string
+    sprints?: SprintUncheckedCreateNestedManyWithoutProjectInput
+  }
+
+  export type ProjectCreateOrConnectWithoutCardsInput = {
+    where: ProjectWhereUniqueInput
+    create: XOR<ProjectCreateWithoutCardsInput, ProjectUncheckedCreateWithoutCardsInput>
+  }
+
   export type CardTagCreateWithoutCardInput = {
     tag: TagCreateNestedOneWithoutCardsInput
   }
@@ -26271,6 +28088,38 @@ export namespace Prisma {
     skipDuplicates?: boolean
   }
 
+  export type CardMovementCreateWithoutCardInput = {
+    id?: string
+    userId?: string | null
+    fromColumnId?: string | null
+    fromColumnTitle?: string | null
+    toColumnId?: string | null
+    toColumnTitle?: string | null
+    reason?: string | null
+    movedAt?: Date | string
+  }
+
+  export type CardMovementUncheckedCreateWithoutCardInput = {
+    id?: string
+    userId?: string | null
+    fromColumnId?: string | null
+    fromColumnTitle?: string | null
+    toColumnId?: string | null
+    toColumnTitle?: string | null
+    reason?: string | null
+    movedAt?: Date | string
+  }
+
+  export type CardMovementCreateOrConnectWithoutCardInput = {
+    where: CardMovementWhereUniqueInput
+    create: XOR<CardMovementCreateWithoutCardInput, CardMovementUncheckedCreateWithoutCardInput>
+  }
+
+  export type CardMovementCreateManyCardInputEnvelope = {
+    data: CardMovementCreateManyCardInput | CardMovementCreateManyCardInput[]
+    skipDuplicates?: boolean
+  }
+
   export type SprintUpsertWithoutCardsInput = {
     update: XOR<SprintUpdateWithoutCardsInput, SprintUncheckedUpdateWithoutCardsInput>
     create: XOR<SprintCreateWithoutCardsInput, SprintUncheckedCreateWithoutCardsInput>
@@ -26349,6 +28198,31 @@ export namespace Prisma {
     deletedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
+  export type ProjectUpsertWithoutCardsInput = {
+    update: XOR<ProjectUpdateWithoutCardsInput, ProjectUncheckedUpdateWithoutCardsInput>
+    create: XOR<ProjectCreateWithoutCardsInput, ProjectUncheckedCreateWithoutCardsInput>
+    where?: ProjectWhereInput
+  }
+
+  export type ProjectUpdateToOneWithWhereWithoutCardsInput = {
+    where?: ProjectWhereInput
+    data: XOR<ProjectUpdateWithoutCardsInput, ProjectUncheckedUpdateWithoutCardsInput>
+  }
+
+  export type ProjectUpdateWithoutCardsInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    tenantId?: StringFieldUpdateOperationsInput | string
+    name?: StringFieldUpdateOperationsInput | string
+    sprints?: SprintUpdateManyWithoutProjectNestedInput
+  }
+
+  export type ProjectUncheckedUpdateWithoutCardsInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    tenantId?: StringFieldUpdateOperationsInput | string
+    name?: StringFieldUpdateOperationsInput | string
+    sprints?: SprintUncheckedUpdateManyWithoutProjectNestedInput
   }
 
   export type CardTagUpsertWithWhereUniqueWithoutCardInput = {
@@ -26452,6 +28326,149 @@ export namespace Prisma {
   export type CommentUpdateManyWithWhereWithoutCardInput = {
     where: CommentScalarWhereInput
     data: XOR<CommentUpdateManyMutationInput, CommentUncheckedUpdateManyWithoutCardInput>
+  }
+
+  export type CardMovementUpsertWithWhereUniqueWithoutCardInput = {
+    where: CardMovementWhereUniqueInput
+    update: XOR<CardMovementUpdateWithoutCardInput, CardMovementUncheckedUpdateWithoutCardInput>
+    create: XOR<CardMovementCreateWithoutCardInput, CardMovementUncheckedCreateWithoutCardInput>
+  }
+
+  export type CardMovementUpdateWithWhereUniqueWithoutCardInput = {
+    where: CardMovementWhereUniqueInput
+    data: XOR<CardMovementUpdateWithoutCardInput, CardMovementUncheckedUpdateWithoutCardInput>
+  }
+
+  export type CardMovementUpdateManyWithWhereWithoutCardInput = {
+    where: CardMovementScalarWhereInput
+    data: XOR<CardMovementUpdateManyMutationInput, CardMovementUncheckedUpdateManyWithoutCardInput>
+  }
+
+  export type CardMovementScalarWhereInput = {
+    AND?: CardMovementScalarWhereInput | CardMovementScalarWhereInput[]
+    OR?: CardMovementScalarWhereInput[]
+    NOT?: CardMovementScalarWhereInput | CardMovementScalarWhereInput[]
+    id?: StringFilter<"CardMovement"> | string
+    cardId?: StringFilter<"CardMovement"> | string
+    userId?: StringNullableFilter<"CardMovement"> | string | null
+    fromColumnId?: StringNullableFilter<"CardMovement"> | string | null
+    fromColumnTitle?: StringNullableFilter<"CardMovement"> | string | null
+    toColumnId?: StringNullableFilter<"CardMovement"> | string | null
+    toColumnTitle?: StringNullableFilter<"CardMovement"> | string | null
+    reason?: StringNullableFilter<"CardMovement"> | string | null
+    movedAt?: DateTimeFilter<"CardMovement"> | Date | string
+  }
+
+  export type CardCreateWithoutMovementsInput = {
+    id?: string
+    title: string
+    description?: string
+    color?: string
+    position?: number
+    sprintPosition?: number | null
+    priority?: string
+    tagsImport?: string
+    startDate?: Date | string | null
+    endDate?: Date | string | null
+    deletedAt?: Date | string | null
+    createdAt?: Date | string
+    updatedAt?: Date | string
+    sprint?: SprintCreateNestedOneWithoutCardsInput
+    sprintColumn?: SprintColumnCreateNestedOneWithoutCardsInput
+    project?: ProjectCreateNestedOneWithoutCardsInput
+    tags?: CardTagCreateNestedManyWithoutCardInput
+    attachments?: AttachmentCreateNestedManyWithoutCardInput
+    timeEntries?: TimeEntryCreateNestedManyWithoutCardInput
+    responsibles?: CardResponsibleCreateNestedManyWithoutCardInput
+    comments?: CommentCreateNestedManyWithoutCardInput
+  }
+
+  export type CardUncheckedCreateWithoutMovementsInput = {
+    id?: string
+    title: string
+    description?: string
+    color?: string
+    position?: number
+    sprintId?: string | null
+    sprintColumnId?: string | null
+    sprintPosition?: number | null
+    projectId?: string | null
+    priority?: string
+    tagsImport?: string
+    startDate?: Date | string | null
+    endDate?: Date | string | null
+    deletedAt?: Date | string | null
+    createdAt?: Date | string
+    updatedAt?: Date | string
+    tags?: CardTagUncheckedCreateNestedManyWithoutCardInput
+    attachments?: AttachmentUncheckedCreateNestedManyWithoutCardInput
+    timeEntries?: TimeEntryUncheckedCreateNestedManyWithoutCardInput
+    responsibles?: CardResponsibleUncheckedCreateNestedManyWithoutCardInput
+    comments?: CommentUncheckedCreateNestedManyWithoutCardInput
+  }
+
+  export type CardCreateOrConnectWithoutMovementsInput = {
+    where: CardWhereUniqueInput
+    create: XOR<CardCreateWithoutMovementsInput, CardUncheckedCreateWithoutMovementsInput>
+  }
+
+  export type CardUpsertWithoutMovementsInput = {
+    update: XOR<CardUpdateWithoutMovementsInput, CardUncheckedUpdateWithoutMovementsInput>
+    create: XOR<CardCreateWithoutMovementsInput, CardUncheckedCreateWithoutMovementsInput>
+    where?: CardWhereInput
+  }
+
+  export type CardUpdateToOneWithWhereWithoutMovementsInput = {
+    where?: CardWhereInput
+    data: XOR<CardUpdateWithoutMovementsInput, CardUncheckedUpdateWithoutMovementsInput>
+  }
+
+  export type CardUpdateWithoutMovementsInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    title?: StringFieldUpdateOperationsInput | string
+    description?: StringFieldUpdateOperationsInput | string
+    color?: StringFieldUpdateOperationsInput | string
+    position?: IntFieldUpdateOperationsInput | number
+    sprintPosition?: NullableIntFieldUpdateOperationsInput | number | null
+    priority?: StringFieldUpdateOperationsInput | string
+    tagsImport?: StringFieldUpdateOperationsInput | string
+    startDate?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    endDate?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    deletedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    sprint?: SprintUpdateOneWithoutCardsNestedInput
+    sprintColumn?: SprintColumnUpdateOneWithoutCardsNestedInput
+    project?: ProjectUpdateOneWithoutCardsNestedInput
+    tags?: CardTagUpdateManyWithoutCardNestedInput
+    attachments?: AttachmentUpdateManyWithoutCardNestedInput
+    timeEntries?: TimeEntryUpdateManyWithoutCardNestedInput
+    responsibles?: CardResponsibleUpdateManyWithoutCardNestedInput
+    comments?: CommentUpdateManyWithoutCardNestedInput
+  }
+
+  export type CardUncheckedUpdateWithoutMovementsInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    title?: StringFieldUpdateOperationsInput | string
+    description?: StringFieldUpdateOperationsInput | string
+    color?: StringFieldUpdateOperationsInput | string
+    position?: IntFieldUpdateOperationsInput | number
+    sprintId?: NullableStringFieldUpdateOperationsInput | string | null
+    sprintColumnId?: NullableStringFieldUpdateOperationsInput | string | null
+    sprintPosition?: NullableIntFieldUpdateOperationsInput | number | null
+    projectId?: NullableStringFieldUpdateOperationsInput | string | null
+    priority?: StringFieldUpdateOperationsInput | string
+    tagsImport?: StringFieldUpdateOperationsInput | string
+    startDate?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    endDate?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    deletedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    tags?: CardTagUncheckedUpdateManyWithoutCardNestedInput
+    attachments?: AttachmentUncheckedUpdateManyWithoutCardNestedInput
+    timeEntries?: TimeEntryUncheckedUpdateManyWithoutCardNestedInput
+    responsibles?: CardResponsibleUncheckedUpdateManyWithoutCardNestedInput
+    comments?: CommentUncheckedUpdateManyWithoutCardNestedInput
   }
 
   export type UserCreateWithoutTagsInput = {
@@ -26570,12 +28587,14 @@ export namespace Prisma {
     deletedAt?: Date | string | null
     createdAt?: Date | string
     updatedAt?: Date | string
-    sprint: SprintCreateNestedOneWithoutCardsInput
+    sprint?: SprintCreateNestedOneWithoutCardsInput
     sprintColumn?: SprintColumnCreateNestedOneWithoutCardsInput
+    project?: ProjectCreateNestedOneWithoutCardsInput
     attachments?: AttachmentCreateNestedManyWithoutCardInput
     timeEntries?: TimeEntryCreateNestedManyWithoutCardInput
     responsibles?: CardResponsibleCreateNestedManyWithoutCardInput
     comments?: CommentCreateNestedManyWithoutCardInput
+    movements?: CardMovementCreateNestedManyWithoutCardInput
   }
 
   export type CardUncheckedCreateWithoutTagsInput = {
@@ -26584,9 +28603,10 @@ export namespace Prisma {
     description?: string
     color?: string
     position?: number
-    sprintId: string
+    sprintId?: string | null
     sprintColumnId?: string | null
     sprintPosition?: number | null
+    projectId?: string | null
     priority?: string
     tagsImport?: string
     startDate?: Date | string | null
@@ -26598,6 +28618,7 @@ export namespace Prisma {
     timeEntries?: TimeEntryUncheckedCreateNestedManyWithoutCardInput
     responsibles?: CardResponsibleUncheckedCreateNestedManyWithoutCardInput
     comments?: CommentUncheckedCreateNestedManyWithoutCardInput
+    movements?: CardMovementUncheckedCreateNestedManyWithoutCardInput
   }
 
   export type CardCreateOrConnectWithoutTagsInput = {
@@ -26651,12 +28672,14 @@ export namespace Prisma {
     deletedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
-    sprint?: SprintUpdateOneRequiredWithoutCardsNestedInput
+    sprint?: SprintUpdateOneWithoutCardsNestedInput
     sprintColumn?: SprintColumnUpdateOneWithoutCardsNestedInput
+    project?: ProjectUpdateOneWithoutCardsNestedInput
     attachments?: AttachmentUpdateManyWithoutCardNestedInput
     timeEntries?: TimeEntryUpdateManyWithoutCardNestedInput
     responsibles?: CardResponsibleUpdateManyWithoutCardNestedInput
     comments?: CommentUpdateManyWithoutCardNestedInput
+    movements?: CardMovementUpdateManyWithoutCardNestedInput
   }
 
   export type CardUncheckedUpdateWithoutTagsInput = {
@@ -26665,9 +28688,10 @@ export namespace Prisma {
     description?: StringFieldUpdateOperationsInput | string
     color?: StringFieldUpdateOperationsInput | string
     position?: IntFieldUpdateOperationsInput | number
-    sprintId?: StringFieldUpdateOperationsInput | string
+    sprintId?: NullableStringFieldUpdateOperationsInput | string | null
     sprintColumnId?: NullableStringFieldUpdateOperationsInput | string | null
     sprintPosition?: NullableIntFieldUpdateOperationsInput | number | null
+    projectId?: NullableStringFieldUpdateOperationsInput | string | null
     priority?: StringFieldUpdateOperationsInput | string
     tagsImport?: StringFieldUpdateOperationsInput | string
     startDate?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
@@ -26679,6 +28703,7 @@ export namespace Prisma {
     timeEntries?: TimeEntryUncheckedUpdateManyWithoutCardNestedInput
     responsibles?: CardResponsibleUncheckedUpdateManyWithoutCardNestedInput
     comments?: CommentUncheckedUpdateManyWithoutCardNestedInput
+    movements?: CardMovementUncheckedUpdateManyWithoutCardNestedInput
   }
 
   export type TagUpsertWithoutCardsInput = {
@@ -26722,12 +28747,14 @@ export namespace Prisma {
     deletedAt?: Date | string | null
     createdAt?: Date | string
     updatedAt?: Date | string
-    sprint: SprintCreateNestedOneWithoutCardsInput
+    sprint?: SprintCreateNestedOneWithoutCardsInput
     sprintColumn?: SprintColumnCreateNestedOneWithoutCardsInput
+    project?: ProjectCreateNestedOneWithoutCardsInput
     tags?: CardTagCreateNestedManyWithoutCardInput
     attachments?: AttachmentCreateNestedManyWithoutCardInput
     timeEntries?: TimeEntryCreateNestedManyWithoutCardInput
     comments?: CommentCreateNestedManyWithoutCardInput
+    movements?: CardMovementCreateNestedManyWithoutCardInput
   }
 
   export type CardUncheckedCreateWithoutResponsiblesInput = {
@@ -26736,9 +28763,10 @@ export namespace Prisma {
     description?: string
     color?: string
     position?: number
-    sprintId: string
+    sprintId?: string | null
     sprintColumnId?: string | null
     sprintPosition?: number | null
+    projectId?: string | null
     priority?: string
     tagsImport?: string
     startDate?: Date | string | null
@@ -26750,6 +28778,7 @@ export namespace Prisma {
     attachments?: AttachmentUncheckedCreateNestedManyWithoutCardInput
     timeEntries?: TimeEntryUncheckedCreateNestedManyWithoutCardInput
     comments?: CommentUncheckedCreateNestedManyWithoutCardInput
+    movements?: CardMovementUncheckedCreateNestedManyWithoutCardInput
   }
 
   export type CardCreateOrConnectWithoutResponsiblesInput = {
@@ -26813,12 +28842,14 @@ export namespace Prisma {
     deletedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
-    sprint?: SprintUpdateOneRequiredWithoutCardsNestedInput
+    sprint?: SprintUpdateOneWithoutCardsNestedInput
     sprintColumn?: SprintColumnUpdateOneWithoutCardsNestedInput
+    project?: ProjectUpdateOneWithoutCardsNestedInput
     tags?: CardTagUpdateManyWithoutCardNestedInput
     attachments?: AttachmentUpdateManyWithoutCardNestedInput
     timeEntries?: TimeEntryUpdateManyWithoutCardNestedInput
     comments?: CommentUpdateManyWithoutCardNestedInput
+    movements?: CardMovementUpdateManyWithoutCardNestedInput
   }
 
   export type CardUncheckedUpdateWithoutResponsiblesInput = {
@@ -26827,9 +28858,10 @@ export namespace Prisma {
     description?: StringFieldUpdateOperationsInput | string
     color?: StringFieldUpdateOperationsInput | string
     position?: IntFieldUpdateOperationsInput | number
-    sprintId?: StringFieldUpdateOperationsInput | string
+    sprintId?: NullableStringFieldUpdateOperationsInput | string | null
     sprintColumnId?: NullableStringFieldUpdateOperationsInput | string | null
     sprintPosition?: NullableIntFieldUpdateOperationsInput | number | null
+    projectId?: NullableStringFieldUpdateOperationsInput | string | null
     priority?: StringFieldUpdateOperationsInput | string
     tagsImport?: StringFieldUpdateOperationsInput | string
     startDate?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
@@ -26841,6 +28873,7 @@ export namespace Prisma {
     attachments?: AttachmentUncheckedUpdateManyWithoutCardNestedInput
     timeEntries?: TimeEntryUncheckedUpdateManyWithoutCardNestedInput
     comments?: CommentUncheckedUpdateManyWithoutCardNestedInput
+    movements?: CardMovementUncheckedUpdateManyWithoutCardNestedInput
   }
 
   export type UserUpsertWithoutResponsibleCardsInput = {
@@ -26894,12 +28927,14 @@ export namespace Prisma {
     deletedAt?: Date | string | null
     createdAt?: Date | string
     updatedAt?: Date | string
-    sprint: SprintCreateNestedOneWithoutCardsInput
+    sprint?: SprintCreateNestedOneWithoutCardsInput
     sprintColumn?: SprintColumnCreateNestedOneWithoutCardsInput
+    project?: ProjectCreateNestedOneWithoutCardsInput
     tags?: CardTagCreateNestedManyWithoutCardInput
     attachments?: AttachmentCreateNestedManyWithoutCardInput
     timeEntries?: TimeEntryCreateNestedManyWithoutCardInput
     responsibles?: CardResponsibleCreateNestedManyWithoutCardInput
+    movements?: CardMovementCreateNestedManyWithoutCardInput
   }
 
   export type CardUncheckedCreateWithoutCommentsInput = {
@@ -26908,9 +28943,10 @@ export namespace Prisma {
     description?: string
     color?: string
     position?: number
-    sprintId: string
+    sprintId?: string | null
     sprintColumnId?: string | null
     sprintPosition?: number | null
+    projectId?: string | null
     priority?: string
     tagsImport?: string
     startDate?: Date | string | null
@@ -26922,6 +28958,7 @@ export namespace Prisma {
     attachments?: AttachmentUncheckedCreateNestedManyWithoutCardInput
     timeEntries?: TimeEntryUncheckedCreateNestedManyWithoutCardInput
     responsibles?: CardResponsibleUncheckedCreateNestedManyWithoutCardInput
+    movements?: CardMovementUncheckedCreateNestedManyWithoutCardInput
   }
 
   export type CardCreateOrConnectWithoutCommentsInput = {
@@ -26985,12 +29022,14 @@ export namespace Prisma {
     deletedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
-    sprint?: SprintUpdateOneRequiredWithoutCardsNestedInput
+    sprint?: SprintUpdateOneWithoutCardsNestedInput
     sprintColumn?: SprintColumnUpdateOneWithoutCardsNestedInput
+    project?: ProjectUpdateOneWithoutCardsNestedInput
     tags?: CardTagUpdateManyWithoutCardNestedInput
     attachments?: AttachmentUpdateManyWithoutCardNestedInput
     timeEntries?: TimeEntryUpdateManyWithoutCardNestedInput
     responsibles?: CardResponsibleUpdateManyWithoutCardNestedInput
+    movements?: CardMovementUpdateManyWithoutCardNestedInput
   }
 
   export type CardUncheckedUpdateWithoutCommentsInput = {
@@ -26999,9 +29038,10 @@ export namespace Prisma {
     description?: StringFieldUpdateOperationsInput | string
     color?: StringFieldUpdateOperationsInput | string
     position?: IntFieldUpdateOperationsInput | number
-    sprintId?: StringFieldUpdateOperationsInput | string
+    sprintId?: NullableStringFieldUpdateOperationsInput | string | null
     sprintColumnId?: NullableStringFieldUpdateOperationsInput | string | null
     sprintPosition?: NullableIntFieldUpdateOperationsInput | number | null
+    projectId?: NullableStringFieldUpdateOperationsInput | string | null
     priority?: StringFieldUpdateOperationsInput | string
     tagsImport?: StringFieldUpdateOperationsInput | string
     startDate?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
@@ -27013,6 +29053,7 @@ export namespace Prisma {
     attachments?: AttachmentUncheckedUpdateManyWithoutCardNestedInput
     timeEntries?: TimeEntryUncheckedUpdateManyWithoutCardNestedInput
     responsibles?: CardResponsibleUncheckedUpdateManyWithoutCardNestedInput
+    movements?: CardMovementUncheckedUpdateManyWithoutCardNestedInput
   }
 
   export type UserUpsertWithoutCommentsInput = {
@@ -27066,12 +29107,14 @@ export namespace Prisma {
     deletedAt?: Date | string | null
     createdAt?: Date | string
     updatedAt?: Date | string
-    sprint: SprintCreateNestedOneWithoutCardsInput
+    sprint?: SprintCreateNestedOneWithoutCardsInput
     sprintColumn?: SprintColumnCreateNestedOneWithoutCardsInput
+    project?: ProjectCreateNestedOneWithoutCardsInput
     tags?: CardTagCreateNestedManyWithoutCardInput
     timeEntries?: TimeEntryCreateNestedManyWithoutCardInput
     responsibles?: CardResponsibleCreateNestedManyWithoutCardInput
     comments?: CommentCreateNestedManyWithoutCardInput
+    movements?: CardMovementCreateNestedManyWithoutCardInput
   }
 
   export type CardUncheckedCreateWithoutAttachmentsInput = {
@@ -27080,9 +29123,10 @@ export namespace Prisma {
     description?: string
     color?: string
     position?: number
-    sprintId: string
+    sprintId?: string | null
     sprintColumnId?: string | null
     sprintPosition?: number | null
+    projectId?: string | null
     priority?: string
     tagsImport?: string
     startDate?: Date | string | null
@@ -27094,6 +29138,7 @@ export namespace Prisma {
     timeEntries?: TimeEntryUncheckedCreateNestedManyWithoutCardInput
     responsibles?: CardResponsibleUncheckedCreateNestedManyWithoutCardInput
     comments?: CommentUncheckedCreateNestedManyWithoutCardInput
+    movements?: CardMovementUncheckedCreateNestedManyWithoutCardInput
   }
 
   export type CardCreateOrConnectWithoutAttachmentsInput = {
@@ -27126,12 +29171,14 @@ export namespace Prisma {
     deletedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
-    sprint?: SprintUpdateOneRequiredWithoutCardsNestedInput
+    sprint?: SprintUpdateOneWithoutCardsNestedInput
     sprintColumn?: SprintColumnUpdateOneWithoutCardsNestedInput
+    project?: ProjectUpdateOneWithoutCardsNestedInput
     tags?: CardTagUpdateManyWithoutCardNestedInput
     timeEntries?: TimeEntryUpdateManyWithoutCardNestedInput
     responsibles?: CardResponsibleUpdateManyWithoutCardNestedInput
     comments?: CommentUpdateManyWithoutCardNestedInput
+    movements?: CardMovementUpdateManyWithoutCardNestedInput
   }
 
   export type CardUncheckedUpdateWithoutAttachmentsInput = {
@@ -27140,9 +29187,10 @@ export namespace Prisma {
     description?: StringFieldUpdateOperationsInput | string
     color?: StringFieldUpdateOperationsInput | string
     position?: IntFieldUpdateOperationsInput | number
-    sprintId?: StringFieldUpdateOperationsInput | string
+    sprintId?: NullableStringFieldUpdateOperationsInput | string | null
     sprintColumnId?: NullableStringFieldUpdateOperationsInput | string | null
     sprintPosition?: NullableIntFieldUpdateOperationsInput | number | null
+    projectId?: NullableStringFieldUpdateOperationsInput | string | null
     priority?: StringFieldUpdateOperationsInput | string
     tagsImport?: StringFieldUpdateOperationsInput | string
     startDate?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
@@ -27154,6 +29202,7 @@ export namespace Prisma {
     timeEntries?: TimeEntryUncheckedUpdateManyWithoutCardNestedInput
     responsibles?: CardResponsibleUncheckedUpdateManyWithoutCardNestedInput
     comments?: CommentUncheckedUpdateManyWithoutCardNestedInput
+    movements?: CardMovementUncheckedUpdateManyWithoutCardNestedInput
   }
 
   export type UserCreateWithoutTimeEntriesInput = {
@@ -27201,12 +29250,14 @@ export namespace Prisma {
     deletedAt?: Date | string | null
     createdAt?: Date | string
     updatedAt?: Date | string
-    sprint: SprintCreateNestedOneWithoutCardsInput
+    sprint?: SprintCreateNestedOneWithoutCardsInput
     sprintColumn?: SprintColumnCreateNestedOneWithoutCardsInput
+    project?: ProjectCreateNestedOneWithoutCardsInput
     tags?: CardTagCreateNestedManyWithoutCardInput
     attachments?: AttachmentCreateNestedManyWithoutCardInput
     responsibles?: CardResponsibleCreateNestedManyWithoutCardInput
     comments?: CommentCreateNestedManyWithoutCardInput
+    movements?: CardMovementCreateNestedManyWithoutCardInput
   }
 
   export type CardUncheckedCreateWithoutTimeEntriesInput = {
@@ -27215,9 +29266,10 @@ export namespace Prisma {
     description?: string
     color?: string
     position?: number
-    sprintId: string
+    sprintId?: string | null
     sprintColumnId?: string | null
     sprintPosition?: number | null
+    projectId?: string | null
     priority?: string
     tagsImport?: string
     startDate?: Date | string | null
@@ -27229,6 +29281,7 @@ export namespace Prisma {
     attachments?: AttachmentUncheckedCreateNestedManyWithoutCardInput
     responsibles?: CardResponsibleUncheckedCreateNestedManyWithoutCardInput
     comments?: CommentUncheckedCreateNestedManyWithoutCardInput
+    movements?: CardMovementUncheckedCreateNestedManyWithoutCardInput
   }
 
   export type CardCreateOrConnectWithoutTimeEntriesInput = {
@@ -27298,12 +29351,14 @@ export namespace Prisma {
     deletedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
-    sprint?: SprintUpdateOneRequiredWithoutCardsNestedInput
+    sprint?: SprintUpdateOneWithoutCardsNestedInput
     sprintColumn?: SprintColumnUpdateOneWithoutCardsNestedInput
+    project?: ProjectUpdateOneWithoutCardsNestedInput
     tags?: CardTagUpdateManyWithoutCardNestedInput
     attachments?: AttachmentUpdateManyWithoutCardNestedInput
     responsibles?: CardResponsibleUpdateManyWithoutCardNestedInput
     comments?: CommentUpdateManyWithoutCardNestedInput
+    movements?: CardMovementUpdateManyWithoutCardNestedInput
   }
 
   export type CardUncheckedUpdateWithoutTimeEntriesInput = {
@@ -27312,9 +29367,10 @@ export namespace Prisma {
     description?: StringFieldUpdateOperationsInput | string
     color?: StringFieldUpdateOperationsInput | string
     position?: IntFieldUpdateOperationsInput | number
-    sprintId?: StringFieldUpdateOperationsInput | string
+    sprintId?: NullableStringFieldUpdateOperationsInput | string | null
     sprintColumnId?: NullableStringFieldUpdateOperationsInput | string | null
     sprintPosition?: NullableIntFieldUpdateOperationsInput | number | null
+    projectId?: NullableStringFieldUpdateOperationsInput | string | null
     priority?: StringFieldUpdateOperationsInput | string
     tagsImport?: StringFieldUpdateOperationsInput | string
     startDate?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
@@ -27326,6 +29382,7 @@ export namespace Prisma {
     attachments?: AttachmentUncheckedUpdateManyWithoutCardNestedInput
     responsibles?: CardResponsibleUncheckedUpdateManyWithoutCardNestedInput
     comments?: CommentUncheckedUpdateManyWithoutCardNestedInput
+    movements?: CardMovementUncheckedUpdateManyWithoutCardNestedInput
   }
 
   export type SprintCreateWithoutDashboardMetricsInput = {
@@ -28053,6 +30110,24 @@ export namespace Prisma {
     updatedAt?: Date | string
   }
 
+  export type CardCreateManyProjectInput = {
+    id?: string
+    title: string
+    description?: string
+    color?: string
+    position?: number
+    sprintId?: string | null
+    sprintColumnId?: string | null
+    sprintPosition?: number | null
+    priority?: string
+    tagsImport?: string
+    startDate?: Date | string | null
+    endDate?: Date | string | null
+    deletedAt?: Date | string | null
+    createdAt?: Date | string
+    updatedAt?: Date | string
+  }
+
   export type SprintUpdateWithoutProjectInput = {
     id?: StringFieldUpdateOperationsInput | string
     name?: StringFieldUpdateOperationsInput | string
@@ -28106,6 +30181,72 @@ export namespace Prisma {
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
   }
 
+  export type CardUpdateWithoutProjectInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    title?: StringFieldUpdateOperationsInput | string
+    description?: StringFieldUpdateOperationsInput | string
+    color?: StringFieldUpdateOperationsInput | string
+    position?: IntFieldUpdateOperationsInput | number
+    sprintPosition?: NullableIntFieldUpdateOperationsInput | number | null
+    priority?: StringFieldUpdateOperationsInput | string
+    tagsImport?: StringFieldUpdateOperationsInput | string
+    startDate?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    endDate?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    deletedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    sprint?: SprintUpdateOneWithoutCardsNestedInput
+    sprintColumn?: SprintColumnUpdateOneWithoutCardsNestedInput
+    tags?: CardTagUpdateManyWithoutCardNestedInput
+    attachments?: AttachmentUpdateManyWithoutCardNestedInput
+    timeEntries?: TimeEntryUpdateManyWithoutCardNestedInput
+    responsibles?: CardResponsibleUpdateManyWithoutCardNestedInput
+    comments?: CommentUpdateManyWithoutCardNestedInput
+    movements?: CardMovementUpdateManyWithoutCardNestedInput
+  }
+
+  export type CardUncheckedUpdateWithoutProjectInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    title?: StringFieldUpdateOperationsInput | string
+    description?: StringFieldUpdateOperationsInput | string
+    color?: StringFieldUpdateOperationsInput | string
+    position?: IntFieldUpdateOperationsInput | number
+    sprintId?: NullableStringFieldUpdateOperationsInput | string | null
+    sprintColumnId?: NullableStringFieldUpdateOperationsInput | string | null
+    sprintPosition?: NullableIntFieldUpdateOperationsInput | number | null
+    priority?: StringFieldUpdateOperationsInput | string
+    tagsImport?: StringFieldUpdateOperationsInput | string
+    startDate?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    endDate?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    deletedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    tags?: CardTagUncheckedUpdateManyWithoutCardNestedInput
+    attachments?: AttachmentUncheckedUpdateManyWithoutCardNestedInput
+    timeEntries?: TimeEntryUncheckedUpdateManyWithoutCardNestedInput
+    responsibles?: CardResponsibleUncheckedUpdateManyWithoutCardNestedInput
+    comments?: CommentUncheckedUpdateManyWithoutCardNestedInput
+    movements?: CardMovementUncheckedUpdateManyWithoutCardNestedInput
+  }
+
+  export type CardUncheckedUpdateManyWithoutProjectInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    title?: StringFieldUpdateOperationsInput | string
+    description?: StringFieldUpdateOperationsInput | string
+    color?: StringFieldUpdateOperationsInput | string
+    position?: IntFieldUpdateOperationsInput | number
+    sprintId?: NullableStringFieldUpdateOperationsInput | string | null
+    sprintColumnId?: NullableStringFieldUpdateOperationsInput | string | null
+    sprintPosition?: NullableIntFieldUpdateOperationsInput | number | null
+    priority?: StringFieldUpdateOperationsInput | string
+    tagsImport?: StringFieldUpdateOperationsInput | string
+    startDate?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    endDate?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    deletedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
   export type CardCreateManySprintInput = {
     id?: string
     title: string
@@ -28114,6 +30255,7 @@ export namespace Prisma {
     position?: number
     sprintColumnId?: string | null
     sprintPosition?: number | null
+    projectId?: string | null
     priority?: string
     tagsImport?: string
     startDate?: Date | string | null
@@ -28169,11 +30311,13 @@ export namespace Prisma {
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
     sprintColumn?: SprintColumnUpdateOneWithoutCardsNestedInput
+    project?: ProjectUpdateOneWithoutCardsNestedInput
     tags?: CardTagUpdateManyWithoutCardNestedInput
     attachments?: AttachmentUpdateManyWithoutCardNestedInput
     timeEntries?: TimeEntryUpdateManyWithoutCardNestedInput
     responsibles?: CardResponsibleUpdateManyWithoutCardNestedInput
     comments?: CommentUpdateManyWithoutCardNestedInput
+    movements?: CardMovementUpdateManyWithoutCardNestedInput
   }
 
   export type CardUncheckedUpdateWithoutSprintInput = {
@@ -28184,6 +30328,7 @@ export namespace Prisma {
     position?: IntFieldUpdateOperationsInput | number
     sprintColumnId?: NullableStringFieldUpdateOperationsInput | string | null
     sprintPosition?: NullableIntFieldUpdateOperationsInput | number | null
+    projectId?: NullableStringFieldUpdateOperationsInput | string | null
     priority?: StringFieldUpdateOperationsInput | string
     tagsImport?: StringFieldUpdateOperationsInput | string
     startDate?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
@@ -28196,6 +30341,7 @@ export namespace Prisma {
     timeEntries?: TimeEntryUncheckedUpdateManyWithoutCardNestedInput
     responsibles?: CardResponsibleUncheckedUpdateManyWithoutCardNestedInput
     comments?: CommentUncheckedUpdateManyWithoutCardNestedInput
+    movements?: CardMovementUncheckedUpdateManyWithoutCardNestedInput
   }
 
   export type CardUncheckedUpdateManyWithoutSprintInput = {
@@ -28206,6 +30352,7 @@ export namespace Prisma {
     position?: IntFieldUpdateOperationsInput | number
     sprintColumnId?: NullableStringFieldUpdateOperationsInput | string | null
     sprintPosition?: NullableIntFieldUpdateOperationsInput | number | null
+    projectId?: NullableStringFieldUpdateOperationsInput | string | null
     priority?: StringFieldUpdateOperationsInput | string
     tagsImport?: StringFieldUpdateOperationsInput | string
     startDate?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
@@ -28316,8 +30463,9 @@ export namespace Prisma {
     description?: string
     color?: string
     position?: number
-    sprintId: string
+    sprintId?: string | null
     sprintPosition?: number | null
+    projectId?: string | null
     priority?: string
     tagsImport?: string
     startDate?: Date | string | null
@@ -28341,12 +30489,14 @@ export namespace Prisma {
     deletedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
-    sprint?: SprintUpdateOneRequiredWithoutCardsNestedInput
+    sprint?: SprintUpdateOneWithoutCardsNestedInput
+    project?: ProjectUpdateOneWithoutCardsNestedInput
     tags?: CardTagUpdateManyWithoutCardNestedInput
     attachments?: AttachmentUpdateManyWithoutCardNestedInput
     timeEntries?: TimeEntryUpdateManyWithoutCardNestedInput
     responsibles?: CardResponsibleUpdateManyWithoutCardNestedInput
     comments?: CommentUpdateManyWithoutCardNestedInput
+    movements?: CardMovementUpdateManyWithoutCardNestedInput
   }
 
   export type CardUncheckedUpdateWithoutSprintColumnInput = {
@@ -28355,8 +30505,9 @@ export namespace Prisma {
     description?: StringFieldUpdateOperationsInput | string
     color?: StringFieldUpdateOperationsInput | string
     position?: IntFieldUpdateOperationsInput | number
-    sprintId?: StringFieldUpdateOperationsInput | string
+    sprintId?: NullableStringFieldUpdateOperationsInput | string | null
     sprintPosition?: NullableIntFieldUpdateOperationsInput | number | null
+    projectId?: NullableStringFieldUpdateOperationsInput | string | null
     priority?: StringFieldUpdateOperationsInput | string
     tagsImport?: StringFieldUpdateOperationsInput | string
     startDate?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
@@ -28369,6 +30520,7 @@ export namespace Prisma {
     timeEntries?: TimeEntryUncheckedUpdateManyWithoutCardNestedInput
     responsibles?: CardResponsibleUncheckedUpdateManyWithoutCardNestedInput
     comments?: CommentUncheckedUpdateManyWithoutCardNestedInput
+    movements?: CardMovementUncheckedUpdateManyWithoutCardNestedInput
   }
 
   export type CardUncheckedUpdateManyWithoutSprintColumnInput = {
@@ -28377,8 +30529,9 @@ export namespace Prisma {
     description?: StringFieldUpdateOperationsInput | string
     color?: StringFieldUpdateOperationsInput | string
     position?: IntFieldUpdateOperationsInput | number
-    sprintId?: StringFieldUpdateOperationsInput | string
+    sprintId?: NullableStringFieldUpdateOperationsInput | string | null
     sprintPosition?: NullableIntFieldUpdateOperationsInput | number | null
+    projectId?: NullableStringFieldUpdateOperationsInput | string | null
     priority?: StringFieldUpdateOperationsInput | string
     tagsImport?: StringFieldUpdateOperationsInput | string
     startDate?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
@@ -28430,6 +30583,17 @@ export namespace Prisma {
     deletedAt?: Date | string | null
     createdAt?: Date | string
     updatedAt?: Date | string
+  }
+
+  export type CardMovementCreateManyCardInput = {
+    id?: string
+    userId?: string | null
+    fromColumnId?: string | null
+    fromColumnTitle?: string | null
+    toColumnId?: string | null
+    toColumnTitle?: string | null
+    reason?: string | null
+    movedAt?: Date | string
   }
 
   export type CardTagUpdateWithoutCardInput = {
@@ -28562,6 +30726,39 @@ export namespace Prisma {
     deletedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
+  export type CardMovementUpdateWithoutCardInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    userId?: NullableStringFieldUpdateOperationsInput | string | null
+    fromColumnId?: NullableStringFieldUpdateOperationsInput | string | null
+    fromColumnTitle?: NullableStringFieldUpdateOperationsInput | string | null
+    toColumnId?: NullableStringFieldUpdateOperationsInput | string | null
+    toColumnTitle?: NullableStringFieldUpdateOperationsInput | string | null
+    reason?: NullableStringFieldUpdateOperationsInput | string | null
+    movedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
+  export type CardMovementUncheckedUpdateWithoutCardInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    userId?: NullableStringFieldUpdateOperationsInput | string | null
+    fromColumnId?: NullableStringFieldUpdateOperationsInput | string | null
+    fromColumnTitle?: NullableStringFieldUpdateOperationsInput | string | null
+    toColumnId?: NullableStringFieldUpdateOperationsInput | string | null
+    toColumnTitle?: NullableStringFieldUpdateOperationsInput | string | null
+    reason?: NullableStringFieldUpdateOperationsInput | string | null
+    movedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
+  export type CardMovementUncheckedUpdateManyWithoutCardInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    userId?: NullableStringFieldUpdateOperationsInput | string | null
+    fromColumnId?: NullableStringFieldUpdateOperationsInput | string | null
+    fromColumnTitle?: NullableStringFieldUpdateOperationsInput | string | null
+    toColumnId?: NullableStringFieldUpdateOperationsInput | string | null
+    toColumnTitle?: NullableStringFieldUpdateOperationsInput | string | null
+    reason?: NullableStringFieldUpdateOperationsInput | string | null
+    movedAt?: DateTimeFieldUpdateOperationsInput | Date | string
   }
 
   export type CardTagCreateManyTagInput = {

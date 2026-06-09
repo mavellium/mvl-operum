@@ -72,6 +72,11 @@ export class SprintService {
 
   async remove(id: string) {
     await this.findOne(id)
+    // Devolver todos os cards ao backlog ao deletar a sprint
+    await prisma.card.updateMany({
+      where: { sprintId: id, deletedAt: null },
+      data: { sprintId: null, sprintColumnId: null, sprintPosition: null },
+    })
     await prisma.sprint.update({ where: { id }, data: { deletedAt: new Date() } })
   }
 
@@ -80,6 +85,18 @@ export class SprintService {
     return prisma.sprintColumn.findMany({
       where: { sprintId, deletedAt: null },
       orderBy: { position: 'asc' },
+      include: {
+        cards: {
+          where: { deletedAt: null },
+          orderBy: { sprintPosition: 'asc' },
+          include: {
+            tags: { include: { tag: true } },
+            responsibles: { include: { user: true } },
+            attachments: { where: { deletedAt: null } },
+            timeEntries: { where: { deletedAt: null } },
+          },
+        },
+      },
     })
   }
 

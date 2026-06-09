@@ -58,6 +58,19 @@ export interface Card {
   endDate?: Date | null
   createdAt: number
   updatedAt: number
+  // Orçado
+  orcado_min?: number | null
+  orcado_horas?: number | null
+  orcado_dias?: number | null
+  orcado_total?: number | null
+  data_prevista?: Date | string | null
+  // Realizado
+  realizado_min?: number | null
+  realizado_horas?: number | null
+  realizado_dias?: number | null
+  realizado_total?: number | null
+  data_realizacao?: Date | string | null
+  situacao_status?: string | null
 }
 
 export interface Column {

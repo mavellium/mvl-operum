@@ -12,7 +12,10 @@ export async function createSprintAction(
     const { userId } = await verifySession()
     const sprint = await sprintsApi.create({ ...input, createdBy: userId })
     revalidatePath('/sprints')
-    if (input.projectId) revalidatePath(`/projetos/${input.projectId}`)
+    if (input.projectId) {
+      revalidatePath(`/projetos/${input.projectId}`)
+      revalidatePath(`/projetos/${input.projectId}/sprints`)
+    }
     return { sprint }
   } catch (err) {
     return { error: err instanceof Error ? err.message : 'Erro ao criar sprint' }
@@ -31,11 +34,14 @@ export async function updateSprintAction(_prevState: unknown, id: string, data: 
   }
 }
 
-export async function deleteSprintAction(id: string) {
+export async function deleteSprintAction(id: string, projectId?: string) {
   try {
     await verifySession()
     await sprintsApi.delete(id)
     revalidatePath('/sprints')
+    if (projectId) {
+      revalidatePath(`/projetos/${projectId}/sprints`)
+    }
     return { success: true }
   } catch (err) {
     return { error: err instanceof Error ? err.message : 'Erro ao deletar sprint' }

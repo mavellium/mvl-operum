@@ -2,13 +2,13 @@
 FROM node:22-alpine AS base
 RUN apk add --no-cache libc6-compat
 ENV PNPM_HOME="/pnpm"
-ENV PATH="$PNPM_HOME:$PATH"
+ENV PATH="$PNPM_HOME:$PNPM_HOME/bin:$PATH"
 RUN corepack enable
 
 # ── Stage 1: Install dependencies ─────────────────────────────────────────────
 FROM base AS deps
 WORKDIR /app
-COPY package.json pnpm-lock.yaml pnpm-workspace.yaml ./
+COPY package.json pnpm-lock.yaml pnpm-workspace.yaml pnpm.yaml ./
 RUN pnpm install --frozen-lockfile --ignore-scripts
 
 # ── Stage 2: Build ────────────────────────────────────────────────────────────
@@ -31,9 +31,9 @@ RUN addgroup --system --gid 1001 nodejs \
 
 # Install production deps fresh in runner — avoids broken pnpm symlinks from COPY.
 # pnpm-lock.yaml is removed after install so Trivy doesn't scan it for false positives.
-COPY package.json pnpm-lock.yaml pnpm-workspace.yaml ./
-RUN pnpm install --frozen-lockfile --prod --shamefully-hoist \
- && rm -f pnpm-lock.yaml pnpm-workspace.yaml \
+COPY package.json pnpm-lock.yaml pnpm-workspace.yaml pnpm.yaml ./
+RUN pnpm install --frozen-lockfile --prod --ignore-scripts --shamefully-hoist \
+ && rm -f pnpm-lock.yaml pnpm-workspace.yaml pnpm.yaml \
  && chown -R nestjs:nodejs /pnpm \
  && chmod -R 750 /pnpm
 

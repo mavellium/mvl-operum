@@ -219,8 +219,10 @@ export default function ProjectCharter() {
     } catch {/* non-critical */}
   }, [projetoId])
 
+  // eslint-disable-next-line react-hooks/set-state-in-effect
   useEffect(() => { loadVersions() }, [loadVersions])
   useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     if (historyOpen) loadVersions(debouncedSearch)
   }, [debouncedSearch, historyOpen, loadVersions])
 

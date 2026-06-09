@@ -7,21 +7,48 @@ export const CreateCardSchema = z.object({
   description: z.string().optional(),
   color: z.string().optional(),
   position: z.number().int().optional(),
-  sprintId: z.string(),
+  sprintId: z.string().optional(),
   sprintColumnId: z.string().optional(),
   sprintPosition: z.number().int().optional(),
+  projectId: z.string().optional(),
   priority: z.string().optional(),
   startDate: z.string().datetime().optional(),
   endDate: z.string().datetime().optional(),
 })
 
-export const UpdateCardSchema = CreateCardSchema.partial()
+export const UpdateCardSchema = z.object({
+  title: z.string().min(1).optional(),
+  description: z.string().optional(),
+  color: z.string().optional(),
+  position: z.number().int().optional(),
+  sprintId: z.string().nullable().optional(),
+  sprintColumnId: z.string().nullable().optional(),
+  sprintPosition: z.number().int().nullable().optional(),
+  projectId: z.string().optional(),
+  priority: z.string().optional(),
+  startDate: z.string().datetime().optional(),
+  endDate: z.string().datetime().optional(),
+  reason: z.string().optional(),
+  userId: z.string().optional(),
+})
 
 export type CreateCardDto = z.infer<typeof CreateCardSchema>
 export type UpdateCardDto = z.infer<typeof UpdateCardSchema>
 
 @Injectable()
 export class CardService {
+  async listBacklog(projectId: string) {
+    return prisma.card.findMany({
+      where: { projectId, sprintId: null, deletedAt: null },
+      include: {
+        tags: { include: { tag: true } },
+        responsibles: true,
+        attachments: { where: { deletedAt: null } },
+      },
+      orderBy: { position: 'asc' },
+    })
+  }
+
   async listBySprint(sprintId: string) {
     return prisma.card.findMany({
       where: { sprintId, deletedAt: null },
@@ -60,14 +87,44 @@ export class CardService {
   }
 
   async update(id: string, dto: UpdateCardDto) {
-    await this.findOne(id)
+    const { reason, userId, ...cardData } = dto
+
+    if (cardData.sprintColumnId !== undefined) {
+      const current = await this.findOne(id)
+      const currentColumnId = (current as { sprintColumnId?: string | null }).sprintColumnId
+      if (cardData.sprintColumnId !== currentColumnId) {
+        const [fromCol, toCol] = await Promise.all([
+          currentColumnId ? prisma.sprintColumn.findUnique({ where: { id: currentColumnId } }) : null,
+          cardData.sprintColumnId ? prisma.sprintColumn.findUnique({ where: { id: cardData.sprintColumnId } }) : null,
+        ])
+        await prisma.cardMovement.create({
+          data: {
+            cardId: id,
+            userId: userId ?? null,
+            fromColumnId: currentColumnId ?? null,
+            fromColumnTitle: fromCol?.title ?? null,
+            toColumnId: cardData.sprintColumnId ?? null,
+            toColumnTitle: toCol?.title ?? null,
+            reason: reason ?? null,
+          },
+        })
+      }
+    }
+
     return prisma.card.update({
       where: { id },
       data: {
-        ...dto,
-        startDate: dto.startDate ? new Date(dto.startDate) : undefined,
-        endDate: dto.endDate ? new Date(dto.endDate) : undefined,
+        ...cardData,
+        startDate: cardData.startDate ? new Date(cardData.startDate) : undefined,
+        endDate: cardData.endDate ? new Date(cardData.endDate) : undefined,
       },
+    })
+  }
+
+  async listMovements(cardId: string) {
+    return prisma.cardMovement.findMany({
+      where: { cardId },
+      orderBy: { movedAt: 'asc' },
     })
   }
 

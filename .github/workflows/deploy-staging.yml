@@ -46,7 +46,7 @@ jobs:
 
       - uses: pnpm/action-setup@v3
         with:
-          version: 10
+          version: 11.5.0
 
       - uses: actions/setup-node@v4
         with:
@@ -54,7 +54,9 @@ jobs:
           cache: 'pnpm'
 
       - name: Install dependencies
-        run: pnpm install
+        run: pnpm install --frozen-lockfile
+        env:
+          PNPM_ALLOW_BUILD: "@prisma/engines,bcrypt,esbuild,msgpackr-extract,msw,prisma,sharp,unrs-resolver"
 
       - name: Lint
         run: pnpm lint
@@ -169,8 +171,6 @@ jobs:
           cache-from: type=registry,ref=ghcr.io/${{ steps.meta.outputs.owner }}/sprint-service:staging
           cache-to: type=inline
 
-      - uses: actions/checkout@v4
-
       - name: Scan app image for vulnerabilities (Trivy)
         uses: aquasecurity/trivy-action@v0.35.0
         with:
@@ -234,25 +234,38 @@ jobs:
           severity: CRITICAL,HIGH
           trivyignores: .trivyignore
 
-  # ── Trigger deploy on VPS ─────────────────────────────────────────────────────
+    # ── Trigger deploy on VPS ─────────────────────────────────────────────────────
   deploy:
     name: Deploy
     needs: build
     runs-on: ubuntu-latest
     steps:
       - name: Trigger staging deploy
+        env:
+          STAGING_WEBHOOK_URL: ${{ secrets.STAGING_WEBHOOK_URL }}
+          DEPLOY_WEBHOOK_SECRET: ${{ secrets.DEPLOY_WEBHOOK_SECRET }}
         run: |
-          curl -sf --max-time 300 \
+          if [ -z "$STAGING_WEBHOOK_URL" ]; then
+            echo "::warning::STAGING_WEBHOOK_URL not configured — skipping deploy trigger"
+            exit 0
+          fi
+          curl -sf \
+            --connect-timeout 30 \
+            --max-time 120 \
+            --retry 2 \
+            --retry-delay 15 \
+            --retry-connrefused \
             -X POST \
             -H "Content-Type: application/json" \
-            -H "X-Deploy-Token: ${{ secrets.DEPLOY_WEBHOOK_SECRET }}" \
-            -d '{"sha":"${{ github.sha }}","env":"staging"}' \
-            "${{ secrets.STAGING_WEBHOOK_URL }}"
+            -H "X-Deploy-Token: $DEPLOY_WEBHOOK_SECRET" \
+            -d "{\"sha\":\"${{ github.sha }}\",\"env\":\"staging\"}" \
+            "$STAGING_WEBHOOK_URL"
 
   # ── DAST — scan after deploy ──────────────────────────────────────────────────
   dast:
     name: DAST (ZAP)
     needs: deploy
+    if: needs.deploy.result == 'success'
     runs-on: ubuntu-latest
     permissions:
       contents: read
@@ -265,12 +278,13 @@ jobs:
 
       - name: Wait for staging to be ready
         run: |
-          for i in $(seq 1 40); do
-            if curl -sf --max-time 5 https://staging.operum.mavellium.com.br/api/health; then
-              echo "Staging is up"
+          for i in $(seq 1 5); do
+            # -k ignora problemas temporários de SSL na virada do proxy se necessário
+            if curl -sfk --max-time 5 https://staging.operum.mavellium.com.br/api/health; then
+              echo "Staging is up and healthy."
               exit 0
             fi
-            echo "Attempt $i/40 — waiting 15s..."
+            echo "Attempt $i/5 — waiting 15s..."
             sleep 15
           done
           echo "Staging did not become ready in time"

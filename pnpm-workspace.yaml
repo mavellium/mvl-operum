@@ -1,9 +1,13 @@
 packages:
   - "."
-
+  - "*"
 allowBuilds:
-  '@prisma/engines': false
-  msw: false
-  prisma: false
-  sharp: false
-  unrs-resolver: false
+  '@nestjs/core': true
+  '@prisma/engines': true
+  bcrypt: true
+  esbuild: true
+  msgpackr-extract: true
+  msw: true
+  prisma: true
+  sharp: true
+  unrs-resolver: true

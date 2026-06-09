@@ -3,7 +3,7 @@
 FROM node:22-alpine AS base
 RUN apk add --no-cache libc6-compat
 ENV PNPM_HOME="/pnpm"
-ENV PATH="$PNPM_HOME:$PATH"
+ENV PATH="$PNPM_HOME:$PNPM_HOME/bin:$PATH"
 RUN corepack enable
 
 # ── Stage: Download Prisma schema-engine ──────────────────────────────────────
@@ -22,7 +22,7 @@ RUN npm install -g prisma@7.7.0 \
 FROM base AS deps
 WORKDIR /app
 # Both files are required explicitly — no glob that silently skips the lockfile.
-COPY package.json pnpm-lock.yaml ./
+COPY package.json pnpm-lock.yaml pnpm-workspace.yaml pnpm.yaml ./
 # --frozen-lockfile: fails loudly if lockfile is missing or out of sync.
 # --ignore-scripts: skips postinstall (prisma generate) — we run it explicitly in builder.
 RUN pnpm install --frozen-lockfile --ignore-scripts
@@ -42,7 +42,12 @@ RUN pnpm exec prisma generate
 RUN pnpm build
 
 # ── Stage 3: Runner ───────────────────────────────────────────────────────────
-FROM base AS runner
+# node:22-alpine directly (not base) — base enables corepack which shims npm.
+# The shim reads packageManager from the standalone package.json and refuses to
+# run npm install, breaking the prisma CLI setup below. The runner doesn't use
+# pnpm, so corepack is not needed here.
+FROM node:22-alpine AS runner
+RUN apk add --no-cache libc6-compat
 WORKDIR /app
 ENV NODE_ENV=production
 ENV NEXT_TELEMETRY_DISABLED=1
@@ -50,15 +55,9 @@ ENV NEXT_TELEMETRY_DISABLED=1
 RUN addgroup --system --gid 1001 nodejs \
  && adduser  --system --uid 1001 nextjs
 
-# Prisma CLI for the migrate service.
-# Ownership is scoped to nextjs:nodejs — world-execute removed (750 vs 755).
-RUN pnpm add --global prisma@7.7.0 \
- && chown -R nextjs:nodejs /pnpm \
- && chmod -R 750 /pnpm
-
 # Schema-engine binary baked in from the engine-dl stage (npm install to a
 # writable dir). PRISMA_SCHEMA_ENGINE_BINARY overrides the default search paths
-# so the global prisma CLI uses this binary instead of looking in /pnpm/global.
+# so the prisma CLI uses this binary instead of trying to download one.
 COPY --from=engine-dl /tmp/schema-engine-linux-musl-openssl-3.0.x /usr/local/bin/prisma-schema-engine
 RUN chmod 750 /usr/local/bin/prisma-schema-engine \
  && chown nextjs:nodejs /usr/local/bin/prisma-schema-engine
@@ -76,6 +75,25 @@ COPY --from=builder --chown=nextjs:nodejs /app/lib/generated ./lib/generated
 # chown so the nextjs user can read them without world-readable permissions.
 COPY --from=builder --chown=nextjs:nodejs /app/prisma ./prisma
 COPY --from=builder --chown=nextjs:nodejs /app/prisma.config.ts ./prisma.config.ts
+
+# Prisma CLI for the migrate service — installed LOCALLY into ./node_modules
+# (not --global). prisma.config.ts does `import { defineConfig } from "prisma/config"`,
+# a subpath of the `prisma` package; Node can only resolve that from /app/node_modules,
+# never from a global pnpm store. Plain npm produces a flat node_modules (no pnpm
+# symlinks), so it can be merged into the standalone bundle with a plain directory copy.
+# Ownership is chowned on the source before copying (cp -a preserves it) and scoped
+# to nextjs:nodejs — world-execute removed (750 vs 755) — same posture as before.
+# Instala o Prisma isoladamente para evitar o merge destrutivo do `cp` no Alpine.
+# O symlink garante que o Node resolva 'prisma/config' a partir do ./node_modules local.
+RUN mkdir -p /app/prisma-cli \
+ && npm install prisma@7.7.0 --no-save --prefix /app/prisma-cli \
+ && chown -R nextjs:nodejs /app/prisma-cli \
+ && chmod -R 750 /app/prisma-cli \
+ && ln -s /app/prisma-cli/node_modules/prisma ./node_modules/prisma
+
+ENV PATH="/app/prisma-cli/node_modules/.bin:/app/node_modules/.bin:$PATH"
+
+
 
 USER nextjs
 

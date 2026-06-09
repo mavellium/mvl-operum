@@ -69,6 +69,10 @@ let SprintService = class SprintService {
     }
     async remove(id) {
         await this.findOne(id);
+        await prisma_1.prisma.card.updateMany({
+            where: { sprintId: id, deletedAt: null },
+            data: { sprintId: null, sprintColumnId: null, sprintPosition: null },
+        });
         await prisma_1.prisma.sprint.update({ where: { id }, data: { deletedAt: new Date() } });
     }
     async listColumns(sprintId) {
@@ -76,6 +80,18 @@ let SprintService = class SprintService {
         return prisma_1.prisma.sprintColumn.findMany({
             where: { sprintId, deletedAt: null },
             orderBy: { position: 'asc' },
+            include: {
+                cards: {
+                    where: { deletedAt: null },
+                    orderBy: { sprintPosition: 'asc' },
+                    include: {
+                        tags: { include: { tag: true } },
+                        responsibles: { include: { user: true } },
+                        attachments: { where: { deletedAt: null } },
+                        timeEntries: { where: { deletedAt: null } },
+                    },
+                },
+            },
         });
     }
     async createColumn(sprintId, dto) {

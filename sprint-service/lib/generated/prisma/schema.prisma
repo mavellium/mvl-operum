@@ -32,10 +32,46 @@ model User {
   comments         Comment[]
   dashboardMetrics DashboardMetric[]
   sprintFeedbacks  SprintFeedback[]
+  userProjects     UserProject[]
+  notifications    Notification[]
 
   tags Tag[]
 
   @@unique([email, tenantId])
+}
+
+model UserProject {
+  id           String  @id @default(cuid())
+  userId       String
+  projectId    String
+  active       Boolean @default(true)
+  horasDiarias Float?
+  remuneracao  Float?
+  user         User    @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, projectId])
+}
+
+enum NotificationStatus {
+  UNREAD
+  READ
+  ARCHIVED
+}
+
+model Notification {
+  id            String             @id @default(cuid())
+  userId        String
+  user          User               @relation(fields: [userId], references: [id], onDelete: Cascade)
+  type          String
+  title         String
+  message       String
+  reference     String?
+  referenceType String?
+  status        NotificationStatus @default(UNREAD)
+  deletedAt     DateTime?
+  createdAt     DateTime           @default(now())
+  readAt        DateTime?
+  updatedAt     DateTime           @updatedAt
 }
 
 model Project {
@@ -44,6 +80,7 @@ model Project {
   name     String
 
   sprints Sprint[]
+  cards   Card[]
 }
 
 // ── Sprints ───────────────────────────────────────────────
@@ -97,11 +134,14 @@ model Card {
   description    String        @default("")
   color          String        @default("#6b7280")
   position       Int           @default(0)
-  sprintId       String
-  sprint         Sprint        @relation(fields: [sprintId], references: [id], onDelete: Cascade)
+  sprintId       String?
+  sprint         Sprint?       @relation(fields: [sprintId], references: [id], onDelete: SetNull)
   sprintColumnId String?
   sprintColumn   SprintColumn? @relation("SprintColumnCards", fields: [sprintColumnId], references: [id], onDelete: SetNull)
   sprintPosition Int?
+  status         String        @default("Backlog")
+  projectId      String?
+  project        Project?      @relation(fields: [projectId], references: [id])
   priority       String        @default("media")
   tagsImport     String        @default("")
   startDate      DateTime?
@@ -109,6 +149,21 @@ model Card {
   deletedAt      DateTime?
   createdAt      DateTime      @default(now())
   updatedAt      DateTime      @updatedAt
+
+  // Orçado
+  orcado_min    Int?
+  orcado_horas  Float?
+  orcado_dias   Float?
+  orcado_total  Float?
+  data_prevista DateTime?
+
+  // Realizado
+  realizado_min   Int?
+  realizado_horas Float?
+  realizado_dias  Float?
+  realizado_total Float?
+  data_realizacao DateTime?
+  situacao_status String?
 
   tags         CardTag[]
   attachments  Attachment[]

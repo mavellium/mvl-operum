@@ -141,6 +141,8 @@ export default async function ProjetoStakeholdersPage({ params }: { params: Prom
           departamento: up.department?.name ? [up.department.name] : [],
           isGerente: projectRole === 'gerente',
           hourlyRate: up.hourlyRate,
+          remuneracao: up.remuneracao,
+          horasDiarias: up.horasDiarias,
           startDate: up.startDate.toISOString(),
           userRole: up.user.role,
           signatureUrl: up.user.signatureUrl,

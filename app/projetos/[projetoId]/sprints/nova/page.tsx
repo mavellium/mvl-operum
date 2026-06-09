@@ -1,7 +1,7 @@
 'use client'
 
 import { Suspense, useState, useTransition, useEffect } from 'react'
-import { useRouter, useSearchParams } from 'next/navigation'
+import { useRouter, useSearchParams, useParams } from 'next/navigation'
 import { createSprintAction } from '@/app/actions/sprints'
 import { getProjetosAction } from '@/app/actions/projetos'
 import Link from 'next/link'
@@ -22,7 +22,8 @@ export default function NovaSprintPage() {
 function NovaSprintForm() {
   const router = useRouter()
   const searchParams = useSearchParams()
-  const presetProjetoId = searchParams.get('projetoId') ?? ''
+  const { projetoId: projetoIdFromPath } = useParams<{ projetoId?: string }>()
+  const presetProjetoId = projetoIdFromPath ?? searchParams.get('projetoId') ?? ''
 
   const [isPending, startTransition] = useTransition()
   const [projetos, setProjetos] = useState<Projeto[]>([])
@@ -61,10 +62,7 @@ function NovaSprintForm() {
         setError(result.error ?? 'Erro ao criar sprint')
         return
       }
-      const projectId = form.projectId || presetProjetoId
-      router.push(projectId
-        ? `/projetos/${projectId}/sprints/${result.sprint.id}`
-        : `/sprints/${result.sprint.id}`)
+      router.push(`/sprints/${result.sprint.id}`)
     })
   }
 
@@ -96,20 +94,6 @@ function NovaSprintForm() {
                 autoFocus
                 className="w-full px-3 py-2 border border-gray-200 rounded-xl text-sm text-gray-900 placeholder:text-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500"
               />
-            </div>
-
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">Projeto</label>
-              <select
-                value={form.projectId}
-                onChange={e => setForm(f => ({ ...f, projectId: e.target.value }))}
-                className="w-full px-3 py-2 border border-gray-200 rounded-xl text-sm text-gray-700 focus:outline-none focus:ring-2 focus:ring-blue-500"
-              >
-                <option value="">Nenhum (sprint avulsa)</option>
-                {projetos.map(p => (
-                  <option key={p.id} value={p.id}>{p.name}</option>
-                ))}
-              </select>
             </div>
 
             <div className="grid grid-cols-2 gap-3">

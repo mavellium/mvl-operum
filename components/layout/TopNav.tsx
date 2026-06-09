@@ -6,6 +6,7 @@ import { useEffect, useState, useRef, useTransition } from 'react'
 import UserAvatar from '@/components/user/UserAvatar'
 import BoardActionMenu from '../board/BoardActionMenu'
 import GlobalSearch from '../search/GlobalSearch'
+import TenantSwitcher from '@/components/layout/TenantSwitcher'
 import { logoutAction } from '@/app/actions/auth'
 import { CsvImportModal } from '@/components/csv/CsvImportModal'
 
@@ -237,7 +238,9 @@ export default function TopNav() {
       </div>
 
       <div className="flex items-center gap-3 md:gap-4 ml-4">
-        
+
+        <TenantSwitcher />
+
         {user?.role === 'admin' && (
           <Link href="/admin" className="p-2 text-gray-400 hover:text-gray-900 hover:bg-gray-100 rounded-full transition-colors" title="Painel Admin">
             <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">

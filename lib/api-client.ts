@@ -48,6 +48,26 @@ export const authApi = {
 
   alterarSenha: (password: string) =>
     request('/auth/password/alterar', { method: 'POST', body: JSON.stringify({ password }) }),
+
+  getMyTenants: () =>
+    request<{ userId: string; tenantId: string; tenantName: string; tenantSubdomain: string; role: string; isCurrent: boolean }[]>('/auth/my-tenants'),
+
+  switchTenant: (targetTenantId: string) => {
+    if (!targetTenantId?.trim()) throw new Error('targetTenantId is required')
+    return request<{ token: string; user: { id: string; name: string; email: string; role: string; tenantId: string } }>(
+      '/auth/switch-tenant',
+      { method: 'POST', body: JSON.stringify({ targetTenantId: targetTenantId.trim() }) },
+    )
+  },
+
+  joinTenant: (tenantId: string, password: string) => {
+    if (!tenantId?.trim()) throw new Error('tenantId is required')
+    if (!password || password.length < 8) throw new Error('A senha deve ter pelo menos 8 caracteres')
+    return request<{ ok: boolean }>(
+      '/auth/join-tenant',
+      { method: 'POST', body: JSON.stringify({ tenantId: tenantId.trim(), password }) },
+    )
+  },
 }
 
 type AdminUser = { id: string; name: string; email: string; role: string; avatarUrl?: string | null; isActive?: boolean; phone?: string; cep?: string; logradouro?: string; numero?: string; complemento?: string; bairro?: string; cidade?: string; estado?: string; notes?: string }
@@ -253,6 +273,11 @@ export const sprintsApi = {
 export const cardsApi = {
   get: (id: string) => request<Record<string, unknown>>(`/cards/${id}`),
 
+  listBacklog: (projectId: string) =>
+    request<{ id: string; title: string; description: string; color: string; priority?: string | null; tags?: unknown[]; attachments?: unknown[]; responsibles?: unknown[] }[]>(
+      `/cards/backlog?projectId=${encodeURIComponent(projectId)}`
+    ),
+
   create: (data: Record<string, unknown>) =>
     request<{ id: string; title: string; description: string; color: string; priority?: string | null }>('/cards', { method: 'POST', body: JSON.stringify(data) }),
 
@@ -304,6 +329,9 @@ export const cardsApi = {
 
   search: (q: string) =>
     request<unknown[]>(`/cards/search?q=${encodeURIComponent(q)}`),
+
+  listMovements: (cardId: string) =>
+    request<{ id: string; cardId: string; userId: string | null; fromColumnId: string | null; fromColumnTitle: string | null; toColumnId: string | null; toColumnTitle: string | null; reason: string | null; movedAt: string }[]>(`/cards/${cardId}/movements`),
 }
 
 // ── Tags ──────────────────────────────────────────────────

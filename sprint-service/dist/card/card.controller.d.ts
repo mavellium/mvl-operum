@@ -38,7 +38,8 @@ export declare class CardController {
         description: string;
         startDate: Date | null;
         endDate: Date | null;
-        sprintId: string;
+        projectId: string | null;
+        sprintId: string | null;
         color: string;
         title: string;
         position: number;
@@ -47,32 +48,7 @@ export declare class CardController {
         priority: string;
         tagsImport: string;
     })[]>;
-    findOne(id: string): Promise<{
-        comments: {
-            id: string;
-            deletedAt: Date | null;
-            createdAt: Date;
-            updatedAt: Date;
-            userId: string;
-            cardId: string;
-            content: string;
-            type: import("../../lib/generated/prisma").$Enums.CommentType;
-            reactions: import("../../lib/generated/prisma/runtime/client").JsonValue | null;
-        }[];
-        timeEntries: {
-            id: string;
-            deletedAt: Date | null;
-            createdAt: Date;
-            updatedAt: Date;
-            userId: string;
-            description: string | null;
-            cardId: string;
-            startedAt: Date;
-            endedAt: Date | null;
-            duration: number;
-            isRunning: boolean;
-            isManual: boolean;
-        }[];
+    listBacklog(projectId: string): Promise<({
         tags: ({
             tag: {
                 name: string;
@@ -108,7 +84,79 @@ export declare class CardController {
         description: string;
         startDate: Date | null;
         endDate: Date | null;
-        sprintId: string;
+        projectId: string | null;
+        sprintId: string | null;
+        color: string;
+        title: string;
+        position: number;
+        sprintColumnId: string | null;
+        sprintPosition: number | null;
+        priority: string;
+        tagsImport: string;
+    })[]>;
+    findOne(id: string): Promise<{
+        comments: {
+            id: string;
+            deletedAt: Date | null;
+            createdAt: Date;
+            updatedAt: Date;
+            userId: string;
+            cardId: string;
+            content: string;
+            type: import("../../lib/generated/prisma").$Enums.CommentType;
+            reactions: import("../../lib/generated/prisma/runtime/client").JsonValue | null;
+        }[];
+        tags: ({
+            tag: {
+                name: string;
+                id: string;
+                tenantId: string;
+                userId: string;
+                color: string;
+            };
+        } & {
+            cardId: string;
+            tagId: string;
+        })[];
+        attachments: {
+            id: string;
+            deletedAt: Date | null;
+            cardId: string;
+            fileName: string;
+            fileType: string;
+            filePath: string;
+            fileSize: number;
+            isCover: boolean;
+            uploadedAt: Date;
+        }[];
+        timeEntries: {
+            id: string;
+            deletedAt: Date | null;
+            createdAt: Date;
+            updatedAt: Date;
+            userId: string;
+            description: string | null;
+            cardId: string;
+            startedAt: Date;
+            endedAt: Date | null;
+            duration: number;
+            isRunning: boolean;
+            isManual: boolean;
+        }[];
+        responsibles: {
+            userId: string;
+            cardId: string;
+        }[];
+    } & {
+        id: string;
+        deletedAt: Date | null;
+        createdAt: Date;
+        updatedAt: Date;
+        description: string;
+        startDate: Date | null;
+        endDate: Date | null;
+        projectId: string | null;
+        sprintId: string | null;
         color: string;
         title: string;
         position: number;
@@ -125,7 +173,8 @@ export declare class CardController {
         description: string;
         startDate: Date | null;
         endDate: Date | null;
-        sprintId: string;
+        projectId: string | null;
+        sprintId: string | null;
         color: string;
         title: string;
         position: number;
@@ -134,7 +183,18 @@ export declare class CardController {
         priority: string;
         tagsImport: string;
     }>;
-    update(id: string, body: unknown): Promise<{
+    listMovements(id: string): Promise<{
+        id: string;
+        userId: string | null;
+        cardId: string;
+        fromColumnId: string | null;
+        fromColumnTitle: string | null;
+        toColumnId: string | null;
+        toColumnTitle: string | null;
+        reason: string | null;
+        movedAt: Date;
+    }[]>;
+    update(id: string, body: unknown, userId?: string): Promise<{
         id: string;
         deletedAt: Date | null;
         createdAt: Date;
@@ -142,7 +202,8 @@ export declare class CardController {
         description: string;
         startDate: Date | null;
         endDate: Date | null;
-        sprintId: string;
+        projectId: string | null;
+        sprintId: string | null;
         color: string;
         title: string;
         position: number;

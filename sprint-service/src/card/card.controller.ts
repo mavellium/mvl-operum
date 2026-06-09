@@ -5,6 +5,7 @@ import {
   Patch,
   Delete,
   Param,
+  Query,
   Body,
   Headers,
   HttpCode,
@@ -13,6 +14,7 @@ import {
 } from '@nestjs/common'
 import { CardService, CreateCardSchema, UpdateCardSchema } from './card.service'
 
+
 @Controller()
 export class CardController {
   constructor(private readonly cardService: CardService) {}
@@ -20,6 +22,12 @@ export class CardController {
   @Get('sprints/:sprintId/cards')
   listBySprint(@Param('sprintId') sprintId: string) {
     return this.cardService.listBySprint(sprintId)
+  }
+
+  @Get('cards/backlog')
+  listBacklog(@Query('projectId') projectId: string) {
+    if (!projectId) throw new BadRequestException('projectId é obrigatório')
+    return this.cardService.listBacklog(projectId)
   }
 
   @Get('cards/:id')
@@ -34,9 +42,18 @@ export class CardController {
     return this.cardService.create(parsed.data)
   }
 
+  @Get('cards/:id/movements')
+  listMovements(@Param('id') id: string) {
+    return this.cardService.listMovements(id)
+  }
+
   @Patch('cards/:id')
-  update(@Param('id') id: string, @Body() body: unknown) {
-    const parsed = UpdateCardSchema.safeParse(body)
+  update(
+    @Param('id') id: string,
+    @Body() body: unknown,
+    @Headers('x-user-id') userId?: string,
+  ) {
+    const parsed = UpdateCardSchema.safeParse({ ...(body as object), userId })
     if (!parsed.success) throw new BadRequestException(parsed.error.issues[0].message)
     return this.cardService.update(id, parsed.data)
   }

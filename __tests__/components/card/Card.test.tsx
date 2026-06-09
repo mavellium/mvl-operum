@@ -85,6 +85,59 @@ describe('Card priority badge', () => {
   })
 })
 
+describe('Card description text', () => {
+  it('shows truncated description text instead of icon', () => {
+    render(<Card {...defaultProps} card={makeCard({ description: 'Texto da descrição detalhada' })} />)
+    expect(screen.getByText('Texto da descrição detalhada')).toBeInTheDocument()
+  })
+
+  it('has title attribute with full description for tooltip', () => {
+    const desc = 'Descrição longa para tooltip'
+    render(<Card {...defaultProps} card={makeCard({ description: desc })} />)
+    const el = screen.getByText(desc)
+    expect(el).toHaveAttribute('title', desc)
+  })
+
+  it('does not render description text when description is empty', () => {
+    render(<Card {...defaultProps} card={makeCard({ description: '' })} />)
+    // Nenhum parágrafo de descrição deve aparecer
+    expect(screen.queryByTestId('card-description')).not.toBeInTheDocument()
+  })
+})
+
+describe('Card red flag (realizado > orcado)', () => {
+  it('shows red flag indicator when realizado_min exceeds orcado_min', () => {
+    const card = makeCard({ orcado_min: 60, realizado_min: 120 } as never)
+    render(<Card {...defaultProps} card={card} />)
+    expect(screen.getByTestId('card-overrun-flag')).toBeInTheDocument()
+  })
+
+  it('does not show red flag when realizado_min is within orcado_min', () => {
+    const card = makeCard({ orcado_min: 120, realizado_min: 60 } as never)
+    render(<Card {...defaultProps} card={card} />)
+    expect(screen.queryByTestId('card-overrun-flag')).not.toBeInTheDocument()
+  })
+
+  it('does not show red flag when orcado_min is not set', () => {
+    const card = makeCard({ realizado_min: 60 } as never)
+    render(<Card {...defaultProps} card={card} />)
+    expect(screen.queryByTestId('card-overrun-flag')).not.toBeInTheDocument()
+  })
+})
+
+describe('Card tempo planejado/realizado display', () => {
+  it('renders tempo row when orcado_min is set', () => {
+    const card = makeCard({ orcado_min: 480 } as never)
+    render(<Card {...defaultProps} card={card} />)
+    expect(screen.getByTestId('card-tempo-row')).toBeInTheDocument()
+  })
+
+  it('does not render tempo row when neither orcado_min nor realizado_min set', () => {
+    render(<Card {...defaultProps} card={makeCard()} />)
+    expect(screen.queryByTestId('card-tempo-row')).not.toBeInTheDocument()
+  })
+})
+
 describe('Card responsible avatars', () => {
   it('renders responsible avatars on card face', () => {
     const card = makeCard({
