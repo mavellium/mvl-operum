@@ -4,15 +4,25 @@ import { cookies } from 'next/headers'
 import { redirect } from 'next/navigation'
 import { decrypt } from '@/lib/session'
 
-// Verifies the session JWT locally (no DB round-trip).
-// Token validity (expiry, signature) is checked here.
-// Session invalidation (password change, logout) is enforced by the API gateway
-// on every downstream API call via the Redis session store.
 export const verifySession = cache(async () => {
   const cookieStore = await cookies()
   const token = cookieStore.get('session')?.value
-  const session = await decrypt(token)
 
+  let session = null
+
+  try {
+    if (token) {
+      session = await decrypt(token)
+    }
+  } catch (error) {
+    // Falhas de decodificação (expirado, assinatura inválida) caem aqui.
+    // Ignoramos o erro propositalmente para que a variável 'session' 
+    // continue nula e acione a trava de segurança abaixo.
+    console.warn('Sessão rejeitada localmente:', error)
+  }
+
+  // A validação e o redirecionamento ficam FORA do try/catch.
+  // Isso garante que o NEXT_REDIRECT não seja interceptado por acidente.
   if (!session?.userId) {
     redirect('/login')
   }
