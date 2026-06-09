@@ -1,8 +1,7 @@
 import 'server-only'
 import { cookies } from 'next/headers'
+import { redirect } from 'next/navigation' // ← Adicionado o import de redirecionamento
 
-// Internal URL for server→gateway calls (avoids external round-trip inside Docker)
-// Falls back to the public API URL for local dev where there's no Docker network
 const API_URL = (process.env.API_GATEWAY_INTERNAL_URL ?? process.env.NEXT_PUBLIC_API_URL ?? '').replace(/\/$/, '')
 
 async function getToken(): Promise<string | undefined> {
@@ -26,10 +25,26 @@ async function request<T>(path: string, init: RequestInit = {}): Promise<T> {
   if (res.status === 204) return undefined as T
 
   if (!res.ok) {
+    // 1. Intercepta o 401 Unauthorized da API e joga pro login
+    if (res.status === 401) {
+      redirect('/login')
+    }
+
     const body = await res.text().catch(() => '')
-    let message = body
-    try { message = (JSON.parse(body) as { message?: string }).message ?? body } catch { /* noop */ }
-    throw new Error(message || `${init.method ?? 'GET'} ${path} → ${res.status}`)
+    let errorMessage = body
+
+    try {
+      // 2. Ajustado para capturar tanto 'message' quanto 'error'
+      const parsed = JSON.parse(body) as { message?: string; error?: string }
+      errorMessage = parsed.message ?? parsed.error ?? body
+    } catch { /* noop */ }
+
+    // 3. Trava extra de segurança: se a mensagem for de sessão expirada, redireciona
+    if (errorMessage === 'Sessão expirada') {
+      redirect('/login')
+    }
+
+    throw new Error(errorMessage || `${init.method ?? 'GET'} ${path} → ${res.status}`)
   }
 
   return res.json() as Promise<T>
