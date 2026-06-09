@@ -2,6 +2,7 @@ import { getUserProfileAction } from '@/app/actions/profile'
 import ProfileForm from '@/components/profile/ProfileForm'
 import ChangePasswordForm from '@/components/profile/ChangePasswordForm'
 import SignatureUpload from '@/components/profile/SignatureUpload'
+import UserTenantsList from '@/components/UserTenantsList'
 import Link from 'next/link'
 
 export const dynamic = 'force-dynamic'
@@ -107,6 +108,11 @@ export default async function PerfilPage() {
         <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-6">
           <h2 className="text-base font-semibold text-gray-900 mb-4">Assinatura digital</h2>
           <SignatureUpload signatureUrl={profile.signatureUrl} />
+        </div>
+
+        <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-6">
+          <h2 className="text-base font-semibold text-gray-900 mb-4">Meus Workspaces</h2>
+          <UserTenantsList />
         </div>
 
         <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-6">
