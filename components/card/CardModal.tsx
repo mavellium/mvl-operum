@@ -146,12 +146,13 @@ export default function CardModal({
   const hasCover = imageAttachments.length > 0
   const isEditing = !!initialCard
 
+  const initialCardId = initialCard?.id
   const reloadTimeEntries = useCallback(async () => {
-    if (!initialCard?.id) return
-    const res = await getTimeEntriesAction(initialCard.id)
+    if (!initialCardId) return
+    const res = await getTimeEntriesAction(initialCardId)
     if ('entries' in res && res.entries) setTimeEntries(res.entries as TimeEntry[])
     setTimerKey(k => k + 1)
-  }, [initialCard?.id])
+  }, [initialCardId])
 
   useEffect(() => {
     if (!isOpen) { document.body.style.overflow = 'unset'; return }

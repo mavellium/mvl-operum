@@ -26,7 +26,7 @@ function NovaSprintForm() {
   const presetProjetoId = projetoIdFromPath ?? searchParams.get('projetoId') ?? ''
 
   const [isPending, startTransition] = useTransition()
-  const [projetos, setProjetos] = useState<Projeto[]>([])
+  const [_projetos, setProjetos] = useState<Projeto[]>([])
   const [form, setForm] = useState({
     name: '',
     startDate: '',
