@@ -5,7 +5,7 @@ import {
   createTenantAction,
   updateTenantStatusAction,
   updateTenantNameAction,
-  joinTenantAction,
+  joinAsTenantAdminAction,
 } from '@/app/actions/admin'
 
 type Tenant = {
@@ -14,7 +14,7 @@ type Tenant = {
   subdomain: string
   status: 'ACTIVE' | 'INACTIVE' | 'SUSPENDED' | 'REMOVED'
   createdAt: Date
-  _count: { users: number; projects: number }
+  _count: { users: number }
 }
 
 const statusBadge: Record<string, string> = {
@@ -69,74 +69,6 @@ function InlineNameEdit({
   )
 }
 
-function JoinForm({
-  tenantId, tenantName, onSuccess, onCancel,
-}: {
-  tenantId: string; tenantName: string; onSuccess: (tenantId: string) => void; onCancel: () => void
-}) {
-  const [password, setPassword] = useState('')
-  const [confirm, setConfirm] = useState('')
-  const [error, setError] = useState('')
-  const [isPending, startTransition] = useTransition()
-  const inputRef = useRef<HTMLInputElement>(null)
-
-  useEffect(() => { inputRef.current?.focus() }, [])
-
-  function handleSubmit() {
-    setError('')
-    if (password.length < 8) { setError('A senha deve ter pelo menos 8 caracteres.'); return }
-    if (password !== confirm) { setError('As senhas não coincidem.'); return }
-    startTransition(async () => {
-      const result = await joinTenantAction(tenantId, password)
-      if ('error' in result && result.error) {
-        setError(result.error)
-      } else {
-        onSuccess(tenantId)
-      }
-    })
-  }
-
-  return (
-    <div className="mt-3 p-3 bg-indigo-50 border border-indigo-200 rounded-xl space-y-3">
-      <p className="text-xs text-indigo-800 font-medium">
-        Defina uma senha para sua conta em <strong>{tenantName}</strong>
-      </p>
-      <div className="grid grid-cols-2 gap-2">
-        <input
-          ref={inputRef}
-          type="password"
-          value={password}
-          onChange={e => setPassword(e.target.value)}
-          onKeyDown={e => e.key === 'Enter' && handleSubmit()}
-          placeholder="Nova senha"
-          className="px-3 py-1.5 text-sm border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-400"
-        />
-        <input
-          type="password"
-          value={confirm}
-          onChange={e => setConfirm(e.target.value)}
-          onKeyDown={e => e.key === 'Enter' && handleSubmit()}
-          placeholder="Confirmar senha"
-          className="px-3 py-1.5 text-sm border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-400"
-        />
-      </div>
-      {error && <p className="text-xs text-red-600">{error}</p>}
-      <div className="flex gap-2 justify-end">
-        <button onClick={onCancel} className="px-3 py-1.5 text-xs text-gray-600 hover:text-gray-800 transition-colors">
-          Cancelar
-        </button>
-        <button
-          onClick={handleSubmit}
-          disabled={isPending}
-          className="px-3 py-1.5 text-xs font-medium bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition-colors disabled:opacity-60"
-        >
-          {isPending ? 'Registrando…' : 'Confirmar acesso'}
-        </button>
-      </div>
-    </div>
-  )
-}
-
 export default function AdminTenantsClient({
   initialTenants,
   myTenantIds,
@@ -146,16 +78,16 @@ export default function AdminTenantsClient({
 }) {
   const [tenants, setTenants] = useState(initialTenants)
   const [joinedIds, setJoinedIds] = useState<Set<string>>(new Set(myTenantIds))
+  const [joinErrors, setJoinErrors] = useState<Record<string, string>>({})
   const [showForm, setShowForm] = useState(false)
   const [name, setName] = useState('')
   const [subdomain, setSubdomain] = useState('')
   const [formError, setFormError] = useState('')
   const [editingId, setEditingId] = useState<string | null>(null)
-  const [joiningId, setJoiningId] = useState<string | null>(null)
   const [isPending, startTransition] = useTransition()
 
   function handleSubdomainInput(value: string) {
-    setSubdomain(value.toLowerCase().replace(/[^a-z0-9-]/g, ''))
+    setSubdomain(value.toLowerCase().replace(/[^a-z0-9-]/g, '').slice(0, 63))
   }
 
   function handleCreate() {
@@ -166,7 +98,8 @@ export default function AdminTenantsClient({
       if ('error' in result) {
         setFormError(result.error ?? 'Erro desconhecido')
       } else {
-        setTenants(prev => [{ ...(result.tenant as unknown as Tenant), _count: { users: 0, projects: 0 } }, ...prev])
+        setTenants(prev => [{ ...(result.tenant as unknown as Tenant), _count: { users: 1 } }, ...prev])
+        setJoinedIds(prev => new Set([...prev, (result.tenant as { id: string }).id]))
         setName('')
         setSubdomain('')
         setShowForm(false)
@@ -190,9 +123,17 @@ export default function AdminTenantsClient({
     })
   }
 
-  function handleJoinSuccess(tenantId: string) {
-    setJoinedIds(prev => new Set([...prev, tenantId]))
-    setJoiningId(null)
+  function handleJoin(tenantId: string) {
+    setJoinErrors(prev => ({ ...prev, [tenantId]: '' }))
+    startTransition(async () => {
+      const result = await joinAsTenantAdminAction(tenantId)
+      if ('error' in result && result.error) {
+        setJoinErrors(prev => ({ ...prev, [tenantId]: result.error! }))
+      } else {
+        setJoinedIds(prev => new Set([...prev, tenantId]))
+        setTenants(prev => prev.map(t => t.id === tenantId ? { ...t, _count: { users: t._count.users + 1 } } : t))
+      }
+    })
   }
 
   return (
@@ -229,6 +170,7 @@ export default function AdminTenantsClient({
                 <input type="text" value={subdomain} onChange={e => handleSubdomainInput(e.target.value)}
                   onKeyDown={e => e.key === 'Enter' && handleCreate()}
                   placeholder="acme"
+                  maxLength={63}
                   className="flex-1 px-3 py-2 text-sm border border-gray-300 rounded-l-lg focus:outline-none focus:ring-2 focus:ring-blue-400" />
                 <span className="px-3 py-2 text-xs text-gray-500 bg-gray-100 border border-l-0 border-gray-300 rounded-r-lg whitespace-nowrap">.operum.com</span>
               </div>
@@ -288,15 +230,19 @@ export default function AdminTenantsClient({
                       </div>
                     )}
                     <p className="text-xs text-gray-400 mt-0.5">
-                      {t.subdomain}.operum.com · {t._count.users} usuário{t._count.users !== 1 ? 's' : ''} · {t._count.projects} projeto{t._count.projects !== 1 ? 's' : ''}
+                      {t.subdomain}.operum.com · {t._count.users} usuário{t._count.users !== 1 ? 's' : ''}
                     </p>
+                    {joinErrors[t.id] && (
+                      <p className="text-xs text-red-600 mt-1">{joinErrors[t.id]}</p>
+                    )}
                   </div>
 
                   <div className="flex items-center gap-2 shrink-0">
-                    {!hasAccess && joiningId !== t.id && (
+                    {!hasAccess && (
                       <button
-                        onClick={() => setJoiningId(t.id)}
-                        className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium text-indigo-600 bg-indigo-50 border border-indigo-200 rounded-lg hover:bg-indigo-100 transition-colors"
+                        onClick={() => handleJoin(t.id)}
+                        disabled={isPending}
+                        className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium text-indigo-600 bg-indigo-50 border border-indigo-200 rounded-lg hover:bg-indigo-100 transition-colors disabled:opacity-60 cursor-pointer"
                       >
                         <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M18 9v3m0 0v3m0-3h3m-3 0h-3m-2-5a4 4 0 11-8 0 4 4 0 018 0zM3 20a6 6 0 0112 0v1H3v-1z" />
@@ -318,16 +264,6 @@ export default function AdminTenantsClient({
                     </select>
                   </div>
                 </div>
-
-                {/* Join form — expands inline */}
-                {joiningId === t.id && (
-                  <JoinForm
-                    tenantId={t.id}
-                    tenantName={t.name}
-                    onSuccess={handleJoinSuccess}
-                    onCancel={() => setJoiningId(null)}
-                  />
-                )}
               </div>
             )
           })}

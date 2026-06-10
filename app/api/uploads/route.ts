@@ -41,17 +41,27 @@ export async function POST(request: Request) {
 
   const upstream = new FormData()
   upstream.append('file', file)
-  const res = await fetch(`${FILE_SERVICE_URL}/files/upload?cardId=${encodeURIComponent(cardId)}`, {
-    method: 'POST',
-    headers: {
-      'X-Internal-Api-Key': INTERNAL_API_KEY,
-      'X-User-Id': session.userId as string,
-      'X-Tenant-Id': session.tenantId as string,
-    },
-    body: upstream,
-  })
-  const body = await res.json().catch(() => ({}))
-  return Response.json(body, { status: res.ok ? 201 : res.status })
+  let res: Response
+  try {
+    res = await fetch(`${FILE_SERVICE_URL}/files/upload?cardId=${encodeURIComponent(cardId)}`, {
+      method: 'POST',
+      headers: {
+        'X-Internal-Api-Key': INTERNAL_API_KEY,
+        'X-User-Id': session.userId as string,
+        'X-Tenant-Id': session.tenantId as string,
+      },
+      body: upstream,
+    })
+  } catch (err) {
+    const msg = err instanceof Error ? err.message : 'Erro desconhecido'
+    return Response.json({ error: `File service indisponível: ${msg}` }, { status: 502 })
+  }
+  const body = await res.json().catch(() => ({})) as Record<string, unknown>
+  if (!res.ok) {
+    const error = (body.message ?? body.error ?? `HTTP ${res.status}`) as string
+    return Response.json({ error }, { status: res.status })
+  }
+  return Response.json(body, { status: 201 })
 }
 
 export async function DELETE(request: Request) {

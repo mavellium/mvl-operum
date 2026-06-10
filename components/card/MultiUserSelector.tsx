@@ -39,21 +39,24 @@ export default function MultiUserSelector({ cardId, users, onResponsiblesChange 
 
   async function handleToggle(userId: string) {
     const isSelected = responsibles.some(r => r.userId === userId)
-    let next: Responsible[]
     if (isSelected) {
-      await removeResponsibleAction(cardId, userId)
-      next = responsibles.filter(r => r.userId !== userId)
+      const result = await removeResponsibleAction(cardId, userId)
+      if ('error' in result) return
+      const next = responsibles.filter(r => r.userId !== userId)
+      setResponsibles(next)
+      onResponsiblesChange?.(next)
     } else {
       const user = users.find(u => u.id === userId)
       if (!user) return
-      await addResponsibleAction(cardId, userId)
-      next = [...responsibles, {
+      const result = await addResponsibleAction(cardId, userId)
+      if ('error' in result) return
+      const next = [...responsibles, {
         userId,
         user: { id: user.id, name: user.name, cargo: user.cargo ?? null, avatarUrl: user.avatarUrl ?? null },
       }]
+      setResponsibles(next)
+      onResponsiblesChange?.(next)
     }
-    setResponsibles(next)
-    onResponsiblesChange?.(next)
   }
 
   if (loading) return <div className="text-xs text-gray-400">Carregando...</div>

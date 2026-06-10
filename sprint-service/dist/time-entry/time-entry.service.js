@@ -52,6 +52,19 @@ let TimeEntryService = class TimeEntryService {
             data: { cardId, userId, startedAt: start, endedAt: end, duration, isManual: true, description: data.description },
         });
     }
+    async getTotal(cardId) {
+        const entries = await prisma_1.prisma.timeEntry.findMany({
+            where: { cardId, isRunning: false, deletedAt: null },
+            select: { duration: true },
+        });
+        const seconds = entries.reduce((sum, e) => sum + (e.duration ?? 0), 0);
+        return { seconds };
+    }
+    async getActive(cardId) {
+        return prisma_1.prisma.timeEntry.findFirst({
+            where: { cardId, isRunning: true, deletedAt: null },
+        });
+    }
     async remove(id) {
         const entry = await prisma_1.prisma.timeEntry.findUnique({ where: { id } });
         if (!entry)

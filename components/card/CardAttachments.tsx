@@ -49,7 +49,7 @@ export default function CardAttachments({ attachments, onUpload, onDelete, onSet
                 {isImage && (
                   // eslint-disable-next-line @next/next/no-img-element
                   <img
-                    src={att.filePath}
+                    src={`/api/files/${att.id}/image`}
                     alt={att.fileName}
                     className="w-full max-h-32 object-cover"
                   />

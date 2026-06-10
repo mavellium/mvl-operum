@@ -2,7 +2,12 @@ import { CommentService } from './comment.service';
 export declare class CommentController {
     private readonly commentService;
     constructor(commentService: CommentService);
-    list(cardId: string): Promise<{
+    list(cardId: string): Promise<({
+        user: {
+            name: string;
+            id: string;
+        };
+    } & {
         id: string;
         deletedAt: Date | null;
         createdAt: Date;
@@ -12,11 +17,16 @@ export declare class CommentController {
         content: string;
         type: import("../../lib/generated/prisma").$Enums.CommentType;
         reactions: import("../../lib/generated/prisma/runtime/client").JsonValue | null;
-    }[]>;
+    })[]>;
     create(cardId: string, userId: string, body: {
         content: string;
         type?: 'COMMENT' | 'FEEDBACK';
     }): Promise<{
+        user: {
+            name: string;
+            id: string;
+        };
+    } & {
         id: string;
         deletedAt: Date | null;
         createdAt: Date;

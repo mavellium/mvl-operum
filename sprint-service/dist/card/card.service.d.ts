@@ -33,11 +33,11 @@ export declare class CardService {
     listBacklog(projectId: string): Promise<({
         tags: ({
             tag: {
+                color: string;
+                userId: string;
                 name: string;
                 id: string;
                 tenantId: string;
-                userId: string;
-                color: string;
             };
         } & {
             cardId: string;
@@ -54,36 +54,43 @@ export declare class CardService {
             isCover: boolean;
             uploadedAt: Date;
         }[];
-        responsibles: {
+        responsibles: ({
+            user: {
+                name: string;
+                id: string;
+                tenantId: string;
+                email: string;
+            };
+        } & {
             userId: string;
             cardId: string;
-        }[];
+        })[];
     } & {
+        title: string;
+        description: string;
+        color: string;
+        position: number;
+        sprintId: string | null;
+        sprintColumnId: string | null;
+        sprintPosition: number | null;
+        projectId: string | null;
+        priority: string;
+        startDate: Date | null;
+        endDate: Date | null;
         id: string;
         deletedAt: Date | null;
         createdAt: Date;
         updatedAt: Date;
-        description: string;
-        startDate: Date | null;
-        endDate: Date | null;
-        projectId: string | null;
-        sprintId: string | null;
-        color: string;
-        title: string;
-        position: number;
-        sprintColumnId: string | null;
-        sprintPosition: number | null;
-        priority: string;
         tagsImport: string;
     })[]>;
     listBySprint(sprintId: string): Promise<({
         tags: ({
             tag: {
+                color: string;
+                userId: string;
                 name: string;
                 id: string;
                 tenantId: string;
-                userId: string;
-                color: string;
             };
         } & {
             cardId: string;
@@ -100,47 +107,59 @@ export declare class CardService {
             isCover: boolean;
             uploadedAt: Date;
         }[];
-        responsibles: {
+        responsibles: ({
+            user: {
+                name: string;
+                id: string;
+                tenantId: string;
+                email: string;
+            };
+        } & {
             userId: string;
             cardId: string;
-        }[];
+        })[];
     } & {
+        title: string;
+        description: string;
+        color: string;
+        position: number;
+        sprintId: string | null;
+        sprintColumnId: string | null;
+        sprintPosition: number | null;
+        projectId: string | null;
+        priority: string;
+        startDate: Date | null;
+        endDate: Date | null;
         id: string;
         deletedAt: Date | null;
         createdAt: Date;
         updatedAt: Date;
-        description: string;
-        startDate: Date | null;
-        endDate: Date | null;
-        projectId: string | null;
-        sprintId: string | null;
-        color: string;
-        title: string;
-        position: number;
-        sprintColumnId: string | null;
-        sprintPosition: number | null;
-        priority: string;
         tagsImport: string;
     })[]>;
     findOne(id: string): Promise<{
-        comments: {
+        comments: ({
+            user: {
+                name: string;
+                id: string;
+            };
+        } & {
+            type: import("../../lib/generated/prisma").$Enums.CommentType;
+            userId: string;
             id: string;
             deletedAt: Date | null;
             createdAt: Date;
             updatedAt: Date;
-            userId: string;
             cardId: string;
             content: string;
-            type: import("../../lib/generated/prisma").$Enums.CommentType;
             reactions: import("../../lib/generated/prisma/runtime/client").JsonValue | null;
-        }[];
+        })[];
         tags: ({
             tag: {
+                color: string;
+                userId: string;
                 name: string;
                 id: string;
                 tenantId: string;
-                userId: string;
-                color: string;
             };
         } & {
             cardId: string;
@@ -158,12 +177,12 @@ export declare class CardService {
             uploadedAt: Date;
         }[];
         timeEntries: {
+            description: string | null;
+            userId: string;
             id: string;
             deletedAt: Date | null;
             createdAt: Date;
             updatedAt: Date;
-            userId: string;
-            description: string | null;
             cardId: string;
             startedAt: Date;
             endedAt: Date | null;
@@ -171,73 +190,80 @@ export declare class CardService {
             isRunning: boolean;
             isManual: boolean;
         }[];
-        responsibles: {
+        responsibles: ({
+            user: {
+                name: string;
+                id: string;
+                tenantId: string;
+                email: string;
+            };
+        } & {
             userId: string;
             cardId: string;
-        }[];
+        })[];
     } & {
+        title: string;
+        description: string;
+        color: string;
+        position: number;
+        sprintId: string | null;
+        sprintColumnId: string | null;
+        sprintPosition: number | null;
+        projectId: string | null;
+        priority: string;
+        startDate: Date | null;
+        endDate: Date | null;
         id: string;
         deletedAt: Date | null;
         createdAt: Date;
         updatedAt: Date;
-        description: string;
-        startDate: Date | null;
-        endDate: Date | null;
-        projectId: string | null;
-        sprintId: string | null;
-        color: string;
-        title: string;
-        position: number;
-        sprintColumnId: string | null;
-        sprintPosition: number | null;
-        priority: string;
         tagsImport: string;
     }>;
     create(dto: CreateCardDto): Promise<{
+        title: string;
+        description: string;
+        color: string;
+        position: number;
+        sprintId: string | null;
+        sprintColumnId: string | null;
+        sprintPosition: number | null;
+        projectId: string | null;
+        priority: string;
+        startDate: Date | null;
+        endDate: Date | null;
         id: string;
         deletedAt: Date | null;
         createdAt: Date;
         updatedAt: Date;
-        description: string;
-        startDate: Date | null;
-        endDate: Date | null;
-        projectId: string | null;
-        sprintId: string | null;
-        color: string;
-        title: string;
-        position: number;
-        sprintColumnId: string | null;
-        sprintPosition: number | null;
-        priority: string;
         tagsImport: string;
     }>;
     update(id: string, dto: UpdateCardDto): Promise<{
+        title: string;
+        description: string;
+        color: string;
+        position: number;
+        sprintId: string | null;
+        sprintColumnId: string | null;
+        sprintPosition: number | null;
+        projectId: string | null;
+        priority: string;
+        startDate: Date | null;
+        endDate: Date | null;
         id: string;
         deletedAt: Date | null;
         createdAt: Date;
         updatedAt: Date;
-        description: string;
-        startDate: Date | null;
-        endDate: Date | null;
-        projectId: string | null;
-        sprintId: string | null;
-        color: string;
-        title: string;
-        position: number;
-        sprintColumnId: string | null;
-        sprintPosition: number | null;
-        priority: string;
         tagsImport: string;
     }>;
     listMovements(cardId: string): Promise<{
-        id: string;
+        reason: string | null;
         userId: string | null;
+        id: string;
         cardId: string;
         fromColumnId: string | null;
         fromColumnTitle: string | null;
         toColumnId: string | null;
         toColumnTitle: string | null;
-        reason: string | null;
         movedAt: Date;
     }[]>;
     remove(id: string): Promise<void>;
@@ -252,18 +278,18 @@ export declare class CardService {
     }>;
     removeResponsible(cardId: string, userId: string): Promise<void>;
     listTags(tenantId: string): Promise<{
+        color: string;
+        userId: string;
         name: string;
         id: string;
         tenantId: string;
-        userId: string;
-        color: string;
     }[]>;
     createTag(tenantId: string, userId: string, name: string, color?: string): Promise<{
+        color: string;
+        userId: string;
         name: string;
         id: string;
         tenantId: string;
-        userId: string;
-        color: string;
     }>;
     deleteTag(tagId: string): Promise<void>;
 }

@@ -44,7 +44,7 @@ let CardService = class CardService {
             where: { projectId, sprintId: null, deletedAt: null },
             include: {
                 tags: { include: { tag: true } },
-                responsibles: true,
+                responsibles: { include: { user: true } },
                 attachments: { where: { deletedAt: null } },
             },
             orderBy: { position: 'asc' },
@@ -55,7 +55,7 @@ let CardService = class CardService {
             where: { sprintId, deletedAt: null },
             include: {
                 tags: { include: { tag: true } },
-                responsibles: true,
+                responsibles: { include: { user: true } },
                 attachments: { where: { deletedAt: null } },
             },
             orderBy: [{ sprintColumnId: 'asc' }, { position: 'asc' }],
@@ -66,9 +66,9 @@ let CardService = class CardService {
             where: { id, deletedAt: null },
             include: {
                 tags: { include: { tag: true } },
-                responsibles: true,
+                responsibles: { include: { user: true } },
                 attachments: { where: { deletedAt: null } },
-                comments: { where: { deletedAt: null }, orderBy: { createdAt: 'asc' } },
+                comments: { where: { deletedAt: null }, orderBy: { createdAt: 'asc' }, include: { user: { select: { id: true, name: true } } } },
                 timeEntries: { where: { deletedAt: null } },
             },
         });

@@ -1,6 +1,7 @@
 'use client'
 
 import { useState, useEffect, useRef } from 'react'
+import { useToast } from '@/components/ui/Toast'
 import { DragDropContext, Droppable, DropResult } from '@hello-pangea/dnd'
 import SprintHeader from './SprintHeader'
 import ColumnComponent from '@/components/board/Column'
@@ -21,8 +22,8 @@ import {
   moveCardToBacklogAction,
   createBacklogCardAction,
 } from '@/app/actions/sprintBoard'
-import { createCommentAction, getCommentsAction } from '@/app/actions/comentarios'
-import { deleteAttachmentAction, setCoverAction } from '@/app/actions/attachments'
+import { createCommentAction, getCommentsAction, updateCommentAction, deleteCommentAction } from '@/app/actions/comentarios'
+import { deleteAttachmentAction, setCoverAction, renameAttachmentAction, getAttachmentUrlAction } from '@/app/actions/attachments'
 
 interface SprintCard {
   id: string
@@ -98,11 +99,12 @@ function toCardType(card: SprintCard, sprintId: string): CardType {
 }
 
 export default function SprintBoard({ sprint, columns: initialColumns, backlogCards: initialBacklogCards, users, tags, currentUser, initialCardId, projectId }: SprintBoardProps) {
+  const { toast } = useToast()
   const [columns, setColumns] = useState(initialColumns)
   const [newColTitle, setNewColTitle] = useState('')
   const [addingCol, setAddingCol] = useState(false)
   const [openCardId, setOpenCardId] = useState<string | null>(initialCardId ?? null)
-  const [cardComments, setCardComments] = useState<{ id: string; user: { id: string; name: string; avatarUrl: string | null }; content: string; createdAt: Date }[]>([])
+  const [cardComments, setCardComments] = useState<{ id: string; user: { id: string; name: string; avatarUrl?: string | null }; content: string; createdAt: Date }[]>([])
   const [addingCardToColumn, setAddingCardToColumn] = useState<string | null>(null)
   const [boardBg, setBoardBg] = useState('bg-gradient-to-br from-slate-900 via-blue-950 to-slate-900')
   const [backlogCards, setBacklogCards] = useState<SprintCard[]>(initialBacklogCards ?? [])
@@ -552,21 +554,50 @@ export default function SprintBoard({ sprint, columns: initialColumns, backlogCa
               const form = new FormData()
               form.append('cardId', openCardId)
               form.append('file', file)
-              const res = await fetch('/api/uploads', { method: 'POST', body: form })
-              if (res.ok) {
-                const att = await res.json()
-                setColumns(prev => prev.map(col => ({
-                  ...col,
-                  cards: col.cards.map(c =>
-                    c.id === openCardId
-                      ? { ...c, attachments: [...(c.attachments ?? []), att] }
-                      : c
-                  ),
-                })))
+              try {
+                const res = await fetch('/api/uploads', { method: 'POST', body: form })
+                if (res.ok) {
+                  const att = await res.json()
+                  setColumns(prev => prev.map(col => ({
+                    ...col,
+                    cards: col.cards.map(c =>
+                      c.id === openCardId
+                        ? { ...c, attachments: [...(c.attachments ?? []), att] }
+                        : c
+                    ),
+                  })))
+                  toast('Anexo enviado com sucesso!', 'success')
+                } else {
+                  const body = await res.json().catch(() => ({})) as { error?: string; message?: string }
+                  toast(body.error ?? body.message ?? 'Falha ao enviar o anexo.', 'error')
+                }
+              } catch {
+                toast('Erro de rede ao enviar o anexo.', 'error')
               }
             }}
+            onAttachmentView={async (attachmentId) => {
+              if (!openCardId) return null
+              const result = await getAttachmentUrlAction(attachmentId, openCardId)
+              if ('error' in result) { toast(result.error as string, 'error'); return null }
+              return result.url
+            }}
+            onAttachmentRename={async (attachmentId, newName) => {
+              if (!openCardId) return
+              const result = await renameAttachmentAction(attachmentId, openCardId, newName)
+              if ('error' in result) { toast(result.error as string, 'error'); return }
+              setColumns(prev => prev.map(col => ({
+                ...col,
+                cards: col.cards.map(c =>
+                  c.id === openCardId
+                    ? { ...c, attachments: (c.attachments ?? []).map(a => a.id === attachmentId ? { ...a, fileName: newName } : a) }
+                    : c
+                ),
+              })))
+            }}
             onAttachmentDelete={async (attachmentId) => {
-              await deleteAttachmentAction(attachmentId)
+              if (!openCardId) return
+              const result = await deleteAttachmentAction(attachmentId, openCardId)
+              if ('error' in result) { toast(result.error as string, 'error'); return }
               setColumns(prev => prev.map(col => ({
                 ...col,
                 cards: col.cards.map(c =>
@@ -578,7 +609,8 @@ export default function SprintBoard({ sprint, columns: initialColumns, backlogCa
             }}
             onAttachmentSetCover={async (attachmentId) => {
               if (!openCardId) return
-              await setCoverAction(openCardId, attachmentId)
+              const result = await setCoverAction(openCardId, attachmentId)
+              if ('error' in result) { toast(result.error as string, 'error'); return }
               setColumns(prev => prev.map(col => ({
                 ...col,
                 cards: col.cards.map(c =>
@@ -591,11 +623,39 @@ export default function SprintBoard({ sprint, columns: initialColumns, backlogCa
             onAddComment={async (content) => {
               if (!openCardId) return
               const res = await createCommentAction(openCardId, content)
+              if ('error' in res && res.error) {
+                toast(res.error as string, 'error')
+                return
+              }
               if (res.comment) setCardComments(prev => [...prev, res.comment!])
             }}
-            comments={cardComments.map(c => ({
+            onEditComment={async (commentId, content) => {
+              if (!openCardId) return
+              const res = await updateCommentAction(openCardId, commentId, content)
+              if ('error' in res && res.error) { toast(res.error as string, 'error'); return }
+              setCardComments(prev => prev.map(c => c.id === commentId ? { ...c, content } : c))
+            }}
+            onDeleteComment={async (commentId) => {
+              if (!openCardId) return
+              const res = await deleteCommentAction(openCardId, commentId)
+              if ('error' in res && res.error) { toast(res.error as string, 'error'); return }
+              setCardComments(prev => prev.filter(c => c.id !== commentId))
+            }}
+            currentUser={currentUser ?? undefined}
+            onResponsiblesChange={(responsibles) => {
+              if (!openCardId) return
+              setColumns(prev => prev.map(col => ({
+                ...col,
+                cards: col.cards.map(c =>
+                  c.id === openCardId
+                    ? { ...c, responsibles: responsibles.map(r => ({ user: { id: r.user.id, name: r.user.name, avatarUrl: r.user.avatarUrl } })) }
+                    : c
+                ),
+              })))
+            }}
+            comments={cardComments.filter(c => c.user).map(c => ({
               id: c.id,
-              user: { id: c.user.id, name: c.user.name, email: '', avatarUrl: c.user.avatarUrl },
+              user: { id: c.user.id, name: c.user.name, email: '', avatarUrl: c.user.avatarUrl ?? null },
               content: c.content,
               createdAt: new Date(c.createdAt),
             }))}

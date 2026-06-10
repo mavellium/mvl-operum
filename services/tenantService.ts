@@ -69,7 +69,7 @@ export async function listTenants(callerUserId: string) {
   }
   return prisma.tenant.findMany({
     where: { deletedAt: null },
-    include: { _count: { select: { users: true, projects: true } } },
+    include: { _count: { select: { users: true } } },
     orderBy: { createdAt: 'desc' },
   })
 }

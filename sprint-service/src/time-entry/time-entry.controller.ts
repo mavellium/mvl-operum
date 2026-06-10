@@ -16,6 +16,16 @@ import { TimeEntryService } from './time-entry.service'
 export class TimeEntryController {
   constructor(private readonly timeEntryService: TimeEntryService) {}
 
+  @Get('cards/:cardId/time-entries/total')
+  getTotal(@Param('cardId') cardId: string) {
+    return this.timeEntryService.getTotal(cardId)
+  }
+
+  @Get('cards/:cardId/time-entries/active')
+  getActive(@Param('cardId') cardId: string) {
+    return this.timeEntryService.getActive(cardId)
+  }
+
   @Get('cards/:cardId/time-entries')
   listByCard(@Param('cardId') cardId: string) {
     return this.timeEntryService.listByCard(cardId)

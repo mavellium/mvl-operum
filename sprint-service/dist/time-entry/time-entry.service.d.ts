@@ -73,5 +73,22 @@ export declare class TimeEntryService {
         isRunning: boolean;
         isManual: boolean;
     }>;
+    getTotal(cardId: string): Promise<{
+        seconds: number;
+    }>;
+    getActive(cardId: string): Promise<{
+        id: string;
+        deletedAt: Date | null;
+        createdAt: Date;
+        updatedAt: Date;
+        userId: string;
+        description: string | null;
+        cardId: string;
+        startedAt: Date;
+        endedAt: Date | null;
+        duration: number;
+        isRunning: boolean;
+        isManual: boolean;
+    }>;
     remove(id: string): Promise<void>;
 }

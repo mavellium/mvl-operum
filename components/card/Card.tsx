@@ -86,7 +86,7 @@ export default function Card({ card, index, columnId, onDelete, onClick }: CardP
             {cover && (
               <div className="w-full h-32 overflow-hidden border-b border-gray-100 bg-gray-100 shrink-0">
                 {/* eslint-disable-next-line @next/next/no-img-element */}
-                <img src={cover.filePath} alt="Capa" className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105" />
+                <img src={`/api/files/${cover.id}/image`} alt="Capa" className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105" />
               </div>
             )}
 

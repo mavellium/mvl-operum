@@ -50,6 +50,21 @@ export class TimeEntryService {
     })
   }
 
+  async getTotal(cardId: string): Promise<{ seconds: number }> {
+    const entries = await prisma.timeEntry.findMany({
+      where: { cardId, isRunning: false, deletedAt: null },
+      select: { duration: true },
+    })
+    const seconds = entries.reduce((sum, e) => sum + (e.duration ?? 0), 0)
+    return { seconds }
+  }
+
+  async getActive(cardId: string) {
+    return prisma.timeEntry.findFirst({
+      where: { cardId, isRunning: true, deletedAt: null },
+    })
+  }
+
   async remove(id: string) {
     const entry = await prisma.timeEntry.findUnique({ where: { id } })
     if (!entry) throw new NotFoundException('Time entry não encontrada')

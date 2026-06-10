@@ -8,10 +8,13 @@ import {
   HttpCode,
   HttpStatus,
   UnauthorizedException,
+  BadRequestException,
+  UseGuards,
 } from '@nestjs/common'
 import { AuthService } from './auth.service'
 import { JwtService } from './jwt.service'
 import { Public } from '../decorators/public.decorator'
+import { AdminGuard } from '../guards/admin.guard'
 import { LoginSchema } from './dto/login.dto'
 import { RegisterSchema } from './dto/register.dto'
 import {
@@ -154,5 +157,16 @@ export class AuthController {
     if (!userId) throw new UnauthorizedException()
     const dto = JoinTenantSchema.parse(body)
     return this.authService.joinTenant(userId, dto.tenantId, dto.password)
+  }
+
+  @Post('provision-tenant-admin')
+  @HttpCode(HttpStatus.OK)
+  @UseGuards(AdminGuard)
+  async provisionTenantAdmin(
+    @Headers('x-user-id') userId: string,
+    @Body() body: { tenantId: string },
+  ) {
+    if (!body?.tenantId?.trim()) throw new BadRequestException('tenantId é obrigatório')
+    return this.authService.provisionTenantAdmin(userId, body.tenantId.trim())
   }
 }

@@ -14,10 +14,14 @@ let CommentService = class CommentService {
         return prisma_1.prisma.comment.findMany({
             where: { cardId, deletedAt: null },
             orderBy: { createdAt: 'asc' },
+            include: { user: { select: { id: true, name: true } } },
         });
     }
     async create(cardId, userId, content, type = 'COMMENT') {
-        return prisma_1.prisma.comment.create({ data: { cardId, userId, content, type } });
+        return prisma_1.prisma.comment.create({
+            data: { cardId, userId, content, type },
+            include: { user: { select: { id: true, name: true } } },
+        });
     }
     async update(id, userId, content) {
         const comment = await prisma_1.prisma.comment.findUnique({ where: { id } });

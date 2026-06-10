@@ -83,6 +83,17 @@ export const authApi = {
       { method: 'POST', body: JSON.stringify({ tenantId: tenantId.trim(), password }) },
     )
   },
+
+  provisionTenantAdmin: (tenantId: string, callerRole: string) => {
+    if (!tenantId?.trim()) throw new Error('tenantId is required')
+    // Fail-fast defense-in-depth: AdminGuard on the backend is the authoritative check;
+    // this early throw prevents unnecessary network round-trips for non-admin users.
+    if (callerRole !== 'admin') throw new Error('Apenas administradores podem provisionar workspaces')
+    return request<{ ok: boolean }>(
+      '/auth/provision-tenant-admin',
+      { method: 'POST', body: JSON.stringify({ tenantId: tenantId.trim() }) },
+    )
+  },
 }
 
 type AdminUser = { id: string; name: string; email: string; role: string; avatarUrl?: string | null; isActive?: boolean; phone?: string; cep?: string; logradouro?: string; numero?: string; complemento?: string; bairro?: string; cidade?: string; estado?: string; notes?: string }
@@ -314,10 +325,10 @@ export const cardsApi = {
   removeResponsible: (cardId: string, userId: string) =>
     request(`/cards/${cardId}/responsibles/${userId}`, { method: 'DELETE' }),
 
-  listComments: (cardId: string) => request<{ id: string; user: { id: string; name: string; avatarUrl: string | null }; content: string; createdAt: Date }[]>(`/cards/${cardId}/comments`),
+  listComments: (cardId: string) => request<{ id: string; user: { id: string; name: string; avatarUrl?: string | null }; content: string; createdAt: Date }[]>(`/cards/${cardId}/comments`),
 
   createComment: (cardId: string, content: string, type?: string) =>
-    request<{ id: string; user: { id: string; name: string; avatarUrl: string | null }; content: string; createdAt: Date }>(`/cards/${cardId}/comments`, { method: 'POST', body: JSON.stringify({ content, type }) }),
+    request<{ id: string; user: { id: string; name: string; avatarUrl?: string | null }; content: string; createdAt: Date }>(`/cards/${cardId}/comments`, { method: 'POST', body: JSON.stringify({ content, type }) }),
 
   updateComment: (cardId: string, commentId: string, content: string) =>
     request(`/cards/${cardId}/comments/${commentId}`, { method: 'PATCH', body: JSON.stringify({ content }) }),
@@ -336,8 +347,8 @@ export const cardsApi = {
   startTimer: (cardId: string, description?: string) =>
     request(`/cards/${cardId}/time-entries/start`, { method: 'POST', body: JSON.stringify({ description }) }),
 
-  stopTimer: (cardId: string) =>
-    request(`/cards/${cardId}/time-entries/stop`, { method: 'POST' }),
+  stopTimer: (entryId: string) =>
+    request(`/time-entries/${entryId}/stop`, { method: 'POST' }),
 
   createManualEntry: (cardId: string, data: Record<string, unknown>) =>
     request(`/cards/${cardId}/time-entries/manual`, { method: 'POST', body: JSON.stringify(data) }),
@@ -400,8 +411,25 @@ export const filesApi = {
   getPresignedUrl: (attachmentId: string) =>
     request<{ url: string }>(`/files/${attachmentId}/url`),
 
+  listByCards: (cardIds: string[]) => {
+    const CUID_RE = /^c[a-z0-9]{20,30}$/
+    const safe = cardIds.filter(id => CUID_RE.test(id))
+    if (safe.length === 0) return Promise.resolve([] as { id: string; cardId: string; fileName: string; fileType: string; filePath: string; fileSize: number; isCover: boolean; createdAt: string }[])
+    const params = new URLSearchParams()
+    params.set('cardIds', safe.join(','))
+    return request<{ id: string; cardId: string; fileName: string; fileType: string; filePath: string; fileSize: number; isCover: boolean; createdAt: string }[]>(
+      `/files/by-cards?${params.toString()}`,
+    )
+  },
+
+  // Path is /files/:id/cover — the controller never had an /attachments/ sub-path.
+  // Resource-type safety is enforced by the service: findUnique on the Attachment model
+  // returns 404 if the ID is not a valid, non-deleted attachment record.
   setCover: (cardId: string, attachmentId: string) =>
-    request(`/files/attachments/${attachmentId}/cover`, { method: 'PATCH', body: JSON.stringify({ cardId }) }),
+    request(`/files/${attachmentId}/cover`, { method: 'PATCH', body: JSON.stringify({ cardId }) }),
+
+  rename: (attachmentId: string, fileName: string) =>
+    request<{ id: string; fileName: string }>(`/files/${attachmentId}`, { method: 'PATCH', body: JSON.stringify({ fileName }) }),
 
   delete: (attachmentId: string) =>
     request(`/files/${attachmentId}`, { method: 'DELETE' }),

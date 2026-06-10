@@ -2,7 +2,7 @@
 
 import { verifySession } from '@/lib/dal'
 import { revalidatePath } from 'next/cache'
-import { sprintsApi, cardsApi, tagsApi, adminApi } from '@/lib/api-client'
+import { sprintsApi, cardsApi, tagsApi, adminApi, filesApi } from '@/lib/api-client'
 
 type BacklogCard = { id: string; title: string; description: string; color: string; priority?: string | null; tags?: unknown[]; attachments?: unknown[]; responsibles?: unknown[] }
 
@@ -26,7 +26,50 @@ export async function getSprintBoardAction(sprintId: string, projectId?: string)
       tagsApi.list(),
       resolvedProjectId ? cardsApi.listBacklog(resolvedProjectId) : Promise.resolve([]),
     ])
-    return { sprint, columns, backlogCards, users, tags } as unknown as SprintBoardData
+
+    const typedColumns = columns as SprintBoardData['columns']
+    const typedBacklog = backlogCards as BacklogCard[]
+
+    // Enrich cards with attachments from file-service.
+    // Wrapped in its own try/catch so any failure (service down, 5xx, schema mismatch)
+    // never breaks the sprint board page load.
+    let finalColumns: SprintBoardData['columns'] = typedColumns
+    let finalBacklog: BacklogCard[] = typedBacklog
+
+    try {
+      const CUID_RE = /^c[a-z0-9]{20,30}$/
+      const cardIds = [
+        ...typedColumns.flatMap(col => (col.cards ?? []).map(c => c.id)),
+        ...typedBacklog.map(c => c.id),
+      ]
+        .filter(id => CUID_RE.test(id))
+        .filter((id, i, arr) => arr.indexOf(id) === i)
+
+      type FileAtt = { id: string; cardId: string; fileName: string; fileType: string; filePath: string; fileSize: number; isCover: boolean; createdAt: string }
+      const fileAttachments: FileAtt[] = cardIds.length > 0 ? await filesApi.listByCards(cardIds) : []
+
+      const byCard = new Map<string, FileAtt[]>()
+      for (const att of fileAttachments) {
+        const list = byCard.get(att.cardId) ?? []
+        list.push(att)
+        byCard.set(att.cardId, list)
+      }
+
+      const enrich = (id: string) =>
+        (byCard.get(id) ?? []).map(a => ({
+          id: a.id, fileName: a.fileName, fileType: a.fileType,
+          filePath: a.filePath, fileSize: a.fileSize, isCover: a.isCover,
+          uploadedAt: a.createdAt,
+        }))
+
+      finalColumns = typedColumns.map(col => ({
+        ...col,
+        cards: (col.cards ?? []).map(card => ({ ...card, attachments: enrich(card.id) })),
+      }))
+      finalBacklog = typedBacklog.map(card => ({ ...card, attachments: enrich(card.id) }))
+    } catch { /* file-service indisponível — sprint board carrega sem anexos */ }
+
+    return { sprint, columns: finalColumns, backlogCards: finalBacklog, users, tags } as unknown as SprintBoardData
   } catch (err) {
     return { error: err instanceof Error ? err.message : 'Erro ao carregar sprint board' }
   }

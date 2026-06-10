@@ -111,13 +111,29 @@ type TenantStatus = typeof VALID_STATUSES[number]
 
 export async function createTenantAction(data: { name: string; subdomain: string }) {
   try {
-    await requireAdmin()
+    const session = await requireAdmin()
     const tenant = await createTenant(data)
+    // Auto-provision creator as admin in the new tenant using their existing password hash.
+    // Non-fatal: if this fails (e.g. already has access), the tenant was still created.
+    try {
+      await authApi.provisionTenantAdmin(tenant.id, session.role)
+    } catch { /* swallow — creator can join via "Entrar" button */ }
     revalidatePath('/admin/tenants')
     return { tenant }
   } catch (err) {
     if (err instanceof ConflictError) return { error: 'Subdomínio já está em uso' }
     return { error: err instanceof Error ? err.message : 'Erro ao criar workspace' }
+  }
+}
+
+export async function joinAsTenantAdminAction(tenantId: string) {
+  try {
+    const session = await requireAdmin()
+    await authApi.provisionTenantAdmin(tenantId, session.role)
+    revalidatePath('/admin/tenants')
+    return {}
+  } catch (err) {
+    return { error: err instanceof Error ? err.message : 'Erro ao entrar no workspace' }
   }
 }
 

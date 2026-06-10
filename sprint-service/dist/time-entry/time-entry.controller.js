@@ -19,6 +19,12 @@ let TimeEntryController = class TimeEntryController {
     constructor(timeEntryService) {
         this.timeEntryService = timeEntryService;
     }
+    getTotal(cardId) {
+        return this.timeEntryService.getTotal(cardId);
+    }
+    getActive(cardId) {
+        return this.timeEntryService.getActive(cardId);
+    }
     listByCard(cardId) {
         return this.timeEntryService.listByCard(cardId);
     }
@@ -41,6 +47,20 @@ let TimeEntryController = class TimeEntryController {
     }
 };
 exports.TimeEntryController = TimeEntryController;
+__decorate([
+    (0, common_1.Get)('cards/:cardId/time-entries/total'),
+    __param(0, (0, common_1.Param)('cardId')),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [String]),
+    __metadata("design:returntype", void 0)
+], TimeEntryController.prototype, "getTotal", null);
+__decorate([
+    (0, common_1.Get)('cards/:cardId/time-entries/active'),
+    __param(0, (0, common_1.Param)('cardId')),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [String]),
+    __metadata("design:returntype", void 0)
+], TimeEntryController.prototype, "getActive", null);
 __decorate([
     (0, common_1.Get)('cards/:cardId/time-entries'),
     __param(0, (0, common_1.Param)('cardId')),

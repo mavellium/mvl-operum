@@ -8,6 +8,7 @@ export type CardColor =
   | '#ec4899'
   | '#14b8a6'
   | '#6b7280'
+  | '#94a3b8'
 
 export const CARD_COLORS: { value: CardColor; label: string }[] = [
   { value: '#6b7280', label: 'Cinza' },

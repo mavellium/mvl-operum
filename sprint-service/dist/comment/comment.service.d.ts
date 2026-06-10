@@ -1,5 +1,10 @@
 export declare class CommentService {
-    listByCard(cardId: string): Promise<{
+    listByCard(cardId: string): Promise<({
+        user: {
+            name: string;
+            id: string;
+        };
+    } & {
         id: string;
         deletedAt: Date | null;
         createdAt: Date;
@@ -9,8 +14,13 @@ export declare class CommentService {
         content: string;
         type: import("../../lib/generated/prisma").$Enums.CommentType;
         reactions: import("../../lib/generated/prisma/runtime/client").JsonValue | null;
-    }[]>;
+    })[]>;
     create(cardId: string, userId: string, content: string, type?: 'COMMENT' | 'FEEDBACK'): Promise<{
+        user: {
+            name: string;
+            id: string;
+        };
+    } & {
         id: string;
         deletedAt: Date | null;
         createdAt: Date;

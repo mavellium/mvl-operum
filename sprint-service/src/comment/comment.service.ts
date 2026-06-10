@@ -7,11 +7,15 @@ export class CommentService {
     return prisma.comment.findMany({
       where: { cardId, deletedAt: null },
       orderBy: { createdAt: 'asc' },
+      include: { user: { select: { id: true, name: true } } },
     })
   }
 
   async create(cardId: string, userId: string, content: string, type: 'COMMENT' | 'FEEDBACK' = 'COMMENT') {
-    return prisma.comment.create({ data: { cardId, userId, content, type } })
+    return prisma.comment.create({
+      data: { cardId, userId, content, type },
+      include: { user: { select: { id: true, name: true } } },
+    })
   }
 
   async update(id: string, userId: string, content: string) {

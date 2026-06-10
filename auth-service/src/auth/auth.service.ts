@@ -408,4 +408,37 @@ export class AuthService {
 
     return { ok: true }
   }
+
+  async provisionTenantAdmin(userId: string, targetTenantId: string) {
+    const me = await prisma.user.findUnique({
+      where: { id: userId },
+      select: { email: true, name: true, passwordHash: true, role: true },
+    })
+    if (!me) throw new UnauthorizedException('Usuário não encontrado')
+    if (me.role !== 'admin') throw new ForbiddenException('Apenas administradores podem provisionar workspaces')
+
+    const tenant = await prisma.tenant.findFirst({
+      where: { id: targetTenantId, status: 'ACTIVE', deletedAt: null },
+    })
+    if (!tenant) throw new NotFoundException('Workspace não encontrado ou inativo')
+
+    const existing = await prisma.user.findFirst({
+      where: { email: me.email, tenantId: targetTenantId, deletedAt: null },
+    })
+    if (existing) throw new ConflictException('Você já possui acesso a este workspace')
+
+    await prisma.user.create({
+      data: {
+        name: me.name,
+        email: me.email,
+        passwordHash: me.passwordHash,
+        tenantId: targetTenantId,
+        role: 'admin',
+      },
+    })
+
+    this.logger.log(`AUDIT provisionTenantAdmin userId=${userId} email=${me.email} tenantId=${targetTenantId}`)
+
+    return { ok: true }
+  }
 }
