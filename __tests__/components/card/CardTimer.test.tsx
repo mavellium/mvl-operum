@@ -70,7 +70,7 @@ describe('CardTimer', () => {
     render(<CardTimer cardId="c1" />)
     await waitFor(() => screen.getByRole('button', { name: /pausar timer/i }))
     await user.click(screen.getByRole('button', { name: /pausar timer/i }))
-    expect(mockPause).toHaveBeenCalledWith('c1')
+    expect(mockPause).toHaveBeenCalledWith('t1')
   })
 
   it('clicking "Adicionar manualmente" shows hour and minute inputs', async () => {
@@ -116,7 +116,7 @@ describe('CardTimer', () => {
     await user.clear(screen.getByLabelText(/minutos/i))
     await user.type(screen.getByLabelText(/minutos/i), '30')
     await user.click(screen.getByRole('button', { name: /salvar/i }))
-    expect(mockAddManual).toHaveBeenCalledWith('c1', 1, 30, undefined)
+    expect(mockAddManual).toHaveBeenCalledWith('c1', 1, 30)
   })
 
   it('shows error when hours and minutes are both 0', async () => {

@@ -14,6 +14,13 @@ vi.mock('@/app/actions/time', () => ({
   getCardTimeAction: vi.fn().mockResolvedValue({ seconds: 0 }),
   getActiveTimerAction: vi.fn().mockResolvedValue({ entry: null }),
   getTimeEntriesAction: vi.fn().mockResolvedValue({ entries: [] }),
+  addManualTimeAction: vi.fn().mockResolvedValue({ entry: { id: 'm1' } }),
+  updateTimeEntryAction: vi.fn().mockResolvedValue({ entry: { id: 'm1' } }),
+  deleteTimeEntryAction: vi.fn().mockResolvedValue({ success: true }),
+}))
+
+vi.mock('@/app/actions/sprintBoard', () => ({
+  getCardMovementsAction: vi.fn().mockResolvedValue({ movements: [] }),
 }))
 
 vi.mock('@/app/actions/cardResponsible', () => ({
@@ -61,17 +68,13 @@ beforeEach(() => {
 })
 
 describe('CardModal extended', () => {
-  it('renders MultiUserSelector when users prop provided for editing', async () => {
-    const user = userEvent.setup()
+  it('renders MultiUserSelector when users prop provided for editing', () => {
     render(<CardModal {...defaultProps} />)
-    await user.click(screen.getByRole('button', { name: 'Props' }))
     expect(screen.getByText(/responsáveis/i)).toBeInTheDocument()
   })
 
-  it('renders TagSelector with board tags when boardTags provided', async () => {
-    const user = userEvent.setup()
+  it('renders TagSelector with board tags when boardTags provided', () => {
     render(<CardModal {...defaultProps} />)
-    await user.click(screen.getByRole('button', { name: 'Props' }))
     expect(screen.getByText('Bug')).toBeInTheDocument()
     expect(screen.getByText('Feature')).toBeInTheDocument()
   })
@@ -85,7 +88,7 @@ describe('CardModal extended', () => {
     const user = userEvent.setup()
     const onSubmit = vi.fn()
     render(<CardModal {...defaultProps} onSubmit={onSubmit} />)
-    await user.click(screen.getByRole('button', { name: /salvar/i }))
+    await user.click(screen.getByRole('button', { name: /salvar alterações/i }))
     expect(onSubmit).toHaveBeenCalledWith(
       expect.objectContaining({ title: 'Test Card', description: 'Description', color: '#3b82f6' }),
     )
@@ -95,7 +98,7 @@ describe('CardModal extended', () => {
     const user = userEvent.setup()
     const onSubmit = vi.fn()
     render(<CardModal {...defaultProps} onSubmit={onSubmit} />)
-    await user.click(screen.getByRole('button', { name: /salvar/i }))
+    await user.click(screen.getByRole('button', { name: /salvar alterações/i }))
     const callArg = onSubmit.mock.calls[0][0]
     expect(callArg).not.toHaveProperty('responsibleId')
     expect(callArg).not.toHaveProperty('sprintId')
@@ -112,21 +115,18 @@ describe('CardModal extended', () => {
     expect(screen.queryByText(/sprint 1/i)).not.toBeInTheDocument()
   })
 
-  it('shows priority select with options baixa, media, alta', async () => {
-    const user = userEvent.setup()
+  it('shows priority buttons for baixa, media, alta', () => {
     render(<CardModal {...defaultProps} />)
-    await user.click(screen.getByRole('button', { name: 'Props' }))
-    expect(screen.getByRole('combobox', { name: /prioridade/i })).toBeInTheDocument()
-    expect(screen.getByRole('option', { name: /baixa/i })).toBeInTheDocument()
-    expect(screen.getByRole('option', { name: /média|media/i })).toBeInTheDocument()
-    expect(screen.getByRole('option', { name: /alta/i })).toBeInTheDocument()
+    expect(screen.getByRole('button', { name: /baixa/i })).toBeInTheDocument()
+    expect(screen.getByRole('button', { name: /média|media/i })).toBeInTheDocument()
+    expect(screen.getByRole('button', { name: /alta/i })).toBeInTheDocument()
   })
 
   it('onSubmit includes priority field', async () => {
     const user = userEvent.setup()
     const onSubmit = vi.fn()
     render(<CardModal {...defaultProps} initialCard={{ ...baseCard, priority: 'alta' }} onSubmit={onSubmit} />)
-    await user.click(screen.getByRole('button', { name: /salvar/i }))
+    await user.click(screen.getByRole('button', { name: /salvar alterações/i }))
     expect(onSubmit).toHaveBeenCalledWith(
       expect.objectContaining({ priority: 'alta' }),
     )

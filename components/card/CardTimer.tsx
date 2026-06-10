@@ -1,7 +1,7 @@
 'use client'
 
 import { useState, useEffect, useRef } from 'react'
-import { startTimerAction, pauseTimerAction, getCardTimeAction, getActiveTimerAction } from '@/app/actions/time'
+import { startTimerAction, pauseTimerAction, getCardTimeAction, getActiveTimerAction, addManualTimeAction } from '@/app/actions/time'
 
 function formatDuration(seconds: number): string {
   const h = Math.floor(seconds / 3600)
@@ -22,11 +22,15 @@ export default function CardTimer({ cardId, onEntryChanged, timerKey }: CardTime
   const [elapsed, setElapsed] = useState(0)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState('')
+  const [showManualForm, setShowManualForm] = useState(false)
+  const [manualHours, setManualHours] = useState(0)
+  const [manualMinutes, setManualMinutes] = useState(0)
+  const [manualError, setManualError] = useState('')
 
-  const intervalRef       = useRef<ReturnType<typeof setInterval> | null>(null)
-  const startedAtRef      = useRef<Date | null>(null)
-  const baseSecondsRef    = useRef(0)
-  const activeEntryIdRef  = useRef<string | null>(null)
+  const intervalRef      = useRef<ReturnType<typeof setInterval> | null>(null)
+  const startedAtRef     = useRef<Date | null>(null)
+  const baseSecondsRef   = useRef(0)
+  const activeEntryIdRef = useRef<string | null>(null)
 
   async function fetchTotal() {
     const res = await getCardTimeAction(cardId)
@@ -36,7 +40,6 @@ export default function CardTimer({ cardId, onEntryChanged, timerKey }: CardTime
     }
   }
 
-  // Inicialização completa — só roda quando o card muda
   useEffect(() => {
     let cancelled = false
 
@@ -71,7 +74,7 @@ export default function CardTimer({ cardId, onEntryChanged, timerKey }: CardTime
     return () => { cancelled = true }
   }, [cardId])
 
-  // Refresh leve quando tempo manual é adicionado externamente — não toca em isRunning nem no intervalo
+  // Refresh leve quando tempo manual é adicionado externamente
   useEffect(() => {
     if (!timerKey) return
     let cancelled = false
@@ -80,7 +83,6 @@ export default function CardTimer({ cardId, onEntryChanged, timerKey }: CardTime
       if ('seconds' in res && res.seconds != null) {
         const total = res.seconds
         if (startedAtRef.current) {
-          // timer rodando: recalcula a base sem parar o intervalo
           const sinceStart = Math.floor((Date.now() - startedAtRef.current.getTime()) / 1000)
           baseSecondsRef.current = total - sinceStart
         } else {
@@ -143,6 +145,27 @@ export default function CardTimer({ cardId, onEntryChanged, timerKey }: CardTime
     onEntryChanged?.()
   }
 
+  async function handleSaveManual() {
+    setManualError('')
+    if (manualHours === 0 && manualMinutes === 0) {
+      setManualError('Informe um tempo válido')
+      return
+    }
+    setLoading(true)
+    const result = await addManualTimeAction(cardId, manualHours, manualMinutes)
+    if ('error' in result && result.error) {
+      setManualError(result.error as string)
+      setLoading(false)
+      return
+    }
+    setShowManualForm(false)
+    setManualHours(0)
+    setManualMinutes(0)
+    await fetchTotal()
+    setLoading(false)
+    onEntryChanged?.()
+  }
+
   return (
     <div className="flex flex-col gap-2">
       <div className="flex items-center gap-3">
@@ -183,6 +206,63 @@ export default function CardTimer({ cardId, onEntryChanged, timerKey }: CardTime
       </div>
 
       {error && <p className="text-xs text-red-500">{error}</p>}
+
+      {!showManualForm ? (
+        <button
+          type="button"
+          onClick={e => { e.stopPropagation(); setShowManualForm(true); setManualError('') }}
+          className="text-xs text-slate-500 hover:text-slate-700 underline transition-colors cursor-pointer self-start"
+        >
+          Adicionar manualmente
+        </button>
+      ) : (
+        <div className="flex flex-col gap-2 p-3 bg-slate-50 rounded-lg border border-slate-200">
+          <div className="flex gap-3">
+            <div className="flex flex-col gap-1">
+              <label htmlFor={`manual-hours-${cardId}`} className="text-xs text-slate-500">Horas</label>
+              <input
+                id={`manual-hours-${cardId}`}
+                type="number"
+                min={0}
+                max={168}
+                value={manualHours}
+                onChange={e => setManualHours(Number(e.target.value))}
+                className="w-16 px-2 py-1 text-sm border border-slate-300 rounded focus:outline-none focus:ring-2 focus:ring-blue-300"
+              />
+            </div>
+            <div className="flex flex-col gap-1">
+              <label htmlFor={`manual-minutes-${cardId}`} className="text-xs text-slate-500">Minutos</label>
+              <input
+                id={`manual-minutes-${cardId}`}
+                type="number"
+                min={0}
+                max={59}
+                value={manualMinutes}
+                onChange={e => setManualMinutes(Number(e.target.value))}
+                className="w-16 px-2 py-1 text-sm border border-slate-300 rounded focus:outline-none focus:ring-2 focus:ring-blue-300"
+              />
+            </div>
+          </div>
+          {manualError && <p className="text-xs text-red-500">{manualError}</p>}
+          <div className="flex gap-2">
+            <button
+              type="button"
+              onClick={() => { setShowManualForm(false); setManualError('') }}
+              className="px-3 py-1 text-xs text-slate-600 hover:text-slate-800 transition-colors cursor-pointer"
+            >
+              Cancelar
+            </button>
+            <button
+              type="button"
+              onClick={e => { e.stopPropagation(); handleSaveManual() }}
+              disabled={loading}
+              className="px-3 py-1 text-xs font-medium bg-blue-600 text-white rounded hover:bg-blue-700 transition-colors disabled:opacity-60 cursor-pointer"
+            >
+              Salvar
+            </button>
+          </div>
+        </div>
+      )}
     </div>
   )
 }
