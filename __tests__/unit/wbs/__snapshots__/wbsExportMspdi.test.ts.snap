@@ -1,0 +1,48 @@
+// Vitest Snapshot v1, https://vitest.dev/guide/snapshot.html
+
+exports[`exportMspdi > snapshot para árvore pequena 1`] = `
+"<?xml version="1.0" encoding="UTF-8"?>
+<Project xmlns="http://schemas.microsoft.com/project">
+  <SaveVersion>14</SaveVersion>
+  <Name>Projeto Teste</Name>
+  <CurrencyCode>BRL</CurrencyCode>
+  <Tasks>
+    <Task>
+      <UID>1</UID>
+      <ID>1</ID>
+      <Name>Root</Name>
+      <WBS>1</WBS>
+      <OutlineNumber>1</OutlineNumber>
+      <OutlineLevel>1</OutlineLevel>
+      <Summary>1</Summary>
+      <Cost>300.00</Cost>
+      <Duration>PT64H0M0S</Duration>
+      <DurationFormat>7</DurationFormat>
+    </Task>
+    <Task>
+      <UID>2</UID>
+      <ID>2</ID>
+      <Name>Task A</Name>
+      <WBS>1.1</WBS>
+      <OutlineNumber>1.1</OutlineNumber>
+      <OutlineLevel>2</OutlineLevel>
+      <Summary>0</Summary>
+      <Cost>100.00</Cost>
+      <Duration>PT40H0M0S</Duration>
+      <DurationFormat>7</DurationFormat>
+    </Task>
+    <Task>
+      <UID>3</UID>
+      <ID>3</ID>
+      <Name>Task B</Name>
+      <WBS>1.2</WBS>
+      <OutlineNumber>1.2</OutlineNumber>
+      <OutlineLevel>2</OutlineLevel>
+      <Summary>0</Summary>
+      <Cost>200.00</Cost>
+      <Duration>PT24H0M0S</Duration>
+      <DurationFormat>7</DurationFormat>
+    </Task>
+  </Tasks>
+</Project>"
+`;

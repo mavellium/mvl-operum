@@ -51,6 +51,12 @@ const DocumentosIcon = () => (
   </svg>
 )
 
+const WbsIcon = () => (
+  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 5a1 1 0 011-1h4a1 1 0 011 1v2a1 1 0 01-1 1H5a1 1 0 01-1-1V5zm7 0a1 1 0 011-1h7a1 1 0 011 1v2a1 1 0 01-1 1h-7a1 1 0 01-1-1V5zM4 13a1 1 0 011-1h4a1 1 0 011 1v2a1 1 0 01-1 1H5a1 1 0 01-1-1v-2zm7 0a1 1 0 011-1h7a1 1 0 011 1v2a1 1 0 01-1 1h-7a1 1 0 01-1-1v-2z" />
+  </svg>
+)
+
 export default function ProjectSidebar({ projetoId, projetoNome, canManageMembers }: Props) {
   const pathname = usePathname()
 
@@ -60,6 +66,7 @@ export default function ProjectSidebar({ projetoId, projetoNome, canManageMember
   const navItems = [
     { href: `/projetos/${projetoId}/dashboard`, label: 'Dashboard', Icon: DashboardIcon },
     { href: `/projetos/${projetoId}/sprints`, label: 'Sprints', Icon: SprintsIcon },
+    { href: `/projetos/${projetoId}/wbs`, label: 'EAP / WBS', Icon: WbsIcon },
     { href: `/projetos/${projetoId}/documentacao`, label: 'Documentação', Icon: DocumentosIcon },
     ...(canManageMembers
       ? [

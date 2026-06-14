@@ -53,3 +53,29 @@ textarea:disabled {
   color: #6b7280;
   background-color: #f9fafb;
 }
+
+@media print {
+  /* Hide chrome when printing WBS */
+  header,
+  aside,
+  [data-wbs-toolbar] {
+    display: none !important;
+  }
+
+  /* Make the canvas fill the entire printed page */
+  [data-wbs-canvas] {
+    position: fixed !important;
+    inset: 0 !important;
+    overflow: visible !important;
+    width: 100vw !important;
+    height: 100vh !important;
+    background: white !important;
+  }
+
+  /* Reset body/html background */
+  html,
+  body {
+    background: white !important;
+    height: auto !important;
+  }
+}

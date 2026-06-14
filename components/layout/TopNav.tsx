@@ -21,10 +21,6 @@ type HeaderConfig = {
     context: 'global_projects' | 'project_items' | 'sprint_items' | 'project_members' | 'default'
     contextId?: string
   }
-  button: {
-    text: string
-    href: string
-  } | null
 }
 
 function getHeaderContext(pathname: string, role?: string, projectManagerIn: string[] = []): HeaderConfig {
@@ -66,8 +62,7 @@ function getHeaderContext(pathname: string, role?: string, projectManagerIn: str
         placeholder: 'Buscar cards e tarefas na sprint...',
         context: 'sprint_items',
         contextId: idParam,
-      },
-      button: null
+      }
     }
   }
 
@@ -85,8 +80,7 @@ function getHeaderContext(pathname: string, role?: string, projectManagerIn: str
           placeholder: 'Buscar membros no projeto...',
           context: 'project_members',
           contextId: idParam,
-        },
-        button: null
+        }
       }
     }
 
@@ -99,8 +93,7 @@ function getHeaderContext(pathname: string, role?: string, projectManagerIn: str
         search: {
           placeholder: `Buscar cards e sprints no projeto...`,
           context: 'default',
-        },
-        button: null
+        }
       }
     }
 
@@ -114,8 +107,7 @@ function getHeaderContext(pathname: string, role?: string, projectManagerIn: str
           placeholder: 'Buscar cards e sprints no projeto...',
           context: 'project_items',
           contextId: idParam,
-        },
-        button: null
+        }
       }
     }
 
@@ -128,8 +120,7 @@ function getHeaderContext(pathname: string, role?: string, projectManagerIn: str
         placeholder: 'Buscar cards e sprints no projeto...',
         context: 'project_items',
         contextId: idParam,
-      },
-      button: isManagerOrAdmin ? { text: '+ Nova Sprint', href: `/projetos/${idParam}/nova-sprint` } : null
+      }
     }
   }
 
@@ -142,8 +133,7 @@ function getHeaderContext(pathname: string, role?: string, projectManagerIn: str
       search: {
         placeholder: role === 'admin' ? 'Buscar em todos os projetos...' : 'Buscar meus projetos...',
         context: 'global_projects',
-      },
-      button: { text: '+ Novo Projeto', href: '/projetos/novo' }
+      }
     }
   }
 
@@ -155,8 +145,7 @@ function getHeaderContext(pathname: string, role?: string, projectManagerIn: str
     search: {
       placeholder: 'Buscar...',
       context: 'default',
-    },
-    button: null
+    }
   }
 }
 
@@ -202,7 +191,7 @@ export default function TopNav() {
 
   if (HIDDEN_PATHS.some(p => pathname.startsWith(p))) return null
 
-  const { icon, showBoardActions, search, button } = getHeaderContext(pathname, user?.role, user?.projectManagerIn ?? [])
+  const { icon, showBoardActions, search } = getHeaderContext(pathname, user?.role, user?.projectManagerIn ?? [])
 
   return (
     <header className="sticky top-0 z-40 flex items-center justify-between px-6 h-16 bg-white backdrop-blur-sm border-b border-gray-100 transition-all duration-200">
@@ -225,16 +214,7 @@ export default function TopNav() {
             contextId={search.contextId}
           />
         </div>
-
-        {button && (
-          <Link
-            href={button.href}
-            className="whitespace-nowrap px-4 py-2 bg-blue-600 text-white text-sm font-medium rounded-xl hover:bg-blue-700 transition-colors"
-          >
-            {button.text}
-          </Link>
-        )}
-
+        
       </div>
 
       <div className="flex items-center gap-3 md:gap-4 ml-4">
