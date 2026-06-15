@@ -63,7 +63,7 @@ function WbsCanvasInner({ projetoId, canEdit }: { projetoId: string; canEdit: bo
   const { toast } = useToast()
 
   const stateRef = useRef(state)
-  stateRef.current = state
+  useIsomorphicLayoutEffect(() => { stateRef.current = state }, [state])
 
   const canvasRef = useRef<HTMLDivElement>(null)
   const saveTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
@@ -112,6 +112,22 @@ function WbsCanvasInner({ projetoId, canEdit }: { projetoId: string; canEdit: bo
     }, 1500)
     return () => { if (saveTimerRef.current) clearTimeout(saveTimerRef.current) }
   }, [state.nodes, canEdit, projetoId, dispatch, toast])
+
+  // ── Save helpers ────────────────────────────────────────────────────────────
+  const handleManualSave = useCallback(async () => {
+    if (!canEdit) return
+    const s = stateRef.current
+    if (saveTimerRef.current) { clearTimeout(saveTimerRef.current); saveTimerRef.current = null }
+    dispatch({ type: 'SET_SYNC_STATUS', payload: { status: 'SAVING' } })
+    const res = await saveTreeAction({ projetoId, serverVersion: s.sync.serverVersion, rootId: s.rootId, nodes: s.nodes })
+    if (res.ok) {
+      dispatch({ type: 'SET_SYNC_STATUS', payload: { status: 'IDLE', serverVersion: res.serverVersion, lastSavedAt: Date.now() } })
+      toast('EAP salva com sucesso', 'success')
+    } else {
+      dispatch({ type: 'SET_SYNC_STATUS', payload: { status: res.conflict ? 'CONFLICT' : 'ERROR' } })
+      toast(res.error || 'Erro ao salvar', 'error')
+    }
+  }, [canEdit, projetoId, dispatch, toast])
 
   // ── Keyboard shortcuts ──────────────────────────────────────────────────────
   useEffect(() => {
@@ -220,22 +236,6 @@ function WbsCanvasInner({ projetoId, canEdit }: { projetoId: string; canEdit: bo
     hasInitiallyCenteredRef.current = true
     requestAnimationFrame(() => fitToScreen())
   }, [layout.bounds, fitToScreen])
-
-  // ── Save helpers ────────────────────────────────────────────────────────────
-  const handleManualSave = useCallback(async () => {
-    if (!canEdit) return
-    const s = stateRef.current
-    if (saveTimerRef.current) { clearTimeout(saveTimerRef.current); saveTimerRef.current = null }
-    dispatch({ type: 'SET_SYNC_STATUS', payload: { status: 'SAVING' } })
-    const res = await saveTreeAction({ projetoId, serverVersion: s.sync.serverVersion, rootId: s.rootId, nodes: s.nodes })
-    if (res.ok) {
-      dispatch({ type: 'SET_SYNC_STATUS', payload: { status: 'IDLE', serverVersion: res.serverVersion, lastSavedAt: Date.now() } })
-      toast('EAP salva com sucesso', 'success')
-    } else {
-      dispatch({ type: 'SET_SYNC_STATUS', payload: { status: res.conflict ? 'CONFLICT' : 'ERROR' } })
-      toast(res.error || 'Erro ao salvar', 'error')
-    }
-  }, [canEdit, projetoId, dispatch, toast])
 
   // ── Node selection (multi-select via Ctrl/Cmd+click) ──────────────────────
   const handleNodeSelect = useCallback((nodeId: string, multi: boolean) => {

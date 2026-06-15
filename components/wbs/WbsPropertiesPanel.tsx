@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect, type Dispatch } from 'react'
+import { useState, type Dispatch } from 'react'
 import type { WbsNodeClient, WbsRollup, WbsNodeStyle, WbsNodeProperties, WbsLayoutOrientation } from '@/types/wbs'
 import type { WbsAction } from '@/lib/wbsReducer'
 
@@ -45,10 +45,14 @@ function ColorField({
   label, value, mixed, disabled, onChange,
 }: { label: string; value: string; mixed: boolean; disabled?: boolean; onChange: (v: string) => void }) {
   const [localHex, setLocalHex] = useState(value)
+  const [prevValue, setPrevValue] = useState(value)
+  const [prevMixed, setPrevMixed] = useState(mixed)
 
-  useEffect(() => {
-    if (!mixed) setLocalHex(value)
-  }, [value, mixed])
+  if (!mixed && (prevValue !== value || prevMixed !== mixed)) {
+    setPrevValue(value)
+    setPrevMixed(mixed)
+    setLocalHex(value)
+  }
 
   const handleHex = (v: string) => {
     setLocalHex(v)

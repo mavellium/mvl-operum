@@ -1,6 +1,6 @@
 'use client'
 
-import { type Dispatch, useEffect, useRef, useState } from 'react'
+import { type Dispatch, useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { useRouter } from 'next/navigation'
 import Modal from '@/components/ui/Modal'
 import { exportMspdi } from '@/lib/wbsExportMspdi'
@@ -227,6 +227,8 @@ function DropdownMenu({
   )
 }
 
+let menubarCloseTimer: ReturnType<typeof setTimeout> | null = null
+
 // ── Main component ────────────────────────────────────────────────────────────
 
 export default function WbsMenubar({
@@ -242,9 +244,13 @@ export default function WbsMenubar({
   const [showManual, setShowManual] = useState(false)
   const menubarRef = useRef<HTMLDivElement>(null)
   const fileInputRef = useRef<HTMLInputElement>(null)
-  const closeTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
-  const scheduleClose = () => { closeTimerRef.current = setTimeout(() => setActiveMenu(null), 200) }
-  const cancelClose = () => { if (closeTimerRef.current) { clearTimeout(closeTimerRef.current); closeTimerRef.current = null } }
+  const [filePickerTrigger, setFilePickerTrigger] = useState(0)
+  const scheduleClose = useCallback(() => { menubarCloseTimer = setTimeout(() => setActiveMenu(null), 200) }, [])
+  const cancelClose = useCallback(() => { if (menubarCloseTimer) { clearTimeout(menubarCloseTimer); menubarCloseTimer = null } }, [])
+
+  useEffect(() => {
+    if (filePickerTrigger > 0) fileInputRef.current?.click()
+  }, [filePickerTrigger])
 
   // Close dropdown when clicking outside the menubar
   useEffect(() => {
@@ -269,8 +275,8 @@ export default function WbsMenubar({
     return () => window.removeEventListener('keydown', handler)
   }, [])
 
-  const close = () => setActiveMenu(null)
-  const toggle = (name: string) => setActiveMenu(prev => prev === name ? null : name)
+  const close = useCallback(() => setActiveMenu(null), [])
+  const toggle = useCallback((name: string) => setActiveMenu(prev => prev === name ? null : name), [])
 
   const firstSelected = selectedNodeIds[0]
   const selectedNode = firstSelected ? nodes[firstSelected] : null
@@ -287,90 +293,89 @@ export default function WbsMenubar({
     e.target.value = ''
   }
 
-  // Download helpers
-  const downloadMspdi = () => {
-    const xml = exportMspdi(nodes, rootId, { projectName: projetoId })
-    if (!xml) return
-    const a = document.createElement('a')
-    a.href = URL.createObjectURL(new Blob([xml], { type: 'application/xml;charset=utf-8' }))
-    a.download = `eap-${projetoId}.xml`
-    a.click()
-  }
-
-  const downloadWbs = () => {
-    const a = document.createElement('a')
-    a.href = URL.createObjectURL(
-      new Blob([JSON.stringify({ version: 1, rootId, nodes }, null, 2)], { type: 'application/json' })
-    )
-    a.download = `eap-${projetoId}.wbs`
-    a.click()
-  }
-
   const sync = SYNC[syncStatus] ?? SYNC.IDLE
   const zoomPercent = Math.round(zoom * 100)
 
   // Menu definitions
-  const menus: { name: string; items: (MenuItem | null)[] }[] = [
-    {
-      name: 'Documento',
-      items: [
-        { label: 'Abrir documento (.wbs)', shortcut: 'Ctrl+O', action: () => { close(); fileInputRef.current?.click() } },
-        { label: 'Salvar', shortcut: 'Ctrl+S', action: () => { close(); onManualSave() }, disabled: !canEdit },
-        null,
-        { label: 'Imprimir', shortcut: 'Ctrl+P', action: () => { close(); window.print() } },
-      ],
-    },
-    {
-      name: 'Editar',
-      items: [
-        { label: 'Desfazer', shortcut: 'Ctrl+Z', action: () => { close(); dispatch({ type: 'UNDO' }) }, disabled: !canUndo },
-        { label: 'Refazer', shortcut: 'Ctrl+Shift+Z', action: () => { close(); dispatch({ type: 'REDO' }) }, disabled: !canRedo },
-        null,
-        { label: 'Recortar', shortcut: 'Ctrl+X', action: () => { close(); if (firstSelected) dispatch({ type: 'CUT', payload: { nodeIds: selectedNodeIds } }) }, disabled: !firstSelected || !canEdit },
-        { label: 'Copiar', shortcut: 'Ctrl+C', action: () => { close(); if (firstSelected) dispatch({ type: 'COPY', payload: { nodeIds: selectedNodeIds } }) }, disabled: !firstSelected },
-        { label: 'Colar', shortcut: 'Ctrl+V', action: () => { close(); if (firstSelected) dispatch({ type: 'PASTE', payload: { parentId: firstSelected } }) }, disabled: !firstSelected || !canEdit },
-        { label: 'Selecionar Tudo', shortcut: 'Ctrl+A', action: () => { close(); dispatch({ type: 'SET_SELECTION', payload: { nodeIds: Object.keys(nodes) } }) } },
-        null,
-        { label: 'Copiar Estilo', shortcut: 'Ctrl+Shift+C', action: () => { close(); if (firstSelected) dispatch({ type: 'COPY_STYLE', payload: { nodeId: firstSelected } }) }, disabled: !firstSelected },
-        { label: 'Colar Estilo', shortcut: 'Ctrl+Shift+V', action: () => { close(); onPasteStyle() }, disabled: !hasCopiedStyle || !firstSelected || !canEdit },
-      ],
-    },
-    {
-      name: 'Elemento',
-      items: [
-        { label: 'Inserir Filho', shortcut: 'Tab', action: () => { close(); if (firstSelected) dispatch({ type: 'INSERT_CHILD', payload: { parentId: firstSelected } }) }, disabled: !firstSelected || !canEdit },
-        { label: 'Inserir Irmão', shortcut: 'Enter', action: () => { close(); if (firstSelected && selectedNode?.parentId) dispatch({ type: 'INSERT_SIBLING', payload: { siblingId: firstSelected } }) }, disabled: !firstSelected || !selectedNode?.parentId || !canEdit },
-        { label: 'Remover', shortcut: 'Delete', action: () => { close(); onRequestDelete() }, disabled: !firstSelected || !selectedNode?.parentId || !canEdit },
-        null,
-        { label: 'Estilo', action: () => { close() }, disabled: !firstSelected },
-        { label: 'Propriedades', action: () => { close() }, disabled: !firstSelected },
-      ],
-    },
-    {
-      name: 'Organizar',
-      items: [
-        { label: 'Lado a Lado', action: () => { close(); if (firstSelected) dispatch({ type: 'SET_LAYOUT', payload: { nodeId: firstSelected, layout: 'LADO_A_LADO' } }) }, disabled: !firstSelected || !canEdit, checked: selectedNode?.layout === 'LADO_A_LADO' },
-        { label: 'Abaixo', action: () => { close(); if (firstSelected) dispatch({ type: 'SET_LAYOUT', payload: { nodeId: firstSelected, layout: 'ABAIXO' } }) }, disabled: !firstSelected || !canEdit, checked: selectedNode?.layout === 'ABAIXO' },
-        { label: 'Abaixo com conector em L', action: () => { close(); if (firstSelected) dispatch({ type: 'SET_LAYOUT', payload: { nodeId: firstSelected, layout: 'ABAIXO_L' } }) }, disabled: !firstSelected || !canEdit, checked: selectedNode?.layout === 'ABAIXO_L' },
-      ],
-    },
-    {
-      name: 'Download',
-      items: [
-        { label: 'Figura SVG (.svg)', action: () => { close(); exportWbsSvg(nodes, rootId, `eap-${projetoId}.svg`) } },
-        { label: 'Figura PNG (.png)', action: () => { close(); exportWbsPng(nodes, rootId, `eap-${projetoId}.png`) } },
-        { label: 'MS Project XML (MSPDI)', action: () => { close(); downloadMspdi() } },
-        { label: 'Arquivo WBS (.wbs)', action: () => { close(); downloadWbs() } },
-      ],
-    },
-    {
-      name: 'Ajuda',
-      items: [
-        { label: 'Ajuda Rápida', action: () => { close(); setShowHelp(true) } },
-        { label: 'Manual', action: () => { close(); setShowManual(true) } },
-      ],
-    },
-  ]
+  const menus = useMemo((): { name: string; items: (MenuItem | null)[] }[] => {
+    const downloadMspdi = () => {
+      const xml = exportMspdi(nodes, rootId, { projectName: projetoId })
+      if (!xml) return
+      const a = document.createElement('a')
+      a.href = URL.createObjectURL(new Blob([xml], { type: 'application/xml;charset=utf-8' }))
+      a.download = `eap-${projetoId}.xml`
+      a.click()
+    }
+    const downloadWbs = () => {
+      const a = document.createElement('a')
+      a.href = URL.createObjectURL(
+        new Blob([JSON.stringify({ version: 1, rootId, nodes }, null, 2)], { type: 'application/json' })
+      )
+      a.download = `eap-${projetoId}.wbs`
+      a.click()
+    }
+    return [
+      {
+        name: 'Documento',
+        items: [
+          { label: 'Abrir documento (.wbs)', shortcut: 'Ctrl+O', action: () => { close(); setFilePickerTrigger(t => t + 1) } },
+          { label: 'Salvar', shortcut: 'Ctrl+S', action: () => { close(); onManualSave() }, disabled: !canEdit },
+          null,
+          { label: 'Imprimir', shortcut: 'Ctrl+P', action: () => { close(); window.print() } },
+        ],
+      },
+      {
+        name: 'Editar',
+        items: [
+          { label: 'Desfazer', shortcut: 'Ctrl+Z', action: () => { close(); dispatch({ type: 'UNDO' }) }, disabled: !canUndo },
+          { label: 'Refazer', shortcut: 'Ctrl+Shift+Z', action: () => { close(); dispatch({ type: 'REDO' }) }, disabled: !canRedo },
+          null,
+          { label: 'Recortar', shortcut: 'Ctrl+X', action: () => { close(); if (firstSelected) dispatch({ type: 'CUT', payload: { nodeIds: selectedNodeIds } }) }, disabled: !firstSelected || !canEdit },
+          { label: 'Copiar', shortcut: 'Ctrl+C', action: () => { close(); if (firstSelected) dispatch({ type: 'COPY', payload: { nodeIds: selectedNodeIds } }) }, disabled: !firstSelected },
+          { label: 'Colar', shortcut: 'Ctrl+V', action: () => { close(); if (firstSelected) dispatch({ type: 'PASTE', payload: { parentId: firstSelected } }) }, disabled: !firstSelected || !canEdit },
+          { label: 'Selecionar Tudo', shortcut: 'Ctrl+A', action: () => { close(); dispatch({ type: 'SET_SELECTION', payload: { nodeIds: Object.keys(nodes) } }) } },
+          null,
+          { label: 'Copiar Estilo', shortcut: 'Ctrl+Shift+C', action: () => { close(); if (firstSelected) dispatch({ type: 'COPY_STYLE', payload: { nodeId: firstSelected } }) }, disabled: !firstSelected },
+          { label: 'Colar Estilo', shortcut: 'Ctrl+Shift+V', action: () => { close(); onPasteStyle() }, disabled: !hasCopiedStyle || !firstSelected || !canEdit },
+        ],
+      },
+      {
+        name: 'Elemento',
+        items: [
+          { label: 'Inserir Filho', shortcut: 'Tab', action: () => { close(); if (firstSelected) dispatch({ type: 'INSERT_CHILD', payload: { parentId: firstSelected } }) }, disabled: !firstSelected || !canEdit },
+          { label: 'Inserir Irmão', shortcut: 'Enter', action: () => { close(); if (firstSelected && selectedNode?.parentId) dispatch({ type: 'INSERT_SIBLING', payload: { siblingId: firstSelected } }) }, disabled: !firstSelected || !selectedNode?.parentId || !canEdit },
+          { label: 'Remover', shortcut: 'Delete', action: () => { close(); onRequestDelete() }, disabled: !firstSelected || !selectedNode?.parentId || !canEdit },
+          null,
+          { label: 'Estilo', action: () => { close() }, disabled: !firstSelected },
+          { label: 'Propriedades', action: () => { close() }, disabled: !firstSelected },
+        ],
+      },
+      {
+        name: 'Organizar',
+        items: [
+          { label: 'Lado a Lado', action: () => { close(); if (firstSelected) dispatch({ type: 'SET_LAYOUT', payload: { nodeId: firstSelected, layout: 'LADO_A_LADO' } }) }, disabled: !firstSelected || !canEdit, checked: selectedNode?.layout === 'LADO_A_LADO' },
+          { label: 'Abaixo', action: () => { close(); if (firstSelected) dispatch({ type: 'SET_LAYOUT', payload: { nodeId: firstSelected, layout: 'ABAIXO' } }) }, disabled: !firstSelected || !canEdit, checked: selectedNode?.layout === 'ABAIXO' },
+          { label: 'Abaixo com conector em L', action: () => { close(); if (firstSelected) dispatch({ type: 'SET_LAYOUT', payload: { nodeId: firstSelected, layout: 'ABAIXO_L' } }) }, disabled: !firstSelected || !canEdit, checked: selectedNode?.layout === 'ABAIXO_L' },
+        ],
+      },
+      {
+        name: 'Download',
+        items: [
+          { label: 'Figura SVG (.svg)', action: () => { close(); exportWbsSvg(nodes, rootId, `eap-${projetoId}.svg`) } },
+          { label: 'Figura PNG (.png)', action: () => { close(); exportWbsPng(nodes, rootId, `eap-${projetoId}.png`) } },
+          { label: 'MS Project XML (MSPDI)', action: () => { close(); downloadMspdi() } },
+          { label: 'Arquivo WBS (.wbs)', action: () => { close(); downloadWbs() } },
+        ],
+      },
+      {
+        name: 'Ajuda',
+        items: [
+          { label: 'Ajuda Rápida', action: () => { close(); setShowHelp(true) } },
+          { label: 'Manual', action: () => { close(); setShowManual(true) } },
+        ],
+      },
+    ]
+  }, [close, setFilePickerTrigger, onManualSave, canEdit, dispatch, canUndo, canRedo, firstSelected, selectedNodeIds, selectedNode, hasCopiedStyle, onPasteStyle, projetoId, rootId, nodes, onRequestDelete, setShowHelp, setShowManual])
 
   return (
     <>
