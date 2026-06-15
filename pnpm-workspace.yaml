@@ -3,6 +3,7 @@ packages:
   - "*"
 overrides:
   shell-quote: ">=1.8.4"
+  esbuild: ">=0.28.1"
 allowBuilds:
   '@nestjs/core': true
   '@prisma/engines': true
