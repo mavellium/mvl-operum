@@ -1,27 +1,36 @@
 import { z } from 'zod'
 
+export const PasswordSchema = z
+  .string()
+  .min(8, 'Mínimo de 8 caracteres')
+  .regex(/[0-9]/, 'Pelo menos 1 número')
+  .regex(/[^A-Za-z0-9]/, 'Pelo menos 1 caractere especial')
+
 export const ChangePasswordSchema = z.object({
   currentPassword: z.string().min(1),
-  newPassword: z.string().min(8, 'Senha deve ter pelo menos 8 caracteres'),
+  newPassword: PasswordSchema,
 })
 
 export const RequestResetSchema = z.object({
   email: z.string().email(),
+  subdomain: z.string().min(1).optional(),
 })
 
 export const ValidateCodeSchema = z.object({
   email: z.string().email(),
-  code: z.string().min(6),
+  code: z.string().length(8).regex(/^[A-Z2-9]+$/, 'Código inválido'),
+  subdomain: z.string().min(1).optional(),
 })
 
 export const ResetPasswordSchema = z.object({
   email: z.string().email(),
-  code: z.string().min(6),
-  newPassword: z.string().min(8, 'Senha deve ter pelo menos 8 caracteres'),
+  code: z.string().length(8).regex(/^[A-Z2-9]+$/, 'Código inválido'),
+  newPassword: PasswordSchema,
+  subdomain: z.string().min(1).optional(),
 })
 
 export const AlterarSenhaSchema = z.object({
-  password: z.string().min(8, 'Senha deve ter pelo menos 8 caracteres'),
+  password: PasswordSchema,
 })
 
 export type ChangePasswordDto = z.infer<typeof ChangePasswordSchema>

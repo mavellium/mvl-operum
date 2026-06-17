@@ -63,4 +63,17 @@ export class RedisService implements OnModuleInit, OnModuleDestroy {
     if (!this.available) return
     await this.client.expire(key, ttlSeconds).catch(() => undefined)
   }
+
+  /** Incrementa contador e aplica TTL no primeiro acesso. Namespace gerenciado pelo caller. */
+  async incrWithTTL(key: string, ttlSeconds: number): Promise<number> {
+    const count = await this.incr(key)
+    if (count === 1) await this.expire(key, ttlSeconds)
+    return count
+  }
+
+  /** Remove o contador anti-brute-force de validação de código para um usuário. */
+  async delResetAttempts(userId: string): Promise<void> {
+    if (!this.available) return
+    await this.client.del(`reset_attempts:${userId}`).catch(() => undefined)
+  }
 }

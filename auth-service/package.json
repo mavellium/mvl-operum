@@ -7,7 +7,8 @@
     "start": "node dist/main",
     "start:dev": "nest start --watch",
     "lint": "eslint src",
-    "test": "jest"
+    "test": "vitest run",
+    "test:watch": "vitest"
   },
   "dependencies": {
     "@nestjs/common": "^11.0.0",
@@ -22,6 +23,7 @@
     "class-validator": "^0.15.1",
     "ioredis": "^5.6.1",
     "jose": "^6.0.10",
+    "nodemailer": "^9.0.0",
     "pg": "^8.20.0",
     "reflect-metadata": "^0.2.0",
     "rxjs": "^7.8.1",
@@ -33,9 +35,11 @@
     "@nestjs/testing": "^11.0.0",
     "@types/bcryptjs": "^2.4.6",
     "@types/node": "^20",
+    "@types/nodemailer": "^8.0.1",
     "@types/uuid": "^10.0.0",
     "dotenv": "^17.4.1",
     "prisma": "^7.7.0",
-    "typescript": "^5"
+    "typescript": "^5",
+    "vitest": "^4.1.2"
   }
 }

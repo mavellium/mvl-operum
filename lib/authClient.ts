@@ -60,32 +60,43 @@ export async function authServiceRegister(data: {
   return res.json()
 }
 
-export async function authServiceRequestReset(email: string) {
+export async function authServiceRequestReset(email: string, subdomain?: string) {
   const res = await fetch(`${AUTH_URL}/auth/password/request-reset`, {
     method: 'POST',
     headers: headers(),
-    body: JSON.stringify({ email }),
+    body: JSON.stringify({ email, ...(subdomain ? { subdomain } : {}) }),
   })
   return res.json()
 }
 
-export async function authServiceValidateCode(email: string, code: string) {
+export async function authServiceValidateCode(email: string, code: string, subdomain?: string) {
   const res = await fetch(`${AUTH_URL}/auth/password/validate-code`, {
     method: 'POST',
     headers: headers(),
-    body: JSON.stringify({ email, code }),
+    body: JSON.stringify({ email, code, ...(subdomain ? { subdomain } : {}) }),
   })
-  if (!res.ok) throw new Error('Código inválido ou expirado')
+  if (!res.ok) {
+    const body = await res.json().catch(() => ({})) as { error?: string }
+    throw new Error(body.error ?? 'Código inválido ou expirado.')
+  }
   return res.json()
 }
 
-export async function authServiceResetPassword(email: string, code: string, newPassword: string) {
+export async function authServiceResetPassword(
+  email: string,
+  code: string,
+  newPassword: string,
+  subdomain?: string,
+) {
   const res = await fetch(`${AUTH_URL}/auth/password/reset`, {
     method: 'POST',
     headers: headers(),
-    body: JSON.stringify({ email, code, newPassword }),
+    body: JSON.stringify({ email, code, newPassword, ...(subdomain ? { subdomain } : {}) }),
   })
-  if (!res.ok) throw new Error('Código inválido ou expirado')
+  if (!res.ok) {
+    const body = await res.json().catch(() => ({})) as { error?: string }
+    throw new Error(body.error ?? 'Código inválido ou expirado.')
+  }
   return res.json()
 }
 

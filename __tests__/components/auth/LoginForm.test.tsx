@@ -10,7 +10,7 @@ describe('LoginForm', () => {
   it('renders email and password fields', () => {
     render(<LoginForm />)
     expect(screen.getByLabelText(/email/i)).toBeInTheDocument()
-    expect(screen.getByLabelText(/senha/i)).toBeInTheDocument()
+    expect(screen.getByLabelText('Senha')).toBeInTheDocument()
   })
 
   it('renders submit button labeled Entrar', () => {

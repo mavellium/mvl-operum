@@ -4,29 +4,26 @@ import {
   ConflictException,
   NotFoundException,
   ForbiddenException,
+  HttpException,
+  HttpStatus,
   Logger,
 } from '@nestjs/common'
 import { prisma } from '../prisma'
 import bcrypt from 'bcryptjs'
-import { createHash, randomInt } from 'crypto'
 import { JwtService } from './jwt.service'
 import { RedisService } from '../redis/redis.service'
+import { MailerService } from '../mailer/mailer.service'
+import { generateResetCode, hashResetCode, compareResetCode } from '../lib/crypto'
 import type { LoginDto } from './dto/login.dto'
 import type { RegisterDto } from './dto/register.dto'
 import type { ChangePasswordDto, RequestResetDto, ValidateCodeDto, ResetPasswordDto } from './dto/password.dto'
 
 const BCRYPT_ROUNDS = 12
 const MAX_LOGIN_ATTEMPTS = 10
-const RESET_CODE_TTL_MS = 15 * 60 * 1000
-
-function hashResetToken(code: string): string {
-  return createHash('sha256').update(code).digest('hex')
-}
-
-function generateCode(length = 8): string {
-  const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789'
-  return Array.from({ length }, () => chars[randomInt(0, chars.length)]).join('')
-}
+const RESET_CODE_TTL_SECONDS = 15 * 60
+const RESET_CODE_TTL_MS = RESET_CODE_TTL_SECONDS * 1000
+const RATE_LIMIT_MAX = 3
+const MAX_VALIDATE_ATTEMPTS = 5
 
 @Injectable()
 export class AuthService {
@@ -35,6 +32,7 @@ export class AuthService {
   constructor(
     private readonly jwtService: JwtService,
     private readonly redis: RedisService,
+    private readonly mailer: MailerService,
   ) {}
 
   async login(dto: LoginDto, subdomain?: string) {
@@ -42,11 +40,26 @@ export class AuthService {
       where: { ...(subdomain ? { subdomain } : {}), status: 'ACTIVE' },
     })
 
+    // TEMP DEBUG — remover após diagnóstico (bug: novo tenant → "Credenciais inválidas")
+    if (process.env.NODE_ENV !== 'production') {
+      this.logger.debug(`[LOGIN_DEBUG] subdomain recebido="${subdomain ?? '<undefined>'}" tenantId resolvido="${tenant?.id ?? '<nenhum>'}"`)
+    }
+
     if (!tenant) throw new UnauthorizedException('Tenant não encontrado')
 
     const user = await prisma.user.findFirst({
       where: { email: dto.email, tenantId: tenant.id, deletedAt: null },
     })
+
+    // TEMP DEBUG — remover após diagnóstico (sem email/PII; só presença + tenant)
+    if (process.env.NODE_ENV !== 'production') {
+      this.logger.debug(`[LOGIN_DEBUG] user encontrado para tenantId=${tenant.id}? ${!!user}`)
+      if (user) {
+        this.logger.debug(
+          `[LOGIN_DEBUG] isActive=${user.isActive} status=${user.status} deletedAt=${user.deletedAt} tokenVersion=${user.tokenVersion}`,
+        )
+      }
+    }
 
     if (!user) throw new UnauthorizedException('Credenciais inválidas')
 
@@ -59,6 +72,10 @@ export class AuthService {
     }
 
     const match = await bcrypt.compare(dto.password, user.passwordHash)
+    // TEMP DEBUG — remover após diagnóstico (nunca loga a senha em si)
+    if (process.env.NODE_ENV !== 'production') {
+      this.logger.debug(`[LOGIN_DEBUG] bcrypt.compare resultado=${match}`)
+    }
     if (!match) {
       await prisma.user.update({
         where: { id: user.id },
@@ -209,40 +226,103 @@ export class AuthService {
     })
   }
 
+  private async resolveTenant(subdomain?: string) {
+    return prisma.tenant.findFirst({
+      where: { ...(subdomain ? { subdomain } : {}), status: 'ACTIVE' },
+    })
+  }
+
   async requestPasswordReset(dto: RequestResetDto) {
-    // Always return success to avoid user enumeration
+    // Rate limit: 3 solicitações por e-mail a cada 15 min
+    const rateKey = `reset_rate:${dto.email}`
+    const attempts = await this.redis.incrWithTTL(rateKey, RESET_CODE_TTL_SECONDS)
+    if (attempts > RATE_LIMIT_MAX) {
+      throw new HttpException(
+        { success: false, error: 'Muitas solicitações. Aguarde 15 minutos.' },
+        HttpStatus.TOO_MANY_REQUESTS,
+      )
+    }
+
+    // Sempre responde sucesso — anti-enumeração
     try {
-      const user = await prisma.user.findFirst({
-        where: { email: dto.email, deletedAt: null },
-      })
+      const tenant = await this.resolveTenant(dto.subdomain)
+      const user = tenant
+        ? await prisma.user.findFirst({
+            where: { email: dto.email, tenantId: tenant.id, deletedAt: null, isActive: true },
+          })
+        : null
+
       if (user) {
-        const code = generateCode()
+        const code = generateResetCode()
         const expiry = new Date(Date.now() + RESET_CODE_TTL_MS)
         await prisma.user.update({
           where: { id: user.id },
-          data: { resetToken: hashResetToken(code), resetTokenExpiry: expiry },
+          data: {
+            resetToken: hashResetCode(code),
+            resetTokenExpiry: expiry,
+          },
         })
-        if (process.env.NODE_ENV !== 'production') {
-          console.info(`[DEV] Reset code for ${dto.email}: ${code}`)
-        }
+        // Zera tentativas de validação para o novo código
+        await this.redis.delResetAttempts(user.id)
+
+        const tenantName = tenant?.name ?? 'Operum'
+        // Falha de envio é capturada dentro do mailer — nunca vaza para o cliente
+        await this.mailer.sendPasswordResetCode(dto.email, code, tenantName)
+      } else {
+        // Anti-enumeração: executa bcrypt dummy para equalizar o tempo de resposta
+        await bcrypt.hash('dummy-anti-enum', BCRYPT_ROUNDS)
       }
-    } catch {
-      // swallow
+    } catch (err) {
+      // Erros internos não chegam ao cliente (anti-enumeração)
+      if (err instanceof HttpException) throw err
+      this.logger.error('requestPasswordReset internal error', err)
     }
-    return { success: true }
+
+    return { success: true, message: 'Se o e-mail estiver cadastrado, você receberá um código.' }
   }
 
   async validateResetCode(dto: ValidateCodeDto) {
-    const user = await prisma.user.findFirst({
-      where: {
-        email: dto.email,
-        deletedAt: null,
-        resetToken: hashResetToken(dto.code),
-        resetTokenExpiry: { gt: new Date() },
-      },
-    })
-    if (!user) throw new UnauthorizedException('Código inválido ou expirado')
-    return { valid: true }
+    const tenant = await this.resolveTenant(dto.subdomain)
+    const user = tenant
+      ? await prisma.user.findFirst({
+          where: { email: dto.email, tenantId: tenant.id, deletedAt: null },
+        })
+      : await prisma.user.findFirst({ where: { email: dto.email, deletedAt: null } })
+
+    if (!user || !user.resetToken || !user.resetTokenExpiry) {
+      throw new HttpException(
+        { success: false, error: 'Código inválido ou expirado.' },
+        HttpStatus.BAD_REQUEST,
+      )
+    }
+
+    // Anti-brute-force: max 5 tentativas por código emitido
+    const attemptsKey = `reset_attempts:${user.id}`
+    const attempts = await this.redis.incrWithTTL(attemptsKey, RESET_CODE_TTL_SECONDS)
+    if (attempts > MAX_VALIDATE_ATTEMPTS) {
+      // Invalida o código atual para forçar nova solicitação
+      await prisma.user.update({
+        where: { id: user.id },
+        data: { resetToken: null, resetTokenExpiry: null },
+      })
+      throw new HttpException(
+        { success: false, error: 'Código inválido ou expirado.' },
+        HttpStatus.BAD_REQUEST,
+      )
+    }
+
+    const expired = user.resetTokenExpiry < new Date()
+    const valid = !expired && compareResetCode(dto.code, user.resetToken)
+
+    if (!valid) {
+      throw new HttpException(
+        { success: false, error: 'Código inválido ou expirado.' },
+        HttpStatus.BAD_REQUEST,
+      )
+    }
+
+    // Código válido — NÃO consome aqui; só a Etapa 3 consome
+    return { success: true }
   }
 
   async updateProfile(userId: string, data: {
@@ -278,26 +358,44 @@ export class AuthService {
   }
 
   async resetPassword(dto: ResetPasswordDto) {
-    const user = await prisma.user.findFirst({
-      where: {
-        email: dto.email,
-        deletedAt: null,
-        resetToken: hashResetToken(dto.code),
-        resetTokenExpiry: { gt: new Date() },
-      },
-    })
-    if (!user) throw new UnauthorizedException('Código inválido ou expirado')
+    const tenant = await this.resolveTenant(dto.subdomain)
+    const user = tenant
+      ? await prisma.user.findFirst({
+          where: { email: dto.email, tenantId: tenant.id, deletedAt: null },
+        })
+      : await prisma.user.findFirst({ where: { email: dto.email, deletedAt: null } })
+
+    // Re-valida o código (não confia que a Etapa 2 passou)
+    const invalid =
+      !user ||
+      !user.resetToken ||
+      !user.resetTokenExpiry ||
+      user.resetTokenExpiry < new Date() ||
+      !compareResetCode(dto.code, user.resetToken)
+
+    if (invalid) {
+      throw new HttpException(
+        { success: false, error: 'Código inválido ou expirado.' },
+        HttpStatus.BAD_REQUEST,
+      )
+    }
 
     const passwordHash = await bcrypt.hash(dto.newPassword, BCRYPT_ROUNDS)
     await prisma.user.update({
-      where: { id: user.id },
+      where: { id: user!.id },
       data: {
         passwordHash,
         resetToken: null,
         resetTokenExpiry: null,
-        tokenVersion: { increment: 1 },
+        tokenVersion: { increment: 1 }, // invalida todas as sessões anteriores
       },
     })
+
+    // Remove contador de tentativas
+    await this.redis.delResetAttempts(user!.id)
+    // Revogação de sessões: tokenVersion++ já faz o gateway rejeitar tokens antigos.
+    // Sessões Redis expiram naturalmente ou são rejeitadas no verify() via tokenVersion.
+
     return { success: true }
   }
 

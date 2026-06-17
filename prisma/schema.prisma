@@ -618,7 +618,7 @@ model WbsNode {
   code      String  @db.VarChar(255)
   title     String  @db.VarChar(500)
 
-  layout    WbsLayoutOrientation @default(ABAIXO)
+  layout    WbsLayoutOrientation @default(LADO_A_LADO)
   collapsed Boolean              @default(false)
 
   /// WbsNodeStyle

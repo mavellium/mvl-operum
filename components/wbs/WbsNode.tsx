@@ -59,11 +59,6 @@ const WbsNodeCard = React.memo(function WbsNodeCard({
       onClick={e => { e.stopPropagation(); onSelect(node.id, e.ctrlKey || e.metaKey) }}
       onDoubleClick={e => { e.stopPropagation(); dispatch({ type: 'SET_EDITING', payload: { nodeId: node.id } }) }}
     >
-      {/* Code badge */}
-      <span style={{ position: 'absolute', top: 3, left: 6, fontSize: 9, fontWeight: 600, color: '#6b7280', lineHeight: 1 }}>
-        {node.code}
-      </span>
-
       {/* Collapse toggle */}
       {isParent && (
         <button
@@ -75,28 +70,33 @@ const WbsNodeCard = React.memo(function WbsNodeCard({
         </button>
       )}
 
-      {/* Title */}
-      <div style={{ position: 'absolute', top: 14, left: 4, right: 4, bottom: hasChips ? 18 : 4, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+      {/* Code + Title */}
+      <div style={{ position: 'absolute', top: 4, left: 8, right: 8, bottom: hasChips ? 18 : 4, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
         {isEditing ? (
-          <input
-            autoFocus
-            defaultValue={node.title}
-            style={{ width: '100%', textAlign: 'center', background: 'white', border: '1px solid #3b82f6', borderRadius: 3, padding: '0 4px', fontSize: node.style.fontSize, color: '#111827', outline: 'none' }}
-            onBlur={e => {
-              const t = e.currentTarget.value.trim()
-              if (t && t !== node.title) dispatch({ type: 'RENAME_NODE', payload: { nodeId: node.id, title: t } })
-              dispatch({ type: 'SET_EDITING', payload: { nodeId: null } })
-            }}
-            onKeyDown={e => {
-              if (e.key === 'Enter') e.currentTarget.blur()
-              if (e.key === 'Escape') { dispatch({ type: 'SET_EDITING', payload: { nodeId: null } }); e.stopPropagation() }
-              e.stopPropagation()
-            }}
-            onClick={e => e.stopPropagation()}
-          />
+          <div style={{ display: 'flex', alignItems: 'center', gap: 4, width: '100%' }}>
+            <span style={{ whiteSpace: 'nowrap', fontWeight: 500, color: node.style.textColor, flexShrink: 0 }}>
+              {node.code}
+            </span>
+            <input
+              autoFocus
+              defaultValue={node.title}
+              style={{ flex: 1, minWidth: 0, textAlign: 'left', background: 'white', border: '1px solid #3b82f6', borderRadius: 3, padding: '0 4px', fontSize: node.style.fontSize, color: '#111827', outline: 'none' }}
+              onBlur={e => {
+                const t = e.currentTarget.value.trim()
+                if (t && t !== node.title) dispatch({ type: 'RENAME_NODE', payload: { nodeId: node.id, title: t } })
+                dispatch({ type: 'SET_EDITING', payload: { nodeId: null } })
+              }}
+              onKeyDown={e => {
+                if (e.key === 'Enter') e.currentTarget.blur()
+                if (e.key === 'Escape') { dispatch({ type: 'SET_EDITING', payload: { nodeId: null } }); e.stopPropagation() }
+                e.stopPropagation()
+              }}
+              onClick={e => e.stopPropagation()}
+            />
+          </div>
         ) : (
-          <span style={{ whiteSpace: 'nowrap', fontWeight: 500, textAlign: 'center', lineHeight: 1.3 }}>
-            {node.title}
+          <span style={{ whiteSpace: 'nowrap', fontWeight: 500, lineHeight: 1.3 }}>
+            {node.code} {node.title}
           </span>
         )}
       </div>

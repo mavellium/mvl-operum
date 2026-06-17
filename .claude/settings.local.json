@@ -76,7 +76,10 @@
       "Bash(curl -s \"https://api.github.com/repos/mavellium/mvl-operum/actions/runs/27140911523/jobs?per_page=20\")",
       "Bash(curl -sL \"https://api.github.com/repos/mavellium/mvl-operum/actions/jobs/80105935080/logs\" -o /tmp/joblog.txt -w \"%{http_code}\\\\n\")",
       "Bash(docker version *)",
-      "Bash(docker build *)"
+      "Bash(docker build *)",
+      "Bash(python \"C:\\\\Users\\\\VINICIUS\\\\.claude\\\\skills\\\\ui-ux-pro-max\\\\scripts\\\\search.py\" \"kanban card modal task management SaaS\" --design-system -p \"MVL Operum\")",
+      "PowerShell(New-Item -ItemType Directory -Force \"c:\\\\temp\\\\MONOREPO\\\\mvl-operum\\\\__tests__\\\\unit\\\\wbs\")",
+      "Bash(curl -s https://api.github.com/repos/mavellium/mvl-operum/actions/runs/27547847332/jobs -H 'Accept: application/vnd.github+json')"
     ],
     "additionalDirectories": [
       "c:\\temp\\ClaudeCode\\kanban-board\\app\\dashboard\\sprint",

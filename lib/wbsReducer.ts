@@ -91,7 +91,7 @@ function makeNode(parentId: string | null, order: number, style: WbsNodeStyle): 
     order,
     code: '',
     title: 'Novo elemento',
-    layout: 'ABAIXO',
+    layout: 'LADO_A_LADO',
     collapsed: false,
     style: { ...style },
     properties: {},
@@ -446,7 +446,7 @@ export function wbsReducer(state: WbsTreeState, action: WbsAction): WbsTreeState
       const root: WbsNodeClient = {
         id: rootId, parentId: null, order: 0, code: '1',
         title: action.payload?.rootTitle ?? 'Projeto',
-        layout: 'ABAIXO', collapsed: false,
+        layout: 'LADO_A_LADO', collapsed: false,
         style: { ...DEFAULT_STYLE }, properties: {}, childrenIds: [],
       }
       return {

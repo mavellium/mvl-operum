@@ -2,10 +2,13 @@
 
 import { cookies, headers } from 'next/headers'
 import { redirect } from 'next/navigation'
-import { randomInt } from 'crypto'
 import Redis from 'ioredis'
 import { encrypt } from '@/lib/session'
-import { PasswordSchema } from '@/lib/validation/authSchemas'
+import {
+  RequestResetSchema,
+  ValidateCodeSchema,
+  ResetPasswordSchema,
+} from '@/lib/validation/authSchemas'
 import type { FormState } from '@/types/auth'
 import {
   authServiceLogin,
@@ -132,64 +135,84 @@ export async function logoutAction() {
 
 // ── Password Recovery ──────────────────────────────────────
 
-function generateCode(length = 8): string {
-  const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789'
-  return Array.from({ length }, () => chars[randomInt(0, chars.length)]).join('')
+/** Extrai o subdomínio do host da request (nunca do cliente). */
+async function getSubdomain(): Promise<string | undefined> {
+  try {
+    const headerStore = await headers()
+    const host = headerStore.get('host') ?? ''
+    const sub = host.split('.')[0]
+    return sub && sub !== 'www' && sub !== 'localhost' && !/^\d/.test(sub) ? sub : undefined
+  } catch {
+    return undefined
+  }
 }
 
-// generateCode is kept for potential future local use; currently all resets go via auth-service
-void generateCode
-
 export async function requestPasswordResetAction(_prevState: unknown, formData: FormData) {
-  const email = (formData.get('email') as string)?.toLowerCase().trim()
-
-  if (!email) {
-    return { error: 'Email é obrigatório' }
+  const raw = { email: (formData.get('email') as string | null)?.toLowerCase().trim() ?? '' }
+  const parsed = RequestResetSchema.safeParse(raw)
+  if (!parsed.success) {
+    return { error: parsed.error.issues[0].message }
   }
 
-  // Rate limit: max 3 requests per email per 15 minutes.
+  const { email } = parsed.data
+
+  // Rate limit front-end: 3 solicitações por e-mail por 15 min (defense-in-depth)
   const rateLimited = await redisRateLimit(`reset_rate:${email}`, 3, 900)
   if (rateLimited) {
     return { error: 'Muitas tentativas. Aguarde 15 minutos.' }
   }
 
-  return authServiceRequestReset(email)
+  const subdomain = await getSubdomain()
+  // Sempre retorna sucesso — anti-enumeração
+  return authServiceRequestReset(email, subdomain)
 }
 
 export async function validateResetCodeAction(_prevState: unknown, formData: FormData) {
-  const email = (formData.get('email') as string)?.toLowerCase().trim()
-  const code = (formData.get('code') as string)?.toUpperCase().trim()
-
-  if (!email || !code) {
-    return { error: 'Email e código são obrigatórios' }
+  const raw = {
+    email: (formData.get('email') as string | null)?.toLowerCase().trim() ?? '',
+    code: (formData.get('code') as string | null)?.toUpperCase().trim() ?? '',
+  }
+  const parsed = ValidateCodeSchema.safeParse(raw)
+  if (!parsed.success) {
+    return { error: parsed.error.issues[0].message }
   }
 
+  const subdomain = await getSubdomain()
   try {
-    return await authServiceValidateCode(email, code)
+    return await authServiceValidateCode(parsed.data.email, parsed.data.code, subdomain)
   } catch (err) {
-    return { error: err instanceof Error ? err.message : 'Código inválido ou expirado' }
+    return { error: err instanceof Error ? err.message : 'Código inválido ou expirado.' }
   }
 }
 
 export async function resetPasswordAction(_prevState: unknown, formData: FormData) {
-  const email = (formData.get('email') as string)?.toLowerCase().trim()
-  const code = (formData.get('code') as string)?.toUpperCase().trim()
-  const newPassword = formData.get('newPassword') as string
-  const confirmPassword = formData.get('confirmPassword') as string
-
-  const passwordValidation = PasswordSchema.safeParse(newPassword)
-  if (!passwordValidation.success) {
-    return { error: passwordValidation.error.issues[0].message }
-  }
+  const newPassword = (formData.get('newPassword') as string | null) ?? ''
+  const confirmPassword = (formData.get('confirmPassword') as string | null) ?? ''
 
   if (newPassword !== confirmPassword) {
-    return { error: 'Senhas não coincidem' }
+    return { error: 'Senhas não coincidem.' }
   }
 
+  const raw = {
+    email: (formData.get('email') as string | null)?.toLowerCase().trim() ?? '',
+    code: (formData.get('code') as string | null)?.toUpperCase().trim() ?? '',
+    newPassword,
+  }
+  const parsed = ResetPasswordSchema.safeParse(raw)
+  if (!parsed.success) {
+    return { error: parsed.error.issues[0].message }
+  }
+
+  const subdomain = await getSubdomain()
   try {
-    return await authServiceResetPassword(email, code, newPassword)
+    return await authServiceResetPassword(
+      parsed.data.email,
+      parsed.data.code,
+      parsed.data.newPassword,
+      subdomain,
+    )
   } catch (err) {
-    return { error: err instanceof Error ? err.message : 'Código inválido ou expirado' }
+    return { error: err instanceof Error ? err.message : 'Código inválido ou expirado.' }
   }
 }
 

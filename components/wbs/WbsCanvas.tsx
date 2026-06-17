@@ -30,8 +30,8 @@ function measureNodeWidths(nodes: Record<string, WbsNodeClient>): Record<string,
   const widths: Record<string, number> = {}
   for (const node of Object.values(nodes)) {
     ctx.font = `500 ${node.style.fontSize}px ${fontFamily}`
-    const titleW = ctx.measureText(node.title).width
-    widths[node.id] = Math.max(MIN_W, titleW + PADDING_H)
+    const textW = ctx.measureText(`${node.code} ${node.title}`).width
+    widths[node.id] = Math.max(MIN_W, textW + PADDING_H)
   }
   return widths
 }
