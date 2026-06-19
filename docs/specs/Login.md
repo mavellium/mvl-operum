@@ -71,8 +71,9 @@ O sistema de autenticação **não usa NextAuth**. É uma solução customizada 
 2. `loginAction` verifica rate limit por IP (Redis): máx 10 tentativas / 15 min
 3. `authServiceLogin()` faz `POST /auth/login` com `{ email, password, subdomain }` (subdomínio extraído do header `Host` via `getSubdomain()`)
 4. Auth-service resolve o [[Tenant]]:
-   - Subdomínio resolvido para um tenant ACTIVE → busca `User` escopado a esse `tenantId`. Se o subdomínio não resolver nenhum tenant, falha fechada (nunca cai para o passo abaixo).
-   - Subdomínio ausente (cenário atual: infra usa um Host fixo por ambiente — staging/produção não têm wildcard DNS por tenant, então o Host nunca carrega o subdomínio real) → busca por `User.email` entre tenants ACTIVE. Se o e-mail existir em mais de um tenant (federação via `joinTenant`/`provisionTenantAdmin`), a senha é testada contra cada candidato até achar a que bate — nunca escolhe um tenant arbitrariamente.
+   - Subdomínio resolvido para um tenant ACTIVE → busca `User` escopado a esse `tenantId`.
+   - Subdomínio ausente OU presente mas sem tenant correspondente → busca por `User.email` entre tenants ACTIVE. Se o e-mail existir em mais de um tenant (federação via `joinTenant`/`provisionTenantAdmin`), a senha é testada contra cada candidato até achar a que bate — nunca escolhe um tenant arbitrariamente (a senha sempre é validada por bcrypt contra a conta específica).
+   - **Por quê não falha fechado quando o subdomínio está presente mas não resolve**: a infra atual (Traefik) usa um Host fixo por ambiente — produção é `operum.mavellium.com.br`, staging é `staging.operum.mavellium.com.br`, sem wildcard DNS por tenant. `getSubdomain()` extrai o primeiro rótulo desse Host (`"operum"`, `"staging"`) mesmo não sendo um subdomínio de tenant de verdade. Tratar "subdomínio presente" como sinal confiável de erro e falhar fechado nesse caso derruba o login em produção inteira (incidente real — ver commit que reverteu isso).
 5. Compara senha com `passwordHash` (bcrypt 12 rounds)
 6. Sucesso: incrementa `lastLogin`, reseta `loginAttempts`, gera JWT RS256 com JTI único
 7. Armazena `jti → payload` no Redis (TTL 7 dias)
@@ -92,7 +93,7 @@ O sistema de autenticação **não usa NextAuth**. É uma solução customizada 
 - Rate limit por IP (Redis): acima de 10 tentativas em 15 min → erro 429 antes de chegar ao auth-service
 - Bloqueio de conta: após 10 tentativas, conta bloqueada (`isActive = false` ou `status = 'bloqueado'`) — requer intervenção de suporte
 - Sistema não diferencia "email não existe" de "senha incorreta" (proteção contra enumeração)
-- **O login nunca resolve um tenant arbitrário.** Com subdomínio presente, escopo estrito a esse tenant (falha fechada se não resolver). Sem subdomínio — caso comum hoje, já que a infra não propaga subdomínio real por tenant — resolve pelo e-mail, testando a senha contra cada conta candidata.
+- **O login nunca resolve um tenant arbitrário.** Com subdomínio presente E resolvido, escopo estrito a esse tenant. Caso contrário (ausente, ou presente mas sem tenant correspondente — o caso comum hoje, já que a infra não propaga subdomínio real por tenant), resolve pelo e-mail, testando a senha contra cada conta candidata — a senha (não o subdomínio) é a única coisa que decide em qual tenant a pessoa entra.
 
 ### 3. Logout
 

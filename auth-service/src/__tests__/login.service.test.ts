@@ -148,6 +148,22 @@ describe('AuthService.login — resolução de tenant por subdomínio', () => {
     expect(prisma.tenant.findFirst).not.toHaveBeenCalled()
   })
 
+  it('subdomain presente mas sem tenant correspondente (ex.: Host de produção sem wildcard DNS, como "operum.mavellium.com.br") usa o fallback por e-mail em vez de falhar fechado', async () => {
+    vi.mocked(prisma.tenant.findFirst).mockResolvedValue(null as never)
+    const user = makeUser({ id: 'user-1', tenantId: 'tenant-a' })
+    vi.mocked(prisma.user.findMany).mockResolvedValue([user] as never)
+    vi.mocked(bcrypt.compare).mockResolvedValue(true as never)
+
+    const service = makeService()
+    const result = await service.login({ email: 'ana@x.com', password: 'Senha@123' }, 'operum')
+
+    expect(result.token).toBe('jwt-token')
+    expect(result.user.tenantId).toBe('tenant-a')
+    expect(prisma.tenant.findFirst).toHaveBeenCalledWith(
+      expect.objectContaining({ where: { subdomain: 'operum', status: 'ACTIVE' } }),
+    )
+  })
+
   it('subdomain vazio ("") é tratado como ausente — usa o fallback por e-mail, não falha fechada', async () => {
     vi.mocked(prisma.user.findMany).mockResolvedValue([] as never)
     const service = makeService()

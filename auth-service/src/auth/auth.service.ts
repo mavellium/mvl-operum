@@ -36,22 +36,25 @@ export class AuthService {
   ) {}
 
   async login(dto: LoginDto, subdomain?: string) {
-    if (subdomain) {
-      // Subdomínio informado: escopo estrito a esse tenant. Se não resolver,
-      // falha fechada — nunca cai para o fallback de e-mail abaixo (evita
-      // reativar o bug de resolver um tenant arbitrário).
-      const tenant = await prisma.tenant.findFirst({ where: { subdomain, status: 'ACTIVE' } })
-      if (!tenant) throw new UnauthorizedException('Credenciais inválidas')
+    // Subdomínio informado E resolvido para um tenant ACTIVE: escopo estrito a ele.
+    const tenant = subdomain
+      ? await prisma.tenant.findFirst({ where: { subdomain, status: 'ACTIVE' } })
+      : null
 
+    if (tenant) {
       const user = await prisma.user.findFirst({
         where: { email: dto.email, tenantId: tenant.id, deletedAt: null },
       })
       return this.completeLogin(user, dto.password)
     }
 
-    // Sem subdomínio: a infra atual (Traefik) usa um Host fixo por ambiente,
-    // sem wildcard DNS por tenant — o Host nunca carrega o subdomínio real.
-    // O mesmo e-mail pode existir em mais de um tenant (federação via
+    // Sem tenant resolvido — ausente OU presente mas sem correspondência.
+    // A infra atual (Traefik) usa um Host fixo por ambiente (ex.: a própria
+    // "operum.mavellium.com.br" em produção), sem wildcard DNS por tenant.
+    // getSubdomain() lê o primeiro rótulo desse Host mesmo quando ele não é
+    // um subdomínio de tenant de verdade — então "subdomain presente" não
+    // pode ser tratado como sinal confiável de tenant inválido. Resolve pelo
+    // e-mail; o mesmo e-mail pode existir em mais de um tenant (federação via
     // joinTenant/provisionTenantAdmin), cada um com sua própria senha — por
     // isso testamos a senha contra cada candidato em vez de confiar num
     // findFirst arbitrário, o que poderia autenticar no tenant errado.
