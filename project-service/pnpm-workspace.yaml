@@ -1,5 +1,10 @@
 packages: []
+overrides:
+  hono: ">=4.12.25"
+  "@hono/node-server": ">=1.19.13"
+  postcss: ">=8.5.10"
+  multer: ">=2.2.0"
 allowBuilds:
-  '@nestjs/core': set this to true or false
-  '@prisma/engines': set this to true or false
-  prisma: set this to true or false
+  '@nestjs/core': true
+  '@prisma/engines': true
+  prisma: true
