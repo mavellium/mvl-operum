@@ -49,3 +49,22 @@ export const verifyProjectAccess = cache(async () => {
 
   return session
 })
+
+/**
+ * Resolve para onde o usuário autenticado deve ir com base no vínculo ATUAL
+ * com projetos (consulta o banco a cada chamada — nunca usa contagem embutida
+ * em JWT/sessão). Deriva o usuário da própria sessão (nunca aceita um userId
+ * externo) para impedir consultar o vínculo de outra pessoa.
+ * Retorna `null` quando o usuário não tem nenhum projeto ativo no tenant.
+ */
+export async function resolveProjectDestination(): Promise<string | null> {
+  const { userId, role } = await verifySession()
+  if (role === 'admin') return '/admin'
+
+  const { projectsApi } = await import('./api-client')
+  const projects = await projectsApi.getUserProjects(userId).catch(() => [] as unknown[]) as { projectId: string }[]
+
+  if (projects.length === 0) return null
+  if (projects.length === 1) return `/projetos/${projects[0].projectId}/dashboard`
+  return '/projetos'
+}

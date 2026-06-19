@@ -13,6 +13,9 @@ export async function createProjectAction(
     const project = await projectsApi.create({ name: input.name, description: input.description, tenantId }) as Record<string, unknown>
     if (input.initialMemberId) {
       await projectsApi.addMember(project.id as string, { userId: input.initialMemberId })
+      // O novo membro pode estar parado em /no-project — libera o gate dele.
+      revalidatePath('/no-project')
+      revalidatePath('/')
     }
     revalidatePath('/projetos')
     return { project }
@@ -73,6 +76,9 @@ export async function addMemberAction(projectId: string, userId: string) {
     await projectsApi.addMember(projectId, { userId })
     revalidatePath(`/projetos/${projectId}/membros`)
     revalidatePath(`/projetos/${projectId}`)
+    // O membro adicionado pode estar parado em /no-project — libera o gate dele.
+    revalidatePath('/no-project')
+    revalidatePath('/')
     return { success: true }
   } catch (err) {
     return { error: err instanceof Error ? err.message : 'Erro ao adicionar membro' }
@@ -111,6 +117,9 @@ export async function updateUserProjectAction(
     revalidatePath(`/projetos/${projectId}/membros`)
     revalidatePath(`/projetos/${projectId}`)
     revalidatePath('/admin/users')
+    // O vínculo do usuário mudou (ativado/desativado) — libera o gate dele.
+    revalidatePath('/no-project')
+    revalidatePath('/')
     return { success: true }
   } catch (err) {
     return { error: err instanceof Error ? err.message : 'Erro ao atualizar membro' }

@@ -17,6 +17,9 @@ const IconEdit = () => (
 const IconCalendar = () => (
   <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" /></svg>
 )
+const IconPlus = () => (
+  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M12 4v16m8-8H4" /></svg>
+)
 
 // Helper para Logo Fallback com Gradientes Premium
 function getInitials(name: string) {
@@ -60,11 +63,29 @@ export default async function ProjetosPage({ searchParams }: { searchParams: Pro
       <div className="absolute top-0 left-1/2 -translate-x-1/2 w-full max-w-3xl h-[300px] bg-blue-500/5 blur-[120px] rounded-full pointer-events-none" />
 
       <main className="max-w-6xl mx-auto px-4 py-10 relative z-10">
+        {/* CABEÇALHO */}
+        <div className="flex items-center justify-between mb-8">
+          <div>
+            <h1 className="text-2xl font-extrabold text-slate-900 tracking-tight">Projetos</h1>
+            <p className="text-sm text-slate-500 font-medium mt-1">
+              {total} {total === 1 ? 'projeto cadastrado' : 'projetos cadastrados'}
+            </p>
+          </div>
+          <Link
+            href="/projetos/novo"
+            className="flex items-center gap-2 px-5 py-2.5 bg-blue-600 text-white text-sm font-bold rounded-xl hover:bg-blue-700 hover:shadow-lg hover:shadow-blue-600/20 active:scale-95 transition-all shadow-sm cursor-pointer"
+          >
+            <IconPlus />
+            Novo Projeto
+          </Link>
+        </div>
+
         {projetos.length === 0 ? (
-          <div className="mt-12 bg-white rounded-3xl border border-slate-200/60 p-10 shadow-sm">
+          <div className="bg-white rounded-3xl border border-slate-200/60 p-10 shadow-sm">
             <EmptyState
               heading="Nenhum projeto encontrado"
               subtext="Você ainda não possui projetos ativos ou na página atual."
+              action={{ label: 'Criar o primeiro projeto', href: '/projetos/novo' }}
               size="md"
             />
           </div>

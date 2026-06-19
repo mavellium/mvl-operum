@@ -62,6 +62,9 @@ export async function createProjetoAction(
 
     if (initialMemberId) {
       await projectsApi.addMember(projeto.id as string, { userId: initialMemberId })
+      // O novo membro pode estar parado em /no-project — libera o gate dele.
+      revalidatePath('/no-project')
+      revalidatePath('/')
     }
 
     if (macroFases && macroFases.length > 0) {
@@ -150,6 +153,9 @@ export async function addMemberAction(projetoId: string, userId: string) {
     await projectsApi.addMember(projetoId, { userId })
     revalidatePath(`/projetos/${projetoId}/membros`)
     revalidatePath(`/projetos/${projetoId}`)
+    // O membro adicionado pode estar parado em /no-project — libera o gate dele.
+    revalidatePath('/no-project')
+    revalidatePath('/')
     return { success: true }
   } catch (err) {
     return { error: err instanceof Error ? err.message : 'Erro ao adicionar membro' }
@@ -194,6 +200,9 @@ export async function updateUsuarioProjetoAction(
     revalidatePath(`/projetos/${projetoId}/membros`)
     revalidatePath(`/projetos/${projetoId}`)
     revalidatePath('/admin/users')
+    // O vínculo do usuário mudou (ativado/desativado) — libera o gate dele.
+    revalidatePath('/no-project')
+    revalidatePath('/')
     return { membro: { userId, projetoId } }
   } catch (err) {
     return { error: err instanceof Error ? err.message : 'Erro ao atualizar membro' }

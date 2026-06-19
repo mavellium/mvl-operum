@@ -36,31 +36,56 @@ export class AuthService {
   ) {}
 
   async login(dto: LoginDto, subdomain?: string) {
-    const tenant = await prisma.tenant.findFirst({
-      where: { ...(subdomain ? { subdomain } : {}), status: 'ACTIVE' },
-    })
+    if (subdomain) {
+      // Subdomínio informado: escopo estrito a esse tenant. Se não resolver,
+      // falha fechada — nunca cai para o fallback de e-mail abaixo (evita
+      // reativar o bug de resolver um tenant arbitrário).
+      const tenant = await prisma.tenant.findFirst({ where: { subdomain, status: 'ACTIVE' } })
+      if (!tenant) throw new UnauthorizedException('Credenciais inválidas')
 
-    // TEMP DEBUG — remover após diagnóstico (bug: novo tenant → "Credenciais inválidas")
-    if (process.env.NODE_ENV !== 'production') {
-      this.logger.debug(`[LOGIN_DEBUG] subdomain recebido="${subdomain ?? '<undefined>'}" tenantId resolvido="${tenant?.id ?? '<nenhum>'}"`)
+      const user = await prisma.user.findFirst({
+        where: { email: dto.email, tenantId: tenant.id, deletedAt: null },
+      })
+      return this.completeLogin(user, dto.password)
     }
 
-    if (!tenant) throw new UnauthorizedException('Tenant não encontrado')
-
-    const user = await prisma.user.findFirst({
-      where: { email: dto.email, tenantId: tenant.id, deletedAt: null },
+    // Sem subdomínio: a infra atual (Traefik) usa um Host fixo por ambiente,
+    // sem wildcard DNS por tenant — o Host nunca carrega o subdomínio real.
+    // O mesmo e-mail pode existir em mais de um tenant (federação via
+    // joinTenant/provisionTenantAdmin), cada um com sua própria senha — por
+    // isso testamos a senha contra cada candidato em vez de confiar num
+    // findFirst arbitrário, o que poderia autenticar no tenant errado.
+    // Ordenado por lastLogin desc (tenant acessado mais recentemente primeiro);
+    // quem nunca acessou nenhum tenant vai por último (qualquer um serve).
+    const candidates = await prisma.user.findMany({
+      where: { email: dto.email, deletedAt: null, tenant: { status: 'ACTIVE' } },
+      orderBy: { lastLogin: { sort: 'desc', nulls: 'last' } },
     })
 
-    // TEMP DEBUG — remover após diagnóstico (sem email/PII; só presença + tenant)
-    if (process.env.NODE_ENV !== 'production') {
-      this.logger.debug(`[LOGIN_DEBUG] user encontrado para tenantId=${tenant.id}? ${!!user}`)
-      if (user) {
-        this.logger.debug(
-          `[LOGIN_DEBUG] isActive=${user.isActive} status=${user.status} deletedAt=${user.deletedAt} tokenVersion=${user.tokenVersion}`,
-        )
+    if (candidates.length <= 1) {
+      return this.completeLogin(candidates[0] ?? null, dto.password)
+    }
+
+    for (const candidate of candidates) {
+      if (!candidate.isActive || candidate.status !== 'active') continue
+      if ((candidate.loginAttempts ?? 0) >= MAX_LOGIN_ATTEMPTS) continue
+      if (await bcrypt.compare(dto.password, candidate.passwordHash)) {
+        await prisma.user.update({
+          where: { id: candidate.id },
+          data: { lastLogin: new Date(), loginAttempts: 0 },
+        })
+        return this.buildLoginResponse(candidate)
       }
     }
 
+    throw new UnauthorizedException('Credenciais inválidas')
+  }
+
+  /** Valida senha/status para um único candidato já resolvido e finaliza o login. */
+  private async completeLogin(
+    user: Awaited<ReturnType<typeof prisma.user.findFirst>>,
+    password: string,
+  ) {
     if (!user) throw new UnauthorizedException('Credenciais inválidas')
 
     if (!user.isActive || user.status !== 'active') {
@@ -71,11 +96,7 @@ export class AuthService {
       throw new UnauthorizedException('Conta bloqueada por excesso de tentativas. Contate o suporte.')
     }
 
-    const match = await bcrypt.compare(dto.password, user.passwordHash)
-    // TEMP DEBUG — remover após diagnóstico (nunca loga a senha em si)
-    if (process.env.NODE_ENV !== 'production') {
-      this.logger.debug(`[LOGIN_DEBUG] bcrypt.compare resultado=${match}`)
-    }
+    const match = await bcrypt.compare(password, user.passwordHash)
     if (!match) {
       await prisma.user.update({
         where: { id: user.id },
@@ -89,6 +110,10 @@ export class AuthService {
       data: { lastLogin: new Date(), loginAttempts: 0 },
     })
 
+    return this.buildLoginResponse(user)
+  }
+
+  private async buildLoginResponse(user: NonNullable<Awaited<ReturnType<typeof prisma.user.findFirst>>>) {
     const { token, jti } = await this.jwtService.sign({
       userId: user.id,
       tenantId: user.tenantId,

@@ -101,6 +101,66 @@ describe('loginAction', () => {
       expect.objectContaining({ httpOnly: true, sameSite: 'strict' }),
     )
   })
+
+  it('extrai o subdomain do host e o repassa a authServiceLogin', async () => {
+    mockHeaders.mockResolvedValue({ get: vi.fn().mockReturnValue('b.example.com') })
+    mockLogin.mockResolvedValue({
+      token: 'jwt-token',
+      forcePasswordChange: false,
+      user: { role: 'member', id: 'u1' },
+    })
+    const cookieStore = { set: vi.fn(), delete: vi.fn(), get: vi.fn() }
+    mockCookies.mockResolvedValue(cookieStore)
+
+    await loginAction(undefined, makeFormData({ email: 'a@b.com', password: 'Test@1234' }))
+
+    expect(mockLogin).toHaveBeenCalledWith('a@b.com', 'Test@1234', 'b')
+  })
+
+  it('host sem subdomínio (ex.: localhost) repassa subdomain undefined', async () => {
+    mockHeaders.mockResolvedValue({ get: vi.fn().mockReturnValue('localhost') })
+    mockLogin.mockResolvedValue({
+      token: 'jwt-token',
+      forcePasswordChange: false,
+      user: { role: 'member', id: 'u1' },
+    })
+    const cookieStore = { set: vi.fn(), delete: vi.fn(), get: vi.fn() }
+    mockCookies.mockResolvedValue(cookieStore)
+
+    await loginAction(undefined, makeFormData({ email: 'a@b.com', password: 'Test@1234' }))
+
+    expect(mockLogin).toHaveBeenCalledWith('a@b.com', 'Test@1234', undefined)
+  })
+
+  it('host com porta (ex.: localhost:3000, dev local) também repassa subdomain undefined', async () => {
+    mockHeaders.mockResolvedValue({ get: vi.fn().mockReturnValue('localhost:3000') })
+    mockLogin.mockResolvedValue({
+      token: 'jwt-token',
+      forcePasswordChange: false,
+      user: { role: 'member', id: 'u1' },
+    })
+    const cookieStore = { set: vi.fn(), delete: vi.fn(), get: vi.fn() }
+    mockCookies.mockResolvedValue(cookieStore)
+
+    await loginAction(undefined, makeFormData({ email: 'a@b.com', password: 'Test@1234' }))
+
+    expect(mockLogin).toHaveBeenCalledWith('a@b.com', 'Test@1234', undefined)
+  })
+
+  it('host com subdomínio e porta (ex.: b.example.com:3000) extrai só o subdomínio', async () => {
+    mockHeaders.mockResolvedValue({ get: vi.fn().mockReturnValue('b.example.com:3000') })
+    mockLogin.mockResolvedValue({
+      token: 'jwt-token',
+      forcePasswordChange: false,
+      user: { role: 'member', id: 'u1' },
+    })
+    const cookieStore = { set: vi.fn(), delete: vi.fn(), get: vi.fn() }
+    mockCookies.mockResolvedValue(cookieStore)
+
+    await loginAction(undefined, makeFormData({ email: 'a@b.com', password: 'Test@1234' }))
+
+    expect(mockLogin).toHaveBeenCalledWith('a@b.com', 'Test@1234', 'b')
+  })
 })
 
 describe('logoutAction', () => {

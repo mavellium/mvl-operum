@@ -69,8 +69,10 @@ O sistema de autenticação **não usa NextAuth**. É uma solução customizada 
 
 1. [[Usuário]] preenche email + senha em `LoginForm`
 2. `loginAction` verifica rate limit por IP (Redis): máx 10 tentativas / 15 min
-3. `authServiceLogin()` faz `POST /auth/login` com `{ email, password, subdomain }`
-4. Auth-service busca `User` pelo email dentro do [[Tenant]] (subdomínio)
+3. `authServiceLogin()` faz `POST /auth/login` com `{ email, password, subdomain }` (subdomínio extraído do header `Host` via `getSubdomain()`)
+4. Auth-service resolve o [[Tenant]]:
+   - Subdomínio resolvido para um tenant ACTIVE → busca `User` escopado a esse `tenantId`. Se o subdomínio não resolver nenhum tenant, falha fechada (nunca cai para o passo abaixo).
+   - Subdomínio ausente (cenário atual: infra usa um Host fixo por ambiente — staging/produção não têm wildcard DNS por tenant, então o Host nunca carrega o subdomínio real) → busca por `User.email` entre tenants ACTIVE. Se o e-mail existir em mais de um tenant (federação via `joinTenant`/`provisionTenantAdmin`), a senha é testada contra cada candidato até achar a que bate — nunca escolhe um tenant arbitrariamente.
 5. Compara senha com `passwordHash` (bcrypt 12 rounds)
 6. Sucesso: incrementa `lastLogin`, reseta `loginAttempts`, gera JWT RS256 com JTI único
 7. Armazena `jti → payload` no Redis (TTL 7 dias)
@@ -90,6 +92,7 @@ O sistema de autenticação **não usa NextAuth**. É uma solução customizada 
 - Rate limit por IP (Redis): acima de 10 tentativas em 15 min → erro 429 antes de chegar ao auth-service
 - Bloqueio de conta: após 10 tentativas, conta bloqueada (`isActive = false` ou `status = 'bloqueado'`) — requer intervenção de suporte
 - Sistema não diferencia "email não existe" de "senha incorreta" (proteção contra enumeração)
+- **O login nunca resolve um tenant arbitrário.** Com subdomínio presente, escopo estrito a esse tenant (falha fechada se não resolver). Sem subdomínio — caso comum hoje, já que a infra não propaga subdomínio real por tenant — resolve pelo e-mail, testando a senha contra cada conta candidata.
 
 ### 3. Logout
 

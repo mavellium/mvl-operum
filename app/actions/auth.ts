@@ -19,7 +19,7 @@ import {
   authServiceResetPassword,
 } from '@/lib/authClient'
 import { projectsApi, authApi } from '@/lib/api-client'
-import { verifySession } from '@/lib/dal'
+import { verifySession, resolveProjectDestination } from '@/lib/dal'
 import { revalidatePath } from 'next/cache'
 
 const SESSION_DURATION_MS = 7 * 24 * 60 * 60 * 1000 // 7 days
@@ -97,8 +97,10 @@ export async function loginAction(prevState: FormState, formData: FormData): Pro
   let forcePasswordChange = false
   let projectRedirect = '/projetos'
 
+  const subdomain = await getSubdomain()
+
   try {
-    const result = await authServiceLogin(email, password)
+    const result = await authServiceLogin(email, password, subdomain)
     forcePasswordChange = result.forcePasswordChange
     const expiresAt = new Date(Date.now() + SESSION_DURATION_MS)
     const cookieStore = await cookies()
@@ -139,7 +141,7 @@ export async function logoutAction() {
 async function getSubdomain(): Promise<string | undefined> {
   try {
     const headerStore = await headers()
-    const host = headerStore.get('host') ?? ''
+    const host = (headerStore.get('host') ?? '').split(':')[0] // remove a porta (ex.: "localhost:3000")
     const sub = host.split('.')[0]
     return sub && sub !== 'www' && sub !== 'localhost' && !/^\d/.test(sub) ? sub : undefined
   } catch {
@@ -258,4 +260,16 @@ export async function switchTenantAction(targetTenantId: string) {
 
   revalidatePath('/', 'layout')
   redirect('/projetos')
+}
+
+/**
+ * Usado pelo botão "Verificar novamente" em /no-project. Reaplica a mesma
+ * regra de destino da Home (consulta o banco a cada chamada) e redireciona
+ * automaticamente se o usuário já tiver acesso. Se ainda não tiver, retorna
+ * sem redirecionar — o cliente mostra um aviso discreto.
+ */
+export async function checkProjectAccessAction(): Promise<{ hasAccess: false }> {
+  const destination = await resolveProjectDestination()
+  if (destination) redirect(destination)
+  return { hasAccess: false }
 }
