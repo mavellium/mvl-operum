@@ -1,10 +1,13 @@
 'use client'
 
-import { useActionState } from 'react'
+import { useActionState, useState } from 'react'
 import { alterarSenhaObrigatoriaAction } from '@/app/actions/alterarSenha'
+import { PasswordCriteria } from '@/components/auth/PasswordCriteria'
 
 export default function AlterarSenhaPage() {
   const [state, action, pending] = useActionState(alterarSenhaObrigatoriaAction, undefined)
+  const [novaSenha, setNovaSenha] = useState('')
+  const [confirmacao, setConfirmacao] = useState('')
 
   return (
     <div className="min-h-screen bg-gray-50 flex items-center justify-center px-4">
@@ -31,12 +34,15 @@ export default function AlterarSenhaPage() {
               name="novaSenha"
               type="password"
               required
-              minLength={6}
+              minLength={8}
               autoFocus
               autoComplete="new-password"
-              placeholder="Mínimo 6 caracteres"
-              className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm text-gray-900 placeholder:text-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500"
+              placeholder="Mínimo 8 caracteres, 1 número e 1 caractere especial"
+              value={novaSenha}
+              onChange={e => setNovaSenha(e.target.value)}
+              className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm text-gray-900 placeholder:text-slate-500 focus:outline-none focus:ring-2 focus:ring-blue-500"
             />
+            <PasswordCriteria value={novaSenha} confirm={confirmacao} />
           </div>
           <div>
             <label htmlFor="confirmacao" className="block text-sm font-medium text-gray-700 mb-1">
@@ -49,7 +55,9 @@ export default function AlterarSenhaPage() {
               required
               autoComplete="new-password"
               placeholder="Repita a nova senha"
-              className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm text-gray-900 placeholder:text-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500"
+              value={confirmacao}
+              onChange={e => setConfirmacao(e.target.value)}
+              className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm text-gray-900 placeholder:text-slate-500 focus:outline-none focus:ring-2 focus:ring-blue-500"
             />
           </div>
           {(state as { error?: string } | undefined)?.error && (
