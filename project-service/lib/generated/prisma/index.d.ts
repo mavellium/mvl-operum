@@ -9421,11 +9421,15 @@ export namespace Prisma {
 
   export type UserProjectAvgAggregateOutputType = {
     hourlyRate: number | null
+    remuneracao: number | null
+    horasDiarias: number | null
     order: number | null
   }
 
   export type UserProjectSumAggregateOutputType = {
     hourlyRate: number | null
+    remuneracao: number | null
+    horasDiarias: number | null
     order: number | null
   }
 
@@ -9437,6 +9441,8 @@ export namespace Prisma {
     role: string | null
     departmentId: string | null
     hourlyRate: number | null
+    remuneracao: number | null
+    horasDiarias: number | null
     startDate: Date | null
     endDate: Date | null
     order: number | null
@@ -9450,6 +9456,8 @@ export namespace Prisma {
     role: string | null
     departmentId: string | null
     hourlyRate: number | null
+    remuneracao: number | null
+    horasDiarias: number | null
     startDate: Date | null
     endDate: Date | null
     order: number | null
@@ -9463,6 +9471,8 @@ export namespace Prisma {
     role: number
     departmentId: number
     hourlyRate: number
+    remuneracao: number
+    horasDiarias: number
     startDate: number
     endDate: number
     order: number
@@ -9472,11 +9482,15 @@ export namespace Prisma {
 
   export type UserProjectAvgAggregateInputType = {
     hourlyRate?: true
+    remuneracao?: true
+    horasDiarias?: true
     order?: true
   }
 
   export type UserProjectSumAggregateInputType = {
     hourlyRate?: true
+    remuneracao?: true
+    horasDiarias?: true
     order?: true
   }
 
@@ -9488,6 +9502,8 @@ export namespace Prisma {
     role?: true
     departmentId?: true
     hourlyRate?: true
+    remuneracao?: true
+    horasDiarias?: true
     startDate?: true
     endDate?: true
     order?: true
@@ -9501,6 +9517,8 @@ export namespace Prisma {
     role?: true
     departmentId?: true
     hourlyRate?: true
+    remuneracao?: true
+    horasDiarias?: true
     startDate?: true
     endDate?: true
     order?: true
@@ -9514,6 +9532,8 @@ export namespace Prisma {
     role?: true
     departmentId?: true
     hourlyRate?: true
+    remuneracao?: true
+    horasDiarias?: true
     startDate?: true
     endDate?: true
     order?: true
@@ -9614,6 +9634,8 @@ export namespace Prisma {
     role: string | null
     departmentId: string | null
     hourlyRate: number | null
+    remuneracao: number | null
+    horasDiarias: number | null
     startDate: Date
     endDate: Date | null
     order: number
@@ -9646,6 +9668,8 @@ export namespace Prisma {
     role?: boolean
     departmentId?: boolean
     hourlyRate?: boolean
+    remuneracao?: boolean
+    horasDiarias?: boolean
     startDate?: boolean
     endDate?: boolean
     order?: boolean
@@ -9662,6 +9686,8 @@ export namespace Prisma {
     role?: boolean
     departmentId?: boolean
     hourlyRate?: boolean
+    remuneracao?: boolean
+    horasDiarias?: boolean
     startDate?: boolean
     endDate?: boolean
     order?: boolean
@@ -9678,6 +9704,8 @@ export namespace Prisma {
     role?: boolean
     departmentId?: boolean
     hourlyRate?: boolean
+    remuneracao?: boolean
+    horasDiarias?: boolean
     startDate?: boolean
     endDate?: boolean
     order?: boolean
@@ -9694,12 +9722,14 @@ export namespace Prisma {
     role?: boolean
     departmentId?: boolean
     hourlyRate?: boolean
+    remuneracao?: boolean
+    horasDiarias?: boolean
     startDate?: boolean
     endDate?: boolean
     order?: boolean
   }
 
-  export type UserProjectOmit<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetOmit<"id" | "userId" | "projectId" | "active" | "role" | "departmentId" | "hourlyRate" | "startDate" | "endDate" | "order", ExtArgs["result"]["userProject"]>
+  export type UserProjectOmit<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetOmit<"id" | "userId" | "projectId" | "active" | "role" | "departmentId" | "hourlyRate" | "remuneracao" | "horasDiarias" | "startDate" | "endDate" | "order", ExtArgs["result"]["userProject"]>
   export type UserProjectInclude<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
     user?: boolean | UserDefaultArgs<ExtArgs>
     project?: boolean | ProjectDefaultArgs<ExtArgs>
@@ -9731,6 +9761,8 @@ export namespace Prisma {
       role: string | null
       departmentId: string | null
       hourlyRate: number | null
+      remuneracao: number | null
+      horasDiarias: number | null
       startDate: Date
       endDate: Date | null
       order: number
@@ -10167,6 +10199,8 @@ export namespace Prisma {
     readonly role: FieldRef<"UserProject", 'String'>
     readonly departmentId: FieldRef<"UserProject", 'String'>
     readonly hourlyRate: FieldRef<"UserProject", 'Float'>
+    readonly remuneracao: FieldRef<"UserProject", 'Float'>
+    readonly horasDiarias: FieldRef<"UserProject", 'Float'>
     readonly startDate: FieldRef<"UserProject", 'DateTime'>
     readonly endDate: FieldRef<"UserProject", 'DateTime'>
     readonly order: FieldRef<"UserProject", 'Int'>
@@ -17537,6 +17571,8 @@ export namespace Prisma {
     role: 'role',
     departmentId: 'departmentId',
     hourlyRate: 'hourlyRate',
+    remuneracao: 'remuneracao',
+    horasDiarias: 'horasDiarias',
     startDate: 'startDate',
     endDate: 'endDate',
     order: 'order'
@@ -18274,6 +18310,8 @@ export namespace Prisma {
     role?: StringNullableFilter<"UserProject"> | string | null
     departmentId?: StringNullableFilter<"UserProject"> | string | null
     hourlyRate?: FloatNullableFilter<"UserProject"> | number | null
+    remuneracao?: FloatNullableFilter<"UserProject"> | number | null
+    horasDiarias?: FloatNullableFilter<"UserProject"> | number | null
     startDate?: DateTimeFilter<"UserProject"> | Date | string
     endDate?: DateTimeNullableFilter<"UserProject"> | Date | string | null
     order?: IntFilter<"UserProject"> | number
@@ -18290,6 +18328,8 @@ export namespace Prisma {
     role?: SortOrderInput | SortOrder
     departmentId?: SortOrderInput | SortOrder
     hourlyRate?: SortOrderInput | SortOrder
+    remuneracao?: SortOrderInput | SortOrder
+    horasDiarias?: SortOrderInput | SortOrder
     startDate?: SortOrder
     endDate?: SortOrderInput | SortOrder
     order?: SortOrder
@@ -18310,6 +18350,8 @@ export namespace Prisma {
     role?: StringNullableFilter<"UserProject"> | string | null
     departmentId?: StringNullableFilter<"UserProject"> | string | null
     hourlyRate?: FloatNullableFilter<"UserProject"> | number | null
+    remuneracao?: FloatNullableFilter<"UserProject"> | number | null
+    horasDiarias?: FloatNullableFilter<"UserProject"> | number | null
     startDate?: DateTimeFilter<"UserProject"> | Date | string
     endDate?: DateTimeNullableFilter<"UserProject"> | Date | string | null
     order?: IntFilter<"UserProject"> | number
@@ -18326,6 +18368,8 @@ export namespace Prisma {
     role?: SortOrderInput | SortOrder
     departmentId?: SortOrderInput | SortOrder
     hourlyRate?: SortOrderInput | SortOrder
+    remuneracao?: SortOrderInput | SortOrder
+    horasDiarias?: SortOrderInput | SortOrder
     startDate?: SortOrder
     endDate?: SortOrderInput | SortOrder
     order?: SortOrder
@@ -18347,6 +18391,8 @@ export namespace Prisma {
     role?: StringNullableWithAggregatesFilter<"UserProject"> | string | null
     departmentId?: StringNullableWithAggregatesFilter<"UserProject"> | string | null
     hourlyRate?: FloatNullableWithAggregatesFilter<"UserProject"> | number | null
+    remuneracao?: FloatNullableWithAggregatesFilter<"UserProject"> | number | null
+    horasDiarias?: FloatNullableWithAggregatesFilter<"UserProject"> | number | null
     startDate?: DateTimeWithAggregatesFilter<"UserProject"> | Date | string
     endDate?: DateTimeNullableWithAggregatesFilter<"UserProject"> | Date | string | null
     order?: IntWithAggregatesFilter<"UserProject"> | number
@@ -19371,6 +19417,8 @@ export namespace Prisma {
     active?: boolean
     role?: string | null
     hourlyRate?: number | null
+    remuneracao?: number | null
+    horasDiarias?: number | null
     startDate?: Date | string
     endDate?: Date | string | null
     order?: number
@@ -19387,6 +19435,8 @@ export namespace Prisma {
     role?: string | null
     departmentId?: string | null
     hourlyRate?: number | null
+    remuneracao?: number | null
+    horasDiarias?: number | null
     startDate?: Date | string
     endDate?: Date | string | null
     order?: number
@@ -19397,6 +19447,8 @@ export namespace Prisma {
     active?: BoolFieldUpdateOperationsInput | boolean
     role?: NullableStringFieldUpdateOperationsInput | string | null
     hourlyRate?: NullableFloatFieldUpdateOperationsInput | number | null
+    remuneracao?: NullableFloatFieldUpdateOperationsInput | number | null
+    horasDiarias?: NullableFloatFieldUpdateOperationsInput | number | null
     startDate?: DateTimeFieldUpdateOperationsInput | Date | string
     endDate?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     order?: IntFieldUpdateOperationsInput | number
@@ -19413,6 +19465,8 @@ export namespace Prisma {
     role?: NullableStringFieldUpdateOperationsInput | string | null
     departmentId?: NullableStringFieldUpdateOperationsInput | string | null
     hourlyRate?: NullableFloatFieldUpdateOperationsInput | number | null
+    remuneracao?: NullableFloatFieldUpdateOperationsInput | number | null
+    horasDiarias?: NullableFloatFieldUpdateOperationsInput | number | null
     startDate?: DateTimeFieldUpdateOperationsInput | Date | string
     endDate?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     order?: IntFieldUpdateOperationsInput | number
@@ -19426,6 +19480,8 @@ export namespace Prisma {
     role?: string | null
     departmentId?: string | null
     hourlyRate?: number | null
+    remuneracao?: number | null
+    horasDiarias?: number | null
     startDate?: Date | string
     endDate?: Date | string | null
     order?: number
@@ -19436,6 +19492,8 @@ export namespace Prisma {
     active?: BoolFieldUpdateOperationsInput | boolean
     role?: NullableStringFieldUpdateOperationsInput | string | null
     hourlyRate?: NullableFloatFieldUpdateOperationsInput | number | null
+    remuneracao?: NullableFloatFieldUpdateOperationsInput | number | null
+    horasDiarias?: NullableFloatFieldUpdateOperationsInput | number | null
     startDate?: DateTimeFieldUpdateOperationsInput | Date | string
     endDate?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     order?: IntFieldUpdateOperationsInput | number
@@ -19449,6 +19507,8 @@ export namespace Prisma {
     role?: NullableStringFieldUpdateOperationsInput | string | null
     departmentId?: NullableStringFieldUpdateOperationsInput | string | null
     hourlyRate?: NullableFloatFieldUpdateOperationsInput | number | null
+    remuneracao?: NullableFloatFieldUpdateOperationsInput | number | null
+    horasDiarias?: NullableFloatFieldUpdateOperationsInput | number | null
     startDate?: DateTimeFieldUpdateOperationsInput | Date | string
     endDate?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     order?: IntFieldUpdateOperationsInput | number
@@ -20563,6 +20623,8 @@ export namespace Prisma {
     role?: SortOrder
     departmentId?: SortOrder
     hourlyRate?: SortOrder
+    remuneracao?: SortOrder
+    horasDiarias?: SortOrder
     startDate?: SortOrder
     endDate?: SortOrder
     order?: SortOrder
@@ -20570,6 +20632,8 @@ export namespace Prisma {
 
   export type UserProjectAvgOrderByAggregateInput = {
     hourlyRate?: SortOrder
+    remuneracao?: SortOrder
+    horasDiarias?: SortOrder
     order?: SortOrder
   }
 
@@ -20581,6 +20645,8 @@ export namespace Prisma {
     role?: SortOrder
     departmentId?: SortOrder
     hourlyRate?: SortOrder
+    remuneracao?: SortOrder
+    horasDiarias?: SortOrder
     startDate?: SortOrder
     endDate?: SortOrder
     order?: SortOrder
@@ -20594,6 +20660,8 @@ export namespace Prisma {
     role?: SortOrder
     departmentId?: SortOrder
     hourlyRate?: SortOrder
+    remuneracao?: SortOrder
+    horasDiarias?: SortOrder
     startDate?: SortOrder
     endDate?: SortOrder
     order?: SortOrder
@@ -20601,6 +20669,8 @@ export namespace Prisma {
 
   export type UserProjectSumOrderByAggregateInput = {
     hourlyRate?: SortOrder
+    remuneracao?: SortOrder
+    horasDiarias?: SortOrder
     order?: SortOrder
   }
 
@@ -22537,6 +22607,8 @@ export namespace Prisma {
     active?: boolean
     role?: string | null
     hourlyRate?: number | null
+    remuneracao?: number | null
+    horasDiarias?: number | null
     startDate?: Date | string
     endDate?: Date | string | null
     order?: number
@@ -22551,6 +22623,8 @@ export namespace Prisma {
     role?: string | null
     departmentId?: string | null
     hourlyRate?: number | null
+    remuneracao?: number | null
+    horasDiarias?: number | null
     startDate?: Date | string
     endDate?: Date | string | null
     order?: number
@@ -22641,6 +22715,8 @@ export namespace Prisma {
     role?: StringNullableFilter<"UserProject"> | string | null
     departmentId?: StringNullableFilter<"UserProject"> | string | null
     hourlyRate?: FloatNullableFilter<"UserProject"> | number | null
+    remuneracao?: FloatNullableFilter<"UserProject"> | number | null
+    horasDiarias?: FloatNullableFilter<"UserProject"> | number | null
     startDate?: DateTimeFilter<"UserProject"> | Date | string
     endDate?: DateTimeNullableFilter<"UserProject"> | Date | string | null
     order?: IntFilter<"UserProject"> | number
@@ -22736,6 +22812,8 @@ export namespace Prisma {
     active?: boolean
     role?: string | null
     hourlyRate?: number | null
+    remuneracao?: number | null
+    horasDiarias?: number | null
     startDate?: Date | string
     endDate?: Date | string | null
     order?: number
@@ -22750,6 +22828,8 @@ export namespace Prisma {
     role?: string | null
     departmentId?: string | null
     hourlyRate?: number | null
+    remuneracao?: number | null
+    horasDiarias?: number | null
     startDate?: Date | string
     endDate?: Date | string | null
     order?: number
@@ -23158,6 +23238,8 @@ export namespace Prisma {
     active?: boolean
     role?: string | null
     hourlyRate?: number | null
+    remuneracao?: number | null
+    horasDiarias?: number | null
     startDate?: Date | string
     endDate?: Date | string | null
     order?: number
@@ -23172,6 +23254,8 @@ export namespace Prisma {
     active?: boolean
     role?: string | null
     hourlyRate?: number | null
+    remuneracao?: number | null
+    horasDiarias?: number | null
     startDate?: Date | string
     endDate?: Date | string | null
     order?: number
@@ -24854,6 +24938,8 @@ export namespace Prisma {
     role?: string | null
     departmentId?: string | null
     hourlyRate?: number | null
+    remuneracao?: number | null
+    horasDiarias?: number | null
     startDate?: Date | string
     endDate?: Date | string | null
     order?: number
@@ -24878,6 +24964,8 @@ export namespace Prisma {
     active?: BoolFieldUpdateOperationsInput | boolean
     role?: NullableStringFieldUpdateOperationsInput | string | null
     hourlyRate?: NullableFloatFieldUpdateOperationsInput | number | null
+    remuneracao?: NullableFloatFieldUpdateOperationsInput | number | null
+    horasDiarias?: NullableFloatFieldUpdateOperationsInput | number | null
     startDate?: DateTimeFieldUpdateOperationsInput | Date | string
     endDate?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     order?: IntFieldUpdateOperationsInput | number
@@ -24892,6 +24980,8 @@ export namespace Prisma {
     role?: NullableStringFieldUpdateOperationsInput | string | null
     departmentId?: NullableStringFieldUpdateOperationsInput | string | null
     hourlyRate?: NullableFloatFieldUpdateOperationsInput | number | null
+    remuneracao?: NullableFloatFieldUpdateOperationsInput | number | null
+    horasDiarias?: NullableFloatFieldUpdateOperationsInput | number | null
     startDate?: DateTimeFieldUpdateOperationsInput | Date | string
     endDate?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     order?: IntFieldUpdateOperationsInput | number
@@ -24904,6 +24994,8 @@ export namespace Prisma {
     role?: NullableStringFieldUpdateOperationsInput | string | null
     departmentId?: NullableStringFieldUpdateOperationsInput | string | null
     hourlyRate?: NullableFloatFieldUpdateOperationsInput | number | null
+    remuneracao?: NullableFloatFieldUpdateOperationsInput | number | null
+    horasDiarias?: NullableFloatFieldUpdateOperationsInput | number | null
     startDate?: DateTimeFieldUpdateOperationsInput | Date | string
     endDate?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     order?: IntFieldUpdateOperationsInput | number
@@ -24958,6 +25050,8 @@ export namespace Prisma {
     role?: string | null
     departmentId?: string | null
     hourlyRate?: number | null
+    remuneracao?: number | null
+    horasDiarias?: number | null
     startDate?: Date | string
     endDate?: Date | string | null
     order?: number
@@ -24993,6 +25087,8 @@ export namespace Prisma {
     active?: BoolFieldUpdateOperationsInput | boolean
     role?: NullableStringFieldUpdateOperationsInput | string | null
     hourlyRate?: NullableFloatFieldUpdateOperationsInput | number | null
+    remuneracao?: NullableFloatFieldUpdateOperationsInput | number | null
+    horasDiarias?: NullableFloatFieldUpdateOperationsInput | number | null
     startDate?: DateTimeFieldUpdateOperationsInput | Date | string
     endDate?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     order?: IntFieldUpdateOperationsInput | number
@@ -25007,6 +25103,8 @@ export namespace Prisma {
     role?: NullableStringFieldUpdateOperationsInput | string | null
     departmentId?: NullableStringFieldUpdateOperationsInput | string | null
     hourlyRate?: NullableFloatFieldUpdateOperationsInput | number | null
+    remuneracao?: NullableFloatFieldUpdateOperationsInput | number | null
+    horasDiarias?: NullableFloatFieldUpdateOperationsInput | number | null
     startDate?: DateTimeFieldUpdateOperationsInput | Date | string
     endDate?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     order?: IntFieldUpdateOperationsInput | number
@@ -25019,6 +25117,8 @@ export namespace Prisma {
     role?: NullableStringFieldUpdateOperationsInput | string | null
     departmentId?: NullableStringFieldUpdateOperationsInput | string | null
     hourlyRate?: NullableFloatFieldUpdateOperationsInput | number | null
+    remuneracao?: NullableFloatFieldUpdateOperationsInput | number | null
+    horasDiarias?: NullableFloatFieldUpdateOperationsInput | number | null
     startDate?: DateTimeFieldUpdateOperationsInput | Date | string
     endDate?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     order?: IntFieldUpdateOperationsInput | number
@@ -25111,6 +25211,8 @@ export namespace Prisma {
     active?: boolean
     role?: string | null
     hourlyRate?: number | null
+    remuneracao?: number | null
+    horasDiarias?: number | null
     startDate?: Date | string
     endDate?: Date | string | null
     order?: number
@@ -25136,6 +25238,8 @@ export namespace Prisma {
     active?: BoolFieldUpdateOperationsInput | boolean
     role?: NullableStringFieldUpdateOperationsInput | string | null
     hourlyRate?: NullableFloatFieldUpdateOperationsInput | number | null
+    remuneracao?: NullableFloatFieldUpdateOperationsInput | number | null
+    horasDiarias?: NullableFloatFieldUpdateOperationsInput | number | null
     startDate?: DateTimeFieldUpdateOperationsInput | Date | string
     endDate?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     order?: IntFieldUpdateOperationsInput | number
@@ -25150,6 +25254,8 @@ export namespace Prisma {
     active?: BoolFieldUpdateOperationsInput | boolean
     role?: NullableStringFieldUpdateOperationsInput | string | null
     hourlyRate?: NullableFloatFieldUpdateOperationsInput | number | null
+    remuneracao?: NullableFloatFieldUpdateOperationsInput | number | null
+    horasDiarias?: NullableFloatFieldUpdateOperationsInput | number | null
     startDate?: DateTimeFieldUpdateOperationsInput | Date | string
     endDate?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     order?: IntFieldUpdateOperationsInput | number
@@ -25162,6 +25268,8 @@ export namespace Prisma {
     active?: BoolFieldUpdateOperationsInput | boolean
     role?: NullableStringFieldUpdateOperationsInput | string | null
     hourlyRate?: NullableFloatFieldUpdateOperationsInput | number | null
+    remuneracao?: NullableFloatFieldUpdateOperationsInput | number | null
+    horasDiarias?: NullableFloatFieldUpdateOperationsInput | number | null
     startDate?: DateTimeFieldUpdateOperationsInput | Date | string
     endDate?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     order?: IntFieldUpdateOperationsInput | number

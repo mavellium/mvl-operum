@@ -145,9 +145,9 @@ const emptyForm: FormState = {
 }
 
 const inputCls =
-  'w-full px-3 py-2 border border-gray-200 rounded-xl text-sm bg-white focus:outline-none focus:ring-2 focus:ring-blue-500 transition-shadow'
+  'w-full px-3 py-2 border border-gray-200 rounded-xl text-sm bg-white placeholder:text-slate-500 focus:outline-none focus:ring-2 focus:ring-blue-500 transition-shadow'
 const disabledCls =
-  'disabled:bg-gray-100 disabled:text-gray-400 disabled:cursor-not-allowed'
+  'disabled:bg-gray-100 disabled:text-gray-500 disabled:cursor-not-allowed'
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
 
@@ -282,7 +282,7 @@ function MultiCreatableSelect({
           onChange={e => { setSearch(e.target.value); setIsOpen(true) }}
           onFocus={() => !disabled && setIsOpen(true)}
           placeholder={values.length === 0 ? placeholder : ''}
-          className="flex-1 min-w-[120px] outline-none bg-transparent text-sm placeholder:text-gray-400 disabled:cursor-not-allowed"
+          className="flex-1 min-w-[120px] outline-none bg-transparent text-sm placeholder:text-slate-500 disabled:cursor-not-allowed"
         />
       </div>
       {isOpen && !disabled && (
@@ -1048,7 +1048,7 @@ export default function ProjetoStakeholdersClient({
             placeholder="Buscar por nome, e-mail ou empresa…"
             value={searchProjeto}
             onChange={e => setSearchProjeto(e.target.value)}
-            className="w-full px-3 py-2 border border-gray-200 rounded-xl text-sm placeholder:text-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500"
+            className="w-full px-3 py-2 border border-gray-200 rounded-xl text-sm placeholder:text-slate-500 focus:outline-none focus:ring-2 focus:ring-blue-500"
           />
         </div>
 
@@ -1207,7 +1207,7 @@ export default function ProjetoStakeholdersClient({
               placeholder={addMode === 'interno' ? 'Buscar usuário…' : 'Buscar no diretório…'}
               value={searchDir}
               onChange={e => setSearchDir(e.target.value)}
-              className="w-full px-3 py-2 border border-gray-200 rounded-xl text-sm placeholder:text-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500"
+              className="w-full px-3 py-2 border border-gray-200 rounded-xl text-sm placeholder:text-slate-500 focus:outline-none focus:ring-2 focus:ring-blue-500"
             />
           </div>
 
@@ -1301,15 +1301,15 @@ export default function ProjetoStakeholdersClient({
 
       {/* ── COLUMN 3 — Formulário de Edição ── */}
       {showCol3 && (
-        <div className={`${col3Width} w-full bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden animate-in slide-in-from-right-4 duration-300`}>
-          <div className="flex items-center justify-between px-5 py-4 border-b border-gray-100 bg-gray-50/50">
+        <div className={`${col3Width} w-full bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden animate-in slide-in-from-right-4 duration-300 flex flex-col max-h-[calc(100vh-6rem)]`}>
+          <div className="flex items-center justify-between px-5 py-4 border-b border-gray-100 bg-gray-50/50 shrink-0">
             <h2 className="text-sm font-semibold text-gray-900">{col3Title}</h2>
             <button onClick={handleClearSelection} className="p-2 rounded-xl text-gray-400 hover:text-gray-600 hover:bg-gray-100 transition-colors">
               <X className="w-4 h-4" />
             </button>
           </div>
 
-          <div className="px-5 py-5 space-y-4 overflow-y-auto max-h-[720px]">
+          <div className="px-5 py-5 space-y-4 overflow-y-auto flex-1 min-h-0">
 
             {/* Avatar */}
             <div className="flex justify-center pb-2">
@@ -1589,6 +1589,10 @@ export default function ProjetoStakeholdersClient({
               />
             </div>
 
+          </div>
+
+          {/* Rodapé fixo — sempre visível, mesmo com o formulário rolando por dentro */}
+          <div className="px-5 py-4 border-t border-gray-100 bg-white shrink-0 space-y-3">
             {!isAdmin && (
               <p className="text-xs text-amber-600 bg-amber-50 border border-amber-100 rounded-xl px-3 py-2">
                 Você está em modo somente leitura. Apenas administradores podem editar.
@@ -1599,7 +1603,7 @@ export default function ProjetoStakeholdersClient({
               <p className="text-xs text-red-500 bg-red-50 px-3 py-2 rounded-lg">{formError}</p>
             )}
 
-            <div className="flex gap-2 pt-2">
+            <div className="flex gap-2">
               <button
                 type="button"
                 onClick={handleClearSelection}

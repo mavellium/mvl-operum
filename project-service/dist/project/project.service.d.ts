@@ -82,6 +82,8 @@ export declare class ProjectService {
             userId: string;
             projectId: string;
             departmentId: string | null;
+            remuneracao: number | null;
+            horasDiarias: number | null;
             order: number;
         }[];
         macroFases: {
@@ -208,6 +210,8 @@ export declare class ProjectService {
         userId: string;
         projectId: string;
         departmentId: string | null;
+        remuneracao: number | null;
+        horasDiarias: number | null;
         order: number;
     }[]>;
     reorderMembers(projectId: string, tenantId: string, orderedUserIds: string[]): Promise<void>;
@@ -225,6 +229,8 @@ export declare class ProjectService {
         userId: string;
         projectId: string;
         departmentId: string | null;
+        remuneracao: number | null;
+        horasDiarias: number | null;
         order: number;
     }>;
     removeMember(projectId: string, tenantId: string, userId: string): Promise<void>;
@@ -244,6 +250,8 @@ export declare class ProjectService {
         userId: string;
         projectId: string;
         departmentId: string | null;
+        remuneracao: number | null;
+        horasDiarias: number | null;
         order: number;
     })[]>;
     listMacroFases(projectId: string, tenantId: string): Promise<{

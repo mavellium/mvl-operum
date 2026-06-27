@@ -48,6 +48,8 @@ export declare class ProjectController {
         userId: string;
         projectId: string;
         departmentId: string | null;
+        remuneracao: number | null;
+        horasDiarias: number | null;
         order: number;
     })[]>;
     findOne(id: string, tenantId: string): Promise<{
@@ -61,6 +63,8 @@ export declare class ProjectController {
             userId: string;
             projectId: string;
             departmentId: string | null;
+            remuneracao: number | null;
+            horasDiarias: number | null;
             order: number;
         }[];
         macroFases: {
@@ -187,6 +191,8 @@ export declare class ProjectController {
         userId: string;
         projectId: string;
         departmentId: string | null;
+        remuneracao: number | null;
+        horasDiarias: number | null;
         order: number;
     }[]>;
     addMember(projectId: string, tenantId: string, body: {
@@ -204,6 +210,8 @@ export declare class ProjectController {
         userId: string;
         projectId: string;
         departmentId: string | null;
+        remuneracao: number | null;
+        horasDiarias: number | null;
         order: number;
     }>;
     removeMember(projectId: string, userId: string, tenantId: string): Promise<void>;

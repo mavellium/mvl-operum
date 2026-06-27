@@ -200,6 +200,8 @@ exports.Prisma.UserProjectScalarFieldEnum = {
   role: 'role',
   departmentId: 'departmentId',
   hourlyRate: 'hourlyRate',
+  remuneracao: 'remuneracao',
+  horasDiarias: 'horasDiarias',
   startDate: 'startDate',
   endDate: 'endDate',
   order: 'order'
