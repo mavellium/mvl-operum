@@ -2,13 +2,17 @@ packages:
   - "."
   - "*"
 overrides:
-  shell-quote: ">=1.8.4"
+  shell-quote: ">=1.8.5"
   esbuild: ">=0.28.1"
   hono: ">=4.12.25"
   "@hono/node-server": ">=1.19.13"
-  postcss: ">=8.5.10"
+  postcss: ">=8.5.18"
   multer: ">=2.2.0"
   undici: ">=7.28.0 <8.0.0"
+  fast-uri: ">=3.1.4"
+  js-yaml: ">=4.3.0"
+  sharp: ">=0.35.0"
+  brace-expansion: ">=5.0.8"
 allowBuilds:
   '@nestjs/core': true
   '@prisma/engines': true
@@ -19,3 +23,14 @@ allowBuilds:
   prisma: true
   sharp: true
   unrs-resolver: true
+minimumReleaseAgeExclude:
+  - '@next/env@16.2.12'
+  - '@next/swc-darwin-arm64@16.2.12'
+  - '@next/swc-darwin-x64@16.2.12'
+  - '@next/swc-linux-arm64-gnu@16.2.12'
+  - '@next/swc-linux-arm64-musl@16.2.12'
+  - '@next/swc-linux-x64-gnu@16.2.12'
+  - '@next/swc-linux-x64-musl@16.2.12'
+  - '@next/swc-win32-arm64-msvc@16.2.12'
+  - '@next/swc-win32-x64-msvc@16.2.12'
+  - next@16.2.12

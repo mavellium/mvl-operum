@@ -2,8 +2,11 @@ packages: []
 overrides:
   hono: ">=4.12.25"
   "@hono/node-server": ">=1.19.13"
-  postcss: ">=8.5.10"
+  postcss: ">=8.5.18"
   multer: ">=2.2.0"
+  fast-uri: ">=3.1.4"
+  js-yaml: ">=4.3.0"
+  brace-expansion: ">=5.0.8"
 allowBuilds:
   '@nestjs/core': true
   '@prisma/engines': true
