@@ -140,7 +140,6 @@ export default function WbsPropertiesPanel({ selectedNodeIds, nodes, rollups, ca
   const count = selectedNodes.length
   if (count === 0) return null
 
-  const allLeaves = selectedNodes.every(n => n.childrenIds.length === 0)
   const anyParent = selectedNodes.some(n => n.childrenIds.length > 0)
 
   // ── Valores comuns de estilo ──

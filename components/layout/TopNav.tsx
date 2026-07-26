@@ -23,7 +23,7 @@ type HeaderConfig = {
   }
 }
 
-function getHeaderContext(pathname: string, role?: string, projectManagerIn: string[] = []): HeaderConfig {
+function getHeaderContext(pathname: string, role?: string): HeaderConfig {
   const parts = pathname.split('/').filter(Boolean)
   const baseRoute = parts[0]
   const idParam = parts[1]
@@ -68,8 +68,6 @@ function getHeaderContext(pathname: string, role?: string, projectManagerIn: str
 
   // 2. Contexto: Projeto Específico (/projetos/:id/...)
   if (baseRoute === 'projetos' && idParam && idParam !== 'novo') {
-    const isManagerOrAdmin = role === 'admin' || projectManagerIn.includes(idParam)
-
     // Sub-rota: Membros
     if (subRoute === 'membros') {
       return {
@@ -191,7 +189,7 @@ export default function TopNav() {
 
   if (HIDDEN_PATHS.some(p => pathname.startsWith(p))) return null
 
-  const { icon, showBoardActions, search } = getHeaderContext(pathname, user?.role, user?.projectManagerIn ?? [])
+  const { icon, showBoardActions, search } = getHeaderContext(pathname, user?.role)
 
   return (
     <header className="sticky top-0 z-40 flex items-center justify-between px-6 h-16 bg-white backdrop-blur-sm border-b border-gray-100 transition-all duration-200">
