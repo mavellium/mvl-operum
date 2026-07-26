@@ -26,7 +26,7 @@ export default async function ProjetoLayout({
         projetoNome={projeto.name}
         canManageMembers={canManageMembers}
       />
-      <main className="flex-1 min-w-0 h-full overflow-hidden">
+      <main className="flex-1 min-w-0 h-full overflow-y-auto">
         {children}
       </main>
     </div>

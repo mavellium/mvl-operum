@@ -1,15 +1,25 @@
 'use client'
 
 import { useTransition } from 'react'
+import { useRouter } from 'next/navigation'
 import { deleteProjetoAction } from '@/app/actions/projetos'
+import { useToast } from '@/components/ui/Toast'
 
 export default function DeleteProjectButton({ id, name }: { id: string; name: string }) {
   const [isPending, startTransition] = useTransition()
+  const router = useRouter()
+  const { toast } = useToast()
 
   const handleDelete = () => {
     if (confirm(`Tem certeza que deseja inativar/deletar o projeto "${name}"?`)) {
       startTransition(async () => {
-        await deleteProjetoAction(id)
+        const result = await deleteProjetoAction(id)
+        if ('error' in result) {
+          toast(result.error || 'Erro ao excluir projeto', 'error')
+          return
+        }
+        toast('Projeto excluído com sucesso', 'success')
+        router.refresh()
       })
     }
   }
