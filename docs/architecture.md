@@ -54,8 +54,8 @@ Plataforma de gerenciamento de projetos multi-tenant com board Kanban por sprint
 
 | Ambiente | Aplicação | MinIO (storage) |
 |----------|-----------|-----------------|
-| **Staging** | https://staging.operum.mavellium.com.br | https://storage-staging.operum.mavellium.com.br |
-| **Produção** | https://operum.mavellium.com.br | https://storage-prod.operum.mavellium.com.br |
+| **Staging** | https://staging.operum.adm.br | https://storage-staging.operum.adm.br |
+| **Produção** | https://operum.adm.br | https://storage-prod.operum.adm.br |
 
 ### Bancos de Dados (VPS `187.77.236.241`)
 
@@ -93,7 +93,7 @@ Plataforma de gerenciamento de projetos multi-tenant com board Kanban por sprint
 | `IMAGE_TAG` | `staging` | `prod` |
 | `DATABASE_URL` | `postgresql://...@postgres:5432/mvloperum` | `postgresql://...@postgres:5432/mvloperum_prod` |
 | `MINIO_BUCKET` | `mvloperum` | `mvloperum-prod` |
-| `MINIO_PUBLIC_URL` | `https://storage-staging.operum.mavellium.com.br` | `https://storage-prod.operum.mavellium.com.br` |
+| `MINIO_PUBLIC_URL` | `https://storage-staging.operum.adm.br` | `https://storage-prod.operum.adm.br` |
 | `JWT_PRIVATE_KEY` | Chave RS256 exclusiva | Chave RS256 exclusiva |
 | `JWT_PUBLIC_KEY` | Chave RS256 exclusiva | Chave RS256 exclusiva |
 

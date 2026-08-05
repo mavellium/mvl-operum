@@ -102,8 +102,8 @@ Internet
     v
 [Traefik] :443 (TLS via Let's Encrypt)
     |
-    +-- app.mvloperum.com         --> frontend     (Next.js,  :3000)
-    +-- api.mvloperum.com         --> api-gateway   (Express,  :4000)
+    +-- app.operum.adm.br         --> frontend     (Next.js,  :3000)
+    +-- api.operum.adm.br         --> api-gateway   (Express,  :4000)
     |       |
     |       +-- /auth/*           --> auth-service         (NestJS, :4001)
     |       +-- /projects/*       --> project-service       (NestJS, :4002)
@@ -111,8 +111,8 @@ Internet
     |       +-- /notifications/*  --> notification-service  (NestJS, :4004)
     |       +-- /files/*          --> file-service          (NestJS, :4005)
     |
-    +-- files.mvloperum.com       --> MinIO         (:9000, acesso publico controlado)
-    +-- grafana.mvloperum.com     --> Grafana       (:3000, apenas prod)
+    +-- files.operum.adm.br       --> MinIO         (:9000, acesso publico controlado)
+    +-- grafana.operum.adm.br     --> Grafana       (:3000, apenas prod)
 
 Rede interna Docker (sem acesso externo):
     [PostgreSQL :5432] [Redis :6379] [MinIO :9000] [Prometheus :9090] [Loki :3100]
@@ -461,8 +461,8 @@ http:
           - Authorization
           - X-Tenant-ID
         accessControlAllowOriginList:
-          - "https://app.mvloperum.com"
-          - "https://staging.mvloperum.com"
+          - "https://app.operum.adm.br"
+          - "https://staging.operum.adm.br"
         accessControlMaxAge: 3600
 ```
 
@@ -604,10 +604,10 @@ Para operacoes fire-and-forget que nao devem bloquear o request:
 
 **Estado alvo:**
 
-1. Usuario POST credenciais para `api.mvloperum.com/auth/login`
+1. Usuario POST credenciais para `api.operum.adm.br/auth/login`
 2. Auth-service valida (bcrypt compare), cria JWT RS256 com payload `{ userId, tenantId, role, tokenVersion, jti }`
 3. Armazena sessao no Redis: chave `session:{jti}`, TTL 7 dias
-4. Retorna JWT no body + seta cookie `session` httpOnly em `app.mvloperum.com`
+4. Retorna JWT no body + seta cookie `session` httpOnly em `app.operum.adm.br`
 5. Frontend API client le o cookie e envia `Authorization: Bearer <token>` em todos os requests
 6. API Gateway:
    - Verifica assinatura JWT com chave publica RS256
@@ -673,7 +673,7 @@ mvloperum-files/
 
 ### 6.3 Politica de Acesso
 
-- **Avatars e logos**: bucket publico (acesso direto via `files.mvloperum.com/...`)
+- **Avatars e logos**: bucket publico (acesso direto via `files.operum.adm.br/...`)
 - **Attachments**: presigned URLs com expiracao de 1 hora
 - **Exports**: presigned URLs com expiracao de 15 minutos
 
@@ -832,8 +832,8 @@ jobs:
 
 | Branch | Trigger | Ambiente |
 |--------|---------|----------|
-| `develop` | Push automatico | Staging (`staging.mvloperum.com`) |
-| `main` | Push automatico ou manual dispatch | Producao (`app.mvloperum.com`) |
+| `develop` | Push automatico | Staging (`staging.operum.adm.br`) |
+| `main` | Push automatico ou manual dispatch | Producao (`app.operum.adm.br`) |
 
 ### 8.3 Secrets Necessarios no GitHub
 
@@ -881,12 +881,12 @@ jobs:
 
 ```bash
 COMPOSE_PROJECT_NAME=mvloperum-staging
-BASE_DOMAIN=mvloperum.com
-FRONTEND_HOST=staging.mvloperum.com
-API_HOST=api-staging.mvloperum.com
-API_URL=https://api-staging.mvloperum.com
-MINIO_HOST=minio-staging.mvloperum.com
-MINIO_PUBLIC_URL=https://minio-staging.mvloperum.com
+BASE_DOMAIN=operum.adm.br
+FRONTEND_HOST=staging.operum.adm.br
+API_HOST=api-staging.operum.adm.br
+API_URL=https://api-staging.operum.adm.br
+MINIO_HOST=minio-staging.operum.adm.br
+MINIO_PUBLIC_URL=https://minio-staging.operum.adm.br
 
 DB_USER=mvluser
 DB_PASSWORD=<senha-staging>
@@ -911,12 +911,12 @@ NODE_ENV=staging
 
 ```bash
 COMPOSE_PROJECT_NAME=mvloperum-prod
-BASE_DOMAIN=mvloperum.com
-FRONTEND_HOST=app.mvloperum.com
-API_HOST=api.mvloperum.com
-API_URL=https://api.mvloperum.com
-MINIO_HOST=files.mvloperum.com
-MINIO_PUBLIC_URL=https://files.mvloperum.com
+BASE_DOMAIN=operum.adm.br
+FRONTEND_HOST=app.operum.adm.br
+API_HOST=api.operum.adm.br
+API_URL=https://api.operum.adm.br
+MINIO_HOST=files.operum.adm.br
+MINIO_PUBLIC_URL=https://files.operum.adm.br
 
 DB_USER=mvluser
 DB_PASSWORD=<senha-producao>

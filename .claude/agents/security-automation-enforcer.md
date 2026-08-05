@@ -30,7 +30,7 @@ Before issuing APPROVED, verify:
 - [ ] No Critical or High vulnerabilities in application code (SAST passed)
 - [ ] No known CVEs in dependencies with CVSS ≥ 7.0 (SCA passed)
 - [ ] IaC scan passed (no containers running as root, no hardcoded secrets, no unnecessary exposed ports)
-- [ ] DAST scan completed against staging URL (`https://staging.operum.mavellium.com.br`)
+- [ ] DAST scan completed against staging URL (`https://staging.operum.adm.br`)
 - [ ] GitHub Actions pipeline has security gates that block merge on failure
 - [ ] No secrets committed to repository (check `.env`, `*.pem`, `*.key`)
 - [ ] JWT keys (`JWT_PRIVATE_KEY`, `JWT_PUBLIC_KEY`) are only in VPS `.env` files, never in repo

@@ -17,7 +17,7 @@ services:
       - traefik-public
     labels:
       - "traefik.enable=true"
-      - "traefik.http.routers.mvl-prod.rule=Host(`operum.mavellium.com.br`)"
+      - "traefik.http.routers.mvl-prod.rule=Host(`operum.adm.br`)"
       - "traefik.http.routers.mvl-prod.entrypoints=websecure"
       - "traefik.http.routers.mvl-prod.tls.certresolver=myresolver"
       - "traefik.http.routers.mvl-prod.service=app-${COMPOSE_PROJECT_NAME}"
@@ -35,7 +35,7 @@ services:
       - traefik-public
     labels:
       - "traefik.enable=true"
-      - "traefik.http.routers.api-prod.rule=Host(`api.operum.mavellium.com.br`)"
+      - "traefik.http.routers.api-prod.rule=Host(`api.operum.adm.br`)"
       - "traefik.http.routers.api-prod.entrypoints=websecure"
       - "traefik.http.routers.api-prod.tls.certresolver=myresolver"
       - "traefik.http.routers.api-prod.service=api-gateway-${COMPOSE_PROJECT_NAME}"
@@ -104,7 +104,7 @@ services:
       - traefik-public
     labels:
       - "traefik.enable=true"
-      - "traefik.http.routers.minio-prod.rule=Host(`storage-prod.operum.mavellium.com.br`)"
+      - "traefik.http.routers.minio-prod.rule=Host(`storage-prod.operum.adm.br`)"
       - "traefik.http.routers.minio-prod.entrypoints=websecure"
       - "traefik.http.routers.minio-prod.tls.certresolver=myresolver"
       - "traefik.http.services.minio-prod.loadbalancer.server.port=9000"

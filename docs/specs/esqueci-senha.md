@@ -78,7 +78,7 @@ A arquitetura atual gera o código mas **não o entrega**. Sem entrega o usuári
 | `SMTP_USER` | Prod | Usuário SMTP |
 | `SMTP_PASSWORD` | Prod | Senha SMTP |
 | `SMTP_FROM` | Prod | Remetente, ex: `"Operum <no-reply@mavellium.com.br>"` |
-| `APP_PUBLIC_URL` | Sim | Base para link no e-mail (ex: `https://operum.mavellium.com.br`) |
+| `APP_PUBLIC_URL` | Sim | Base para link no e-mail (ex: `https://operum.adm.br`) |
 
 ---
 

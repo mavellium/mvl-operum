@@ -24,7 +24,7 @@ export class MailerService {
       },
     })
 
-    const appUrl = (process.env.APP_PUBLIC_URL ?? 'https://operum.mavellium.com.br').replace(/\/$/, '')
+    const appUrl = (process.env.APP_PUBLIC_URL ?? 'https://operum.adm.br').replace(/\/$/, '')
 
     try {
       await transporter.sendMail({

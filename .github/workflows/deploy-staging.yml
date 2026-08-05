@@ -280,7 +280,7 @@ jobs:
         run: |
           for i in $(seq 1 5); do
             # -k ignora problemas temporários de SSL na virada do proxy se necessário
-            if curl -sfk --max-time 5 https://staging.operum.mavellium.com.br/api/health; then
+            if curl -sfk --max-time 5 https://staging.operum.adm.br/api/health; then
               echo "Staging is up and healthy."
               exit 0
             fi
@@ -293,6 +293,6 @@ jobs:
       - name: OWASP ZAP Baseline Scan
         uses: zaproxy/action-baseline@v0.14.0
         with:
-          target: 'https://staging.operum.mavellium.com.br'
+          target: 'https://staging.operum.adm.br'
           fail_action: false
           issue_title: 'ZAP Baseline Scan - Staging'

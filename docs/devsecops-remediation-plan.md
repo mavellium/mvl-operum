@@ -414,7 +414,7 @@ grep -q "^DATABASE_URL=" .env || (echo "❌ DATABASE_URL missing" && exit 1)
 - name: DAST — OWASP ZAP Baseline Scan
   uses: zaproxy/action-baseline@v0.12.0
   with:
-    target: 'https://staging.operum.mavellium.com.br'
+    target: 'https://staging.operum.adm.br'
     fail_action: true
 ```
 
@@ -446,7 +446,7 @@ headers: async () => [{
   headers: [
     {
       key: 'Content-Security-Policy',
-      value: "default-src 'self'; script-src 'self'; img-src 'self' data: https://*.mavellium.com.br; connect-src 'self'",
+      value: "default-src 'self'; script-src 'self'; img-src 'self' data: https://*.operum.adm.br; connect-src 'self'",
     },
   ],
 }],
