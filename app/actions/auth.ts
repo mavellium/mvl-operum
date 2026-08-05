@@ -241,12 +241,13 @@ export async function switchTenantAction(targetTenantId: string) {
   const isMember = myTenants.some(t => t.tenantId === targetTenantId)
   if (!isMember) return
 
-  // Invalidate old session in Redis (fire-and-forget, but log failures)
+  const result = await authApi.switchTenant(targetTenantId)
+
+  // Invalidate old session only after the new one is issued, to avoid a race
+  // where the gateway rejects the switch call as "Sessão expirada".
   authServiceLogout(oldToken).catch((err: unknown) => {
     console.warn('[switchTenantAction] failed to invalidate old session:', err instanceof Error ? err.message : err)
   })
-
-  const result = await authApi.switchTenant(targetTenantId)
 
   const cookieStore = await cookies()
   const expiresAt = new Date(Date.now() + SESSION_DURATION_MS)

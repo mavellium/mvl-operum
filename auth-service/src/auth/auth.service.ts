@@ -474,6 +474,11 @@ export class AuthService {
       throw new NotFoundException('Usuário não encontrado neste workspace')
     }
 
+    await prisma.user.update({
+      where: { id: target.id },
+      data: { lastLogin: new Date() },
+    })
+
     const { token, jti } = await this.jwtService.sign({
       userId: target.id,
       tenantId: target.tenantId,
