@@ -36,6 +36,10 @@ RUN pnpm install --frozen-lockfile --prod --ignore-scripts \
 
 COPY --from=builder --chown=gateway:nodejs /app/dist ./dist
 
+# npm's own vendored deps (bundled with node:22-alpine) carry known CVEs.
+# This image runs via pnpm/corepack only — npm/npx are never invoked.
+RUN rm -rf /usr/local/lib/node_modules/npm /usr/local/bin/npm /usr/local/bin/npx
+
 USER gateway
 
 EXPOSE 4000

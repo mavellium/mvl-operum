@@ -39,6 +39,10 @@ COPY --from=builder --chown=nestjs:nodejs /app/dist ./dist
 COPY --from=builder --chown=nestjs:nodejs /app/lib/generated ./lib/generated
 COPY --from=builder --chown=nestjs:nodejs /app/prisma ./prisma
 
+# npm's own vendored deps (bundled with node:22-alpine) carry known CVEs.
+# This image runs via pnpm/corepack only — npm/npx are never invoked.
+RUN rm -rf /usr/local/lib/node_modules/npm /usr/local/bin/npm /usr/local/bin/npx
+
 USER nestjs
 
 EXPOSE 4005

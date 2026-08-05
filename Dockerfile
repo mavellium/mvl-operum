@@ -96,6 +96,12 @@ RUN mkdir -p /app/prisma-cli \
 
 ENV PATH="/app/prisma-cli/node_modules/.bin:/app/node_modules/.bin:$PATH"
 
+# npm's own vendored dependencies (bundled with the node:22-alpine base image)
+# carry known CVEs (brace-expansion, tar, ip-address, sigstore). npm already
+# did its one job above (installing the prisma CLI) — nothing at runtime
+# invokes npm/npx, so strip it to remove the vulnerable files from the image.
+RUN rm -rf /usr/local/lib/node_modules/npm /usr/local/bin/npm /usr/local/bin/npx
+
 
 
 USER nextjs
