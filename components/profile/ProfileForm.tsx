@@ -52,7 +52,7 @@ export default function ProfileForm({ name, email, cargo, departamento, hourlyRa
           name="name"
           defaultValue={name}
           required
-          className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm text-gray-900 placeholder:text-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500"
+          className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm text-gray-900 focus:outline-none focus:ring-2 focus:ring-blue-500"
         />
       </div>
 
@@ -64,7 +64,7 @@ export default function ProfileForm({ name, email, cargo, departamento, hourlyRa
           type="email"
           defaultValue={email}
           required
-          className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm text-gray-900 placeholder:text-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500"
+          className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm text-gray-900 focus:outline-none focus:ring-2 focus:ring-blue-500"
         />
       </div>
 
@@ -75,7 +75,7 @@ export default function ProfileForm({ name, email, cargo, departamento, hourlyRa
             id="cargo"
             name="cargo"
             defaultValue={cargo ?? ''}
-            className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm text-gray-900 placeholder:text-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500"
+            className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm text-gray-900 focus:outline-none focus:ring-2 focus:ring-blue-500"
           />
         </div>
         <div>
@@ -84,7 +84,7 @@ export default function ProfileForm({ name, email, cargo, departamento, hourlyRa
             id="departamento"
             name="departamento"
             defaultValue={departamento ?? ''}
-            className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm text-gray-900 placeholder:text-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500"
+            className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm text-gray-900 focus:outline-none focus:ring-2 focus:ring-blue-500"
           />
         </div>
       </div>
@@ -98,7 +98,7 @@ export default function ProfileForm({ name, email, cargo, departamento, hourlyRa
           min="0"
           step="0.01"
           defaultValue={hourlyRate}
-          className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm text-gray-900 placeholder:text-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500"
+          className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm text-gray-900 focus:outline-none focus:ring-2 focus:ring-blue-500"
         />
       </div>
 
@@ -110,7 +110,7 @@ export default function ProfileForm({ name, email, cargo, departamento, hourlyRa
           type="tel"
           defaultValue={phone ?? ''}
           placeholder="(00) 00000-0000"
-          className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm text-gray-900 placeholder:text-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500"
+          className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm text-gray-900 focus:outline-none focus:ring-2 focus:ring-blue-500"
         />
       </div>
 
@@ -135,7 +135,7 @@ export default function ProfileForm({ name, email, cargo, departamento, hourlyRa
           defaultValue={notes ?? ''}
           rows={3}
           placeholder="Informações adicionais..."
-          className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm text-gray-900 placeholder:text-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500 resize-none"
+          className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm text-gray-900 focus:outline-none focus:ring-2 focus:ring-blue-500 resize-none"
         />
       </div>
 

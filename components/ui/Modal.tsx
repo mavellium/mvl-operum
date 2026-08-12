@@ -31,11 +31,11 @@ export default function Modal({
 
   // Scroll-lock e foco inicial — só depende de isOpen para não disparar a cada render do pai
   useEffect(() => {
-    if (!isOpen) {
-      document.body.style.overflow = 'unset'
-      return
-    }
+    if (!isOpen) return
 
+    // Guarda o valor anterior em vez de assumir 'unset': com dois overlays
+    // sobrepostos, fechar o de cima não deve destravar o body do que ainda está aberto.
+    const previousOverflow = document.body.style.overflow
     document.body.style.overflow = 'hidden'
 
     // Prioriza campos de entrada; só cai em button/tabindex se não houver nenhum.
@@ -47,7 +47,7 @@ export default function Modal({
 
     return () => {
       clearTimeout(timer)
-      document.body.style.overflow = 'unset'
+      document.body.style.overflow = previousOverflow
     }
   }, [isOpen])
 

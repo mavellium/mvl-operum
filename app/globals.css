@@ -36,7 +36,7 @@ body {
 /* Improved contrast for inputs and labels */
 input::placeholder,
 textarea::placeholder {
-  color: #6b7280; /* gray-500 — legível mas sem dominar */
+  color: #9ca3af; /* gray-400 — visível mas não compete com o valor digitado */
   opacity: 1;
 }
 

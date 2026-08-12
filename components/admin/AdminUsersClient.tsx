@@ -5,6 +5,7 @@ import UserAvatar from '@/components/user/UserAvatar'
 import AdminCreateUserModal, { type AdminUser } from './AdminCreateUserModal'
 import AdminEditUserModal from './AdminEditUserModal'
 import { toggleUserActiveAction } from '@/app/actions/admin'
+import { useFocusOnMount } from '@/hooks/useFocusOnMount'
 
 interface Props {
   initialUsers: AdminUser[]
@@ -57,17 +58,19 @@ export default function AdminUsersClient({ initialUsers }: Props) {
   }
 
   const roleInfo = (role: string) => ROLE_LABELS[role] ?? ROLE_LABELS.member
+  const searchRef = useFocusOnMount<HTMLInputElement>()
 
   return (
     <>
       {/* Toolbar */}
       <div className="flex flex-col sm:flex-row gap-3 mb-6">
         <input
+          ref={searchRef}
           type="search"
           placeholder="Buscar por nome ou email…"
           value={search}
           onChange={e => setSearch(e.target.value)}
-          className="flex-1 rounded-xl border border-gray-200 px-3 py-2 text-sm text-gray-900 placeholder:text-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500"
+          className="flex-1 rounded-xl border border-gray-200 px-3 py-2 text-sm text-gray-900 focus:outline-none focus:ring-2 focus:ring-blue-500"
         />
         <select
           value={filterRole}

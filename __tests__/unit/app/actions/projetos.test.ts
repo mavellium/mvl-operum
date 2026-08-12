@@ -22,8 +22,15 @@ vi.mock('next/cache', () => ({
   revalidatePath: vi.fn(),
 }))
 
+vi.mock('@/lib/prisma', () => ({
+  default: {
+    projectDraft: { deleteMany: vi.fn() },
+  },
+}))
+
 import { verifySession } from '@/lib/dal'
 import { projectsApi } from '@/lib/api-client'
+import prisma from '@/lib/prisma'
 import {
   createProjetoAction,
   getProjetosAction,
@@ -129,10 +136,15 @@ describe('Projeto Actions', () => {
     it('should delete project and return success', async () => {
       vi.mocked(verifySession).mockResolvedValue(mockSession)
       vi.mocked(projectsApi.delete).mockResolvedValue(undefined)
+      vi.mocked(prisma.projectDraft.deleteMany).mockResolvedValue({ count: 0 } as never)
 
       const result = await deleteProjetoAction('p1')
       expect(result).toHaveProperty('success')
       expect(result.success).toBe(true)
+      // Limpa rascunhos do projeto excluído para não reaparecerem no formulário de "novo projeto".
+      expect(prisma.projectDraft.deleteMany).toHaveBeenCalledWith(
+        expect.objectContaining({ where: { projectId: 'p1', tenantId: mockSession.tenantId } }),
+      )
     })
 
     it('should return error on delete failure', async () => {
@@ -141,6 +153,7 @@ describe('Projeto Actions', () => {
 
       const result = await deleteProjetoAction('nonexistent')
       expect(result).toHaveProperty('error')
+      expect(prisma.projectDraft.deleteMany).not.toHaveBeenCalled()
     })
   })
 })

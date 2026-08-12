@@ -289,7 +289,7 @@ export default function CardModal({
           <input
             value={title}
             onChange={e => { setTitle(e.target.value); setError('') }}
-            className="flex-1 bg-transparent text-xl font-semibold text-slate-900 outline-none placeholder:text-slate-400 focus:ring-1 focus:ring-blue-400 rounded px-1"
+            className="flex-1 bg-transparent text-xl font-semibold text-slate-900 outline-none focus:ring-1 focus:ring-blue-400 rounded px-1"
             placeholder="Título da tarefa..."
           />
           {error && <span className="text-red-500 text-xs shrink-0">{error}</span>}

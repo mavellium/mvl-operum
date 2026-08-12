@@ -26,17 +26,17 @@ export default function Drawer({
   useEffect(() => { setMounted(true) }, [])
 
   useEffect(() => {
-    if (!isOpen) {
-      document.body.style.overflow = 'unset'
-      return
-    }
+    if (!isOpen) return
+    // Guarda o valor anterior: com dois overlays sobrepostos, fechar o de cima
+    // não deve destravar o body do que ainda está aberto.
+    const previousOverflow = document.body.style.overflow
     document.body.style.overflow = 'hidden'
     const handleKey = (e: KeyboardEvent) => { if (e.key === 'Escape') onClose() }
     document.addEventListener('keydown', handleKey)
     setTimeout(() => firstFocusRef.current?.focus(), 10)
     return () => {
       document.removeEventListener('keydown', handleKey)
-      document.body.style.overflow = 'unset'
+      document.body.style.overflow = previousOverflow
     }
   }, [isOpen, onClose])
 

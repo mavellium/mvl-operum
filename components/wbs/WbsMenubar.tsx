@@ -2,7 +2,12 @@
 
 import { type Dispatch, useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { useRouter } from 'next/navigation'
+import {
+  Undo2, Redo2, CornerDownRight, Plus, Trash2, Palette, Save, Printer,
+  ZoomIn, ZoomOut, Maximize2,
+} from 'lucide-react'
 import Modal from '@/components/ui/Modal'
+import Tooltip from '@/components/ui/Tooltip'
 import { exportMspdi } from '@/lib/wbsExportMspdi'
 import { exportWbsSvg, exportWbsPng } from '@/lib/wbsExportSvg'
 import { importWbsAction } from '@/app/actions/wbs'
@@ -28,6 +33,30 @@ export interface WbsMenubarProps {
   onManualSave: () => void
   onRequestDelete: () => void
   onPasteStyle: () => void
+  showStylePanel: boolean
+  onToggleStylePanel: () => void
+}
+
+// ── Botão de ícone com tooltip, usado na faixa de ações rápidas ───────────────
+
+function IconButton({
+  label, onClick, disabled, active, children,
+}: { label: string; onClick: () => void; disabled?: boolean; active?: boolean; children: React.ReactNode }) {
+  return (
+    <Tooltip label={label}>
+      <button
+        type="button"
+        onClick={onClick}
+        disabled={disabled}
+        aria-label={label}
+        className={`h-6 w-6 flex items-center justify-center rounded transition-colors cursor-pointer disabled:opacity-30 disabled:cursor-not-allowed disabled:pointer-events-none ${
+          active ? 'bg-blue-100 text-blue-700' : 'text-gray-600 hover:bg-gray-100 hover:text-gray-900'
+        }`}
+      >
+        {children}
+      </button>
+    </Tooltip>
+  )
 }
 
 const SYNC = {
@@ -237,6 +266,7 @@ export default function WbsMenubar({
   nodes, rootId, selectedNodeIds, projetoId,
   hasCopiedStyle,
   dispatch, onFitScreen, onManualSave, onRequestDelete, onPasteStyle,
+  showStylePanel, onToggleStylePanel,
 }: WbsMenubarProps) {
   const router = useRouter()
   const [activeMenu, setActiveMenu] = useState<string | null>(null)
@@ -346,8 +376,8 @@ export default function WbsMenubar({
           { label: 'Inserir Irmão', shortcut: 'Enter', action: () => { close(); if (firstSelected && selectedNode?.parentId) dispatch({ type: 'INSERT_SIBLING', payload: { siblingId: firstSelected } }) }, disabled: !firstSelected || !selectedNode?.parentId || !canEdit },
           { label: 'Remover', shortcut: 'Delete', action: () => { close(); onRequestDelete() }, disabled: !firstSelected || !selectedNode?.parentId || !canEdit },
           null,
-          { label: 'Estilo', action: () => { close() }, disabled: !firstSelected },
-          { label: 'Propriedades', action: () => { close() }, disabled: !firstSelected },
+          { label: 'Estilo', action: () => { close(); onToggleStylePanel() }, disabled: !firstSelected },
+          { label: 'Propriedades', action: () => { close(); onToggleStylePanel() }, disabled: !firstSelected },
         ],
       },
       {
@@ -375,7 +405,7 @@ export default function WbsMenubar({
         ],
       },
     ]
-  }, [close, setFilePickerTrigger, onManualSave, canEdit, dispatch, canUndo, canRedo, firstSelected, selectedNodeIds, selectedNode, hasCopiedStyle, onPasteStyle, projetoId, rootId, nodes, onRequestDelete, setShowHelp, setShowManual])
+  }, [close, setFilePickerTrigger, onManualSave, canEdit, dispatch, canUndo, canRedo, firstSelected, selectedNodeIds, selectedNode, hasCopiedStyle, onPasteStyle, projetoId, rootId, nodes, onRequestDelete, setShowHelp, setShowManual, onToggleStylePanel])
 
   return (
     <>
@@ -411,15 +441,59 @@ export default function WbsMenubar({
           ))}
         </div>
 
+        {/* Ações rápidas com ícone */}
+        <div className="flex items-center gap-0.5 px-2 border-l border-gray-200">
+          <IconButton label="Desfazer (Ctrl+Z)" onClick={() => dispatch({ type: 'UNDO' })} disabled={!canUndo}>
+            <Undo2 className="w-4 h-4" />
+          </IconButton>
+          <IconButton label="Refazer (Ctrl+Shift+Z)" onClick={() => dispatch({ type: 'REDO' })} disabled={!canRedo}>
+            <Redo2 className="w-4 h-4" />
+          </IconButton>
+          <span className="w-px h-4 bg-gray-200 mx-1" />
+          <IconButton
+            label="Inserir filho (Tab)"
+            onClick={() => firstSelected && dispatch({ type: 'INSERT_CHILD', payload: { parentId: firstSelected } })}
+            disabled={!firstSelected || !canEdit}
+          >
+            <CornerDownRight className="w-4 h-4" />
+          </IconButton>
+          <IconButton
+            label="Inserir irmão (Enter)"
+            onClick={() => firstSelected && selectedNode?.parentId && dispatch({ type: 'INSERT_SIBLING', payload: { siblingId: firstSelected } })}
+            disabled={!firstSelected || !selectedNode?.parentId || !canEdit}
+          >
+            <Plus className="w-4 h-4" />
+          </IconButton>
+          <IconButton
+            label="Remover (Delete)"
+            onClick={onRequestDelete}
+            disabled={!firstSelected || !selectedNode?.parentId || !canEdit}
+          >
+            <Trash2 className="w-4 h-4" />
+          </IconButton>
+          <span className="w-px h-4 bg-gray-200 mx-1" />
+          <IconButton
+            label="Estilo e propriedades"
+            onClick={onToggleStylePanel}
+            disabled={!firstSelected}
+            active={showStylePanel}
+          >
+            <Palette className="w-4 h-4" />
+          </IconButton>
+          <span className="w-px h-4 bg-gray-200 mx-1" />
+          <IconButton label="Salvar (Ctrl+S)" onClick={onManualSave} disabled={!canEdit}>
+            <Save className="w-4 h-4" />
+          </IconButton>
+          <IconButton label="Imprimir (Ctrl+P)" onClick={() => window.print()}>
+            <Printer className="w-4 h-4" />
+          </IconButton>
+        </div>
+
         {/* Zoom controls */}
         <div className="flex items-center gap-0.5 px-2 border-l border-gray-200">
-          <button
-            onClick={() => dispatch({ type: 'SET_VIEWPORT', payload: { zoom: Math.max(0.1, zoom / 1.2), panX, panY } })}
-            className="h-6 w-6 flex items-center justify-center rounded hover:bg-gray-100 text-gray-600 font-medium text-base leading-none"
-            title="Diminuir zoom"
-          >
-            −
-          </button>
+          <IconButton label="Diminuir zoom" onClick={() => dispatch({ type: 'SET_VIEWPORT', payload: { zoom: Math.max(0.1, zoom / 1.2), panX, panY } })}>
+            <ZoomOut className="w-4 h-4" />
+          </IconButton>
           <button
             onClick={() => dispatch({ type: 'SET_VIEWPORT', payload: { zoom: 1, panX, panY } })}
             className="w-12 text-center text-xs text-gray-600 tabular-nums rounded hover:bg-gray-100 py-0.5"
@@ -427,20 +501,12 @@ export default function WbsMenubar({
           >
             {zoomPercent}%
           </button>
-          <button
-            onClick={() => dispatch({ type: 'SET_VIEWPORT', payload: { zoom: Math.min(3, zoom * 1.2), panX, panY } })}
-            className="h-6 w-6 flex items-center justify-center rounded hover:bg-gray-100 text-gray-600 font-medium text-base leading-none"
-            title="Aumentar zoom"
-          >
-            +
-          </button>
-          <button
-            onClick={onFitScreen}
-            className="h-6 px-1.5 flex items-center justify-center rounded hover:bg-gray-100 text-gray-600 ml-1 text-base"
-            title="Ajustar à tela"
-          >
-            ⤢
-          </button>
+          <IconButton label="Aumentar zoom" onClick={() => dispatch({ type: 'SET_VIEWPORT', payload: { zoom: Math.min(3, zoom * 1.2), panX, panY } })}>
+            <ZoomIn className="w-4 h-4" />
+          </IconButton>
+          <IconButton label="Ajustar à tela" onClick={onFitScreen}>
+            <Maximize2 className="w-4 h-4" />
+          </IconButton>
         </div>
 
         {/* Sync indicator */}

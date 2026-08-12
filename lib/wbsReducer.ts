@@ -298,7 +298,7 @@ export function wbsReducer(state: WbsTreeState, action: WbsAction): WbsTreeState
         if (!updated[id]) continue
         updated[id] = { ...updated[id], style: { ...updated[id].style, ...style } }
       }
-      return { ...state, nodes: updated, sync: { ...state.sync, status: 'DIRTY' } }
+      return { ...state, nodes: updated, history: pushHistory(state), sync: { ...state.sync, status: 'DIRTY' } }
     }
 
     case 'UPDATE_PROPERTIES': {

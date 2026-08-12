@@ -40,7 +40,7 @@ export default function AlterarSenhaPage() {
               placeholder="Mínimo 8 caracteres, 1 número e 1 caractere especial"
               value={novaSenha}
               onChange={e => setNovaSenha(e.target.value)}
-              className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm text-gray-900 placeholder:text-slate-500 focus:outline-none focus:ring-2 focus:ring-blue-500"
+              className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm text-gray-900 focus:outline-none focus:ring-2 focus:ring-blue-500"
             />
             <PasswordCriteria value={novaSenha} confirm={confirmacao} />
           </div>
@@ -57,7 +57,7 @@ export default function AlterarSenhaPage() {
               placeholder="Repita a nova senha"
               value={confirmacao}
               onChange={e => setConfirmacao(e.target.value)}
-              className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm text-gray-900 placeholder:text-slate-500 focus:outline-none focus:ring-2 focus:ring-blue-500"
+              className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm text-gray-900 focus:outline-none focus:ring-2 focus:ring-blue-500"
             />
           </div>
           {(state as { error?: string } | undefined)?.error && (

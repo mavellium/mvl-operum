@@ -4,6 +4,7 @@ import { useState, useEffect, useTransition } from 'react'
 import { adminUpdateUserAction, setUserRoleAction } from '@/app/actions/admin'
 import { getUserProjetosAction, addMemberAction, updateUsuarioProjetoAction } from '@/app/actions/projetos'
 import { getProjetosAction } from '@/app/actions/projetos'
+import AddressFields, { type AddressValues } from '@/components/ui/AddressFields'
 import type { AdminUser } from './AdminCreateUserModal'
 
 interface Props {
@@ -44,6 +45,15 @@ export default function AdminEditUserModal({ user, onClose, onUpdated }: Props) 
     password: '',
     role: user.role,
   })
+  const [address, setAddress] = useState<AddressValues>({
+    cep: user.cep ?? '',
+    logradouro: user.logradouro ?? '',
+    numero: user.numero ?? '',
+    complemento: user.complemento ?? '',
+    bairro: user.bairro ?? '',
+    cidade: user.cidade ?? '',
+    estado: user.estado ?? '',
+  })
   const [error, setError] = useState('')
   const [loading, setLoading] = useState(false)
   const [isPending, startTransition] = useTransition()
@@ -82,6 +92,7 @@ export default function AdminEditUserModal({ user, onClose, onUpdated }: Props) 
       name: form.name.trim(),
       email: form.email.trim(),
       password: form.password || undefined,
+      ...address,
     })
 
     if ('error' in updateResult) {
@@ -168,9 +179,9 @@ export default function AdminEditUserModal({ user, onClose, onUpdated }: Props) 
 
   return (
     <div className="fixed inset-0 bg-black/40 flex items-center justify-center z-50 p-4">
-      <div className="bg-white rounded-2xl shadow-xl w-full max-w-lg max-h-[90vh] overflow-y-auto">
-        <div className="p-6">
-          <h2 className="text-lg font-bold text-gray-900 mb-4">Editar Usuário</h2>
+      <div className="bg-white rounded-2xl shadow-xl w-full max-w-lg max-h-[90vh] flex flex-col overflow-hidden">
+        <h2 className="text-lg font-bold text-gray-900 px-6 pt-6 pb-2 shrink-0">Editar Usuário</h2>
+        <div className="overflow-y-auto flex-1 min-h-0 px-6">
           <form onSubmit={handleSubmit} className="space-y-3">
             <Field label="Nome *" value={form.name} onChange={v => setForm(f => ({ ...f, name: v }))} />
             <Field label="E-mail *" type="email" value={form.email} onChange={v => setForm(f => ({ ...f, email: v }))} />
@@ -186,6 +197,15 @@ export default function AdminEditUserModal({ user, onClose, onUpdated }: Props) 
                 <option value="admin">Administrador</option>
               </select>
             </div>
+
+            <div className="pt-1 border-t border-gray-100">
+              <p className="text-xs font-semibold text-gray-500 uppercase tracking-wide my-2">Endereço</p>
+              <AddressFields
+                values={address}
+                onChange={(field, value) => setAddress(a => ({ ...a, [field]: value }))}
+              />
+            </div>
+
             {error && <p className="text-sm text-red-500">{error}</p>}
             <div className="flex gap-2 pt-1">
               <button type="button" onClick={onClose} className="flex-1 px-4 py-2 rounded-xl border border-gray-200 text-gray-600 hover:bg-gray-50 text-sm">
@@ -196,10 +216,9 @@ export default function AdminEditUserModal({ user, onClose, onUpdated }: Props) 
               </button>
             </div>
           </form>
-        </div>
 
-        {/* Projects section */}
-        <div className="border-t border-gray-100 px-6 pb-6">
+          {/* Projects section */}
+          <div className="border-t border-gray-100 -mx-6 px-6 pb-6">
           <div className="flex items-center justify-between py-4">
             <h3 className="text-sm font-semibold text-gray-900">
               Projetos ({userProjetos.filter(p => p.active).length} active{userProjetos.filter(p => p.active).length !== 1 ? 's' : ''})
@@ -335,6 +354,7 @@ export default function AdminEditUserModal({ user, onClose, onUpdated }: Props) 
               ))}
             </div>
           )}
+          </div>
         </div>
       </div>
     </div>

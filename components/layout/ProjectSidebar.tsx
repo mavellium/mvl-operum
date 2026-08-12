@@ -1,13 +1,18 @@
 'use client'
 
+import { useEffect, useState } from 'react'
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
+import { PanelLeftClose, PanelLeftOpen } from 'lucide-react'
+import Tooltip from '@/components/ui/Tooltip'
 
 interface Props {
   projetoId: string
   projetoNome: string
   canManageMembers: boolean
 }
+
+const STORAGE_KEY = 'wbs-project-sidebar-collapsed'
 
 const DashboardIcon = () => (
   <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -59,6 +64,23 @@ const WbsIcon = () => (
 
 export default function ProjectSidebar({ projetoId, projetoNome, canManageMembers }: Props) {
   const pathname = usePathname()
+  const [collapsed, setCollapsed] = useState(false)
+
+  // Lido do localStorage só no client, depois do primeiro paint, para não gerar
+  // divergência de hidratação entre servidor e navegador.
+  useEffect(() => {
+    const stored = window.localStorage.getItem(STORAGE_KEY)
+    // eslint-disable-next-line react-hooks/set-state-in-effect
+    if (stored === '1') setCollapsed(true)
+  }, [])
+
+  const toggleCollapsed = () => {
+    setCollapsed(prev => {
+      const next = !prev
+      window.localStorage.setItem(STORAGE_KEY, next ? '1' : '0')
+      return next
+    })
+  }
 
   const isActive = (href: string) =>
     pathname === href || pathname.startsWith(href + '/')
@@ -78,42 +100,72 @@ export default function ProjectSidebar({ projetoId, projetoNome, canManageMember
   ]
 
   return (
-    <aside className="w-56 shrink-0 bg-white border-r border-gray-200 flex flex-col">
-      {/* Back to projects */}
-      <div className="px-4 py-3 border-b border-gray-100">
-        <Link
-          href="/projetos"
-          className="flex items-center gap-2 text-sm text-gray-500 hover:text-gray-700 transition-colors"
-        >
-          <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
-          </svg>
-          Projetos
-        </Link>
+    <aside
+      className={`shrink-0 bg-white border-r border-gray-200 flex flex-col transition-[width] duration-200 ${
+        collapsed ? 'w-14' : 'w-56'
+      }`}
+    >
+      {/* Hamburger + Back to projects */}
+      <div className={`flex items-center gap-1 px-2 py-3 border-b border-gray-100 ${collapsed ? 'justify-center' : ''}`}>
+        <Tooltip label={collapsed ? 'Expandir menu' : 'Recolher menu'} side="bottom">
+          <button
+            type="button"
+            onClick={toggleCollapsed}
+            aria-expanded={!collapsed}
+            aria-label={collapsed ? 'Expandir menu lateral' : 'Recolher menu lateral'}
+            className="shrink-0 p-1.5 rounded-lg text-gray-500 hover:text-gray-700 hover:bg-gray-100 transition-colors cursor-pointer"
+          >
+            {collapsed ? <PanelLeftOpen className="w-4 h-4" /> : <PanelLeftClose className="w-4 h-4" />}
+          </button>
+        </Tooltip>
+        {!collapsed && (
+          <Link
+            href="/projetos"
+            className="flex items-center gap-2 text-sm text-gray-500 hover:text-gray-700 transition-colors min-w-0 truncate"
+          >
+            <svg className="w-4 h-4 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
+            </svg>
+            Projetos
+          </Link>
+        )}
       </div>
 
       {/* Project name */}
-      <div className="px-4 py-3 border-b border-gray-100">
-        <p className="text-sm font-semibold text-gray-900 truncate" title={projetoNome}>
-          {projetoNome}
-        </p>
-      </div>
+      {!collapsed && (
+        <div className="px-4 py-3 border-b border-gray-100">
+          <p className="text-sm font-semibold text-gray-900 truncate" title={projetoNome}>
+            {projetoNome}
+          </p>
+        </div>
+      )}
 
       {/* Navigation */}
-      <nav className="flex-1 px-2 py-3 space-y-0.5">
-        {navItems.map(({ href, label, Icon }) => (
-          <Link
-            key={href}
-            href={href}
-            className={`flex items-center gap-2.5 px-3 py-2 rounded-lg text-sm font-medium transition-colors ${isActive(href)
-              ? 'bg-blue-50 text-blue-700'
-              : 'text-gray-600 hover:bg-gray-50 hover:text-gray-900'
+      <nav className={`flex-1 py-3 space-y-0.5 ${collapsed ? 'px-2' : 'px-2'}`}>
+        {navItems.map(({ href, label, Icon }) => {
+          const link = (
+            <Link
+              key={href}
+              href={href}
+              aria-label={collapsed ? label : undefined}
+              className={`flex items-center gap-2.5 rounded-lg text-sm font-medium transition-colors ${
+                collapsed ? 'justify-center px-0 py-2.5' : 'px-3 py-2'
+              } ${
+                isActive(href)
+                  ? 'bg-blue-50 text-blue-700'
+                  : 'text-gray-600 hover:bg-gray-50 hover:text-gray-900'
               }`}
-          >
-            <Icon />
-            {label}
-          </Link>
-        ))}
+            >
+              <Icon />
+              {!collapsed && label}
+            </Link>
+          )
+          return collapsed ? (
+            <Tooltip key={href} label={label} side="bottom">
+              {link}
+            </Tooltip>
+          ) : link
+        })}
       </nav>
     </aside>
   )

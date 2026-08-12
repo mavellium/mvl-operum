@@ -65,7 +65,7 @@ export async function deleteDraftAction(input: {
   draftId?: string
 }): Promise<{ success: true } | { error: string }> {
   try {
-    const { tenantId } = await verifySession()
+    const { userId, tenantId } = await verifySession()
     const { projectId, draftId } = input
 
     if (projectId === null && draftId) {
@@ -73,8 +73,10 @@ export async function deleteDraftAction(input: {
         where: { id: draftId, tenantId },
       })
     } else {
+      // Sem draftId, o único identificador seguro é (tenantId, projectId, authorId) —
+      // sem authorId apagaria o rascunho de todos os usuários do tenant para esse projeto.
       await prisma.projectDraft.deleteMany({
-        where: { projectId, tenantId },
+        where: { projectId, tenantId, authorId: userId },
       })
     }
 
@@ -83,6 +85,8 @@ export async function deleteDraftAction(input: {
     return { error: err instanceof Error ? err.message : 'Erro ao deletar rascunho' }
   }
 }
+
+const DRAFT_MAX_AGE_MS = 7 * 24 * 60 * 60 * 1000 // 7 dias
 
 export async function getDraftsWithProjectsAction(): Promise<
   { drafts: Array<{ id: string; projectId: string | null; savedAt: Date; authorId: string }> }
@@ -115,10 +119,27 @@ export async function getDraftAction(
 
     const record = await prisma.projectDraft.findFirst({
       where: { tenantId, projectId: projectId ?? null, authorId: userId },
-      select: { id: true, data: true },
+      select: { id: true, data: true, savedAt: true, projectId: true },
     })
 
     if (!record) return { draft: null, draftId: null }
+
+    // Rascunho velho demais — descarta em vez de reaparecer indefinidamente.
+    const isExpired = Date.now() - record.savedAt.getTime() > DRAFT_MAX_AGE_MS
+    // Rascunho de "novo projeto" (projectId null) que aponta pra um projeto já criado
+    // e depois excluído — o projeto correspondente não existe mais como ativo.
+    const draftProject = record.projectId
+      ? await prisma.project.findFirst({
+          where: { id: record.projectId, tenantId },
+          select: { deletedAt: true },
+        })
+      : null
+    const isOrphaned = record.projectId !== null && (!draftProject || draftProject.deletedAt !== null)
+
+    if (isExpired || isOrphaned) {
+      await prisma.projectDraft.deleteMany({ where: { id: record.id } })
+      return { draft: null, draftId: null }
+    }
 
     return { draft: record.data as DraftData, draftId: record.id }
   } catch (err) {

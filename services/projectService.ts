@@ -255,7 +255,7 @@ export async function updateUserProject(
 
 export async function getUserProjectsWithDetails(userId: string) {
   return prisma.userProject.findMany({
-    where: { userId },
+    where: { userId, active: true, project: { deletedAt: null } },
     include: {
       project: { select: { id: true, name: true, status: true } },
       department: { select: { name: true } },
@@ -286,7 +286,7 @@ export async function getProjectPaginated(tenantId: string, page: number = 1, li
       orderBy: { updatedAt: 'desc' }, // Ordem: O último movimentado/acessado aparece primeiro
       include: {
         _count: {
-          select: { members: true } // Traz a quantidade de integrantes automaticamente
+          select: { members: { where: { active: true } } } // Traz a quantidade de integrantes ativos
         }
       }
     }),

@@ -145,7 +145,7 @@ const emptyForm: FormState = {
 }
 
 const inputCls =
-  'w-full px-3 py-2 border border-gray-200 rounded-xl text-sm bg-white placeholder:text-slate-500 focus:outline-none focus:ring-2 focus:ring-blue-500 transition-shadow'
+  'w-full px-3 py-2 border border-gray-200 rounded-xl text-sm bg-white focus:outline-none focus:ring-2 focus:ring-blue-500 transition-shadow'
 const disabledCls =
   'disabled:bg-gray-100 disabled:text-gray-500 disabled:cursor-not-allowed'
 
@@ -282,7 +282,7 @@ function MultiCreatableSelect({
           onChange={e => { setSearch(e.target.value); setIsOpen(true) }}
           onFocus={() => !disabled && setIsOpen(true)}
           placeholder={values.length === 0 ? placeholder : ''}
-          className="flex-1 min-w-[120px] outline-none bg-transparent text-sm placeholder:text-slate-500 disabled:cursor-not-allowed"
+          className="flex-1 min-w-[120px] outline-none bg-transparent text-sm disabled:cursor-not-allowed"
         />
       </div>
       {isOpen && !disabled && (
@@ -932,6 +932,7 @@ export default function ProjetoStakeholdersClient({
       const result = await updateProjetoMemberAction(selected.userId, projetoId, {
         ...(isAdmin && formState.name.trim() && { name: formState.name.trim() }),
         ...(isAdmin && formState.email.trim() && { email: formState.email.trim() }),
+        avatarUrl: formState.avatarUrl || undefined,
         phone: formState.phone || undefined,
         cep: formState.address.cep || undefined,
         logradouro: formState.address.logradouro || undefined,
@@ -957,6 +958,7 @@ export default function ProjetoStakeholdersClient({
                 ...x,
                 ...(isAdmin && formState.name.trim() && { name: formState.name.trim() }),
                 ...(isAdmin && formState.email.trim() && { email: formState.email.trim() }),
+                avatarUrl: formState.avatarUrl || x.avatarUrl,
                 phone: formState.phone || null,
                 cep: formState.address.cep || null,
                 logradouro: formState.address.logradouro || null,
@@ -1048,7 +1050,7 @@ export default function ProjetoStakeholdersClient({
             placeholder="Buscar por nome, e-mail ou empresa…"
             value={searchProjeto}
             onChange={e => setSearchProjeto(e.target.value)}
-            className="w-full px-3 py-2 border border-gray-200 rounded-xl text-sm placeholder:text-slate-500 focus:outline-none focus:ring-2 focus:ring-blue-500"
+            className="w-full px-3 py-2 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
           />
         </div>
 
@@ -1207,7 +1209,7 @@ export default function ProjetoStakeholdersClient({
               placeholder={addMode === 'interno' ? 'Buscar usuário…' : 'Buscar no diretório…'}
               value={searchDir}
               onChange={e => setSearchDir(e.target.value)}
-              className="w-full px-3 py-2 border border-gray-200 rounded-xl text-sm placeholder:text-slate-500 focus:outline-none focus:ring-2 focus:ring-blue-500"
+              className="w-full px-3 py-2 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
             />
           </div>
 
@@ -1433,7 +1435,7 @@ export default function ProjetoStakeholdersClient({
                       value={formState.horasDiarias}
                       onChange={e => setField('horasDiarias', e.target.value)}
                       disabled={!isAdmin}
-                      placeholder="8"
+                      placeholder="ex: 8"
                       className={`${inputCls} ${disabledCls}`}
                     />
                   </div>

@@ -115,7 +115,7 @@ export default function GlobalSearch({
           onKeyDown={handleKeyDown}
           placeholder={placeholder}
           aria-label="Busca global"
-          className="w-full pl-9 pr-3 py-1.5 border border-gray-300 rounded-lg text-sm text-gray-900 placeholder:text-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-400 bg-white transition-shadow"
+          className="w-full pl-9 pr-3 py-1.5 border border-gray-300 rounded-lg text-sm text-gray-900 focus:outline-none focus:ring-2 focus:ring-blue-400 bg-white transition-shadow"
         />
         {loading && (
           <div className="absolute right-3 top-1/2 -translate-y-1/2 w-3 h-3 border-2 border-blue-400 border-t-transparent rounded-full animate-spin" />

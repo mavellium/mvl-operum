@@ -90,11 +90,20 @@ export async function uploadSignatureAction(formData: FormData) {
   }
 }
 
+const ALLOWED_AVATAR_MIME_TYPES = new Set(['image/jpeg', 'image/png', 'image/webp', 'image/gif'])
+const MAX_AVATAR_BYTES = 5 * 1024 * 1024 // 5MB
+
 export async function uploadAvatarAction(formData: FormData) {
   try {
     const { userId } = await verifySession()
     const file = formData.get('file') as File
     if (!file || file.size === 0) throw new Error('Arquivo inválido')
+    if (!ALLOWED_AVATAR_MIME_TYPES.has(file.type)) {
+      throw new Error('Formato de imagem não suportado. Use JPEG, PNG, WEBP ou GIF.')
+    }
+    if (file.size > MAX_AVATAR_BYTES) {
+      throw new Error('Arquivo muito grande. O limite é 5MB.')
+    }
 
     const ext = file.name.split('.').pop()?.toLowerCase() ?? 'jpg'
     const key = `avatars/${userId}/avatar-${Date.now()}.${ext}`

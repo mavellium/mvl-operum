@@ -54,6 +54,7 @@ const labelCls = 'block text-xs font-medium text-gray-600 mb-1'
 
 export default function AddressFields({ values, onChange, disabled = false, withNames = false }: AddressFieldsProps) {
   const [cepLoading, setCepLoading] = useState(false)
+  const [cepError, setCepError] = useState(false)
   const numeroRef = useRef<HTMLInputElement>(null)
 
   async function handleCepBlur() {
@@ -65,6 +66,7 @@ export default function AddressFields({ values, onChange, disabled = false, with
     setCepLoading(false)
 
     if (result) {
+      setCepError(false)
       onChange('logradouro', result.logradouro)
       onChange('bairro', result.bairro)
       onChange('cidade', result.cidade)
@@ -74,6 +76,7 @@ export default function AddressFields({ values, onChange, disabled = false, with
     } else {
       // CEP não encontrado — limpa os campos que seriam auto-preenchidos
       // e deixa o usuário digitar manualmente
+      setCepError(true)
       onChange('logradouro', '')
       onChange('bairro', '')
       onChange('cidade', '')
@@ -82,6 +85,7 @@ export default function AddressFields({ values, onChange, disabled = false, with
   }
 
   function handleCepChange(e: React.ChangeEvent<HTMLInputElement>) {
+    if (cepError) setCepError(false)
     const formatted = formatCep(e.target.value)
     onChange('cep', formatted)
   }
@@ -102,8 +106,9 @@ export default function AddressFields({ values, onChange, disabled = false, with
             disabled={disabled}
             placeholder="00000-000"
             maxLength={9}
+            aria-invalid={cepError}
             {...(withNames ? { name: 'cep' } : {})}
-            className={`${inputCls} pr-8`}
+            className={`${inputCls} pr-8 ${cepError ? 'border-red-300 focus:ring-red-500' : ''}`}
           />
           {cepLoading && (
             <div className="absolute inset-y-0 right-2.5 flex items-center pointer-events-none">
@@ -111,6 +116,9 @@ export default function AddressFields({ values, onChange, disabled = false, with
             </div>
           )}
         </div>
+        {cepError && (
+          <p className="mt-1 text-xs text-red-500">CEP não encontrado. Preencha o endereço manualmente.</p>
+        )}
       </div>
 
       {/* Logradouro + Número */}

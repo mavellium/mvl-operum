@@ -5,6 +5,7 @@ import { revalidatePath } from 'next/cache'
 import { projectsApi } from '@/lib/api-client'
 import prisma from '@/lib/prisma'
 import { isProjectManager, setProjectManagerRole, removeProjectRole } from '@/services/projectRoleService'
+import { validateAvatarUrl } from '@/lib/validation/avatarUrl'
 
 async function upsertDepartamentos(tenantId: string, names: string[]) {
   for (const deptName of names) {
@@ -138,8 +139,17 @@ export async function updateProjetoAction(
 
 export async function deleteProjetoAction(id: string) {
   try {
-    await verifySession()
+    const { tenantId } = await verifySession()
+
+    // projectsApi.delete chama o project-service, que escopa por x-tenant-id
+    // (project.service.ts remove -> findOne) e lança NotFoundException se o
+    // projeto não pertencer ao tenant do usuário — não precisa revalidar aqui.
     await projectsApi.delete(id)
+
+    // O delete do projeto é soft (deletedAt); rascunhos não têm cascade e reapareceriam
+    // no formulário de "novo projeto"/edição se não forem limpos aqui. O filtro por
+    // tenantId torna essa limpeza inofensiva mesmo que `id` não pertença a este tenant.
+    await prisma.projectDraft.deleteMany({ where: { projectId: id, tenantId } })
     revalidatePath('/projetos')
     return { success: true }
   } catch (err) {
@@ -215,6 +225,7 @@ export async function updateProjetoMemberAction(
   data: {
     name?: string
     email?: string
+    avatarUrl?: string
     phone?: string
     cep?: string
     logradouro?: string
@@ -226,6 +237,7 @@ export async function updateProjetoMemberAction(
     notes?: string
     remuneracao?: number | string
     horasDiarias?: number | string
+    hourlyRate?: number
     cargos?: string[]
     departamento?: string[]
     isGerente?: boolean
@@ -237,7 +249,7 @@ export async function updateProjetoMemberAction(
     const canManage = isAdmin || await isProjectManager(sessionUserId, projetoId)
     if (!canManage) throw new Error('Acesso não autorizado')
 
-    const { isGerente: makeGerente, cargos, departamento, remuneracao: rawRemuneracao, horasDiarias: rawHorasDiarias, name, email, ...profileData } = data
+    const { isGerente: makeGerente, cargos, departamento, remuneracao: rawRemuneracao, horasDiarias: rawHorasDiarias, hourlyRate: rawHourlyRate, name, email, ...profileData } = data
 
     let remuneracao: number | undefined
     if (rawRemuneracao !== undefined) {
@@ -253,13 +265,25 @@ export async function updateProjetoMemberAction(
       if (!isNaN(h) && h > 0) horasDiarias = h
     }
 
-    const hourlyRate =
+    const derivedHourlyRate =
       remuneracao !== undefined && horasDiarias !== undefined
         ? remuneracao / 30 / horasDiarias
         : undefined
 
+    let directHourlyRate: number | undefined
+    if (rawHourlyRate !== undefined) {
+      const hr = Number(rawHourlyRate)
+      if (!isNaN(hr) && hr > 0 && hr < 1_000_000) directHourlyRate = hr
+    }
+    // Alguns formulários (ex.: edição de membro em ProjetoMembrosClient) enviam
+    // hourlyRate direto em vez de remuneracao+horasDiarias — respeita esse valor quando presente.
+    const hourlyRate = directHourlyRate !== undefined ? directHourlyRate : derivedHourlyRate
+
     // 1. Update User profile via Prisma (name/email only for admin)
     const userUpdateData: Record<string, unknown> = { ...profileData }
+    if ('avatarUrl' in profileData) {
+      userUpdateData.avatarUrl = validateAvatarUrl(profileData.avatarUrl)
+    }
     if (isAdmin) {
       if (name?.trim()) userUpdateData.name = name.trim()
       if (email?.trim()) userUpdateData.email = email.trim()

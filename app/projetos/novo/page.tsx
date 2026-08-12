@@ -16,6 +16,7 @@ interface Usuario {
   id: string
   name: string
   email: string
+  isActive?: boolean
 }
 
 interface MacroFase {
@@ -282,11 +283,11 @@ function ProjetoFormContent() {
     ? (editId ? 'Salvando...' : 'Criando Projeto...')
     : (editId ? 'Salvar Alterações' : 'Salvar Projeto')
 
-  const inputClass = "w-full px-4 py-3 bg-slate-50/50 border border-slate-200/60 rounded-xl text-sm focus:bg-white focus:outline-none focus:ring-4 focus:ring-blue-500/10 focus:border-blue-500 transition-all duration-200 placeholder:text-slate-400 text-slate-800 font-medium"
+  const inputClass = "w-full px-4 py-3 bg-slate-50/50 border border-slate-200/60 rounded-xl text-sm focus:bg-white focus:outline-none focus:ring-4 focus:ring-blue-500/10 focus:border-blue-500 transition-all duration-200 text-slate-800 font-medium"
   const labelClass = "block text-[11px] font-bold text-slate-500 uppercase tracking-widest mb-1.5 ml-1"
 
   return (
-    <div className="min-h-screen bg-[#F8FAFC] relative overflow-hidden font-sans">
+    <div className="min-h-screen bg-[#F8FAFC] relative font-sans">
 
       {/* BACKGROUND DECORATIVO */}
       <div className="absolute top-0 left-1/2 -translate-x-1/2 w-full max-w-3xl h-[300px] bg-blue-500/5 blur-[120px] rounded-full pointer-events-none" />
@@ -468,7 +469,7 @@ function ProjetoFormContent() {
                       <div className="relative">
                         <select name="initialMemberId" value={form.initialMemberId} onChange={handleChange} className={`${inputClass} appearance-none cursor-pointer pr-10`}>
                           <option value="">Ainda não definido (Designar depois)</option>
-                          {usuarios.map(u => <option key={u.id} value={u.id}>{u.name}</option>)}
+                          {usuarios.filter(u => u.isActive !== false).map(u => <option key={u.id} value={u.id}>{u.name}</option>)}
                         </select>
                         <svg className="absolute right-4 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400 pointer-events-none" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" /></svg>
                       </div>

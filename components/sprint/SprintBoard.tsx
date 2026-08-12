@@ -678,8 +678,8 @@ export default function SprintBoard({ sprint, columns: initialColumns, backlogCa
 
       {/* Diálogo de motivo para movimentação retroativa */}
       {pendingMove && (
-        <div className="fixed inset-0 z-[200] flex items-center justify-center bg-black/60 backdrop-blur-sm">
-          <div className="bg-white rounded-2xl shadow-2xl p-6 w-full max-w-md mx-4 animate-in fade-in zoom-in-95 duration-200">
+        <div className="fixed inset-0 z-[200] flex items-center justify-center bg-black/60 backdrop-blur-sm p-4">
+          <div className="bg-white rounded-2xl shadow-2xl p-6 w-full max-w-md max-h-[90vh] overflow-y-auto animate-in fade-in zoom-in-95 duration-200">
             <h3 className="text-base font-bold text-gray-900 mb-1">Motivo da movimentação</h3>
             <p className="text-sm text-gray-500 mb-4">
               Por que este card está voltando para uma etapa anterior?

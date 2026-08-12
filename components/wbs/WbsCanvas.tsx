@@ -80,6 +80,13 @@ function WbsCanvasInner({ projetoId, canEdit }: { projetoId: string; canEdit: bo
 
   const [drag, setDrag] = useState<DragState | null>(null)
   const [confirmDelete, setConfirmDelete] = useState(false)
+  const [showStylePanel, setShowStylePanel] = useState(false)
+
+  // O painel de estilo só deve aparecer enquanto houver seleção — some junto com ela.
+  useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect
+    if (state.selectedNodeIds.length === 0) setShowStylePanel(false)
+  }, [state.selectedNodeIds])
 
   const [nodeWidths, setNodeWidths] = useState<Record<string, number>>({})
   useIsomorphicLayoutEffect(() => { setNodeWidths(measureNodeWidths(state.nodes)) }, [state.nodes])
@@ -140,6 +147,7 @@ function WbsCanvasInner({ projetoId, canEdit }: { projetoId: string; canEdit: bo
 
       if (e.key === 'Escape') {
         if (s.editingNodeId) dispatch({ type: 'SET_EDITING', payload: { nodeId: null } })
+        else if (showStylePanel) setShowStylePanel(false)
         else dispatch({ type: 'SET_SELECTION', payload: { nodeIds: [] } })
         return
       }
@@ -169,7 +177,7 @@ function WbsCanvasInner({ projetoId, canEdit }: { projetoId: string; canEdit: bo
     }
     window.addEventListener('keydown', handle)
     return () => window.removeEventListener('keydown', handle)
-  }, [dispatch]) // eslint-disable-line react-hooks/exhaustive-deps
+  }, [dispatch, showStylePanel]) // eslint-disable-line react-hooks/exhaustive-deps
 
   // ── Space key tracking (pan cursor) ────────────────────────────────────────
   useEffect(() => {
@@ -367,6 +375,8 @@ function WbsCanvasInner({ projetoId, canEdit }: { projetoId: string; canEdit: bo
         onFitScreen={fitToScreen}
         onManualSave={handleManualSave}
         onRequestDelete={() => setConfirmDelete(true)}
+        showStylePanel={showStylePanel}
+        onToggleStylePanel={() => setShowStylePanel(v => !v)}
         onPasteStyle={() => {
           const s = stateRef.current
           if (s.clipboard.copiedStyle && s.selectedNodeIds.length > 0) {
@@ -376,7 +386,7 @@ function WbsCanvasInner({ projetoId, canEdit }: { projetoId: string; canEdit: bo
         }}
       />
 
-      <div className="flex flex-1 overflow-hidden">
+      <div className="relative flex flex-1 overflow-hidden">
         {/* Canvas */}
         <div
           ref={canvasRef}
@@ -455,14 +465,15 @@ function WbsCanvasInner({ projetoId, canEdit }: { projetoId: string; canEdit: bo
           )}
         </div>
 
-        {/* Properties panel */}
-        {state.selectedNodeIds.length > 0 && (
+        {/* Painel de estilo — popover flutuante, só aparece quando aberto pela toolbar */}
+        {showStylePanel && state.selectedNodeIds.length > 0 && (
           <WbsPropertiesPanel
             selectedNodeIds={state.selectedNodeIds}
             nodes={state.nodes}
             rollups={rollups}
             canEdit={canEdit}
             dispatch={dispatch}
+            onClose={() => setShowStylePanel(false)}
           />
         )}
       </div>

@@ -1,6 +1,6 @@
 'use client'
 
-import React, { type Dispatch } from 'react'
+import React, { type Dispatch, useEffect, useRef } from 'react'
 import type { WbsNodeClient, WbsNodeGeometry, WbsRollup } from '@/types/wbs'
 import type { WbsAction } from '@/lib/wbsReducer'
 
@@ -30,6 +30,11 @@ const WbsNodeCard = React.memo(function WbsNodeCard({
   const effectiveDays = rollup ? rollup.durationDays : (node.properties.durationDays ?? 0)
   const hasChips = effectiveCost > 0 || effectiveDays > 0
 
+  const inputRef = useRef<HTMLInputElement>(null)
+  useEffect(() => {
+    if (isEditing) inputRef.current?.select()
+  }, [isEditing])
+
   const ring = isSelected
     ? '0 0 0 2px #3b82f6, 0 0 0 4px rgba(59,130,246,0.2)'
     : isDragTarget
@@ -56,7 +61,16 @@ const WbsNodeCard = React.memo(function WbsNodeCard({
         userSelect: 'none',
         overflow: 'hidden',
       }}
-      onClick={e => { e.stopPropagation(); onSelect(node.id, e.ctrlKey || e.metaKey) }}
+      onClick={e => {
+        e.stopPropagation()
+        if (e.ctrlKey || e.metaKey) { onSelect(node.id, true); return }
+        // Clique num nó já selecionado entra direto em edição; senão, apenas seleciona.
+        if (isSelected && !isEditing) {
+          dispatch({ type: 'SET_EDITING', payload: { nodeId: node.id } })
+        } else {
+          onSelect(node.id, false)
+        }
+      }}
       onDoubleClick={e => { e.stopPropagation(); dispatch({ type: 'SET_EDITING', payload: { nodeId: node.id } }) }}
     >
       {/* Collapse toggle */}
@@ -78,9 +92,10 @@ const WbsNodeCard = React.memo(function WbsNodeCard({
               {node.code}
             </span>
             <input
+              ref={inputRef}
               autoFocus
               defaultValue={node.title}
-              style={{ flex: 1, minWidth: 0, textAlign: 'left', background: 'white', border: '1px solid #3b82f6', borderRadius: 3, padding: '0 4px', fontSize: node.style.fontSize, color: '#111827', outline: 'none' }}
+              style={{ flex: 1, minWidth: 0, textAlign: 'left', background: 'transparent', border: 'none', borderRadius: 3, padding: '0 4px', fontSize: node.style.fontSize, color: node.style.textColor, outline: 'none' }}
               onBlur={e => {
                 const t = e.currentTarget.value.trim()
                 if (t && t !== node.title) dispatch({ type: 'RENAME_NODE', payload: { nodeId: node.id, title: t } })

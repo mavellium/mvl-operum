@@ -77,7 +77,7 @@ export function SprintManager({ sprints: initialSprints, onSprintCreated }: Spri
           value={newName}
           onChange={(e) => setNewName(e.target.value)}
           placeholder="Nome da sprint"
-          className="rounded border border-gray-300 px-2 py-1 text-sm text-gray-900 placeholder:text-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-400"
+          className="rounded border border-gray-300 px-2 py-1 text-sm text-gray-900 focus:outline-none focus:ring-2 focus:ring-blue-400"
           onKeyDown={(e) => e.key === 'Enter' && handleCreate()}
           aria-label="Nome"
         />

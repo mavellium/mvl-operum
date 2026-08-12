@@ -172,7 +172,7 @@ function MultiCreatableSelect({ values = [], onChange, options, placeholder, dis
             )}
           </span>
         ))}
-        <input ref={inputRef} type="text" value={search} disabled={disabled} onChange={(e) => { setSearch(e.target.value); setIsOpen(true) }} onFocus={() => !disabled && setIsOpen(true)} placeholder={values.length === 0 ? placeholder : ''} className="flex-1 min-w-[120px] outline-none bg-transparent text-sm placeholder:text-gray-400 disabled:cursor-not-allowed" />
+        <input ref={inputRef} type="text" value={search} disabled={disabled} onChange={(e) => { setSearch(e.target.value); setIsOpen(true) }} onFocus={() => !disabled && setIsOpen(true)} placeholder={values.length === 0 ? placeholder : ''} className="flex-1 min-w-[120px] outline-none bg-transparent text-sm disabled:cursor-not-allowed" />
       </div>
 
       {isOpen && !disabled && (
@@ -424,6 +424,7 @@ export default function ProjetoMembrosClient({
       setLoadingId('form')
 
       const result = await updateProjetoMemberAction(m.userId, projetoId, {
+        avatarUrl: formState.avatarUrl,
         phone: formState.phone,
         cep: formState.address.cep,
         logradouro: formState.address.logradouro,
@@ -450,6 +451,7 @@ export default function ProjetoMembrosClient({
           existing.userId === m.userId
             ? {
               ...existing,
+              avatarUrl: formState.avatarUrl || existing.avatarUrl,
               phone: formState.phone,
               cep: formState.address.cep,
               logradouro: formState.address.logradouro,
@@ -578,7 +580,7 @@ export default function ProjetoMembrosClient({
         </div>
 
         <div className="px-4 py-3 border-b border-gray-100">
-          <input type="search" placeholder="Buscar membro…" value={searchMembros} onChange={e => setSearchMembros(e.target.value)} className="w-full px-3 py-2 border border-gray-200 rounded-xl text-sm placeholder:text-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500" />
+          <input type="search" placeholder="Buscar membro…" value={searchMembros} onChange={e => setSearchMembros(e.target.value)} className="w-full px-3 py-2 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-blue-500" />
         </div>
 
         {filteredMembros.length === 0 ? (
@@ -698,7 +700,7 @@ export default function ProjetoMembrosClient({
             </div>
           </div>
           <div className="px-4 py-3 border-b border-gray-100">
-            <input type="search" placeholder="Buscar usuário…" value={searchDisponiveis} onChange={e => setSearchDisponiveis(e.target.value)} className="w-full px-3 py-2 border border-gray-200 rounded-xl text-sm placeholder:text-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500" />
+            <input type="search" placeholder="Buscar usuário…" value={searchDisponiveis} onChange={e => setSearchDisponiveis(e.target.value)} className="w-full px-3 py-2 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-blue-500" />
           </div>
           {filteredDisponiveis.length === 0 ? (
             <div className="px-5 py-10 text-center">
@@ -729,13 +731,13 @@ export default function ProjetoMembrosClient({
 
       {/* ── COLUMN 3 — Formulário de Edição ── */}
       {showCol3 && (
-        <div className={`${col3Width} w-full bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden animate-in slide-in-from-right-4 duration-300`}>
-          <div className="flex items-center justify-between px-5 py-4 border-b border-gray-100 bg-gray-50/50">
+        <div className={`${col3Width} w-full bg-white rounded-2xl shadow-sm border border-gray-100 max-h-[calc(100vh-6rem)] flex flex-col overflow-hidden animate-in slide-in-from-right-4 duration-300`}>
+          <div className="flex items-center justify-between px-5 py-4 border-b border-gray-100 bg-gray-50/50 shrink-0">
             <h2 className="text-sm font-semibold text-gray-900">{col3Title}</h2>
             <button onClick={handleClearSelection} className="p-2 rounded-xl text-gray-400 hover:text-gray-600 hover:bg-gray-100 transition-colors"><IconClose /></button>
           </div>
 
-          <div className="px-5 py-5 space-y-4">
+          <div className="px-5 py-5 space-y-4 overflow-y-auto flex-1 min-h-0">
             <div className="flex justify-center mb-6">
               <AvatarUpload
                 name={formState.name || 'Novo Usuário'}
@@ -777,7 +779,7 @@ export default function ProjetoMembrosClient({
                     onChange={handlePhoneChange}
                     disabled={!isAdmin}
                     placeholder="(00) 00000-0000"
-                    className="w-full pl-9 pr-3 py-2.5 border border-gray-300 rounded-xl text-sm text-gray-900 bg-gray-50 placeholder:text-gray-400 focus:bg-white focus:outline-none focus:ring-2 focus:ring-blue-500 transition-all disabled:opacity-60 disabled:cursor-not-allowed"
+                    className="w-full pl-9 pr-3 py-2.5 border border-gray-300 rounded-xl text-sm text-gray-900 bg-gray-50 focus:bg-white focus:outline-none focus:ring-2 focus:ring-blue-500 transition-all disabled:opacity-60 disabled:cursor-not-allowed"
                   />
                 </div>
               </div>
@@ -796,7 +798,7 @@ export default function ProjetoMembrosClient({
                     onChange={handleCurrencyChange}
                     disabled={!isAdmin}
                     placeholder="0,00"
-                    className="w-full pl-10 pr-3 py-2.5 border border-gray-300 rounded-xl text-sm text-gray-900 bg-gray-50 placeholder:text-gray-400 focus:bg-white focus:outline-none focus:ring-2 focus:ring-blue-500 transition-all disabled:opacity-60 disabled:cursor-not-allowed"
+                    className="w-full pl-10 pr-3 py-2.5 border border-gray-300 rounded-xl text-sm text-gray-900 bg-gray-50 focus:bg-white focus:outline-none focus:ring-2 focus:ring-blue-500 transition-all disabled:opacity-60 disabled:cursor-not-allowed"
                   />
                 </div>
               </div>

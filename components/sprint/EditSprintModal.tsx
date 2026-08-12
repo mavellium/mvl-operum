@@ -62,10 +62,10 @@ export default function EditSprintModal({ sprint, onClose, onUpdated }: Props) {
       <div className="absolute inset-0" onClick={onClose} aria-hidden="true" />
 
       {/* Container Principal do Modal */}
-      <div className="relative bg-white rounded-2xl shadow-2xl w-full max-w-md overflow-hidden animate-in zoom-in-95 duration-200">
-        
+      <div className="relative bg-white rounded-2xl shadow-2xl w-full max-w-md max-h-[90vh] flex flex-col overflow-hidden animate-in zoom-in-95 duration-200">
+
         {/* Cabeçalho */}
-        <div className="flex items-center justify-between px-6 py-4 border-b border-gray-100 bg-gray-50/50">
+        <div className="flex items-center justify-between px-6 py-4 border-b border-gray-100 bg-gray-50/50 shrink-0">
           <h2 className="text-lg font-semibold text-gray-900">Configurações da Sprint</h2>
           <button
             onClick={onClose}
@@ -77,7 +77,7 @@ export default function EditSprintModal({ sprint, onClose, onUpdated }: Props) {
         </div>
 
         {/* Formulário */}
-        <form onSubmit={handleSubmit} className="p-6 space-y-5">
+        <form onSubmit={handleSubmit} className="p-6 space-y-5 overflow-y-auto flex-1 min-h-0">
           
           {/* Campo Nome */}
           <div>
@@ -90,7 +90,7 @@ export default function EditSprintModal({ sprint, onClose, onUpdated }: Props) {
               value={name}
               placeholder="Ex: Sprint 1 - Autenticação"
               onChange={e => { setName(e.target.value); setError('') }}
-              className={`w-full px-4 py-2.5 border rounded-xl text-sm text-gray-900 placeholder:text-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500/20 transition-all ${
+              className={`w-full px-4 py-2.5 border rounded-xl text-sm text-gray-900 focus:outline-none focus:ring-2 focus:ring-blue-500/20 transition-all ${
                 error ? 'border-red-300 focus:border-red-500 bg-red-50/30' : 'border-gray-200 focus:border-blue-500 bg-white'
               }`}
             />

@@ -38,6 +38,11 @@ export class ProjectService {
         skip,
         take: limit,
         orderBy: { createdAt: 'desc' },
+        include: {
+          _count: {
+            select: { members: { where: { active: true } } },
+          },
+        },
       }),
       prisma.project.count({ where: { tenantId, deletedAt: null } }),
     ])

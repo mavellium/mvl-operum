@@ -58,7 +58,7 @@ export default async function ProjetosPage({ searchParams }: { searchParams: Pro
   const totalPages = Math.ceil(total / limit)
 
   return (
-    <div className="min-h-screen bg-[#F8FAFC] relative overflow-hidden">
+    <div className="min-h-screen bg-[#F8FAFC] relative">
       {/* BACKGROUND DECORATIVO (Glow sutil no topo) */}
       <div className="absolute top-0 left-1/2 -translate-x-1/2 w-full max-w-3xl h-[300px] bg-blue-500/5 blur-[120px] rounded-full pointer-events-none" />
 
@@ -95,7 +95,7 @@ export default async function ProjetosPage({ searchParams }: { searchParams: Pro
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
               {projetos.map(projeto => {
                 const s = STATUS_CONFIG[projeto.status ?? 'ACTIVE'] ?? STATUS_CONFIG.ACTIVE
-                const qtdMembros = (projeto as { _count?: { members?: number } })._count?.members ?? 0
+                const qtdMembros = projeto._count?.members ?? 0
 
                 return (
                   <div 

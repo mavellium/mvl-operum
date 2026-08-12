@@ -114,7 +114,7 @@ export default function MultiCreatableSelect({
           onFocus={() => setIsOpen(true)}
           placeholder={values.length === 0 ? placeholder : ''}
           disabled={disabled}
-          className="flex-1 min-w-[120px] bg-transparent outline-none text-sm text-slate-800 font-medium placeholder:text-slate-400"
+          className="flex-1 min-w-[120px] bg-transparent outline-none text-sm text-slate-800 font-medium"
         />
       </div>
 

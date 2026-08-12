@@ -95,7 +95,7 @@ function useDebounce<T>(value: T, delay: number): T {
 const labelClass = 'block text-xs font-semibold text-slate-500 uppercase tracking-wide mb-1'
 const inputClass =
   'w-full border border-slate-300 rounded-lg px-3 py-2 text-sm text-slate-900 bg-white ' +
-  'placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500'
+  ' focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500'
 const textareaClass = inputClass + ' resize-none leading-relaxed'
 const sectionTitle = 'text-sm font-bold text-slate-700 uppercase tracking-wider mb-3 pb-1 border-b border-slate-200'
 
