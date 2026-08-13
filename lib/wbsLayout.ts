@@ -3,12 +3,45 @@ import type {
   WbsLayoutResult,
   WbsNodeGeometry,
   WbsConnector,
+  DropPosition,
 } from '@/types/wbs'
 
 export const NODE_W = 160
 export const NODE_H = 60
 export const GAP_X = 40
 export const GAP_Y = 60
+
+/**
+ * Resolve a posição de drop sobre (ou logo abaixo de) um card:
+ * - borda esquerda  → BEFORE (irmão antes)
+ * - borda direita   → AFTER  (irmão depois)
+ * - corpo/abaixo    → INSIDE (filho)
+ * Retorna null quando o cursor não está em nenhuma zona do card.
+ */
+export function resolveDropPosition(
+  cx: number,
+  cy: number,
+  g: Pick<WbsNodeGeometry, 'x' | 'y' | 'width' | 'height'>
+): DropPosition | null {
+  const SIDE_W = Math.max(18, g.width * 0.2)
+  const BELOW_H = 24
+
+  const withinCard =
+    cx >= g.x && cx <= g.x + g.width &&
+    cy >= g.y && cy <= g.y + g.height
+  if (withinCard) {
+    if (cx < g.x + SIDE_W) return 'BEFORE'
+    if (cx > g.x + g.width - SIDE_W) return 'AFTER'
+    return 'INSIDE'
+  }
+
+  const inBelowBand =
+    cy > g.y + g.height && cy <= g.y + g.height + BELOW_H &&
+    cx >= g.x && cx <= g.x + g.width
+  if (inBelowBand) return 'INSIDE'
+
+  return null
+}
 
 interface SubtreeSize {
   width: number

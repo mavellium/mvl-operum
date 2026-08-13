@@ -24,6 +24,7 @@ export function WbsProvider({
     rootId: initialTree.rootId,
     selectedNodeIds: [],
     editingNodeId: null,
+    focusNodeId: null,
     clipboard: { nodes: [], copiedStyle: null, actionType: null },
     history: { past: [], future: [] },
     viewport: { zoom: 1, panX: 40, panY: 40 },

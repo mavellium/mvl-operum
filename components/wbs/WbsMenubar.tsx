@@ -1,10 +1,13 @@
 'use client'
 
-import { type Dispatch, useCallback, useEffect, useMemo, useRef, useState } from 'react'
+import { type Dispatch, useEffect, useRef, useState } from 'react'
 import { useRouter } from 'next/navigation'
 import {
   Undo2, Redo2, CornerDownRight, Plus, Trash2, Palette, Save, Printer,
-  ZoomIn, ZoomOut, Maximize2,
+  ZoomIn, ZoomOut, Maximize2, Search,
+  FolderOpen, Scissors, Copy, ClipboardPaste, CopyPlus, Paintbrush, PaintRoller, Eraser,
+  PencilLine, ChevronsUpDown, Columns2, Rows2, Rows3,
+  FileImage, ImageDown, FileCode2, FileJson, HelpCircle, BookOpen,
 } from 'lucide-react'
 import Modal from '@/components/ui/Modal'
 import Tooltip from '@/components/ui/Tooltip'
@@ -29,6 +32,7 @@ export interface WbsMenubarProps {
   projetoId: string
   dispatch: Dispatch<WbsAction>
   hasCopiedStyle: boolean
+  hasClipboardNodes: boolean
   onFitScreen: () => void
   onManualSave: () => void
   onRequestDelete: () => void
@@ -49,8 +53,10 @@ function IconButton({
         onClick={onClick}
         disabled={disabled}
         aria-label={label}
-        className={`h-6 w-6 flex items-center justify-center rounded transition-colors cursor-pointer disabled:opacity-30 disabled:cursor-not-allowed disabled:pointer-events-none ${
-          active ? 'bg-blue-100 text-blue-700' : 'text-gray-600 hover:bg-gray-100 hover:text-gray-900'
+        className={`h-7 w-7 flex items-center justify-center rounded-md border transition-colors cursor-pointer disabled:opacity-30 disabled:cursor-not-allowed disabled:pointer-events-none ${
+          active
+            ? 'bg-blue-50 border-blue-300 text-blue-700'
+            : 'border-gray-200 bg-white text-gray-600 shadow-sm hover:bg-gray-50 hover:border-gray-300 hover:text-gray-900'
         }`}
       >
         {children}
@@ -75,9 +81,12 @@ function ShortcutsTable() {
       title: 'Navegação',
       rows: [
         ['↑ ↓ ← →', 'Navegar entre elementos'],
-        ['Tab', 'Inserir elemento filho'],
+        ['Tab', 'Inserir elemento filho (desce nível)'],
+        ['Shift+Tab', 'Voltar ao nível pai'],
         ['Enter', 'Inserir elemento irmão'],
         ['F2 / Duplo clique', 'Renomear elemento'],
+        ['[ / ]', 'Recolher / expandir elemento'],
+        ['Digitar', 'Clicar e digitar já troca o texto'],
       ],
     },
     {
@@ -88,8 +97,11 @@ function ShortcutsTable() {
         ['Ctrl+X', 'Recortar'],
         ['Ctrl+C', 'Copiar'],
         ['Ctrl+V', 'Colar'],
+        ['Ctrl+D', 'Duplicar elemento(s) (Ctrl+Alt+D se o navegador reservar Ctrl+D)'],
         ['Ctrl+A', 'Selecionar tudo'],
         ['Ctrl+Shift+C', 'Copiar estilo'],
+        ['Ctrl+Shift+V', 'Colar estilo'],
+        ['Ctrl+Shift+X', 'Limpar estilo'],
         ['Delete', 'Remover elemento'],
       ],
     },
@@ -213,83 +225,48 @@ function ManualContent() {
 
 // ── Dropdown item types ───────────────────────────────────────────────────────
 
-interface MenuItem {
+interface ToolbarItem {
   label: string
-  shortcut?: string
-  action: () => void
+  icon: React.ReactNode
+  onClick: () => void
   disabled?: boolean
-  checked?: boolean
+  active?: boolean
 }
 
-function DropdownMenu({
-  items,
-  onMouseEnter,
-  onMouseLeave,
-}: {
-  items: (MenuItem | null)[]
-  onMouseEnter?: () => void
-  onMouseLeave?: () => void
-}) {
+function ToolbarCard({ title, items }: { title: string; items: ToolbarItem[] }) {
   return (
-    <div
-      onMouseEnter={onMouseEnter}
-      onMouseLeave={onMouseLeave}
-      className="absolute top-full left-0 z-50 bg-white shadow-xl rounded-md border border-gray-200 py-1 min-w-[230px]"
-    >
-      {items.map((item, idx) => {
-        if (!item) return <hr key={idx} className="my-1 border-gray-200" />
-        return (
-          <button
-            key={item.label}
-            disabled={item.disabled}
-            onClick={item.action}
-            className="w-full flex items-center justify-between px-4 py-1.5 text-sm text-left text-gray-800 hover:bg-blue-50 hover:text-blue-700 disabled:opacity-40 disabled:pointer-events-none transition-colors cursor-pointer"
-          >
-            <span className={item.checked ? 'font-semibold text-blue-600' : ''}>{item.label}</span>
-            {item.shortcut && (
-              <span className="ml-8 text-xs text-gray-500 shrink-0">{item.shortcut}</span>
-            )}
-          </button>
-        )
-      })}
+    <div className="flex flex-col gap-0.5 border border-gray-200 rounded-md bg-white p-1 shadow-sm shrink-0">
+      <span className="text-[9px] font-semibold uppercase tracking-widest text-gray-400 px-0.5">{title}</span>
+      <div className="flex items-center gap-0.5">
+        {items.map(it => (
+          <IconButton key={it.label} label={it.label} onClick={it.onClick} disabled={it.disabled} active={it.active}>
+            {it.icon}
+          </IconButton>
+        ))}
+      </div>
     </div>
   )
 }
 
-let menubarCloseTimer: ReturnType<typeof setTimeout> | null = null
-
 // ── Main component ────────────────────────────────────────────────────────────
 
 export default function WbsMenubar({
-  syncStatus, lastSavedAt, zoom, panX, panY,
+  syncStatus, zoom, panX, panY,
   canUndo, canRedo, canEdit,
   nodes, rootId, selectedNodeIds, projetoId,
-  hasCopiedStyle,
+  hasCopiedStyle, hasClipboardNodes,
   dispatch, onFitScreen, onManualSave, onRequestDelete, onPasteStyle,
   showStylePanel, onToggleStylePanel,
 }: WbsMenubarProps) {
   const router = useRouter()
-  const [activeMenu, setActiveMenu] = useState<string | null>(null)
   const [showHelp, setShowHelp] = useState(false)
   const [showManual, setShowManual] = useState(false)
-  const menubarRef = useRef<HTMLDivElement>(null)
   const fileInputRef = useRef<HTMLInputElement>(null)
   const [filePickerTrigger, setFilePickerTrigger] = useState(0)
-  const scheduleClose = useCallback(() => { menubarCloseTimer = setTimeout(() => setActiveMenu(null), 200) }, [])
-  const cancelClose = useCallback(() => { if (menubarCloseTimer) { clearTimeout(menubarCloseTimer); menubarCloseTimer = null } }, [])
 
   useEffect(() => {
     if (filePickerTrigger > 0) fileInputRef.current?.click()
   }, [filePickerTrigger])
-
-  // Close dropdown when clicking outside the menubar
-  useEffect(() => {
-    const handler = (e: MouseEvent) => {
-      if (!menubarRef.current?.contains(e.target as Node)) setActiveMenu(null)
-    }
-    document.addEventListener('mousedown', handler)
-    return () => document.removeEventListener('mousedown', handler)
-  }, [])
 
   // Ctrl+O → open file picker, Ctrl+P → print
   useEffect(() => {
@@ -305,11 +282,9 @@ export default function WbsMenubar({
     return () => window.removeEventListener('keydown', handler)
   }, [])
 
-  const close = useCallback(() => setActiveMenu(null), [])
-  const toggle = useCallback((name: string) => setActiveMenu(prev => prev === name ? null : name), [])
-
   const firstSelected = selectedNodeIds[0]
   const selectedNode = firstSelected ? nodes[firstSelected] : null
+  const canDelete = selectedNodeIds.some(id => nodes[id]?.parentId)
 
   // File import
   const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -326,196 +301,105 @@ export default function WbsMenubar({
   const sync = SYNC[syncStatus] ?? SYNC.IDLE
   const zoomPercent = Math.round(zoom * 100)
 
-  // Menu definitions
-  const menus = useMemo((): { name: string; items: (MenuItem | null)[] }[] => {
-    const downloadMspdi = () => {
-      const xml = exportMspdi(nodes, rootId, { projectName: projetoId })
-      if (!xml) return
-      const a = document.createElement('a')
-      a.href = URL.createObjectURL(new Blob([xml], { type: 'application/xml;charset=utf-8' }))
-      a.download = `eap-${projetoId}.xml`
-      a.click()
-    }
-    const downloadWbs = () => {
-      const a = document.createElement('a')
-      a.href = URL.createObjectURL(
-        new Blob([JSON.stringify({ version: 1, rootId, nodes }, null, 2)], { type: 'application/json' })
-      )
-      a.download = `eap-${projetoId}.wbs`
-      a.click()
-    }
-    return [
-      {
-        name: 'Documento',
-        items: [
-          { label: 'Abrir documento (.wbs)', shortcut: 'Ctrl+O', action: () => { close(); setFilePickerTrigger(t => t + 1) } },
-          { label: 'Salvar', shortcut: 'Ctrl+S', action: () => { close(); onManualSave() }, disabled: !canEdit },
-          null,
-          { label: 'Imprimir', shortcut: 'Ctrl+P', action: () => { close(); window.print() } },
-        ],
-      },
-      {
-        name: 'Editar',
-        items: [
-          { label: 'Desfazer', shortcut: 'Ctrl+Z', action: () => { close(); dispatch({ type: 'UNDO' }) }, disabled: !canUndo },
-          { label: 'Refazer', shortcut: 'Ctrl+Shift+Z', action: () => { close(); dispatch({ type: 'REDO' }) }, disabled: !canRedo },
-          null,
-          { label: 'Recortar', shortcut: 'Ctrl+X', action: () => { close(); if (firstSelected) dispatch({ type: 'CUT', payload: { nodeIds: selectedNodeIds } }) }, disabled: !firstSelected || !canEdit },
-          { label: 'Copiar', shortcut: 'Ctrl+C', action: () => { close(); if (firstSelected) dispatch({ type: 'COPY', payload: { nodeIds: selectedNodeIds } }) }, disabled: !firstSelected },
-          { label: 'Colar', shortcut: 'Ctrl+V', action: () => { close(); if (firstSelected) dispatch({ type: 'PASTE', payload: { parentId: firstSelected } }) }, disabled: !firstSelected || !canEdit },
-          { label: 'Selecionar Tudo', shortcut: 'Ctrl+A', action: () => { close(); dispatch({ type: 'SET_SELECTION', payload: { nodeIds: Object.keys(nodes) } }) } },
-          null,
-          { label: 'Copiar Estilo', shortcut: 'Ctrl+Shift+C', action: () => { close(); if (firstSelected) dispatch({ type: 'COPY_STYLE', payload: { nodeId: firstSelected } }) }, disabled: !firstSelected },
-          { label: 'Colar Estilo', shortcut: 'Ctrl+Shift+V', action: () => { close(); onPasteStyle() }, disabled: !hasCopiedStyle || !firstSelected || !canEdit },
-        ],
-      },
-      {
-        name: 'Elemento',
-        items: [
-          { label: 'Inserir Filho', shortcut: 'Tab', action: () => { close(); if (firstSelected) dispatch({ type: 'INSERT_CHILD', payload: { parentId: firstSelected } }) }, disabled: !firstSelected || !canEdit },
-          { label: 'Inserir Irmão', shortcut: 'Enter', action: () => { close(); if (firstSelected && selectedNode?.parentId) dispatch({ type: 'INSERT_SIBLING', payload: { siblingId: firstSelected } }) }, disabled: !firstSelected || !selectedNode?.parentId || !canEdit },
-          { label: 'Remover', shortcut: 'Delete', action: () => { close(); onRequestDelete() }, disabled: !firstSelected || !selectedNode?.parentId || !canEdit },
-          null,
-          { label: 'Estilo', action: () => { close(); onToggleStylePanel() }, disabled: !firstSelected },
-          { label: 'Propriedades', action: () => { close(); onToggleStylePanel() }, disabled: !firstSelected },
-        ],
-      },
-      {
-        name: 'Organizar',
-        items: [
-          { label: 'Lado a Lado', action: () => { close(); if (firstSelected) dispatch({ type: 'SET_LAYOUT', payload: { nodeId: firstSelected, layout: 'LADO_A_LADO' } }) }, disabled: !firstSelected || !canEdit, checked: selectedNode?.layout === 'LADO_A_LADO' },
-          { label: 'Abaixo', action: () => { close(); if (firstSelected) dispatch({ type: 'SET_LAYOUT', payload: { nodeId: firstSelected, layout: 'ABAIXO' } }) }, disabled: !firstSelected || !canEdit, checked: selectedNode?.layout === 'ABAIXO' },
-          { label: 'Abaixo com conector em L', action: () => { close(); if (firstSelected) dispatch({ type: 'SET_LAYOUT', payload: { nodeId: firstSelected, layout: 'ABAIXO_L' } }) }, disabled: !firstSelected || !canEdit, checked: selectedNode?.layout === 'ABAIXO_L' },
-        ],
-      },
-      {
-        name: 'Download',
-        items: [
-          { label: 'Figura SVG (.svg)', action: () => { close(); exportWbsSvg(nodes, rootId, `eap-${projetoId}.svg`) } },
-          { label: 'Figura PNG (.png)', action: () => { close(); exportWbsPng(nodes, rootId, `eap-${projetoId}.png`) } },
-          { label: 'MS Project XML (MSPDI)', action: () => { close(); downloadMspdi() } },
-          { label: 'Arquivo WBS (.wbs)', action: () => { close(); downloadWbs() } },
-        ],
-      },
-      {
-        name: 'Ajuda',
-        items: [
-          { label: 'Ajuda Rápida', action: () => { close(); setShowHelp(true) } },
-          { label: 'Manual', action: () => { close(); setShowManual(true) } },
-        ],
-      },
-    ]
-  }, [close, setFilePickerTrigger, onManualSave, canEdit, dispatch, canUndo, canRedo, firstSelected, selectedNodeIds, selectedNode, hasCopiedStyle, onPasteStyle, projetoId, rootId, nodes, onRequestDelete, setShowHelp, setShowManual, onToggleStylePanel])
+  const downloadMspdi = () => {
+    const xml = exportMspdi(nodes, rootId, { projectName: projetoId })
+    if (!xml) return
+    const a = document.createElement('a')
+    a.href = URL.createObjectURL(new Blob([xml], { type: 'application/xml;charset=utf-8' }))
+    a.download = `eap-${projetoId}.xml`
+    a.click()
+  }
+  const downloadWbs = () => {
+    const a = document.createElement('a')
+    a.href = URL.createObjectURL(
+      new Blob([JSON.stringify({ version: 1, rootId, nodes }, null, 2)], { type: 'application/json' })
+    )
+    a.download = `eap-${projetoId}.wbs`
+    a.click()
+  }
+
+  // ── Cards da toolbar: título + ações como ícones (texto só no tooltip) ─────
+  const cards: { title: string; items: ToolbarItem[] }[] = [
+    {
+      title: 'Documentos',
+      items: [
+        { label: 'Abrir documento (.wbs)', icon: <FolderOpen className="w-4 h-4" />, onClick: () => setFilePickerTrigger(t => t + 1) },
+        { label: 'Salvar (Ctrl+S)', icon: <Save className="w-4 h-4" />, onClick: onManualSave, disabled: !canEdit },
+        { label: 'Imprimir (Ctrl+P)', icon: <Printer className="w-4 h-4" />, onClick: () => window.print() },
+      ],
+    },
+    {
+      title: 'Editar',
+      items: [
+        { label: 'Desfazer (Ctrl+Z)', icon: <Undo2 className="w-4 h-4" />, onClick: () => dispatch({ type: 'UNDO' }), disabled: !canUndo },
+        { label: 'Refazer (Ctrl+Shift+Z)', icon: <Redo2 className="w-4 h-4" />, onClick: () => dispatch({ type: 'REDO' }), disabled: !canRedo },
+        { label: 'Recortar (Ctrl+X)', icon: <Scissors className="w-4 h-4" />, onClick: () => dispatch({ type: 'CUT', payload: { nodeIds: selectedNodeIds } }), disabled: !canDelete || !canEdit },
+        { label: 'Copiar (Ctrl+C)', icon: <Copy className="w-4 h-4" />, onClick: () => dispatch({ type: 'COPY', payload: { nodeIds: selectedNodeIds } }), disabled: !firstSelected },
+        { label: 'Colar (Ctrl+V)', icon: <ClipboardPaste className="w-4 h-4" />, onClick: () => { if (firstSelected) dispatch({ type: 'PASTE', payload: { parentId: firstSelected } }) }, disabled: !firstSelected || !canEdit || !hasClipboardNodes },
+        { label: 'Duplicar (Ctrl+D)', icon: <CopyPlus className="w-4 h-4" />, onClick: () => dispatch({ type: 'DUPLICATE', payload: { nodeIds: selectedNodeIds } }), disabled: !canDelete || !canEdit },
+        { label: 'Copiar Estilo (Ctrl+Shift+C)', icon: <Paintbrush className="w-4 h-4" />, onClick: () => { if (firstSelected) dispatch({ type: 'COPY_STYLE', payload: { nodeId: firstSelected } }) }, disabled: !firstSelected },
+        { label: 'Colar Estilo (Ctrl+Shift+V)', icon: <PaintRoller className="w-4 h-4" />, onClick: onPasteStyle, disabled: !hasCopiedStyle || !firstSelected || !canEdit },
+        { label: 'Limpar Estilo (Ctrl+Shift+X)', icon: <Eraser className="w-4 h-4" />, onClick: () => dispatch({ type: 'CLEAR_STYLE' }), disabled: selectedNodeIds.length === 0 || !canEdit },
+      ],
+    },
+    {
+      title: 'Elemento',
+      items: [
+        { label: 'Inserir Filho (Tab)', icon: <CornerDownRight className="w-4 h-4" />, onClick: () => { if (firstSelected) dispatch({ type: 'INSERT_CHILD', payload: { parentId: firstSelected } }) }, disabled: !firstSelected || !canEdit },
+        { label: 'Inserir Irmão (Enter)', icon: <Plus className="w-4 h-4" />, onClick: () => { if (firstSelected && selectedNode?.parentId) dispatch({ type: 'INSERT_SIBLING', payload: { siblingId: firstSelected } }) }, disabled: !firstSelected || !selectedNode?.parentId || !canEdit },
+        { label: 'Renomear (F2)', icon: <PencilLine className="w-4 h-4" />, onClick: () => { if (firstSelected) dispatch({ type: 'SET_EDITING', payload: { nodeId: firstSelected } }) }, disabled: !firstSelected },
+        { label: 'Recolher/Expandir ([ / ])', icon: <ChevronsUpDown className="w-4 h-4" />, onClick: () => { if (firstSelected && selectedNode) dispatch({ type: 'SET_COLLAPSED', payload: { nodeId: firstSelected, collapsed: !selectedNode.collapsed } }) }, disabled: !selectedNode?.childrenIds.length || !canEdit },
+        { label: 'Remover (Delete)', icon: <Trash2 className="w-4 h-4" />, onClick: onRequestDelete, disabled: !canDelete || !canEdit },
+      ],
+    },
+    {
+      title: 'Organizar',
+      items: [
+        { label: 'Lado a Lado', icon: <Columns2 className="w-4 h-4" />, onClick: () => { if (firstSelected) dispatch({ type: 'SET_LAYOUT', payload: { nodeId: firstSelected, layout: 'LADO_A_LADO' } }) }, disabled: !firstSelected || !canEdit, active: selectedNode?.layout === 'LADO_A_LADO' },
+        { label: 'Abaixo', icon: <Rows2 className="w-4 h-4" />, onClick: () => { if (firstSelected) dispatch({ type: 'SET_LAYOUT', payload: { nodeId: firstSelected, layout: 'ABAIXO' } }) }, disabled: !firstSelected || !canEdit, active: selectedNode?.layout === 'ABAIXO' },
+        { label: 'Abaixo com conector em L', icon: <Rows3 className="w-4 h-4" />, onClick: () => { if (firstSelected) dispatch({ type: 'SET_LAYOUT', payload: { nodeId: firstSelected, layout: 'ABAIXO_L' } }) }, disabled: !firstSelected || !canEdit, active: selectedNode?.layout === 'ABAIXO_L' },
+      ],
+    },
+    {
+      title: 'Download',
+      items: [
+        { label: 'Figura SVG (.svg)', icon: <FileImage className="w-4 h-4" />, onClick: () => exportWbsSvg(nodes, rootId, `eap-${projetoId}.svg`) },
+        { label: 'Figura PNG (.png)', icon: <ImageDown className="w-4 h-4" />, onClick: () => exportWbsPng(nodes, rootId, `eap-${projetoId}.png`) },
+        { label: 'MS Project XML (MSPDI)', icon: <FileCode2 className="w-4 h-4" />, onClick: downloadMspdi },
+        { label: 'Arquivo WBS (.wbs)', icon: <FileJson className="w-4 h-4" />, onClick: downloadWbs },
+      ],
+    },
+    {
+      title: 'Outros',
+      items: [
+        { label: 'Estilo e propriedades', icon: <Palette className="w-4 h-4" />, onClick: onToggleStylePanel, disabled: !firstSelected, active: showStylePanel },
+        { label: 'Ajustar à tela', icon: <Maximize2 className="w-4 h-4" />, onClick: onFitScreen },
+        { label: 'Diminuir zoom', icon: <ZoomOut className="w-4 h-4" />, onClick: () => dispatch({ type: 'SET_VIEWPORT', payload: { zoom: Math.max(0.1, zoom / 1.2), panX, panY } }) },
+        { label: `Zoom: ${zoomPercent}% (clique = 100%)`, icon: <Search className="w-4 h-4" />, onClick: () => dispatch({ type: 'SET_VIEWPORT', payload: { zoom: 1, panX, panY } }) },
+        { label: 'Aumentar zoom', icon: <ZoomIn className="w-4 h-4" />, onClick: () => dispatch({ type: 'SET_VIEWPORT', payload: { zoom: Math.min(3, zoom * 1.2), panX, panY } }) },
+        { label: 'Ajuda Rápida', icon: <HelpCircle className="w-4 h-4" />, onClick: () => setShowHelp(true) },
+        { label: 'Manual', icon: <BookOpen className="w-4 h-4" />, onClick: () => setShowManual(true) },
+      ],
+    },
+  ]
 
   return (
     <>
-      <div
-        ref={menubarRef}
-        data-wbs-toolbar=""
-        onMouseLeave={scheduleClose}
-        className="flex items-center h-8 shrink-0 border-b border-gray-200 bg-white select-none"
-      >
-        {/* Menus */}
-        <div className="flex items-center flex-1">
-          {menus.map(menu => (
-            <div key={menu.name} className="relative">
-              <button
-                className={`h-8 px-3 text-sm transition-colors rounded-sm cursor-pointer ${
-                  activeMenu === menu.name
-                    ? 'bg-blue-50 text-blue-700 font-medium'
-                    : 'text-gray-700 hover:bg-gray-100 hover:text-gray-900'
-                }`}
-                onMouseEnter={() => { cancelClose(); setActiveMenu(menu.name) }}
-                onClick={() => toggle(menu.name)}
-              >
-                {menu.name}
-              </button>
-              {activeMenu === menu.name && (
-                <DropdownMenu
-                  items={menu.items}
-                  onMouseEnter={cancelClose}
-                  onMouseLeave={scheduleClose}
-                />
-              )}
-            </div>
-          ))}
-        </div>
-
-        {/* Ações rápidas com ícone */}
-        <div className="flex items-center gap-0.5 px-2 border-l border-gray-200">
-          <IconButton label="Desfazer (Ctrl+Z)" onClick={() => dispatch({ type: 'UNDO' })} disabled={!canUndo}>
-            <Undo2 className="w-4 h-4" />
-          </IconButton>
-          <IconButton label="Refazer (Ctrl+Shift+Z)" onClick={() => dispatch({ type: 'REDO' })} disabled={!canRedo}>
-            <Redo2 className="w-4 h-4" />
-          </IconButton>
-          <span className="w-px h-4 bg-gray-200 mx-1" />
-          <IconButton
-            label="Inserir filho (Tab)"
-            onClick={() => firstSelected && dispatch({ type: 'INSERT_CHILD', payload: { parentId: firstSelected } })}
-            disabled={!firstSelected || !canEdit}
-          >
-            <CornerDownRight className="w-4 h-4" />
-          </IconButton>
-          <IconButton
-            label="Inserir irmão (Enter)"
-            onClick={() => firstSelected && selectedNode?.parentId && dispatch({ type: 'INSERT_SIBLING', payload: { siblingId: firstSelected } })}
-            disabled={!firstSelected || !selectedNode?.parentId || !canEdit}
-          >
-            <Plus className="w-4 h-4" />
-          </IconButton>
-          <IconButton
-            label="Remover (Delete)"
-            onClick={onRequestDelete}
-            disabled={!firstSelected || !selectedNode?.parentId || !canEdit}
-          >
-            <Trash2 className="w-4 h-4" />
-          </IconButton>
-          <span className="w-px h-4 bg-gray-200 mx-1" />
-          <IconButton
-            label="Estilo e propriedades"
-            onClick={onToggleStylePanel}
-            disabled={!firstSelected}
-            active={showStylePanel}
-          >
-            <Palette className="w-4 h-4" />
-          </IconButton>
-          <span className="w-px h-4 bg-gray-200 mx-1" />
-          <IconButton label="Salvar (Ctrl+S)" onClick={onManualSave} disabled={!canEdit}>
-            <Save className="w-4 h-4" />
-          </IconButton>
-          <IconButton label="Imprimir (Ctrl+P)" onClick={() => window.print()}>
-            <Printer className="w-4 h-4" />
-          </IconButton>
-        </div>
-
-        {/* Zoom controls */}
-        <div className="flex items-center gap-0.5 px-2 border-l border-gray-200">
-          <IconButton label="Diminuir zoom" onClick={() => dispatch({ type: 'SET_VIEWPORT', payload: { zoom: Math.max(0.1, zoom / 1.2), panX, panY } })}>
-            <ZoomOut className="w-4 h-4" />
-          </IconButton>
-          <button
-            onClick={() => dispatch({ type: 'SET_VIEWPORT', payload: { zoom: 1, panX, panY } })}
-            className="w-12 text-center text-xs text-gray-600 tabular-nums rounded hover:bg-gray-100 py-0.5"
-            title="Zoom 100% (Ctrl+0)"
-          >
-            {zoomPercent}%
-          </button>
-          <IconButton label="Aumentar zoom" onClick={() => dispatch({ type: 'SET_VIEWPORT', payload: { zoom: Math.min(3, zoom * 1.2), panX, panY } })}>
-            <ZoomIn className="w-4 h-4" />
-          </IconButton>
-          <IconButton label="Ajustar à tela" onClick={onFitScreen}>
-            <Maximize2 className="w-4 h-4" />
-          </IconButton>
-        </div>
+      <div className="flex items-center gap-1.5 px-1.5 py-1 border-b border-gray-200 bg-white select-none overflow-x-auto">
+        {cards.map(card => (
+          <ToolbarCard key={card.title} title={card.title} items={card.items} />
+        ))}
 
         {/* Sync indicator */}
-        <div
-          className="flex items-center gap-1 text-xs px-3 border-l border-gray-200"
-          title={lastSavedAt ? `Último save: ${new Date(lastSavedAt).toLocaleTimeString('pt-BR')}` : undefined}
-        >
-          <span style={{ color: sync.color }}>{sync.icon}</span>
-          <span className="text-gray-500">{sync.label}</span>
+        <div className="flex items-center pl-1">
+          <Tooltip label={sync.label}>
+            <span
+              className="flex items-center justify-center w-7 h-7 rounded-md border border-gray-200 bg-white shadow-sm text-xs cursor-default"
+              aria-label={sync.label}
+            >
+              <span style={{ color: sync.color }}>{sync.icon}</span>
+            </span>
+          </Tooltip>
         </div>
       </div>
 

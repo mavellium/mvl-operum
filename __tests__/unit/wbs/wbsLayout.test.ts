@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest'
-import { computeLayout, NODE_W, NODE_H, GAP_X, GAP_Y } from '@/lib/wbsLayout'
+import { computeLayout, resolveDropPosition, NODE_W, NODE_H, GAP_X, GAP_Y } from '@/lib/wbsLayout'
 import type { WbsNodeClient, WbsLayoutOrientation } from '@/types/wbs'
 
 const S = {
@@ -199,5 +199,33 @@ describe('computeLayout', () => {
     const maxBottom = Math.max(...Object.values(geometry).map(g => g.y + NODE_H))
     expect(bounds.width).toBe(maxRight)
     expect(bounds.height).toBe(maxBottom)
+  })
+})
+
+describe('resolveDropPosition', () => {
+  const g = { x: 100, y: 200, width: 160, height: NODE_H }
+  const midX = g.x + g.width / 2
+  const midY = g.y + g.height / 2
+
+  it('corpo do card → INSIDE (filho)', () => {
+    expect(resolveDropPosition(midX, midY, g)).toBe('INSIDE')
+  })
+
+  it('abaixo do card (faixa de filhos) → INSIDE', () => {
+    expect(resolveDropPosition(midX, g.y + g.height + 10, g)).toBe('INSIDE')
+  })
+
+  it('borda esquerda → BEFORE (irmão antes)', () => {
+    expect(resolveDropPosition(g.x + 5, midY, g)).toBe('BEFORE')
+  })
+
+  it('borda direita → AFTER (irmão depois)', () => {
+    expect(resolveDropPosition(g.x + g.width - 5, midY, g)).toBe('AFTER')
+  })
+
+  it('fora de qualquer zona → null', () => {
+    expect(resolveDropPosition(midX, g.y - 40, g)).toBeNull()
+    expect(resolveDropPosition(g.x + g.width + 40, midY, g)).toBeNull()
+    expect(resolveDropPosition(midX, g.y + g.height + 40, g)).toBeNull()
   })
 })

@@ -131,4 +131,30 @@ describe('CardModal extended', () => {
       expect.objectContaining({ priority: 'alta' }),
     )
   })
+
+  it('readOnly renders title as static text and hides editing actions', () => {
+    render(<CardModal {...defaultProps} readOnly />)
+    expect(screen.getByRole('heading', { name: /test card/i })).toBeInTheDocument()
+    expect(screen.queryByRole('textbox')).not.toBeInTheDocument()
+    expect(screen.queryByRole('button', { name: /editar/i })).not.toBeInTheDocument()
+    expect(screen.queryByRole('button', { name: /salvar alterações/i })).not.toBeInTheDocument()
+    expect(screen.getAllByRole('button', { name: /fechar/i }).length).toBeGreaterThan(0)
+  })
+
+  it('readOnly shows responsibles as chips and priority as static badge', () => {
+    const card = {
+      ...baseCard,
+      priority: 'alta',
+      responsibles: [{ user: { id: 'u1', name: 'Ana Silva', avatarUrl: null } }],
+    }
+    render(<CardModal {...defaultProps} readOnly initialCard={card} />)
+    expect(screen.getByText('Ana Silva')).toBeInTheDocument()
+    expect(screen.getByText(/alta/i)).toBeInTheDocument()
+    expect(screen.queryByRole('button', { name: /baixa/i })).not.toBeInTheDocument()
+  })
+
+  it('readOnly hides comment composer', () => {
+    render(<CardModal {...defaultProps} readOnly />)
+    expect(screen.queryByPlaceholderText(/escreva um comentário/i)).not.toBeInTheDocument()
+  })
 })

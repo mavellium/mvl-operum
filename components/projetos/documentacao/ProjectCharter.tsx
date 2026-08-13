@@ -359,7 +359,7 @@ export default function ProjectCharter() {
       <div className="w-[210mm] bg-white rounded-xl shadow-md p-5 grid grid-cols-2 gap-4">
         <div>
           <label className={labelClass}>Elaborado por</label>
-          <input className={inputClass} value={versionMeta.elaboradoPor}
+          <input className={inputClass} autoFocus value={versionMeta.elaboradoPor}
             onChange={e => setVersionMeta(m => ({ ...m, elaboradoPor: e.target.value }))}
             placeholder="Nome do responsável" />
         </div>

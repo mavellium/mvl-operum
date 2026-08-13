@@ -9,7 +9,7 @@ interface ConfirmDialogProps {
   message: string
   /** Variante do botão de cancelamento. Padrão: 'secondary'. */
   cancelVariant?: 'primary' | 'secondary' | 'danger' | 'ghost'
-  /** Quando true, o botão Cancelar recebe foco automático (recomendado para ações destrutivas). */
+  /** Quando true, o botão Cancelar recebe foco automático. Padrão: true (diálogos de confirmação). */
   cancelAutoFocus?: boolean
   /** Label do botão de confirmação. Padrão: 'Excluir'. */
   confirmLabel?: string
@@ -18,9 +18,10 @@ interface ConfirmDialogProps {
 export default function ConfirmDialog({
   isOpen, onClose, onConfirm, title, message,
   cancelVariant = 'secondary',
-  cancelAutoFocus = false,
+  cancelAutoFocus = true,
   confirmLabel = 'Excluir',
 }: ConfirmDialogProps) {
+  // Foco inicial no Cancelar: o próximo Tab no DOM chega ao botão de confirmação.
   return (
     <Modal isOpen={isOpen} onClose={onClose} title={title}>
       <p className="text-gray-600 mb-6">{message}</p>

@@ -21,8 +21,10 @@ interface Responsible { userId: string; user: { id: string; name: string; avatar
 interface CardModalProps {
   isOpen: boolean
   onClose: () => void
-  onSubmit: (data: { title: string; description: string; color: CardColor; priority: string }) => void
+  onSubmit: (data: { title: string; description: string; color: CardColor; priority: string; responsibles?: string[]; files?: File[] }) => void
   initialCard?: Card
+  /** Modo somente-leitura: cards concluídos podem ser vistos mas não editados. */
+  readOnly?: boolean
   users?: User[]
   boardTags?: Tag[]
   attachments?: Attachment[]
@@ -98,7 +100,7 @@ function AttachmentIcon({ fileType }: { fileType: string }) {
 }
 
 export default function CardModal({
-  isOpen, onClose, onSubmit, initialCard, users, boardTags,
+  isOpen, onClose, onSubmit, initialCard, readOnly = false, users, boardTags,
   attachments = [], onAttachmentUpload, onAttachmentView, onAttachmentRename, onAttachmentDelete, onAttachmentSetCover,
   comments = [], onAddComment, onEditComment, onDeleteComment, currentUser, onResponsiblesChange,
 }: CardModalProps) {
@@ -107,6 +109,7 @@ export default function CardModal({
   const [color, setColor]                   = useState<CardColor>(DEFAULT_COLOR)
   const [priority, setPriority]             = useState('media')
   const [selectedTagIds, setSelectedTagIds] = useState<string[]>([])
+  const [selectedResponsibleIds, setSelectedResponsibleIds] = useState<string[]>([])
   const [error, setError]                   = useState('')
 
   const [savedDescription, setSavedDescription] = useState('')
@@ -141,6 +144,9 @@ export default function CardModal({
 
   const [coverIndex] = useState(0)
   const fileInputRef = useRef<HTMLInputElement>(null)
+  const dialogRef = useRef<HTMLDivElement>(null)
+
+  const [pendingFiles, setPendingFiles] = useState<File[]>([])
 
   const imageAttachments = attachments.filter(a => a.fileType.startsWith('image/'))
   const hasCover = imageAttachments.length > 0
@@ -164,6 +170,8 @@ export default function CardModal({
       setColor(initialCard?.color ?? DEFAULT_COLOR)
       setPriority(initialCard?.priority ?? 'media')
       setSelectedTagIds(initialCard?.tags?.map(t => t.tagId) ?? [])
+      setSelectedResponsibleIds([])
+      setPendingFiles([])
       setError('')
       setTimeError('')
       setIsEditingDesc(false)
@@ -202,11 +210,37 @@ export default function CardModal({
 
   const handleSave = () => {
     if (!title.trim()) { setError('O título é obrigatório para salvar.'); return }
-    onSubmit({ title: title.trim(), description: savedDescription, color, priority })
+    onSubmit({
+      title: title.trim(),
+      description: savedDescription,
+      color,
+      priority,
+      responsibles: selectedResponsibleIds,
+      files: pendingFiles,
+    })
     onClose()
   }
 
   const handleCancel = () => onClose()
+
+  const handleDialogKeyDown = (e: React.KeyboardEvent) => {
+    if (e.key !== 'Tab' || !dialogRef.current) return
+    const focusables = Array.from(
+      dialogRef.current.querySelectorAll<HTMLElement>(
+        'button:not([disabled]), input:not([disabled]), select:not([disabled]), textarea:not([disabled]), a[href], [tabindex]:not([tabindex="-1"])',
+      ),
+    )
+    if (focusables.length === 0) return
+    const first = focusables[0]
+    const last = focusables[focusables.length - 1]
+    if (e.shiftKey && document.activeElement === first) {
+      e.preventDefault()
+      last.focus()
+    } else if (!e.shiftKey && document.activeElement === last) {
+      e.preventDefault()
+      first.focus()
+    }
+  }
 
   const handleSaveDescription = () => {
     setSavedDescription(draftDescription)
@@ -272,8 +306,10 @@ export default function CardModal({
 
   return (
     <div
+      ref={dialogRef}
       role="dialog"
       aria-modal="true"
+      onKeyDown={handleDialogKeyDown}
       className="fixed inset-0 z-[100] flex items-center justify-center p-4 sm:p-6 bg-slate-900/50 backdrop-blur-sm"
     >
       <div className="absolute inset-0" onClick={handleCancel} aria-hidden="true" />
@@ -286,12 +322,17 @@ export default function CardModal({
             className="w-3.5 h-3.5 rounded-full shrink-0 ring-2 ring-slate-200"
             style={{ backgroundColor: color }}
           />
-          <input
-            value={title}
-            onChange={e => { setTitle(e.target.value); setError('') }}
-            className="flex-1 bg-transparent text-xl font-semibold text-slate-900 outline-none focus:ring-1 focus:ring-blue-400 rounded px-1"
-            placeholder="Título da tarefa..."
-          />
+          {readOnly ? (
+            <h2 className="flex-1 text-xl font-semibold text-slate-900 rounded px-1 truncate">{title}</h2>
+          ) : (
+            <input
+              autoFocus
+              value={title}
+              onChange={e => { setTitle(e.target.value); setError('') }}
+              className="flex-1 bg-transparent text-xl font-semibold text-slate-900 outline-none focus:ring-1 focus:ring-blue-400 rounded px-1"
+              placeholder="Título da tarefa..."
+            />
+          )}
           {error && <span className="text-red-500 text-xs shrink-0">{error}</span>}
           <button
             onClick={handleCancel}
@@ -325,7 +366,7 @@ export default function CardModal({
                   {hasUnsavedDescription && !isEditingDesc && (
                     <span className="text-[10px] font-semibold bg-amber-100 text-amber-700 px-2 py-0.5 rounded-full">não salvo</span>
                   )}
-                  {!isEditingDesc && (
+                  {!isEditingDesc && !readOnly && (
                     <button
                       onClick={() => setIsEditingDesc(true)}
                       className="text-xs text-slate-500 hover:text-slate-800 transition-colors cursor-pointer"
@@ -336,7 +377,14 @@ export default function CardModal({
                 </div>
               </div>
 
-              {isEditingDesc ? (
+              {readOnly ? (
+                <div className="min-h-[72px] p-3 rounded-lg bg-slate-50 text-sm text-slate-700 border border-slate-200">
+                  {draftDescription
+                    ? <div className="whitespace-pre-wrap">{draftDescription}</div>
+                    : <span className="text-slate-400 text-sm">Sem descrição.</span>
+                  }
+                </div>
+              ) : isEditingDesc ? (
                 <div className="border border-blue-400 rounded-lg overflow-hidden bg-white ring-1 ring-blue-400">
                   <div className="flex items-center gap-1 p-1.5 bg-slate-50 border-b border-slate-200">
                     <button type="button" onClick={() => insertMarkdown('**', '**')} className="px-2 py-1 text-xs hover:bg-slate-200 rounded font-bold text-slate-600 cursor-pointer">B</button>
@@ -369,26 +417,60 @@ export default function CardModal({
             </section>
 
             {/* Anexos */}
-            {(attachments.length > 0 || onAttachmentUpload) && (
+            {(attachments.length > 0 || onAttachmentUpload || !isEditing) && (
               <section>
                 <div className="flex items-center justify-between mb-2">
                   <h3 className="text-xs font-semibold text-slate-500 uppercase tracking-wider">Anexos</h3>
-                  <button
-                    onClick={() => fileInputRef.current?.click()}
-                    className="text-xs text-slate-500 hover:text-slate-800 transition-colors cursor-pointer"
-                  >
-                    + Adicionar
-                  </button>
+                  {!readOnly && (
+                    <button
+                      onClick={() => fileInputRef.current?.click()}
+                      className="text-xs text-slate-500 hover:text-slate-800 transition-colors cursor-pointer"
+                    >
+                      + Adicionar
+                    </button>
+                  )}
                   <input
                     ref={fileInputRef}
                     type="file"
                     accept="image/*,.pdf,.docx,.xlsx"
                     className="hidden"
-                    onChange={e => { const f = e.target.files?.[0]; if (f && onAttachmentUpload) onAttachmentUpload(f); e.target.value = '' }}
+                    onChange={e => {
+                      const f = e.target.files?.[0]
+                      if (f) {
+                        if (isEditing) {
+                          onAttachmentUpload?.(f)
+                        } else {
+                          setPendingFiles(prev => [...prev, f])
+                        }
+                      }
+                      e.target.value = ''
+                    }}
                   />
                 </div>
+                {pendingFiles.length > 0 && (
+                  <ul className="space-y-0.5 mb-2">
+                    {pendingFiles.map((f, i) => (
+                      <li key={`${f.name}-${i}`} className="flex items-center gap-2 rounded-md px-2 py-1.5 hover:bg-slate-50">
+                        <svg className="w-4 h-4 shrink-0 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={1.5}>
+                          <path strokeLinecap="round" strokeLinejoin="round" d="m2.25 15.75 5.159-5.159a2.25 2.25 0 0 1 3.182 0l5.159 5.159m-1.5-1.5 1.409-1.409a2.25 2.25 0 0 1 3.182 0l2.909 2.909m-18 3.75h16.5a1.5 1.5 0 0 0 1.5-1.5V6a1.5 1.5 0 0 0-1.5-1.5H3.75A1.5 1.5 0 0 0 2.25 6v12a1.5 1.5 0 0 0 1.5 1.5Zm10.5-11.25h.008v.008h-.008V8.25Zm.375 0a.375.375 0 1 1-.75 0 .375.375 0 0 1 .75 0Z" />
+                        </svg>
+                        <span className="flex-1 min-w-0 truncate text-sm text-slate-700">{f.name}</span>
+                        <span className="text-xs text-slate-400 shrink-0">{formatBytes(f.size)}</span>
+                        <button
+                          onClick={() => setPendingFiles(prev => prev.filter((_, j) => j !== i))}
+                          className="p-1 rounded hover:bg-red-50 text-slate-400 hover:text-red-600 cursor-pointer shrink-0"
+                          aria-label={`Remover ${f.name}`}
+                        >
+                          <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={2}>
+                            <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
+                          </svg>
+                        </button>
+                      </li>
+                    ))}
+                  </ul>
+                )}
                 {attachments.length === 0
-                  ? <p className="text-sm text-slate-400 italic">Nenhum anexo ainda.</p>
+                  ? (pendingFiles.length === 0 && <p className="text-sm text-slate-400 italic">Nenhum anexo ainda.</p>)
                   : (
                     <ul className="space-y-0.5">
                       {attachments.map(a => (
@@ -434,7 +516,7 @@ export default function CardModal({
                                     <path strokeLinecap="round" strokeLinejoin="round" d="M13.5 6H5.25A2.25 2.25 0 0 0 3 8.25v10.5A2.25 2.25 0 0 0 5.25 21h10.5A2.25 2.25 0 0 0 18 18.75V10.5m-10.5 6L21 3m0 0h-5.25M21 3v5.25" />
                                   </svg>
                                 </button>
-                                {onAttachmentRename && (
+                                {!readOnly && onAttachmentRename && (
                                   <button
                                     title="Renomear"
                                     onClick={() => { setRenamingId(a.id); setRenameValue(a.fileName) }}
@@ -445,7 +527,7 @@ export default function CardModal({
                                     </svg>
                                   </button>
                                 )}
-                                {a.fileType.startsWith('image/') && onAttachmentSetCover && (
+                                {!readOnly && a.fileType.startsWith('image/') && onAttachmentSetCover && (
                                   <button
                                     title={a.isCover ? 'Capa atual' : 'Definir como capa'}
                                     onClick={() => onAttachmentSetCover(a.id)}
@@ -456,7 +538,7 @@ export default function CardModal({
                                     </svg>
                                   </button>
                                 )}
-                                {onAttachmentDelete && (
+                                {!readOnly && onAttachmentDelete && (
                                   <button
                                     title="Excluir"
                                     onClick={() => onAttachmentDelete(a.id)}
@@ -482,21 +564,23 @@ export default function CardModal({
             <section>
               <h3 className="text-xs font-semibold text-slate-500 uppercase tracking-wider mb-3">Atividade</h3>
 
-              <div className={`border rounded-lg overflow-hidden bg-white mb-4 transition-all ${isCommenting ? 'border-blue-400 ring-1 ring-blue-400' : 'border-slate-200'}`}>
-                <textarea
-                  value={commentText}
-                  onChange={e => setCommentText(e.target.value)}
-                  onFocus={() => setIsCommenting(true)}
-                  placeholder="Escreva um comentário..."
-                  className={`w-full bg-transparent text-slate-800 p-3 outline-none resize-none text-sm ${isCommenting ? 'min-h-[72px]' : 'h-10 overflow-hidden'}`}
-                />
-                {isCommenting && (
-                  <div className="p-2 bg-slate-50 border-t border-slate-200 flex gap-2">
-                    <button onClick={handleCommentSubmit} className="px-3 py-1.5 bg-blue-600 hover:bg-blue-700 text-white text-xs font-medium rounded-md transition-colors cursor-pointer">Comentar</button>
-                    <button onClick={() => { setIsCommenting(false); setCommentText('') }} className="px-3 py-1.5 text-slate-500 hover:text-slate-700 text-xs rounded-md transition-colors cursor-pointer">Cancelar</button>
-                  </div>
-                )}
-              </div>
+              {!readOnly && (
+                <div className={`border rounded-lg overflow-hidden bg-white mb-4 transition-all ${isCommenting ? 'border-blue-400 ring-1 ring-blue-400' : 'border-slate-200'}`}>
+                  <textarea
+                    value={commentText}
+                    onChange={e => setCommentText(e.target.value)}
+                    onFocus={() => setIsCommenting(true)}
+                    placeholder="Escreva um comentário..."
+                    className={`w-full bg-transparent text-slate-800 p-3 outline-none resize-none text-sm ${isCommenting ? 'min-h-[72px]' : 'h-10 overflow-hidden'}`}
+                  />
+                  {isCommenting && (
+                    <div className="p-2 bg-slate-50 border-t border-slate-200 flex gap-2">
+                      <button onClick={handleCommentSubmit} className="px-3 py-1.5 bg-blue-600 hover:bg-blue-700 text-white text-xs font-medium rounded-md transition-colors cursor-pointer">Comentar</button>
+                      <button onClick={() => { setIsCommenting(false); setCommentText('') }} className="px-3 py-1.5 text-slate-500 hover:text-slate-700 text-xs rounded-md transition-colors cursor-pointer">Cancelar</button>
+                    </div>
+                  )}
+                </div>
+              )}
 
               <div className="space-y-4">
                 {comments.map(comment => {
@@ -509,7 +593,7 @@ export default function CardModal({
                         <div className="flex items-baseline gap-2 mb-1">
                           <span className="font-semibold text-slate-900 text-sm">{comment.user.name}</span>
                           <span className="text-[11px] text-slate-400">há pouco</span>
-                          {isOwner && !isEditingThis && (
+                          {isOwner && !isEditingThis && !readOnly && (
                             <div className="ml-auto flex gap-1">
                               <button
                                 onClick={() => { setEditingCommentId(comment.id); setEditCommentContent(comment.content) }}
@@ -575,11 +659,36 @@ export default function CardModal({
               {/* Propriedades */}
               <section className="space-y-3">
                 {/* Responsáveis */}
-                {isEditing && users && (
+                {readOnly ? (
+                  <div>
+                    <p className="text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-1.5">Responsáveis</p>
+                    {initialCard?.responsibles && initialCard.responsibles.length > 0 ? (
+                      <div className="flex flex-wrap gap-2">
+                        {initialCard.responsibles.map(r => (
+                          <div key={r.user.id} className="flex items-center gap-1.5 bg-blue-50 rounded-full pl-1 pr-2 py-0.5">
+                            <UserAvatar name={r.user.name} avatarUrl={r.user.avatarUrl} size="sm" />
+                            <span className="text-xs text-blue-800 font-medium">{r.user.name}</span>
+                          </div>
+                        ))}
+                      </div>
+                    ) : (
+                      <p className="text-sm text-slate-400 italic">Sem responsáveis.</p>
+                    )}
+                  </div>
+                ) : users && users.length > 0 && (
                   <div>
                     <p className="text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-1.5">Responsáveis</p>
                     <div className="bg-white rounded-lg border border-slate-200 p-2">
-                      <MultiUserSelector cardId={initialCard.id} users={users} onResponsiblesChange={onResponsiblesChange} />
+                      {isEditing ? (
+                        <MultiUserSelector cardId={initialCard.id} users={users} onResponsiblesChange={onResponsiblesChange} />
+                      ) : (
+                        <MultiUserSelector
+                          cardId=""
+                          pending
+                          users={users}
+                          onResponsiblesChange={resps => setSelectedResponsibleIds(resps.map(r => r.userId))}
+                        />
+                      )}
                     </div>
                   </div>
                 )}
@@ -587,31 +696,59 @@ export default function CardModal({
                 {/* Prioridade */}
                 <div>
                   <p className="text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-1.5">Prioridade</p>
-                  <div className="flex gap-1.5">
-                    {(['baixa', 'media', 'alta'] as const).map(p => (
-                      <button
-                        key={p}
-                        onClick={() => setPriority(p)}
-                        className={`flex-1 py-1.5 text-xs font-medium rounded-md transition-colors cursor-pointer border ${
-                          priority === p
-                            ? `${PRIORITY_LABELS[p].cls} border-transparent ring-2 ring-offset-1 ring-blue-400`
-                            : 'bg-white text-slate-500 border-slate-200 hover:border-slate-300'
-                        }`}
-                      >
-                        {PRIORITY_LABELS[p].label}
-                      </button>
-                    ))}
-                  </div>
+                  {readOnly ? (
+                    <span className={`inline-block px-3 py-1.5 text-xs font-medium rounded-md ${PRIORITY_LABELS[priority]?.cls ?? 'bg-slate-100 text-slate-600'}`}>
+                      {PRIORITY_LABELS[priority]?.label ?? '—'}
+                    </span>
+                  ) : (
+                    <div className="flex gap-1.5">
+                      {(['baixa', 'media', 'alta'] as const).map(p => (
+                        <button
+                          key={p}
+                          onClick={() => setPriority(p)}
+                          className={`flex-1 py-1.5 text-xs font-medium rounded-md transition-colors cursor-pointer border ${
+                            priority === p
+                              ? `${PRIORITY_LABELS[p].cls} border-transparent ring-2 ring-offset-1 ring-blue-400`
+                              : 'bg-white text-slate-500 border-slate-200 hover:border-slate-300'
+                          }`}
+                        >
+                          {PRIORITY_LABELS[p].label}
+                        </button>
+                      ))}
+                    </div>
+                  )}
                 </div>
 
                 {/* Cor */}
                 <div>
                   <p className="text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-1.5">Cor</p>
-                  <ColorPicker value={color} onChange={setColor} />
+                  {readOnly ? (
+                    <div className="flex items-center gap-2">
+                      <span className="w-7 h-7 rounded-full ring-2 ring-slate-200" style={{ backgroundColor: color }} />
+                      <span className="text-xs text-slate-500">{color}</span>
+                    </div>
+                  ) : (
+                    <ColorPicker value={color} onChange={setColor} />
+                  )}
                 </div>
 
                 {/* Etiquetas */}
-                {boardTags && boardTags.length > 0 && (
+                {readOnly ? (
+                  (selectedTagIds.length > 0) && (
+                    <div>
+                      <p className="text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-1.5">Etiquetas</p>
+                      <div className="flex flex-wrap gap-1.5">
+                        {(boardTags ?? []).filter(t => selectedTagIds.includes(t.id)).map(t => (
+                          <span key={t.id} className="inline-flex items-center gap-1 text-xs px-2 py-0.5 rounded-full font-medium"
+                            style={{ backgroundColor: `${t.color}20`, color: t.color }}>
+                            <span className="w-2 h-2 rounded-full" style={{ backgroundColor: t.color }} />
+                            {t.name}
+                          </span>
+                        ))}
+                      </div>
+                    </div>
+                  )
+                ) : boardTags && boardTags.length > 0 && (
                   <div>
                     <p className="text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-1.5">Etiquetas</p>
                     <TagSelector tags={boardTags} selectedTagIds={selectedTagIds} onToggle={handleTagToggle} />
@@ -622,7 +759,7 @@ export default function CardModal({
               <hr className="border-slate-200" />
 
               {/* Registro de Tempo */}
-              {isEditing && initialCard?.id && (
+              {isEditing && !readOnly && initialCard?.id && (
                 <section>
                   <p className="text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-2">Registro de Tempo</p>
 
@@ -687,7 +824,7 @@ export default function CardModal({
               )}
 
               {/* Histórico */}
-              {isEditing && (timeEntries.length > 0 || movements.length > 0) && (
+              {isEditing && !readOnly && (timeEntries.length > 0 || movements.length > 0) && (
                 <>
                   <hr className="border-slate-200" />
                   <section>
@@ -783,18 +920,29 @@ export default function CardModal({
 
         {/* ── Footer ── */}
         <div className="shrink-0 border-t border-slate-200 bg-white px-6 py-3 flex items-center justify-between">
-          <button
-            onClick={handleCancel}
-            className="px-4 py-2 text-sm text-slate-500 hover:text-slate-800 hover:bg-slate-100 rounded-lg transition-colors cursor-pointer"
-          >
-            {isEditing ? 'Fechar sem salvar' : 'Cancelar'}
-          </button>
-          <button
-            onClick={handleSave}
-            className="px-5 py-2 bg-blue-600 hover:bg-blue-700 text-white text-sm font-semibold rounded-lg transition-colors cursor-pointer shadow-sm"
-          >
-            {isEditing ? 'Salvar alterações' : 'Criar card'}
-          </button>
+          {readOnly ? (
+            <button
+              onClick={handleCancel}
+              className="px-5 py-2 bg-blue-600 hover:bg-blue-700 text-white text-sm font-semibold rounded-lg transition-colors cursor-pointer shadow-sm"
+            >
+              Fechar
+            </button>
+          ) : (
+            <>
+              <button
+                onClick={handleCancel}
+                className="px-4 py-2 text-sm text-slate-500 hover:text-slate-800 hover:bg-slate-100 rounded-lg transition-colors cursor-pointer"
+              >
+                {isEditing ? 'Fechar sem salvar' : 'Cancelar'}
+              </button>
+              <button
+                onClick={handleSave}
+                className="px-5 py-2 bg-blue-600 hover:bg-blue-700 text-white text-sm font-semibold rounded-lg transition-colors cursor-pointer shadow-sm"
+              >
+                {isEditing ? 'Salvar alterações' : 'Criar card'}
+              </button>
+            </>
+          )}
         </div>
       </div>
     </div>

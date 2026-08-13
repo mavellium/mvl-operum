@@ -19,9 +19,12 @@ export const DEFAULT_STYLE: WbsNodeStyle = {
 export type WbsAction =
   | { type: 'INSERT_CHILD'; payload: { parentId: string } }
   | { type: 'INSERT_SIBLING'; payload: { siblingId: string } }
+  | { type: 'DUPLICATE'; payload: { nodeIds: string[] } }
   | { type: 'DELETE_NODE'; payload: { nodeId: string } }
+  | { type: 'DELETE_NODES'; payload: { nodeIds: string[] } }
   | { type: 'RENAME_NODE'; payload: { nodeId: string; title: string } }
   | { type: 'MOVE_NODE'; payload: { nodeId: string; targetId: string; position: DropPosition } }
+  | { type: 'MOVE_NODES'; payload: { nodeIds: string[]; targetId: string; position: DropPosition } }
   | { type: 'SET_LAYOUT'; payload: { nodeId: string; layout: WbsLayoutOrientation } }
   | { type: 'UPDATE_STYLE'; payload: { style: Partial<WbsNodeStyle> } }
   | { type: 'UPDATE_PROPERTIES'; payload: { nodeId: string; properties: Partial<WbsNodeProperties> } }
@@ -29,11 +32,13 @@ export type WbsAction =
   | { type: 'COPY_STYLE'; payload: { nodeId: string } }
   | { type: 'PASTE_STYLE'; payload: { nodeIds: string[] } }
   | { type: 'PASTE_STYLE_TO_SELECTED' }
+  | { type: 'CLEAR_STYLE' }
   | { type: 'COPY'; payload: { nodeIds: string[] } }
   | { type: 'CUT'; payload: { nodeIds: string[] } }
   | { type: 'PASTE'; payload: { parentId: string } }
   | { type: 'SET_SELECTION'; payload: { nodeIds: string[] } }
-  | { type: 'SET_EDITING'; payload: { nodeId: string | null } }
+  | { type: 'SET_EDITING'; payload: { nodeId: string | null; initialText?: string } }
+  | { type: 'SET_FOCUS_NODE'; payload: { nodeId: string | null } }
   | { type: 'UNDO' }
   | { type: 'REDO' }
   | { type: 'SET_VIEWPORT'; payload: WbsViewport }
@@ -82,6 +87,123 @@ function pushHistory(state: WbsTreeState): WbsTreeState['history'] {
     past: [...state.history.past.slice(-(MAX_HISTORY - 1)), entry],
     future: [],
   }
+}
+
+/**
+ * Move um ou mais nós para junto do alvo (INSIDE = filho; BEFORE/AFTER = irmão).
+ * Retorna null se o movimento for inválido (ciclo, alvo inexistente, só raiz etc.).
+ * Mantém a ordem relativa visual dos nós movidos e evita órfãos quando o alvo é
+ * a raiz com BEFORE/AFTER (cai para INSIDE).
+ */
+function moveNodes(
+  state: WbsTreeState,
+  nodeIds: string[],
+  targetId: string,
+  position: DropPosition
+): WbsTreeState | null {
+  const nodes = state.nodes
+  const target = nodes[targetId]
+  if (!target) return null
+
+  // Só nós existentes e com pai (a raiz não move)
+  const rawSet = new Set(nodeIds.filter(id => nodes[id]?.parentId))
+  if (rawSet.size === 0) return null
+
+  // Fica apenas com os nós "de topo": sem ancestral também no lote
+  // (descendentes já vão junto na subárvore do movido).
+  const toMove = new Set<string>()
+  for (const id of nodeIds) {
+    if (!rawSet.has(id)) continue
+    let anc = nodes[id]?.parentId ?? null
+    let hasSelectedAncestor = false
+    while (anc) {
+      if (rawSet.has(anc)) { hasSelectedAncestor = true; break }
+      anc = nodes[anc]?.parentId ?? null
+    }
+    if (!hasSelectedAncestor) toMove.add(id)
+  }
+  if (toMove.size === 0) return null
+
+  // Prevenção de ciclo: o alvo não pode estar dentro da subárvore de nenhum movido
+  for (const id of toMove) {
+    if (targetId === id || isInSubtree(targetId, id, nodes)) return null
+  }
+
+  // BEFORE/AFTER reposiciona no pai do alvo. Se o alvo for a raiz (sem pai),
+  // não há onde "inserir ao lado" — cai para INSIDE (vira filho da raiz).
+  const newParentId = position === 'INSIDE' ? targetId : (target.parentId ?? targetId)
+
+  let newNodes: Record<string, WbsNodeClient> = { ...nodes }
+
+  // 1. Remover os movidos dos pais antigos
+  const oldParents = new Set<string>()
+  for (const id of toMove) {
+    const pid = nodes[id].parentId
+    if (pid && newNodes[pid]) oldParents.add(pid)
+  }
+  for (const pid of oldParents) {
+    newNodes[pid] = {
+      ...newNodes[pid],
+      childrenIds: newNodes[pid].childrenIds.filter(cid => !toMove.has(cid)),
+    }
+    newNodes = recompactChildren(pid, newNodes)
+  }
+
+  // 2. Ordem de inserção no novo pai (estado pós-remoção)
+  let insertOrder: number
+  if (position === 'INSIDE') {
+    insertOrder = newParentId && newNodes[newParentId] ? newNodes[newParentId].childrenIds.length : 0
+  } else {
+    insertOrder = (newNodes[targetId]?.order ?? 0) + (position === 'BEFORE' ? 0 : 1)
+  }
+
+  // 3. Ordem relativa visual dos movidos (pré-ordem na árvore ORIGINAL)
+  const movedList = [...toMove]
+  if (state.rootId) {
+    const pre: string[] = []
+    const seen = new Set<string>()
+    const walk = [state.rootId]
+    while (walk.length > 0) {
+      const id = walk.shift()!
+      if (!id || !nodes[id] || seen.has(id)) continue
+      seen.add(id)
+      pre.push(id)
+      const ch = nodes[id].childrenIds
+      for (let i = ch.length - 1; i >= 0; i--) walk.unshift(ch[i])
+    }
+    movedList.sort((a, b) => pre.indexOf(a) - pre.indexOf(b))
+  }
+
+  // 4. Deslocar irmãos (não movidos) do novo pai pela quantidade inserida
+  if (newParentId && newNodes[newParentId]) {
+    for (const cid of newNodes[newParentId].childrenIds) {
+      const c = newNodes[cid]
+      if (c && !toMove.has(cid) && c.order >= insertOrder) {
+        newNodes[cid] = { ...c, order: c.order + movedList.length }
+      }
+    }
+  }
+
+  // 5. Posicionar os movidos em sequência
+  let cursor = insertOrder
+  for (const id of movedList) {
+    newNodes[id] = { ...newNodes[id], parentId: newParentId, order: cursor }
+    cursor++
+  }
+
+  // 6. Reconstrói childrenIds do novo pai e recompacta
+  if (newParentId && newNodes[newParentId]) {
+    const newChildIds = [...newNodes[newParentId].childrenIds, ...movedList]
+      .filter(id => newNodes[id])
+      .sort((a, b) => newNodes[a].order - newNodes[b].order)
+    newNodes[newParentId] = { ...newNodes[newParentId], childrenIds: newChildIds }
+    newNodes = recompactChildren(newParentId, newNodes)
+  }
+
+  // 7. Recalcular códigos
+  if (state.rootId) newNodes = recalcCodes(newNodes)
+
+  return { ...state, nodes: newNodes, history: pushHistory(state), sync: { ...state.sync, status: 'DIRTY' } }
 }
 
 function makeNode(parentId: string | null, order: number, style: WbsNodeStyle): WbsNodeClient {
@@ -149,7 +271,15 @@ export function wbsReducer(state: WbsTreeState, action: WbsAction): WbsTreeState
         [parentId]: { ...parent, childrenIds: [...parent.childrenIds, newNode.id] },
       }
       newNodes = recalcCodes(newNodes)
-      return { ...state, nodes: newNodes, history: pushHistory(state), sync: { ...state.sync, status: 'DIRTY' } }
+      return {
+        ...state,
+        nodes: newNodes,
+        selectedNodeIds: [newNode.id],
+        editingNodeId: newNode.id,
+        focusNodeId: newNode.id,
+        history: pushHistory(state),
+        sync: { ...state.sync, status: 'DIRTY' },
+      }
     }
 
     case 'INSERT_SIBLING': {
@@ -182,7 +312,15 @@ export function wbsReducer(state: WbsTreeState, action: WbsAction): WbsTreeState
 
       newNodes[parentId] = { ...newNodes[parentId], childrenIds: allChildren.map(c => c.id) }
       newNodes = recalcCodes(newNodes)
-      return { ...state, nodes: newNodes, history: pushHistory(state), sync: { ...state.sync, status: 'DIRTY' } }
+      return {
+        ...state,
+        nodes: newNodes,
+        selectedNodeIds: [newNode.id],
+        editingNodeId: newNode.id,
+        focusNodeId: newNode.id,
+        history: pushHistory(state),
+        sync: { ...state.sync, status: 'DIRTY' },
+      }
     }
 
     case 'DELETE_NODE': {
@@ -217,70 +355,58 @@ export function wbsReducer(state: WbsTreeState, action: WbsAction): WbsTreeState
       }
     }
 
+    case 'DELETE_NODES': {
+      const { nodeIds } = action.payload
+      // O card raiz (principal) nunca é excluído; nós sem pai são ignorados.
+      const ids = nodeIds.filter(id => id !== state.rootId && state.nodes[id]?.parentId)
+      if (ids.length === 0) return state
+
+      const toDelete = new Set<string>()
+      for (const id of ids) {
+        for (const sid of collectSubtree(id, state.nodes)) toDelete.add(sid)
+      }
+
+      let newNodes: Record<string, WbsNodeClient> = { ...state.nodes }
+      toDelete.forEach(id => { delete newNodes[id] })
+
+      const affectedParents = new Set<string>()
+      for (const id of ids) {
+        const pid = state.nodes[id]?.parentId
+        if (pid && newNodes[pid]) affectedParents.add(pid)
+      }
+      for (const pid of affectedParents) {
+        newNodes[pid] = { ...newNodes[pid], childrenIds: newNodes[pid].childrenIds.filter(cid => !toDelete.has(cid)) }
+        newNodes = recompactChildren(pid, newNodes)
+      }
+
+      const newRootId = toDelete.has(state.rootId ?? '') ? null : state.rootId
+      if (newRootId) newNodes = recalcCodes(newNodes)
+
+      return {
+        ...state,
+        nodes: newNodes,
+        rootId: newRootId,
+        selectedNodeIds: state.selectedNodeIds.filter(id => !toDelete.has(id)),
+        editingNodeId: toDelete.has(state.editingNodeId ?? '') ? null : state.editingNodeId,
+        history: pushHistory(state),
+        sync: { ...state.sync, status: 'DIRTY' },
+      }
+    }
+
     case 'RENAME_NODE': {
       const { nodeId, title } = action.payload
       const node = state.nodes[nodeId]
       if (!node) return state
       return { ...state, nodes: { ...state.nodes, [nodeId]: { ...node, title } }, sync: { ...state.sync, status: 'DIRTY' } }
     }
-
     case 'MOVE_NODE': {
       const { nodeId, targetId, position } = action.payload
-      const node = state.nodes[nodeId]
-      const target = state.nodes[targetId]
-      if (!node || !target) return state
+      return moveNodes(state, [nodeId], targetId, position) ?? state
+    }
 
-      // Prevenção de ciclo
-      if (targetId === nodeId || isInSubtree(targetId, nodeId, state.nodes)) return state
-
-      const newParentId = position === 'INSIDE' ? targetId : target.parentId
-      const oldParentId = node.parentId
-
-      // 1. Remover do pai antigo
-      let newNodes: Record<string, WbsNodeClient> = { ...state.nodes }
-      if (oldParentId && newNodes[oldParentId]) {
-        newNodes[oldParentId] = {
-          ...newNodes[oldParentId],
-          childrenIds: newNodes[oldParentId].childrenIds.filter(id => id !== nodeId),
-        }
-        newNodes = recompactChildren(oldParentId, newNodes)
-      }
-
-      // 2. Calcular order de inserção (usando ordens pós-recompact)
-      let insertOrder: number
-      if (position === 'INSIDE') {
-        insertOrder = newNodes[targetId]?.childrenIds.length ?? 0
-      } else {
-        const updatedTarget = newNodes[targetId]
-        if (!updatedTarget) return state
-        insertOrder = position === 'BEFORE' ? updatedTarget.order : updatedTarget.order + 1
-      }
-
-      // 3. Deslocar irmãos no novo pai
-      if (newParentId && newNodes[newParentId]) {
-        for (const cid of newNodes[newParentId].childrenIds) {
-          if (newNodes[cid] && newNodes[cid].order >= insertOrder) {
-            newNodes[cid] = { ...newNodes[cid], order: newNodes[cid].order + 1 }
-          }
-        }
-      }
-
-      // 4. Posicionar o nó
-      newNodes[nodeId] = { ...newNodes[nodeId], parentId: newParentId, order: insertOrder }
-
-      // 5. Atualizar childrenIds do novo pai e recompactar
-      if (newParentId && newNodes[newParentId]) {
-        const newChildIds = [...newNodes[newParentId].childrenIds, nodeId]
-          .filter(id => newNodes[id])
-          .sort((a, b) => newNodes[a].order - newNodes[b].order)
-        newNodes[newParentId] = { ...newNodes[newParentId], childrenIds: newChildIds }
-        newNodes = recompactChildren(newParentId, newNodes)
-      }
-
-      // 6. Recalcular codes
-      if (state.rootId) newNodes = recalcCodes(newNodes)
-
-      return { ...state, nodes: newNodes, history: pushHistory(state), sync: { ...state.sync, status: 'DIRTY' } }
+    case 'MOVE_NODES': {
+      const { nodeIds, targetId, position } = action.payload
+      return moveNodes(state, nodeIds, targetId, position) ?? state
     }
 
     case 'SET_LAYOUT': {
@@ -342,6 +468,16 @@ export function wbsReducer(state: WbsTreeState, action: WbsAction): WbsTreeState
       for (const id of state.selectedNodeIds) {
         if (!updated[id]) continue
         updated[id] = { ...updated[id], style: { ...style } }
+      }
+      return { ...state, nodes: updated, history: pushHistory(state), sync: { ...state.sync, status: 'DIRTY' } }
+    }
+
+    case 'CLEAR_STYLE': {
+      if (state.selectedNodeIds.length === 0) return state
+      const updated = { ...state.nodes }
+      for (const id of state.selectedNodeIds) {
+        if (!updated[id]) continue
+        updated[id] = { ...updated[id], style: { ...DEFAULT_STYLE } }
       }
       return { ...state, nodes: updated, history: pushHistory(state), sync: { ...state.sync, status: 'DIRTY' } }
     }
@@ -414,11 +550,72 @@ export function wbsReducer(state: WbsTreeState, action: WbsAction): WbsTreeState
       return { ...state, nodes: newNodes, history: pushHistory(state), sync: { ...state.sync, status: 'DIRTY' } }
     }
 
+    case 'DUPLICATE': {
+      const { nodeIds } = action.payload
+      const selectedSet = new Set(nodeIds)
+      // Mantém só os nós "de topo" da seleção (sem ancestral selecionado).
+      const isTop = (id: string) => {
+        let p = state.nodes[id]?.parentId
+        while (p) {
+          if (selectedSet.has(p)) return false
+          p = state.nodes[p]?.parentId
+        }
+        return true
+      }
+      const roots = nodeIds.filter(isTop)
+
+      const byParent = new Map<string, string[]>()
+      for (const id of roots) {
+        const parentId = state.nodes[id]?.parentId
+        if (!parentId) continue
+        const list = byParent.get(parentId) ?? []
+        list.push(id)
+        byParent.set(parentId, list)
+      }
+      if (byParent.size === 0) return state
+
+      let newNodes = { ...state.nodes }
+      const shiftUp = (parentId: string, fromOrder: number) => {
+        for (const cid of newNodes[parentId].childrenIds) {
+          const c = newNodes[cid]
+          if (c && c.order >= fromOrder) newNodes[cid] = { ...c, order: c.order + 1 }
+        }
+      }
+
+      for (const [parentId, ids] of byParent) {
+        // Maior order primeiro: cada duplicata é inserida logo após o original.
+        const sorted = ids
+          .map(id => newNodes[id])
+          .filter((n): n is WbsNodeClient => Boolean(n))
+          .sort((a, b) => b.order - a.order)
+
+        for (const root of sorted) {
+          const { cloned, newRootId } = cloneSubtree(root.id, state.nodes)
+          const newOrder = root.order + 1
+          shiftUp(parentId, newOrder)
+          Object.assign(newNodes, cloned)
+          newNodes[newRootId] = { ...newNodes[newRootId], parentId, order: newOrder }
+          newNodes[parentId] = { ...newNodes[parentId], childrenIds: [...newNodes[parentId].childrenIds, newRootId] }
+        }
+        newNodes = recompactChildren(parentId, newNodes)
+      }
+
+      if (state.rootId) newNodes = recalcCodes(newNodes)
+      return { ...state, nodes: newNodes, history: pushHistory(state), sync: { ...state.sync, status: 'DIRTY' } }
+    }
+
     case 'SET_SELECTION':
       return { ...state, selectedNodeIds: action.payload.nodeIds }
 
     case 'SET_EDITING':
-      return { ...state, editingNodeId: action.payload.nodeId }
+      return {
+        ...state,
+        editingNodeId: action.payload.nodeId,
+        editingInitialText: action.payload.nodeId ? action.payload.initialText : undefined,
+      }
+
+    case 'SET_FOCUS_NODE':
+      return { ...state, focusNodeId: action.payload.nodeId }
 
     case 'UNDO': {
       if (state.history.past.length === 0) return state

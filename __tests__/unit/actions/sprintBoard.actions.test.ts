@@ -21,8 +21,15 @@ vi.mock('@/lib/api-client', () => ({
   },
 }))
 
+vi.mock('@/lib/prisma', () => ({
+  default: {
+    userProject: { findMany: vi.fn() },
+  },
+}))
+
 import { verifySession } from '@/lib/dal'
 import { sprintsApi, adminApi, tagsApi, cardsApi } from '@/lib/api-client'
+import prisma from '@/lib/prisma'
 import {
   getSprintBoardAction,
   addSprintColumnAction,
@@ -31,7 +38,10 @@ import {
 
 const mockVerify = verifySession as ReturnType<typeof vi.fn>
 
-beforeEach(() => vi.clearAllMocks())
+beforeEach(() => {
+  vi.clearAllMocks()
+  vi.mocked(prisma.userProject.findMany).mockResolvedValue([])
+})
 
 describe('getSprintBoardAction', () => {
   it('returns sprint, columns, users, tags', async () => {

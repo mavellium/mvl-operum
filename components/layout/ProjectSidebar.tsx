@@ -3,12 +3,12 @@
 import { useEffect, useState } from 'react'
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
-import { PanelLeftClose, PanelLeftOpen } from 'lucide-react'
+import { PanelLeftOpen } from 'lucide-react'
 import Tooltip from '@/components/ui/Tooltip'
+import SidebarLayout from '@/components/layout/SidebarLayout'
 
 interface Props {
   projetoId: string
-  projetoNome: string
   canManageMembers: boolean
 }
 
@@ -23,12 +23,6 @@ const DashboardIcon = () => (
 const SprintsIcon = () => (
   <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 17V7m0 10a2 2 0 01-2 2H5a2 2 0 01-2-2V7a2 2 0 012-2h2a2 2 0 012 2m0 10a2 2 0 002 2h2a2 2 0 002-2M9 7a2 2 0 012-2h2a2 2 0 012 2m0 10V7m0 10a2 2 0 002 2h2a2 2 0 002-2V7a2 2 0 00-2-2h-2a2 2 0 00-2 2" />
-  </svg>
-)
-
-const _MembrosIcon = () => (
-  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0z" />
   </svg>
 )
 
@@ -62,16 +56,20 @@ const WbsIcon = () => (
   </svg>
 )
 
-export default function ProjectSidebar({ projetoId, projetoNome, canManageMembers }: Props) {
+export default function ProjectSidebar({ projetoId, canManageMembers }: Props) {
   const pathname = usePathname()
   const [collapsed, setCollapsed] = useState(false)
+  const [animated, setAnimated] = useState(false)
 
   // Lido do localStorage só no client, depois do primeiro paint, para não gerar
-  // divergência de hidratação entre servidor e navegador.
+  // divergência de hidratação entre servidor e navegador. `animated` só liga as
+  // transições depois do paint (senão o estado salvo animaria ao carregar).
   useEffect(() => {
     const stored = window.localStorage.getItem(STORAGE_KEY)
     // eslint-disable-next-line react-hooks/set-state-in-effect
     if (stored === '1') setCollapsed(true)
+    const raf = requestAnimationFrame(() => setAnimated(true))
+    return () => cancelAnimationFrame(raf)
   }, [])
 
   const toggleCollapsed = () => {
@@ -99,74 +97,60 @@ export default function ProjectSidebar({ projetoId, projetoNome, canManageMember
       : []),
   ]
 
+  // Contexto da busca conforme a sub-rota do projeto.
+  const subRoute = pathname.split('/')[3] ?? ''
+  const search: { placeholder: string; context: 'global_projects' | 'project_items' | 'sprint_items' | 'project_members' | 'default'; contextId?: string } = (
+    subRoute === 'membros'
+      ? { placeholder: 'Buscar membros no projeto...', context: 'project_members', contextId: projetoId }
+      : subRoute === 'funcoes' || subRoute === 'departamentos'
+        ? { placeholder: 'Buscar cards e sprints no projeto...', context: 'default' }
+        : { placeholder: 'Buscar cards e sprints no projeto...', context: 'project_items', contextId: projetoId }
+  )
+
+  const title = navItems.find(i => isActive(i.href))?.label ?? 'Projeto'
+
+  // Recolhido: nenhuma coluna reservada — só um botão flutuante sobre o conteúdo,
+  // para o main ocupar 100% do espaço horizontal.
   return (
-    <aside
-      className={`shrink-0 bg-white border-r border-gray-200 flex flex-col transition-[width] duration-200 ${
-        collapsed ? 'w-14' : 'w-56'
-      }`}
-    >
-      {/* Hamburger + Back to projects */}
-      <div className={`flex items-center gap-1 px-2 py-3 border-b border-gray-100 ${collapsed ? 'justify-center' : ''}`}>
-        <Tooltip label={collapsed ? 'Expandir menu' : 'Recolher menu'} side="bottom">
+    <>
+      <SidebarLayout
+        title={title}
+        searchPlaceholder={search.placeholder}
+        searchContext={search.context}
+        contextId={search.contextId}
+        collapsed={collapsed}
+        animated={animated}
+        onToggleCollapse={toggleCollapsed}
+      >
+        {navItems.map(({ href, label, Icon }) => (
+          <Link
+            key={href}
+            href={href}
+            className={`flex items-center gap-2.5 px-3 py-2.5 rounded-lg text-sm font-medium transition-colors ${
+              isActive(href)
+                ? 'bg-blue-50 text-blue-700'
+                : 'text-gray-600 hover:bg-gray-50 hover:text-gray-900'
+            }`}
+          >
+            <Icon />
+            <span className="truncate">{label}</span>
+          </Link>
+        ))}
+      </SidebarLayout>
+
+      {collapsed && (
+        <Tooltip label="Expandir menu" side="bottom">
           <button
             type="button"
             onClick={toggleCollapsed}
-            aria-expanded={!collapsed}
-            aria-label={collapsed ? 'Expandir menu lateral' : 'Recolher menu lateral'}
-            className="shrink-0 p-1.5 rounded-lg text-gray-500 hover:text-gray-700 hover:bg-gray-100 transition-colors cursor-pointer"
+            aria-expanded={false}
+            aria-label="Expandir menu lateral"
+            className="fixed top-3.5 left-2 z-30 p-1.5 rounded-lg bg-white border border-gray-200 shadow-sm text-gray-500 hover:text-gray-700 hover:bg-gray-100 transition-colors cursor-pointer"
           >
-            {collapsed ? <PanelLeftOpen className="w-4 h-4" /> : <PanelLeftClose className="w-4 h-4" />}
+            <PanelLeftOpen className="w-4 h-4" />
           </button>
         </Tooltip>
-        {!collapsed && (
-          <Link
-            href="/projetos"
-            className="flex items-center gap-2 text-sm text-gray-500 hover:text-gray-700 transition-colors min-w-0 truncate"
-          >
-            <svg className="w-4 h-4 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
-            </svg>
-            Projetos
-          </Link>
-        )}
-      </div>
-
-      {/* Project name */}
-      {!collapsed && (
-        <div className="px-4 py-3 border-b border-gray-100">
-          <p className="text-sm font-semibold text-gray-900 truncate" title={projetoNome}>
-            {projetoNome}
-          </p>
-        </div>
       )}
-
-      {/* Navigation */}
-      <nav className={`flex-1 py-3 space-y-0.5 ${collapsed ? 'px-2' : 'px-2'}`}>
-        {navItems.map(({ href, label, Icon }) => {
-          const link = (
-            <Link
-              key={href}
-              href={href}
-              aria-label={collapsed ? label : undefined}
-              className={`flex items-center gap-2.5 rounded-lg text-sm font-medium transition-colors ${
-                collapsed ? 'justify-center px-0 py-2.5' : 'px-3 py-2'
-              } ${
-                isActive(href)
-                  ? 'bg-blue-50 text-blue-700'
-                  : 'text-gray-600 hover:bg-gray-50 hover:text-gray-900'
-              }`}
-            >
-              <Icon />
-              {!collapsed && label}
-            </Link>
-          )
-          return collapsed ? (
-            <Tooltip key={href} label={label} side="bottom">
-              {link}
-            </Tooltip>
-          ) : link
-        })}
-      </nav>
-    </aside>
+    </>
   )
 }

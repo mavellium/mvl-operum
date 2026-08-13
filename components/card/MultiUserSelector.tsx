@@ -16,6 +16,8 @@ interface MultiUserSelectorProps {
   cardId: string
   users: User[]
   onResponsiblesChange?: (responsibles: Responsible[]) => void
+  /** Modo de criação: ainda não existe card — só seleção local, sem chamadas à API. */
+  pending?: boolean
 }
 
 interface Responsible {
@@ -23,11 +25,12 @@ interface Responsible {
   user: { id: string; name: string; cargo: string | null; avatarUrl: string | null }
 }
 
-export default function MultiUserSelector({ cardId, users, onResponsiblesChange }: MultiUserSelectorProps) {
+export default function MultiUserSelector({ cardId, users, onResponsiblesChange, pending = false }: MultiUserSelectorProps) {
   const [responsibles, setResponsibles] = useState<Responsible[]>([])
-  const [loading, setLoading] = useState(true)
+  const [loading, setLoading] = useState(pending)
 
   useEffect(() => {
+    if (pending) return
     getResponsiblesAction(cardId).then(result => {
       if ('responsibles' in result && result.responsibles) {
         const valid = result.responsibles.filter((r: Responsible) => r.user != null)
@@ -35,10 +38,29 @@ export default function MultiUserSelector({ cardId, users, onResponsiblesChange 
       }
       setLoading(false)
     })
-  }, [cardId])
+  }, [cardId, pending])
 
   async function handleToggle(userId: string) {
     const isSelected = responsibles.some(r => r.userId === userId)
+
+    if (pending) {
+      if (isSelected) {
+        const next = responsibles.filter(r => r.userId !== userId)
+        setResponsibles(next)
+        onResponsiblesChange?.(next)
+      } else {
+        const user = users.find(u => u.id === userId)
+        if (!user) return
+        const next = [...responsibles, {
+          userId,
+          user: { id: user.id, name: user.name, cargo: user.cargo ?? null, avatarUrl: user.avatarUrl ?? null },
+        }]
+        setResponsibles(next)
+        onResponsiblesChange?.(next)
+      }
+      return
+    }
+
     if (isSelected) {
       const result = await removeResponsibleAction(cardId, userId)
       if ('error' in result) return

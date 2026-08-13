@@ -11,6 +11,7 @@ interface WbsNodeCardProps {
   isEditing: boolean
   rollup: WbsRollup | undefined
   isDragTarget: boolean
+  editingInitialText?: string
   onSelect: (nodeId: string, multi: boolean) => void
   dispatch: Dispatch<WbsAction>
 }
@@ -23,7 +24,7 @@ function fmtCost(v: number) {
 }
 
 const WbsNodeCard = React.memo(function WbsNodeCard({
-  node, geom, isSelected, isEditing, rollup, isDragTarget, onSelect, dispatch,
+  node, geom, isSelected, isEditing, rollup, isDragTarget, editingInitialText, onSelect, dispatch,
 }: WbsNodeCardProps) {
   const isParent = node.childrenIds.length > 0
   const effectiveCost = rollup ? rollup.cost : (node.properties.cost ?? 0)
@@ -32,8 +33,15 @@ const WbsNodeCard = React.memo(function WbsNodeCard({
 
   const inputRef = useRef<HTMLInputElement>(null)
   useEffect(() => {
-    if (isEditing) inputRef.current?.select()
-  }, [isEditing])
+    if (!isEditing) return
+    if (editingInitialText != null) {
+      // Digitação substituindo o título: cursor no fim do texto inicial.
+      const el = inputRef.current
+      if (el) { const len = el.value.length; el.setSelectionRange(len, len) }
+    } else {
+      inputRef.current?.select()
+    }
+  }, [isEditing, editingInitialText])
 
   const ring = isSelected
     ? '0 0 0 2px #3b82f6, 0 0 0 4px rgba(59,130,246,0.2)'
@@ -63,7 +71,13 @@ const WbsNodeCard = React.memo(function WbsNodeCard({
       }}
       onClick={e => {
         e.stopPropagation()
-        if (e.ctrlKey || e.metaKey) { onSelect(node.id, true); return }
+        if (e.ctrlKey || e.metaKey || e.shiftKey) { onSelect(node.id, true); return }
+        // Card recolhido: clique expande em vez de abrir a edição de texto.
+        if (node.collapsed) {
+          onSelect(node.id, false)
+          dispatch({ type: 'SET_COLLAPSED', payload: { nodeId: node.id, collapsed: false } })
+          return
+        }
         // Clique num nó já selecionado entra direto em edição; senão, apenas seleciona.
         if (isSelected && !isEditing) {
           dispatch({ type: 'SET_EDITING', payload: { nodeId: node.id } })
@@ -71,21 +85,38 @@ const WbsNodeCard = React.memo(function WbsNodeCard({
           onSelect(node.id, false)
         }
       }}
-      onDoubleClick={e => { e.stopPropagation(); dispatch({ type: 'SET_EDITING', payload: { nodeId: node.id } }) }}
+      onDoubleClick={e => {
+        e.stopPropagation()
+        if (node.collapsed) {
+          dispatch({ type: 'SET_COLLAPSED', payload: { nodeId: node.id, collapsed: false } })
+          return
+        }
+        dispatch({ type: 'SET_EDITING', payload: { nodeId: node.id } })
+      }}
     >
       {/* Collapse toggle */}
       {isParent && (
         <button
-          style={{ position: 'absolute', top: 2, right: 4, fontSize: 10, lineHeight: 1, color: '#6b7280', background: 'transparent', border: 'none', cursor: 'pointer', padding: 2 }}
+          style={{
+            position: 'absolute', top: 3, right: 4, minWidth: 22, height: 20,
+            display: 'flex', alignItems: 'center', justifyContent: 'center',
+            fontSize: 12, lineHeight: 1, fontWeight: 600, zIndex: 2,
+            color: node.collapsed ? '#ffffff' : '#475569',
+            background: node.collapsed ? '#3b82f6' : '#ffffff',
+            border: `1px solid ${node.collapsed ? '#3b82f6' : '#cbd5e1'}`,
+            borderRadius: 10, cursor: 'pointer', padding: '0 6px',
+            boxShadow: '0 1px 2px rgba(0,0,0,0.1)',
+          }}
           onClick={e => { e.stopPropagation(); dispatch({ type: 'SET_COLLAPSED', payload: { nodeId: node.id, collapsed: !node.collapsed } }) }}
           title={node.collapsed ? 'Expandir' : 'Recolher'}
+          aria-label={node.collapsed ? 'Expandir' : 'Recolher'}
         >
           {node.collapsed ? `+${node.childrenIds.length}` : '−'}
         </button>
       )}
 
       {/* Code + Title */}
-      <div style={{ position: 'absolute', top: 4, left: 8, right: 8, bottom: hasChips ? 18 : 4, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+      <div style={{ position: 'absolute', top: 4, left: 8, right: isParent ? 32 : 8, bottom: hasChips ? 18 : 4, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
         {isEditing ? (
           <div style={{ display: 'flex', alignItems: 'center', gap: 4, width: '100%' }}>
             <span style={{ whiteSpace: 'nowrap', fontWeight: 500, color: node.style.textColor, flexShrink: 0 }}>
@@ -94,7 +125,7 @@ const WbsNodeCard = React.memo(function WbsNodeCard({
             <input
               ref={inputRef}
               autoFocus
-              defaultValue={node.title}
+              defaultValue={editingInitialText != null ? editingInitialText : node.title}
               style={{ flex: 1, minWidth: 0, textAlign: 'left', background: 'transparent', border: 'none', borderRadius: 3, padding: '0 4px', fontSize: node.style.fontSize, color: node.style.textColor, outline: 'none' }}
               onBlur={e => {
                 const t = e.currentTarget.value.trim()
@@ -102,6 +133,23 @@ const WbsNodeCard = React.memo(function WbsNodeCard({
                 dispatch({ type: 'SET_EDITING', payload: { nodeId: null } })
               }}
               onKeyDown={e => {
+                if (e.key === 'Tab') {
+                  // Tab durante a edição: confirma o texto e navega níveis
+                  // (Tab = desce, cria filho; Shift+Tab = sobe, vai ao pai).
+                  e.preventDefault()
+                  e.stopPropagation()
+                  e.currentTarget.blur()
+                  if (e.shiftKey) {
+                    const parentId = node.parentId
+                    if (parentId) {
+                      dispatch({ type: 'SET_SELECTION', payload: { nodeIds: [parentId] } })
+                      dispatch({ type: 'SET_EDITING', payload: { nodeId: parentId } })
+                    }
+                  } else {
+                    dispatch({ type: 'INSERT_CHILD', payload: { parentId: node.id } })
+                  }
+                  return
+                }
                 if (e.key === 'Enter') e.currentTarget.blur()
                 if (e.key === 'Escape') { dispatch({ type: 'SET_EDITING', payload: { nodeId: null } }); e.stopPropagation() }
                 e.stopPropagation()

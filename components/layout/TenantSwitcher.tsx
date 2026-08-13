@@ -1,6 +1,7 @@
 'use client'
 
 import { useEffect, useRef, useState, useTransition } from 'react'
+import { createPortal } from 'react-dom'
 import { getMyTenantsAction, switchTenantAction } from '@/app/actions/auth'
 
 type TenantEntry = {
@@ -17,6 +18,7 @@ export default function TenantSwitcher() {
   const [open, setOpen] = useState(false)
   const [isPending, startTransition] = useTransition()
   const ref = useRef<HTMLDivElement>(null)
+  const dropRef = useRef<HTMLDivElement>(null)
 
   useEffect(() => {
     getMyTenantsAction().then(setTenants).catch(() => {})
@@ -24,11 +26,32 @@ export default function TenantSwitcher() {
 
   useEffect(() => {
     function handleClickOutside(e: MouseEvent) {
-      if (ref.current && !ref.current.contains(e.target as Node)) setOpen(false)
+      const t = e.target as Node
+      if (ref.current?.contains(t)) return
+      if (dropRef.current?.contains(t)) return
+      setOpen(false)
     }
     document.addEventListener('mousedown', handleClickOutside)
     return () => document.removeEventListener('mousedown', handleClickOutside)
   }, [])
+
+  // Posição do dropdown via portal (não é cortado por overflow-hidden da sidebar).
+  // Abre para cima, pois o botão fica no rodapé da sidebar.
+  const [dropRect, setDropRect] = useState<{ left: number; bottom: number; width: number } | null>(null)
+  useEffect(() => {
+    if (!open) return
+    const id = requestAnimationFrame(() => {
+      const r = ref.current?.getBoundingClientRect()
+      if (r) {
+        setDropRect({
+          left: r.left,
+          bottom: window.innerHeight - r.top + 8,
+          width: 224,
+        })
+      }
+    })
+    return () => cancelAnimationFrame(id)
+  }, [open, tenants.length])
 
   const current = tenants.find(t => t.isCurrent)
 
@@ -57,8 +80,12 @@ export default function TenantSwitcher() {
         )}
       </button>
 
-      {open && tenants.length > 1 && (
-        <div className="absolute left-0 top-full mt-2 w-56 bg-white rounded-xl shadow-lg border border-gray-100 py-1 z-50 animate-in fade-in slide-in-from-top-2">
+      {open && tenants.length > 1 && dropRect && createPortal(
+        <div
+          ref={dropRef}
+          className="fixed z-[60] bg-white rounded-xl shadow-lg border border-gray-100 py-1 max-h-80 overflow-y-auto"
+          style={{ left: dropRect.left, bottom: dropRect.bottom, width: dropRect.width }}
+        >
           <p className="px-3 pt-1 pb-1.5 text-xs font-semibold text-gray-400 uppercase tracking-wide">Trocar de workspace</p>
           {tenants.map(t => (
             <button
@@ -75,7 +102,8 @@ export default function TenantSwitcher() {
               {t.isCurrent && <span className="text-xs text-blue-500 font-medium shrink-0">atual</span>}
             </button>
           ))}
-        </div>
+        </div>,
+        document.body,
       )}
     </div>
   )

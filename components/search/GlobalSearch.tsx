@@ -1,6 +1,7 @@
 'use client'
 
 import { useState, useEffect, useRef, useCallback } from 'react'
+import { createPortal } from 'react-dom'
 import { useRouter } from 'next/navigation'
 import UserAvatar from '@/components/user/UserAvatar' // Adicionado para renderizar a foto do usuário
 
@@ -37,7 +38,27 @@ export default function GlobalSearch({
   const [loading, setLoading] = useState(false)
   const inputRef = useRef<HTMLInputElement>(null)
   const containerRef = useRef<HTMLDivElement>(null)
+  const dropRef = useRef<HTMLDivElement>(null)
   const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
+
+  // Posição (fixed/viewport) para o dropdown — renderizado via portal em <body>
+  // para não ser recortado por containers com overflow-hidden (ex.: sidebar).
+  const [dropRect, setDropRect] = useState<{ left: number; top: number; width: number } | null>(null)
+
+  useEffect(() => {
+    if (!open) return
+    const id = requestAnimationFrame(() => {
+      const r = containerRef.current?.getBoundingClientRect()
+      if (r) {
+        setDropRect({
+          left: r.left,
+          top: r.bottom + 4,
+          width: Math.min(384, Math.max(320, window.innerWidth - r.left - 8)),
+        })
+      }
+    })
+    return () => cancelAnimationFrame(id)
+  }, [open, results, query])
 
   const search = useCallback(async (q: string) => {
     if (q.length < 2) { setResults([]); setOpen(false); return }
@@ -68,9 +89,10 @@ export default function GlobalSearch({
 
   useEffect(() => {
     function handleClickOutside(e: MouseEvent) {
-      if (containerRef.current && !containerRef.current.contains(e.target as Node)) {
-        setOpen(false)
-      }
+      const t = e.target as Node
+      if (containerRef.current?.contains(t)) return
+      if (dropRef.current?.contains(t)) return
+      setOpen(false)
     }
     document.addEventListener('mousedown', handleClickOutside)
     return () => document.removeEventListener('mousedown', handleClickOutside)
@@ -122,9 +144,11 @@ export default function GlobalSearch({
         )}
       </div>
 
-      {open && results.length > 0 && (
+      {open && results.length > 0 && dropRect && createPortal(
         <div
-          className="absolute top-full mt-1 left-0 w-96 bg-white rounded-xl shadow-xl border border-gray-100 py-1 z-50 max-h-80 overflow-y-auto"
+          ref={dropRef}
+          className="fixed z-[60] bg-white rounded-xl shadow-xl border border-gray-100 py-1 max-h-80 overflow-y-auto"
+          style={{ left: dropRect.left, top: dropRect.top, width: dropRect.width }}
           role="listbox"
           aria-label="Resultados da busca"
         >
@@ -178,13 +202,18 @@ export default function GlobalSearch({
               </div>
             </div>
           ))}
-        </div>
+        </div>,
+        document.body,
       )}
 
-      {open && results.length === 0 && query.length >= 2 && !loading && (
-        <div className="absolute top-full mt-1 left-0 w-80 bg-white rounded-xl shadow-lg border border-gray-100 py-4 z-50 text-center">
+      {open && results.length === 0 && query.length >= 2 && !loading && dropRect && createPortal(
+        <div
+          className="fixed z-[60] bg-white rounded-xl shadow-lg border border-gray-100 py-4 text-center"
+          style={{ left: dropRect.left, top: dropRect.top, width: dropRect.width }}
+        >
           <p className="text-sm text-gray-500">Nenhum resultado para &ldquo;{query}&rdquo;</p>
-        </div>
+        </div>,
+        document.body,
       )}
     </div>
   )

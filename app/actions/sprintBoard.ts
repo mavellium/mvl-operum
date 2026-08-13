@@ -2,7 +2,8 @@
 
 import { verifySession } from '@/lib/dal'
 import { revalidatePath } from 'next/cache'
-import { sprintsApi, cardsApi, tagsApi, adminApi, filesApi } from '@/lib/api-client'
+import { sprintsApi, cardsApi, tagsApi, filesApi } from '@/lib/api-client'
+import prisma from '@/lib/prisma'
 
 type BacklogCard = { id: string; title: string; description: string; color: string; priority?: string | null; tags?: unknown[]; attachments?: unknown[]; responsibles?: unknown[] }
 
@@ -16,16 +17,29 @@ type SprintBoardData = {
 
 export async function getSprintBoardAction(sprintId: string, projectId?: string): Promise<SprintBoardData | { error: string }> {
   try {
-    await verifySession()
+    const { tenantId } = await verifySession()
     const sprint = await sprintsApi.get(sprintId)
     const resolvedProjectId = projectId ?? (sprint as { projectId?: string }).projectId ?? ''
 
-    const [columns, users, tags, backlogCards] = await Promise.all([
+    const [columns, tags, backlogCards] = await Promise.all([
       sprintsApi.listColumns(sprintId),
-      adminApi.listAllUsers(),
       tagsApi.list(),
       resolvedProjectId ? cardsApi.listBacklog(resolvedProjectId) : Promise.resolve([]),
     ])
+
+    // Responsáveis possíveis: somente membros (stakeholders internos) vinculados ao projeto — nunca usuários externos.
+    const projectMembers = resolvedProjectId
+      ? await prisma.userProject.findMany({
+          where: {
+            projectId: resolvedProjectId,
+            active: true,
+            user: { tenantId, deletedAt: null, isActive: true },
+          },
+          select: { user: { select: { id: true, name: true, email: true, avatarUrl: true } } },
+          orderBy: { order: 'asc' },
+        })
+      : []
+    const users = projectMembers.map(m => m.user).filter((u): u is { id: string; name: string; email: string; avatarUrl: string | null } => u != null)
 
     const typedColumns = columns as SprintBoardData['columns']
     const typedBacklog = backlogCards as BacklogCard[]
@@ -230,10 +244,19 @@ export async function moveCardToBacklogAction(cardId: string) {
   }
 }
 
-export async function createBacklogCardAction(projectId: string, title: string) {
+export async function createBacklogCardAction(
+  projectId: string,
+  data: { title: string; description?: string; color?: string; priority?: string },
+) {
   try {
     await verifySession()
-    const card = await cardsApi.create({ projectId, title, description: '' })
+    const card = await cardsApi.create({
+      projectId,
+      title: data.title,
+      description: data.description ?? '',
+      color: data.color,
+      priority: data.priority,
+    })
     return { card }
   } catch (err) {
     return { error: err instanceof Error ? err.message : 'Erro ao criar card no backlog' }

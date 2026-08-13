@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
-import TopNav from "@/components/layout/TopNav";
+import AppShell from "@/components/layout/AppShell";
 import { ToastProvider } from "@/components/ui/Toast";
 import "./globals.css";
 
@@ -32,8 +32,7 @@ export default function RootLayout({
     >
       <body className="h-full flex flex-col" suppressHydrationWarning>
         <ToastProvider>
-          <TopNav />
-          {children}
+          <AppShell>{children}</AppShell>
         </ToastProvider>
       </body>
     </html>

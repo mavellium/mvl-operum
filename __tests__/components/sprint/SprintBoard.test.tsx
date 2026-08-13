@@ -47,6 +47,10 @@ vi.mock('@/app/actions/time', () => ({
   pauseTimerAction: vi.fn(),
   getCardTimeAction: vi.fn(),
   getActiveTimerAction: vi.fn(),
+  getTimeEntriesAction: vi.fn().mockResolvedValue({ entries: [] }),
+  addManualTimeAction: vi.fn().mockResolvedValue({ entry: { id: 'm1' } }),
+  updateTimeEntryAction: vi.fn().mockResolvedValue({ entry: { id: 'm1' } }),
+  deleteTimeEntryAction: vi.fn().mockResolvedValue({ success: true }),
 }))
 
 vi.mock('@/app/actions/cardResponsible', () => ({
@@ -166,5 +170,35 @@ describe('SprintBoard', () => {
     fireEvent.click(screen.getByRole('button', { name: /board actions/i }))
     fireEvent.click(screen.getByText(/importar csv/i))
     expect(screen.getAllByText(/importar csv/i).length).toBeGreaterThanOrEqual(1)
+  })
+
+  it('opens card modal when clicking a backlog card', () => {
+    const backlogCard = {
+      id: 'bc1',
+      title: 'Backlog Task',
+      description: '',
+      color: '#3b82f6',
+      tags: [],
+      attachments: [],
+    }
+    renderWithProviders(<SprintBoard sprint={sprint} columns={columns} projectId="proj1" backlogCards={[backlogCard]} />)
+    fireEvent.click(screen.getByText('Backlog Task'))
+    expect(screen.getByRole('button', { name: /salvar alterações/i })).toBeInTheDocument()
+  })
+
+  it('opens concluded card in read-only mode', () => {
+    const concludedColumns = [
+      columns[0],
+      {
+        id: 'sc2', title: 'Concluído', position: 1,
+        cards: [{ id: 'c9', title: 'Done Task', description: 'feito', color: '#3b82f6', tags: [], attachments: [] }],
+      },
+    ]
+    renderWithProviders(<SprintBoard sprint={sprint} columns={concludedColumns} projectId="proj1" />)
+    fireEvent.click(screen.getByText('Done Task'))
+    expect(screen.getByRole('heading', { name: /done task/i })).toBeInTheDocument()
+    expect(screen.queryByRole('button', { name: /salvar alterações/i })).not.toBeInTheDocument()
+    expect(screen.queryByRole('button', { name: /editar/i })).not.toBeInTheDocument()
+    expect(screen.getAllByRole('button', { name: /fechar/i }).length).toBeGreaterThan(0)
   })
 })

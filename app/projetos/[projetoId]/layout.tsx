@@ -23,7 +23,6 @@ export default async function ProjetoLayout({
     <div className="flex flex-1 overflow-hidden">
       <ProjectSidebar
         projetoId={projetoId}
-        projetoNome={projeto.name}
         canManageMembers={canManageMembers}
       />
       <main className="flex-1 min-w-0 h-full overflow-y-auto">

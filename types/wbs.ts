@@ -82,6 +82,10 @@ export interface WbsTreeState {
   selectedNodeIds: string[];
   /** edição inline em andamento */
   editingNodeId: string | null;
+  /** texto inicial da edição inline (digitação substitui o título) */
+  editingInitialText?: string;
+  /** nó recém-criado que o canvas deve centralizar (limpo após o pan) */
+  focusNodeId: string | null;
   clipboard: {
     nodes: WbsNodeClient[];
     copiedStyle: WbsNodeStyle | null;

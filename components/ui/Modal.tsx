@@ -38,12 +38,18 @@ export default function Modal({
     const previousOverflow = document.body.style.overflow
     document.body.style.overflow = 'hidden'
 
-    // Prioriza campos de entrada; só cai em button/tabindex se não houver nenhum.
-    // querySelector usa ordem do DOM, não do seletor — por isso a busca é em duas etapas.
-    const focusTarget =
-      dialogRef.current?.querySelector<HTMLElement>('input, textarea, select') ??
-      dialogRef.current?.querySelector<HTMLElement>('button, [tabindex]:not([tabindex="-1"])')
-    const timer = setTimeout(() => focusTarget?.focus(), 10)
+    const timer = setTimeout(() => {
+      // O React já focou no mount qualquer elemento com autoFocus (ex.: o botão
+      // Cancelar do ConfirmDialog). Se o foco atual está dentro do diálogo, mantém.
+      const active = document.activeElement
+      if (active && dialogRef.current?.contains(active)) return
+
+      // Prioriza campos de entrada; só cai em button/tabindex se não houver nenhum.
+      const focusTarget =
+        dialogRef.current?.querySelector<HTMLElement>('input, textarea, select') ??
+        dialogRef.current?.querySelector<HTMLElement>('button:not([disabled]), [tabindex]:not([tabindex="-1"])')
+      focusTarget?.focus()
+    }, 10)
 
     return () => {
       clearTimeout(timer)
@@ -51,11 +57,32 @@ export default function Modal({
     }
   }, [isOpen])
 
-  // Listener de teclado separado — precisa de onClose atualizado mas não deve re-focar
+  // Listener de teclado separado — precisa de onClose atualizado mas não deve re-focar.
+  // Inclui focus trap: Tab/Shift+Tab circulam dentro do modal em vez de vazar para a página.
   useEffect(() => {
     if (!isOpen) return
     const handleKey = (e: KeyboardEvent) => {
-      if (e.key === 'Escape') onClose()
+      if (e.key === 'Escape') { onClose(); return }
+      if (e.key !== 'Tab' || !dialogRef.current) return
+      const focusable = dialogRef.current.querySelectorAll<HTMLElement>(
+        'button:not([disabled]), [href], input:not([disabled]), select:not([disabled]), textarea:not([disabled]), [tabindex]:not([tabindex="-1"])'
+      )
+      if (focusable.length === 0) return
+      const first = focusable[0]
+      const last = focusable[focusable.length - 1]
+      const active = document.activeElement
+      if (!active || !dialogRef.current.contains(active)) {
+        e.preventDefault()
+        ;(e.shiftKey ? last : first).focus()
+        return
+      }
+      if (e.shiftKey && active === first) {
+        e.preventDefault()
+        last.focus()
+      } else if (!e.shiftKey && active === last) {
+        e.preventDefault()
+        first.focus()
+      }
     }
     document.addEventListener('keydown', handleKey)
     return () => document.removeEventListener('keydown', handleKey)

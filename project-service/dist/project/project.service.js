@@ -40,6 +40,11 @@ let ProjectService = class ProjectService {
                 skip,
                 take: limit,
                 orderBy: { createdAt: 'desc' },
+                include: {
+                    _count: {
+                        select: { members: { where: { active: true } } },
+                    },
+                },
             }),
             prisma_1.prisma.project.count({ where: { tenantId, deletedAt: null } }),
         ]);

@@ -24,6 +24,7 @@ import {
 } from '@/app/actions/sprintBoard'
 import { createCommentAction, getCommentsAction, updateCommentAction, deleteCommentAction } from '@/app/actions/comentarios'
 import { deleteAttachmentAction, setCoverAction, renameAttachmentAction, getAttachmentUrlAction } from '@/app/actions/attachments'
+import { addResponsibleAction } from '@/app/actions/cardResponsible'
 
 interface SprintCard {
   id: string
@@ -109,7 +110,6 @@ export default function SprintBoard({ sprint, columns: initialColumns, backlogCa
   const [boardBg, setBoardBg] = useState('bg-gradient-to-br from-slate-900 via-blue-950 to-slate-900')
   const [backlogCards, setBacklogCards] = useState<SprintCard[]>(initialBacklogCards ?? [])
   const [addingBacklogCard, setAddingBacklogCard] = useState(false)
-  const [newBacklogTitle, setNewBacklogTitle] = useState('')
   const [pendingMove, setPendingMove] = useState<{
     cardId: string
     srcColumnId: string
@@ -162,14 +162,70 @@ export default function SprintBoard({ sprint, columns: initialColumns, backlogCa
     scrollContainerRef.current.scrollLeft = scrollLeft - walk
   }
 
-  async function handleAddBacklogCard() {
-    if (!newBacklogTitle.trim() || !projectId) return
-    const result = await createBacklogCardAction(projectId, newBacklogTitle.trim())
+  async function uploadCardAttachment(cardId: string, file: File): Promise<Record<string, unknown> | null> {
+    const form = new FormData()
+    form.append('cardId', cardId)
+    form.append('file', file)
+    try {
+      const res = await fetch('/api/uploads', { method: 'POST', body: form })
+      if (res.ok) {
+        const att = await res.json()
+        toast('Anexo enviado com sucesso!', 'success')
+        return att
+      }
+      const body = await res.json().catch(() => ({})) as { error?: string; message?: string }
+      toast(body.error ?? body.message ?? 'Falha ao enviar o anexo.', 'error')
+      return null
+    } catch {
+      toast('Erro de rede ao enviar o anexo.', 'error')
+      return null
+    }
+  }
+
+  async function handleAddBacklogCardModal(data: { title: string; description: string; color: CardColor; priority?: string; responsibles?: string[]; files?: File[] }) {
+    if (!projectId) return
+    const result = await createBacklogCardAction(projectId, {
+      title: data.title,
+      description: data.description,
+      color: data.color,
+      priority: data.priority,
+    })
     if ('card' in result && result.card) {
       const c = result.card
-      setBacklogCards(prev => [...prev, { id: c.id, title: c.title, description: c.description ?? '', color: c.color, tags: [], attachments: [], timeEntries: [] }])
+      const responsibles = data.responsibles?.length
+        ? await Promise.all(data.responsibles.map(async userId => {
+            await addResponsibleAction(c.id, userId)
+            const user = users?.find(u => u.id === userId)
+            return { user: { id: userId, name: user?.name ?? '', avatarUrl: user?.avatarUrl ?? null } }
+          }))
+        : []
+      const attachments: SprintCard['attachments'] = []
+      for (const file of data.files ?? []) {
+        const att = await uploadCardAttachment(c.id, file)
+        if (att) {
+          attachments.push({
+            id: att.id as string,
+            fileName: att.fileName as string,
+            fileType: att.fileType as string,
+            filePath: att.filePath as string,
+            fileSize: att.fileSize as number,
+            isCover: att.isCover as boolean | undefined,
+            uploadedAt: (att.uploadedAt as string | Date | undefined) ?? (att.createdAt as string | Date),
+          })
+        }
+      }
+      setBacklogCards(prev => [...prev, {
+        id: c.id,
+        title: c.title,
+        description: c.description ?? '',
+        color: c.color,
+        priority: c.priority,
+        tags: [],
+        attachments,
+        timeEntries: [],
+        responsibles,
+      }])
     }
-    setNewBacklogTitle('')
     setAddingBacklogCard(false)
   }
 
@@ -280,7 +336,12 @@ export default function SprintBoard({ sprint, columns: initialColumns, backlogCa
     await deleteSprintColumnAction(sprint.id, columnId)
   }
 
-  async function handleAddCard(columnId: string, data: { title: string; description: string; color: CardColor; priority?: string }) {
+  function patchCardState(cardId: string, updater: (c: SprintCard) => SprintCard) {
+    setColumns(cols => cols.map(col => ({ ...col, cards: col.cards.map(c => c.id === cardId ? updater(c) : c) })))
+    setBacklogCards(prev => prev.map(c => c.id === cardId ? updater(c) : c))
+  }
+
+  async function handleAddCard(columnId: string, data: { title: string; description: string; color: CardColor; priority?: string; responsibles?: string[]; files?: File[] }) {
     const result = await createCardInSprintAction({
       sprintId: sprint.id,
       sprintColumnId: columnId,
@@ -290,14 +351,37 @@ export default function SprintBoard({ sprint, columns: initialColumns, backlogCa
       priority: data.priority,
     })
     if ('card' in result && result.card) {
+      const responsibles = data.responsibles?.length
+        ? await Promise.all(data.responsibles.map(async userId => {
+            await addResponsibleAction(result.card.id, userId)
+            const user = users?.find(u => u.id === userId)
+            return { user: { id: userId, name: user?.name ?? '', avatarUrl: user?.avatarUrl ?? null } }
+          }))
+        : []
+      const attachments: SprintCard['attachments'] = []
+      for (const file of data.files ?? []) {
+        const att = await uploadCardAttachment(result.card.id, file)
+        if (att) {
+          attachments.push({
+            id: att.id as string,
+            fileName: att.fileName as string,
+            fileType: att.fileType as string,
+            filePath: att.filePath as string,
+            fileSize: att.fileSize as number,
+            isCover: att.isCover as boolean | undefined,
+            uploadedAt: (att.uploadedAt as string | Date | undefined) ?? (att.createdAt as string | Date),
+          })
+        }
+      }
       const newCard: SprintCard = {
         id: result.card.id,
         title: result.card.title,
         description: result.card.description,
         color: result.card.color,
         tags: [],
-        attachments: [],
+        attachments,
         timeEntries: [],
+        responsibles,
       }
       setColumns(cols => cols.map(col =>
         col.id === columnId ? { ...col, cards: [...col.cards, newCard] } : col
@@ -416,35 +500,13 @@ export default function SprintBoard({ sprint, columns: initialColumns, backlogCa
 
                 {/* Footer — igual ao das outras colunas */}
                 <div className="p-2 border-t border-black/5 bg-gray-100 rounded-b-2xl shrink-0">
-                  {addingBacklogCard ? (
-                    <div className="px-1 space-y-2">
-                      <input
-                        autoFocus
-                        value={newBacklogTitle}
-                        onChange={e => setNewBacklogTitle(e.target.value)}
-                        onKeyDown={e => {
-                          if (e.key === 'Enter') handleAddBacklogCard()
-                          if (e.key === 'Escape') { setAddingBacklogCard(false); setNewBacklogTitle('') }
-                        }}
-                        placeholder="Título do card..."
-                        className="w-full px-3 py-2 text-sm border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500/20"
-                      />
-                      <div className="flex gap-2">
-                        <button onClick={handleAddBacklogCard} className="flex-1 bg-blue-600 text-white text-xs font-bold py-2 rounded-lg hover:bg-blue-700 transition-all">Criar</button>
-                        <button onClick={() => { setAddingBacklogCard(false); setNewBacklogTitle('') }} className="px-3 bg-gray-200 text-gray-600 rounded-lg hover:bg-gray-300 transition-all">
-                          <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" /></svg>
-                        </button>
-                      </div>
-                    </div>
-                  ) : (
-                    <button
-                      onClick={() => setAddingBacklogCard(true)}
-                      className="w-full flex items-center gap-1.5 px-3 py-2 text-sm font-medium text-gray-500 hover:text-blue-600 hover:bg-white rounded-xl transition-all active:scale-[0.98]"
-                    >
-                      <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" /></svg>
-                      Adicionar card
-                    </button>
-                  )}
+                  <button
+                    onClick={() => setAddingBacklogCard(true)}
+                    className="w-full flex items-center gap-1.5 px-3 py-2 text-sm font-medium text-gray-500 hover:text-blue-600 hover:bg-white rounded-xl transition-all active:scale-[0.98]"
+                  >
+                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" /></svg>
+                    Adicionar card
+                  </button>
                 </div>
               </div>
             )}
@@ -528,20 +590,28 @@ export default function SprintBoard({ sprint, columns: initialColumns, backlogCa
       {/* MODAL DO CARD - TOTALMENTE INTEGRADO */}
       {(() => {
         if (!openCardId) return null
-        
-        // Encontra a coluna atual para passar o nome como referência (caso você adicione no modal no futuro)
+
+        // Card pode estar em uma coluna ou no backlog (coluna virtual).
         const currentColumn = columns.find(col => col.cards.some(c => c.id === openCardId))
-        const openCardRaw = currentColumn?.cards.find(c => c.id === openCardId)
-        
+        const openCardRaw = currentColumn?.cards.find(c => c.id === openCardId) ?? backlogCards.find(c => c.id === openCardId)
+
         if (!openCardRaw) return null
-        
+
         const openCardType = toCardType(openCardRaw, sprint.id)
+        // Cards em "Concluído": só visualização, edição desabilitada.
+        const readOnly = !!currentColumn && currentColumn.title === 'Concluído'
+        const isBacklog = !currentColumn
 
         return (
           <CardModal
             isOpen
+            readOnly={readOnly}
             onClose={() => setOpenCardId(null)}
-            onSubmit={data => handleUpdateCard(openCardId, data)}
+            onSubmit={data => {
+              if (readOnly) return
+              if (isBacklog) handleUpdateBacklogCard(openCardId, data)
+              else handleUpdateCard(openCardId, data)
+            }}
             initialCard={openCardType}
             users={users}
             boardTags={tags}
@@ -558,14 +628,7 @@ export default function SprintBoard({ sprint, columns: initialColumns, backlogCa
                 const res = await fetch('/api/uploads', { method: 'POST', body: form })
                 if (res.ok) {
                   const att = await res.json()
-                  setColumns(prev => prev.map(col => ({
-                    ...col,
-                    cards: col.cards.map(c =>
-                      c.id === openCardId
-                        ? { ...c, attachments: [...(c.attachments ?? []), att] }
-                        : c
-                    ),
-                  })))
+                  patchCardState(openCardId, c => ({ ...c, attachments: [...(c.attachments ?? []), att] }))
                   toast('Anexo enviado com sucesso!', 'success')
                 } else {
                   const body = await res.json().catch(() => ({})) as { error?: string; message?: string }
@@ -585,40 +648,25 @@ export default function SprintBoard({ sprint, columns: initialColumns, backlogCa
               if (!openCardId) return
               const result = await renameAttachmentAction(attachmentId, openCardId, newName)
               if ('error' in result) { toast(result.error as string, 'error'); return }
-              setColumns(prev => prev.map(col => ({
-                ...col,
-                cards: col.cards.map(c =>
-                  c.id === openCardId
-                    ? { ...c, attachments: (c.attachments ?? []).map(a => a.id === attachmentId ? { ...a, fileName: newName } : a) }
-                    : c
-                ),
-              })))
+              patchCardState(openCardId, c => ({
+                ...c,
+                attachments: (c.attachments ?? []).map(a => a.id === attachmentId ? { ...a, fileName: newName } : a),
+              }))
             }}
             onAttachmentDelete={async (attachmentId) => {
               if (!openCardId) return
               const result = await deleteAttachmentAction(attachmentId, openCardId)
               if ('error' in result) { toast(result.error as string, 'error'); return }
-              setColumns(prev => prev.map(col => ({
-                ...col,
-                cards: col.cards.map(c =>
-                  c.id === openCardId
-                    ? { ...c, attachments: (c.attachments ?? []).filter(a => a.id !== attachmentId) }
-                    : c
-                ),
-              })))
+              patchCardState(openCardId, c => ({ ...c, attachments: (c.attachments ?? []).filter(a => a.id !== attachmentId) }))
             }}
             onAttachmentSetCover={async (attachmentId) => {
               if (!openCardId) return
               const result = await setCoverAction(openCardId, attachmentId)
               if ('error' in result) { toast(result.error as string, 'error'); return }
-              setColumns(prev => prev.map(col => ({
-                ...col,
-                cards: col.cards.map(c =>
-                  c.id === openCardId
-                    ? { ...c, attachments: (c.attachments ?? []).map(a => ({ ...a, isCover: a.id === attachmentId })) }
-                    : c
-                ),
-              })))
+              patchCardState(openCardId, c => ({
+                ...c,
+                attachments: (c.attachments ?? []).map(a => ({ ...a, isCover: a.id === attachmentId })),
+              }))
             }}
             onAddComment={async (content) => {
               if (!openCardId) return
@@ -644,14 +692,10 @@ export default function SprintBoard({ sprint, columns: initialColumns, backlogCa
             currentUser={currentUser ?? undefined}
             onResponsiblesChange={(responsibles) => {
               if (!openCardId) return
-              setColumns(prev => prev.map(col => ({
-                ...col,
-                cards: col.cards.map(c =>
-                  c.id === openCardId
-                    ? { ...c, responsibles: responsibles.map(r => ({ user: { id: r.user.id, name: r.user.name, avatarUrl: r.user.avatarUrl } })) }
-                    : c
-                ),
-              })))
+              patchCardState(openCardId, c => ({
+                ...c,
+                responsibles: responsibles.map(r => ({ user: { id: r.user.id, name: r.user.name, avatarUrl: r.user.avatarUrl } })),
+              }))
             }}
             comments={cardComments.filter(c => c.user).map(c => ({
               id: c.id,
@@ -672,6 +716,14 @@ export default function SprintBoard({ sprint, columns: initialColumns, backlogCa
             setAddingCardToColumn(null)
           }
         }}
+        users={users}
+        boardTags={tags}
+      />
+
+      <CardModal
+        isOpen={addingBacklogCard}
+        onClose={() => setAddingBacklogCard(false)}
+        onSubmit={handleAddBacklogCardModal}
         users={users}
         boardTags={tags}
       />

@@ -26,6 +26,8 @@ export type CreateSprintDto = z.infer<typeof CreateSprintSchema>
 export type UpdateSprintDto = z.infer<typeof UpdateSprintSchema>
 export type CreateColumnDto = z.infer<typeof CreateColumnSchema>
 
+export const DEFAULT_SPRINT_COLUMNS = ['A Fazer', 'Em andamento', 'Em teste', 'Concluído']
+
 @Injectable()
 export class SprintService {
   async list(projectId?: string) {
@@ -49,13 +51,20 @@ export class SprintService {
   }
 
   async create(dto: CreateSprintDto) {
-    return prisma.sprint.create({
+    const sprint = await prisma.sprint.create({
       data: {
         ...dto,
         startDate: dto.startDate ? new Date(dto.startDate) : undefined,
         endDate: dto.endDate ? new Date(dto.endDate) : undefined,
       },
     })
+
+    // Colunas padrão além do backlog — A Fazer, Em andamento, Em teste, Concluído.
+    await prisma.sprintColumn.createMany({
+      data: DEFAULT_SPRINT_COLUMNS.map((title, position) => ({ title, position, sprintId: sprint.id })),
+    })
+
+    return sprint
   }
 
   async update(id: string, dto: UpdateSprintDto) {

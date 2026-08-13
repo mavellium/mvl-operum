@@ -10,7 +10,10 @@ export async function createSprintAction(
 ) {
   try {
     const { userId } = await verifySession()
-    const sprint = await sprintsApi.create({ ...input, createdBy: userId })
+    const { startDate, endDate, ...rest } = input
+    // <input type="date"> envia "YYYY-MM-DD"; o sprint-service exige datetime ISO completo.
+    const toISO = (d?: string) => d ? new Date(d).toISOString() : undefined
+    const sprint = await sprintsApi.create({ ...rest, createdBy: userId, startDate: toISO(startDate), endDate: toISO(endDate) })
     revalidatePath('/sprints')
     if (input.projectId) {
       revalidatePath(`/projetos/${input.projectId}`)

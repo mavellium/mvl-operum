@@ -6,7 +6,7 @@ var __decorate = (this && this.__decorate) || function (decorators, target, key,
     return c > 3 && r && Object.defineProperty(target, key, r), r;
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.SprintService = exports.CreateColumnSchema = exports.UpdateSprintSchema = exports.CreateSprintSchema = void 0;
+exports.SprintService = exports.DEFAULT_SPRINT_COLUMNS = exports.CreateColumnSchema = exports.UpdateSprintSchema = exports.CreateSprintSchema = void 0;
 const common_1 = require("@nestjs/common");
 const prisma_1 = require("../prisma");
 const zod_1 = require("zod");
@@ -27,6 +27,7 @@ exports.CreateColumnSchema = zod_1.z.object({
     title: zod_1.z.string().min(1),
     position: zod_1.z.number().int(),
 });
+exports.DEFAULT_SPRINT_COLUMNS = ['A Fazer', 'Em andamento', 'Em teste', 'Concluído'];
 let SprintService = class SprintService {
     async list(projectId) {
         return prisma_1.prisma.sprint.findMany({
@@ -48,13 +49,17 @@ let SprintService = class SprintService {
         return sprint;
     }
     async create(dto) {
-        return prisma_1.prisma.sprint.create({
+        const sprint = await prisma_1.prisma.sprint.create({
             data: {
                 ...dto,
                 startDate: dto.startDate ? new Date(dto.startDate) : undefined,
                 endDate: dto.endDate ? new Date(dto.endDate) : undefined,
             },
         });
+        await prisma_1.prisma.sprintColumn.createMany({
+            data: exports.DEFAULT_SPRINT_COLUMNS.map((title, position) => ({ title, position, sprintId: sprint.id })),
+        });
+        return sprint;
     }
     async update(id, dto) {
         await this.findOne(id);

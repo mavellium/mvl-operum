@@ -38,4 +38,16 @@ describe('createSprintAction', () => {
     expect(result?.sprint).toMatchObject({ name: 'Sprint 1' })
     expect(sprintsApi.create).toHaveBeenCalledOnce()
   })
+
+  it('converts date-only strings to ISO datetime before sending', async () => {
+    mockVerify.mockResolvedValue({ userId: 'u1', role: 'member' })
+    vi.mocked(sprintsApi.create).mockResolvedValue({ id: 's1', name: 'Sprint 1', status: 'PLANNED' })
+    await createSprintAction(undefined, { name: 'Sprint 1', startDate: '2026-08-12', endDate: '2026-09-12' })
+    expect(sprintsApi.create).toHaveBeenCalledWith({
+      name: 'Sprint 1',
+      createdBy: 'u1',
+      startDate: '2026-08-12T00:00:00.000Z',
+      endDate: '2026-09-12T00:00:00.000Z',
+    })
+  })
 })

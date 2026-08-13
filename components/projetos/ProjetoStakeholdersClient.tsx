@@ -1045,14 +1045,16 @@ export default function ProjetoStakeholdersClient({
 
         {/* Search */}
         <div className="px-4 py-3 border-b border-gray-100">
-          <input
-            type="search"
-            placeholder="Buscar por nome, e-mail ou empresa…"
-            value={searchProjeto}
-            onChange={e => setSearchProjeto(e.target.value)}
-            className="w-full px-3 py-2 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
-          />
-        </div>
+  <input 
+    type="search" 
+    placeholder="Buscar por nome, e-mail ou empresa…" 
+    value={searchProjeto} 
+    onChange={e => setSearchProjeto(e.target.value)} 
+    className="w-full px-3 py-2 border border-gray-200 rounded-xl text-sm text-gray-900 placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all duration-150" 
+    autoFocus 
+  />
+</div>
+
 
         {/* Reorder error feedback */}
         {reorderError && (
@@ -1204,14 +1206,16 @@ export default function ProjetoStakeholdersClient({
           </div>
 
           <div className="px-4 py-3 border-b border-gray-100">
-            <input
-              type="search"
-              placeholder={addMode === 'interno' ? 'Buscar usuário…' : 'Buscar no diretório…'}
-              value={searchDir}
-              onChange={e => setSearchDir(e.target.value)}
-              className="w-full px-3 py-2 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
-            />
-          </div>
+  <input
+    type="search"
+    placeholder={addMode === 'interno' ? 'Buscar usuário…' : 'Buscar no diretório…'}
+    value={searchDir}
+    autoFocus
+    onChange={e => setSearchDir(e.target.value)}
+    className="w-full px-3 py-2 border border-gray-200 rounded-xl text-sm text-gray-900 placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-blue-500"
+  />
+</div>
+
 
           {/* Externo directory */}
           {addMode === 'externo' && (
@@ -1330,6 +1334,7 @@ export default function ProjetoStakeholdersClient({
               </label>
               <input
                 type="text"
+                autoFocus
                 value={formState.name}
                 onChange={e => setField('name', e.target.value)}
                 disabled={!isAdmin}

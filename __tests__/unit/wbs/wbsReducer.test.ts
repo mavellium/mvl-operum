@@ -29,6 +29,7 @@ function makeState(
     rootId,
     selectedNodeIds: [],
     editingNodeId: null,
+    focusNodeId: null,
     clipboard: { nodes: [], copiedStyle: null, actionType: null },
     history: { past: [], future: [] },
     viewport: { zoom: 1, panX: 0, panY: 0 },
@@ -75,6 +76,13 @@ describe('INSERT_CHILD', () => {
     expect(s.nodes.r.childrenIds).toHaveLength(1)
   })
 
+  it('seleciona o nó recém-criado e entra em edição', () => {
+    const s = act(base, { type: 'INSERT_CHILD', payload: { parentId: 'r' } })
+    const id = newId(base, s)
+    expect(s.selectedNodeIds).toEqual([id])
+    expect(s.editingNodeId).toBe(id)
+  })
+
   it('empilha no history', () => {
     const s = act(base, { type: 'INSERT_CHILD', payload: { parentId: 'r' } })
     expect(s.history.past).toHaveLength(1)
@@ -113,6 +121,13 @@ describe('INSERT_SIBLING', () => {
     const s = act(s0, { type: 'INSERT_SIBLING', payload: { siblingId: 'a' } })
     expect(s.nodes.b.order).toBe(2)
     expect(s.nodes.b.code).toBe('1.3')
+  })
+
+  it('seleciona o irmão recém-criado e entra em edição', () => {
+    const s = act(base, { type: 'INSERT_SIBLING', payload: { siblingId: 'a' } })
+    const id = newId(base, s)
+    expect(s.selectedNodeIds).toEqual([id])
+    expect(s.editingNodeId).toBe(id)
   })
 
   it('não insere irmão da raiz', () => {
@@ -180,6 +195,56 @@ describe('DELETE_NODE', () => {
     expect(s.nodes.c6.code).toBe('1.6')
     expect(s.nodes.c10.order).toBe(9)
     expect(s.nodes.c10.code).toBe('1.10')
+  })
+})
+
+// ── DELETE_NODES ─────────────────────────────────────────────────────────────
+
+describe('DELETE_NODES', () => {
+  it('remove todos os selecionados (com subárvores) e renumera os irmãos', () => {
+    const s0 = makeState({
+      r: node('r', null, 0, ['a', 'b', 'c'], '1'),
+      a: node('a', 'r', 0, ['aa'], '1.1'),
+      aa: node('aa', 'a', 0, [], '1.1.1'),
+      b: node('b', 'r', 1, [], '1.2'),
+      c: node('c', 'r', 2, [], '1.3'),
+    })
+    const s = act(s0, { type: 'DELETE_NODES', payload: { nodeIds: ['a', 'b'] } })
+    expect(s.nodes.a).toBeUndefined()
+    expect(s.nodes.aa).toBeUndefined()
+    expect(s.nodes.b).toBeUndefined()
+    expect(s.nodes.c).toBeDefined()
+    expect(s.nodes.r.childrenIds).toEqual(['c'])
+    expect(s.nodes.c.order).toBe(0)
+    expect(s.nodes.c.code).toBe('1.1')
+  })
+
+  it('nunca exclui o card raiz, mesmo selecionado', () => {
+    const s0 = makeState({
+      r: node('r', null, 0, ['a'], '1'),
+      a: node('a', 'r', 0, [], '1.1'),
+    }, 'r')
+    const s = act(s0, { type: 'DELETE_NODES', payload: { nodeIds: ['r', 'a'] } })
+    expect(s.nodes.r).toBeDefined()
+    expect(s.nodes.a).toBeUndefined()
+  })
+
+  it('no-op quando só o card raiz está selecionado', () => {
+    const s0 = makeState({ r: node('r', null, 0, [], '1') }, 'r')
+    expect(act(s0, { type: 'DELETE_NODES', payload: { nodeIds: ['r'] } })).toBe(s0)
+  })
+
+  it('limpa da seleção apenas os nós que foram excluídos', () => {
+    const s0 = {
+      ...makeState({
+        r: node('r', null, 0, ['a', 'b'], '1'),
+        a: node('a', 'r', 0, [], '1.1'),
+        b: node('b', 'r', 1, [], '1.2'),
+      }, 'r'),
+      selectedNodeIds: ['r', 'a', 'b'],
+    }
+    const s = act(s0, { type: 'DELETE_NODES', payload: { nodeIds: ['r', 'a', 'b'] } })
+    expect(s.selectedNodeIds).toEqual(['r'])
   })
 })
 
@@ -271,6 +336,215 @@ describe('MOVE_NODE', () => {
     })
     const s = act(s0, { type: 'MOVE_NODE', payload: { nodeId: 'a', targetId: 'b', position: 'INSIDE' } })
     expect(s.history.past).toHaveLength(1)
+  })
+
+  it('arrastar nó para a borda da raiz (BEFORE/AFTER) o torna filho, não o órfão', () => {
+    const s0 = makeState({
+      r: node('r', null, 0, ['a'], '1'),
+      a: node('a', 'r', 0, ['aa'], '1.1'),
+      aa: node('aa', 'a', 0, [], '1.1.1'),
+    })
+    const s = act(s0, { type: 'MOVE_NODE', payload: { nodeId: 'aa', targetId: 'r', position: 'AFTER' } })
+    // aa não pode sumir: vira filho da raiz (r não tem pai para BEFORE/AFTER)
+    expect(s.nodes.aa).toBeDefined()
+    expect(s.nodes.aa.parentId).toBe('r')
+    expect(s.nodes.r.childrenIds).toContain('aa')
+    expect(s.nodes.aa.code.startsWith('1.')).toBe(true)
+  })
+
+  it('arrastar descendente para dentro de um ancestral o torna filho dele', () => {
+    const s0 = makeState({
+      r: node('r', null, 0, ['a'], '1'),
+      a: node('a', 'r', 0, ['aa'], '1.1'),
+      aa: node('aa', 'a', 0, [], '1.1.1'),
+    })
+    const s = act(s0, { type: 'MOVE_NODE', payload: { nodeId: 'aa', targetId: 'r', position: 'INSIDE' } })
+    expect(s.nodes.aa.parentId).toBe('r')
+    expect(s.nodes.a.childrenIds).not.toContain('aa')
+    expect(s.nodes.r.childrenIds).toContain('aa')
+  })
+})
+
+// ── MOVE_NODES ───────────────────────────────────────────────────────────────
+
+describe('MOVE_NODES', () => {
+  it('move vários irmãos para dentro de um alvo, preservando a ordem', () => {
+    const s0 = makeState({
+      r: node('r', null, 0, ['a', 'b', 'c'], '1'),
+      a: node('a', 'r', 0, [], '1.1'),
+      b: node('b', 'r', 1, [], '1.2'),
+      c: node('c', 'r', 2, ['ca'], '1.3'),
+      ca: node('ca', 'c', 0, [], '1.3.1'),
+    })
+    const s = act(s0, { type: 'MOVE_NODES', payload: { nodeIds: ['a', 'b'], targetId: 'c', position: 'INSIDE' } })
+    expect(s.nodes.a.parentId).toBe('c')
+    expect(s.nodes.b.parentId).toBe('c')
+    expect(s.nodes.c.childrenIds).toEqual(['ca', 'a', 'b'])
+    expect(s.nodes.r.childrenIds).toEqual(['c'])
+    expect(s.nodes.a.order).toBe(1)
+    expect(s.nodes.b.order).toBe(2)
+    // c virou filho único da raiz → recalcCodes o renumerou para 1.1
+    expect(s.nodes.c.code).toBe('1.1')
+    expect(s.nodes.a.code).toBe('1.1.2')
+    expect(s.nodes.b.code).toBe('1.1.3')
+  })
+
+  it('BEFORE em um irmão mantém todos os movidos antes do alvo', () => {
+    const s0 = makeState({
+      r: node('r', null, 0, ['a', 'b', 'c'], '1'),
+      a: node('a', 'r', 0, [], '1.1'),
+      b: node('b', 'r', 1, [], '1.2'),
+      c: node('c', 'r', 2, [], '1.3'),
+    })
+    const s = act(s0, { type: 'MOVE_NODES', payload: { nodeIds: ['a', 'b'], targetId: 'c', position: 'BEFORE' } })
+    expect(s.nodes.r.childrenIds).toEqual(['a', 'b', 'c'])
+    expect(s.nodes.a.order).toBe(0)
+    expect(s.nodes.b.order).toBe(1)
+    expect(s.nodes.c.order).toBe(2)
+  })
+
+  it('descendente no lote não é movido em dobro (só o topo vai)', () => {
+    const s0 = makeState({
+      r: node('r', null, 0, ['a'], '1'),
+      a: node('a', 'r', 0, ['aa'], '1.1'),
+      aa: node('aa', 'a', 0, [], '1.1.1'),
+    })
+    const s = act(s0, { type: 'MOVE_NODES', payload: { nodeIds: ['a', 'aa'], targetId: 'r', position: 'INSIDE' } })
+    expect(s.nodes.a.parentId).toBe('r')
+    expect(s.nodes.aa.parentId).toBe('a')
+    expect(s.nodes.r.childrenIds).toContain('a')
+    expect(s.nodes.a.childrenIds).toContain('aa')
+  })
+
+  it('ignora a raiz no lote', () => {
+    const s0 = makeState({
+      r: node('r', null, 0, ['a'], '1'),
+      a: node('a', 'r', 0, [], '1.1'),
+    })
+    const s = act(s0, { type: 'MOVE_NODES', payload: { nodeIds: ['r', 'a'], targetId: 'r', position: 'INSIDE' } })
+    expect(s.nodes.r.parentId).toBeNull()
+    expect(s.nodes.a.parentId).toBe('r')
+  })
+
+  it('no-op quando o alvo está dentro de um dos movidos (ciclo)', () => {
+    const s0 = makeState({
+      r: node('r', null, 0, ['a'], '1'),
+      a: node('a', 'r', 0, ['aa'], '1.1'),
+      aa: node('aa', 'a', 0, [], '1.1.1'),
+    })
+    expect(act(s0, { type: 'MOVE_NODES', payload: { nodeIds: ['a'], targetId: 'aa', position: 'INSIDE' } })).toBe(s0)
+  })
+
+  it('empilha no history', () => {
+    const s0 = makeState({
+      r: node('r', null, 0, ['a', 'b'], '1'),
+      a: node('a', 'r', 0, [], '1.1'),
+      b: node('b', 'r', 1, [], '1.2'),
+    })
+    const s = act(s0, { type: 'MOVE_NODES', payload: { nodeIds: ['a', 'b'], targetId: 'r', position: 'INSIDE' } })
+    expect(s.history.past).toHaveLength(1)
+  })
+})
+
+// ── DUPLICATE ─────────────────────────────────────────────────────────────────
+
+describe('DUPLICATE', () => {
+  it('duplica um nó como irmão imediatamente após ele', () => {
+    const s0 = makeState({
+      r: node('r', null, 0, ['a', 'b'], '1'),
+      a: node('a', 'r', 0, ['aa'], '1.1'),
+      aa: node('aa', 'a', 0, [], '1.1.1'),
+      b: node('b', 'r', 1, [], '1.2'),
+    })
+    const s = act(s0, { type: 'DUPLICATE', payload: { nodeIds: ['a'] } })
+    expect(s.nodes.a.childrenIds).toHaveLength(1)
+    expect(s.nodes.r.childrenIds).toHaveLength(3)
+    const cloneId = s.nodes.r.childrenIds[1]
+    expect(cloneId).not.toBe('a')
+    expect(s.nodes[cloneId].parentId).toBe('r')
+    expect(s.nodes[cloneId].order).toBe(1)
+    // subárvore clonada preserva o filho
+    expect(s.nodes[s.nodes[cloneId].childrenIds[0]]).toBeDefined()
+    expect(s.nodes[cloneId].childrenIds).toHaveLength(1)
+    expect(s.nodes.b.order).toBe(2)
+    expect(s.nodes[cloneId].code).toBe('1.2')
+    expect(s.nodes.b.code).toBe('1.3')
+  })
+
+  it('duplica múltiplos irmãos, cada clone logo após o original', () => {
+    const s0 = makeState({
+      r: node('r', null, 0, ['a', 'b'], '1'),
+      a: node('a', 'r', 0, [], '1.1'),
+      b: node('b', 'r', 1, [], '1.2'),
+    })
+    const s = act(s0, { type: 'DUPLICATE', payload: { nodeIds: ['a', 'b'] } })
+    expect(s.nodes.r.childrenIds).toHaveLength(4)
+    expect(s.nodes.r.childrenIds[0]).toBe('a')
+    expect(s.nodes.r.childrenIds[1]).not.toBe('a')
+    expect(s.nodes.r.childrenIds[2]).toBe('b')
+    expect(s.nodes.r.childrenIds[3]).not.toBe('b')
+  })
+
+  it('com seleção pai+filho duplica apenas o topo (pai)', () => {
+    const s0 = makeState({
+      r: node('r', null, 0, ['a'], '1'),
+      a: node('a', 'r', 0, ['aa'], '1.1'),
+      aa: node('aa', 'a', 0, [], '1.1.1'),
+    })
+    const s = act(s0, { type: 'DUPLICATE', payload: { nodeIds: ['a', 'aa'] } })
+    expect(s.nodes.r.childrenIds).toHaveLength(2)
+    const cloneId = s.nodes.r.childrenIds[1]
+    expect(s.nodes[cloneId].childrenIds).toHaveLength(1)
+    expect(s.nodes.a.childrenIds).toHaveLength(1)
+  })
+
+  it('ignora a raiz e não duplica', () => {
+    const s0 = makeState({ r: node('r', null, 0, [], '1') })
+    const s = act(s0, { type: 'DUPLICATE', payload: { nodeIds: ['r'] } })
+    expect(s).toBe(s0)
+  })
+
+  it('empilha no history', () => {
+    const s0 = makeState({
+      r: node('r', null, 0, ['a'], '1'),
+      a: node('a', 'r', 0, [], '1.1'),
+    })
+    const s = act(s0, { type: 'DUPLICATE', payload: { nodeIds: ['a'] } })
+    expect(s.history.past).toHaveLength(1)
+  })
+})
+
+// ── CLEAR_STYLE ──────────────────────────────────────────────────────────────
+
+describe('CLEAR_STYLE', () => {
+  it('reseta o estilo dos selecionados para DEFAULT_STYLE, preservando title', () => {
+    const s: State = {
+      ...makeState({ r: node('r', null, 0, ['a'], '1'), a: node('a', 'r', 0, [], '1.1') }),
+      selectedNodeIds: ['a'],
+    }
+    s.nodes.a = { ...s.nodes.a, style: { ...DEFAULT_STYLE, backgroundColor: '#ff0000', fontSize: 20 } }
+    const result = act(s, { type: 'CLEAR_STYLE' })
+    expect(result.nodes.a.style.backgroundColor).toBe(DEFAULT_STYLE.backgroundColor)
+    expect(result.nodes.a.style.fontSize).toBe(DEFAULT_STYLE.fontSize)
+    expect(result.nodes.a.title).toBe('a')
+  })
+
+  it('no-op sem seleção', () => {
+    const s0 = makeState({
+      r: node('r', null, 0, ['a'], '1'),
+      a: node('a', 'r', 0, [], '1.1'),
+    })
+    s0.nodes.a = { ...s0.nodes.a, style: { ...DEFAULT_STYLE, backgroundColor: '#ff0000' } }
+    expect(act(s0, { type: 'CLEAR_STYLE' })).toBe(s0)
+  })
+
+  it('empilha no history', () => {
+    const s: State = {
+      ...makeState({ r: node('r', null, 0, ['a'], '1'), a: node('a', 'r', 0, [], '1.1') }),
+      selectedNodeIds: ['a'],
+    }
+    const result = act(s, { type: 'CLEAR_STYLE' })
+    expect(result.history.past).toHaveLength(1)
   })
 })
 

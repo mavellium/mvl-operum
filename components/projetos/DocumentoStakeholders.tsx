@@ -54,8 +54,9 @@ function toDisplayDate(raw: string): string {
 
 const labelClass = 'block text-sm font-semibold text-slate-700 mb-1'
 const inputClass =
-  'w-full border-2 border-slate-400 rounded-lg px-3 py-2 text-sm text-slate-900 bg-white ' +
-  ' focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500'
+  'w-full border-2 border-slate-400 rounded-lg px-3 py-2 text-sm text-slate-900 bg-white placeholder-slate-500 ' +
+  'focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500';
+
 
 const STATUS_BADGE: Record<DocumentVersion['status'], string> = {
   PENDING:  'bg-amber-100 text-amber-700',
@@ -268,6 +269,7 @@ export default function DocumentoStakeholders() {
               <label className={labelClass}>Elaborado por</label>
               <input
                 className={inputClass}
+                autoFocus
                 value={editable.elaboradoPor}
                 onChange={e => update('elaboradoPor', e.target.value)}
                 placeholder="Nome do responsável"
