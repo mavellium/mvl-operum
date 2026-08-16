@@ -9,8 +9,11 @@ import UserHoursChart from '@/components/dashboard/UserHoursChart'
 import UserRankingTable from '@/components/dashboard/UserRankingTable'
 import OverdueCardsList from '@/components/dashboard/OverdueCardsList'
 import Link from 'next/link'
+import type { Metadata } from 'next'
 
 export const dynamic = 'force-dynamic'
+
+export const metadata: Metadata = { title: 'Dashboard' }
 
 function formatHours(h: number) {
   if (h < 1) return `${Math.round(h * 60)}min`

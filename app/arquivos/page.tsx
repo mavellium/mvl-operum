@@ -4,8 +4,11 @@ import { getProjectsWhereManager } from '@/services/projectRoleService'
 import prisma from '@/lib/prisma'
 import ArquivosClient from '@/components/arquivos/ArquivosClient'
 import Link from 'next/link'
+import type { Metadata } from 'next'
 
 export const dynamic = 'force-dynamic'
+
+export const metadata: Metadata = { title: 'Arquivos' }
 
 function formatBytes(bytes: number) {
   if (bytes < 1024) return `${bytes} B`

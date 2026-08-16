@@ -8,8 +8,11 @@ import ProjetoStakeholdersClient, {
   type UsuarioDisponivel,
   type StakeholderExterno,
 } from '@/components/projetos/ProjetoStakeholdersClient'
+import type { Metadata } from 'next'
 
 export const dynamic = 'force-dynamic'
+
+export const metadata: Metadata = { title: 'Stakeholders' }
 
 export default async function ProjetoStakeholdersPage({ params }: { params: Promise<{ projetoId: string }> }) {
   const { projetoId } = await params

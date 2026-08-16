@@ -4,8 +4,11 @@ import { getMyTenantsAction } from '@/app/actions/auth'
 import AdminTenantsClient from '@/components/admin/AdminTenantsClient'
 import { redirect } from 'next/navigation'
 import Link from 'next/link'
+import type { Metadata } from 'next'
 
 export const dynamic = 'force-dynamic'
+
+export const metadata: Metadata = { title: 'Workspaces' }
 
 export default async function AdminTenantsPage() {
   const { role, userId } = await verifySession()

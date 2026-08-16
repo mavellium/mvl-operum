@@ -4,8 +4,11 @@ import { STATUS_CONFIG } from '@/lib/statusConfig'
 import EmptyState from '@/components/ui/EmptyState'
 import Link from 'next/link'
 import DeleteProjectButton from '@/components/projetos/DeleteProjectButton'
+import type { Metadata } from 'next'
 
 export const dynamic = 'force-dynamic'
+
+export const metadata: Metadata = { title: 'Projetos' }
 
 // --- ÍCONES SVG REFINADOS ---
 const IconUsers = () => (

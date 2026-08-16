@@ -4,8 +4,11 @@ import { findById } from '@/services/projectService'
 import { isProjectManager } from '@/services/projectRoleService'
 import prisma from '@/lib/prisma'
 import ProjetoDepartamentosClient from '@/components/projetos/ProjetoDepartamentosClient'
+import type { Metadata } from 'next'
 
 export const dynamic = 'force-dynamic'
+
+export const metadata: Metadata = { title: 'Departamentos' }
 
 export default async function ProjetoDepartamentosPage({ params }: { params: Promise<{ projetoId: string }> }) {
   const { projetoId } = await params

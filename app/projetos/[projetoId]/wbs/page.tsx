@@ -4,8 +4,11 @@ import { findById } from '@/services/projectService'
 import { isProjectManager } from '@/services/projectRoleService'
 import { getTree, resetTree } from '@/services/wbsService'
 import WbsCanvas from '@/components/wbs/WbsCanvas'
+import type { Metadata } from 'next'
 
 export const dynamic = 'force-dynamic'
+
+export const metadata: Metadata = { title: 'EAP / WBS' }
 
 export default async function WbsPage({
   params,

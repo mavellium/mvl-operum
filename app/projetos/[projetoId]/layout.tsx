@@ -1,8 +1,25 @@
 import { notFound } from 'next/navigation'
+import type { Metadata } from 'next'
 import { verifySession } from '@/lib/dal'
 import { findById } from '@/services/projectService'
 import { isProjectManager } from '@/services/projectRoleService'
 import ProjectSidebar from '@/components/layout/ProjectSidebar'
+
+export async function generateMetadata({
+  params,
+}: {
+  params: Promise<{ projetoId: string }>
+}): Promise<Metadata> {
+  const { projetoId } = await params
+  const projeto = await findById(projetoId)
+  if (!projeto) return { title: 'Projeto' }
+  return {
+    title: {
+      default: projeto.name,
+      template: `%s - ${projeto.name}`,
+    },
+  }
+}
 
 export default async function ProjetoLayout({
   children,

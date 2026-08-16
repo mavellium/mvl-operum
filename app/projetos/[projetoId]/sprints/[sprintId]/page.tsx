@@ -2,12 +2,24 @@ import { getSprintBoardAction } from '@/app/actions/sprintBoard'
 import { getCurrentUserAction } from '@/app/actions/users'
 import SprintBoard from '@/components/sprint/SprintBoard'
 import Link from 'next/link'
+import type { Metadata } from 'next'
+import { sprintsApi } from '@/lib/api-client'
 
 export const dynamic = 'force-dynamic'
 
 interface Props {
   params: Promise<{ projetoId: string; sprintId: string }>
   searchParams: Promise<{ card?: string }>
+}
+
+export async function generateMetadata({ params }: Props): Promise<Metadata> {
+  const { sprintId } = await params
+  try {
+    const sprint = (await sprintsApi.get(sprintId)) as { name?: string }
+    return { title: sprint.name ?? 'Sprint' }
+  } catch {
+    return { title: 'Sprint' }
+  }
 }
 
 export default async function SprintPage({ params, searchParams }: Props) {

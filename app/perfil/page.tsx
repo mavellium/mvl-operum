@@ -4,8 +4,11 @@ import ChangePasswordForm from '@/components/profile/ChangePasswordForm'
 import SignatureUpload from '@/components/profile/SignatureUpload'
 import UserTenantsList from '@/components/UserTenantsList'
 import Link from 'next/link'
+import type { Metadata } from 'next'
 
 export const dynamic = 'force-dynamic'
+
+export const metadata: Metadata = { title: 'Meu Perfil' }
 
 export default async function PerfilPage() {
   const result = await getUserProfileAction()

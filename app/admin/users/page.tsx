@@ -2,8 +2,11 @@ import { listAllUsers } from '@/services/adminService'
 import AdminUsersClient from '@/components/admin/AdminUsersClient'
 import { verifySession } from '@/lib/dal'
 import Link from 'next/link'
+import type { Metadata } from 'next'
 
 export const dynamic = 'force-dynamic'
+
+export const metadata: Metadata = { title: 'Gerenciar Usuários' }
 
 export default async function AdminUsersPage() {
   const { tenantId } = await verifySession()

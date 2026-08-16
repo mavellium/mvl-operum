@@ -7,8 +7,11 @@ import { getSprintMetrics } from '@/services/dashboardService'
 import EmptyState from '@/components/ui/EmptyState'
 import DeleteSprintButton from '@/components/sprint/DeleteSprintButton'
 import Link from 'next/link'
+import type { Metadata } from 'next'
 
 export const dynamic = 'force-dynamic'
+
+export const metadata: Metadata = { title: 'Sprints' }
 
 const SPRINT_STATUS: Record<string, { label: string; cls: string }> = {
   PLANNED:   { label: 'Planejada',  cls: 'bg-gray-100 text-gray-600 border-gray-200' },

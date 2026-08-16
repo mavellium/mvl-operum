@@ -1,6 +1,9 @@
 import DocumentacaoLayout from '@/components/projetos/documentacao/DocumentacaoLayout'
+import type { Metadata } from 'next'
 
 export const dynamic = 'force-dynamic'
+
+export const metadata: Metadata = { title: 'Documentação' }
 
 export default function DocumentacaoPage() {
   return (

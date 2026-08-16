@@ -2,8 +2,11 @@ import { verifySession } from '@/lib/dal'
 import { findAllByUser } from '@/services/notificacaoService'
 import NotificacaoList from '@/components/notificacoes/NotificacaoList'
 import Link from 'next/link'
+import type { Metadata } from 'next'
 
 export const dynamic = 'force-dynamic'
+
+export const metadata: Metadata = { title: 'Notificações' }
 
 export default async function NotificacoesPage() {
   const { userId } = await verifySession()

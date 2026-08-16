@@ -1,8 +1,11 @@
 import { verifySession } from '@/lib/dal'
 import { adminApi, projectsApi, notificationsApi } from '@/lib/api-client'
 import Link from 'next/link'
+import type { Metadata } from 'next'
 
 export const dynamic = 'force-dynamic'
+
+export const metadata: Metadata = { title: 'Painel Admin' }
 
 async function getAdminStats(userId: string) {
   const [users, projects, notifications] = await Promise.all([
