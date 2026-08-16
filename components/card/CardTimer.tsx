@@ -15,9 +15,11 @@ interface CardTimerProps {
   cardId: string
   onEntryChanged?: () => void
   timerKey?: number
+  /** Disparado quando o timer é iniciado (Correção 6). */
+  onTimerStarted?: (cardId: string) => void
 }
 
-export default function CardTimer({ cardId, onEntryChanged, timerKey }: CardTimerProps) {
+export default function CardTimer({ cardId, onEntryChanged, timerKey, onTimerStarted }: CardTimerProps) {
   const [isRunning, setIsRunning] = useState(false)
   const [elapsed, setElapsed] = useState(0)
   const [loading, setLoading] = useState(true)
@@ -124,6 +126,7 @@ export default function CardTimer({ cardId, onEntryChanged, timerKey }: CardTime
       baseSecondsRef.current   = elapsed
       startedAtRef.current     = new Date()
       setIsRunning(true)
+      onTimerStarted?.(cardId)
     }
     setLoading(false)
   }

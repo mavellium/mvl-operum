@@ -27,6 +27,11 @@ let CardController = class CardController {
             throw new common_1.BadRequestException('projectId é obrigatório');
         return this.cardService.listBacklog(projectId);
     }
+    search(q, sprintId, projectId, responsibleUserId) {
+        if (!q || q.trim().length < 2)
+            throw new common_1.BadRequestException('q é obrigatório (mínimo 2 caracteres)');
+        return this.cardService.search(q.trim(), { sprintId, projectId, responsibleUserId });
+    }
     findOne(id) {
         return this.cardService.findOne(id);
     }
@@ -87,6 +92,16 @@ __decorate([
     __metadata("design:paramtypes", [String]),
     __metadata("design:returntype", void 0)
 ], CardController.prototype, "listBacklog", null);
+__decorate([
+    (0, common_1.Get)('cards/search'),
+    __param(0, (0, common_1.Query)('q')),
+    __param(1, (0, common_1.Query)('sprintId')),
+    __param(2, (0, common_1.Query)('projectId')),
+    __param(3, (0, common_1.Query)('responsibleUserId')),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [String, String, String, String]),
+    __metadata("design:returntype", void 0)
+], CardController.prototype, "search", null);
 __decorate([
     (0, common_1.Get)('cards/:id'),
     __param(0, (0, common_1.Param)('id')),

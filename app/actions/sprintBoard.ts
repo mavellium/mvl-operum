@@ -5,7 +5,7 @@ import { revalidatePath } from 'next/cache'
 import { sprintsApi, cardsApi, tagsApi, filesApi } from '@/lib/api-client'
 import prisma from '@/lib/prisma'
 
-type BacklogCard = { id: string; title: string; description: string; color: string; priority?: string | null; tags?: unknown[]; attachments?: unknown[]; responsibles?: unknown[] }
+type BacklogCard = { id: string; title: string; description: string; color: string; priority?: string | null; tags?: unknown[]; attachments?: unknown[]; responsibles?: { user: { id: string; name: string; avatarUrl?: string | null } }[] }
 
 type SprintBoardData = {
   sprint: { id: string; name: string; status: string; projectId?: string | null; startDate: Date | string | null; endDate: Date | string | null; description?: string | null; qualidade?: number | null; dificuldade?: number | null }
@@ -13,6 +13,29 @@ type SprintBoardData = {
   backlogCards: BacklogCard[]
   users: { id: string; name: string; email: string; avatarUrl?: string | null }[]
   tags: { id: string; name: string; color: string }[]
+}
+
+type ResponsibleUser = { id: string; name: string; avatarUrl?: string | null }
+
+function buildAvatarMap(users: { id: string; avatarUrl?: string | null }[]): Map<string, string | null> {
+  return new Map(users.map(u => [u.id, u.avatarUrl ?? null]))
+}
+
+function enrichCardResponsibles<T extends { responsibles?: { user: ResponsibleUser }[] }>(
+  card: T,
+  avatarByUserId: Map<string, string | null>,
+): T & { responsibles: { user: { id: string; name: string; avatarUrl: string | null } }[] } {
+  return {
+    ...card,
+    responsibles: (card.responsibles ?? []).map(r => ({
+      ...r,
+      user: {
+        id: r.user.id,
+        name: r.user.name,
+        avatarUrl: r.user.avatarUrl ?? avatarByUserId.get(r.user.id) ?? null,
+      },
+    })),
+  }
 }
 
 export async function getSprintBoardAction(sprintId: string, projectId?: string): Promise<SprintBoardData | { error: string }> {
@@ -44,11 +67,22 @@ export async function getSprintBoardAction(sprintId: string, projectId?: string)
     const typedColumns = columns as SprintBoardData['columns']
     const typedBacklog = backlogCards as BacklogCard[]
 
+    // Responsáveis vindos do sprint-service não têm avatarUrl (réplica local do
+    // User). Enriquecer cruzando com o banco principal (userProject -> User.avatarUrl),
+    // mesmo padrão usado para anexos abaixo. Resolve avatar sumindo ao reabrir card.
+    const avatarByUserId = buildAvatarMap(users)
+
+    const baseColumns = typedColumns.map(col => ({
+      ...col,
+      cards: (col.cards ?? []).map(card => enrichCardResponsibles(card, avatarByUserId)),
+    }))
+    const baseBacklog = typedBacklog.map(card => enrichCardResponsibles(card, avatarByUserId))
+
     // Enrich cards with attachments from file-service.
     // Wrapped in its own try/catch so any failure (service down, 5xx, schema mismatch)
     // never breaks the sprint board page load.
-    let finalColumns: SprintBoardData['columns'] = typedColumns
-    let finalBacklog: BacklogCard[] = typedBacklog
+    let finalColumns: SprintBoardData['columns'] = baseColumns
+    let finalBacklog: BacklogCard[] = baseBacklog
 
     try {
       const CUID_RE = /^c[a-z0-9]{20,30}$/
@@ -76,11 +110,11 @@ export async function getSprintBoardAction(sprintId: string, projectId?: string)
           uploadedAt: a.createdAt,
         }))
 
-      finalColumns = typedColumns.map(col => ({
+      finalColumns = baseColumns.map(col => ({
         ...col,
         cards: (col.cards ?? []).map(card => ({ ...card, attachments: enrich(card.id) })),
       }))
-      finalBacklog = typedBacklog.map(card => ({ ...card, attachments: enrich(card.id) }))
+      finalBacklog = baseBacklog.map(card => ({ ...card, attachments: enrich(card.id) }))
     } catch { /* file-service indisponível — sprint board carrega sem anexos */ }
 
     return { sprint, columns: finalColumns, backlogCards: finalBacklog, users, tags } as unknown as SprintBoardData
@@ -211,9 +245,18 @@ export async function deleteCardInSprintAction(sprintId: string, cardId: string)
 
 export async function getProjectBacklogAction(projectId: string): Promise<BacklogCard[] | { error: string }> {
   try {
-    await verifySession()
+    const { tenantId } = await verifySession()
     const cards = await cardsApi.listBacklog(projectId)
-    return cards
+    const members = await prisma.userProject.findMany({
+      where: {
+        projectId,
+        active: true,
+        user: { tenantId, deletedAt: null, isActive: true },
+      },
+      select: { user: { select: { id: true, avatarUrl: true } } },
+    })
+    const avatarByUserId = buildAvatarMap(members.map(m => m.user).filter((u): u is { id: string; avatarUrl: string | null } => u != null))
+    return (cards as BacklogCard[]).map(card => enrichCardResponsibles(card, avatarByUserId))
   } catch (err) {
     return { error: err instanceof Error ? err.message : 'Erro ao carregar backlog' }
   }

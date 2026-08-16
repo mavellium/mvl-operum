@@ -61,6 +61,33 @@ let CardService = class CardService {
             orderBy: [{ sprintColumnId: 'asc' }, { position: 'asc' }],
         });
     }
+    async search(q, opts) {
+        const where = {
+            deletedAt: null,
+            OR: [
+                { title: { contains: q, mode: 'insensitive' } },
+                { description: { contains: q, mode: 'insensitive' } },
+            ],
+        };
+        if (opts?.sprintId)
+            where.sprintId = opts.sprintId;
+        if (opts?.projectId)
+            where.projectId = opts.projectId;
+        if (opts?.responsibleUserId)
+            where.responsibles = { some: { userId: opts.responsibleUserId } };
+        return prisma_1.prisma.card.findMany({
+            where,
+            include: {
+                tags: { include: { tag: true } },
+                responsibles: { include: { user: true } },
+                attachments: { where: { deletedAt: null } },
+                sprint: { select: { id: true, name: true } },
+                sprintColumn: { select: { id: true, title: true } },
+            },
+            take: 50,
+            orderBy: { updatedAt: 'desc' },
+        });
+    }
     async findOne(id) {
         const card = await prisma_1.prisma.card.findFirst({
             where: { id, deletedAt: null },

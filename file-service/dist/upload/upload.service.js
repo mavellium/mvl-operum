@@ -8,6 +8,7 @@ var __decorate = (this && this.__decorate) || function (decorators, target, key,
 var __metadata = (this && this.__metadata) || function (k, v) {
     if (typeof Reflect === "object" && typeof Reflect.metadata === "function") return Reflect.metadata(k, v);
 };
+var UploadService_1;
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.UploadService = void 0;
 const common_1 = require("@nestjs/common");
@@ -46,9 +47,10 @@ function validateFileName(name) {
         throw new common_1.BadRequestException('Nome de arquivo contém caracteres inválidos');
     }
 }
-let UploadService = class UploadService {
+let UploadService = UploadService_1 = class UploadService {
     constructor(minio) {
         this.minio = minio;
+        this.logger = new common_1.Logger(UploadService_1.name);
         this.prisma = prisma_1.prisma;
     }
     async upload(file, cardId, userId) {
@@ -63,7 +65,8 @@ let UploadService = class UploadService {
         try {
             fileUrl = await this.minio.upload(key, file.buffer, file.mimetype);
         }
-        catch {
+        catch (error) {
+            this.logger.error(`upload: falha no armazenamento — key=${key} cardId=${cardId} mimetype=${file.mimetype} originalname=${file.originalname}`, error instanceof Error ? error.stack : String(error));
             throw new common_1.InternalServerErrorException('Falha no armazenamento');
         }
         try {
@@ -77,8 +80,9 @@ let UploadService = class UploadService {
                 },
             });
         }
-        catch {
+        catch (error) {
             await this.minio.delete(key).catch(() => undefined);
+            this.logger.error(`upload: falha ao registrar anexo — key=${key} cardId=${cardId}`, error instanceof Error ? error.stack : String(error));
             throw new common_1.InternalServerErrorException('Falha ao registrar o anexo');
         }
     }
@@ -92,7 +96,8 @@ let UploadService = class UploadService {
                 orderBy: { createdAt: 'asc' },
             });
         }
-        catch {
+        catch (error) {
+            this.logger.error(`listByCards: erro ao buscar anexos — cardIds=${cardIds.join(',')}`, error instanceof Error ? error.stack : String(error));
             throw new common_1.InternalServerErrorException('Erro ao buscar anexos');
         }
     }
@@ -104,7 +109,8 @@ let UploadService = class UploadService {
                 where: { id: attachmentId, deletedAt: null },
             });
         }
-        catch {
+        catch (error) {
+            this.logger.error(`setCover: erro ao buscar anexo — attachmentId=${attachmentId}`, error instanceof Error ? error.stack : String(error));
             throw new common_1.InternalServerErrorException('Erro ao buscar o anexo');
         }
         if (!attachment)
@@ -119,7 +125,8 @@ let UploadService = class UploadService {
                 data: { isCover: true },
             });
         }
-        catch {
+        catch (error) {
+            this.logger.error(`setCover: erro ao definir capa — attachmentId=${attachmentId} cardId=${cardId}`, error instanceof Error ? error.stack : String(error));
             throw new common_1.InternalServerErrorException('Erro ao definir capa');
         }
     }
@@ -132,7 +139,8 @@ let UploadService = class UploadService {
                 where: { id: attachmentId, deletedAt: null },
             });
         }
-        catch {
+        catch (error) {
+            this.logger.error(`rename: erro ao buscar anexo — attachmentId=${attachmentId}`, error instanceof Error ? error.stack : String(error));
             throw new common_1.InternalServerErrorException('Erro ao buscar o anexo');
         }
         if (!attachment)
@@ -143,7 +151,8 @@ let UploadService = class UploadService {
                 data: { fileName, updatedAt: new Date() },
             });
         }
-        catch {
+        catch (error) {
+            this.logger.error(`rename: erro ao renomear anexo — attachmentId=${attachmentId}`, error instanceof Error ? error.stack : String(error));
             throw new common_1.InternalServerErrorException('Erro ao renomear o anexo');
         }
     }
@@ -155,7 +164,8 @@ let UploadService = class UploadService {
                 where: { id: attachmentId, deletedAt: null },
             });
         }
-        catch {
+        catch (error) {
+            this.logger.error(`delete: erro ao buscar anexo — attachmentId=${attachmentId}`, error instanceof Error ? error.stack : String(error));
             throw new common_1.InternalServerErrorException('Erro ao buscar o anexo');
         }
         if (!attachment)
@@ -169,7 +179,8 @@ let UploadService = class UploadService {
                 data: { deletedAt: new Date() },
             });
         }
-        catch {
+        catch (error) {
+            this.logger.error(`delete: erro ao excluir anexo — attachmentId=${attachmentId}`, error instanceof Error ? error.stack : String(error));
             throw new common_1.InternalServerErrorException('Erro ao excluir o anexo');
         }
     }
@@ -181,7 +192,8 @@ let UploadService = class UploadService {
                 where: { id: attachmentId, deletedAt: null },
             });
         }
-        catch {
+        catch (error) {
+            this.logger.error(`getPresignedUrl: erro ao buscar anexo — attachmentId=${attachmentId}`, error instanceof Error ? error.stack : String(error));
             throw new common_1.InternalServerErrorException('Erro ao buscar o anexo');
         }
         if (!attachment)
@@ -203,7 +215,8 @@ let UploadService = class UploadService {
             const url = await this.minio.upload(key, file.buffer, file.mimetype);
             return { url };
         }
-        catch {
+        catch (error) {
+            this.logger.error(`uploadAvatar: falha no armazenamento — key=${key} userId=${userId}`, error instanceof Error ? error.stack : String(error));
             throw new common_1.InternalServerErrorException('Falha no armazenamento');
         }
     }
@@ -217,13 +230,14 @@ let UploadService = class UploadService {
             const url = await this.minio.upload(key, file.buffer, file.mimetype);
             return { url };
         }
-        catch {
+        catch (error) {
+            this.logger.error(`uploadLogo: falha no armazenamento — key=${key} entityId=${entityId} type=${type}`, error instanceof Error ? error.stack : String(error));
             throw new common_1.InternalServerErrorException('Falha no armazenamento');
         }
     }
 };
 exports.UploadService = UploadService;
-exports.UploadService = UploadService = __decorate([
+exports.UploadService = UploadService = UploadService_1 = __decorate([
     (0, common_1.Injectable)(),
     __metadata("design:paramtypes", [minio_service_1.MinioService])
 ], UploadService);

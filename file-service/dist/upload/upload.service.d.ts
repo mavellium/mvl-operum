@@ -1,6 +1,7 @@
 import { MinioService } from '../minio/minio.service';
 export declare class UploadService {
     private readonly minio;
+    private readonly logger;
     private readonly prisma;
     constructor(minio: MinioService);
     upload(file: Express.Multer.File, cardId: string, userId: string): Promise<{

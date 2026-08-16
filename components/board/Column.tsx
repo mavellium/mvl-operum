@@ -22,6 +22,7 @@ interface ColumnProps {
   users?: User[]
   boardTags?: Tag[]
   onCardClick: (cardId: string) => void
+  onTimerStarted?: (cardId: string) => void
 }
 
 export default function Column({
@@ -29,7 +30,7 @@ export default function Column({
   isBacklog = false, isVirtual = false,
   onRenameColumn, onDeleteColumn,
   onAddCard, onUpdateCard, onDeleteCard,
-  users, boardTags, onCardClick
+  users, boardTags, onCardClick, onTimerStarted
 }: ColumnProps) {
 
   const columnBg = isBacklog
@@ -49,7 +50,7 @@ export default function Column({
             ${snapshot.isDragging ? 'shadow-2xl ring-2 ring-blue-300 rotate-1' : 'shadow-sm'}`}
         >
           {/* HEADER DA COLUNA */}
-          <div {...provided.dragHandleProps}>
+          <div {...provided.dragHandleProps} className="drag-handle">
             {isBacklog ? (
               <div className="flex items-center gap-2 px-4 py-3 border-b border-slate-500/20">
                 <svg className="w-4 h-4 text-slate-300 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -100,6 +101,7 @@ export default function Column({
                       users={users}
                       boardTags={boardTags}
                       onClick={() => onCardClick(card.id)}
+                      onTimerStarted={onTimerStarted}
                     />
                   </div>
                 ))}

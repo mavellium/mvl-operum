@@ -62,6 +62,12 @@ describe('MultiUserSelector', () => {
     expect(mockRemove).toHaveBeenCalledWith('c1', 'u1')
   })
 
+  it('renders selector immediately in pending mode (no infinite loading)', () => {
+    render(<MultiUserSelector cardId="" pending users={users} />)
+    expect(screen.queryByText('Carregando...')).not.toBeInTheDocument()
+    expect(screen.getByRole('combobox', { name: /adicionar responsável/i })).toBeInTheDocument()
+  })
+
   it('does not crash when responsible has no user object (defensive)', async () => {
     mockGetResponsibles.mockResolvedValue({
       responsibles: [{ userId: 'u1', user: null }],

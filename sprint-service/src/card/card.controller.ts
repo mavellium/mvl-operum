@@ -30,6 +30,19 @@ export class CardController {
     return this.cardService.listBacklog(projectId)
   }
 
+  // Declarada ANTES de @Get('cards/:id') para não colidir com o parâmetro
+  // dinâmico (senão "search" vira o :id e cai em findOne).
+  @Get('cards/search')
+  search(
+    @Query('q') q?: string,
+    @Query('sprintId') sprintId?: string,
+    @Query('projectId') projectId?: string,
+    @Query('responsibleUserId') responsibleUserId?: string,
+  ) {
+    if (!q || q.trim().length < 2) throw new BadRequestException('q é obrigatório (mínimo 2 caracteres)')
+    return this.cardService.search(q.trim(), { sprintId, projectId, responsibleUserId })
+  }
+
   @Get('cards/:id')
   findOne(@Param('id') id: string) {
     return this.cardService.findOne(id)

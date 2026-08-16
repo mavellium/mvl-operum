@@ -39,6 +39,8 @@ interface CardModalProps {
   onDeleteComment?: (commentId: string) => Promise<void>
   currentUser?: User
   onResponsiblesChange?: (responsibles: Responsible[]) => void
+  /** Disparado quando o timer é iniciado dentro do modal (Correção 6). */
+  onTimerStarted?: (cardId: string) => void
 }
 
 const DEFAULT_COLOR: CardColor = '#94a3b8'
@@ -102,7 +104,7 @@ function AttachmentIcon({ fileType }: { fileType: string }) {
 export default function CardModal({
   isOpen, onClose, onSubmit, initialCard, readOnly = false, users, boardTags,
   attachments = [], onAttachmentUpload, onAttachmentView, onAttachmentRename, onAttachmentDelete, onAttachmentSetCover,
-  comments = [], onAddComment, onEditComment, onDeleteComment, currentUser, onResponsiblesChange,
+  comments = [], onAddComment, onEditComment, onDeleteComment, currentUser, onResponsiblesChange, onTimerStarted,
 }: CardModalProps) {
 
   const [title, setTitle]                   = useState('')
@@ -764,7 +766,7 @@ export default function CardModal({
                   <p className="text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-2">Registro de Tempo</p>
 
                   <div className="bg-white rounded-lg border border-slate-200 p-3">
-                    <CardTimer cardId={initialCard.id} onEntryChanged={reloadTimeEntries} timerKey={timerKey} />
+                    <CardTimer cardId={initialCard.id} onEntryChanged={reloadTimeEntries} timerKey={timerKey} onTimerStarted={onTimerStarted} />
                   </div>
 
                   {/* Toggle Lançamento Manual */}

@@ -152,56 +152,71 @@ export default function GlobalSearch({
           role="listbox"
           aria-label="Resultados da busca"
         >
-          {results.map(result => (
-            <div
-              key={result.id}
-              className="px-4 py-2.5 hover:bg-gray-50 cursor-pointer transition-colors border-b border-gray-50 last:border-0"
-              role="option"
-              aria-selected={false}
-              onClick={() => handleResultClick(result)}
-            >
-              <div className="flex items-center gap-3">
-                
-                {/* Ícones Dinâmicos com base no tipo de resultado */}
-                {result.type === 'card' && (
-                  <div className="w-1.5 h-8 rounded-full shrink-0" style={{ backgroundColor: result.color || '#3b82f6' }} />
-                )}
-                
-                {result.type === 'project' && (
-                  <div className="w-8 h-8 rounded-lg bg-blue-50 text-blue-600 flex items-center justify-center shrink-0">
-                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 7v10a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-6l-2-2H5a2 2 0 00-2 2z" />
-                    </svg>
-                  </div>
-                )}
+          {(() => {
+            const sections = [
+              { key: 'card', label: 'Cards e tarefas', items: results.filter(r => (r.type ?? 'card') === 'card') },
+              { key: 'project', label: 'Projetos', items: results.filter(r => r.type === 'project') },
+              { key: 'member', label: 'Pessoas', items: results.filter(r => r.type === 'member') },
+            ].filter(s => s.items.length > 0)
 
-                {result.type === 'member' && (
-                  <div className="shrink-0">
-                    <UserAvatar name={result.title} avatarUrl={result.avatarUrl} size="sm" />
-                  </div>
-                )}
-                
-                <div className="flex-1 min-w-0">
-                  <p className="text-sm font-medium text-gray-900 truncate">{result.title}</p>
-                  
-                  {/* Descrição para Cards */}
-                  {result.type === 'card' && (
-                    <p className="text-xs text-gray-500 mt-0.5 truncate">
-                      {result.sprintColumn}
-                      {result.sprint && <span className="ml-1 text-blue-500">· {result.sprint}</span>}
-                    </p>
-                  )}
-
-                  {/* Descrição para Projetos ou Membros (ex: Email ou Cargo) */}
-                  {(result.type === 'project' || result.type === 'member') && result.description && (
-                    <p className="text-xs text-gray-500 mt-0.5 truncate">
-                      {result.description}
-                    </p>
-                  )}
+            return sections.map(section => (
+              <div key={section.key}>
+                <div className="px-4 pt-2 pb-1 text-[10px] font-bold text-gray-400 uppercase tracking-widest">
+                  {section.label}
                 </div>
+                {section.items.map(result => (
+                  <div
+                    key={result.id}
+                    className="px-4 py-2.5 hover:bg-gray-50 cursor-pointer transition-colors border-b border-gray-50 last:border-0"
+                    role="option"
+                    aria-selected={false}
+                    onClick={() => handleResultClick(result)}
+                  >
+                    <div className="flex items-center gap-3">
+
+                      {/* Ícones Dinâmicos com base no tipo de resultado */}
+                      {result.type === 'card' && (
+                        <div className="w-1.5 h-8 rounded-full shrink-0" style={{ backgroundColor: result.color || '#3b82f6' }} />
+                      )}
+
+                      {result.type === 'project' && (
+                        <div className="w-8 h-8 rounded-lg bg-blue-50 text-blue-600 flex items-center justify-center shrink-0">
+                          <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 7v10a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-6l-2-2H5a2 2 0 00-2 2z" />
+                          </svg>
+                        </div>
+                      )}
+
+                      {result.type === 'member' && (
+                        <div className="shrink-0">
+                          <UserAvatar name={result.title} avatarUrl={result.avatarUrl} size="sm" />
+                        </div>
+                      )}
+
+                      <div className="flex-1 min-w-0">
+                        <p className="text-sm font-medium text-gray-900 truncate">{result.title}</p>
+
+                        {/* Descrição para Cards */}
+                        {result.type === 'card' && (
+                          <p className="text-xs text-gray-500 mt-0.5 truncate">
+                            {result.sprintColumn}
+                            {result.sprint && <span className="ml-1 text-blue-500">· {result.sprint}</span>}
+                          </p>
+                        )}
+
+                        {/* Descrição para Projetos ou Membros (ex: Email ou Cargo) */}
+                        {(result.type === 'project' || result.type === 'member') && result.description && (
+                          <p className="text-xs text-gray-500 mt-0.5 truncate">
+                            {result.description}
+                          </p>
+                        )}
+                      </div>
+                    </div>
+                  </div>
+                ))}
               </div>
-            </div>
-          ))}
+            ))
+          })()}
         </div>,
         document.body,
       )}

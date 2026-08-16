@@ -1,11 +1,12 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import { Draggable } from '@hello-pangea/dnd'
 import { Card as CardType, CardColor } from '@/types/kanban'
 import ConfirmDialog from '@/components/ui/ConfirmDialog'
 import { TagBadge } from '@/components/tag/TagBadge'
 import UserAvatar from '@/components/user/UserAvatar'
+import { startTimerAction, pauseTimerAction, getCardTimeAction, getActiveTimerAction } from '@/app/actions/time'
 
 interface User {
   id: string
@@ -29,6 +30,8 @@ interface CardProps {
   users?: User[]
   boardTags?: Tag[]
   onClick: () => void
+  /** Disparado quando o timer é iniciado a partir do card fechado. */
+  onTimerStarted?: (cardId: string) => void
 }
 
 function formatTempo(min?: number | null): string {
@@ -37,9 +40,20 @@ function formatTempo(min?: number | null): string {
   return `${horas}h`
 }
 
-export default function Card({ card, index, columnId, onDelete, onClick }: CardProps) {
+function formatCardTimer(seconds: number): string {
+  const m = Math.floor(seconds / 60)
+  const s = seconds % 60
+  return `${m.toString().padStart(2, '0')}:${s.toString().padStart(2, '0')}`
+}
+
+export default function Card({ card, index, columnId, onDelete, onClick, onTimerStarted }: CardProps) {
   const [confirmOpen, setConfirmOpen] = useState(false)
   const [isTimerRunning, setIsTimerRunning] = useState(false)
+  const [elapsedSeconds, setElapsedSeconds] = useState(0)
+  const intervalRef = useRef<ReturnType<typeof setInterval> | null>(null)
+  const startedAtRef = useRef<Date | null>(null)
+  const baseSecondsRef = useRef(0)
+  const activeEntryIdRef = useRef<string | null>(null)
 
   const hasDescription = !!card.description?.trim()
   const hasAttachments = card.attachments && card.attachments.length > 0
@@ -50,9 +64,70 @@ export default function Card({ card, index, columnId, onDelete, onClick }: CardP
   const isOverrun = orcadoMin != null && realizadoMin != null && realizadoMin > orcadoMin
   const hasTempoData = orcadoMin != null || realizadoMin != null
 
-  const handleTimerClick = (e: React.MouseEvent) => {
+  // Carrega o estado real do timer (mesma fonte de verdade do CardTimer no modal).
+  useEffect(() => {
+    let cancelled = false
+    Promise.all([getCardTimeAction(card.id), getActiveTimerAction(card.id)])
+      .then(([timeResult, activeResult]) => {
+        if (cancelled) return
+        const total = ('seconds' in timeResult ? timeResult.seconds : 0) ?? 0
+        const active = 'entry' in activeResult ? activeResult.entry : null
+        if (active?.isRunning) {
+          const sinceStart = Math.floor((Date.now() - new Date(active.startedAt).getTime()) / 1000)
+          baseSecondsRef.current = total - (active.duration ?? 0)
+          startedAtRef.current = new Date(active.startedAt)
+          activeEntryIdRef.current = active.id
+          setElapsedSeconds(baseSecondsRef.current + sinceStart)
+          setIsTimerRunning(true)
+        } else {
+          baseSecondsRef.current = total
+          activeEntryIdRef.current = null
+          setElapsedSeconds(total)
+          setIsTimerRunning(false)
+        }
+      })
+      .catch(() => {})
+    return () => { cancelled = true }
+  }, [card.id])
+
+  useEffect(() => {
+    if (isTimerRunning) {
+      intervalRef.current = setInterval(() => {
+        const sinceStart = startedAtRef.current
+          ? Math.floor((Date.now() - startedAtRef.current.getTime()) / 1000)
+          : 0
+        setElapsedSeconds(baseSecondsRef.current + sinceStart)
+      }, 1000)
+    } else {
+      if (intervalRef.current) clearInterval(intervalRef.current)
+    }
+    return () => { if (intervalRef.current) clearInterval(intervalRef.current) }
+  }, [isTimerRunning])
+
+  const handleTimerClick = async (e: React.MouseEvent) => {
     e.stopPropagation()
-    setIsTimerRunning(!isTimerRunning)
+    if (isTimerRunning) {
+      const entryId = activeEntryIdRef.current
+      if (!entryId) return
+      setIsTimerRunning(false)
+      if (intervalRef.current) clearInterval(intervalRef.current)
+      await pauseTimerAction(entryId)
+      activeEntryIdRef.current = null
+      const res = await getCardTimeAction(card.id)
+      if ('seconds' in res && res.seconds != null) {
+        baseSecondsRef.current = res.seconds
+        setElapsedSeconds(res.seconds)
+      }
+    } else {
+      const result = await startTimerAction(card.id)
+      if ('entry' in result && result.entry) {
+        activeEntryIdRef.current = (result.entry as { id: string }).id
+        baseSecondsRef.current = elapsedSeconds
+        startedAtRef.current = new Date()
+        setIsTimerRunning(true)
+        onTimerStarted?.(card.id)
+      }
+    }
   }
 
   return (
@@ -63,7 +138,7 @@ export default function Card({ card, index, columnId, onDelete, onClick }: CardP
             ref={provided.innerRef}
             {...provided.draggableProps}
             {...provided.dragHandleProps}
-            className={`group bg-white rounded-xl shadow-sm border border-gray-200/75 overflow-hidden cursor-pointer transition-all duration-200 flex flex-col
+            className={`group bg-white rounded-xl shadow-sm border border-gray-200/75 overflow-hidden cursor-pointer transition-all duration-200 flex flex-col drag-handle
               ${isOverrun ? 'border-l-red-500' : ''}
               ${snapshot.isDragging ? 'shadow-2xl rotate-2 ring-2 ring-blue-400 scale-105 z-50' : 'hover:shadow-md hover:border-blue-300 hover:-translate-y-0.5 active:scale-[0.98]'}`}
             style={{
@@ -174,7 +249,7 @@ export default function Card({ card, index, columnId, onDelete, onClick }: CardP
                         <svg className="w-3.5 h-3.5 ml-0.5" fill="currentColor" viewBox="0 0 20 20"><path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM9.555 7.168A1 1 0 008 8v4a1 1 0 001.555.832l3-2a1 1 0 000-1.664l-3-2z" clipRule="evenodd" /></svg>
                       </div>
                     )}
-                    <span className={`text-xs font-mono font-bold tracking-tight mt-px ${isTimerRunning ? 'text-green-700' : 'text-gray-600'}`}>01:23</span>
+                    <span className={`text-xs font-mono font-bold tracking-tight mt-px ${isTimerRunning ? 'text-green-700' : 'text-gray-600'}`}>{formatCardTimer(elapsedSeconds)}</span>
                   </div>
                 </div>
 

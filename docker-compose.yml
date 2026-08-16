@@ -262,6 +262,44 @@ services:
     profiles:
       - migration
 
+  migrate-sprint-service:
+    image: ghcr.io/${GHCR_OWNER}/sprint-service:${IMAGE_TAG}
+    command: prisma migrate deploy
+    read_only: true
+    tmpfs:
+      - /tmp
+    security_opt:
+      - no-new-privileges:true
+    env_file:
+      - .env
+    networks:
+      - internal
+    depends_on:
+      postgres:
+        condition: service_healthy
+    restart: "no"
+    profiles:
+      - migration
+
+  migrate-file-service:
+    image: ghcr.io/${GHCR_OWNER}/file-service:${IMAGE_TAG}
+    command: prisma migrate deploy
+    read_only: true
+    tmpfs:
+      - /tmp
+    security_opt:
+      - no-new-privileges:true
+    env_file:
+      - .env
+    networks:
+      - internal
+    depends_on:
+      postgres:
+        condition: service_healthy
+    restart: "no"
+    profiles:
+      - migration
+
   # ── PostgreSQL ─────────────────────────────────────────────────────────────
   postgres:
     image: postgres:17-alpine

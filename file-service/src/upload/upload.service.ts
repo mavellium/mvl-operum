@@ -1,5 +1,6 @@
 import {
   Injectable,
+  Logger,
   NotFoundException,
   BadRequestException,
   InternalServerErrorException,
@@ -49,6 +50,7 @@ function validateFileName(name: string): void {
 
 @Injectable()
 export class UploadService {
+  private readonly logger = new Logger(UploadService.name)
   private readonly prisma = prisma
 
   constructor(private readonly minio: MinioService) {}
@@ -66,7 +68,11 @@ export class UploadService {
     let fileUrl: string
     try {
       fileUrl = await this.minio.upload(key, file.buffer, file.mimetype)
-    } catch {
+    } catch (error) {
+      this.logger.error(
+        `upload: falha no armazenamento — key=${key} cardId=${cardId} mimetype=${file.mimetype} originalname=${file.originalname}`,
+        error instanceof Error ? error.stack : String(error),
+      )
       throw new InternalServerErrorException('Falha no armazenamento')
     }
 
@@ -80,9 +86,13 @@ export class UploadService {
           fileSize: file.size,
         },
       })
-    } catch {
+    } catch (error) {
       // Roll back orphaned object on DB failure
       await this.minio.delete(key).catch(() => undefined)
+      this.logger.error(
+        `upload: falha ao registrar anexo — key=${key} cardId=${cardId}`,
+        error instanceof Error ? error.stack : String(error),
+      )
       throw new InternalServerErrorException('Falha ao registrar o anexo')
     }
   }
@@ -99,7 +109,8 @@ export class UploadService {
         where: { cardId: { in: cardIds }, deletedAt: null },
         orderBy: { createdAt: 'asc' },
       })
-    } catch {
+    } catch (error) {
+      this.logger.error(`listByCards: erro ao buscar anexos — cardIds=${cardIds.join(',')}`, error instanceof Error ? error.stack : String(error))
       throw new InternalServerErrorException('Erro ao buscar anexos')
     }
   }
@@ -111,7 +122,8 @@ export class UploadService {
       attachment = await this.prisma.attachment.findUnique({
         where: { id: attachmentId, deletedAt: null },
       })
-    } catch {
+    } catch (error) {
+      this.logger.error(`setCover: erro ao buscar anexo — attachmentId=${attachmentId}`, error instanceof Error ? error.stack : String(error))
       throw new InternalServerErrorException('Erro ao buscar o anexo')
     }
     if (!attachment) throw new NotFoundException('Anexo não encontrado')
@@ -124,7 +136,8 @@ export class UploadService {
         where: { id: attachmentId },
         data: { isCover: true },
       })
-    } catch {
+    } catch (error) {
+      this.logger.error(`setCover: erro ao definir capa — attachmentId=${attachmentId} cardId=${cardId}`, error instanceof Error ? error.stack : String(error))
       throw new InternalServerErrorException('Erro ao definir capa')
     }
   }
@@ -139,7 +152,8 @@ export class UploadService {
       attachment = await this.prisma.attachment.findUnique({
         where: { id: attachmentId, deletedAt: null },
       })
-    } catch {
+    } catch (error) {
+      this.logger.error(`rename: erro ao buscar anexo — attachmentId=${attachmentId}`, error instanceof Error ? error.stack : String(error))
       throw new InternalServerErrorException('Erro ao buscar o anexo')
     }
     if (!attachment) throw new NotFoundException('Anexo não encontrado')
@@ -148,7 +162,8 @@ export class UploadService {
         where: { id: attachmentId },
         data: { fileName, updatedAt: new Date() },
       })
-    } catch {
+    } catch (error) {
+      this.logger.error(`rename: erro ao renomear anexo — attachmentId=${attachmentId}`, error instanceof Error ? error.stack : String(error))
       throw new InternalServerErrorException('Erro ao renomear o anexo')
     }
   }
@@ -160,7 +175,8 @@ export class UploadService {
       attachment = await this.prisma.attachment.findUnique({
         where: { id: attachmentId, deletedAt: null },
       })
-    } catch {
+    } catch (error) {
+      this.logger.error(`delete: erro ao buscar anexo — attachmentId=${attachmentId}`, error instanceof Error ? error.stack : String(error))
       throw new InternalServerErrorException('Erro ao buscar o anexo')
     }
     if (!attachment) throw new NotFoundException('Anexo não encontrado')
@@ -173,7 +189,8 @@ export class UploadService {
         where: { id: attachmentId },
         data: { deletedAt: new Date() },
       })
-    } catch {
+    } catch (error) {
+      this.logger.error(`delete: erro ao excluir anexo — attachmentId=${attachmentId}`, error instanceof Error ? error.stack : String(error))
       throw new InternalServerErrorException('Erro ao excluir o anexo')
     }
   }
@@ -185,7 +202,8 @@ export class UploadService {
       attachment = await this.prisma.attachment.findUnique({
         where: { id: attachmentId, deletedAt: null },
       })
-    } catch {
+    } catch (error) {
+      this.logger.error(`getPresignedUrl: erro ao buscar anexo — attachmentId=${attachmentId}`, error instanceof Error ? error.stack : String(error))
       throw new InternalServerErrorException('Erro ao buscar o anexo')
     }
     if (!attachment) throw new NotFoundException('Anexo não encontrado')
@@ -209,7 +227,8 @@ export class UploadService {
     try {
       const url = await this.minio.upload(key, file.buffer, file.mimetype)
       return { url }
-    } catch {
+    } catch (error) {
+      this.logger.error(`uploadAvatar: falha no armazenamento — key=${key} userId=${userId}`, error instanceof Error ? error.stack : String(error))
       throw new InternalServerErrorException('Falha no armazenamento')
     }
   }
@@ -225,7 +244,8 @@ export class UploadService {
     try {
       const url = await this.minio.upload(key, file.buffer, file.mimetype)
       return { url }
-    } catch {
+    } catch (error) {
+      this.logger.error(`uploadLogo: falha no armazenamento — key=${key} entityId=${entityId} type=${type}`, error instanceof Error ? error.stack : String(error))
       throw new InternalServerErrorException('Falha no armazenamento')
     }
   }

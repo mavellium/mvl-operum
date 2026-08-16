@@ -27,17 +27,20 @@ interface Responsible {
 
 export default function MultiUserSelector({ cardId, users, onResponsiblesChange, pending = false }: MultiUserSelectorProps) {
   const [responsibles, setResponsibles] = useState<Responsible[]>([])
-  const [loading, setLoading] = useState(pending)
+  const [loading, setLoading] = useState(!pending)
 
   useEffect(() => {
+    let cancelled = false
     if (pending) return
     getResponsiblesAction(cardId).then(result => {
+      if (cancelled) return
       if ('responsibles' in result && result.responsibles) {
         const valid = result.responsibles.filter((r: Responsible) => r.user != null)
         setResponsibles(valid)
       }
       setLoading(false)
     })
+    return () => { cancelled = true }
   }, [cardId, pending])
 
   async function handleToggle(userId: string) {

@@ -108,6 +108,67 @@ export declare class CardController {
         priority: string;
         tagsImport: string;
     })[]>;
+    search(q?: string, sprintId?: string, projectId?: string, responsibleUserId?: string): Promise<({
+        sprint: {
+            name: string;
+            id: string;
+        };
+        sprintColumn: {
+            id: string;
+            title: string;
+        };
+        tags: ({
+            tag: {
+                name: string;
+                id: string;
+                tenantId: string;
+                userId: string;
+                color: string;
+            };
+        } & {
+            cardId: string;
+            tagId: string;
+        })[];
+        attachments: {
+            id: string;
+            deletedAt: Date | null;
+            cardId: string;
+            fileName: string;
+            fileType: string;
+            filePath: string;
+            fileSize: number;
+            isCover: boolean;
+            uploadedAt: Date;
+        }[];
+        responsibles: ({
+            user: {
+                name: string;
+                id: string;
+                tenantId: string;
+                email: string;
+            };
+        } & {
+            userId: string;
+            cardId: string;
+        })[];
+    } & {
+        id: string;
+        deletedAt: Date | null;
+        createdAt: Date;
+        updatedAt: Date;
+        description: string;
+        startDate: Date | null;
+        endDate: Date | null;
+        projectId: string | null;
+        sprintId: string | null;
+        color: string;
+        title: string;
+        position: number;
+        sprintColumnId: string | null;
+        sprintPosition: number | null;
+        priority: string;
+        tagsImport: string;
+    })[]>;
     findOne(id: string): Promise<{
         comments: ({
             user: {

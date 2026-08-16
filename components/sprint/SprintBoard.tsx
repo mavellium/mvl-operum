@@ -279,7 +279,20 @@ export default function SprintBoard({ sprint, columns: initialColumns, backlogCa
     const dstColMeta = columns.find(c => c.id === destination.droppableId)
     if (!srcColMeta || !dstColMeta) return
 
+    const applyMove = (cols: SprintColumnData[]) => {
+      const newColumns = cols.map(col => ({ ...col, cards: [...col.cards] }))
+      const srcCol = newColumns.find(c => c.id === source.droppableId)
+      const dstCol = newColumns.find(c => c.id === destination.droppableId)
+      if (!srcCol || !dstCol) return newColumns
+      const [movedCard] = srcCol.cards.splice(source.index, 1)
+      dstCol.cards.splice(destination.index, 0, movedCard)
+      return newColumns
+    }
+
     if (dstColMeta.position < srcColMeta.position) {
+      // Movimento retroativo: aplica otimista AGORA (para o card não "voltar"
+      // à posição original ao fim da animação) e abre o diálogo de motivo.
+      setColumns(cols => applyMove(cols))
       setPendingMove({
         cardId: draggableId,
         srcColumnId: source.droppableId,
@@ -291,29 +304,65 @@ export default function SprintBoard({ sprint, columns: initialColumns, backlogCa
       return
     }
 
-    const newColumns = columns.map(col => ({ ...col, cards: [...col.cards] }))
-    const srcCol = newColumns.find(c => c.id === source.droppableId)
-    const dstCol = newColumns.find(c => c.id === destination.droppableId)
-    if (!srcCol || !dstCol) return
-
-    const [movedCard] = srcCol.cards.splice(source.index, 1)
-    dstCol.cards.splice(destination.index, 0, movedCard)
-    setColumns(newColumns)
-
+    setColumns(cols => applyMove(cols))
     await moveCardInSprintAction(draggableId, destination.droppableId, destination.index)
   }
 
   async function confirmPendingMove() {
     if (!pendingMove || !pendingMove.reason.trim()) return
-    const newColumns = columns.map(col => ({ ...col, cards: [...col.cards] }))
-    const srcCol = newColumns.find(c => c.id === pendingMove.srcColumnId)
-    const dstCol = newColumns.find(c => c.id === pendingMove.dstColumnId)
-    if (!srcCol || !dstCol) { setPendingMove(null); return }
-    const [movedCard] = srcCol.cards.splice(pendingMove.srcColumnIndex, 1)
-    dstCol.cards.splice(pendingMove.dstColumnIndex, 0, movedCard)
-    setColumns(newColumns)
     await moveCardInSprintAction(pendingMove.cardId, pendingMove.dstColumnId, pendingMove.dstColumnIndex, pendingMove.reason)
     setPendingMove(null)
+  }
+
+  function cancelPendingMove() {
+    if (!pendingMove) return
+    setColumns(cols => {
+      const newColumns = cols.map(col => ({ ...col, cards: [...col.cards] }))
+      const srcCol = newColumns.find(c => c.id === pendingMove.srcColumnId)
+      const dstCol = newColumns.find(c => c.id === pendingMove.dstColumnId)
+      if (!srcCol || !dstCol) return newColumns
+      const [moved] = dstCol.cards.splice(pendingMove.dstColumnIndex, 1)
+      if (moved) srcCol.cards.splice(Math.min(pendingMove.srcColumnIndex, srcCol.cards.length), 0, moved)
+      return newColumns
+    })
+    setPendingMove(null)
+  }
+
+  // Correção 6: iniciar tempo move o card para "Em andamento" automaticamente.
+  async function handleCardTimerStarted(cardId: string) {
+    const target = columns.find(col => col.title.trim().toLowerCase() === 'em andamento')
+    if (!target) return
+
+    const inColumn = columns.find(col => col.cards.some(c => c.id === cardId))
+
+    if (inColumn) {
+      if (inColumn.id === target.id) return
+      // Só auto-move para frente — voltar de "Concluído" para "Em andamento"
+      // é retroativo e deve passar pelo diálogo de motivo.
+      if (inColumn.position >= target.position) return
+      const srcIndex = inColumn.cards.findIndex(c => c.id === cardId)
+      const newPosition = target.cards.length
+      setColumns(cols => {
+        const newColumns = cols.map(col => ({ ...col, cards: [...col.cards] }))
+        const src = newColumns.find(c => c.id === inColumn.id)
+        const dst = newColumns.find(c => c.id === target.id)
+        if (!src || !dst) return newColumns
+        const [moved] = src.cards.splice(srcIndex, 1)
+        dst.cards.push(moved)
+        return newColumns
+      })
+      await moveCardInSprintAction(cardId, target.id, newPosition)
+      return
+    }
+
+    const inBacklog = backlogCards.some(c => c.id === cardId)
+    if (!inBacklog) return
+    const card = backlogCards.find(c => c.id === cardId)
+    if (!card) return
+    const newPosition = target.cards.length
+    setBacklogCards(prev => prev.filter(c => c.id !== cardId))
+    setColumns(cols => cols.map(col => col.id === target.id ? { ...col, cards: [...col.cards, card] } : col))
+    await moveCardToSprintAction(cardId, sprint.id, target.id, newPosition)
   }
 
   async function handleAddColumn() {
@@ -428,7 +477,7 @@ export default function SprintBoard({ sprint, columns: initialColumns, backlogCa
 
   return (
     <div 
-      className={`h-[calc(100vh-64px)] w-full flex flex-col overflow-hidden bg-cover bg-center bg-fixed transition-all duration-700 selection:bg-blue-500/30 ${!isImageBg ? boardBg : ''}`}
+      className={`h-full w-full flex flex-col overflow-hidden bg-cover bg-center bg-fixed transition-all duration-700 selection:bg-blue-500/30 ${!isImageBg ? boardBg : ''}`}
       style={isImageBg ? { backgroundImage: boardBg } : {}}
     >
       <SprintHeader 
@@ -490,6 +539,7 @@ export default function SprintBoard({ sprint, columns: initialColumns, backlogCa
                             users={users}
                             boardTags={tags}
                             onClick={() => setOpenCardId(card.id)}
+                            onTimerStarted={handleCardTimerStarted}
                           />
                         </div>
                       ))}
@@ -532,6 +582,7 @@ export default function SprintBoard({ sprint, columns: initialColumns, backlogCa
                           users={users}
                           boardTags={tags}
                           onCardClick={(cardId) => setOpenCardId(cardId)}
+                          onTimerStarted={handleCardTimerStarted}
                         />
                       </div>
                     ))}
@@ -615,6 +666,7 @@ export default function SprintBoard({ sprint, columns: initialColumns, backlogCa
             initialCard={openCardType}
             users={users}
             boardTags={tags}
+            onTimerStarted={handleCardTimerStarted}
             
             // Repassando os anexos (o componente CardModal já mapeia eles)
             attachments={openCardType.attachments}
@@ -742,7 +794,7 @@ export default function SprintBoard({ sprint, columns: initialColumns, backlogCa
               onChange={e => setPendingMove(prev => prev ? { ...prev, reason: e.target.value } : null)}
               onKeyDown={e => {
                 if (e.key === 'Enter' && !e.shiftKey && pendingMove.reason.trim()) { e.preventDefault(); confirmPendingMove() }
-                if (e.key === 'Escape') setPendingMove(null)
+                if (e.key === 'Escape') cancelPendingMove()
               }}
               placeholder="Ex: Bug encontrado em produção, cliente solicitou revisão..."
               rows={3}
@@ -750,7 +802,7 @@ export default function SprintBoard({ sprint, columns: initialColumns, backlogCa
             />
             <div className="flex gap-2 justify-end">
               <button
-                onClick={() => setPendingMove(null)}
+                onClick={cancelPendingMove}
                 className="px-4 py-2 text-sm text-gray-600 bg-gray-100 rounded-lg hover:bg-gray-200 transition-colors"
               >
                 Cancelar

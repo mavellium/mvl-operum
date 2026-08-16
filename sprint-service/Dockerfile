@@ -5,6 +5,15 @@ ENV PNPM_HOME="/pnpm"
 ENV PATH="$PNPM_HOME:$PNPM_HOME/bin:$PATH"
 RUN corepack enable
 
+# ── Stage: Download Prisma schema-engine ──────────────────────────────────────
+FROM node:22-alpine AS engine-dl
+RUN apk upgrade --no-cache libcrypto3 libssl3
+RUN npm install -g prisma@7.7.0 \
+ && find /usr/local/lib/node_modules -name "schema-engine-linux-musl-openssl-3.0.x" -type f \
+    | head -1 \
+    | xargs cp -t /tmp/ \
+ && test -f /tmp/schema-engine-linux-musl-openssl-3.0.x
+
 FROM base AS deps
 WORKDIR /app
 COPY package.json pnpm-lock.yaml pnpm-workspace.yaml pnpm.yaml ./
@@ -34,6 +43,24 @@ RUN pnpm install --frozen-lockfile --prod --ignore-scripts --shamefully-hoist \
 COPY --from=builder --chown=nestjs:nodejs /app/dist ./dist
 COPY --from=builder --chown=nestjs:nodejs /app/lib/generated ./lib/generated
 COPY --from=builder --chown=nestjs:nodejs /app/prisma ./prisma
+COPY --from=builder --chown=nestjs:nodejs /app/prisma.config.ts ./prisma.config.ts
+
+# Prisma CLI for the migrate service — mirrors the monolith Dockerfile pattern.
+# Installed locally into /app/prisma-cli with plain npm (flat node_modules) and
+# symlinked into node_modules so Node resolves `prisma/config` and `dotenv/config`.
+RUN mkdir -p /app/prisma-cli \
+ && npm install prisma@7.7.0 dotenv --no-save --prefix /app/prisma-cli \
+ && chown -R nestjs:nodejs /app/prisma-cli \
+ && chmod -R 750 /app/prisma-cli \
+ && ln -s /app/prisma-cli/node_modules/prisma ./node_modules/prisma \
+ && ln -s /app/prisma-cli/node_modules/dotenv ./node_modules/dotenv
+
+COPY --from=engine-dl /tmp/schema-engine-linux-musl-openssl-3.0.x /usr/local/bin/prisma-schema-engine
+RUN chmod 750 /usr/local/bin/prisma-schema-engine \
+ && chown nestjs:nodejs /usr/local/bin/prisma-schema-engine
+
+ENV PRISMA_SCHEMA_ENGINE_BINARY=/usr/local/bin/prisma-schema-engine
+ENV PATH="/app/prisma-cli/node_modules/.bin:/app/node_modules/.bin:$PATH"
 
 # npm's own vendored deps (bundled with node:22-alpine) carry known CVEs.
 # This image runs via pnpm/corepack only — npm/npx are never invoked.
