@@ -25,6 +25,7 @@ import {
 import { createCommentAction, getCommentsAction, updateCommentAction, deleteCommentAction } from '@/app/actions/comentarios'
 import { deleteAttachmentAction, setCoverAction, renameAttachmentAction, getAttachmentUrlAction } from '@/app/actions/attachments'
 import { addResponsibleAction } from '@/app/actions/cardResponsible'
+import { fetchWithSession } from '@/lib/clientFetch'
 
 interface SprintCard {
   id: string
@@ -167,7 +168,7 @@ export default function SprintBoard({ sprint, columns: initialColumns, backlogCa
     form.append('cardId', cardId)
     form.append('file', file)
     try {
-      const res = await fetch('/api/uploads', { method: 'POST', body: form })
+      const res = await fetchWithSession('/api/uploads', { method: 'POST', body: form })
       if (res.ok) {
         const att = await res.json()
         toast('Anexo enviado com sucesso!', 'success')
@@ -677,7 +678,7 @@ export default function SprintBoard({ sprint, columns: initialColumns, backlogCa
               form.append('cardId', openCardId)
               form.append('file', file)
               try {
-                const res = await fetch('/api/uploads', { method: 'POST', body: form })
+                const res = await fetchWithSession('/api/uploads', { method: 'POST', body: form })
                 if (res.ok) {
                   const att = await res.json()
                   patchCardState(openCardId, c => ({ ...c, attachments: [...(c.attachments ?? []), att] }))

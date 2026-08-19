@@ -98,25 +98,26 @@ const WbsNodeCard = React.memo(function WbsNodeCard({
       {isParent && (
         <button
           style={{
-            position: 'absolute', top: 3, right: 4, minWidth: 22, height: 20,
+            position: 'absolute', bottom: 3, left: '50%', transform: 'translateX(-50%)',
+            width: 22, height: 20,
             display: 'flex', alignItems: 'center', justifyContent: 'center',
-            fontSize: 12, lineHeight: 1, fontWeight: 600, zIndex: 2,
+            fontSize: 14, lineHeight: 1, fontWeight: 600, zIndex: 2,
             color: node.collapsed ? '#ffffff' : '#475569',
             background: node.collapsed ? '#3b82f6' : '#ffffff',
             border: `1px solid ${node.collapsed ? '#3b82f6' : '#cbd5e1'}`,
-            borderRadius: 10, cursor: 'pointer', padding: '0 6px',
+            borderRadius: 10, cursor: 'pointer', padding: 0,
             boxShadow: '0 1px 2px rgba(0,0,0,0.1)',
           }}
           onClick={e => { e.stopPropagation(); dispatch({ type: 'SET_COLLAPSED', payload: { nodeId: node.id, collapsed: !node.collapsed } }) }}
           title={node.collapsed ? 'Expandir' : 'Recolher'}
           aria-label={node.collapsed ? 'Expandir' : 'Recolher'}
         >
-          {node.collapsed ? `+${node.childrenIds.length}` : '−'}
+          +
         </button>
       )}
 
       {/* Code + Title */}
-      <div style={{ position: 'absolute', top: 4, left: 8, right: isParent ? 32 : 8, bottom: hasChips ? 18 : 4, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+      <div style={{ position: 'absolute', top: 4, left: 8, right: 8, bottom: isParent ? 26 : (hasChips ? 18 : 4), display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
         {isEditing ? (
           <div style={{ display: 'flex', alignItems: 'center', gap: 4, width: '100%' }}>
             <span style={{ whiteSpace: 'nowrap', fontWeight: 500, color: node.style.textColor, flexShrink: 0 }}>
@@ -166,7 +167,7 @@ const WbsNodeCard = React.memo(function WbsNodeCard({
 
       {/* Chips */}
       {hasChips && (
-        <div style={{ position: 'absolute', bottom: 3, left: 6, right: 6, display: 'flex', gap: 6, alignItems: 'center', fontSize: 9, opacity: 0.75 }}>
+        <div style={{ position: 'absolute', bottom: 3, left: 6, right: isParent ? 'calc(50% + 14px)' : 6, display: 'flex', gap: 6, alignItems: 'center', fontSize: 9, opacity: 0.75 }}>
           {effectiveCost > 0 && (
             <span title={rollup?.isRolledUp ? 'Valor calculado (rollup)' : undefined}>
               💰 {fmtCost(effectiveCost)}{rollup?.isRolledUp ? ' Σ' : ''}

@@ -8,6 +8,7 @@ import GlobalSearch from '@/components/search/GlobalSearch'
 import TenantSwitcher from '@/components/layout/TenantSwitcher'
 import Tooltip from '@/components/ui/Tooltip'
 import { logoutAction } from '@/app/actions/auth'
+import { fetchWithSession } from '@/lib/clientFetch'
 
 interface SidebarLayoutProps {
   title: string
@@ -55,7 +56,7 @@ export default function SidebarLayout({
   }, [])
 
   useEffect(() => {
-    fetch('/api/me')
+    fetchWithSession('/api/me')
       .then(r => r.json())
       .then(d => { if (d?.user) setUser(d.user) })
       .catch(() => { })
@@ -64,7 +65,7 @@ export default function SidebarLayout({
   useEffect(() => {
     if (!user) return
     function fetchCount() {
-      fetch('/api/notificacoes/count')
+      fetchWithSession('/api/notificacoes/count')
         .then(r => r.json())
         .then(d => { if (typeof d?.count === 'number') setUnreadCount(d.count) })
         .catch(() => { })

@@ -7,6 +7,7 @@ import { Save, History, Download } from 'lucide-react'
 import Modal from '@/components/ui/Modal'
 import Drawer from '@/components/ui/Drawer'
 import { useToast } from '@/components/ui/Toast'
+import { fetchWithSession } from '@/lib/clientFetch'
 import MacroFaseTable, { type MacroFase } from './MacroFaseTable'
 import ProjectCharterDocument from './ProjectCharterDocument'
 
@@ -150,7 +151,7 @@ export default function ProjectCharter() {
 
   useEffect(() => {
     if (!projetoId) return
-    fetch(`/api/projects/${projetoId}/charter`)
+    fetchWithSession(`/api/projects/${projetoId}/charter`)
       .then(r => r.ok ? r.json() : r.json().then((e: { error?: string }) => Promise.reject(e.error)))
       .then((d: CharterData) => {
         setData(d)
@@ -182,7 +183,7 @@ export default function ProjectCharter() {
     const { principaisEnvolvidos: __, ...savedServer } = savedFields.current
     if (JSON.stringify(serverFields) === JSON.stringify(savedServer)) return
 
-    fetch(`/api/projects/${projetoId}/charter`, {
+    fetchWithSession(`/api/projects/${projetoId}/charter`, {
       method: 'PATCH',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(serverFields),
@@ -199,7 +200,7 @@ export default function ProjectCharter() {
       const url = search
         ? `/api/projects/${projetoId}/charter/versions?search=${encodeURIComponent(search)}`
         : `/api/projects/${projetoId}/charter/versions`
-      const r = await fetch(url)
+      const r = await fetchWithSession(url)
       if (!r.ok) return
       const list: DocumentVersion[] = await r.json()
       setVersions(list)
@@ -230,7 +231,7 @@ export default function ProjectCharter() {
 
   async function handleAddFase() {
     if (!projetoId) return
-    const r = await fetch(`/api/projects/${projetoId}/macro-fases`, {
+    const r = await fetchWithSession(`/api/projects/${projetoId}/macro-fases`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ fase: '', dataLimite: null, custo: null }),
@@ -247,7 +248,7 @@ export default function ProjectCharter() {
     clearTimeout((handleFaseChange as { _t?: ReturnType<typeof setTimeout> })._t)
     ;(handleFaseChange as { _t?: ReturnType<typeof setTimeout> })._t = setTimeout(async () => {
       setFaseSaving(s => ({ ...s, [id]: true }))
-      await fetch(`/api/projects/${projetoId}/macro-fases/${id}`, {
+await fetchWithSession(`/api/projects/${projetoId}/macro-fases/${id}`, {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ [field]: value }),
@@ -259,7 +260,7 @@ export default function ProjectCharter() {
   async function handleRemoveFase(id: string) {
     if (!projetoId) return
     setFases(prev => prev.filter(f => f.id !== id))
-    await fetch(`/api/projects/${projetoId}/macro-fases/${id}`, { method: 'DELETE' }).catch(() => {})
+    await fetchWithSession(`/api/projects/${projetoId}/macro-fases/${id}`, { method: 'DELETE' }).catch(() => {})
   }
 
   // ── Print ──────────────────────────────────────────────────────────────────
@@ -279,7 +280,7 @@ export default function ProjectCharter() {
     if (!projetoId || !commitTitle.trim()) return
     setSavingVersion(true)
     try {
-      const r = await fetch(`/api/projects/${projetoId}/charter/versions`, {
+      const r = await fetchWithSession(`/api/projects/${projetoId}/charter/versions`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -311,7 +312,7 @@ export default function ProjectCharter() {
     if (!projetoId) return
     setActingVersionId(versionId)
     try {
-      const r = await fetch(
+      const r = await fetchWithSession(
         `/api/projects/${projetoId}/documento/versions/${versionId}`,
         {
           method: 'PATCH',

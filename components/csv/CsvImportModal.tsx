@@ -3,6 +3,7 @@
 import { useState, useRef } from 'react'
 import Modal from '@/components/ui/Modal'
 import Button from '@/components/ui/Button'
+import { fetchWithSession } from '@/lib/clientFetch'
 
 interface ImportResult {
   imported: number
@@ -35,7 +36,7 @@ export function CsvImportModal({ sprintId, isOpen, onClose, onImported }: CsvImp
       const form = new FormData()
       form.set('sprintId', sprintId)
       form.set('file', file)
-      const res = await fetch('/api/csv', { method: 'POST', body: form })
+      const res = await fetchWithSession('/api/csv', { method: 'POST', body: form })
       const data = await res.json()
       if (!res.ok) {
         setError(data.error ?? 'Erro ao importar')

@@ -3,6 +3,7 @@
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
 import { useEffect, useState } from 'react'
+import { fetchWithSession } from '@/lib/clientFetch'
 
 // ── Icons ──────────────────────────────────────────────────
 
@@ -63,7 +64,7 @@ export default function BottomNav() {
   const [projectManagerIn, setProjectManagerIn] = useState<string[]>([])
 
   useEffect(() => {
-    fetch('/api/me')
+    fetchWithSession('/api/me')
       .then(r => r.json())
       .then(d => {
         if (d?.user?.role) setRole(d.user.role)

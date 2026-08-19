@@ -11,6 +11,7 @@ import StakeholderDocument, {
 import Modal from '@/components/ui/Modal'
 import Drawer from '@/components/ui/Drawer'
 import { useToast } from '@/components/ui/Toast'
+import { fetchWithSession } from '@/lib/clientFetch'
 
 type DocumentData = { header: ProjetoHeader; stakeholders: Stakeholder[] }
 
@@ -111,7 +112,7 @@ export default function DocumentoStakeholders() {
 
   useEffect(() => {
     if (!projetoId) return
-    fetch(`/api/projects/${projetoId}/documento`)
+    fetchWithSession(`/api/projects/${projetoId}/documento`)
       .then(r =>
         r.ok ? r.json() : r.json().then((e: { error?: string }) => Promise.reject(e.error)),
       )
@@ -127,7 +128,7 @@ export default function DocumentoStakeholders() {
         const url = search
           ? `/api/projects/${projetoId}/documento/versions?search=${encodeURIComponent(search)}`
           : `/api/projects/${projetoId}/documento/versions`
-        const r = await fetch(url)
+        const r = await fetchWithSession(url)
         if (!r.ok) return
         const list: DocumentVersion[] = await r.json()
         setVersions(list)
@@ -189,7 +190,7 @@ export default function DocumentoStakeholders() {
     if (!projetoId || !commitTitle.trim()) return
     setSavingVersion(true)
     try {
-      const r = await fetch(`/api/projects/${projetoId}/documento/versions`, {
+      const r = await fetchWithSession(`/api/projects/${projetoId}/documento/versions`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -221,7 +222,7 @@ export default function DocumentoStakeholders() {
     if (!projetoId) return
     setActingVersionId(versionId)
     try {
-      const r = await fetch(
+      const r = await fetchWithSession(
         `/api/projects/${projetoId}/documento/versions/${versionId}`,
         {
           method: 'PATCH',

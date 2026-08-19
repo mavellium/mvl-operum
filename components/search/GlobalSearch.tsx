@@ -4,6 +4,7 @@ import { useState, useEffect, useRef, useCallback } from 'react'
 import { createPortal } from 'react-dom'
 import { useRouter } from 'next/navigation'
 import UserAvatar from '@/components/user/UserAvatar' // Adicionado para renderizar a foto do usuário
+import { fetchWithSession } from '@/lib/clientFetch'
 
 // Tipagem atualizada para suportar 'member' e seus dados específicos
 interface SearchResult {
@@ -70,7 +71,7 @@ export default function GlobalSearch({
         ...(contextId && { contextId }) 
       })
 
-      const res = await fetch(`/api/search?${queryParams.toString()}`)
+      const res = await fetchWithSession(`/api/search?${queryParams.toString()}`)
       if (res.ok) {
         const data = await res.json()
         setResults(data.results ?? [])
