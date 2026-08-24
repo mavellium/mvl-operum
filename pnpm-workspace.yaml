@@ -13,6 +13,7 @@ overrides:
   fast-uri: ">=4.1.2"
   js-yaml: ">=4.3.0"
   sharp: ">=0.35.0"
+  deepmerge-ts: ">=8.0.0"
 allowBuilds:
   '@nestjs/core': true
   '@prisma/engines': true
