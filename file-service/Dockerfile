@@ -53,6 +53,7 @@ COPY --from=builder --chown=nestjs:nodejs /app/prisma.config.ts ./prisma.config.
 # Installed locally into /app/prisma-cli with plain npm (flat node_modules) and
 # symlinked into node_modules so Node resolves `prisma/config` and `dotenv/config`.
 RUN mkdir -p /app/prisma-cli \
+ && printf '{"name":"prisma-cli","private":true,"overrides":{"deepmerge-ts":">=8.0.0"}}' > /app/prisma-cli/package.json \
  && npm install prisma@7.7.0 dotenv --no-save --prefix /app/prisma-cli \
  && chown -R nestjs:nodejs /app/prisma-cli \
  && chmod -R 750 /app/prisma-cli \

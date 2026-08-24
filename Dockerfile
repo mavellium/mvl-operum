@@ -89,6 +89,7 @@ COPY --from=builder --chown=nextjs:nodejs /app/prisma.config.ts ./prisma.config.
 # Instala o Prisma isoladamente para evitar o merge destrutivo do `cp` no Alpine.
 # O symlink garante que o Node resolva 'prisma/config' a partir do ./node_modules local.
 RUN mkdir -p /app/prisma-cli \
+ && printf '{"name":"prisma-cli","private":true,"overrides":{"deepmerge-ts":">=8.0.0"}}' > /app/prisma-cli/package.json \
  && npm install prisma@7.7.0 --no-save --prefix /app/prisma-cli \
  && chown -R nextjs:nodejs /app/prisma-cli \
  && chmod -R 750 /app/prisma-cli \
