@@ -3,6 +3,7 @@
 import { verifySession } from '@/lib/dal'
 import { revalidatePath } from 'next/cache'
 import { departmentsApi } from '@/lib/api-client'
+import prisma from '@/lib/prisma'
 
 export async function createDepartmentAction(
   _prevState: unknown,
@@ -73,6 +74,10 @@ export async function updateDepartmentNameAction(id: string, name: string) {
 export async function deleteDepartmentAction(id: string) {
   try {
     await verifySession()
+    const inUse = await prisma.projetoDepartamento.count({ where: { departamentoId: id } })
+    if (inUse > 0) {
+      return { error: `Departamento em uso por ${inUse} projeto(s). Desassocie antes de remover.` }
+    }
     await departmentsApi.delete(id)
     return { success: true }
   } catch (err) {

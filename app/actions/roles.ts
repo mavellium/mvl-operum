@@ -3,6 +3,7 @@
 import { verifySession } from '@/lib/dal'
 import { revalidatePath } from 'next/cache'
 import { rolesApi } from '@/lib/api-client'
+import prisma from '@/lib/prisma'
 
 export async function createRoleAction(
   _prevState: unknown,
@@ -85,6 +86,10 @@ export async function updateRoleNameAction(id: string, name: string) {
 export async function deleteRoleAction(id: string) {
   try {
     await verifySession()
+    const inUse = await prisma.projetoFuncao.count({ where: { funcaoId: id } })
+    if (inUse > 0) {
+      return { error: `Função em uso por ${inUse} projeto(s). Desassocie antes de remover.` }
+    }
     await rolesApi.delete(id)
     return { success: true }
   } catch (err) {

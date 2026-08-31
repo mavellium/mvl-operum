@@ -90,7 +90,7 @@ describe('SprintListPage', () => {
     expect(screen.getByText(/8\/10/)).toBeInTheDocument()
   })
 
-  it('each sprint card links to its Mavellium Operum', () => {
+  it('each sprint card links to its sprint page', () => {
     render(<SprintListPage sprintsWithMetrics={sprintsWithMetrics} />)
     const links = screen.getAllByRole('link').filter(l => l.getAttribute('href')?.startsWith('/sprints/'))
     expect(links.length).toBeGreaterThanOrEqual(2)

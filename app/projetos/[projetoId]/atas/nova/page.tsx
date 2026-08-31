@@ -1,0 +1,38 @@
+import Link from 'next/link'
+import { notFound } from 'next/navigation'
+import { verifySession } from '@/lib/dal'
+import { findById } from '@/services/projectService'
+import prisma from '@/lib/prisma'
+import AtaFormClient from '@/components/atas/AtaFormClient'
+import type { Metadata } from 'next'
+
+export const dynamic = 'force-dynamic'
+
+export const metadata: Metadata = { title: 'Nova Ata' }
+
+export default async function NovaAtaPage({ params }: { params: Promise<{ projetoId: string }> }) {
+  const { projetoId } = await params
+  const { userId, role } = await verifySession()
+
+  const project = await findById(projetoId)
+  if (!project) notFound()
+
+  const isMember =
+    role === 'admin' || (await prisma.userProject.findUnique({
+      where: { userId_projectId: { userId, projectId: projetoId } },
+    }))?.active
+  if (!isMember) notFound()
+
+  return (
+    <div className="min-h-screen bg-gray-50">
+      <main className="max-w-3xl mx-auto px-4 py-8">
+        <Link href={`/projetos/${projetoId}/atas`} className="text-sm text-blue-600 hover:underline">
+          ← Voltar às atas
+        </Link>
+        <h1 className="text-xl font-bold text-gray-900 mt-3 mb-1">Nova Ata de Reunião</h1>
+        <p className="text-sm text-gray-500 mb-6">Projeto: {project.name}</p>
+        <AtaFormClient projetoId={projetoId} mode="create" />
+      </main>
+    </div>
+  )
+}

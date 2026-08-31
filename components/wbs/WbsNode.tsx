@@ -94,25 +94,25 @@ const WbsNodeCard = React.memo(function WbsNodeCard({
         dispatch({ type: 'SET_EDITING', payload: { nodeId: node.id } })
       }}
     >
-      {/* Collapse toggle */}
+      {/* Collapse toggle — pílula na borda inferior, meio para fora; − expandido / + recolhido */}
       {isParent && (
         <button
           style={{
-            position: 'absolute', bottom: 3, left: '50%', transform: 'translateX(-50%)',
-            width: 22, height: 20,
+            position: 'absolute', bottom: -10, left: '50%', transform: 'translate(-50%, 0)',
+            width: 26, height: 20,
             display: 'flex', alignItems: 'center', justifyContent: 'center',
-            fontSize: 14, lineHeight: 1, fontWeight: 600, zIndex: 2,
+            fontSize: 16, lineHeight: 1, fontWeight: 700, zIndex: 3,
             color: node.collapsed ? '#ffffff' : '#475569',
             background: node.collapsed ? '#3b82f6' : '#ffffff',
             border: `1px solid ${node.collapsed ? '#3b82f6' : '#cbd5e1'}`,
             borderRadius: 10, cursor: 'pointer', padding: 0,
-            boxShadow: '0 1px 2px rgba(0,0,0,0.1)',
+            boxShadow: '0 1px 3px rgba(0,0,0,0.18)',
           }}
           onClick={e => { e.stopPropagation(); dispatch({ type: 'SET_COLLAPSED', payload: { nodeId: node.id, collapsed: !node.collapsed } }) }}
           title={node.collapsed ? 'Expandir' : 'Recolher'}
           aria-label={node.collapsed ? 'Expandir' : 'Recolher'}
         >
-          +
+          {node.collapsed ? '+' : '−'}
         </button>
       )}
 

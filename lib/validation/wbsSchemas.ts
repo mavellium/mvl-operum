@@ -26,6 +26,14 @@ export const WbsNodePropertiesSchema = z.object({
   durationDays: z.number().min(0).optional(),
   ownerUserId: z.string().optional(),
   description: z.string().max(2000).optional(),
+  tempoMinutos: z.number().int().min(0).optional(),
+  materiais: z.number().min(0).optional(),
+  dataPrevista: z.string().max(10).optional(),
+  tempoRealMinutos: z.number().int().min(0).optional(),
+  materiaisReal: z.number().min(0).optional(),
+  dataRealizacao: z.string().max(10).optional(),
+  elaboradoPor: z.string().max(200).optional(),
+  percentualConclusao: z.number().int().min(0).max(100).optional(),
 })
 
 // ── Nó completo (usado em saveTree e import) ─────────────────────────────────

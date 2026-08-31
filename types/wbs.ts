@@ -12,13 +12,29 @@ export interface WbsNodeStyle {
 }
 
 export interface WbsNodeProperties {
-  /** INPUT só em folhas; em nós-pai o valor é derivado (rollup). >= 0 */
+  /** Folha: custo DERIVADO de tempo×valorPorMinuto+materiais (§5.4). Rollup soma. >= 0 */
   cost?: number;
   /** INPUT só em folhas; rollup soma os filhos. >= 0 */
   durationDays?: number;
   /** referência a UserProject ativo */
   ownerUserId?: string;
   description?: string;
+  /** Planilha de Custos — folha: tempo previsto (minutos). */
+  tempoMinutos?: number;
+  /** Planilha de Custos — folha: custo previsto de materiais. */
+  materiais?: number;
+  /** Planilha de Custos — folha: data de realização prevista. */
+  dataPrevista?: string;
+  /** Planilha de Custos — folha: tempo real (minutos). */
+  tempoRealMinutos?: number;
+  /** Planilha de Custos — folha: custo real de materiais. */
+  materiaisReal?: number;
+  /** Planilha de Custos — folha: data de realização efetiva. */
+  dataRealizacao?: string;
+  /** Planilha de Custos — folha: nome/identificação de quem elaborou. */
+  elaboradoPor?: string;
+  /** Planilha de Custos — folha: % de conclusão (0-100) para situação. */
+  percentualConclusao?: number;
 }
 
 /** Valores derivados (não persistidos) — calculados por lib/wbsRollup.ts */

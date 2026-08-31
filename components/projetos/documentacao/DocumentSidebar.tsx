@@ -7,6 +7,7 @@ import { GripVertical } from 'lucide-react'
 const DOCUMENTS = [
   { id: 'stakeholder', label: 'Formulário de Partes Interessadas' },
   { id: 'charter', label: 'Termo de Abertura' },
+  { id: 'atas', label: 'Atas de Reunião' },
 ] as const
 
 type DocId = (typeof DOCUMENTS)[number]['id']

@@ -3,7 +3,7 @@
 import { useEffect, useState } from 'react'
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
-import { LayoutDashboard, FolderKanban, Paperclip, BellRing, PanelLeftOpen } from 'lucide-react'
+import { LayoutDashboard, FolderKanban, Paperclip, BellRing, PanelLeftOpen, Users } from 'lucide-react'
 import Tooltip from '@/components/ui/Tooltip'
 import SidebarLayout from '@/components/layout/SidebarLayout'
 
@@ -12,6 +12,7 @@ const NAV_ITEMS = [
   { href: '/projetos', label: 'Projetos', Icon: FolderKanban },
   { href: '/arquivos', label: 'Arquivos', Icon: Paperclip },
   { href: '/notificacoes', label: 'Notificações', Icon: BellRing },
+  { href: '/equipe', label: 'Equipe de Desenvolvimento', Icon: Users },
 ]
 
 const FALLBACK_TITLES: Record<string, string> = {
@@ -23,6 +24,7 @@ const FALLBACK_TITLES: Record<string, string> = {
   perfil: 'Perfil',
   admin: 'Admin',
   'alterar-senha': 'Alterar senha',
+  equipe: 'Equipe de Desenvolvimento',
 }
 
 const STORAGE_KEY = 'wbs-global-sidebar-collapsed'

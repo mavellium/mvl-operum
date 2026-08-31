@@ -72,6 +72,10 @@ model Project {
   ano                Int?
   departamentos      String[]
 
+  /// Planilha de Custos: salário mínimo de referência e jornada diária (federação tempo→custo)
+  valorReferencia Float?
+  horasPorDia     Float?
+
   status      ProjectStatus @default(ACTIVE)
   deletedAt   DateTime?
   createdAt   DateTime      @default(now())
@@ -87,6 +91,10 @@ model Project {
   documentVersions  DocumentVersion[]
   drafts            ProjectDraft[]
   wbsNodes          WbsNode[]
+
+  projetoDepartamentos ProjetoDepartamento[]
+  projetoFuncoes       ProjetoFuncao[]
+  atas                 Ata[]
 
   @@unique([name, tenantId])
 }
@@ -129,6 +137,7 @@ model Department {
 
   users        UserDepartment[]
   userProjects UserProject[]
+  projetoDepartamentos ProjetoDepartamento[]
 
   @@unique([name, tenantId])
 }
@@ -163,6 +172,34 @@ model UserProject {
   @@unique([userId, projectId])
 }
 
+// Associação de um departamento do catálogo global do tenant a um projeto
+model ProjetoDepartamento {
+  id             String     @id @default(cuid())
+  projetoId      String
+  departamentoId String
+  createdAt      DateTime   @default(now())
+
+  project    Project    @relation(fields: [projetoId], references: [id], onDelete: Cascade)
+  department Department @relation(fields: [departamentoId], references: [id], onDelete: Cascade)
+
+  @@unique([projetoId, departamentoId])
+  @@index([departamentoId])
+}
+
+// Associação de uma função (Role globais do tenant) a um projeto
+model ProjetoFuncao {
+  id        String   @id @default(cuid())
+  projetoId String
+  funcaoId  String
+  createdAt DateTime @default(now())
+
+  project Project @relation(fields: [projetoId], references: [id], onDelete: Cascade)
+  role    Role    @relation(fields: [funcaoId], references: [id], onDelete: Cascade)
+
+  @@unique([projetoId, funcaoId])
+  @@index([funcaoId])
+}
+
 // ── RBAC ───────────────────────────────────────────────────
 
 enum RoleScope {
@@ -184,6 +221,7 @@ model Role {
 
   permissions         RolePermission[]
   userProjectRoles    UserProjectRole[]
+  projetoFuncoes      ProjetoFuncao[]
 
   @@unique([nameKey, tenantId, scope])
 }
@@ -598,6 +636,61 @@ model DocumentVersion {
   documentType  DocumentType          @default(STAKEHOLDER)
   createdAt     DateTime              @default(now())
   updatedAt     DateTime              @updatedAt
+}
+
+// ── Atas de Reunião ───────────────────────────────────────
+
+model Ata {
+  id            String   @id @default(cuid())
+  tenantId      String
+  projetoId     String
+  numero        Int
+  nomeProjeto   String
+  local         String?
+  data          DateTime
+  elaboradoPor  String
+  aprovadoPor   String?
+  assuntosTratados String? @db.Text
+  decisoesTomadas  String? @db.Text
+  observacoes      String? @db.Text
+  copiasPara       String[]
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+  deletedAt     DateTime?
+
+  project   Project     @relation(fields: [projetoId], references: [id], onDelete: Cascade)
+  presentes AtaPresente[]
+  acoes     AtaAcao[]
+  anexos    AtaAnexo[]
+
+  @@unique([projetoId, numero])
+  @@index([tenantId])
+  @@index([projetoId])
+}
+
+model AtaPresente {
+  id           String  @id @default(cuid())
+  ataId        String
+  nome         String
+  setorEmpresa String?
+  ata          Ata     @relation(fields: [ataId], references: [id], onDelete: Cascade)
+}
+
+model AtaAcao {
+  id          String   @id @default(cuid())
+  ataId       String
+  acao        String
+  prazo       DateTime?
+  responsavel String?
+  ata         Ata      @relation(fields: [ataId], references: [id], onDelete: Cascade)
+}
+
+model AtaAnexo {
+  id     String  @id @default(cuid())
+  ataId  String
+  nome   String
+  url    String?
+  ata    Ata     @relation(fields: [ataId], references: [id], onDelete: Cascade)
 }
 
 // ── WBS / EAP ─────────────────────────────────────────────

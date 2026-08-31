@@ -2,6 +2,7 @@ import { notFound } from 'next/navigation'
 import { verifySession } from '@/lib/dal'
 import { findById } from '@/services/projectService'
 import { isProjectManager } from '@/services/projectRoleService'
+import { listarDepartamentosAssociados } from '@/services/projetoCadastroService'
 import prisma from '@/lib/prisma'
 import ProjetoDepartamentosClient from '@/components/projetos/ProjetoDepartamentosClient'
 import type { Metadata } from 'next'
@@ -18,17 +19,18 @@ export default async function ProjetoDepartamentosPage({ params }: { params: Pro
     notFound()
   }
 
-  const [project, departments] = await Promise.all([
+  const [project, departments, associados] = await Promise.all([
     findById(projetoId),
     prisma.department.findMany({
       where: { tenantId, deletedAt: null },
       orderBy: { name: 'asc' },
     }),
+    listarDepartamentosAssociados(projetoId),
   ])
 
   if (!project) notFound()
 
-  const departamentosIniciais = departments.map(d => ({
+  const catalogo = departments.map(d => ({
     id: d.id,
     name: d.name,
   }))
@@ -38,12 +40,13 @@ export default async function ProjetoDepartamentosPage({ params }: { params: Pro
       <main className="max-w-3xl mx-auto px-4 py-8">
         <div className="mb-6">
           <h1 className="text-xl font-bold text-gray-900">Departamentos</h1>
-          <p className="text-sm text-gray-500 mt-1">Gerencie as áreas e departamentos da organização.</p>
+          <p className="text-sm text-gray-500 mt-1">Associe ao projeto os departamentos do catálogo global da organização.</p>
         </div>
 
         <ProjetoDepartamentosClient
           projetoId={projetoId}
-          departamentosIniciais={departamentosIniciais}
+          catalogo={catalogo}
+          associadosIniciais={associados}
         />
       </main>
     </div>

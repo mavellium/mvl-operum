@@ -2,6 +2,7 @@ import { notFound } from 'next/navigation'
 import { verifySession } from '@/lib/dal'
 import { findById } from '@/services/projectService'
 import { isProjectManager } from '@/services/projectRoleService'
+import { listarFuncoesAssociadas } from '@/services/projetoCadastroService'
 import prisma from '@/lib/prisma'
 import ProjetoFuncoesClient from '@/components/projetos/ProjetoFuncoesClient'
 import type { Metadata } from 'next'
@@ -18,17 +19,18 @@ export default async function ProjetoFuncoesPage({ params }: { params: Promise<{
     notFound()
   }
 
-  const [project, funcoes] = await Promise.all([
+  const [project, funcoes, associadas] = await Promise.all([
     findById(projetoId),
     prisma.role.findMany({
       where: { tenantId, deletedAt: null },
       orderBy: { name: 'asc' },
     }),
+    listarFuncoesAssociadas(projetoId),
   ])
 
   if (!project) notFound()
 
-  const cargosIniciais = funcoes.map(f => ({
+  const catalogo = funcoes.map(f => ({
     id: f.id,
     name: f.name,
   }))
@@ -38,12 +40,13 @@ export default async function ProjetoFuncoesPage({ params }: { params: Promise<{
       <main className="max-w-3xl mx-auto px-4 py-8">
         <div className="mb-6">
           <h1 className="text-xl font-bold text-gray-900">Funções</h1>
-          <p className="text-sm text-gray-500 mt-1">Gerencie os papéis e funções disponíveis na organização.</p>
+          <p className="text-sm text-gray-500 mt-1">Associe ao projeto as funções do catálogo global da organização.</p>
         </div>
 
         <ProjetoFuncoesClient
           projetoId={projetoId}
-          cargosIniciais={cargosIniciais}
+          catalogo={catalogo}
+          associadasIniciais={associadas}
         />
       </main>
     </div>

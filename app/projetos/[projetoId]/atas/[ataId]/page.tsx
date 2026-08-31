@@ -1,0 +1,74 @@
+import Link from 'next/link'
+import { notFound } from 'next/navigation'
+import { verifySession } from '@/lib/dal'
+import { buscarAta } from '@/services/ataService'
+import prisma from '@/lib/prisma'
+import AtaFormClient from '@/components/atas/AtaFormClient'
+import type { Metadata } from 'next'
+
+export const dynamic = 'force-dynamic'
+
+export const metadata: Metadata = { title: 'Editar Ata' }
+
+export default async function EditarAtaPage({
+  params,
+}: {
+  params: Promise<{ projetoId: string; ataId: string }>
+}) {
+  const { projetoId, ataId } = await params
+  const { userId, role, tenantId } = await verifySession()
+
+  const isMember =
+    role === 'admin' || (await prisma.userProject.findUnique({
+      where: { userId_projectId: { userId, projectId: projetoId } },
+    }))?.active
+  if (!isMember) notFound()
+
+  const ata = await buscarAta(tenantId, ataId)
+  if (!ata || ata.projetoId !== projetoId) notFound()
+
+  return (
+    <div className="min-h-screen bg-gray-50">
+      <main className="max-w-3xl mx-auto px-4 py-8">
+        <div className="flex items-center justify-between">
+          <Link href={`/projetos/${projetoId}/atas`} className="text-sm text-blue-600 hover:underline">
+            ← Voltar às atas
+          </Link>
+          <a
+            href={`/api/atas/${ataId}/export`}
+            download
+            className="px-3 py-1.5 text-sm font-medium text-white bg-gray-800 hover:bg-gray-900 rounded-lg"
+          >
+            Exportar .docx
+          </a>
+        </div>
+        <h1 className="text-xl font-bold text-gray-900 mt-3 mb-1">
+          Ata {String(ata.numero).padStart(2, '0')} — {ata.nomeProjeto}
+        </h1>
+        <p className="text-sm text-gray-500 mb-6">Edite os campos abaixo e salve as alterações.</p>
+        <AtaFormClient
+          projetoId={projetoId}
+          ataId={ata.id}
+          mode="edit"
+          initial={{
+            local: ata.local,
+            data: ata.data.toISOString(),
+            elaboradoPor: ata.elaboradoPor,
+            aprovadoPor: ata.aprovadoPor,
+            assuntosTratados: ata.assuntosTratados,
+            decisoesTomadas: ata.decisoesTomadas,
+            observacoes: ata.observacoes,
+            copiasPara: ata.copiasPara,
+            presentes: ata.presentes.map(p => ({ nome: p.nome, setorEmpresa: p.setorEmpresa ?? '' })),
+            acoes: ata.acoes.map(a => ({
+              acao: a.acao,
+              prazo: a.prazo ? a.prazo.toISOString() : '',
+              responsavel: a.responsavel ?? '',
+            })),
+            anexos: ata.anexos.map(a => ({ nome: a.nome, url: a.url ?? '' })),
+          }}
+        />
+      </main>
+    </div>
+  )
+}

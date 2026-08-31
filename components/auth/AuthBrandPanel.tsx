@@ -103,17 +103,6 @@ export function AuthBrandPanel() {
           <WbsDiagramLight />
         </div>
       </div>
-
-      {/* 5. Footer — powered by Mavellium */}
-      <div className="absolute bottom-6 left-0 right-0 flex items-center justify-center gap-2">
-        <span
-          className="text-xs uppercase tracking-widest"
-          style={{ color: 'var(--text-secondary)' }}
-        >
-          powered by
-        </span>
-        <MavelliumWordmark />
-      </div>
     </div>
   )
 }
@@ -294,17 +283,3 @@ function WbsDiagramLight() {
   )
 }
 
-function MavelliumWordmark() {
-  return (
-    <div className="flex items-center gap-1.5">
-      {/* "M" geométrico: dois chevrons sobrepostos */}
-      <svg width="16" height="16" viewBox="0 0 16 16" fill="none" aria-hidden="true">
-        <path d="M2 13L8 4L14 13" stroke="var(--brand-1)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
-        <path d="M5 13L8 8.5L11 13" stroke="var(--brand-1)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
-      </svg>
-      <span className="text-sm font-semibold" style={{ color: 'var(--brand-1)' }}>
-        Mavellium
-      </span>
-    </div>
-  )
-}

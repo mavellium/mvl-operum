@@ -4,6 +4,7 @@ import { useEffect, useRef, useState, type Dispatch } from 'react'
 import { X } from 'lucide-react'
 import type { WbsNodeClient, WbsRollup, WbsNodeStyle, WbsNodeProperties, WbsLayoutOrientation } from '@/types/wbs'
 import type { WbsAction } from '@/lib/wbsReducer'
+import { custoFolhaPrevisto, custoFolhaRealizado } from '@/lib/custosCalc'
 
 interface Props {
   selectedNodeIds: string[]
@@ -12,6 +13,7 @@ interface Props {
   canEdit: boolean
   dispatch: Dispatch<WbsAction>
   onClose: () => void
+  valorPorMinuto: number
 }
 
 // ── Layout helpers ─────────────────────────────────────────────────────────────
@@ -115,6 +117,53 @@ function NumField({
   )
 }
 
+// ── Número editável tolerante a vazio (Planilha de Custos) ────────────────────
+// Evita o bug de input controlado: permite limpar o campo ('' → undefined) e
+// redigitar sem o valor "saltar" de volta.
+function CustosNum({
+  label, value, min, max, step, suffix, disabled, placeholder, title: tooltip, onChange,
+}: {
+  label: string; value: number | undefined; min: number; max?: number; step?: number;
+  suffix?: string; disabled?: boolean; placeholder?: string; title?: string;
+  onChange: (v: number | undefined) => void
+}) {
+  const [prevValue, setPrevValue] = useState(value)
+  const [text, setText] = useState(value === undefined ? '' : String(value))
+
+  // Sincroniza o texto local apenas quando o valor externo muda de fato — assim o
+  // campo nunca "salta de volta" enquanto o usuário digita/apaga.
+  if (value !== prevValue) {
+    setPrevValue(value)
+    setText(value === undefined ? '' : String(value))
+  }
+
+  const commit = (raw: string) => {
+    setText(raw)
+    if (raw === '') { onChange(undefined); return }
+    const n = Number(raw.replace(',', '.'))
+    if (!Number.isNaN(n)) onChange(n)
+  }
+
+  return (
+    <FieldRow label={label}>
+      <div className="flex items-center gap-1" title={tooltip}>
+        <input
+          type="number"
+          min={min}
+          max={max}
+          step={step ?? 1}
+          value={text}
+          disabled={disabled}
+          placeholder={placeholder ?? String(min)}
+          onChange={e => commit(e.target.value)}
+          className="w-14 text-[11px] text-right border border-gray-200 rounded px-1.5 py-1 text-gray-800 focus:outline-none focus:ring-1 focus:ring-blue-400 disabled:bg-gray-50 disabled:text-gray-400 disabled:cursor-not-allowed"
+        />
+        {suffix && <span className="text-[11px] text-gray-400 shrink-0">{suffix}</span>}
+      </div>
+    </FieldRow>
+  )
+}
+
 // ── Helpers de valor comum ─────────────────────────────────────────────────────
 
 function commonStr(nodes: WbsNodeClient[], selector: (n: WbsNodeClient) => string): { same: true; value: string } | { same: false; value: string } {
@@ -135,9 +184,43 @@ function commonPropNum(nodes: WbsNodeClient[], key: keyof WbsNodeProperties): { 
   return vals.every(v => v === first) ? { same: true, value: first } : { same: false, value: first }
 }
 
+/** Custo derivado médio dos nós selecionados (folhas), conforme §5.4. */
+function derivedLeafCost(nodes: WbsNodeClient[], valorPorMinuto: number, modo: 'prev' | 'real'): number {
+  const leaves = nodes.filter(n => n.childrenIds.length === 0)
+  if (leaves.length === 0) return 0
+  const total = leaves.reduce((acc, n) => {
+    const p = n.properties
+    const v = modo === 'prev'
+      ? custoFolhaPrevisto(p.tempoMinutos ?? 0, valorPorMinuto, p.materiais ?? 0)
+      : custoFolhaRealizado(p.tempoRealMinutos ?? 0, valorPorMinuto, p.materiaisReal ?? 0)
+    return acc + v
+  }, 0)
+  return total
+}
+
+/** Custo derivado de todos os descendentes-folha a partir de um nó (Σ, para pais). */
+function subtreeDerivedCost(nodes: Record<string, WbsNodeClient>, nodeId: string, valorPorMinuto: number, modo: 'prev' | 'real'): number {
+  let total = 0
+  const stack: string[] = [nodeId]
+  while (stack.length > 0) {
+    const id = stack.pop()!
+    const node = nodes[id]
+    if (!node) continue
+    if (node.childrenIds.length === 0) {
+      const p = node.properties
+      total += modo === 'prev'
+        ? custoFolhaPrevisto(p.tempoMinutos ?? 0, valorPorMinuto, p.materiais ?? 0)
+        : custoFolhaRealizado(p.tempoRealMinutos ?? 0, valorPorMinuto, p.materiaisReal ?? 0)
+    } else {
+      stack.push(...node.childrenIds)
+    }
+  }
+  return total
+}
+
 // ── Painel principal ───────────────────────────────────────────────────────────
 
-export default function WbsPropertiesPanel({ selectedNodeIds, nodes, rollups, canEdit, dispatch, onClose }: Props) {
+export default function WbsPropertiesPanel({ selectedNodeIds, nodes, rollups, canEdit, dispatch, onClose, valorPorMinuto }: Props) {
   const panelRef = useRef<HTMLDivElement>(null)
 
   // Fecha ao clicar fora ou pressionar Escape — é um popover, não faz mais parte do fluxo do canvas.
@@ -172,8 +255,12 @@ export default function WbsPropertiesPanel({ selectedNodeIds, nodes, rollups, ca
   const layoutC = commonStr(selectedNodes, n => n.layout)
 
   // ── Valores comuns de propriedades ──
-  const costC = commonPropNum(selectedNodes, 'cost')
   const durC = commonPropNum(selectedNodes, 'durationDays')
+  const tempoC = commonPropNum(selectedNodes, 'tempoMinutos')
+  const matC = commonPropNum(selectedNodes, 'materiais')
+  const tempoRealC = commonPropNum(selectedNodes, 'tempoRealMinutos')
+  const matRealC = commonPropNum(selectedNodes, 'materiaisReal')
+  const pctC = commonPropNum(selectedNodes, 'percentualConclusao')
 
   // Rollup do primeiro selecionado (para exibição quando é pai)
   const firstRollup = rollups[selectedNodes[0]?.id]
@@ -186,6 +273,18 @@ export default function WbsPropertiesPanel({ selectedNodeIds, nodes, rollups, ca
     // Aplica a todos selecionados que forem folhas (cost/duration) ou a todos (desc/owner)
     for (const id of selectedNodeIds) {
       dispatch({ type: 'UPDATE_PROPERTIES', payload: { nodeId: id, properties: patch } })
+    }
+  }
+
+  // Atualiza um campo de custo derivado (tempo/materiais) e recalcula `cost`,
+  // mantendo a exibição do nó e os rollups coerentes com a Planilha (§5.4).
+  const updateDerivedField = (patch: Partial<WbsNodeProperties>) => {
+    for (const id of selectedNodeIds) {
+      const n = nodes[id]
+      if (!n || n.childrenIds.length > 0) continue
+      const merged = { ...n.properties, ...patch }
+      const cost = custoFolhaPrevisto(merged.tempoMinutos ?? 0, valorPorMinuto, merged.materiais ?? 0)
+      dispatch({ type: 'UPDATE_PROPERTIES', payload: { nodeId: id, properties: { ...patch, cost } } })
     }
   }
 
@@ -311,33 +410,80 @@ export default function WbsPropertiesPanel({ selectedNodeIds, nodes, rollups, ca
 
         {/* ─── PROPRIEDADES ─── */}
         <Section title="Propriedades">
-          {/* Custo */}
-          <FieldRow label="Custo (R$)">
+          {/* Custo derivado (§5.4): tempo × valorPorMinuto + materiais */}
+          <FieldRow label="Custo previsto">
             {anyParent && count === 1 ? (
               <div className="text-right">
                 <span className="text-xs font-semibold text-gray-700">
-                  {firstRollup ? `R$ ${firstRollup.cost.toLocaleString('pt-BR', { minimumFractionDigits: 0 })}` : '—'}
+                  {subtreeDerivedCost(nodes, selectedNodes[0].id, valorPorMinuto, 'prev')
+                    .toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}
                 </span>
                 <span className="ml-1 text-[10px] text-blue-500">Σ</span>
               </div>
             ) : (
-              <div title={anyParent ? LEAF_ONLY_TOOLTIP : undefined}>
-                <input
-                  type="number"
-                  min={0}
-                  step={0.01}
-                  value={costC.same ? (costC.value ?? '') : ''}
-                  placeholder={!costC.same ? '—' : '0,00'}
-                  disabled={!canEdit || anyParent}
-                  onChange={e => {
-                    const v = e.target.value === '' ? undefined : Math.max(0, Number(e.target.value))
-                    updateProps({ cost: v })
-                  }}
-                  className="w-24 text-[11px] text-right border border-gray-200 rounded px-1.5 py-1 text-gray-800 focus:outline-none focus:ring-1 focus:ring-blue-400 disabled:bg-gray-50 disabled:text-gray-400 disabled:cursor-not-allowed"
-                />
+              <div className="text-right" title={anyParent ? LEAF_ONLY_TOOLTIP : 'Derivado: tempo × valor/h ÷ 60 + materiais'}>
+                <span className="text-xs font-semibold text-gray-700">
+                  {derivedLeafCost(selectedNodes, valorPorMinuto, 'prev')
+                    .toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}
+                </span>
               </div>
             )}
           </FieldRow>
+
+          <FieldRow label="Custo realizado">
+            <div className="text-right" title={anyParent ? LEAF_ONLY_TOOLTIP : 'Derivado: tempo real × valor/h ÷ 60 + materiais reais'}>
+              <span className="text-xs font-semibold text-gray-700">
+                {derivedLeafCost(selectedNodes, valorPorMinuto, 'real')
+                  .toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}
+              </span>
+            </div>
+          </FieldRow>
+
+          <CustosNum
+            label="Tempo previsto (min)"
+            value={tempoC.same ? tempoC.value : undefined}
+            min={0} step={1}
+            placeholder={!tempoC.same ? '—' : '0'}
+            title={anyParent ? LEAF_ONLY_TOOLTIP : undefined}
+            disabled={!canEdit || anyParent}
+            onChange={v => updateDerivedField({ tempoMinutos: v })}
+          />
+          <CustosNum
+            label="Materiais previstos (R$)"
+            value={matC.same ? matC.value : undefined}
+            min={0} step={0.01}
+            placeholder={!matC.same ? '—' : '0,00'}
+            title={anyParent ? LEAF_ONLY_TOOLTIP : undefined}
+            disabled={!canEdit || anyParent}
+            onChange={v => updateDerivedField({ materiais: v })}
+          />
+          <CustosNum
+            label="Tempo realizado (min)"
+            value={tempoRealC.same ? tempoRealC.value : undefined}
+            min={0} step={1}
+            placeholder={!tempoRealC.same ? '—' : '0'}
+            title={anyParent ? LEAF_ONLY_TOOLTIP : undefined}
+            disabled={!canEdit || anyParent}
+            onChange={v => updateProps({ tempoRealMinutos: v })}
+          />
+          <CustosNum
+            label="Materiais realizados (R$)"
+            value={matRealC.same ? matRealC.value : undefined}
+            min={0} step={0.01}
+            placeholder={!matRealC.same ? '—' : '0,00'}
+            title={anyParent ? LEAF_ONLY_TOOLTIP : undefined}
+            disabled={!canEdit || anyParent}
+            onChange={v => updateProps({ materiaisReal: v })}
+          />
+          <CustosNum
+            label="% concluído"
+            value={pctC.same ? pctC.value : undefined}
+            min={0} max={100} step={1} suffix="%"
+            placeholder={!pctC.same ? '—' : '0'}
+            title={anyParent ? LEAF_ONLY_TOOLTIP : undefined}
+            disabled={!canEdit || anyParent}
+            onChange={v => updateProps({ percentualConclusao: v })}
+          />
 
           {/* Duração */}
           <FieldRow label="Duração (dias)">

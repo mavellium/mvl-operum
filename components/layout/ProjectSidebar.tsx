@@ -56,6 +56,12 @@ const WbsIcon = () => (
   </svg>
 )
 
+const CustosIcon = () => (
+  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 9V7a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2m2 4h10a2 2 0 002-2v-6a2 2 0 00-2-2H9a2 2 0 00-2 2v6a2 2 0 002 2zm7-5a2 2 0 11-4 0 2 2 0 014 0z" />
+  </svg>
+)
+
 export default function ProjectSidebar({ projetoId, canManageMembers }: Props) {
   const pathname = usePathname()
   const [collapsed, setCollapsed] = useState(false)
@@ -88,6 +94,7 @@ export default function ProjectSidebar({ projetoId, canManageMembers }: Props) {
     { href: `/projetos/${projetoId}/sprints`, label: 'Sprints', Icon: SprintsIcon },
     { href: `/projetos/${projetoId}/wbs`, label: 'EAP / WBS', Icon: WbsIcon },
     { href: `/projetos/${projetoId}/documentacao`, label: 'Documentação', Icon: DocumentosIcon },
+    { href: `/projetos/${projetoId}/planilha-custos`, label: 'Planilha de Custos', Icon: CustosIcon },
     ...(canManageMembers
       ? [
           { href: `/projetos/${projetoId}/stakeholders`, label: 'Stakeholders', Icon: StakeholdersIcon },

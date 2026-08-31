@@ -43,6 +43,7 @@ export interface WbsCanvasProps {
   userId: string
   canEdit: boolean
   initialTree: GetTreeResult
+  valorPorMinuto: number
 }
 
 interface DragState {
@@ -61,7 +62,7 @@ interface PendingDrag {
   startY: number
 }
 
-function WbsCanvasInner({ projetoId, canEdit }: { projetoId: string; canEdit: boolean }) {
+function WbsCanvasInner({ projetoId, canEdit, valorPorMinuto }: { projetoId: string; canEdit: boolean; valorPorMinuto: number }) {
   const { state, dispatch } = useWbs()
   const { toast } = useToast()
 
@@ -709,6 +710,7 @@ function WbsCanvasInner({ projetoId, canEdit }: { projetoId: string; canEdit: bo
             canEdit={canEdit}
             dispatch={dispatch}
             onClose={() => setShowStylePanel(false)}
+            valorPorMinuto={valorPorMinuto}
           />
         )}
       </div>
@@ -802,10 +804,10 @@ function WbsCanvasInner({ projetoId, canEdit }: { projetoId: string; canEdit: bo
   )
 }
 
-export default function WbsCanvas({ initialTree, projetoId, canEdit }: WbsCanvasProps) {
+export default function WbsCanvas({ initialTree, projetoId, canEdit, valorPorMinuto }: WbsCanvasProps) {
   return (
     <WbsProvider initialTree={initialTree}>
-      <WbsCanvasInner projetoId={projetoId} canEdit={canEdit} />
+      <WbsCanvasInner projetoId={projetoId} canEdit={canEdit} valorPorMinuto={valorPorMinuto} />
     </WbsProvider>
   )
 }

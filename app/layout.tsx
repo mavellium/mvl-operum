@@ -16,8 +16,8 @@ const geistMono = Geist_Mono({
 
 export const metadata: Metadata = {
   title: {
-    default: "Mavellium Operum",
-    template: "%s | Mavellium Operum",
+    default: "Operum",
+    template: "%s | Operum",
   },
   description: "Gestão de projetos com Kanban",
 };

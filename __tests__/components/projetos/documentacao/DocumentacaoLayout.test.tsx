@@ -23,7 +23,7 @@ beforeEach(() => {
 
 describe('DocumentacaoLayout', () => {
   it('renderiza o Formulário de Partes Interessadas por padrão', () => {
-    render(<DocumentacaoLayout />)
+    render(<DocumentacaoLayout projetoId="p1" atas={[]} gerente={false} />)
     expect(screen.getByTestId('stakeholder-doc')).toBeInTheDocument()
     expect(screen.queryByTestId('charter-doc')).not.toBeInTheDocument()
   })
@@ -32,14 +32,14 @@ describe('DocumentacaoLayout', () => {
     vi.mocked(useSearchParams).mockReturnValue(
       new URLSearchParams('doc=charter') as ReturnType<typeof useSearchParams>,
     )
-    render(<DocumentacaoLayout />)
+    render(<DocumentacaoLayout projetoId="p1" atas={[]} gerente={false} />)
     expect(screen.getByTestId('charter-doc')).toBeInTheDocument()
     expect(screen.queryByTestId('stakeholder-doc')).not.toBeInTheDocument()
   })
 
   it('ao clicar em "Termo de Abertura", chama router.replace com ?doc=charter', async () => {
     const user = userEvent.setup()
-    render(<DocumentacaoLayout />)
+    render(<DocumentacaoLayout projetoId="p1" atas={[]} gerente={false} />)
     await user.click(screen.getByRole('button', { name: /termo de abertura/i }))
     expect(mockReplace).toHaveBeenCalledWith(
       expect.stringContaining('doc=charter'),
@@ -51,7 +51,7 @@ describe('DocumentacaoLayout', () => {
       new URLSearchParams('doc=charter') as ReturnType<typeof useSearchParams>,
     )
     const user = userEvent.setup()
-    render(<DocumentacaoLayout />)
+    render(<DocumentacaoLayout projetoId="p1" atas={[]} gerente={false} />)
     await user.click(screen.getByRole('button', { name: /formulário de partes interessadas/i }))
     expect(mockReplace).toHaveBeenCalledWith(
       expect.stringContaining('doc=stakeholder'),
@@ -62,19 +62,19 @@ describe('DocumentacaoLayout', () => {
     vi.mocked(useSearchParams).mockReturnValue(
       new URLSearchParams('doc=charter') as ReturnType<typeof useSearchParams>,
     )
-    render(<DocumentacaoLayout />)
+    render(<DocumentacaoLayout projetoId="p1" atas={[]} gerente={false} />)
     const charterBtn = screen.getByRole('button', { name: /termo de abertura/i })
     expect(charterBtn.className).toContain('text-blue-700')
   })
 
   it('container principal tem overflow-hidden para isolar o scroll global', () => {
-    render(<DocumentacaoLayout />)
+    render(<DocumentacaoLayout projetoId="p1" atas={[]} gerente={false} />)
     const layout = screen.getByTestId('doc-layout')
     expect(layout.className).toMatch(/overflow-hidden/)
   })
 
   it('área de conteúdo tem overflow-y-auto para scroll isolado do documento', () => {
-    render(<DocumentacaoLayout />)
+    render(<DocumentacaoLayout projetoId="p1" atas={[]} gerente={false} />)
     const content = screen.getByTestId('doc-content')
     expect(content.className).toMatch(/overflow-y-auto/)
   })

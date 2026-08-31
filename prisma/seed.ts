@@ -25,32 +25,41 @@ async function main() {
     ?? (() => { throw new Error('SEED_ADMIN_PASSWORD env var is required') })()
   const passwordHash = await bcrypt.hash(password, 12)
 
-  // 3. User
-  const user = await prisma.user.upsert({
-    where: {
-      email_tenantId: {
-        email: 'vinicius.mota@mavellium.com.br',
-        tenantId: tenant.id,
+  // 3. Users
+  const admins = [
+    { name: 'Vinícius Tavares Mota', email: 'vinicius.mota@mavellium.com.br' },
+    { name: 'Fábio', email: 'frgfabio@gmail.com' },
+  ]
+
+  const users = []
+  for (const admin of admins) {
+    const user = await prisma.user.upsert({
+      where: {
+        email_tenantId: {
+          email: admin.email,
+          tenantId: tenant.id,
+        },
       },
-    },
-    update: {
-      passwordHash,
-      role: 'admin',
-    },
-    create: {
-      name: 'Vinícius Tavares Mota',
-      email: 'vinicius.mota@mavellium.com.br',
-      passwordHash,
-      role: 'admin',
-      tenantId: tenant.id,
-      isActive: true,
-      status: 'active',
-    },
-  })
+      update: {
+        passwordHash,
+        role: 'admin',
+      },
+      create: {
+        name: admin.name,
+        email: admin.email,
+        passwordHash,
+        role: 'admin',
+        tenantId: tenant.id,
+        isActive: true,
+        status: 'active',
+      },
+    })
+    users.push(user)
+  }
 
   console.log('✅ Seed completed!')
   console.log({
-    email: user.email,
+    emails: users.map((u) => u.email),
     tenant: tenant.name,
   })
 }

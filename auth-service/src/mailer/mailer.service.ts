@@ -93,7 +93,7 @@ function buildTemplate(code: string, tenantName: string, appUrl: string): string
           <tr>
             <td style="padding:16px 32px 24px;text-align:center;border-top:1px solid #f3f4f6;">
               <p style="margin:0;font-size:11px;color:#9ca3af;">
-                Enviado por Operum · Mavellium &nbsp;·&nbsp;
+                Enviado por Operum &nbsp;·&nbsp;
                 <a href="${appUrl}" style="color:#9ca3af;">${new URL(appUrl).hostname}</a>
               </p>
             </td>

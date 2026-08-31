@@ -16,6 +16,12 @@ vi.mock('@/lib/api-client', () => ({
   },
 }))
 
+vi.mock('@/lib/prisma', () => ({
+  default: {
+    projetoDepartamento: { count: vi.fn().mockResolvedValue(0) },
+  },
+}))
+
 import { verifySession } from '@/lib/dal'
 import { departmentsApi } from '@/lib/api-client'
 import {

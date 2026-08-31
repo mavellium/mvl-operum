@@ -172,7 +172,7 @@ export default function DocumentoStakeholders() {
     contentRef: documentRef,
     documentTitle: 'Formulário de parte interessada',
     onBeforePrint: async () => { document.title = 'Formulário de parte interessada' },
-    onAfterPrint: () => { document.title = 'Documentação | Mavellium' },
+    onAfterPrint: () => { document.title = 'Documentação' },
     pageStyle: `
       @page { size: A4; margin: 0; }
       @media print { body { -webkit-print-color-adjust: exact; print-color-adjust: exact; } }

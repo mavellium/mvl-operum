@@ -140,6 +140,33 @@ describe('computeLayout', () => {
         expect(c.path).toContain('H')
       })
     })
+
+    it('conector sai do meio-direito do pai e entra na borda esquerda do filho (cotovelo)', () => {
+      const nodes = make()
+      const { geometry, connectors } = computeLayout(nodes, 'r')
+      const c = connectors.find(x => x.toId === 'a')!
+      const parentMidY = geometry.r.y + NODE_H / 2
+      const spineX = geometry.r.x + NODE_W + 10
+      const childLeft = geometry.a.x
+      const childMidY = geometry.a.y + NODE_H / 2
+      expect(c.path).toBe(`M ${geometry.r.x + NODE_W} ${parentMidY} H ${spineX} V ${childMidY} H ${childLeft}`)
+    })
+
+    it('LADO_A_LADO largo (5 filhos) — nenhum par se sobrepõe', () => {
+      const nodes = {
+        r: node('r', null, 0, ['a', 'b', 'c', 'd', 'e'], 'LADO_A_LADO'),
+        a: node('a', 'r', 0, []),
+        b: node('b', 'r', 1, []),
+        c: node('c', 'r', 2, []),
+        d: node('d', 'r', 3, []),
+        e: node('e', 'r', 4, []),
+      }
+      const { geometry } = computeLayout(nodes, 'r')
+      const xs = ['a', 'b', 'c', 'd', 'e'].map(id => geometry[id].x)
+      for (let i = 1; i < xs.length; i++) {
+        expect(xs[i]).toBeGreaterThanOrEqual(xs[i - 1] + NODE_W)
+      }
+    })
   })
 
   // ── Colapsado ────────────────────────────────────────────────────────────────

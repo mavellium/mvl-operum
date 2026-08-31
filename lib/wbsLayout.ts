@@ -186,8 +186,11 @@ export function computeLayout(
         childY += (sizes[child.id]?.height ?? NODE_H) + GAP_Y
       }
     } else {
-      // ABAIXO_L
+      // ABAIXO_L — pai à esquerda, filhos indentados à direita, conector em cotovelo
+      // (sai do meio-direito do pai, desce/sobe e entra na borda esquerda do filho).
       const childX = x + GAP_X
+      const spineX = x + nw + 10
+      const parentMidY = y + NODE_H / 2
       let childY = y + NODE_H + GAP_Y
 
       for (const child of ch) {
@@ -195,7 +198,7 @@ export function computeLayout(
         connectors.push({
           fromId: id,
           toId: child.id,
-          path: `M ${x + nw / 2} ${y + NODE_H} V ${childY + NODE_H / 2} H ${childX}`,
+          path: `M ${x + nw} ${parentMidY} H ${spineX} V ${childY + NODE_H / 2} H ${childX}`,
         })
         childY += (sizes[child.id]?.height ?? NODE_H) + GAP_Y
       }

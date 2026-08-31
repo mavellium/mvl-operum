@@ -1,0 +1,129 @@
+import prisma from '@/lib/prisma'
+import { CriarAtaSchema, AtualizarAtaSchema } from '@/lib/validation/ataSchemas'
+import type { CriarAtaInput, AtualizarAtaInput } from '@/lib/validation/ataSchemas'
+import { NotFoundError, ConflictError } from '@/services/projetoCadastroService'
+
+export async function listarAtasPorProjeto(projetoId: string) {
+  return prisma.ata.findMany({
+    where: { projetoId, deletedAt: null },
+    orderBy: [{ numero: 'desc' }],
+    include: { presentes: true, acoes: true, anexos: true },
+  })
+}
+
+export async function buscarAta(tenantId: string, ataId: string) {
+  return prisma.ata.findFirst({
+    where: { id: ataId, tenantId, deletedAt: null },
+    include: { presentes: true, acoes: true, anexos: true },
+  })
+}
+
+async function proximoNumero(projetoId: string): Promise<number> {
+  const last = await prisma.ata.findFirst({
+    where: { projetoId },
+    orderBy: { numero: 'desc' },
+    select: { numero: true },
+  })
+  return (last?.numero ?? 0) + 1
+}
+
+export async function criarAta(tenantId: string, input: CriarAtaInput) {
+  const parsed = CriarAtaSchema.safeParse(input)
+  if (!parsed.success) throw new Error(parsed.error.issues[0].message)
+
+  const d = parsed.data
+  const projeto = await prisma.project.findFirst({
+    where: { id: d.projetoId, tenantId },
+    select: { id: true, name: true },
+  })
+  if (!projeto) throw new NotFoundError('Projeto não encontrado')
+
+  return prisma.$transaction(async (tx) => {
+    const numero = await proximoNumero(d.projetoId)
+    try {
+      return await tx.ata.create({
+        data: {
+          tenantId,
+          projetoId: d.projetoId,
+          numero,
+          nomeProjeto: projeto.name,
+          local: d.local ?? undefined,
+          data: new Date(d.data),
+          elaboradoPor: d.elaboradoPor,
+          aprovadoPor: d.aprovadoPor ?? undefined,
+          assuntosTratados: d.assuntosTratados ?? undefined,
+          decisoesTomadas: d.decisoesTomadas ?? undefined,
+          observacoes: d.observacoes ?? undefined,
+          copiasPara: d.copiasPara,
+          presentes: {
+            create: d.presentes.map(p => ({ nome: p.nome, setorEmpresa: p.setorEmpresa ?? undefined })),
+          },
+          acoes: {
+            create: d.acoes.map(a => ({
+              acao: a.acao,
+              prazo: a.prazo ? new Date(a.prazo) : undefined,
+              responsavel: a.responsavel ?? undefined,
+            })),
+          },
+          anexos: {
+            create: d.anexos.map(a => ({ nome: a.nome, url: a.url ?? undefined })),
+          },
+        },
+        include: { presentes: true, acoes: true, anexos: true },
+      })
+    } catch (err) {
+      const code = (err as { code?: string }).code
+      if (code === 'P2002') throw new ConflictError('Número de ata conflitante. Tente novamente.')
+      throw err
+    }
+  })
+}
+
+export async function atualizarAta(tenantId: string, ataId: string, input: AtualizarAtaInput) {
+  const parsed = AtualizarAtaSchema.safeParse(input)
+  if (!parsed.success) throw new Error(parsed.error.issues[0].message)
+
+  const d = parsed.data
+  const existing = await prisma.ata.findFirst({ where: { id: ataId, tenantId, deletedAt: null } })
+  if (!existing) throw new NotFoundError('Ata não encontrada')
+
+  return prisma.$transaction(async (tx) => {
+    await tx.ataPresente.deleteMany({ where: { ataId } })
+    await tx.ataAcao.deleteMany({ where: { ataId } })
+    await tx.ataAnexo.deleteMany({ where: { ataId } })
+
+    return tx.ata.update({
+      where: { id: ataId },
+      data: {
+        local: d.local ?? undefined,
+        data: new Date(d.data),
+        elaboradoPor: d.elaboradoPor,
+        aprovadoPor: d.aprovadoPor ?? undefined,
+        assuntosTratados: d.assuntosTratados ?? undefined,
+        decisoesTomadas: d.decisoesTomadas ?? undefined,
+        observacoes: d.observacoes ?? undefined,
+        copiasPara: d.copiasPara,
+        presentes: {
+          create: d.presentes.map(p => ({ nome: p.nome, setorEmpresa: p.setorEmpresa ?? undefined })),
+        },
+        acoes: {
+          create: d.acoes.map(a => ({
+            acao: a.acao,
+            prazo: a.prazo ? new Date(a.prazo) : undefined,
+            responsavel: a.responsavel ?? undefined,
+          })),
+        },
+        anexos: {
+          create: d.anexos.map(a => ({ nome: a.nome, url: a.url ?? undefined })),
+        },
+      },
+      include: { presentes: true, acoes: true, anexos: true },
+    })
+  })
+}
+
+export async function removerAta(tenantId: string, ataId: string) {
+  const existing = await prisma.ata.findFirst({ where: { id: ataId, tenantId, deletedAt: null } })
+  if (!existing) throw new NotFoundError('Ata não encontrada')
+  return prisma.ata.update({ where: { id: ataId }, data: { deletedAt: new Date() } })
+}
