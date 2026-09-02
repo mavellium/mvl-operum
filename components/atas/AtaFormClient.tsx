@@ -3,20 +3,24 @@
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { criarAtaAction, atualizarAtaAction } from '@/app/actions/atas'
+import MemberSelect, { type MemberOption } from '@/components/atas/MemberSelect'
 
-interface Presente { nome: string; setorEmpresa: string }
-interface Acao { acao: string; prazo: string; responsavel: string }
+interface Presente { nome: string; setorEmpresa: string; userId: string }
+interface Acao { acao: string; prazo: string; responsavel: string; responsavelUserId: string }
 interface Anexo { nome: string; url: string }
 
 interface Props {
   projetoId: string
   ataId?: string
   mode: 'create' | 'edit'
+  members: MemberOption[]
   initial?: {
     local?: string | null
     data?: string
     elaboradoPor: string
+    elaboradoPorUserId?: string | null
     aprovadoPor?: string | null
+    aprovadoPorUserId?: string | null
     assuntosTratados?: string | null
     decisoesTomadas?: string | null
     observacoes?: string | null
@@ -27,31 +31,64 @@ interface Props {
   }
 }
 
-function toLocal(iso: string): string {
+function toDateOnly(iso: string): string {
   const d = new Date(iso)
+  if (Number.isNaN(d.getTime())) return ''
   const pad = (n: number) => String(n).padStart(2, '0')
-  return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}T${pad(d.getHours())}:${pad(d.getMinutes())}`
+  return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`
 }
 
 const inputCls =
   'w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500'
 
-export default function AtaFormClient({ projetoId, ataId, mode, initial }: Props) {
+export default function AtaFormClient({ projetoId, ataId, mode, members, initial }: Props) {
   const router = useRouter()
 
   const [local, setLocal] = useState(initial?.local ?? '')
-  const [data, setData] = useState(initial?.data ? toLocal(initial.data) : '')
+  const [data, setData] = useState(initial?.data ? toDateOnly(initial.data) : '')
   const [elaboradoPor, setElaboradoPor] = useState(initial?.elaboradoPor ?? '')
+  const [elaboradoPorUserId, setElaboradoPorUserId] = useState(initial?.elaboradoPorUserId ?? null)
   const [aprovadoPor, setAprovadoPor] = useState(initial?.aprovadoPor ?? '')
+  const [aprovadoPorUserId, setAprovadoPorUserId] = useState(initial?.aprovadoPorUserId ?? null)
   const [assuntos, setAssuntos] = useState(initial?.assuntosTratados ?? '')
   const [decisoes, setDecisoes] = useState(initial?.decisoesTomadas ?? '')
   const [observacoes, setObservacoes] = useState(initial?.observacoes ?? '')
   const [copias, setCopias] = useState(initial?.copiasPara.join(', ') ?? '')
-  const [presentes, setPresentes] = useState<Presente[]>(initial?.presentes ?? [{ nome: '', setorEmpresa: '' }])
-  const [acoes, setAcoes] = useState<Acao[]>(initial?.acoes ?? [{ acao: '', prazo: '', responsavel: '' }])
+  const [presentes, setPresentes] = useState<Presente[]>(
+    initial?.presentes ?? [{ nome: '', setorEmpresa: '', userId: '' }],
+  )
+  const [acoes, setAcoes] = useState<Acao[]>(
+    initial?.acoes ?? [{ acao: '', prazo: '', responsavel: '', responsavelUserId: '' }],
+  )
   const [anexos, setAnexos] = useState<Anexo[]>(initial?.anexos ?? [])
   const [error, setError] = useState<string | null>(null)
   const [saving, setSaving] = useState(false)
+
+  function pickElaborador(member: MemberOption | null) {
+    setElaboradoPor(member?.name ?? '')
+    setElaboradoPorUserId(member?.id ?? null)
+  }
+
+  function pickAprovador(member: MemberOption | null) {
+    setAprovadoPor(member?.name ?? '')
+    setAprovadoPorUserId(member?.id ?? null)
+  }
+
+  function pickPresente(i: number, member: MemberOption | null) {
+    const next = [...presentes]
+    next[i].nome = member?.name ?? ''
+    // Setor auto-preenchido pela função do membro
+    next[i].setorEmpresa = member?.setor ?? ''
+    next[i].userId = member?.id ?? ''
+    setPresentes(next)
+  }
+
+  function pickResponsavel(i: number, member: MemberOption | null) {
+    const next = [...acoes]
+    next[i].responsavel = member?.name ?? ''
+    next[i].responsavelUserId = member?.id ?? ''
+    setAcoes(next)
+  }
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault()
@@ -60,21 +97,28 @@ export default function AtaFormClient({ projetoId, ataId, mode, initial }: Props
 
     const payload = {
       local: local || null,
-      data: new Date(data).toISOString(),
+      data: new Date(`${data}T00:00:00`).toISOString(),
       elaboradoPor,
+      elaboradoPorUserId: elaboradoPorUserId || null,
       aprovadoPor: aprovadoPor || null,
+      aprovadoPorUserId: aprovadoPorUserId || null,
       assuntosTratados: assuntos || null,
       decisoesTomadas: decisoes || null,
       observacoes: observacoes || null,
       copiasPara: copias.split(',').map(s => s.trim()).filter(Boolean),
       presentes: presentes
-        .map(p => ({ nome: p.nome.trim(), setorEmpresa: p.setorEmpresa.trim() || null }))
+        .map(p => ({
+          nome: p.nome.trim(),
+          setorEmpresa: p.setorEmpresa.trim() || null,
+          userId: p.userId || null,
+        }))
         .filter(p => p.nome),
       acoes: acoes
         .map(a => ({
           acao: a.acao.trim(),
-          prazo: a.prazo ? new Date(a.prazo).toISOString() : null,
+          prazo: a.prazo ? new Date(`${a.prazo}T00:00:00`).toISOString() : null,
           responsavel: a.responsavel.trim() || null,
+          responsavelUserId: a.responsavelUserId || null,
         }))
         .filter(a => a.acao),
       anexos: anexos
@@ -107,7 +151,7 @@ export default function AtaFormClient({ projetoId, ataId, mode, initial }: Props
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
         <div>
           <label className="block text-sm font-medium text-gray-700 mb-1">Data da reunião *</label>
-          <input type="datetime-local" required value={data} onChange={e => setData(e.target.value)} className={inputCls} />
+          <input type="date" required value={data} onChange={e => setData(e.target.value)} className={inputCls} />
         </div>
         <div>
           <label className="block text-sm font-medium text-gray-700 mb-1">Local</label>
@@ -115,34 +159,33 @@ export default function AtaFormClient({ projetoId, ataId, mode, initial }: Props
         </div>
         <div>
           <label className="block text-sm font-medium text-gray-700 mb-1">Elaborado por *</label>
-          <input type="text" required value={elaboradoPor} onChange={e => setElaboradoPor(e.target.value)} className={inputCls} />
+          <MemberSelect members={members} value={elaboradoPorUserId ?? undefined} onChange={pickElaborador} placeholder="Selecionar membro" />
         </div>
         <div>
           <label className="block text-sm font-medium text-gray-700 mb-1">Aprovado por</label>
-          <input type="text" value={aprovadoPor} onChange={e => setAprovadoPor(e.target.value)} className={inputCls} />
+          <MemberSelect members={members} value={aprovadoPorUserId ?? undefined} onChange={pickAprovador} placeholder="Selecionar membro" />
         </div>
       </div>
 
       <div>
-        <label className="block text-sm font-medium text-gray-700 mb-1">Relação dos presentes</label>
+        <label className="block text-sm font-medium text-gray-700 mb-1">I. Relação dos presentes</label>
         {presentes.map((p, i) => (
-          <div key={i} className="flex gap-2 mb-2">
-            <input
-              type="text"
-              value={p.nome}
-              onChange={e => {
-                const next = [...presentes]; next[i].nome = e.target.value; setPresentes(next)
-              }}
-              placeholder="Nome"
-              className={inputCls}
-            />
+          <div key={i} className="flex flex-col sm:flex-row gap-2 mb-2">
+            <div className="flex-1">
+              <MemberSelect
+                members={members}
+                value={p.userId}
+                onChange={m => pickPresente(i, m)}
+                placeholder="Selecionar presente"
+              />
+            </div>
             <input
               type="text"
               value={p.setorEmpresa}
               onChange={e => {
                 const next = [...presentes]; next[i].setorEmpresa = e.target.value; setPresentes(next)
               }}
-              placeholder="Setor / Empresa"
+              placeholder="Setor (auto pela função)"
               className={inputCls}
             />
             <button
@@ -156,7 +199,7 @@ export default function AtaFormClient({ projetoId, ataId, mode, initial }: Props
         ))}
         <button
           type="button"
-          onClick={() => setPresentes([...presentes, { nome: '', setorEmpresa: '' }])}
+          onClick={() => setPresentes([...presentes, { nome: '', setorEmpresa: '', userId: '' }])}
           className="text-sm text-blue-600 hover:text-blue-700 font-medium"
         >
           + Adicionar presente
@@ -164,21 +207,21 @@ export default function AtaFormClient({ projetoId, ataId, mode, initial }: Props
       </div>
 
       <div>
-        <label className="block text-sm font-medium text-gray-700 mb-1">Assuntos tratados</label>
+        <label className="block text-sm font-medium text-gray-700 mb-1">II. Assuntos tratados</label>
         <textarea rows={3} value={assuntos} onChange={e => setAssuntos(e.target.value)} className={inputCls} />
       </div>
 
       <div>
-        <label className="block text-sm font-medium text-gray-700 mb-1">Decisões tomadas</label>
+        <label className="block text-sm font-medium text-gray-700 mb-1">III. Decisões tomadas</label>
         <textarea rows={3} value={decisoes} onChange={e => setDecisoes(e.target.value)} className={inputCls} />
       </div>
 
       <div>
-        <label className="block text-sm font-medium text-gray-700 mb-1">Ações a empreender</label>
+        <label className="block text-sm font-medium text-gray-700 mb-1">IV. Ações a serem empreendidas</label>
         {acoes.map((a, i) => (
-          <div key={i} className="flex gap-2 mb-2 items-center">
-            <input
-              type="text"
+          <div key={i} className="flex flex-col gap-2 mb-3 p-3 rounded-lg border border-gray-200">
+            <textarea
+              rows={2}
               value={a.acao}
               onChange={e => {
                 const next = [...acoes]; next[i].acao = e.target.value; setAcoes(next)
@@ -186,35 +229,38 @@ export default function AtaFormClient({ projetoId, ataId, mode, initial }: Props
               placeholder="Ação"
               className={inputCls}
             />
-            <input
-              type="datetime-local"
-              value={a.prazo}
-              onChange={e => {
-                const next = [...acoes]; next[i].prazo = e.target.value; setAcoes(next)
-              }}
-              className={`${inputCls} sm:w-44`}
-            />
-            <input
-              type="text"
-              value={a.responsavel}
-              onChange={e => {
-                const next = [...acoes]; next[i].responsavel = e.target.value; setAcoes(next)
-              }}
-              placeholder="Responsável"
-              className={inputCls}
-            />
-            <button
-              type="button"
-              onClick={() => setAcoes(acoes.filter((_, j) => j !== i))}
-              className="px-2 text-red-500 hover:bg-red-50 rounded-lg"
-            >
-              ×
-            </button>
+            <div className="flex flex-col sm:flex-row gap-2 items-stretch">
+              <div className="sm:w-44">
+                <input
+                  type="date"
+                  value={a.prazo}
+                  onChange={e => {
+                    const next = [...acoes]; next[i].prazo = e.target.value; setAcoes(next)
+                  }}
+                  className={inputCls}
+                />
+              </div>
+              <div className="flex-1">
+                <MemberSelect
+                  members={members}
+                  value={a.responsavelUserId}
+                  onChange={m => pickResponsavel(i, m)}
+                  placeholder="Responsável (membro)"
+                />
+              </div>
+              <button
+                type="button"
+                onClick={() => setAcoes(acoes.filter((_, j) => j !== i))}
+                className="px-2 text-red-500 hover:bg-red-50 rounded-lg"
+              >
+                ×
+              </button>
+            </div>
           </div>
         ))}
         <button
           type="button"
-          onClick={() => setAcoes([...acoes, { acao: '', prazo: '', responsavel: '' }])}
+          onClick={() => setAcoes([...acoes, { acao: '', prazo: '', responsavel: '', responsavelUserId: '' }])}
           className="text-sm text-blue-600 hover:text-blue-700 font-medium"
         >
           + Adicionar ação

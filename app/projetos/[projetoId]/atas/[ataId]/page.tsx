@@ -4,6 +4,7 @@ import { verifySession } from '@/lib/dal'
 import { buscarAta } from '@/services/ataService'
 import prisma from '@/lib/prisma'
 import AtaFormClient from '@/components/atas/AtaFormClient'
+import type { MemberOption } from '@/components/atas/MemberSelect'
 import type { Metadata } from 'next'
 
 export const dynamic = 'force-dynamic'
@@ -26,6 +27,25 @@ export default async function EditarAtaPage({
 
   const ata = await buscarAta(tenantId, ataId)
   if (!ata || ata.projetoId !== projetoId) notFound()
+
+  const members: MemberOption[] = (
+    await prisma.userProject.findMany({
+      where: { projectId: projetoId, active: true },
+      include: {
+        user: { select: { id: true, name: true, signatureUrl: true, deletedAt: true, isActive: true } },
+        department: { select: { name: true } },
+      },
+      orderBy: { order: 'asc' },
+    })
+  )
+    .filter(up => up.user.deletedAt === null && up.user.isActive)
+    .map(up => {
+      const cargos = up.role
+        ? up.role.split(',').map((s: string) => s.trim()).filter(Boolean)
+        : []
+      const setor = cargos[0] ?? up.department?.name ?? null
+      return { id: up.userId, name: up.user.name, setor, signatureUrl: up.user.signatureUrl }
+    })
 
   return (
     <div className="min-h-screen bg-gray-50">
@@ -50,22 +70,30 @@ export default async function EditarAtaPage({
           projetoId={projetoId}
           ataId={ata.id}
           mode="edit"
+          members={members}
           initial={{
             local: ata.local,
-            data: ata.data.toISOString(),
-            elaboradoPor: ata.elaboradoPor,
+            data: ata.data ? ata.data.toISOString() : undefined,
+            elaboradoPor: ata.elaboradoPor ?? '',
+            elaboradoPorUserId: ata.elaboradoPorUserId,
             aprovadoPor: ata.aprovadoPor,
+            aprovadoPorUserId: ata.aprovadoPorUserId,
             assuntosTratados: ata.assuntosTratados,
             decisoesTomadas: ata.decisoesTomadas,
             observacoes: ata.observacoes,
             copiasPara: ata.copiasPara,
-            presentes: ata.presentes.map(p => ({ nome: p.nome, setorEmpresa: p.setorEmpresa ?? '' })),
-            acoes: ata.acoes.map(a => ({
+            presentes: (ata.presentes ?? []).map(p => ({
+              nome: p.nome,
+              setorEmpresa: p.setorEmpresa ?? '',
+              userId: p.userId ?? '',
+            })),
+            acoes: (ata.acoes ?? []).map(a => ({
               acao: a.acao,
               prazo: a.prazo ? a.prazo.toISOString() : '',
               responsavel: a.responsavel ?? '',
+              responsavelUserId: a.responsavelUserId ?? '',
             })),
-            anexos: ata.anexos.map(a => ({ nome: a.nome, url: a.url ?? '' })),
+            anexos: (ata.anexos ?? []).map(a => ({ nome: a.nome, url: a.url ?? '' })),
           }}
         />
       </main>

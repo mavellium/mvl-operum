@@ -20,8 +20,8 @@ export interface AtaExportData {
   numero: number
   nomeProjeto: string
   local: string | null
-  data: Date
-  elaboradoPor: string
+  data: Date | null
+  elaboradoPor: string | null
   aprovadoPor: string | null
   assuntosTratados: string | null
   decisoesTomadas: string | null
@@ -32,7 +32,11 @@ export interface AtaExportData {
   anexos: Anexo[]
 }
 
-const fmtDate = (d: Date) => d.toLocaleDateString('pt-BR')
+const fmtDate = (d: Date | null | undefined): string => {
+  if (!d) return '—'
+  const parsed = new Date(d)
+  return Number.isNaN(parsed.getTime()) ? '—' : parsed.toLocaleDateString('pt-BR')
+}
 
 function labelRow(label: string, value: string): TableRow {
   return new TableRow({
@@ -79,7 +83,7 @@ export function buildAtaDocx(data: AtaExportData): Document {
     labelRow('Projeto', data.nomeProjeto),
     labelRow('Local', data.local ?? '—'),
     labelRow('Data', fmtDate(data.data)),
-    labelRow('Elaborado por', data.elaboradoPor),
+    labelRow('Elaborado por', data.elaboradoPor ?? '—'),
     labelRow('Aprovado por', data.aprovadoPor ?? '—'),
   ]
 

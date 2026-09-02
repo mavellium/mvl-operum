@@ -1,7 +1,7 @@
 'use client'
 
 import React, { type Dispatch, useEffect, useRef } from 'react'
-import type { WbsNodeClient, WbsNodeGeometry, WbsRollup } from '@/types/wbs'
+import type { WbsNodeClient, WbsNodeGeometry } from '@/types/wbs'
 import type { WbsAction } from '@/lib/wbsReducer'
 
 interface WbsNodeCardProps {
@@ -9,27 +9,16 @@ interface WbsNodeCardProps {
   geom: WbsNodeGeometry
   isSelected: boolean
   isEditing: boolean
-  rollup: WbsRollup | undefined
   isDragTarget: boolean
   editingInitialText?: string
   onSelect: (nodeId: string, multi: boolean) => void
   dispatch: Dispatch<WbsAction>
 }
 
-function fmtCost(v: number) {
-  if (v === 0) return ''
-  if (v >= 1_000_000) return `${(v / 1_000_000).toFixed(1)}M`
-  if (v >= 1_000) return `${(v / 1_000).toFixed(0)}k`
-  return String(v)
-}
-
 const WbsNodeCard = React.memo(function WbsNodeCard({
-  node, geom, isSelected, isEditing, rollup, isDragTarget, editingInitialText, onSelect, dispatch,
+  node, geom, isSelected, isEditing, isDragTarget, editingInitialText, onSelect, dispatch,
 }: WbsNodeCardProps) {
   const isParent = node.childrenIds.length > 0
-  const effectiveCost = rollup ? rollup.cost : (node.properties.cost ?? 0)
-  const effectiveDays = rollup ? rollup.durationDays : (node.properties.durationDays ?? 0)
-  const hasChips = effectiveCost > 0 || effectiveDays > 0
 
   const inputRef = useRef<HTMLInputElement>(null)
   useEffect(() => {
@@ -67,7 +56,7 @@ const WbsNodeCard = React.memo(function WbsNodeCard({
         boxShadow: ring,
         cursor: 'pointer',
         userSelect: 'none',
-        overflow: 'hidden',
+        overflow: 'visible',
       }}
       onClick={e => {
         e.stopPropagation()
@@ -117,7 +106,7 @@ const WbsNodeCard = React.memo(function WbsNodeCard({
       )}
 
       {/* Code + Title */}
-      <div style={{ position: 'absolute', top: 4, left: 8, right: 8, bottom: isParent ? 26 : (hasChips ? 18 : 4), display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+      <div style={{ position: 'absolute', top: 4, left: 8, right: 8, bottom: 4, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
         {isEditing ? (
           <div style={{ display: 'flex', alignItems: 'center', gap: 4, width: '100%' }}>
             <span style={{ whiteSpace: 'nowrap', fontWeight: 500, color: node.style.textColor, flexShrink: 0 }}>
@@ -164,22 +153,6 @@ const WbsNodeCard = React.memo(function WbsNodeCard({
           </span>
         )}
       </div>
-
-      {/* Chips */}
-      {hasChips && (
-        <div style={{ position: 'absolute', bottom: 3, left: 6, right: isParent ? 'calc(50% + 14px)' : 6, display: 'flex', gap: 6, alignItems: 'center', fontSize: 9, opacity: 0.75 }}>
-          {effectiveCost > 0 && (
-            <span title={rollup?.isRolledUp ? 'Valor calculado (rollup)' : undefined}>
-              💰 {fmtCost(effectiveCost)}{rollup?.isRolledUp ? ' Σ' : ''}
-            </span>
-          )}
-          {effectiveDays > 0 && (
-            <span title={rollup?.isRolledUp ? 'Valor calculado (rollup)' : undefined}>
-              ⏱ {effectiveDays}d{rollup?.isRolledUp ? ' Σ' : ''}
-            </span>
-          )}
-        </div>
-      )}
     </div>
   )
 })

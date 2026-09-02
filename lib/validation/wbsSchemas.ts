@@ -28,11 +28,12 @@ export const WbsNodePropertiesSchema = z.object({
   description: z.string().max(2000).optional(),
   tempoMinutos: z.number().int().min(0).optional(),
   materiais: z.number().min(0).optional(),
-  dataPrevista: z.string().max(10).optional(),
+  dataPrevista: z.string().max(10).nullable().optional(),
   tempoRealMinutos: z.number().int().min(0).optional(),
   materiaisReal: z.number().min(0).optional(),
-  dataRealizacao: z.string().max(10).optional(),
+  dataRealizacao: z.string().max(10).nullable().optional(),
   elaboradoPor: z.string().max(200).optional(),
+  elaboradoPorUserId: z.string().nullable().optional(),
   percentualConclusao: z.number().int().min(0).max(100).optional(),
 })
 

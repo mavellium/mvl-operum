@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest'
-import { computeLayout, resolveDropPosition, NODE_W, NODE_H, GAP_X, GAP_Y } from '@/lib/wbsLayout'
+import { computeLayout, resolveDropPosition, NODE_W, NODE_H, GAP_X, GAP_Y, PILL_OVERHANG } from '@/lib/wbsLayout'
 import type { WbsNodeClient, WbsLayoutOrientation } from '@/types/wbs'
 
 const S = {
@@ -225,7 +225,8 @@ describe('computeLayout', () => {
     const maxRight = Math.max(...Object.values(geometry).map(g => g.x + NODE_W))
     const maxBottom = Math.max(...Object.values(geometry).map(g => g.y + NODE_H))
     expect(bounds.width).toBe(maxRight)
-    expect(bounds.height).toBe(maxBottom)
+    // O bounds reserva a área da pílula de colapso que fica meio para fora do card.
+    expect(bounds.height).toBe(maxBottom + PILL_OVERHANG)
   })
 })
 

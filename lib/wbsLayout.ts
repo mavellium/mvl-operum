@@ -10,6 +10,8 @@ export const NODE_W = 160
 export const NODE_H = 60
 export const GAP_X = 40
 export const GAP_Y = 60
+/** Área da pílula de colapso que fica meio para fora (~10px abaixo do card). */
+export const PILL_OVERHANG = 12
 
 /**
  * Resolve a posição de drop sobre (ou logo abaixo de) um card:
@@ -212,5 +214,5 @@ export function computeLayout(
     if (g.y + NODE_H > maxY) maxY = g.y + NODE_H
   }
 
-  return { geometry, connectors, bounds: { width: maxX, height: maxY } }
+  return { geometry, connectors, bounds: { width: maxX, height: maxY + PILL_OVERHANG } }
 }

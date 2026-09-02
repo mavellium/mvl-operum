@@ -3,18 +3,30 @@ import { CriarAtaSchema, AtualizarAtaSchema } from '@/lib/validation/ataSchemas'
 import type { CriarAtaInput, AtualizarAtaInput } from '@/lib/validation/ataSchemas'
 import { NotFoundError, ConflictError } from '@/services/projetoCadastroService'
 
+function dateOnly(d: Date): Date {
+  return new Date(d.getFullYear(), d.getMonth(), d.getDate())
+}
+
 export async function listarAtasPorProjeto(projetoId: string) {
   return prisma.ata.findMany({
     where: { projetoId, deletedAt: null },
     orderBy: [{ numero: 'desc' }],
-    include: { presentes: true, acoes: true, anexos: true },
+    include: {
+      presentes: { include: { user: { select: { id: true, name: true, signatureUrl: true } } } },
+      acoes: { include: { responsavelUser: { select: { id: true, name: true, signatureUrl: true } } } },
+      anexos: true,
+    },
   })
 }
 
 export async function buscarAta(tenantId: string, ataId: string) {
   return prisma.ata.findFirst({
     where: { id: ataId, tenantId, deletedAt: null },
-    include: { presentes: true, acoes: true, anexos: true },
+    include: {
+      presentes: { include: { user: { select: { id: true, name: true, signatureUrl: true } } } },
+      acoes: { include: { responsavelUser: { select: { id: true, name: true, signatureUrl: true } } } },
+      anexos: true,
+    },
   })
 }
 
@@ -48,28 +60,39 @@ export async function criarAta(tenantId: string, input: CriarAtaInput) {
           numero,
           nomeProjeto: projeto.name,
           local: d.local ?? undefined,
-          data: new Date(d.data),
+          data: dateOnly(new Date(d.data)),
           elaboradoPor: d.elaboradoPor,
+          elaboradoPorUserId: d.elaboradoPorUserId ?? undefined,
           aprovadoPor: d.aprovadoPor ?? undefined,
+          aprovadoPorUserId: d.aprovadoPorUserId ?? undefined,
           assuntosTratados: d.assuntosTratados ?? undefined,
           decisoesTomadas: d.decisoesTomadas ?? undefined,
           observacoes: d.observacoes ?? undefined,
           copiasPara: d.copiasPara,
           presentes: {
-            create: d.presentes.map(p => ({ nome: p.nome, setorEmpresa: p.setorEmpresa ?? undefined })),
+            create: d.presentes.map(p => ({
+              nome: p.nome,
+              setorEmpresa: p.setorEmpresa ?? undefined,
+              userId: p.userId ?? undefined,
+            })),
           },
           acoes: {
             create: d.acoes.map(a => ({
               acao: a.acao,
-              prazo: a.prazo ? new Date(a.prazo) : undefined,
+              prazo: a.prazo ? dateOnly(new Date(a.prazo)) : undefined,
               responsavel: a.responsavel ?? undefined,
+              responsavelUserId: a.responsavelUserId ?? undefined,
             })),
           },
           anexos: {
             create: d.anexos.map(a => ({ nome: a.nome, url: a.url ?? undefined })),
           },
         },
-        include: { presentes: true, acoes: true, anexos: true },
+        include: {
+          presentes: { include: { user: { select: { id: true, name: true, signatureUrl: true } } } },
+          acoes: { include: { responsavelUser: { select: { id: true, name: true, signatureUrl: true } } } },
+          anexos: true,
+        },
       })
     } catch (err) {
       const code = (err as { code?: string }).code
@@ -96,28 +119,39 @@ export async function atualizarAta(tenantId: string, ataId: string, input: Atual
       where: { id: ataId },
       data: {
         local: d.local ?? undefined,
-        data: new Date(d.data),
+        data: dateOnly(new Date(d.data)),
         elaboradoPor: d.elaboradoPor,
+        elaboradoPorUserId: d.elaboradoPorUserId ?? undefined,
         aprovadoPor: d.aprovadoPor ?? undefined,
+        aprovadoPorUserId: d.aprovadoPorUserId ?? undefined,
         assuntosTratados: d.assuntosTratados ?? undefined,
         decisoesTomadas: d.decisoesTomadas ?? undefined,
         observacoes: d.observacoes ?? undefined,
         copiasPara: d.copiasPara,
         presentes: {
-          create: d.presentes.map(p => ({ nome: p.nome, setorEmpresa: p.setorEmpresa ?? undefined })),
+          create: d.presentes.map(p => ({
+            nome: p.nome,
+            setorEmpresa: p.setorEmpresa ?? undefined,
+            userId: p.userId ?? undefined,
+          })),
         },
         acoes: {
           create: d.acoes.map(a => ({
             acao: a.acao,
-            prazo: a.prazo ? new Date(a.prazo) : undefined,
+            prazo: a.prazo ? dateOnly(new Date(a.prazo)) : undefined,
             responsavel: a.responsavel ?? undefined,
+            responsavelUserId: a.responsavelUserId ?? undefined,
           })),
         },
         anexos: {
           create: d.anexos.map(a => ({ nome: a.nome, url: a.url ?? undefined })),
         },
       },
-      include: { presentes: true, acoes: true, anexos: true },
+      include: {
+        presentes: { include: { user: { select: { id: true, name: true, signatureUrl: true } } } },
+        acoes: { include: { responsavelUser: { select: { id: true, name: true, signatureUrl: true } } } },
+        anexos: true,
+      },
     })
   })
 }

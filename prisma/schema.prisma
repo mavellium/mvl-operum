@@ -317,6 +317,11 @@ model User {
   documentVersionsAuthored  DocumentVersion[] @relation("DocumentVersionAuthor")
   documentVersionsApproved  DocumentVersion[] @relation("DocumentVersionApprover")
 
+  atasPresentes            AtaPresente[]
+  atasAcoesResponsaveis    AtaAcao[]           @relation("AtaAcaoResponsavel")
+  atasElaboradas           Ata[]               @relation("AtaElaboradoPor")
+  atasAprovadas            Ata[]               @relation("AtaAprovadoPor")
+
   @@unique([email, tenantId])
 }
 
@@ -649,7 +654,11 @@ model Ata {
   local         String?
   data          DateTime
   elaboradoPor  String
+  elaboradoPorUserId String?
+  elaboradoPorUser   User?    @relation("AtaElaboradoPor", fields: [elaboradoPorUserId], references: [id], onDelete: SetNull)
   aprovadoPor   String?
+  aprovadoPorUserId  String?
+  aprovadoPorUser    User?    @relation("AtaAprovadoPor", fields: [aprovadoPorUserId], references: [id], onDelete: SetNull)
   assuntosTratados String? @db.Text
   decisoesTomadas  String? @db.Text
   observacoes      String? @db.Text
@@ -669,20 +678,24 @@ model Ata {
 }
 
 model AtaPresente {
-  id           String  @id @default(cuid())
+  id           String   @id @default(cuid())
   ataId        String
   nome         String
   setorEmpresa String?
-  ata          Ata     @relation(fields: [ataId], references: [id], onDelete: Cascade)
+  userId       String?
+  user         User?    @relation(fields: [userId], references: [id], onDelete: SetNull)
+  ata          Ata      @relation(fields: [ataId], references: [id], onDelete: Cascade)
 }
 
 model AtaAcao {
-  id          String   @id @default(cuid())
-  ataId       String
-  acao        String
-  prazo       DateTime?
-  responsavel String?
-  ata         Ata      @relation(fields: [ataId], references: [id], onDelete: Cascade)
+  id                  String   @id @default(cuid())
+  ataId               String
+  acao                String   @db.Text
+  prazo               DateTime?
+  responsavel         String?
+  responsavelUserId   String?
+  responsavelUser     User?    @relation("AtaAcaoResponsavel", fields: [responsavelUserId], references: [id], onDelete: SetNull)
+  ata                 Ata      @relation(fields: [ataId], references: [id], onDelete: Cascade)
 }
 
 model AtaAnexo {

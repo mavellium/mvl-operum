@@ -6,7 +6,6 @@ import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } fr
 const useIsomorphicLayoutEffect = typeof window !== 'undefined' ? useLayoutEffect : useEffect
 import { computeLayout, resolveDropPosition, NODE_W, NODE_H } from '@/lib/wbsLayout'
 import type { WbsNodeClient } from '@/types/wbs'
-import { computeRollups } from '@/lib/wbsRollup'
 import { useToast } from '@/components/ui/Toast'
 import ConfirmDialog from '@/components/ui/ConfirmDialog'
 import { WbsProvider, useWbs } from './WbsContext'
@@ -43,7 +42,6 @@ export interface WbsCanvasProps {
   userId: string
   canEdit: boolean
   initialTree: GetTreeResult
-  valorPorMinuto: number
 }
 
 interface DragState {
@@ -62,7 +60,7 @@ interface PendingDrag {
   startY: number
 }
 
-function WbsCanvasInner({ projetoId, canEdit, valorPorMinuto }: { projetoId: string; canEdit: boolean; valorPorMinuto: number }) {
+function WbsCanvasInner({ projetoId, canEdit }: { projetoId: string; canEdit: boolean }) {
   const { state, dispatch } = useWbs()
   const { toast } = useToast()
 
@@ -104,7 +102,6 @@ function WbsCanvasInner({ projetoId, canEdit, valorPorMinuto }: { projetoId: str
   const [nodeWidths, setNodeWidths] = useState<Record<string, number>>({})
   useIsomorphicLayoutEffect(() => { setNodeWidths(measureNodeWidths(state.nodes)) }, [state.nodes])
   const layout = useMemo(() => computeLayout(state.nodes, state.rootId, nodeWidths), [state.nodes, state.rootId, nodeWidths])
-  const rollups = useMemo(() => computeRollups(state.nodes, state.rootId), [state.nodes, state.rootId])
 
   // ── Seguir o card recém-criado: centraliza a tela nele ────────────────────
   useEffect(() => {
@@ -138,6 +135,7 @@ function WbsCanvasInner({ projetoId, canEdit, valorPorMinuto }: { projetoId: str
     if (saveTimerRef.current) clearTimeout(saveTimerRef.current)
     saveTimerRef.current = setTimeout(async () => {
       const s = stateRef.current
+      saveTimerRef.current = null
       dispatch({ type: 'SET_SYNC_STATUS', payload: { status: 'SAVING' } })
       const res = await saveTreeAction({ projetoId, serverVersion: s.sync.serverVersion, rootId: s.rootId, nodes: s.nodes })
       if (res.ok) {
@@ -152,6 +150,38 @@ function WbsCanvasInner({ projetoId, canEdit, valorPorMinuto }: { projetoId: str
     }, 1500)
     return () => { if (saveTimerRef.current) clearTimeout(saveTimerRef.current) }
   }, [state.nodes, canEdit, projetoId, dispatch, toast])
+
+  // Flush de alterações pendentes: o debounce de 1500ms cancela o save no cleanup,
+  // então navegar antes do tempo (back/SPA) perdia a edição silenciosamente.
+  // Este handler grava o estado mais recente de forma imediata ao desmontar ou ao
+  // unload do navegador, evitando a perda total de dados.
+  const flushPendingSaveRef = useRef<() => void>(() => {})
+  useIsomorphicLayoutEffect(() => {
+    flushPendingSaveRef.current = () => {
+      const s = stateRef.current
+      if (!canEdit || s.sync.status === 'IDLE') return
+      if (saveTimerRef.current) { clearTimeout(saveTimerRef.current); saveTimerRef.current = null }
+      saveTreeAction({ projetoId, serverVersion: s.sync.serverVersion, rootId: s.rootId, nodes: s.nodes })
+        .then(res => {
+          if (res.ok) {
+            dispatch({ type: 'SET_SYNC_STATUS', payload: { status: 'IDLE', serverVersion: res.serverVersion, lastSavedAt: Date.now() } })
+          } else if (res.conflict) {
+            dispatch({ type: 'SET_SYNC_STATUS', payload: { status: 'CONFLICT' } })
+          } else {
+            dispatch({ type: 'SET_SYNC_STATUS', payload: { status: 'ERROR' } })
+          }
+        })
+        .catch(() => {})
+    }
+  })
+  useEffect(() => {
+    const flush = () => flushPendingSaveRef.current()
+    window.addEventListener('beforeunload', flush)
+    return () => {
+      window.removeEventListener('beforeunload', flush)
+      flush()
+    }
+  }, [])
 
   // ── Save helpers ────────────────────────────────────────────────────────────
   const handleManualSave = useCallback(async () => {
@@ -661,7 +691,6 @@ function WbsCanvasInner({ projetoId, canEdit, valorPorMinuto }: { projetoId: str
                   isSelected={state.selectedNodeIds.includes(node.id)}
                   isEditing={state.editingNodeId === node.id}
                   editingInitialText={state.editingNodeId === node.id ? state.editingInitialText : undefined}
-                  rollup={rollups[node.id]}
                   isDragTarget={drag?.targetId === node.id}
                   onSelect={handleNodeSelect}
                   dispatch={dispatch}
@@ -706,11 +735,9 @@ function WbsCanvasInner({ projetoId, canEdit, valorPorMinuto }: { projetoId: str
           <WbsPropertiesPanel
             selectedNodeIds={state.selectedNodeIds}
             nodes={state.nodes}
-            rollups={rollups}
             canEdit={canEdit}
             dispatch={dispatch}
             onClose={() => setShowStylePanel(false)}
-            valorPorMinuto={valorPorMinuto}
           />
         )}
       </div>
@@ -804,10 +831,10 @@ function WbsCanvasInner({ projetoId, canEdit, valorPorMinuto }: { projetoId: str
   )
 }
 
-export default function WbsCanvas({ initialTree, projetoId, canEdit, valorPorMinuto }: WbsCanvasProps) {
+export default function WbsCanvas({ initialTree, projetoId, canEdit }: WbsCanvasProps) {
   return (
     <WbsProvider initialTree={initialTree}>
-      <WbsCanvasInner projetoId={projetoId} canEdit={canEdit} valorPorMinuto={valorPorMinuto} />
+      <WbsCanvasInner projetoId={projetoId} canEdit={canEdit} />
     </WbsProvider>
   )
 }

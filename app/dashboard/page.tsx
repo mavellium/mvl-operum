@@ -6,6 +6,8 @@ import UserRankingTable from '@/components/dashboard/UserRankingTable'
 import MemberMetricsTable from '@/components/dashboard/MemberMetricsTable'
 import OverdueCardsList from '@/components/dashboard/OverdueCardsList'
 import Link from 'next/link'
+import { redirect } from 'next/navigation'
+import { verifySession } from '@/lib/dal'
 import type { Metadata } from 'next'
 
 export const dynamic = 'force-dynamic'
@@ -22,6 +24,9 @@ function formatCurrency(v: number) {
 }
 
 export default async function DashboardPage() {
+  const { role } = await verifySession()
+  if (role === 'admin') redirect('/admin/dashboard')
+
   const result = await getDashboardDataAction()
 
   if ('error' in result) {

@@ -72,7 +72,7 @@ describe('signupAction', () => {
     expect(cookieStore.set).toHaveBeenCalledWith(
       'session',
       'jwt-token',
-      expect.objectContaining({ httpOnly: true }),
+      expect.objectContaining({ httpOnly: true, maxAge: 60 * 60 * 24 * 7 }),
     )
   })
 })
@@ -98,7 +98,7 @@ describe('loginAction', () => {
     expect(cookieStore.set).toHaveBeenCalledWith(
       'session',
       'jwt-token',
-      expect.objectContaining({ httpOnly: true, sameSite: 'strict' }),
+      expect.objectContaining({ httpOnly: true, sameSite: 'strict', maxAge: 60 * 60 * 24 * 7 }),
     )
   })
 

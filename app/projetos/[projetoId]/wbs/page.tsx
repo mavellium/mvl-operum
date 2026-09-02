@@ -22,9 +22,6 @@ export default async function WbsPage({
   if (!projeto) notFound()
 
   const canEdit = role === 'admin' || await isProjectManager(userId, projetoId)
-  const valorReferencia = projeto.valorReferencia ?? 4000
-  const horasPorDia = projeto.horasPorDia ?? 8
-  const valorPorMinuto = Math.round(valorReferencia / (horasPorDia * 22 * 60) * 10000) / 10000
   let initialTree = await getTree(projetoId, tenantId)
 
   // Auto-initialize on first access
@@ -40,7 +37,6 @@ export default async function WbsPage({
       userId={userId}
       canEdit={canEdit}
       initialTree={initialTree}
-      valorPorMinuto={valorPorMinuto}
     />
   )
 }

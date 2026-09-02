@@ -1,8 +1,8 @@
 'use client'
 
-import { useEffect, useRef, useState, useTransition } from 'react'
+import { useEffect, useState, useTransition } from 'react'
 import Link from 'next/link'
-import { PanelLeftClose } from 'lucide-react'
+import { PanelLeftClose, LogOut } from 'lucide-react'
 import UserAvatar from '@/components/user/UserAvatar'
 import GlobalSearch from '@/components/search/GlobalSearch'
 import TenantSwitcher from '@/components/layout/TenantSwitcher'
@@ -18,6 +18,7 @@ interface SidebarLayoutProps {
   collapsed?: boolean
   animated?: boolean
   onToggleCollapse?: () => void
+  logoHref?: string
   children: React.ReactNode
 }
 
@@ -30,6 +31,7 @@ interface SidebarLayoutProps {
  * `collapsed` recolhe com animação de largura (o conteúdo desliza para fora).
  * `animated` só liga as transições depois do primeiro paint (para não animar
  * ao restaurar o estado salvo no localStorage).
+ * `logoHref` personaliza o destino da logo (ex.: admin → /admin/dashboard).
  */
 export default function SidebarLayout({
   title,
@@ -39,21 +41,12 @@ export default function SidebarLayout({
   collapsed = false,
   animated = false,
   onToggleCollapse,
+  logoHref = '/',
   children,
 }: SidebarLayoutProps) {
   const [user, setUser] = useState<{ name: string; avatarUrl?: string | null; role?: string } | null>(null)
   const [unreadCount, setUnreadCount] = useState(0)
-  const [userMenuOpen, setUserMenuOpen] = useState(false)
-  const userMenuRef = useRef<HTMLDivElement>(null)
   const [isPending, startTransition] = useTransition()
-
-  useEffect(() => {
-    function handleClickOutside(e: MouseEvent) {
-      if (userMenuRef.current && !userMenuRef.current.contains(e.target as Node)) setUserMenuOpen(false)
-    }
-    document.addEventListener('mousedown', handleClickOutside)
-    return () => document.removeEventListener('mousedown', handleClickOutside)
-  }, [])
 
   useEffect(() => {
     fetchWithSession('/api/me')
@@ -88,7 +81,7 @@ export default function SidebarLayout({
       >
       {/* Logo do software + ícone hambúrguer */}
       <div className="flex items-center gap-2 px-3 pt-3 pb-2">
-        <Link href="/" className="flex items-center gap-2 min-w-0 flex-1" aria-label="Operum">
+        <Link href={logoHref} className="flex items-center gap-2 min-w-0 flex-1" aria-label="Operum">
           <div className="w-8 h-8 bg-gradient-to-br from-blue-500 to-violet-600 rounded-lg shadow-sm flex items-center justify-center shrink-0">
             <svg className="w-4 h-4 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 17V7m0 10a2 2 0 01-2 2H5a2 2 0 01-2-2V7a2 2 0 012-2h2a2 2 0 012 2m0 10a2 2 0 002 2h2a2 2 0 002-2M9 7a2 2 0 012-2h2a2 2 0 012 2m0 10V7m0 10a2 2 0 002 2h2a2 2 0 002-2V7a2 2 0 00-2-2h-2a2 2 0 00-2 2" />
@@ -149,31 +142,25 @@ export default function SidebarLayout({
             <TenantSwitcher />
           </div>
 
-          <div className="relative" ref={userMenuRef}>
+          <Link
+            href="/perfil"
+            aria-label="Meu perfil"
+            className="rounded-full p-0.5 hover:bg-gray-100 transition-colors focus:outline-none focus:ring-2 focus:ring-blue-100"
+          >
+            <UserAvatar name={user?.name} avatarUrl={user?.avatarUrl} size="sm" />
+          </Link>
+
+          <Tooltip label="Sair" side="bottom">
             <button
-              onClick={() => setUserMenuOpen(v => !v)}
-              className="rounded-full p-0.5 hover:bg-gray-100 transition-colors focus:outline-none focus:ring-2 focus:ring-blue-100"
-              aria-label="Menu do usuário"
+              type="button"
+              onClick={() => startTransition(() => logoutAction())}
+              disabled={isPending}
+              aria-label="Sair"
+              className="shrink-0 p-1.5 text-gray-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors cursor-pointer disabled:opacity-50"
             >
-              <UserAvatar name={user?.name} avatarUrl={user?.avatarUrl} size="sm" />
+              <LogOut className="w-4 h-4" />
             </button>
-            {userMenuOpen && (
-              <div className="absolute right-0 bottom-full mb-2 w-48 bg-white rounded-xl shadow-lg border border-gray-100 py-1 z-50 animate-in fade-in slide-in-from-bottom-2">
-                <Link href="/perfil" className="flex items-center gap-2 px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 transition-colors" onClick={() => setUserMenuOpen(false)}>Meu Perfil</Link>
-                <Link href="/dashboard" className="flex items-center gap-2 px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 transition-colors" onClick={() => setUserMenuOpen(false)}>Dashboard</Link>
-                {user?.role === 'admin' && (
-                  <Link href="/admin" className="flex items-center gap-2 px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 transition-colors" onClick={() => setUserMenuOpen(false)}>Painel Admin</Link>
-                )}
-                <button
-                  onClick={() => startTransition(() => logoutAction())}
-                  disabled={isPending}
-                  className="w-full text-left px-4 py-2 text-sm text-red-600 hover:bg-red-50 transition-colors font-medium disabled:opacity-50"
-                >
-                  {isPending ? 'Saindo...' : 'Sair'}
-                </button>
-              </div>
-            )}
-          </div>
+          </Tooltip>
         </div>
       </div>
       </div>

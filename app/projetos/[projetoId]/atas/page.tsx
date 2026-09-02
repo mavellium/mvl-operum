@@ -12,7 +12,11 @@ export const dynamic = 'force-dynamic'
 
 export const metadata: Metadata = { title: 'Atas de Reunião' }
 
-const fmtDate = (d: Date) => d.toLocaleDateString('pt-BR')
+const fmtDate = (d: Date | null | undefined): string => {
+  if (!d) return '—'
+  const parsed = new Date(d)
+  return Number.isNaN(parsed.getTime()) ? '—' : parsed.toLocaleDateString('pt-BR')
+}
 
 export default async function AtasPage({ params }: { params: Promise<{ projetoId: string }> }) {
   const { projetoId } = await params
@@ -29,7 +33,18 @@ export default async function AtasPage({ params }: { params: Promise<{ projetoId
     if (!entry?.active) notFound()
   }
 
-  const ataList = await listarAtasPorProjeto(projetoId)
+  // Memória: no ambiente do cliente a listagem já quebrou com 500 por dado
+  // específico (migration de Ata não aplicada, ata incompleta, relação ausente).
+  // Em vez de 500, mostramos um estado informativo e seguimos com o restante da página.
+  let ataList: Awaited<ReturnType<typeof listarAtasPorProjeto>> = []
+  let loadError: string | null = null
+  try {
+    ataList = await listarAtasPorProjeto(projetoId)
+  } catch (err) {
+    console.error('[AtasPage] falha ao listar atas:', err)
+    loadError = 'Não foi possível carregar as atas agora. Tente novamente em instantes.'
+  }
+
   const gerente = (await isProjectManager(userId, projetoId)) || role === 'admin'
 
   return (
@@ -48,12 +63,21 @@ export default async function AtasPage({ params }: { params: Promise<{ projetoId
           </Link>
         </div>
 
-        {ataList.length === 0 ? (
+        {loadError && (
+          <div className="rounded-xl border border-amber-200 bg-amber-50 p-6 text-sm text-amber-800">
+            <p className="font-medium">Atas indisponíveis</p>
+            <p className="mt-1 text-amber-700">
+              {loadError} Se o problema persistir, verifique se as migrações de banco foram aplicadas no ambiente.
+            </p>
+          </div>
+        )}
+
+        {!loadError && ataList.length === 0 ? (
           <div className="bg-white rounded-xl border border-gray-200 p-10 text-center">
             <p className="text-gray-500">Nenhuma ata registrada ainda.</p>
             <p className="text-sm text-gray-400 mt-1">Clique em “+ Nova Ata” para criar a primeira.</p>
           </div>
-        ) : (
+        ) : !loadError ? (
           <div className="space-y-3">
             {ataList.map(ata => (
               <div
@@ -62,12 +86,12 @@ export default async function AtasPage({ params }: { params: Promise<{ projetoId
               >
                 <div className="flex items-center gap-4 flex-1">
                   <div className="w-11 h-11 rounded-lg bg-blue-50 text-blue-700 flex items-center justify-center text-sm font-bold">
-                    {String(ata.numero).padStart(2, '0')}
+                    {String(ata.numero ?? 0).padStart(2, '0')}
                   </div>
                   <div>
                     <p className="font-medium text-gray-900">{fmtDate(ata.data)}</p>
                     <p className="text-sm text-gray-500">
-                      Elaborado por {ata.elaboradoPor}
+                      Elaborado por {ata.elaboradoPor || '—'}
                       {ata.local ? ` · ${ata.local}` : ''}
                     </p>
                   </div>
@@ -90,7 +114,7 @@ export default async function AtasPage({ params }: { params: Promise<{ projetoId
                     <form
                       action={async () => { await removerAtaAction(ata.id, projetoId) }}
                       onSubmit={e => {
-                        if (!confirm(`Remover a ata ${String(ata.numero).padStart(2, '0')}?`)) e.preventDefault()
+                        if (!confirm(`Remover a ata ${String(ata.numero ?? 0).padStart(2, '0')}?`)) e.preventDefault()
                       }}
                     >
                       <button
@@ -105,7 +129,7 @@ export default async function AtasPage({ params }: { params: Promise<{ projetoId
               </div>
             ))}
           </div>
-        )}
+        ) : null}
       </main>
     </div>
   )

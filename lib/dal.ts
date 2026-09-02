@@ -59,7 +59,7 @@ export const verifyProjectAccess = cache(async () => {
  */
 export async function resolveProjectDestination(): Promise<string | null> {
   const { userId, role } = await verifySession()
-  if (role === 'admin') return '/admin'
+  if (role === 'admin') return '/admin/dashboard'
 
   const { projectsApi } = await import('./api-client')
   const projects = await projectsApi.getUserProjects(userId).catch(() => [] as unknown[]) as { projectId: string }[]

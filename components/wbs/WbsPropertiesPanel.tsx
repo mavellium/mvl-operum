@@ -2,18 +2,15 @@
 
 import { useEffect, useRef, useState, type Dispatch } from 'react'
 import { X } from 'lucide-react'
-import type { WbsNodeClient, WbsRollup, WbsNodeStyle, WbsNodeProperties, WbsLayoutOrientation } from '@/types/wbs'
+import type { WbsNodeClient, WbsNodeStyle, WbsLayoutOrientation } from '@/types/wbs'
 import type { WbsAction } from '@/lib/wbsReducer'
-import { custoFolhaPrevisto, custoFolhaRealizado } from '@/lib/custosCalc'
 
 interface Props {
   selectedNodeIds: string[]
   nodes: Record<string, WbsNodeClient>
-  rollups: Record<string, WbsRollup>
   canEdit: boolean
   dispatch: Dispatch<WbsAction>
   onClose: () => void
-  valorPorMinuto: number
 }
 
 // ── Layout helpers ─────────────────────────────────────────────────────────────
@@ -43,6 +40,13 @@ function FieldRow({ label, children }: { label: string; children: React.ReactNod
   )
 }
 
+// ── Paleta básica padrão Office (Tema + Padrão) — §E.2 ────────────────────────
+
+const OFFICE_PALETTE = [
+  '#FFFFFF', '#000000', '#E7E6E6', '#44546A', '#4472C4', '#ED7D31', '#A5A5A5', '#FFC000', '#5B9BD5', '#70AD47',
+  '#C00000', '#FF0000', '#FFC000', '#FFFF00', '#92D050', '#00B050', '#00B0F0', '#0070C0', '#002060', '#7030A0',
+]
+
 // ── Color picker + hex text (sincronizados) ────────────────────────────────────
 
 function ColorField({
@@ -65,24 +69,45 @@ function ColorField({
 
   return (
     <FieldRow label={label}>
-      <div className="flex items-center gap-1.5">
-        <input
-          type="color"
-          value={value}
-          disabled={disabled}
-          onChange={e => onChange(e.target.value)}
-          className="w-7 h-7 rounded border border-gray-200 p-0.5 cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
-        />
-        <input
-          type="text"
-          value={mixed ? '' : localHex}
-          maxLength={7}
-          placeholder={mixed ? '—' : '#000000'}
-          disabled={disabled}
-          onChange={e => handleHex(e.target.value)}
-          onBlur={() => { if (!/^#[0-9a-fA-F]{6}$/.test(localHex)) setLocalHex(value) }}
-          className="w-16 text-[11px] font-mono border border-gray-200 rounded px-1.5 py-1 text-gray-800 focus:outline-none focus:ring-1 focus:ring-blue-400 disabled:bg-gray-50 disabled:text-gray-400"
-        />
+      <div className="flex flex-col items-end gap-1.5">
+        <div className="flex items-center gap-1.5">
+          <input
+            type="color"
+            value={value}
+            disabled={disabled}
+            onChange={e => onChange(e.target.value)}
+            className="w-7 h-7 rounded border border-gray-200 p-0.5 cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
+          />
+          <input
+            type="text"
+            value={mixed ? '' : localHex}
+            maxLength={7}
+            placeholder={mixed ? '—' : '#000000'}
+            disabled={disabled}
+            onChange={e => handleHex(e.target.value)}
+            onBlur={() => { if (!/^#[0-9a-fA-F]{6}$/.test(localHex)) setLocalHex(value) }}
+            className="w-16 text-[11px] font-mono border border-gray-200 rounded px-1.5 py-1 text-gray-800 focus:outline-none focus:ring-1 focus:ring-blue-400 disabled:bg-gray-50 disabled:text-gray-400"
+          />
+        </div>
+        <div className="flex flex-wrap max-w-[168px] gap-[3px]">
+          {OFFICE_PALETTE.map(c => {
+            const active = !mixed && value.toLowerCase() === c.toLowerCase()
+            return (
+              <button
+                key={c}
+                type="button"
+                title={c}
+                disabled={disabled}
+                onClick={() => onChange(c)}
+                className={`w-4 h-4 rounded-sm border shrink-0 cursor-pointer disabled:cursor-not-allowed transition-transform hover:scale-125 ${
+                  active ? 'border-blue-500 ring-1 ring-blue-300' : 'border-gray-200'
+                }`}
+                style={{ backgroundColor: c }}
+                aria-label={`Paleta ${c}`}
+              />
+            )
+          })}
+        </div>
       </div>
     </FieldRow>
   )
@@ -117,53 +142,6 @@ function NumField({
   )
 }
 
-// ── Número editável tolerante a vazio (Planilha de Custos) ────────────────────
-// Evita o bug de input controlado: permite limpar o campo ('' → undefined) e
-// redigitar sem o valor "saltar" de volta.
-function CustosNum({
-  label, value, min, max, step, suffix, disabled, placeholder, title: tooltip, onChange,
-}: {
-  label: string; value: number | undefined; min: number; max?: number; step?: number;
-  suffix?: string; disabled?: boolean; placeholder?: string; title?: string;
-  onChange: (v: number | undefined) => void
-}) {
-  const [prevValue, setPrevValue] = useState(value)
-  const [text, setText] = useState(value === undefined ? '' : String(value))
-
-  // Sincroniza o texto local apenas quando o valor externo muda de fato — assim o
-  // campo nunca "salta de volta" enquanto o usuário digita/apaga.
-  if (value !== prevValue) {
-    setPrevValue(value)
-    setText(value === undefined ? '' : String(value))
-  }
-
-  const commit = (raw: string) => {
-    setText(raw)
-    if (raw === '') { onChange(undefined); return }
-    const n = Number(raw.replace(',', '.'))
-    if (!Number.isNaN(n)) onChange(n)
-  }
-
-  return (
-    <FieldRow label={label}>
-      <div className="flex items-center gap-1" title={tooltip}>
-        <input
-          type="number"
-          min={min}
-          max={max}
-          step={step ?? 1}
-          value={text}
-          disabled={disabled}
-          placeholder={placeholder ?? String(min)}
-          onChange={e => commit(e.target.value)}
-          className="w-14 text-[11px] text-right border border-gray-200 rounded px-1.5 py-1 text-gray-800 focus:outline-none focus:ring-1 focus:ring-blue-400 disabled:bg-gray-50 disabled:text-gray-400 disabled:cursor-not-allowed"
-        />
-        {suffix && <span className="text-[11px] text-gray-400 shrink-0">{suffix}</span>}
-      </div>
-    </FieldRow>
-  )
-}
-
 // ── Helpers de valor comum ─────────────────────────────────────────────────────
 
 function commonStr(nodes: WbsNodeClient[], selector: (n: WbsNodeClient) => string): { same: true; value: string } | { same: false; value: string } {
@@ -178,49 +156,9 @@ function commonNum(nodes: WbsNodeClient[], selector: (n: WbsNodeClient) => numbe
   return vals.every(v => v === first) ? { same: true, value: first } : { same: false, value: first }
 }
 
-function commonPropNum(nodes: WbsNodeClient[], key: keyof WbsNodeProperties): { same: true; value: number | undefined } | { same: false; value: number | undefined } {
-  const vals = nodes.map(n => n.properties[key] as number | undefined)
-  const first = vals[0]
-  return vals.every(v => v === first) ? { same: true, value: first } : { same: false, value: first }
-}
-
-/** Custo derivado médio dos nós selecionados (folhas), conforme §5.4. */
-function derivedLeafCost(nodes: WbsNodeClient[], valorPorMinuto: number, modo: 'prev' | 'real'): number {
-  const leaves = nodes.filter(n => n.childrenIds.length === 0)
-  if (leaves.length === 0) return 0
-  const total = leaves.reduce((acc, n) => {
-    const p = n.properties
-    const v = modo === 'prev'
-      ? custoFolhaPrevisto(p.tempoMinutos ?? 0, valorPorMinuto, p.materiais ?? 0)
-      : custoFolhaRealizado(p.tempoRealMinutos ?? 0, valorPorMinuto, p.materiaisReal ?? 0)
-    return acc + v
-  }, 0)
-  return total
-}
-
-/** Custo derivado de todos os descendentes-folha a partir de um nó (Σ, para pais). */
-function subtreeDerivedCost(nodes: Record<string, WbsNodeClient>, nodeId: string, valorPorMinuto: number, modo: 'prev' | 'real'): number {
-  let total = 0
-  const stack: string[] = [nodeId]
-  while (stack.length > 0) {
-    const id = stack.pop()!
-    const node = nodes[id]
-    if (!node) continue
-    if (node.childrenIds.length === 0) {
-      const p = node.properties
-      total += modo === 'prev'
-        ? custoFolhaPrevisto(p.tempoMinutos ?? 0, valorPorMinuto, p.materiais ?? 0)
-        : custoFolhaRealizado(p.tempoRealMinutos ?? 0, valorPorMinuto, p.materiaisReal ?? 0)
-    } else {
-      stack.push(...node.childrenIds)
-    }
-  }
-  return total
-}
-
 // ── Painel principal ───────────────────────────────────────────────────────────
 
-export default function WbsPropertiesPanel({ selectedNodeIds, nodes, rollups, canEdit, dispatch, onClose, valorPorMinuto }: Props) {
+export default function WbsPropertiesPanel({ selectedNodeIds, nodes, canEdit, dispatch, onClose }: Props) {
   const panelRef = useRef<HTMLDivElement>(null)
 
   // Fecha ao clicar fora ou pressionar Escape — é um popover, não faz mais parte do fluxo do canvas.
@@ -243,8 +181,6 @@ export default function WbsPropertiesPanel({ selectedNodeIds, nodes, rollups, ca
   const count = selectedNodes.length
   if (count === 0) return null
 
-  const anyParent = selectedNodes.some(n => n.childrenIds.length > 0)
-
   // ── Valores comuns de estilo ──
   const bgC = commonStr(selectedNodes, n => n.style.backgroundColor)
   const bcC = commonStr(selectedNodes, n => n.style.borderColor)
@@ -254,38 +190,8 @@ export default function WbsPropertiesPanel({ selectedNodeIds, nodes, rollups, ca
   const brC = commonNum(selectedNodes, n => n.style.borderRadius)
   const layoutC = commonStr(selectedNodes, n => n.layout)
 
-  // ── Valores comuns de propriedades ──
-  const durC = commonPropNum(selectedNodes, 'durationDays')
-  const tempoC = commonPropNum(selectedNodes, 'tempoMinutos')
-  const matC = commonPropNum(selectedNodes, 'materiais')
-  const tempoRealC = commonPropNum(selectedNodes, 'tempoRealMinutos')
-  const matRealC = commonPropNum(selectedNodes, 'materiaisReal')
-  const pctC = commonPropNum(selectedNodes, 'percentualConclusao')
-
-  // Rollup do primeiro selecionado (para exibição quando é pai)
-  const firstRollup = rollups[selectedNodes[0]?.id]
-
   const updateStyle = (patch: Partial<WbsNodeStyle>) => {
     dispatch({ type: 'UPDATE_STYLE', payload: { style: patch } })
-  }
-
-  const updateProps = (patch: Partial<WbsNodeProperties>) => {
-    // Aplica a todos selecionados que forem folhas (cost/duration) ou a todos (desc/owner)
-    for (const id of selectedNodeIds) {
-      dispatch({ type: 'UPDATE_PROPERTIES', payload: { nodeId: id, properties: patch } })
-    }
-  }
-
-  // Atualiza um campo de custo derivado (tempo/materiais) e recalcula `cost`,
-  // mantendo a exibição do nó e os rollups coerentes com a Planilha (§5.4).
-  const updateDerivedField = (patch: Partial<WbsNodeProperties>) => {
-    for (const id of selectedNodeIds) {
-      const n = nodes[id]
-      if (!n || n.childrenIds.length > 0) continue
-      const merged = { ...n.properties, ...patch }
-      const cost = custoFolhaPrevisto(merged.tempoMinutos ?? 0, valorPorMinuto, merged.materiais ?? 0)
-      dispatch({ type: 'UPDATE_PROPERTIES', payload: { nodeId: id, properties: { ...patch, cost } } })
-    }
   }
 
   const updateLayout = (layout: WbsLayoutOrientation) => {
@@ -293,8 +199,6 @@ export default function WbsPropertiesPanel({ selectedNodeIds, nodes, rollups, ca
       dispatch({ type: 'SET_LAYOUT', payload: { nodeId: id, layout } })
     }
   }
-
-  const LEAF_ONLY_TOOLTIP = 'Editável apenas em elementos folha'
 
   return (
     <div
@@ -404,127 +308,6 @@ export default function WbsPropertiesPanel({ selectedNodeIds, nodes, rollups, ca
               </button>
             </div>
           )}
-        </Section>
-
-        <div className="border-t border-gray-100 my-1" />
-
-        {/* ─── PROPRIEDADES ─── */}
-        <Section title="Propriedades">
-          {/* Custo derivado (§5.4): tempo × valorPorMinuto + materiais */}
-          <FieldRow label="Custo previsto">
-            {anyParent && count === 1 ? (
-              <div className="text-right">
-                <span className="text-xs font-semibold text-gray-700">
-                  {subtreeDerivedCost(nodes, selectedNodes[0].id, valorPorMinuto, 'prev')
-                    .toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}
-                </span>
-                <span className="ml-1 text-[10px] text-blue-500">Σ</span>
-              </div>
-            ) : (
-              <div className="text-right" title={anyParent ? LEAF_ONLY_TOOLTIP : 'Derivado: tempo × valor/h ÷ 60 + materiais'}>
-                <span className="text-xs font-semibold text-gray-700">
-                  {derivedLeafCost(selectedNodes, valorPorMinuto, 'prev')
-                    .toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}
-                </span>
-              </div>
-            )}
-          </FieldRow>
-
-          <FieldRow label="Custo realizado">
-            <div className="text-right" title={anyParent ? LEAF_ONLY_TOOLTIP : 'Derivado: tempo real × valor/h ÷ 60 + materiais reais'}>
-              <span className="text-xs font-semibold text-gray-700">
-                {derivedLeafCost(selectedNodes, valorPorMinuto, 'real')
-                  .toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}
-              </span>
-            </div>
-          </FieldRow>
-
-          <CustosNum
-            label="Tempo previsto (min)"
-            value={tempoC.same ? tempoC.value : undefined}
-            min={0} step={1}
-            placeholder={!tempoC.same ? '—' : '0'}
-            title={anyParent ? LEAF_ONLY_TOOLTIP : undefined}
-            disabled={!canEdit || anyParent}
-            onChange={v => updateDerivedField({ tempoMinutos: v })}
-          />
-          <CustosNum
-            label="Materiais previstos (R$)"
-            value={matC.same ? matC.value : undefined}
-            min={0} step={0.01}
-            placeholder={!matC.same ? '—' : '0,00'}
-            title={anyParent ? LEAF_ONLY_TOOLTIP : undefined}
-            disabled={!canEdit || anyParent}
-            onChange={v => updateDerivedField({ materiais: v })}
-          />
-          <CustosNum
-            label="Tempo realizado (min)"
-            value={tempoRealC.same ? tempoRealC.value : undefined}
-            min={0} step={1}
-            placeholder={!tempoRealC.same ? '—' : '0'}
-            title={anyParent ? LEAF_ONLY_TOOLTIP : undefined}
-            disabled={!canEdit || anyParent}
-            onChange={v => updateProps({ tempoRealMinutos: v })}
-          />
-          <CustosNum
-            label="Materiais realizados (R$)"
-            value={matRealC.same ? matRealC.value : undefined}
-            min={0} step={0.01}
-            placeholder={!matRealC.same ? '—' : '0,00'}
-            title={anyParent ? LEAF_ONLY_TOOLTIP : undefined}
-            disabled={!canEdit || anyParent}
-            onChange={v => updateProps({ materiaisReal: v })}
-          />
-          <CustosNum
-            label="% concluído"
-            value={pctC.same ? pctC.value : undefined}
-            min={0} max={100} step={1} suffix="%"
-            placeholder={!pctC.same ? '—' : '0'}
-            title={anyParent ? LEAF_ONLY_TOOLTIP : undefined}
-            disabled={!canEdit || anyParent}
-            onChange={v => updateProps({ percentualConclusao: v })}
-          />
-
-          {/* Duração */}
-          <FieldRow label="Duração (dias)">
-            {anyParent && count === 1 ? (
-              <div className="text-right">
-                <span className="text-xs font-semibold text-gray-700">
-                  {firstRollup ? `${firstRollup.durationDays}d` : '—'}
-                </span>
-                <span className="ml-1 text-[10px] text-blue-500">Σ</span>
-              </div>
-            ) : (
-              <div title={anyParent ? LEAF_ONLY_TOOLTIP : undefined}>
-                <input
-                  type="number"
-                  min={0}
-                  step={1}
-                  value={durC.same ? (durC.value ?? '') : ''}
-                  placeholder={!durC.same ? '—' : '0'}
-                  disabled={!canEdit || anyParent}
-                  onChange={e => {
-                    const v = e.target.value === '' ? undefined : Math.max(0, Number(e.target.value))
-                    updateProps({ durationDays: v })
-                  }}
-                  className="w-24 text-[11px] text-right border border-gray-200 rounded px-1.5 py-1 text-gray-800 focus:outline-none focus:ring-1 focus:ring-blue-400 disabled:bg-gray-50 disabled:text-gray-400 disabled:cursor-not-allowed"
-                />
-              </div>
-            )}
-          </FieldRow>
-
-          {/* Descrição */}
-          <div className="mb-2">
-            <span className="text-[11px] text-gray-600 block mb-1">Descrição</span>
-            <textarea
-              value={count === 1 ? (selectedNodes[0].properties.description ?? '') : ''}
-              disabled={!canEdit || count > 1}
-              rows={3}
-              placeholder={count > 1 ? '(múltiplos)' : 'Descreva este elemento…'}
-              onChange={e => updateProps({ description: e.target.value || undefined })}
-              className="w-full text-[11px] border border-gray-200 rounded px-2 py-1 resize-none text-gray-800 focus:outline-none focus:ring-1 focus:ring-blue-400 disabled:bg-gray-50 disabled:text-gray-400"
-            />
-          </div>
         </Section>
       </div>
     </div>

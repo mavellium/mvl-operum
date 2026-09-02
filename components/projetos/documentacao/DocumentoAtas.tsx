@@ -45,7 +45,11 @@ function RemoverAtaButton({ ataId, projetoId, numero }: { ataId: string; projeto
   )
 }
 
-const fmtDate = (d: string) => new Date(d).toLocaleDateString('pt-BR')
+const fmtDate = (d: string | null | undefined): string => {
+  if (!d) return '—'
+  const parsed = new Date(d)
+  return Number.isNaN(parsed.getTime()) ? '—' : parsed.toLocaleDateString('pt-BR')
+}
 
 export default function DocumentoAtas({ projetoId, atas, gerente }: Props) {
   return (
@@ -82,7 +86,7 @@ export default function DocumentoAtas({ projetoId, atas, gerente }: Props) {
                 <div>
                   <p className="font-medium text-gray-900">{fmtDate(ata.data)}</p>
                   <p className="text-sm text-gray-500">
-                    Elaborado por {ata.elaboradoPor}
+                    Elaborado por {ata.elaboradoPor || '—'}
                     {ata.local ? ` · ${ata.local}` : ''}
                   </p>
                 </div>

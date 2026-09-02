@@ -3,12 +3,14 @@ import { z } from 'zod'
 export const AtaPresenteSchema = z.object({
   nome: z.string().trim().min(1, 'Nome obrigatório').max(200),
   setorEmpresa: z.string().trim().max(200).optional().nullable(),
+  userId: z.string().min(1).optional().nullable(),
 })
 
 export const AtaAcaoSchema = z.object({
   acao: z.string().trim().min(1, 'Ação obrigatória').max(1000),
   prazo: z.string().datetime().optional().nullable(),
   responsavel: z.string().trim().max(200).optional().nullable(),
+  responsavelUserId: z.string().min(1).optional().nullable(),
 })
 
 export const AtaAnexoSchema = z.object({
@@ -21,7 +23,9 @@ export const CriarAtaSchema = z.object({
   local: z.string().trim().max(200).optional().nullable(),
   data: z.string().datetime(),
   elaboradoPor: z.string().trim().min(1, 'Elaborado por obrigatório').max(200),
+  elaboradoPorUserId: z.string().min(1).optional().nullable(),
   aprovadoPor: z.string().trim().max(200).optional().nullable(),
+  aprovadoPorUserId: z.string().min(1).optional().nullable(),
   assuntosTratados: z.string().max(10000).optional().nullable(),
   decisoesTomadas: z.string().max(10000).optional().nullable(),
   observacoes: z.string().max(10000).optional().nullable(),

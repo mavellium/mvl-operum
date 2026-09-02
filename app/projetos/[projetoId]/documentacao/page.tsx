@@ -26,7 +26,12 @@ export default async function DocumentacaoPage({ params }: { params: Promise<{ p
     if (!entry?.active) notFound()
   }
 
-  const atas = await listarAtasPorProjeto(projetoId)
+  let atas: Awaited<ReturnType<typeof listarAtasPorProjeto>> = []
+  try {
+    atas = await listarAtasPorProjeto(projetoId)
+  } catch (err) {
+    console.error('[DocumentacaoPage] falha ao listar atas:', err)
+  }
   const gerente = (await isProjectManager(userId, projetoId)) || role === 'admin'
 
   return (
@@ -36,8 +41,8 @@ export default async function DocumentacaoPage({ params }: { params: Promise<{ p
         atas={atas.map(a => ({
           id: a.id,
           numero: a.numero,
-          data: a.data.toISOString(),
-          elaboradoPor: a.elaboradoPor,
+          data: (a.data ?? a.createdAt)?.toISOString() ?? '',
+          elaboradoPor: a.elaboradoPor ?? '',
           local: a.local,
         }))}
         gerente={gerente}

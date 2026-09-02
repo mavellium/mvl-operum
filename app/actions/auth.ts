@@ -72,7 +72,7 @@ export async function signupAction(prevState: FormState, formData: FormData): Pr
       httpOnly: true,
       secure: process.env.NODE_ENV === 'production',
       sameSite: 'strict',
-      expires: expiresAt,
+      maxAge: 60 * 60 * 24 * 7, // 7 dias — coincidindo com o TTL do JWT
       path: '/',
     })
   } catch (err) {
@@ -102,13 +102,12 @@ export async function loginAction(prevState: FormState, formData: FormData): Pro
   try {
     const result = await authServiceLogin(email, password, subdomain)
     forcePasswordChange = result.forcePasswordChange
-    const expiresAt = new Date(Date.now() + SESSION_DURATION_MS)
     const cookieStore = await cookies()
     cookieStore.set('session', result.token, {
       httpOnly: true,
       secure: process.env.NODE_ENV === 'production',
       sameSite: 'strict',
-      expires: expiresAt,
+      maxAge: 60 * 60 * 24 * 7, // 7 dias — coincidindo com o TTL do JWT
       path: '/',
     })
     const { role, id: userId } = result.user
@@ -250,12 +249,11 @@ export async function switchTenantAction(targetTenantId: string) {
   })
 
   const cookieStore = await cookies()
-  const expiresAt = new Date(Date.now() + SESSION_DURATION_MS)
   cookieStore.set('session', result.token, {
     httpOnly: true,
     secure: process.env.NODE_ENV === 'production',
     sameSite: 'strict',
-    expires: expiresAt,
+    maxAge: 60 * 60 * 24 * 7, // 7 dias — coincidindo com o TTL do JWT
     path: '/',
   })
 

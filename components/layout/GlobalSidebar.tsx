@@ -3,16 +3,27 @@
 import { useEffect, useState } from 'react'
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
-import { LayoutDashboard, FolderKanban, Paperclip, BellRing, PanelLeftOpen, Users } from 'lucide-react'
+import { LayoutDashboard, FolderKanban, Paperclip, PanelLeftOpen, Users, Building2, Briefcase, Landmark, Code2 } from 'lucide-react'
 import Tooltip from '@/components/ui/Tooltip'
 import SidebarLayout from '@/components/layout/SidebarLayout'
+import { fetchWithSession } from '@/lib/clientFetch'
 
 const NAV_ITEMS = [
   { href: '/dashboard', label: 'Dashboard', Icon: LayoutDashboard },
   { href: '/projetos', label: 'Projetos', Icon: FolderKanban },
   { href: '/arquivos', label: 'Arquivos', Icon: Paperclip },
-  { href: '/notificacoes', label: 'Notificações', Icon: BellRing },
   { href: '/equipe', label: 'Equipe de Desenvolvimento', Icon: Users },
+]
+
+const ADMIN_ITEMS = [
+  { href: '/admin/dashboard', label: 'Dashboard', Icon: LayoutDashboard },
+  { href: '/projetos', label: 'Projetos', Icon: FolderKanban },
+  { href: '/admin/users', label: 'Usuários', Icon: Users },
+  { href: '/arquivos', label: 'Arquivos', Icon: Paperclip },
+  { href: '/admin/cadastros', label: 'Departamentos', Icon: Building2 },
+  { href: '/admin/cadastros', label: 'Funções', Icon: Briefcase },
+  { href: '/admin/tenants', label: 'Tenants', Icon: Landmark },
+  { href: '/equipe', label: 'Equipe de Desenvolvimento', Icon: Code2 },
 ]
 
 const FALLBACK_TITLES: Record<string, string> = {
@@ -34,6 +45,7 @@ export default function GlobalSidebar() {
   const pathname = usePathname()
   const [collapsed, setCollapsed] = useState(false)
   const [animated, setAnimated] = useState(false)
+  const [role, setRole] = useState<string | undefined>(undefined)
 
   useEffect(() => {
     const stored = window.localStorage.getItem(STORAGE_KEY)
@@ -41,6 +53,13 @@ export default function GlobalSidebar() {
     if (stored === '1') setCollapsed(true)
     const raf = requestAnimationFrame(() => setAnimated(true))
     return () => cancelAnimationFrame(raf)
+  }, [])
+
+  useEffect(() => {
+    fetchWithSession('/api/me')
+      .then(r => r.json())
+      .then(d => { if (d?.user?.role) setRole(d.user.role) })
+      .catch(() => { })
   }, [])
 
   const toggleCollapsed = () => {
@@ -67,7 +86,9 @@ export default function GlobalSidebar() {
   const isActive = (href: string) =>
     pathname === href || pathname.startsWith(href + '/')
 
-  const title = NAV_ITEMS.find(i => isActive(i.href))?.label
+  const nav = role === 'admin' ? ADMIN_ITEMS : NAV_ITEMS
+
+  const title = nav.find(i => isActive(i.href))?.label
     ?? FALLBACK_TITLES[parts[0]]
     ?? 'Operum'
 
@@ -81,10 +102,11 @@ export default function GlobalSidebar() {
         collapsed={collapsed}
         animated={animated}
         onToggleCollapse={toggleCollapsed}
+        logoHref={role === 'admin' ? '/admin/dashboard' : '/'}
       >
-        {NAV_ITEMS.map(({ href, label, Icon }) => (
+        {nav.map(({ href, label, Icon }) => (
           <Link
-            key={href}
+            key={label}
             href={href}
             className={`flex items-center gap-2.5 px-3 py-2.5 rounded-lg text-sm font-medium transition-colors ${
               isActive(href)
