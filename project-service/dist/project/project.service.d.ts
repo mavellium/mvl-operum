@@ -47,8 +47,13 @@ export declare class ProjectService {
                 members: number;
             };
         } & {
-            tenantId: string;
             name: string;
+            id: string;
+            status: import("../../lib/generated/prisma").$Enums.ProjectStatus;
+            deletedAt: Date | null;
+            createdAt: Date;
+            updatedAt: Date;
+            tenantId: string;
             description: string | null;
             logoUrl: string | null;
             slogan: string | null;
@@ -65,11 +70,6 @@ export declare class ProjectService {
             semestre: string | null;
             ano: number | null;
             departamentos: string[];
-            id: string;
-            status: import("../../lib/generated/prisma").$Enums.ProjectStatus;
-            deletedAt: Date | null;
-            createdAt: Date;
-            updatedAt: Date;
         })[];
         total: number;
         page: number;
@@ -77,9 +77,9 @@ export declare class ProjectService {
     }>;
     findOne(id: string, tenantId: string): Promise<{
         members: {
+            id: string;
             startDate: Date;
             endDate: Date | null;
-            id: string;
             active: boolean;
             hourlyRate: number | null;
             role: string | null;
@@ -101,12 +101,12 @@ export declare class ProjectService {
         }[];
         stakeholders: ({
             stakeholder: {
-                tenantId: string;
                 name: string;
-                logoUrl: string | null;
                 id: string;
                 createdAt: Date;
                 updatedAt: Date;
+                tenantId: string;
+                logoUrl: string | null;
                 company: string | null;
                 competence: string | null;
                 email: string | null;
@@ -129,8 +129,13 @@ export declare class ProjectService {
             stakeholderId: string;
         })[];
     } & {
-        tenantId: string;
         name: string;
+        id: string;
+        status: import("../../lib/generated/prisma").$Enums.ProjectStatus;
+        deletedAt: Date | null;
+        createdAt: Date;
+        updatedAt: Date;
+        tenantId: string;
         description: string | null;
         logoUrl: string | null;
         slogan: string | null;
@@ -147,15 +152,15 @@ export declare class ProjectService {
         semestre: string | null;
         ano: number | null;
         departamentos: string[];
-        id: string;
-        status: import("../../lib/generated/prisma").$Enums.ProjectStatus;
-        deletedAt: Date | null;
-        createdAt: Date;
-        updatedAt: Date;
     }>;
     create(dto: CreateProjectDto): Promise<{
-        tenantId: string;
         name: string;
+        id: string;
+        status: import("../../lib/generated/prisma").$Enums.ProjectStatus;
+        deletedAt: Date | null;
+        createdAt: Date;
+        updatedAt: Date;
+        tenantId: string;
         description: string | null;
         logoUrl: string | null;
         slogan: string | null;
@@ -172,15 +177,15 @@ export declare class ProjectService {
         semestre: string | null;
         ano: number | null;
         departamentos: string[];
-        id: string;
-        status: import("../../lib/generated/prisma").$Enums.ProjectStatus;
-        deletedAt: Date | null;
-        createdAt: Date;
-        updatedAt: Date;
     }>;
     update(id: string, tenantId: string, dto: UpdateProjectDto): Promise<{
-        tenantId: string;
         name: string;
+        id: string;
+        status: import("../../lib/generated/prisma").$Enums.ProjectStatus;
+        deletedAt: Date | null;
+        createdAt: Date;
+        updatedAt: Date;
+        tenantId: string;
         description: string | null;
         logoUrl: string | null;
         slogan: string | null;
@@ -197,17 +202,12 @@ export declare class ProjectService {
         semestre: string | null;
         ano: number | null;
         departamentos: string[];
-        id: string;
-        status: import("../../lib/generated/prisma").$Enums.ProjectStatus;
-        deletedAt: Date | null;
-        createdAt: Date;
-        updatedAt: Date;
     }>;
     remove(id: string, tenantId: string): Promise<void>;
     getMembers(projectId: string, tenantId: string): Promise<{
+        id: string;
         startDate: Date;
         endDate: Date | null;
-        id: string;
         active: boolean;
         hourlyRate: number | null;
         role: string | null;
@@ -224,9 +224,9 @@ export declare class ProjectService {
         departmentId?: string;
         hourlyRate?: number;
     }): Promise<{
+        id: string;
         startDate: Date;
         endDate: Date | null;
-        id: string;
         active: boolean;
         hourlyRate: number | null;
         role: string | null;
@@ -245,9 +245,9 @@ export declare class ProjectService {
             status: import("../../lib/generated/prisma").$Enums.ProjectStatus;
         };
     } & {
+        id: string;
         startDate: Date;
         endDate: Date | null;
-        id: string;
         active: boolean;
         hourlyRate: number | null;
         role: string | null;
