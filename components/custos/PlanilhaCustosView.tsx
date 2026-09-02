@@ -1,6 +1,6 @@
 'use client'
 
-import { useCallback, useEffect, useRef, useState } from 'react'
+import { memo, useCallback, useEffect, useLayoutEffect, useRef, useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { RefreshCw, Download, UserPlus, Undo2 } from 'lucide-react'
 import { useToast } from '@/components/ui/Toast'
@@ -31,6 +31,8 @@ type CampoLinha = Partial<{
   elaboradoPorUserId: string
   elaboradoPor: string
 }>
+
+const useIsomorphicLayoutEffect = typeof window !== 'undefined' ? useLayoutEffect : useEffect
 
 const SITUACAO_CLASS: Record<SituacaoAtividade, string> = {
   Antecipada: 'bg-emerald-100 text-emerald-800',
@@ -104,43 +106,31 @@ export default function PlanilhaCustosView({
     return () => window.removeEventListener('keydown', handle)
   }, [desfazer])
 
-  const valorDe = (nodeId: string, campo: keyof CampoLinha, original: string | number | null | undefined): string => {
-    const r = rascunho[nodeId]?.[campo]
-    if (r !== undefined) return r
-    if (original === null || original === undefined) return ''
-    return String(original)
-  }
-
-  const esborcoPorCurrent = (nodeId: string, originalUserId: string | null): string => {
-    const r = rascunho[nodeId]?.elaboradoPorUserId
-    if (r !== undefined) return r
-    return originalUserId ?? ''
-  }
-
   // ── Auto-save (debounce) ──────────────────────────────────────────────────────
   const salvarRef = useRef<() => void>(() => {})
-  salvarRef.current = useCallback(async () => {
-    if (Object.keys(rascunho).length === 0) return
-    setSalvando(true)
-    const erros: string[] = []
-    for (const [nodeId, campos] of Object.entries(rascunho)) {
-      const props: Record<string, unknown> = {}
-      if (campos.minOrcado !== undefined) props.tempoMinutos = Math.round(num(campos.minOrcado, 0))
-      if (campos.materiaisOrcado !== undefined) props.materiais = Math.round(num(campos.materiaisOrcado, 0) * 100) / 100
-      if (campos.dataPrevista !== undefined) props.dataPrevista = campos.dataPrevista || null
-      if (campos.minReal !== undefined) props.tempoRealMinutos = Math.round(num(campos.minReal, 0))
-      if (campos.materiaisReal !== undefined) props.materiaisReal = Math.round(num(campos.materiaisReal, 0) * 100) / 100
-      if (campos.dataRealizacao !== undefined) props.dataRealizacao = campos.dataRealizacao || null
-      if (campos.elaboradoPorUserId !== undefined) {
-        props.elaboradoPorUserId = campos.elaboradoPorUserId || null
-        const nome = elaboradores.find(e => e.userId === campos.elaboradoPorUserId)?.name ?? ''
-        props.elaboradoPor = nome
-      }
-      if (campos.elaboradoPor !== undefined) props.elaboradoPor = campos.elaboradoPor.trim()
+  useIsomorphicLayoutEffect(() => {
+    salvarRef.current = async () => {
+      if (Object.keys(rascunho).length === 0) return
+      setSalvando(true)
+      const erros: string[] = []
+      for (const [nodeId, campos] of Object.entries(rascunho)) {
+        const props: Record<string, unknown> = {}
+        if (campos.minOrcado !== undefined) props.tempoMinutos = Math.round(num(campos.minOrcado, 0))
+        if (campos.materiaisOrcado !== undefined) props.materiais = Math.round(num(campos.materiaisOrcado, 0) * 100) / 100
+        if (campos.dataPrevista !== undefined) props.dataPrevista = campos.dataPrevista || null
+        if (campos.minReal !== undefined) props.tempoRealMinutos = Math.round(num(campos.minReal, 0))
+        if (campos.materiaisReal !== undefined) props.materiaisReal = Math.round(num(campos.materiaisReal, 0) * 100) / 100
+        if (campos.dataRealizacao !== undefined) props.dataRealizacao = campos.dataRealizacao || null
+        if (campos.elaboradoPorUserId !== undefined) {
+          props.elaboradoPorUserId = campos.elaboradoPorUserId || null
+          const nome = elaboradores.find(e => e.userId === campos.elaboradoPorUserId)?.name ?? ''
+          props.elaboradoPor = nome
+        }
+        if (campos.elaboradoPor !== undefined) props.elaboradoPor = campos.elaboradoPor.trim()
 
-      const res = await updateNodePropertiesAction(projetoId, nodeId, props)
-      if (!res.ok) erros.push(res.error)
-    }
+        const res = await updateNodePropertiesAction(projetoId, nodeId, props)
+        if (!res.ok) erros.push(res.error)
+      }
       setSalvando(false)
       if (erros.length > 0) {
         toast(erros[0], 'error')
@@ -149,25 +139,14 @@ export default function PlanilhaCustosView({
         setSalvo(rascunho)
         toast('Alterações salvas automaticamente', 'success')
       }
-  }, [rascunho, elaboradores, projetoId, toast])
+    }
+  })
 
   useEffect(() => {
     if (Object.keys(rascunho).length === 0) return
     const id = setTimeout(() => { salvarRef.current() }, 1000)
     return () => clearTimeout(id)
   }, [rascunho])
-
-  const input = (nodeId: string, campo: keyof CampoLinha, original: string | number | null | undefined) => (
-    <input
-      type={campo === 'dataPrevista' || campo === 'dataRealizacao' ? 'date' : 'text'}
-      inputMode={campo === 'minOrcado' || campo === 'minReal' ? 'numeric' : undefined}
-      value={valorDe(nodeId, campo, original)}
-      onChange={e => setCampo(nodeId, campo, e.target.value)}
-      onFocus={e => (campo !== 'dataPrevista' && campo !== 'dataRealizacao') && e.target.select()}
-      className="w-full min-w-[64px] rounded border border-gray-300 bg-white px-1.5 py-0.5 text-right text-xs focus:border-blue-500 focus:outline-none"
-    />
-  )
-  const texto = (v: string) => <span className="text-xs tabular-nums text-gray-700">{v}</span>
 
   const semAtividades = planilha.macrofases.length === 0
 
@@ -284,7 +263,15 @@ export default function PlanilhaCustosView({
             </thead>
             <tbody className="divide-y divide-gray-100">
               {planilha.macrofases.map(fase => (
-                <FragmentFase key={fase.nodeId} fase={fase} />
+                <FaseFragment
+                  key={fase.nodeId}
+                  fase={fase}
+                  rascunho={rascunho}
+                  config={config}
+                  canEdit={canEdit}
+                  elaboradores={elaboradores}
+                  onCampoChange={setCampo}
+                />
               ))}
             </tbody>
           </table>
@@ -302,93 +289,125 @@ export default function PlanilhaCustosView({
       )}
     </div>
   )
-
-  function FragmentFase({ fase }: { fase: PlanilhaDeCustos['macrofases'][number] }) {
-    return (
-      <>
-        <tr className="bg-gray-100 font-semibold text-gray-800">
-          <td colSpan={18} className="border border-gray-200 px-3 py-1.5 text-sm">{fase.codigo} {fase.titulo}</td>
-        </tr>
-        {fase.atividades.map(a => {
-          const minO = num(rascunho[a.nodeId]?.minOrcado, a.minOrcado)
-          const matO = num(rascunho[a.nodeId]?.materiaisOrcado, a.materiaisOrcado)
-          const minR = num(rascunho[a.nodeId]?.minReal, a.minReal)
-          const matR = num(rascunho[a.nodeId]?.materiaisReal, a.materiaisReal)
-          const vpm = a.vpm
-          const brutoO = minO * vpm
-          const brutoR = minR * vpm
-          const userId = esborcoPorCurrent(a.nodeId, a.elaboradoPorUserId)
-          return (
-            <tr key={a.nodeId} className="bg-white align-top hover:bg-blue-50/30">
-              <td className="border border-gray-100 px-2 py-1"></td>
-              <td className="border border-gray-100 px-2 py-1 text-xs whitespace-nowrap font-medium text-gray-800">
-                {a.codigo} {a.titulo}
-              </td>
-              <td className="border border-gray-100 px-1 py-1">
-                {canEdit ? (
-                  <select
-                    value={userId}
-                    onChange={e => setCampo(a.nodeId, 'elaboradoPorUserId', e.target.value)}
-                    className="w-full min-w-[110px] rounded border border-gray-300 bg-white px-1.5 py-0.5 text-xs focus:border-blue-500 focus:outline-none"
-                  >
-                    <option value="">—</option>
-                    {elaboradores.map(e => (
-                      <option key={e.userId} value={e.userId}>{e.name}</option>
-                    ))}
-                  </select>
-                ) : texto(a.elaboradoPor)}
-              </td>
-              <td className="border border-gray-100 px-1 py-1 text-right">
-                {canEdit ? input(a.nodeId, 'minOrcado', a.minOrcado) : texto(String(a.minOrcado))}
-              </td>
-              <td className="border border-gray-100 px-2 py-1 text-right">{texto(hhmm(minO))}</td>
-              <td className="border border-gray-100 px-2 py-1 text-right">{texto(dois(minO / 60 / config.horasPorDia))}</td>
-              <td className="border border-gray-100 px-2 py-1 text-right">{texto(brl(brutoO))}</td>
-              <td className="border border-gray-100 px-1 py-1 text-right">
-                {canEdit ? input(a.nodeId, 'materiaisOrcado', a.materiaisOrcado) : texto(dois(matO))}
-              </td>
-              <td className="border border-gray-100 px-2 py-1 text-right font-semibold text-gray-900">{texto(brl(brutoO + matO))}</td>
-              <td className="border border-gray-100 px-1 py-1">
-                {canEdit ? input(a.nodeId, 'dataPrevista', a.dataPrevista) : texto(fmtDataBR(a.dataPrevista))}
-              </td>
-              <td className="border border-gray-100 px-1 py-1 text-right">
-                {canEdit ? input(a.nodeId, 'minReal', a.minReal) : texto(String(a.minReal))}
-              </td>
-              <td className="border border-gray-100 px-2 py-1 text-right">{texto(hhmm(minR))}</td>
-              <td className="border border-gray-100 px-2 py-1 text-right">{texto(dois(minR / 60 / config.horasPorDia))}</td>
-              <td className="border border-gray-100 px-2 py-1 text-right">{texto(brl(brutoR))}</td>
-              <td className="border border-gray-100 px-1 py-1 text-right">
-                {canEdit ? input(a.nodeId, 'materiaisReal', a.materiaisReal) : texto(dois(matR))}
-              </td>
-              <td className="border border-gray-100 px-2 py-1 text-right font-semibold text-gray-900">{texto(brl(brutoR + matR))}</td>
-              <td className="border border-gray-100 px-1 py-1">
-                {canEdit ? input(a.nodeId, 'dataRealizacao', a.dataRealizacao) : texto(fmtDataBR(a.dataRealizacao))}
-              </td>
-              <td className="border border-gray-100 px-1 py-1 text-center">
-                <span className={`inline-block rounded-full px-2 py-0.5 text-[10px] font-semibold ${SITUACAO_CLASS[a.situacao]}`}>
-                  {a.situacao}
-                </span>
-              </td>
-            </tr>
-          )
-        })}
-        <tr className="bg-gray-200/70 font-semibold text-gray-700">
-          <td colSpan={3} className="border border-gray-200 px-3 py-1 text-xs italic">{fase.codigo} Sub-total {fase.titulo}</td>
-          <td className="border border-gray-200 px-2 py-1 text-right">{texto(String(fase.minOrcado))}</td>
-          <td className="border border-gray-200 px-2 py-1 text-right">{texto(hhmm(fase.minOrcado))}</td>
-          <td className="border border-gray-200 px-2 py-1 text-right">{texto(dois(fase.minOrcado / 60 / config.horasPorDia))}</td>
-          <td colSpan={3} className="border border-gray-200 px-2 py-1 text-right">{texto(brl(fase.totalOrcado))}</td>
-          <td className="border border-gray-200 px-2 py-1 text-right"></td>
-          <td className="border border-gray-200 px-2 py-1 text-right">{texto(String(fase.minReal))}</td>
-          <td className="border border-gray-200 px-2 py-1 text-right">{texto(hhmm(fase.minReal))}</td>
-          <td className="border border-gray-200 px-2 py-1 text-right">{texto(dois(fase.minReal / 60 / config.horasPorDia))}</td>
-          <td colSpan={3} className="border border-gray-200 px-2 py-1 text-right">{texto(brl(fase.totalReal))}</td>
-          <td colSpan={2} className="border border-gray-200"></td>
-        </tr>
-      </>
-    )
-  }
 }
+
+
+const FaseFragment = memo(function FaseFragment({
+  fase, rascunho, config, canEdit, elaboradores, onCampoChange,
+}: {
+  fase: PlanilhaDeCustos['macrofases'][number]
+  rascunho: Record<string, CampoLinha>
+  config: PlanilhaDeCustos['config']
+  canEdit: boolean
+  elaboradores: Elaborador[]
+  onCampoChange: (nodeId: string, campo: keyof CampoLinha, valor: string) => void
+}) {
+  const valorDe = (nodeId: string, campo: keyof CampoLinha, original: string | number | null | undefined): string => {
+    const r = rascunho[nodeId]?.[campo]
+    if (r !== undefined) return r
+    if (original === null || original === undefined) return ''
+    return String(original)
+  }
+  const esborcoPorCurrent = (nodeId: string, originalUserId: string | null): string => {
+    const r = rascunho[nodeId]?.elaboradoPorUserId
+    if (r !== undefined) return r
+    return originalUserId ?? ''
+  }
+  const texto = (v: string) => <span className="text-xs tabular-nums text-gray-700">{v}</span>
+  const campoInput = (nodeId: string, campo: keyof CampoLinha, original: string | number | null | undefined) => (
+    <input
+      type={campo === 'dataPrevista' || campo === 'dataRealizacao' ? 'date' : 'text'}
+      inputMode={campo === 'minOrcado' || campo === 'minReal' ? 'numeric' : undefined}
+      value={valorDe(nodeId, campo, original)}
+      onChange={e => onCampoChange(nodeId, campo, e.target.value)}
+      onFocus={e => (campo !== 'dataPrevista' && campo !== 'dataRealizacao') && e.target.select()}
+      className="w-full min-w-[64px] rounded border border-gray-300 bg-white px-1.5 py-0.5 text-right text-xs focus:border-blue-500 focus:outline-none"
+    />
+  )
+  return (
+    <>
+      <tr className="bg-gray-100 font-semibold text-gray-800">
+        <td colSpan={18} className="border border-gray-200 px-3 py-1.5 text-sm">{fase.codigo} {fase.titulo}</td>
+      </tr>
+      {fase.atividades.map(a => {
+        const minO = num(rascunho[a.nodeId]?.minOrcado, a.minOrcado)
+        const matO = num(rascunho[a.nodeId]?.materiaisOrcado, a.materiaisOrcado)
+        const minR = num(rascunho[a.nodeId]?.minReal, a.minReal)
+        const matR = num(rascunho[a.nodeId]?.materiaisReal, a.materiaisReal)
+        const vpm = a.vpm
+        const brutoO = minO * vpm
+        const brutoR = minR * vpm
+        const userId = esborcoPorCurrent(a.nodeId, a.elaboradoPorUserId)
+        return (
+          <tr key={a.nodeId} className="bg-white align-top hover:bg-blue-50/30">
+            <td className="border border-gray-100 px-2 py-1"></td>
+            <td className="border border-gray-100 px-2 py-1 text-xs whitespace-nowrap font-medium text-gray-800">
+              {a.codigo} {a.titulo}
+            </td>
+            <td className="border border-gray-100 px-1 py-1">
+              {canEdit ? (
+                <select
+                  value={userId}
+                  onChange={e => onCampoChange(a.nodeId, 'elaboradoPorUserId', e.target.value)}
+                  className="w-full min-w-[110px] rounded border border-gray-300 bg-white px-1.5 py-0.5 text-xs focus:border-blue-500 focus:outline-none"
+                >
+                  <option value="">—</option>
+                  {elaboradores.map(e => (
+                    <option key={e.userId} value={e.userId}>{e.name}</option>
+                  ))}
+                </select>
+              ) : texto(a.elaboradoPor)}
+            </td>
+            <td className="border border-gray-100 px-1 py-1 text-right">
+              {canEdit ? campoInput(a.nodeId, 'minOrcado', a.minOrcado) : texto(String(a.minOrcado))}
+            </td>
+            <td className="border border-gray-100 px-2 py-1 text-right">{texto(hhmm(minO))}</td>
+            <td className="border border-gray-100 px-2 py-1 text-right">{texto(dois(minO / 60 / config.horasPorDia))}</td>
+            <td className="border border-gray-100 px-2 py-1 text-right">{texto(brl(brutoO))}</td>
+            <td className="border border-gray-100 px-1 py-1 text-right">
+              {canEdit ? campoInput(a.nodeId, 'materiaisOrcado', a.materiaisOrcado) : texto(dois(matO))}
+            </td>
+            <td className="border border-gray-100 px-2 py-1 text-right font-semibold text-gray-900">{texto(brl(brutoO + matO))}</td>
+            <td className="border border-gray-100 px-1 py-1">
+              {canEdit ? campoInput(a.nodeId, 'dataPrevista', a.dataPrevista) : texto(fmtDataBR(a.dataPrevista))}
+            </td>
+            <td className="border border-gray-100 px-1 py-1 text-right">
+              {canEdit ? campoInput(a.nodeId, 'minReal', a.minReal) : texto(String(a.minReal))}
+            </td>
+            <td className="border border-gray-100 px-2 py-1 text-right">{texto(hhmm(minR))}</td>
+            <td className="border border-gray-100 px-2 py-1 text-right">{texto(dois(minR / 60 / config.horasPorDia))}</td>
+            <td className="border border-gray-100 px-2 py-1 text-right">{texto(brl(brutoR))}</td>
+            <td className="border border-gray-100 px-1 py-1 text-right">
+              {canEdit ? campoInput(a.nodeId, 'materiaisReal', a.materiaisReal) : texto(dois(matR))}
+            </td>
+            <td className="border border-gray-100 px-2 py-1 text-right font-semibold text-gray-900">{texto(brl(brutoR + matR))}</td>
+            <td className="border border-gray-100 px-1 py-1">
+              {canEdit ? campoInput(a.nodeId, 'dataRealizacao', a.dataRealizacao) : texto(fmtDataBR(a.dataRealizacao))}
+            </td>
+            <td className="border border-gray-100 px-1 py-1 text-center">
+              <span className={`inline-block rounded-full px-2 py-0.5 text-[10px] font-semibold ${SITUACAO_CLASS[a.situacao]}`}>
+                {a.situacao}
+              </span>
+            </td>
+          </tr>
+        )
+      })}
+      <tr className="bg-gray-200/70 font-semibold text-gray-700">
+        <td colSpan={3} className="border border-gray-200 px-3 py-1 text-xs italic">{fase.codigo} Sub-total {fase.titulo}</td>
+        <td className="border border-gray-200 px-2 py-1 text-right">{texto(String(fase.minOrcado))}</td>
+        <td className="border border-gray-200 px-2 py-1 text-right">{texto(hhmm(fase.minOrcado))}</td>
+        <td className="border border-gray-200 px-2 py-1 text-right">{texto(dois(fase.minOrcado / 60 / config.horasPorDia))}</td>
+        <td colSpan={3} className="border border-gray-200 px-2 py-1 text-right">{texto(brl(fase.totalOrcado))}</td>
+        <td className="border border-gray-200 px-2 py-1 text-right"></td>
+        <td className="border border-gray-200 px-2 py-1 text-right">{texto(String(fase.minReal))}</td>
+        <td className="border border-gray-200 px-2 py-1 text-right">{texto(hhmm(fase.minReal))}</td>
+        <td className="border border-gray-200 px-2 py-1 text-right">{texto(dois(fase.minReal / 60 / config.horasPorDia))}</td>
+        <td colSpan={3} className="border border-gray-200 px-2 py-1 text-right">{texto(brl(fase.totalReal))}</td>
+        <td colSpan={2} className="border border-gray-200"></td>
+      </tr>
+    </>
+  )
+})
 
 function AdicionarElaborador({
   projetoId, elaboradores, usuariosDisponiveis, onFechar,
@@ -456,7 +475,8 @@ function AdicionarElaborador({
   )
 }
 
-function QuadroValor({ planilha }: { planilha: PlanilhaDeCustos }) {
+
+const QuadroValor = memo(function QuadroValor({ planilha }: { planilha: PlanilhaDeCustos }) {
   return (
     <div className="rounded-xl border border-gray-200 bg-white p-4">
       <h3 className="mb-3 text-sm font-bold text-gray-800">Resumo — Valor por Fase do Projeto</h3>
@@ -485,9 +505,9 @@ function QuadroValor({ planilha }: { planilha: PlanilhaDeCustos }) {
       </table>
     </div>
   )
-}
+})
 
-function QuadroTempo({ planilha }: { planilha: PlanilhaDeCustos }) {
+const QuadroTempo = memo(function QuadroTempo({ planilha }: { planilha: PlanilhaDeCustos }) {
   return (
     <div className="rounded-xl border border-gray-200 bg-white p-4">
       <h3 className="mb-3 text-sm font-bold text-gray-800">Resumo — Tempo por Fase do Projeto</h3>
@@ -516,9 +536,9 @@ function QuadroTempo({ planilha }: { planilha: PlanilhaDeCustos }) {
       </table>
     </div>
   )
-}
+})
 
-function QuadroElaborador({ planilha }: { planilha: PlanilhaDeCustos }) {
+const QuadroElaborador = memo(function QuadroElaborador({ planilha }: { planilha: PlanilhaDeCustos }) {
   return (
     <div className="rounded-xl border border-gray-200 bg-white p-4">
       <h3 className="mb-3 text-sm font-bold text-gray-800">Resumo — Distribuição por Elaborador</h3>
@@ -547,9 +567,9 @@ function QuadroElaborador({ planilha }: { planilha: PlanilhaDeCustos }) {
       </table>
     </div>
   )
-}
+})
 
-function GraficoValor({ planilha }: { planilha: PlanilhaDeCustos }) {
+const GraficoValor = memo(function GraficoValor({ planilha }: { planilha: PlanilhaDeCustos }) {
   if (planilha.quadros.valor.length === 0) return null
   const data = planilha.quadros.valor.map(v => ({
     fase: v.fase.split(' ')[0],
@@ -588,4 +608,5 @@ function GraficoValor({ planilha }: { planilha: PlanilhaDeCustos }) {
       )}
     </div>
   )
-}
+})
+
