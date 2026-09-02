@@ -66,10 +66,15 @@ export default function PlanilhaCustosView({
   const [rascunho, setRascunho] = useState<Record<string, CampoLinha>>({})
   const [historia, setHistoria] = useState<Record<string, CampoLinha>[]>([])
   const [salvando, setSalvando] = useState(false)
+  const [salvo, setSalvo] = useState<Record<string, CampoLinha>>({})
   const [mostrarNovoMembro, setMostrarNovoMembro] = useState(false)
-  const dirtyCount = Object.values(rascunho).some(c => c && Object.keys(c).length > 0)
-    ? Object.keys(rascunho).length
-    : 0
+  const dirtyCount = Object.keys(rascunho).reduce((acc, nodeId) => {
+    const cur = rascunho[nodeId]
+    if (!cur || Object.keys(cur).length === 0) return acc
+    const s = salvo[nodeId]
+    if (!s) return acc + 1
+    return JSON.stringify(s) !== JSON.stringify(cur) ? acc + 1 : acc
+  }, 0)
 
   // ── Undo (Ctrl+Z) ────────────────────────────────────────────────────────────
   const setCampo = useCallback((nodeId: string, campo: keyof CampoLinha, valor: string) => {
@@ -136,16 +141,15 @@ export default function PlanilhaCustosView({
       const res = await updateNodePropertiesAction(projetoId, nodeId, props)
       if (!res.ok) erros.push(res.error)
     }
-    setSalvando(false)
-    if (erros.length > 0) {
-      toast(erros[0], 'error')
-    } else {
-      setRascunho({})
-      setHistoria([])
-      toast('Alterações salvas automaticamente', 'success')
-      router.refresh()
-    }
-  }, [rascunho, elaboradores, projetoId, toast, router])
+      setSalvando(false)
+      if (erros.length > 0) {
+        toast(erros[0], 'error')
+      } else {
+        setHistoria([])
+        setSalvo(rascunho)
+        toast('Alterações salvas automaticamente', 'success')
+      }
+  }, [rascunho, elaboradores, projetoId, toast])
 
   useEffect(() => {
     if (Object.keys(rascunho).length === 0) return
@@ -169,6 +173,7 @@ export default function PlanilhaCustosView({
 
   async function salvarManual() {
     await salvarRef.current()
+    router.refresh()
   }
 
   return (
