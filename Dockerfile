@@ -94,6 +94,7 @@ COPY --from=builder --chown=nextjs:nodejs /app/prisma.config.ts ./prisma.config.
 RUN mkdir -p /app/prisma-cli \
  && printf '{"name":"prisma-cli","private":true,"overrides":{"deepmerge-ts":">=8.0.0","mysql2":"3.24.2"}}' > /app/prisma-cli/package.json \
  && npm install prisma@7.7.0 --no-save --prefix /app/prisma-cli \
+ && node -e "const v=require('/app/prisma-cli/node_modules/mysql2/package.json').version; if (v !== '3.24.2') { console.error('mysql2 override falhou: esperado 3.24.2, obtido ' + v); process.exit(1); }" \
  && chown -R nextjs:nodejs /app/prisma-cli \
  && chmod -R 750 /app/prisma-cli \
  && ln -s /app/prisma-cli/node_modules/prisma ./node_modules/prisma
