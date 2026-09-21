@@ -23,27 +23,11 @@ export const EQUIPE_INFO = {
 
 export const DESENVOLVEDORES: Desenvolvedor[] = [
   {
-    nome: 'Nome do Aluno 1',
-    papel: 'Gerente de Projeto / Backend',
+    nome: 'Vinícius Tavares Mota',
+    papel: 'ADS-AMS',
     instituicao: 'Fatec Garça',
-    curso: 'Gestão Empresarial',
-    email: 'aluno1@fatec.edu.br',
-    rede: 'https://www.linkedin.com/in/aluno1',
-  },
-  {
-    nome: 'Nome do Aluno 2',
-    papel: 'Frontend',
-    instituicao: 'Fatec Garça',
-    curso: 'Gestão Empresarial',
-    email: 'aluno2@fatec.edu.br',
-    rede: 'https://www.linkedin.com/in/aluno2',
-  },
-  {
-    nome: 'Nome do Aluno 3',
-    papel: 'Banco de Dados / DevOps',
-    instituicao: 'Fatec Garça',
-    curso: 'Gestão Empresarial',
-    email: 'aluno3@fatec.edu.br',
-    rede: 'https://www.linkedin.com/in/aluno3',
+    curso: 'ADS-AMS',
+    email: 'vinicius.mota2@aluno.cps.sp.gov.br',
+    rede: 'https://www.linkedin.com/in/viniciustmota/',
   },
 ]

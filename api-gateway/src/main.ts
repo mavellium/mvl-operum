@@ -6,7 +6,6 @@ import { authMiddleware } from './middleware/auth'
 
 const app = express()
 
-// Rate limiting: 100 req/s per IP, burst 200
 app.use(
   rateLimit({
     windowMs: 1000,
@@ -17,79 +16,57 @@ app.use(
   }),
 )
 
-// CORS
 app.use((req, res, next) => {
   const allowedOrigins = (process.env.ALLOWED_ORIGINS ?? '').split(',').filter(Boolean)
   const origin = req.headers.origin
-
   if (origin && allowedOrigins.includes(origin)) {
     res.setHeader('Access-Control-Allow-Origin', origin)
     res.setHeader('Access-Control-Allow-Credentials', 'true')
   }
-
   res.setHeader('Access-Control-Allow-Methods', 'GET,POST,PUT,PATCH,DELETE,OPTIONS')
   res.setHeader('Access-Control-Allow-Headers', 'Content-Type,Authorization,X-Tenant-ID,X-Internal-Api-Key')
-
-  if (req.method === 'OPTIONS') {
-    return res.sendStatus(204)
-  }
+  if (req.method === 'OPTIONS') return res.sendStatus(204)
   next()
 })
 
-// Health check (unauthenticated)
 app.get('/health', (_req, res) => res.json({ status: 'ok' }))
 
-// Auth middleware — validates JWT and injects x-user-id / x-tenant-id / x-user-role
 app.use(authMiddleware())
 
 const INTERNAL_API_KEY = process.env.INTERNAL_API_KEY ?? ''
 
-// prefix: the path segment Express strips — we rewrite it back so downstream services
-// receive the full original path (e.g. /auth/me, not just /me)
-function proxyTo(target: string, prefix: string) {
-  return createProxyMiddleware({
-    target,
-    changeOrigin: true,
-    pathRewrite: (path) => `${prefix}${path}`,
-    on: {
-      proxyReq: (proxyReq) => {
-        proxyReq.setHeader('X-Internal-Api-Key', INTERNAL_API_KEY)
-      },
-    },
-  })
-}
-
-// Route table
 const AUTH_SERVICE_URL = process.env.AUTH_SERVICE_URL ?? 'http://auth-service:4001'
 const PROJECT_SERVICE_URL = process.env.PROJECT_SERVICE_URL ?? 'http://project-service:4002'
 const SPRINT_SERVICE_URL = process.env.SPRINT_SERVICE_URL ?? 'http://sprint-service:4003'
 const NOTIFICATION_SERVICE_URL = process.env.NOTIFICATION_SERVICE_URL ?? 'http://notification-service:4004'
 const FILE_SERVICE_URL = process.env.FILE_SERVICE_URL ?? 'http://file-service:4005'
 
-// Auth service
-app.use('/auth', proxyTo(AUTH_SERVICE_URL, '/auth'))
+function makeProxy(targetUrl: string, prefix: string) {
+  return createProxyMiddleware({ target: targetUrl, changeOrigin: true, pathRewrite: { '^/': `${prefix}/` }, on: { proxyReq: (proxyReq) => proxyReq.setHeader('X-Internal-Api-Key', INTERNAL_API_KEY) } })
+}
 
-// Project service
-app.use('/projects', proxyTo(PROJECT_SERVICE_URL, '/projects'))
-app.use('/departments', proxyTo(PROJECT_SERVICE_URL, '/departments'))
-app.use('/roles', proxyTo(PROJECT_SERVICE_URL, '/roles'))
-app.use('/permissions', proxyTo(PROJECT_SERVICE_URL, '/permissions'))
-app.use('/stakeholders', proxyTo(PROJECT_SERVICE_URL, '/stakeholders'))
+const proxyRoutes = [
+  { context: '/auth', target: AUTH_SERVICE_URL },
+  { context: '/projects', target: PROJECT_SERVICE_URL },
+  { context: '/departments', target: PROJECT_SERVICE_URL },
+  { context: '/roles', target: PROJECT_SERVICE_URL },
+  { context: '/permissions', target: PROJECT_SERVICE_URL },
+  { context: '/stakeholders', target: PROJECT_SERVICE_URL },
+  { context: '/sprints', target: SPRINT_SERVICE_URL },
+  { context: '/cards', target: SPRINT_SERVICE_URL },
+  { context: '/tags', target: SPRINT_SERVICE_URL },
+  { context: '/time-entries', target: SPRINT_SERVICE_URL },
+  { context: '/audit', target: SPRINT_SERVICE_URL },
+  { context: '/notifications', target: NOTIFICATION_SERVICE_URL },
+  { context: '/files', target: FILE_SERVICE_URL },
+]
 
-// Sprint service
-app.use('/sprints', proxyTo(SPRINT_SERVICE_URL, '/sprints'))
-app.use('/cards', proxyTo(SPRINT_SERVICE_URL, '/cards'))
-app.use('/tags', proxyTo(SPRINT_SERVICE_URL, '/tags'))
-app.use('/time-entries', proxyTo(SPRINT_SERVICE_URL, '/time-entries'))
-app.use('/audit', proxyTo(SPRINT_SERVICE_URL, '/audit'))
-
-// Notification service
-app.use('/notifications', proxyTo(NOTIFICATION_SERVICE_URL, '/notifications'))
-
-// File service
-app.use('/files', proxyTo(FILE_SERVICE_URL, '/files'))
+for (const { context, target } of proxyRoutes) {
+  const proxy = makeProxy(target, context)
+  app.use(context, (req: express.Request, res: express.Response, next: express.NextFunction) => {
+    proxy(req, res, next)
+  })
+}
 
 const PORT = Number(process.env.PORT ?? 4000)
-app.listen(PORT, () => {
-  console.log(`api-gateway listening on :${PORT}`)
-})
+app.listen(PORT, () => { console.log(`api-gateway listening on :${PORT}`) })

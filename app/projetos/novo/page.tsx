@@ -5,6 +5,7 @@ import { useRouter, useSearchParams } from 'next/navigation'
 import { createProjetoAction, updateProjetoAction, getProjetoAction } from '@/app/actions/projetos'
 import { listUsersAction } from '@/app/actions/admin'
 import { getDepartmentsAction } from '@/app/actions/departments'
+import { useToast } from '@/components/ui/Toast'
 import AvatarUpload from '@/components/profile/AvatarUpload'
 import MultiCreatableSelect from '@/components/ui/MultiCreatableSelect'
 import Link from 'next/link'
@@ -68,6 +69,7 @@ function ProjetoFormContent() {
   const router = useRouter()
   const searchParams = useSearchParams()
   const editId = searchParams.get('edit')
+  const { toast } = useToast()
 
   const [isPending, startTransition] = useTransition()
   const [isLoadingEdit, setIsLoadingEdit] = useState(!!editId)
@@ -185,9 +187,14 @@ function ProjetoFormContent() {
 
       if ('error' in result) {
         setError(result.error || 'Erro ao salvar projeto')
+        if (editId) toast(result.error || 'Erro ao salvar projeto', 'error')
         return
       }
-      router.push(`/projetos/${result.projeto.id}`)
+      if (editId) {
+        toast('Projeto atualizado com sucesso!', 'success')
+      } else {
+        router.push(`/projetos/${result.projeto.id}`)
+      }
     })
   }
 

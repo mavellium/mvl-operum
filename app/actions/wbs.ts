@@ -248,11 +248,12 @@ export async function importWbsAction(
     if (!parsed.success) return { ok: false, error: parsed.error.issues[0].message }
 
     const importData: WbsImportData = parsed.data
+    const { serverVersion: currentVersion } = await getTree(projetoId, tenantId)
     const result = await saveTree(
       {
         projectId: projetoId,
         tenantId,
-        serverVersion: 0, // import always overwrites
+        serverVersion: currentVersion,
         rootId: importData.rootId,
         nodes: importData.nodes,
       },

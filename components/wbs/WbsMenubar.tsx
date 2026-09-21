@@ -2,6 +2,7 @@
 
 import { type Dispatch, useEffect, useRef, useState } from 'react'
 import { useRouter } from 'next/navigation'
+import { useToast } from '@/components/ui/Toast'
 import {
   Undo2, Redo2, CornerDownRight, Plus, Trash2, Palette, Save, Printer,
   ZoomIn, ZoomOut, Maximize2, Search,
@@ -259,6 +260,7 @@ export default function WbsMenubar({
   showStylePanel, onToggleStylePanel,
 }: WbsMenubarProps) {
   const router = useRouter()
+  const { toast } = useToast()
   const [showHelp, setShowHelp] = useState(false)
   const [showManual, setShowManual] = useState(false)
   const fileInputRef = useRef<HTMLInputElement>(null)
@@ -292,9 +294,17 @@ export default function WbsMenubar({
     if (!file) return
     try {
       const data = JSON.parse(await file.text())
+      toast('Importando projeto...', 'success')
       const res = await importWbsAction(projetoId, data)
-      if (res.ok) router.refresh()
-    } catch { /* invalid JSON — ignore silently */ }
+      if (res.ok) {
+        toast('Projeto importado com sucesso!', 'success')
+        router.refresh()
+      } else {
+        toast(res.error || 'Erro ao importar projeto', 'error')
+      }
+    } catch {
+      toast('Arquivo inválido', 'error')
+    }
     e.target.value = ''
   }
 
@@ -303,19 +313,28 @@ export default function WbsMenubar({
 
   const downloadMspdi = () => {
     const xml = exportMspdi(nodes, rootId, { projectName: projetoId })
-    if (!xml) return
+    if (!xml) {
+      toast('Erro ao gerar arquivo', 'error')
+      return
+    }
+    toast('Exportando projeto...', 'success')
     const a = document.createElement('a')
     a.href = URL.createObjectURL(new Blob([xml], { type: 'application/xml;charset=utf-8' }))
     a.download = `eap-${projetoId}.xml`
     a.click()
+    toast('Arquivo exportado com sucesso!', 'success')
+    URL.revokeObjectURL(a.href)
   }
   const downloadWbs = () => {
+    toast('Exportando projeto...', 'success')
     const a = document.createElement('a')
     a.href = URL.createObjectURL(
       new Blob([JSON.stringify({ version: 1, rootId, nodes }, null, 2)], { type: 'application/json' })
     )
     a.download = `eap-${projetoId}.wbs`
     a.click()
+    toast('Arquivo exportado com sucesso!', 'success')
+    URL.revokeObjectURL(a.href)
   }
 
   // ── Cards da toolbar: título + ações como ícones (texto só no tooltip) ─────

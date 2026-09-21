@@ -19,6 +19,7 @@ import {
 } from 'lucide-react'
 import AvatarUpload from '@/components/profile/AvatarUpload'
 import AddressFields, { type AddressValues, emptyAddress } from '@/components/ui/AddressFields'
+import { useToast } from '@/components/ui/Toast'
 import {
   createStakeholderAction,
   updateStakeholderAction,
@@ -399,6 +400,7 @@ export default function ProjetoStakeholdersClient({
   userRole,
 }: Props) {
   const isAdmin = userRole === 'admin'
+  const { toast } = useToast()
 
   // Data state
   const [projeto, setProjeto] = useState<StakeholderUnificado[]>(initialStakeholders)
@@ -816,6 +818,40 @@ export default function ProjetoStakeholdersClient({
         role: result.user.role,
       }
       setDispInterno(prev => [novoUsuario, ...prev])
+      
+      // Auto-vincular ao projeto
+      setLoadingId('form')
+      const addResult = await addMemberAction(projetoId, novoUsuario.id)
+      setLoadingId(null)
+      if ('error' in addResult) {
+        toast(addResult.error ?? 'Erro ao vincular usuário ao projeto', 'error')
+      } else {
+        const unified: StakeholderUnificado = {
+          id: novoUsuario.id,
+          tipo: 'interno',
+          userId: novoUsuario.id,
+          name: novoUsuario.name,
+          email: novoUsuario.email,
+          avatarUrl: novoUsuario.avatarUrl,
+          phone: null,
+          cep: null,
+          logradouro: null,
+          numero: null,
+          complemento: null,
+          bairro: null,
+          cidade: null,
+          estado: null,
+          notes: null,
+          cargos: [],
+          departamento: [],
+          isGerente: false,
+          hourlyRate: null,
+          startDate: new Date().toISOString(),
+          userRole: novoUsuario.role,
+        }
+        setProjeto(prev => [...prev, unified])
+        toast('Usuário criado e vinculado ao projeto!', 'success')
+      }
       handleClearSelection()
       return
     }
@@ -1270,38 +1306,55 @@ export default function ProjetoStakeholdersClient({
 
           {/* Internal users list */}
           {addMode === 'interno' && (
-            filteredDispInterno.length === 0 ? (
-              <div className="px-5 py-10 text-center">
-                <p className="text-sm text-gray-400">
-                  {dispInterno.length === 0 ? 'Todos os usuários já estão no projeto.' : 'Nenhum resultado.'}
-                </p>
-              </div>
-            ) : (
-              <ul className="divide-y divide-gray-50/80 p-2 space-y-1">
-                {filteredDispInterno.map(u => (
-                  <li key={u.id} className="group flex items-center gap-3 p-3 rounded-xl hover:bg-slate-50 border border-transparent hover:border-slate-100 hover:shadow-sm transition-all">
-                    <Avatar name={u.name} url={u.avatarUrl} size="sm" />
-                    <div className="flex-1 min-w-0">
-                      <p className="text-sm font-semibold text-gray-900 truncate">{u.name}</p>
-                      <p className="text-xs text-gray-400 truncate flex items-center gap-1 mt-0.5">
-                        <Mail className="w-3 h-3 shrink-0" />{u.email}
-                      </p>
-                    </div>
-                    <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 focus-within:opacity-100 transition-opacity shrink-0">
-                      <button
-                        onClick={() => handleAddInterno(u)}
-                        disabled={loadingId === u.id}
-                        title="Adicionar ao projeto"
-                        className="p-1.5 rounded-lg text-gray-400 hover:text-green-600 hover:bg-green-50 disabled:opacity-40 transition-colors"
-                      >
-                        {loadingId === u.id ? <Spinner /> : <UserPlus className="w-4 h-4" />}
-                      </button>
+            <>
+              {filteredDispInterno.length > 0 && (
+                <ul className="divide-y divide-gray-50/80 p-2 space-y-1">
+                  {filteredDispInterno.map(u => (
+                    <li key={u.id} className="group flex items-center gap-3 p-3 rounded-xl hover:bg-slate-50 border border-transparent hover:border-slate-100 hover:shadow-sm transition-all">
+                      <Avatar name={u.name} url={u.avatarUrl} size="sm" />
+                      <div className="flex-1 min-w-0">
+                        <p className="text-sm font-semibold text-gray-900 truncate">{u.name}</p>
+                        <p className="text-xs text-gray-400 truncate flex items-center gap-1 mt-0.5">
+                          <Mail className="w-3 h-3 shrink-0" />{u.email}
+                        </p>
+                      </div>
+                      <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 focus-within:opacity-100 transition-opacity shrink-0">
+                        <button
+                          onClick={() => handleAddInterno(u)}
+                          disabled={loadingId === u.id}
+                          title="Adicionar ao projeto"
+                          className="p-1.5 rounded-lg text-gray-400 hover:text-green-600 hover:bg-green-50 disabled:opacity-40 transition-colors"
+                        >
+                          {loadingId === u.id ? <Spinner /> : <UserPlus className="w-4 h-4" />}
+                        </button>
                     </div>
                   </li>
                 ))}
               </ul>
-            )
-          )}
+              )}
+              
+              {/* Create & Add option when search has no results */}
+              {searchDir.trim().length > 0 && filteredDispInterno.length === 0 && (
+                <button
+                  onClick={() => {
+                    setFormState(f => ({ ...f, name: searchDir.trim() }))
+                    handleOpenCreateInterno()
+                  }}
+                  className="w-full flex items-center gap-2 px-4 py-3 text-sm text-blue-700 font-medium bg-blue-50/50 hover:bg-blue-50 transition-colors border-t border-gray-50 mx-2 rounded-xl"
+                >
+                  <UserPlus className="w-4 h-4" /> Criar e adicionar "{searchDir.trim()}"
+                </button>
+              )}
+              
+              {/* Empty state when no search term */}
+              {searchDir.trim().length === 0 && filteredDispInterno.length === 0 && (
+                <div className="px-5 py-10 text-center">
+                  <p className="text-sm text-gray-400">
+                    {dispInterno.length === 0 ? 'Todos os usuários já estão no projeto.' : 'Digite um nome para buscar ou criar.'}
+                  </p>
+                </div>
+              )}
+            </div>
         </div>
       )}
 
