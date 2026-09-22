@@ -27,7 +27,7 @@ export default function AdminCadastrosClient({ departamentosIniciais, funcoesIni
   const [funcoes, setFuncoes] = useState<RoleItem[]>(funcoesIniciais)
   const [section, setSection] = useState<Section>('departamentos')
 
-  const [error, setError] = useState<string | null>(null)
+  const [error] = useState<string | null>(null)
 
   return (
     <div className="space-y-6">

@@ -127,7 +127,7 @@ export function duplicateNode(
   idFactory: IdFactory = uuidv4,
 ): EapNode[] {
   let found = false
-  const walk = (nodes: EapNode[], parentId: string | null): EapNode[] => {
+  const walk = (nodes: EapNode[], _parentId: string | null): EapNode[] => {
     const idx = nodes.findIndex(n => n.id === nodeId)
     if (idx !== -1) {
       found = true

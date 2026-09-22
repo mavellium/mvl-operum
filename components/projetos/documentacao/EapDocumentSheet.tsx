@@ -2,7 +2,7 @@
 
 import { forwardRef, useMemo } from 'react'
 import type { EapNode, EapDocumentMetadata } from '@/types/eap'
-import { computeEapLayout, fitScale, EAP_BOX_W, EAP_BOX_H } from '@/lib/eapLayout'
+import { computeEapLayout, fitScale } from '@/lib/eapLayout'
 import { flattenTree } from '@/lib/eapCode'
 import { formatDateBR } from '@/lib/date'
 

@@ -47,7 +47,7 @@ export async function GET(
       const topLevelIds = tree.nodes[tree.rootId].childrenIds
       macroFases = topLevelIds.map(faseId => {
         const fase = tree.nodes[faseId]
-        const props = (fase?.properties as Record<string, any>) ?? {}
+        const props = (fase?.properties as Record<string, unknown>) ?? {}
         return {
           id: fase?.id,
           fase: fase?.title ?? '',

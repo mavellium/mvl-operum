@@ -76,7 +76,6 @@ export function computeEapLayout(roots: EapNode[]): EapLayoutResult {
   }
 
   const allSizes: Record<string, SubtreeSize> = {}
-  const allGeometry = new Map<string, { x: number; y: number }>()
   const geometry: EapLayoutResult['geometry'] = {}
   const connectors: EapLayoutResult['connectors'] = []
   let maxX = 0

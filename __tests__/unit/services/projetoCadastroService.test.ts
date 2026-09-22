@@ -24,7 +24,6 @@ import {
   desassociarDepartamento,
   listarDepartamentosAssociados,
   associarFuncao,
-  desassociarFuncao,
   listarFuncoesAssociadas,
   contAssociacoesDepartamento,
   contAssociacoesFuncao,

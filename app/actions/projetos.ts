@@ -6,7 +6,6 @@ import { projectsApi } from '@/lib/api-client'
 import prisma from '@/lib/prisma'
 import { isProjectManager, setProjectManagerRole, removeProjectRole } from '@/services/projectRoleService'
 import { getTree, syncMacrofasesComEap } from '@/services/wbsService'
-import { computarPlanilhaCustos, type Elaborador } from '@/lib/planilhaCustos'
 import { validateAvatarUrl } from '@/lib/validation/avatarUrl'
 
 /**
@@ -160,7 +159,7 @@ export async function getProjetoAction(id: string) {
       if (topLevelIds.length > 0) {
         macroFasesFromTree = topLevelIds.map(faseId => {
           const fase = tree.nodes[faseId]
-          const props = (fase?.properties as Record<string, any>) ?? {}
+          const props = (fase?.properties as Record<string, unknown>) ?? {}
           return {
             fase: fase?.title ?? '',
             dataLimite: props.dataLimite ?? '',

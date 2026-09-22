@@ -24,7 +24,7 @@ import { findById } from '@/services/projectService'
 import { addResponsibleAction, removeResponsibleAction } from '@/app/actions/cardResponsible'
 
 const mockVerify = verifySession as ReturnType<typeof vi.fn>
-const mockPublish = publishNotification as ReturnType<typeof vi.fn>
+const _mockPublish = publishNotification as ReturnType<typeof vi.fn>
 
 beforeEach(() => {
   vi.clearAllMocks()

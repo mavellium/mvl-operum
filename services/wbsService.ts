@@ -649,9 +649,9 @@ export async function syncMacrofasesComEap(
     where: { projectId, tenantId, parentId: rootId },
     select: { id: true, title: true, properties: true, order: true },
   })
-  const topLevelByNorm = new Map<string, { id: string; title: string; properties: any }>()
+  const topLevelByNorm = new Map<string, { id: string; title: string; properties: Record<string, unknown> }>()
   for (const n of topLevelRows) {
-    topLevelByNorm.set(norm(n.title), { id: n.id, title: n.title, properties: n.properties })
+    topLevelByNorm.set(norm(n.title), { id: n.id, title: n.title, properties: (n.properties as Record<string, unknown>) ?? {} })
   }
 
   const result = new Map<string, string>()
@@ -666,7 +666,7 @@ export async function syncMacrofasesComEap(
     const existing = topLevelByNorm.get(key)
 
     // properties a mesclar (mescla shallow — preserva outras chaves da EAP)
-    const newProps: Record<string, any> = {}
+    const newProps: Record<string, unknown> = {}
     if (dataLimite) newProps.dataLimite = dataLimite
     if (custo) {
       const parsed = parseFloat(custo.replace(/\./g, '').replace(',', '.'))
