@@ -135,8 +135,14 @@ describe('fmtDataBR', () => {
 describe('computarPlanilhaCustos — dataset de exemplo', () => {
   const plan = computarPlanilhaCustos(eapExemplo(), 'r', CONFIG, ELABORADORES)
 
-  it('macrofase sem atividades folha é ignorada (m2)', () => {
-    expect(plan.macrofases.map(f => f.nodeId)).toEqual(['m1'])
+  it('macrofase sem atividades folha aparece vazia (m2)', () => {
+    expect(plan.macrofases.map(f => f.nodeId)).toEqual(['m1', 'm2'])
+    const m2 = plan.macrofases.find(f => f.nodeId === 'm2')
+    expect(m2?.atividades).toEqual([])
+    expect(m2?.minOrcado).toBe(0)
+    expect(m2?.totalOrcado).toBe(0)
+    expect(m2?.minReal).toBe(0)
+    expect(m2?.totalReal).toBe(0)
   })
 
   it('TOTAL GERAL orçado ≈ 58,84 e realizado ≈ 22,51', () => {

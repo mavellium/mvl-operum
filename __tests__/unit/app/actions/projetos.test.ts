@@ -27,6 +27,7 @@ vi.mock('@/lib/prisma', () => ({
     projectDraft: { deleteMany: vi.fn() },
     projetoDepartamento: { findMany: vi.fn().mockResolvedValue([]) },
     userProjectRole: { findFirst: vi.fn().mockResolvedValue(null) },
+    wbsNode: { findMany: vi.fn().mockResolvedValue([]) },
   },
 }))
 
