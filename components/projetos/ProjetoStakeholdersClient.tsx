@@ -125,6 +125,27 @@ type FormState = {
   forcePasswordChange: boolean
 }
 
+/** Formato mínimo retornado pela criação de um stakeholder externo (POST /stakeholders) */
+type StakeholderCriado = {
+  id: string
+  tenantId: string
+  name: string
+  logoUrl?: string | null
+  company?: string | null
+  competence?: string | null
+  email?: string | null
+  phone?: string | null
+  cep?: string | null
+  logradouro?: string | null
+  numero?: string | null
+  complemento?: string | null
+  bairro?: string | null
+  cidade?: string | null
+  estado?: string | null
+  notes?: string | null
+  isActive?: boolean
+}
+
 // ─── Constants ────────────────────────────────────────────────────────────────
 
 const emptyForm: FormState = {
@@ -419,6 +440,8 @@ export default function ProjetoStakeholdersClient({
 
   const [searchProjeto, setSearchProjeto] = useState('')
   const [searchDir, setSearchDir] = useState('')
+  /** Criação/vínculo rápida a partir das buscas (Col 1 projeto / Col 2 diretório externo) */
+  const [quickLoading, setQuickLoading] = useState<null | 'col1' | 'dir'>(null)
 
   const [, startTransition] = useTransition()
   const addMenuRef = useRef<HTMLDivElement>(null)
@@ -464,6 +487,14 @@ export default function ProjetoStakeholdersClient({
     const q = searchDir.toLowerCase()
     return u.name.toLowerCase().includes(q) || u.email.toLowerCase().includes(q)
   })
+
+  // Stakeholder externo do diretório que casa exatamente com a busca do Col 1
+  // (para vincular em vez de duplicar ao criar pela busca do projeto).
+  const candidatoDiretorio =
+    searchProjeto.trim().length > 0
+      ? dispExterno.find(s => s.name.toLowerCase() === searchProjeto.trim().toLowerCase())
+      : undefined
+  const vinculandoDiretorio = candidatoDiretorio ? loadingId === candidatoDiretorio.id : false
 
   // ── Form helpers
   function setField<K extends keyof FormState>(key: K, value: FormState[K]) {
@@ -571,6 +602,115 @@ export default function ProjetoStakeholdersClient({
     setSearchDir('')
   }
 
+  // ── Criação como MEMBRO DA EQUIPE a partir das buscas ──
+  // Abre o fluxo de criação de usuário interno (Col 2 interno + Col 3) com o
+  // nome preenchido — o usuário informa e-mail/senha e o membro fica PENDENTE
+  // (troca de senha no 1º acesso), igual ao "Criar e adicionar" do modo interno.
+  function handleCreateMembroDaBusca() {
+    if (!isAdmin) return
+    const name = searchProjeto.trim()
+    if (!name) return
+    handleOpenAddMode('interno')
+    handleOpenCreateInterno()
+    setFormState(f => ({ ...f, name }))
+  }
+
+  function handleCreateMembroDoDiretorio() {
+    if (!isAdmin) return
+    const name = searchDir.trim()
+    if (!name) return
+    handleOpenAddMode('interno')
+    handleOpenCreateInterno()
+    setFormState(f => ({ ...f, name }))
+  }
+
+  // ── Quick-create a partir das buscas (cria o stakeholder se não existir)
+  // Col 1 — "Stakeholders do Projeto": cria externo + vincula ao projeto.
+  function handleQuickCreateProjeto() {
+    if (!isAdmin) return
+    const name = searchProjeto.trim()
+    if (!name) return
+    // Se já existe no diretório disponível, apenas vincula (evita duplicata).
+    if (candidatoDiretorio) {
+      handleBindExterno(candidatoDiretorio)
+      setSearchProjeto('')
+      return
+    }
+    setQuickLoading('col1')
+    startTransition(async () => {
+      const result = await createStakeholderAction({ name }, projetoId)
+      setQuickLoading(null)
+      if ('error' in result) {
+        toast(result.error ?? 'Erro ao criar stakeholder.', 'error')
+        return
+      }
+      const raw = result.stakeholder as StakeholderCriado
+      const unified: StakeholderUnificado = {
+        id: raw.id,
+        tipo: 'externo',
+        stakeholderId: raw.id,
+        tenantId: raw.tenantId,
+        name: raw.name,
+        email: raw.email ?? null,
+        avatarUrl: raw.logoUrl ?? null,
+        phone: raw.phone ?? null,
+        cep: raw.cep ?? null,
+        logradouro: raw.logradouro ?? null,
+        numero: raw.numero ?? null,
+        complemento: raw.complemento ?? null,
+        bairro: raw.bairro ?? null,
+        cidade: raw.cidade ?? null,
+        estado: raw.estado ?? null,
+        notes: raw.notes ?? null,
+        company: raw.company ?? null,
+        competence: raw.competence ?? null,
+        isActive: raw.isActive ?? true,
+      }
+      setProjeto(prev => (prev.some(x => x.id === unified.id) ? prev : [...prev, unified]))
+      setSearchProjeto('')
+      toast(`Stakeholder "${raw.name}" criado e adicionado ao projeto!`, 'success')
+    })
+  }
+
+  // Col 2 — Diretório externo: cria no diretório do tenant (sem auto-vínculo).
+  function handleQuickCreateExterno() {
+    if (!isAdmin) return
+    const name = searchDir.trim()
+    if (!name) return
+    setQuickLoading('dir')
+    startTransition(async () => {
+      const result = await createStakeholderAction({ name })
+      setQuickLoading(null)
+      if ('error' in result) {
+        toast(result.error ?? 'Erro ao criar stakeholder.', 'error')
+        return
+      }
+      const raw = result.stakeholder as StakeholderCriado
+      const novoExterno: StakeholderExterno = {
+        id: raw.id,
+        tenantId: raw.tenantId,
+        name: raw.name,
+        logoUrl: raw.logoUrl ?? null,
+        company: raw.company ?? null,
+        competence: raw.competence ?? null,
+        email: raw.email ?? null,
+        phone: raw.phone ?? null,
+        cep: raw.cep ?? null,
+        logradouro: raw.logradouro ?? null,
+        numero: raw.numero ?? null,
+        complemento: raw.complemento ?? null,
+        bairro: raw.bairro ?? null,
+        cidade: raw.cidade ?? null,
+        estado: raw.estado ?? null,
+        notes: raw.notes ?? null,
+        isActive: raw.isActive ?? true,
+      }
+      setDispExterno(prev => (prev.some(x => x.id === novoExterno.id) ? prev : [novoExterno, ...prev]))
+      setSearchDir('')
+      toast(`Stakeholder "${raw.name}" criado no diretório!`, 'success')
+    })
+  }
+
   // ── Bind external stakeholder
   function handleBindExterno(s: StakeholderExterno) {
     if (!isAdmin) return
@@ -607,6 +747,9 @@ export default function ProjetoStakeholdersClient({
         setProjeto(prev => prev.filter(x => x.id !== s.id))
         setDispExterno(prev => [...prev, s])
         handleClearSelection()
+        toast(result.error ?? 'Erro ao vincular stakeholder.', 'error')
+      } else {
+        toast(`Stakeholder "${s.name}" vinculado ao projeto!`, 'success')
       }
     })
   }
@@ -1110,6 +1253,36 @@ export default function ProjetoStakeholdersClient({
                   : 'Nenhum stakeholder no projeto.'
                 : 'Nenhum resultado para a busca.'}
             </p>
+            {isAdmin && searchProjeto.trim().length > 0 && (
+              candidatoDiretorio ? (
+                <button
+                  onClick={handleQuickCreateProjeto}
+                  disabled={vinculandoDiretorio}
+                  className="mt-4 inline-flex items-center gap-2 px-4 py-2 text-sm font-semibold text-blue-700 bg-blue-50 border border-blue-100 rounded-xl hover:bg-blue-100 transition-colors disabled:opacity-50"
+                >
+                  {vinculandoDiretorio ? <Spinner /> : <UserPlus className="w-4 h-4" />}
+                  Vincular &quot;{candidatoDiretorio.name}&quot; ao projeto
+                </button>
+              ) : (
+                <div className="mt-4 flex flex-col gap-2 items-stretch">
+                  <button
+                    onClick={handleCreateMembroDaBusca}
+                    className="inline-flex items-center justify-center gap-2 px-4 py-2 text-sm font-semibold text-indigo-700 bg-indigo-50 border border-indigo-100 rounded-xl hover:bg-indigo-100 transition-colors"
+                  >
+                    <Users className="w-4 h-4" />
+                    Criar &quot;{searchProjeto.trim()}&quot; como membro da equipe
+                  </button>
+                  <button
+                    onClick={handleQuickCreateProjeto}
+                    disabled={quickLoading === 'col1'}
+                    className="inline-flex items-center justify-center gap-2 px-4 py-2 text-sm font-semibold text-blue-700 bg-blue-50 border border-blue-100 rounded-xl hover:bg-blue-100 transition-colors disabled:opacity-50"
+                  >
+                    {quickLoading === 'col1' ? <Spinner /> : <Building2 className="w-4 h-4" />}
+                    Criar &quot;{searchProjeto.trim()}&quot; como externo
+                  </button>
+                </div>
+              )
+            )}
           </div>
         ) : (
           <ul className={`space-y-2 overflow-y-auto max-h-[600px] px-2 py-2${isReordering ? ' opacity-70' : ''}`}>
@@ -1258,8 +1431,31 @@ export default function ProjetoStakeholdersClient({
             filteredDispExterno.length === 0 ? (
               <div className="px-5 py-10 text-center">
                 <p className="text-sm text-gray-400">
-                  {dispExterno.length === 0 ? 'Todos os stakeholders já estão vinculados.' : 'Nenhum resultado.'}
+                  {searchDir.trim().length > 0
+                    ? 'Nenhum resultado no diretório.'
+                    : dispExterno.length === 0
+                    ? 'Todos os stakeholders já estão vinculados.'
+                    : 'Nenhum resultado.'}
                 </p>
+                {searchDir.trim().length > 0 && (
+                  <div className="mt-4 flex flex-col gap-2 items-stretch">
+                    <button
+                      onClick={handleQuickCreateExterno}
+                      disabled={quickLoading === 'dir'}
+                      className="inline-flex items-center justify-center gap-2 px-4 py-2 text-sm font-semibold text-blue-700 bg-blue-50 border border-blue-100 rounded-xl hover:bg-blue-100 transition-colors disabled:opacity-50"
+                    >
+                      {quickLoading === 'dir' ? <Spinner /> : <Building2 className="w-4 h-4" />}
+                      Criar &quot;{searchDir.trim()}&quot; no diretório
+                    </button>
+                    <button
+                      onClick={handleCreateMembroDoDiretorio}
+                      className="inline-flex items-center justify-center gap-2 px-4 py-2 text-sm font-semibold text-indigo-700 bg-indigo-50 border border-indigo-100 rounded-xl hover:bg-indigo-100 transition-colors"
+                    >
+                      <Users className="w-4 h-4" />
+                      Criar &quot;{searchDir.trim()}&quot; como membro da equipe
+                    </button>
+                  </div>
+                )}
               </div>
             ) : (
               <ul className="divide-y divide-gray-50/80 p-2 space-y-1">
@@ -1342,7 +1538,7 @@ export default function ProjetoStakeholdersClient({
                   }}
                   className="w-full flex items-center gap-2 px-4 py-3 text-sm text-blue-700 font-medium bg-blue-50/50 hover:bg-blue-50 transition-colors border-t border-gray-50 mx-2 rounded-xl"
                 >
-                  <UserPlus className="w-4 h-4" /> Criar e adicionar "{searchDir.trim()}"
+                  <UserPlus className="w-4 h-4" /> Criar e adicionar &quot;{searchDir.trim()}&quot;
                 </button>
               )}
               
@@ -1354,7 +1550,8 @@ export default function ProjetoStakeholdersClient({
                   </p>
                 </div>
               )}
-            </div>
+            </>
+          )}
         </div>
       )}
 

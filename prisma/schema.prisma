@@ -36,6 +36,8 @@ model Tenant {
   stakeholders  Stakeholder[]
   projectDrafts ProjectDraft[]
   wbsNodes      WbsNode[]
+  eapTemplates  EapTemplate[]
+  eapDocuments  EapDocument[]
 }
 
 // ── Projects ──────────────────────────────────────────────
@@ -95,6 +97,7 @@ model Project {
   projetoDepartamentos ProjetoDepartamento[]
   projetoFuncoes       ProjetoFuncao[]
   atas                 Ata[]
+  eapDocument          EapDocument?
 
   @@unique([name, tenantId])
 }
@@ -749,4 +752,57 @@ model WbsNode {
   @@index([tenantId])
   @@index([projectId])
   @@index([parentId])
+}
+
+// ── EAP — Template documental (Estrutura Analítica do Projeto) ──────────────
+
+/// Matriz protegida: define a estrutura/layout do documento-modelo.
+/// Não é editada pelos usuários — apenas usada para criar documentos.
+model EapTemplate {
+  id          String   @id @default(cuid())
+  name        String
+  version     String   @default("1.0")
+  description String?
+  isActive    Boolean  @default(true)
+
+  /// EapNode[] — estrutura inicial (placeholders) usada ao criar documentos.
+  structure  Json
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+
+  tenantId String
+  tenant   Tenant   @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+
+  documents EapDocument[]
+
+  @@index([tenantId])
+}
+
+/// Documento EAP — instância independente criada a partir do template
+/// (SPEC §15: alterar um documento nunca altera o template).
+model EapDocument {
+  id         String   @id @default(cuid())
+  tenantId   String
+  projectId  String   @unique
+  templateId String
+
+  projectName    String   @default("")
+  projectManager String   @default("")
+  preparedBy     String   @default("")
+  version        String   @default("1.0")
+  approvedBy     String   @default("")
+  signature      String   @default("")
+  /// aaaa-mm-dd (string para evitar viés de fuso, padrão do app)
+  approvalDate   String?
+
+  /// EapNode[] — árvore da EAP (códigos normalizados pelo servidor)
+  nodes     Json
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  tenant   Tenant      @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  project  Project     @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  template EapTemplate @relation(fields: [templateId], references: [id])
+
+  @@index([tenantId])
 }

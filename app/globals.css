@@ -114,6 +114,25 @@ textarea:disabled {
     background: white !important;
   }
 
+  /* EAP — documento de layout fixo A4 (impressão direta / react-to-print) */
+  .eap-sheet,
+  html,
+  body {
+    background: white !important;
+    -webkit-print-color-adjust: exact !important;
+    print-color-adjust: exact !important;
+  }
+  .eap-sheet {
+    transform: none !important;
+  }
+  .eap-sheet .eap-page {
+    page-break-inside: avoid;
+    overflow: hidden;
+  }
+  .eap-sheet .eap-page-1 {
+    page-break-after: always;
+  }
+
   /* Reset body/html background */
   html,
   body {

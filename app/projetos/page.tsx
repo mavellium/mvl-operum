@@ -44,10 +44,10 @@ function getGradient(name: string) {
   return gradients[Math.abs(hash) % gradients.length]
 }
 
-// Helper para formatar data curta (ex: 12/Jan/2026)
+// Helper para formatar data (ex: 12/01/2026)
 function formatDateShort(date?: Date | string | null) {
   if (!date) return '--/--/----'
-  return new Date(date).toLocaleDateString('pt-BR', { day: '2-digit', month: 'short', year: 'numeric' }).replace(/ de /g, '/').replace('.', '')
+  return new Date(date).toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit', year: 'numeric' })
 }
 
 export default async function ProjetosPage({ searchParams }: { searchParams: Promise<{ page?: string }> }) {

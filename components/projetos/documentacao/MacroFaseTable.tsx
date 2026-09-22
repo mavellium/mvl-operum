@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useRef } from 'react'
 import { Plus, Trash2 } from 'lucide-react'
+import DateInput from '@/components/ui/DateInput'
 
 export interface MacroFase {
   id: string
@@ -124,11 +125,10 @@ export default function MacroFaseTable({ fases, onChange, onAdd, onRemove, autoF
                 />
               </td>
               <td className={tdClass}>
-                <input
-                  type="date"
+                <DateInput
                   className={inputClass}
                   value={f.dataLimite ?? ''}
-                  onChange={e => onChange(f.id, 'dataLimite', e.target.value)}
+                  onChange={v => onChange(f.id, 'dataLimite', v)}
                   disabled={disabled}
                 />
               </td>

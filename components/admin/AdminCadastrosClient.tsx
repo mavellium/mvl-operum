@@ -120,7 +120,12 @@ function CatalogCrud({
   const [error, setError] = useState<string | null>(null)
   const [isPending, startTransition] = useTransition()
 
-  const filtered = items.filter(i => i.name.toLowerCase().includes(search.toLowerCase()))
+  const term = search.trim()
+  const normalized = term.toLowerCase()
+  const filtered = items.filter(i => i.name.toLowerCase().includes(normalized))
+  const exactMatch = filtered.some(i => i.name.toLowerCase() === normalized)
+  // Se não existir exatamente o que foi digitado, oferece criar ali mesmo.
+  const canCreate = term !== '' && !exactMatch
 
   async function run(fn: () => Promise<void>, id: string | null) {
     setError(null)
@@ -141,6 +146,15 @@ function CatalogCrud({
       onItems(items.some(i => i.id === created.id) ? items : [...items, created])
       setNovoNome('')
       setShowAdd(false)
+    }, 'new'))
+  }
+
+  function handleCreateFromSearch() {
+    if (!canCreate) return
+    startTransition(() => run(async () => {
+      const created = await onCreate(term)
+      onItems(items.some(i => i.id === created.id) ? items : [...items, created])
+      setSearch('')
     }, 'new'))
   }
 
@@ -183,9 +197,10 @@ function CatalogCrud({
       <div className="px-6 py-3 border-b border-gray-100">
         <input
           type="search"
-          placeholder="Buscar..."
+          placeholder="Buscar... (enter cria se não existir)"
           value={search}
           onChange={e => setSearch(e.target.value)}
+          onKeyDown={e => e.key === 'Enter' && canCreate && handleCreateFromSearch()}
           className="w-full max-w-md px-3 py-2 bg-white border border-gray-200 rounded-xl text-sm text-gray-900 placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-blue-500"
         />
       </div>
@@ -214,10 +229,37 @@ function CatalogCrud({
         </div>
       )}
 
-      {filtered.length === 0 ? (
+      {filtered.length === 0 && !canCreate ? (
         <div className="px-6 py-12 text-center text-sm text-gray-500">Nenhum item encontrado.</div>
       ) : (
         <div className="divide-y divide-gray-100">
+          {canCreate && (
+            <div className="px-6 py-3 flex items-center justify-between gap-4 bg-blue-50/40">
+              <p className="text-sm text-gray-600">
+                <span className="text-gray-500">“{term}” não existe ainda.</span>
+              </p>
+              <button
+                onClick={handleCreateFromSearch}
+                disabled={isPending}
+                className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium bg-blue-600 text-white rounded-xl hover:bg-blue-700 transition-colors disabled:opacity-50 whitespace-nowrap"
+              >
+                {loadingId === 'new' ? (
+                  <>
+                    <div className="w-3.5 h-3.5 border-2 border-white border-t-transparent rounded-full animate-spin" />
+                    Criando...
+                  </>
+                ) : (
+                  <>
+                    <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
+                    </svg>
+                    Criar “{term}”
+                  </>
+                )}
+              </button>
+            </div>
+          )}
+
           {filtered.map(item => (
             <div key={item.id} className="px-6 py-3 flex items-center justify-between gap-4 hover:bg-gray-50/50">
               {editingId === item.id ? (

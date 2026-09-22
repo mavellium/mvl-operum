@@ -72,6 +72,15 @@ ENV PATH="/app/prisma-cli/node_modules/.bin:/app/node_modules/.bin:$PATH"
 # This image runs via pnpm/corepack only — npm/npx are never invoked.
 RUN rm -rf /usr/local/lib/node_modules/npm /usr/local/bin/npm /usr/local/bin/npx
 
+# Entrypoint: roda `prisma migrate deploy` no startup (fail-fast) para que
+# migrations pendentes — ex.: 20260814000000_fix_attachment_schema — nunca
+# fiquem sem aplicar no deploy de producao (o webhook roda `up -d` sem o
+# profile `migration`, entao o servico migrate-file-service nunca executa).
+# O servico one-shot migrate-file-service continua funcionando (o entrypoint
+# apenas repassa argumentos `prisma migrate ...`).
+COPY --chown=nestjs:nodejs docker-entrypoint.sh /app/docker-entrypoint.sh
+RUN chmod 0755 /app/docker-entrypoint.sh
+
 USER nestjs
 
 EXPOSE 4005
@@ -79,4 +88,5 @@ EXPOSE 4005
 HEALTHCHECK --interval=15s --timeout=5s --start-period=20s --retries=3 \
   CMD wget -qO- http://localhost:4005/health || exit 1
 
+ENTRYPOINT ["/app/docker-entrypoint.sh"]
 CMD ["node", "dist/main"]

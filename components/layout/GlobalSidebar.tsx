@@ -3,7 +3,7 @@
 import { useEffect, useState } from 'react'
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
-import { LayoutDashboard, FolderKanban, Paperclip, PanelLeftOpen, Users, Building2, Briefcase, Landmark, Code2 } from 'lucide-react'
+import { LayoutDashboard, FolderKanban, Paperclip, PanelLeftOpen, Users, Building2, Briefcase, Landmark, Info } from 'lucide-react'
 import Tooltip from '@/components/ui/Tooltip'
 import SidebarLayout from '@/components/layout/SidebarLayout'
 import { fetchWithSession } from '@/lib/clientFetch'
@@ -12,7 +12,7 @@ const NAV_ITEMS = [
   { href: '/dashboard', label: 'Dashboard', Icon: LayoutDashboard },
   { href: '/projetos', label: 'Projetos', Icon: FolderKanban },
   { href: '/arquivos', label: 'Arquivos', Icon: Paperclip },
-  { href: '/equipe', label: 'Equipe de Desenvolvimento', Icon: Users },
+  { href: '/sobre', label: 'Sobre', Icon: Info },
 ]
 
 const ADMIN_ITEMS = [
@@ -23,7 +23,6 @@ const ADMIN_ITEMS = [
   { href: '/admin/cadastros', label: 'Departamentos', Icon: Building2 },
   { href: '/admin/cadastros', label: 'Funções', Icon: Briefcase },
   { href: '/admin/tenants', label: 'Tenants', Icon: Landmark },
-  { href: '/equipe', label: 'Equipe de Desenvolvimento', Icon: Code2 },
 ]
 
 const FALLBACK_TITLES: Record<string, string> = {
@@ -35,7 +34,7 @@ const FALLBACK_TITLES: Record<string, string> = {
   perfil: 'Perfil',
   admin: 'Admin',
   'alterar-senha': 'Alterar senha',
-  equipe: 'Equipe de Desenvolvimento',
+  sobre: 'Sobre',
 }
 
 const STORAGE_KEY = 'wbs-global-sidebar-collapsed'

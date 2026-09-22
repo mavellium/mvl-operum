@@ -3,6 +3,7 @@ import { getSprintBoardAction } from '@/app/actions/sprintBoard'
 import { getCurrentUserAction } from '@/app/actions/users'
 import SprintBoard from '@/components/sprint/SprintBoard'
 import Link from 'next/link'
+import { redirect } from 'next/navigation'
 import type { Metadata } from 'next'
 import { sprintsApi } from '@/lib/api-client'
 import { findById } from '@/services/projectService'
@@ -33,6 +34,20 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
 export default async function SprintPage({ params, searchParams }: Props) {
   const { sprintId } = await params
   const { card: initialCardId } = await searchParams
+
+  // Se a sprint pertence a um projeto, redireciona para a rota com contexto de
+  // projeto (/projetos/:id/sprints/:sprintId) — onde o menu lateral do projeto
+  // é renderizado e o board abre o card apontado por ?card=.
+  try {
+    const sprint = (await sprintsApi.get(sprintId)) as { projectId?: string }
+    if (sprint.projectId) {
+      const qs = initialCardId ? `?card=${encodeURIComponent(initialCardId)}` : ''
+      redirect(`/projetos/${sprint.projectId}/sprints/${sprintId}${qs}`)
+    }
+  } catch {
+    // segue o fluxo: o board resolve e reporta o erro
+  }
+
   const [result, currentUser] = await Promise.all([
     getSprintBoardAction(sprintId),
     getCurrentUserAction(),

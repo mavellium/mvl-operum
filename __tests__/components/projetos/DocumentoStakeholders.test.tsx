@@ -20,10 +20,21 @@ vi.mock('@/components/projetos/StakeholderDocument', () => ({
   default: vi.fn(() => <div data-testid="stakeholder-document" />),
 }))
 
+// ── Server action de criação de membro — não exercitada nestes testes
+vi.mock('@/app/actions/membros', () => ({
+  criarMembroEquipeAction: vi.fn(),
+}))
+
 import DocumentoStakeholders from '@/components/projetos/DocumentoStakeholders'
 import { ToastProvider } from '@/components/ui/Toast'
 
 // ── Helpers ─────────────────────────────────────────────────────────────────
+
+// Membros da equipe — responsável/aprovador devem ser membros
+const MEMBROS = [
+  { id: 'ana', name: 'Ana', setor: null },
+  { id: 'joao', name: 'João', setor: null },
+]
 
 const MOCK_DOCUMENTO = {
   header: {
@@ -63,7 +74,7 @@ function makeVersionsResponse(versions = [MOCK_VERSION_APPROVED], isManager = fa
 function renderComponent() {
   return render(
     <ToastProvider>
-      <DocumentoStakeholders />
+      <DocumentoStakeholders membros={MEMBROS} />
     </ToastProvider>,
   )
 }
@@ -102,8 +113,8 @@ describe('DocumentoStakeholders — localStorage', () => {
   it('não chama localStorage.setItem ao editar campos', async () => {
     const setSpy = vi.spyOn(Storage.prototype, 'setItem')
     renderComponent()
-    await waitFor(() => expect(screen.getByPlaceholderText('Nome do responsável')).toBeInTheDocument())
-    await userEvent.type(screen.getByPlaceholderText('Nome do responsável'), 'Novo nome')
+    await waitFor(() => expect(screen.getByLabelText('Elaborado por')).toBeInTheDocument())
+    await userEvent.selectOptions(screen.getByLabelText('Elaborado por'), 'joao')
     expect(setSpy).not.toHaveBeenCalled()
   })
 })
@@ -112,16 +123,59 @@ describe('DocumentoStakeholders — carga inicial da versão APPROVED', () => {
   it('popula os campos editáveis com o payload da versão APPROVED mais recente', async () => {
     renderComponent()
     await waitFor(() =>
-      expect(screen.getByPlaceholderText('Nome do responsável')).toHaveValue('Ana'),
+      expect(screen.getByLabelText('Elaborado por')).toHaveValue('ana'),
     )
-    expect(screen.getByPlaceholderText('Nome do aprovador')).toHaveValue('João')
+    expect(screen.getByLabelText('Aprovado por')).toHaveValue('joao')
+  })
+})
+
+describe('DocumentoStakeholders — responsáveis restritos a membros da equipe', () => {
+  it('bloqueia salvar quando o responsável/aprovador não é membro da equipe', async () => {
+    const versaoSemMembro = {
+      id: 'v1', commitTitle: 'Versão inicial', versao: '1.0',
+      elaboradoPor: 'Fulano de Tal', aprovadoPor: 'Ciclano', dataAprovacao: '01/05/2026',
+      authorId: 'u1', author: { name: 'Ana' },
+      status: 'APPROVED', approvedAt: '2026-05-01T00:00:00Z', approvedById: 'g1',
+      createdAt: '2026-05-01T00:00:00Z',
+    }
+    fetchSpy.mockImplementation(async (input) => {
+      const url = input.toString()
+      if (url.includes('/documento/versions')) {
+        return makeVersionsResponse([versaoSemMembro], true)
+      }
+      if (url.includes('/documento')) {
+        return new Response(JSON.stringify(MOCK_DOCUMENTO), { status: 200, headers: { 'Content-Type': 'application/json' } })
+      }
+      return new Response('{}', { status: 200 })
+    })
+
+    renderComponent()
+
+    // Sincroniza com a inicialização a partir da versão APPROVED (que referencia não-membros)
+    const histBtn = await screen.findByRole('button', { name: 'Histórico de versões' })
+    fireEvent.click(histBtn)
+    await screen.findByText('Versão inicial')
+    fireEvent.click(screen.getByRole('button', { name: 'Fechar' }))
+
+    // O nome da versão aprovada não resolve para um membro → select sem seleção
+    expect(screen.getByLabelText('Elaborado por')).toHaveValue('')
+
+    fireEvent.click(screen.getByText('Salvar Versão'))
+
+    // Modal NÃO abre e exibe notificação de falha
+    expect(screen.queryByText('Salvar alteração')).not.toBeInTheDocument()
+    expect(await screen.findByRole('alert')).toBeInTheDocument()
+    expect(screen.getByRole('alert').textContent).toContain('membro da equipe')
   })
 })
 
 describe('DocumentoStakeholders — fluxo de salvar (commit)', () => {
   it('clicar em "Salvar Versão" abre o modal de título — NÃO dispara fetch direto', async () => {
     renderComponent()
-    await waitFor(() => expect(screen.getByText('Salvar Versão')).toBeInTheDocument())
+    // Sincroniza com o fim do loadVersions (campos inicializados a partir da
+    // versão APPROVED) para que o clique atinja o botão do render mais recente.
+    await waitFor(() => expect(screen.getByLabelText('Elaborado por')).toHaveValue('ana'))
+    expect(screen.getByText('Salvar Versão')).toBeEnabled()
 
     const callsBefore = fetchSpy.mock.calls.length
     fireEvent.click(screen.getByText('Salvar Versão'))
@@ -154,7 +208,10 @@ describe('DocumentoStakeholders — fluxo de salvar (commit)', () => {
     })
 
     renderComponent()
-    await waitFor(() => expect(screen.getByText('Salvar Versão')).toBeInTheDocument())
+    // Sincroniza com o fim do loadVersions antes de clicar em "Salvar Versão"
+    // (evita o clique sobre um botão de um render intermediário).
+    await waitFor(() => expect(screen.getByLabelText('Elaborado por')).toHaveValue('ana'))
+    expect(screen.getByText('Salvar Versão')).toBeEnabled()
 
     fireEvent.click(screen.getByText('Salvar Versão'))
     await screen.findByText('Salvar alteração')
@@ -176,7 +233,8 @@ describe('DocumentoStakeholders — fluxo de salvar (commit)', () => {
 
   it('cancelar o modal não dispara nenhum POST', async () => {
     renderComponent()
-    await waitFor(() => expect(screen.getByText('Salvar Versão')).toBeInTheDocument())
+    await waitFor(() => expect(screen.getByLabelText('Elaborado por')).toHaveValue('ana'))
+    expect(screen.getByText('Salvar Versão')).toBeEnabled()
 
     fireEvent.click(screen.getByText('Salvar Versão'))
     await screen.findByText('Salvar alteração')

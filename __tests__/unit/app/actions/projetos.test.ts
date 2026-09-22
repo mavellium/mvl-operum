@@ -25,6 +25,8 @@ vi.mock('next/cache', () => ({
 vi.mock('@/lib/prisma', () => ({
   default: {
     projectDraft: { deleteMany: vi.fn() },
+    projetoDepartamento: { findMany: vi.fn().mockResolvedValue([]) },
+    userProjectRole: { findFirst: vi.fn().mockResolvedValue(null) },
   },
 }))
 

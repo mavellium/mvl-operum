@@ -10,20 +10,46 @@ export async function getOrCreateGerenteProjetoRole(tenantId: string) {
   })
 }
 
+const GERENTE_LABEL = 'Gerente de Projeto'
+
+function normalizeCargos(role: string | null | undefined): string[] {
+  return (role ?? '')
+    .split(',')
+    .map((s: string) => s.trim())
+    .filter(Boolean)
+}
+
 export async function setProjectManagerRole(userId: string, projectId: string, tenantId: string) {
   const role = await getOrCreateGerenteProjetoRole(tenantId)
   const existing = await prisma.userProjectRole.findUnique({
     where: { userId_projectId: { userId, projectId } },
   })
   if (existing) {
-    return prisma.userProjectRole.update({
+    await prisma.userProjectRole.update({
       where: { id: existing.id },
       data: { roleId: role.id, deletedAt: null },
     })
+  } else {
+    await prisma.userProjectRole.create({
+      data: { userId, projectId, roleId: role.id },
+    })
   }
-  return prisma.userProjectRole.create({
-    data: { userId, projectId, roleId: role.id },
-  })
+
+  // Mantém em sincronia o cargo string (UserProject.role) que alimenta a lista
+  // de "cargos/funções" em Stakeholders — senão o gerente não aparece com a
+  // função "Gerente de Projeto", embora o papel (UserProjectRole) exista.
+  const cargos = normalizeCargos(
+    (await prisma.userProject.findUnique({
+      where: { userId_projectId: { userId, projectId } },
+      select: { role: true },
+    }))?.role,
+  )
+  if (!cargos.some(c => c.toLowerCase() === GERENTE_LABEL.toLowerCase())) {
+    await prisma.userProject.update({
+      where: { userId_projectId: { userId, projectId } },
+      data: { role: [...cargos, GERENTE_LABEL].join(', ') },
+    })
+  }
 }
 
 export async function removeProjectRole(userId: string, projectId: string) {
@@ -34,6 +60,22 @@ export async function removeProjectRole(userId: string, projectId: string) {
     await prisma.userProjectRole.update({
       where: { id: existing.id },
       data: { deletedAt: new Date() },
+    })
+  }
+
+  // Remove o "Gerente de Projeto" da lista de cargos do membro, para a
+  // listagem de Stakeholders não ficar com a função órfã quando o papel cai.
+  const cargos = normalizeCargos(
+    (await prisma.userProject.findUnique({
+      where: { userId_projectId: { userId, projectId } },
+      select: { role: true },
+    }))?.role,
+  )
+  const restantes = cargos.filter(c => c.toLowerCase() !== GERENTE_LABEL.toLowerCase())
+  if (restantes.length !== cargos.length) {
+    await prisma.userProject.update({
+      where: { userId_projectId: { userId, projectId } },
+      data: { role: restantes.join(', ') },
     })
   }
 }

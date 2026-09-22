@@ -790,6 +790,7 @@ Redis "notifications" queue ←→ BullMQ
 | `POST` | `/notifications` | Criar notificação |
 | `PATCH` | `/notifications/:id/read` | Marcar como lida |
 | `PATCH` | `/notifications/:id/archive` | Arquivar |
+| `PATCH` | `/notifications/mark-all-read` | Marcar todas como lidas (`{ userId }` no body) |
 | `DELETE` | `/notifications/:id` | Soft delete |
 | `GET` | `/health` | Health check |
 

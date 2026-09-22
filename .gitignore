@@ -51,3 +51,18 @@ prisma.config.js
 auth-service/dist/
 auth-service/lib/
 api-gateway/dist/
+notification-service/dist/
+notification-service/lib/
+file-service/dist/
+file-service/lib/
+sprint-service/dist/
+sprint-service/lib/
+project-service/dist/
+project-service/lib/
+
+# Build artifacts
+*.tsbuildinfo
+
+# Binary artifacts
+*.deb
+*.tar.gz

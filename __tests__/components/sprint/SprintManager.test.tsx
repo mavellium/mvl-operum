@@ -34,8 +34,8 @@ describe('SprintManager — date inputs', () => {
     render(<SprintManager {...defaultProps} />)
 
     await user.type(screen.getByLabelText(/nome/i), 'Sprint X')
-    await user.type(screen.getByLabelText(/data de in[íi]cio/i), '2025-03-10')
-    await user.type(screen.getByLabelText(/data de fim/i), '2025-03-05')
+    await user.type(screen.getByLabelText(/data de in[íi]cio/i), '10/03/2025')
+    await user.type(screen.getByLabelText(/data de fim/i), '05/03/2025')
     await user.click(screen.getByRole('button', { name: /criar/i }))
 
     expect(screen.getByText(/data de fim deve ser/i)).toBeInTheDocument()
@@ -47,8 +47,8 @@ describe('SprintManager — date inputs', () => {
     render(<SprintManager {...defaultProps} />)
 
     await user.type(screen.getByLabelText(/nome/i), 'Sprint X')
-    await user.type(screen.getByLabelText(/data de in[íi]cio/i), '2025-03-01')
-    await user.type(screen.getByLabelText(/data de fim/i), '2025-03-15')
+    await user.type(screen.getByLabelText(/data de in[íi]cio/i), '01/03/2025')
+    await user.type(screen.getByLabelText(/data de fim/i), '15/03/2025')
     await user.click(screen.getByRole('button', { name: /criar/i }))
 
     expect(createSprintAction).toHaveBeenCalledWith(

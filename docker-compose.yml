@@ -346,7 +346,8 @@ services:
   minio:
     # Pin to a specific release — never use :latest in any environment.
     # Check https://github.com/minio/minio/releases and update periodically.
-    image: minio/minio:RELEASE.2025-04-08T15-41-24Z
+    # Official images are on Quay.io — the minio/minio Docker Hub repo no longer serves them.
+    image: quay.io/minio/minio:RELEASE.2025-04-08T15-41-24Z
     restart: always
     security_opt:
       - no-new-privileges:true

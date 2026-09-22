@@ -8,16 +8,24 @@ import StakeholderDocument, {
   type ProjetoHeader,
   type Stakeholder,
 } from './StakeholderDocument'
+import MembroEquipeSelect, {
+  type MembroEquipeOption,
+  useMembrosEquipe,
+} from './documentacao/MembroEquipeSelect'
 import Modal from '@/components/ui/Modal'
 import Drawer from '@/components/ui/Drawer'
+import DateInput from '@/components/ui/DateInput'
 import { useToast } from '@/components/ui/Toast'
 import { fetchWithSession } from '@/lib/clientFetch'
+import { formatDateBR, toDateInputValue } from '@/lib/date'
 
 type DocumentData = { header: ProjetoHeader; stakeholders: Stakeholder[] }
 
 interface EditableFields {
   elaboradoPor: string
+  elaboradoPorUserId: string | null
   aprovadoPor: string
+  aprovadoPorUserId: string | null
   versao: string
   dataAprovacaoRaw: string
 }
@@ -39,18 +47,11 @@ interface DocumentVersion {
 
 const DEFAULTS: EditableFields = {
   elaboradoPor: '',
+  elaboradoPorUserId: null,
   aprovadoPor: '',
+  aprovadoPorUserId: null,
   versao: '1.0',
   dataAprovacaoRaw: '',
-}
-
-function toDisplayDate(raw: string): string {
-  if (!raw) return ''
-  return new Date(raw + 'T12:00:00').toLocaleDateString('pt-BR', {
-    day: '2-digit',
-    month: '2-digit',
-    year: 'numeric',
-  })
 }
 
 const labelClass = 'block text-sm font-semibold text-slate-700 mb-1'
@@ -80,7 +81,7 @@ function useDebounce<T>(value: T, delay: number): T {
   return debounced
 }
 
-export default function DocumentoStakeholders() {
+export default function DocumentoStakeholders({ membros = [] }: { membros?: MembroEquipeOption[] }) {
   const { projetoId } = useParams<{ projetoId: string }>()
   const documentRef = useRef<HTMLDivElement>(null)
   const { toast } = useToast()
@@ -89,6 +90,15 @@ export default function DocumentoStakeholders() {
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
   const [isManager, setIsManager] = useState(false)
+
+  // Membros da equipe (responsável/aprovador devem ser membros) + criados na sessão (pendência)
+  const { todos: todosMembros, registrarCriado } = useMembrosEquipe(membros)
+  const todosMembrosRef = useRef(todosMembros)
+
+  // Mantém a ref sincronizada com a lista mais recente de membros (lida em loadVersions)
+  useEffect(() => {
+    todosMembrosRef.current = todosMembros
+  })
 
   // Campos editáveis — inicializados a partir da versão APPROVED mais recente (carregada no useEffect)
   const [editable, setEditable] = useState<EditableFields>(DEFAULTS)
@@ -141,11 +151,14 @@ export default function DocumentoStakeholders() {
           const approved = list.find(v => v.status === 'APPROVED')
           if (approved) {
             initializedFromDB.current = true
+            const atuais = todosMembrosRef.current
             setEditable({
               elaboradoPor: approved.elaboradoPor,
-              aprovadoPor:  approved.aprovadoPor,
-              versao:       approved.versao,
-              dataAprovacaoRaw: approved.dataAprovacao,
+              elaboradoPorUserId: atuais.find(m => m.name === approved.elaboradoPor)?.id ?? null,
+              aprovadoPor: approved.aprovadoPor,
+              aprovadoPorUserId: atuais.find(m => m.name === approved.aprovadoPor)?.id ?? null,
+              versao: approved.versao,
+              dataAprovacaoRaw: toDateInputValue(approved.dataAprovacao),
             })
           }
         }
@@ -181,13 +194,50 @@ export default function DocumentoStakeholders() {
 
   // ── Commit (salvar versão) ──────────────────────────────────────────────────
 
+  function validarResponsaveis(): string | null {
+    if (editable.elaboradoPor && !editable.elaboradoPorUserId) {
+      return 'Selecione um membro da equipe em "Elaborado por" — a pessoa informada não é um membro do projeto.'
+    }
+    if (editable.aprovadoPor && !editable.aprovadoPorUserId) {
+      return 'Selecione um membro da equipe em "Aprovado por" — a pessoa informada não é um membro do projeto.'
+    }
+    return null
+  }
+
+  function handleSelectElaborado(membro: MembroEquipeOption | null) {
+    setEditable(prev => ({
+      ...prev,
+      elaboradoPor: membro?.name ?? '',
+      elaboradoPorUserId: membro?.id ?? null,
+    }))
+  }
+
+  function handleSelectAprovado(membro: MembroEquipeOption | null) {
+    setEditable(prev => ({
+      ...prev,
+      aprovadoPor: membro?.name ?? '',
+      aprovadoPorUserId: membro?.id ?? null,
+    }))
+  }
+
   function openCommitModal() {
+    const problema = validarResponsaveis()
+    if (problema) {
+      toast(problema, 'error')
+      return
+    }
     setCommitTitle('')
     setCommitModalOpen(true)
   }
 
   async function handleConfirmCommit() {
     if (!projetoId || !commitTitle.trim()) return
+    const problema = validarResponsaveis()
+    if (problema) {
+      setCommitModalOpen(false)
+      toast(problema, 'error')
+      return
+    }
     setSavingVersion(true)
     try {
       const r = await fetchWithSession(`/api/projects/${projetoId}/documento/versions`, {
@@ -198,7 +248,7 @@ export default function DocumentoStakeholders() {
           versao: editable.versao,
           elaboradoPor: editable.elaboradoPor,
           aprovadoPor: editable.aprovadoPor,
-          dataAprovacao: toDisplayDate(editable.dataAprovacaoRaw) || editable.dataAprovacaoRaw,
+          dataAprovacao: editable.dataAprovacaoRaw,
         }),
       })
       if (r.ok) {
@@ -256,9 +306,20 @@ export default function DocumentoStakeholders() {
         elaboradoPor: editable.elaboradoPor,
         aprovadoPor: editable.aprovadoPor,
         versao: editable.versao,
-        dataAprovacao: toDisplayDate(editable.dataAprovacaoRaw),
+        dataAprovacao: formatDateBR(editable.dataAprovacaoRaw, ''),
       }
     : null
+
+  const pendenciasResponsaveis = [
+    editable.elaboradoPorUserId &&
+    todosMembros.find(m => m.id === editable.elaboradoPorUserId)?.pendente
+      ? `Elaborado por: ${editable.elaboradoPor}`
+      : null,
+    editable.aprovadoPorUserId &&
+    todosMembros.find(m => m.id === editable.aprovadoPorUserId)?.pendente
+      ? `Aprovado por: ${editable.aprovadoPor}`
+      : null,
+  ].filter(Boolean) as string[]
 
   return (
     <div className="min-h-screen bg-gray-300 flex flex-col items-center py-8 gap-6">
@@ -267,22 +328,29 @@ export default function DocumentoStakeholders() {
         {!loading && !error && data && (
           <div className="bg-white rounded-xl shadow-md p-5 grid grid-cols-2 gap-4">
             <div>
-              <label className={labelClass}>Elaborado por</label>
-              <input
+              <label className={labelClass} htmlFor="ds-elaborado-por">Elaborado por</label>
+              <MembroEquipeSelect
+                id="ds-elaborado-por"
+                membros={todosMembros}
+                projetoId={projetoId}
+                value={editable.elaboradoPorUserId}
+                onChange={handleSelectElaborado}
+                onCriarMembro={registrarCriado}
+                placeholder="Selecionar membro da equipe"
                 className={inputClass}
-                autoFocus
-                value={editable.elaboradoPor}
-                onChange={e => update('elaboradoPor', e.target.value)}
-                placeholder="Nome do responsável"
               />
             </div>
             <div>
-              <label className={labelClass}>Aprovado por</label>
-              <input
+              <label className={labelClass} htmlFor="ds-aprovado-por">Aprovado por</label>
+              <MembroEquipeSelect
+                id="ds-aprovado-por"
+                membros={todosMembros}
+                projetoId={projetoId}
+                value={editable.aprovadoPorUserId}
+                onChange={handleSelectAprovado}
+                onCriarMembro={registrarCriado}
+                placeholder="Selecionar membro da equipe"
                 className={inputClass}
-                value={editable.aprovadoPor}
-                onChange={e => update('aprovadoPor', e.target.value)}
-                placeholder="Nome do aprovador"
               />
             </div>
             <div>
@@ -296,11 +364,10 @@ export default function DocumentoStakeholders() {
             </div>
             <div>
               <label className={labelClass}>Data de aprovação</label>
-              <input
-                type="date"
+              <DateInput
                 className={inputClass}
                 value={editable.dataAprovacaoRaw}
-                onChange={e => update('dataAprovacaoRaw', e.target.value)}
+                onChange={v => update('dataAprovacaoRaw', v)}
               />
             </div>
           </div>
@@ -365,6 +432,12 @@ export default function DocumentoStakeholders() {
         maxWidth="max-w-sm"
       >
         <div className="flex flex-col gap-4 py-2">
+          {pendenciasResponsaveis.length > 0 && (
+            <div className="bg-amber-50 border border-amber-200 text-amber-800 rounded-lg px-3 py-2 text-xs leading-relaxed">
+              <strong>Pendência de cadastro:</strong> {pendenciasResponsaveis.join(' · ')} — membro(s)
+              criado(s) de forma simples; o 1º acesso (troca de senha) é necessário para regularizar.
+            </div>
+          )}
           <div>
             <label className={labelClass}>Título da alteração <span className="text-red-500">*</span></label>
             <input

@@ -68,6 +68,13 @@ export async function markAsRead(id: string) {
   })
 }
 
+export async function markAllAsRead(userId: string) {
+  return prisma.notification.updateMany({
+    where: { userId, status: 'UNREAD', deletedAt: null },
+    data: { status: 'READ', readAt: new Date() },
+  })
+}
+
 export async function markAsArchived(id: string) {
   const existing = await prisma.notification.findUnique({
     where: { id, deletedAt: null },

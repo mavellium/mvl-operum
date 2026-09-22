@@ -4,10 +4,11 @@ import { fmtDataBR } from '@/lib/planilhaCustos'
 
 /**
  * Export Planilha de Custos IDÊNTICO ao modelo (§F.6).
- * - Cabeçalho: projeto, horas/dia, valor de referência, início/fim, valor/min (fórmula).
+ * - Cabeçalho: projeto, início/fim.
  * - Colunas/agrupamentos, sub-totais cinza por macrofase, TOTAL GERAL.
- * - Fórmulas nativas: Horas (Min/1440, h:mm), Dias (Min/60/horasPorDia),
- *   R$ (Min × valor/min), Total (R$ + Materiais), somatórios, quadros-resumo.
+ * - Fórmulas nativas: Horas (Min/1440, h:mm), Dias (Min/60/jornada do elaborador),
+ *   R$ (Min × valor/min do elaborador), Total (R$ + Materiais), somatórios, quadros-resumo.
+ * - Linha sem elaborador (ou sem salário/jornada) → células de Dias/R$/Total vazias (nenhum valor).
  * - 3 quadros-resumo (fase×valor, fase×tempo, elaborador×qtde/%).
  * - Formatação h:mm, moeda R$, datas dd/mm/aaaa, status colorido.
  */
@@ -69,7 +70,6 @@ export async function gerarPlanilhaXlsx(
   const ws = wb.addWorksheet('Planilha de Custos')
   ws.views = [{ state: 'frozen', ySplit: 5, activeCell: 'A6' }]
 
-  const { horasPorDia, valorReferencia } = plan.config
   const inicio = meta.inicioProjeto ? fmtDataBR(meta.inicioProjeto.toISOString()) : ''
   const fim = meta.fimProjeto ? fmtDataBR(meta.fimProjeto.toISOString()) : ''
 
@@ -85,30 +85,12 @@ export async function gerarPlanilhaXlsx(
   ws.getCell('A2').value = `Projeto: ${meta.nomeProjeto}`
   ws.getCell('A2').font = { bold: true, size: 12 }
 
-  ws.mergeCells('D2:E2')
-  ws.getCell('D2').value = 'Horas por dia de trabalho:'
-  ws.getCell('D2').alignment = { horizontal: 'right' }
-  ws.getCell('F2').value = horasPorDia
-  ws.getCell('F2').alignment = { horizontal: 'center' }
-
-  ws.mergeCells('G2:H2')
-  ws.getCell('G2').value = 'Valor de Referência (salário mínimo):'
-  ws.getCell('G2').alignment = { horizontal: 'right' }
-  ws.getCell('I2').value = valorReferencia
-  ws.getCell('I2').numFmt = RESPALDO
-
   ws.mergeCells('A3:C3')
   ws.getCell('A3').value = `Início do Projeto: ${inicio}`
 
   ws.mergeCells('D3:E3')
   ws.getCell('D3').value = `Fim do Projeto: ${fim}`
   ws.getCell('D3').alignment = { horizontal: 'right' }
-
-  ws.mergeCells('G3:H3')
-  ws.getCell('G3').value = 'Valor por minuto:'
-  ws.getCell('G3').alignment = { horizontal: 'right' }
-  ws.getCell('I3').value = { formula: 'ROUND(I2/30/F2/60,4)' }
-  ws.getCell('I3').numFmt = RESPALDO
 
   // ── Cabeçalhos do grupo ──────────────────────────────────────────────────────
   ws.getRow(4).height = 22
@@ -188,20 +170,24 @@ export async function gerarPlanilhaXlsx(
       // Orçado
       ws.getCell(r, 4).value = a.minOrcado
       ws.getCell(r, 5).value = { formula: `D${r}/1440` }
-      ws.getCell(r, 6).value = { formula: `D${r}/60/$F$2` }
-      ws.getCell(r, 7).value = { formula: `ROUND(D${r}*$I$3,2)` }
+      if (a.jornadaDiaria !== null) ws.getCell(r, 6).value = { formula: `D${r}/60/${a.jornadaDiaria}` }
+      if (a.vpm !== null) {
+        ws.getCell(r, 7).value = { formula: `ROUND(D${r}*${a.vpm},2)` }
+        ws.getCell(r, 9).value = { formula: `G${r}+H${r}` }
+      }
       ws.getCell(r, 8).value = a.materiaisOrcado
-      ws.getCell(r, 9).value = { formula: `G${r}+H${r}` }
       ws.getCell(r, 10).value = dataCelula(a.dataPrevista)
       fmtRowAtividade(r, false)
 
       // Realizado
       ws.getCell(r, 11).value = a.minReal
       ws.getCell(r, 12).value = { formula: `K${r}/1440` }
-      ws.getCell(r, 13).value = { formula: `K${r}/60/$F$2` }
-      ws.getCell(r, 14).value = { formula: `ROUND(K${r}*$I$3,2)` }
+      if (a.jornadaDiaria !== null) ws.getCell(r, 13).value = { formula: `K${r}/60/${a.jornadaDiaria}` }
+      if (a.vpm !== null) {
+        ws.getCell(r, 14).value = { formula: `ROUND(K${r}*${a.vpm},2)` }
+        ws.getCell(r, 16).value = { formula: `N${r}+O${r}` }
+      }
       ws.getCell(r, 15).value = a.materiaisReal
-      ws.getCell(r, 16).value = { formula: `N${r}+O${r}` }
       ws.getCell(r, 17).value = dataCelula(a.dataRealizacao)
       ws.getCell(r, 18).value = a.situacao
       const status = ws.getCell(r, 18)

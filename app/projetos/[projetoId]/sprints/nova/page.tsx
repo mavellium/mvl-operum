@@ -5,6 +5,7 @@ import { useRouter, useSearchParams, useParams } from 'next/navigation'
 import { createSprintAction } from '@/app/actions/sprints'
 import { getProjetosAction } from '@/app/actions/projetos'
 import Link from 'next/link'
+import DateInput from '@/components/ui/DateInput'
 
 interface Projeto {
   id: string
@@ -99,19 +100,17 @@ function NovaSprintForm() {
             <div className="grid grid-cols-2 gap-3">
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">Data início</label>
-                <input
-                  type="date"
+                <DateInput
                   value={form.startDate}
-                  onChange={e => setForm(f => ({ ...f, startDate: e.target.value }))}
+                  onChange={v => setForm(f => ({ ...f, startDate: v }))}
                   className="w-full px-3 py-2 border border-gray-200 rounded-xl text-sm text-gray-900 focus:outline-none focus:ring-2 focus:ring-blue-500"
                 />
               </div>
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">Data fim</label>
-                <input
-                  type="date"
+                <DateInput
                   value={form.endDate}
-                  onChange={e => setForm(f => ({ ...f, endDate: e.target.value }))}
+                  onChange={v => setForm(f => ({ ...f, endDate: v }))}
                   className="w-full px-3 py-2 border border-gray-200 rounded-xl text-sm text-gray-900 focus:outline-none focus:ring-2 focus:ring-blue-500"
                 />
               </div>

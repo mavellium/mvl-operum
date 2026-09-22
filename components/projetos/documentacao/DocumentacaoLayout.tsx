@@ -5,10 +5,13 @@ import DocumentoStakeholders from '@/components/projetos/DocumentoStakeholders'
 import DocumentSidebar from './DocumentSidebar'
 import ProjectCharterWrapper from './ProjectCharterWrapper'
 import DocumentoAtas, { type AtaListItem } from './DocumentoAtas'
+import EapDocument from './EapDocument'
+import type { MembroEquipeOption } from './MembroEquipeSelect'
 
 const DOCUMENT_MAP = {
   stakeholder: DocumentoStakeholders,
   charter: ProjectCharterWrapper,
+  eap: EapDocument,
   atas: DocumentoAtas,
 } as const
 
@@ -18,9 +21,11 @@ interface Props {
   projetoId: string
   atas: AtaListItem[]
   gerente: boolean
+  /** Membros da equipe — responsáveis/aprovadores dos documentos devem ser membros */
+  membros?: MembroEquipeOption[]
 }
 
-export default function DocumentacaoLayout({ projetoId, atas, gerente }: Props) {
+export default function DocumentacaoLayout({ projetoId, atas, gerente, membros = [] }: Props) {
   const searchParams = useSearchParams()
   const router = useRouter()
   const pathname = usePathname()
@@ -41,9 +46,11 @@ export default function DocumentacaoLayout({ projetoId, atas, gerente }: Props) 
         {activeDoc === 'atas' ? (
           <DocumentoAtas projetoId={projetoId} atas={atas} gerente={gerente} />
         ) : activeDoc === 'charter' ? (
-          <ProjectCharterWrapper />
+          <ProjectCharterWrapper membros={membros} />
+        ) : activeDoc === 'eap' ? (
+          <EapDocument />
         ) : (
-          <DocumentoStakeholders />
+          <DocumentoStakeholders membros={membros} />
         )}
       </div>
     </div>

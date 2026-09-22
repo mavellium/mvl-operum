@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server'
 import { verifySession } from '@/lib/dal'
 import prisma from '@/lib/prisma'
 import { isProjectManager } from '@/services/projectRoleService'
+import { getTree } from '@/services/wbsService'
 
 export async function GET(
   _: Request,
@@ -38,11 +39,38 @@ export async function GET(
     })
     if (!project) return NextResponse.json({ error: 'Projeto não encontrado' }, { status: 404 })
 
-    const [macroFases, gerenteEntries, userProjects] = await Promise.all([
-      prisma.projectMacroFase.findMany({
+    // Fonte única: macrofases = nós top-level da árvore WBS (EAP/Planilha).
+    // Fallback: tabela ProjectMacroFase (projetos legados sem árvore).
+    const tree = await getTree(projetoId, tenantId)
+    let macroFases: Array<{ fase: string; dataLimite?: string; custo?: string; id?: string }> = []
+    if (tree.rootId && tree.nodes[tree.rootId]) {
+      const topLevelIds = tree.nodes[tree.rootId].childrenIds
+      macroFases = topLevelIds.map(faseId => {
+        const fase = tree.nodes[faseId]
+        const props = (fase?.properties as Record<string, any>) ?? {}
+        return {
+          id: fase?.id,
+          fase: fase?.title ?? '',
+          dataLimite: props.dataLimite ?? '',
+          custo: props.custo != null ? String(props.custo) : '',
+        }
+      }).filter(f => f.fase)
+    }
+    // Fallback para projetos legados sem árvore WBS
+    if (macroFases.length === 0) {
+      const legacy = await prisma.projectMacroFase.findMany({
         where: { projectId: projetoId },
         orderBy: { createdAt: 'asc' },
-      }),
+      })
+      macroFases = legacy.map(f => ({
+        id: f.id,
+        fase: f.fase,
+        dataLimite: f.dataLimite ?? undefined,
+        custo: f.custo ?? undefined,
+      }))
+    }
+
+    const [gerenteEntries, userProjects] = await Promise.all([
       prisma.userProjectRole.findMany({
         where: { projectId: projetoId, deletedAt: null, role: { nameKey: 'gerente' } },
         select: { userId: true },

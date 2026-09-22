@@ -55,6 +55,13 @@ export class NotificationService {
     })
   }
 
+  async markAllAsRead(userId: string) {
+    return this.prisma.notification.updateMany({
+      where: { userId, status: 'UNREAD', deletedAt: null },
+      data: { status: 'READ', readAt: new Date() },
+    })
+  }
+
   async softDelete(id: string) {
     await this.findById(id)
     return this.prisma.notification.update({

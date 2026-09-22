@@ -8,13 +8,14 @@ vi.mock('@/lib/prisma', () => ({
       findMany: vi.fn(),
       create: vi.fn(),
       update: vi.fn(),
+      updateMany: vi.fn(),
       count: vi.fn(),
     },
   },
 }))
 
 import prisma from '@/lib/prisma'
-import { create, findAllByUser, findById, markAsRead, markAsArchived, deleteNotificacao, countUnread } from '@/services/notificacaoService'
+import { create, findAllByUser, findById, markAsRead, markAllAsRead, markAsArchived, deleteNotificacao, countUnread } from '@/services/notificacaoService'
 
 const mockPrisma = prisma as {
   notification: {
@@ -22,6 +23,7 @@ const mockPrisma = prisma as {
     findMany: ReturnType<typeof vi.fn>
     create: ReturnType<typeof vi.fn>
     update: ReturnType<typeof vi.fn>
+    updateMany: ReturnType<typeof vi.fn>
     count: ReturnType<typeof vi.fn>
   }
 }
@@ -195,6 +197,26 @@ describe('NotificacaoService', () => {
 
       const notif = await markAsArchived('n1')
       expect(notif.status).toBe('ARCHIVED')
+    })
+  })
+
+  describe('markAllAsRead', () => {
+    it('should mark all unread notifications as read for the user', async () => {
+      mockPrisma.notification.updateMany.mockResolvedValue({ count: 3 })
+
+      const result = await markAllAsRead('user-1')
+      expect(result).toEqual({ count: 3 })
+      expect(mockPrisma.notification.updateMany).toHaveBeenCalledWith({
+        where: { userId: 'user-1', status: 'UNREAD', deletedAt: null },
+        data: { status: 'READ', readAt: expect.any(Date) },
+      })
+    })
+
+    it('should return count 0 when there are no unread notifications', async () => {
+      mockPrisma.notification.updateMany.mockResolvedValue({ count: 0 })
+
+      const result = await markAllAsRead('user-1')
+      expect(result).toEqual({ count: 0 })
     })
   })
 

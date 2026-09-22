@@ -38,6 +38,16 @@ export class NotificationController {
     return { count }
   }
 
+  @Patch('mark-all-read')
+  @HttpCode(HttpStatus.OK)
+  async markAllAsRead(@Body() body: { userId?: string }) {
+    if (!body?.userId) {
+      return { count: 0 }
+    }
+    const result = await this.service.markAllAsRead(body.userId)
+    return { count: result.count }
+  }
+
   @Get(':id')
   async findOne(@Param('id') id: string) {
     return this.service.findById(id)

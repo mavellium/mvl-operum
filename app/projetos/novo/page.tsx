@@ -65,6 +65,65 @@ const formatCurrency = (value: string) => {
     });
   };
 
+// ── Datas no padrão brasileiro (dd/mm/aaaa) ─────────────────
+// O valor mantido no state é ISO (YYYY-MM-DD) — só o display é mascarado.
+const isoToBR = (iso: string): string => {
+  const m = iso.match(/^(\d{4})-(\d{2})-(\d{2})/)
+  return m ? `${m[3]}/${m[2]}/${m[1]}` : ''
+}
+
+const maskDateBR = (raw: string): string => {
+  const digits = raw.replace(/\D/g, '').slice(0, 8)
+  if (digits.length <= 2) return digits
+  if (digits.length <= 4) return `${digits.slice(0, 2)}/${digits.slice(2)}`
+  return `${digits.slice(0, 2)}/${digits.slice(2, 4)}/${digits.slice(4)}`
+}
+
+const brToISO = (br: string): string => {
+  const m = br.match(/^(\d{2})\/(\d{2})\/(\d{4})$/)
+  return m ? `${m[3]}-${m[2]}-${m[1]}` : ''
+}
+
+function DateInputBR({
+  value,
+  onChange,
+  className,
+}: {
+  value: string
+  onChange: (iso: string) => void
+  className?: string
+}) {
+  const [display, setDisplay] = useState(isoToBR(value))
+  const [focused, setFocused] = useState(false)
+  const [lastValue, setLastValue] = useState(value)
+
+  // Sincroniza o campo quando o valor ISO muda externamente (sem sobrescrever
+  // a digitação enquanto o usuário está focado no input).
+  if (lastValue !== value && !focused) {
+    setLastValue(value)
+    setDisplay(isoToBR(value))
+  }
+
+  return (
+    <input
+      type="text"
+      inputMode="numeric"
+      autoComplete="off"
+      placeholder="dd/mm/aaaa"
+      maxLength={10}
+      value={display}
+      onFocus={() => setFocused(true)}
+      onBlur={() => setFocused(false)}
+      onChange={(e) => {
+        const masked = maskDateBR(e.target.value)
+        setDisplay(masked)
+        onChange(brToISO(masked))
+      }}
+      className={className}
+    />
+  )
+}
+
 function ProjetoFormContent() {
   const router = useRouter()
   const searchParams = useSearchParams()
@@ -115,6 +174,8 @@ function ProjetoFormContent() {
         return
       }
       const p = result.projeto
+      const associados = (result as { departamentosAssociados?: { id: string; name: string }[] }).departamentosAssociados
+      const gerenteId = (result as { gerenteId?: string }).gerenteId ?? ''
       const publishedForm = {
         name: p.name ?? '',
         slogan: p.slogan ?? '',
@@ -122,7 +183,7 @@ function ProjetoFormContent() {
         endDate: p.endDate ? new Date(p.endDate).toISOString().split('T')[0] : '',
         location: p.location ?? '',
         logoUrl: p.logoUrl ?? '',
-        initialMemberId: '',
+        initialMemberId: gerenteId,
         justificativa: p.justificativa ?? '',
         objetivos: p.objetivos ?? '',
         metodologia: p.metodologia ?? '',
@@ -132,7 +193,9 @@ function ProjetoFormContent() {
         limitesAutoridade: p.limitesAutoridade ?? '',
         semestre: p.semestre ?? '',
         ano: p.ano ? String(p.ano) : '',
-        departamentos: p.departamentos ?? [],
+        // Fonte da verdade: associações reais (ProjetoDepartamento). Fallback para
+        // as strings legadas de projetos anteriores à sincronização.
+        departamentos: associados?.length ? associados.map(d => d.name) : (p.departamentos ?? []),
       }
       setForm(publishedForm)
       const publishedMacroFases = p.macroFases?.length
@@ -307,11 +370,11 @@ function ProjetoFormContent() {
                   <div className="grid grid-cols-2 gap-5">
                     <div>
                       <label className={labelClass}>Data de Início</label>
-                      <input name="startDate" type="date" value={form.startDate} onChange={handleChange} className={inputClass} />
+                      <DateInputBR value={form.startDate} onChange={(iso) => setForm(prev => ({ ...prev, startDate: iso }))} className={inputClass} />
                     </div>
                     <div>
                       <label className={labelClass}>Data Prevista (Fim)</label>
-                      <input name="endDate" type="date" value={form.endDate} onChange={handleChange} className={inputClass} />
+                      <DateInputBR value={form.endDate} onChange={(iso) => setForm(prev => ({ ...prev, endDate: iso }))} className={inputClass} />
                     </div>
                   </div>
 
@@ -363,18 +426,16 @@ function ProjetoFormContent() {
                     </div>
                   </div>
 
-                  {!editId && (
-                    <div className="pt-5 border-t border-slate-100">
-                      <label className={labelClass}>Gerente do Projeto (Responsável)</label>
-                      <div className="relative">
-                        <select name="initialMemberId" value={form.initialMemberId} onChange={handleChange} className={`${inputClass} appearance-none cursor-pointer pr-10`}>
-                          <option value="">Ainda não definido (Designar depois)</option>
-                          {usuarios.filter(u => u.isActive !== false).map(u => <option key={u.id} value={u.id}>{u.name}</option>)}
-                        </select>
-                        <svg className="absolute right-4 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400 pointer-events-none" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" /></svg>
-                      </div>
+                  <div className="pt-5 border-t border-slate-100">
+                    <label className={labelClass}>Gerente do Projeto (Responsável)</label>
+                    <div className="relative">
+                      <select name="initialMemberId" value={form.initialMemberId} onChange={handleChange} className={`${inputClass} appearance-none cursor-pointer pr-10`}>
+                        <option value="">Ainda não definido (Designar depois)</option>
+                        {usuarios.filter(u => u.isActive !== false).map(u => <option key={u.id} value={u.id}>{u.name}</option>)}
+                      </select>
+                      <svg className="absolute right-4 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400 pointer-events-none" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" /></svg>
                     </div>
-                  )}
+                  </div>
                 </div>
               </div>
             </div>
@@ -445,7 +506,11 @@ function ProjetoFormContent() {
                           <input type="text" value={fase.fase} onChange={e => updateMacroFase(idx, 'fase', e.target.value)} placeholder={`Ex: Fase ${idx + 1}...`} className="w-full px-3 py-2.5 bg-transparent border border-transparent hover:border-slate-200 focus:border-blue-500 focus:bg-white focus:ring-4 focus:ring-blue-500/10 rounded-lg text-sm font-semibold text-slate-800 transition-all outline-none" />
                         </td>
                         <td className="p-3">
-                          <input type="date" value={fase.dataLimite} onChange={e => updateMacroFase(idx, 'dataLimite', e.target.value)} className="w-full px-3 py-2.5 bg-transparent border border-transparent hover:border-slate-200 focus:border-blue-500 focus:bg-white focus:ring-4 focus:ring-blue-500/10 rounded-lg text-sm text-slate-600 font-medium transition-all outline-none" />
+                          <DateInputBR
+                            value={fase.dataLimite}
+                            onChange={(v) => updateMacroFase(idx, 'dataLimite', v)}
+                            className="w-full px-3 py-2.5 bg-transparent border border-transparent hover:border-slate-200 focus:border-blue-500 focus:bg-white focus:ring-4 focus:ring-blue-500/10 rounded-lg text-sm text-slate-600 font-medium transition-all outline-none"
+                          />
                         </td>
                         <td className="p-3">
                           <div className="relative flex items-center">

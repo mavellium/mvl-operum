@@ -4,6 +4,7 @@ import { useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { criarAtaAction, atualizarAtaAction } from '@/app/actions/atas'
 import MemberSelect, { type MemberOption } from '@/components/atas/MemberSelect'
+import DateInput from '@/components/ui/DateInput'
 
 interface Presente { nome: string; setorEmpresa: string; userId: string }
 interface Acao { acao: string; prazo: string; responsavel: string; responsavelUserId: string }
@@ -95,6 +96,12 @@ export default function AtaFormClient({ projetoId, ataId, mode, members, initial
     setError(null)
     setSaving(true)
 
+    if (!data) {
+      setError('Informe a data da reunião.')
+      setSaving(false)
+      return
+    }
+
     const payload = {
       local: local || null,
       data: new Date(`${data}T00:00:00`).toISOString(),
@@ -151,7 +158,7 @@ export default function AtaFormClient({ projetoId, ataId, mode, members, initial
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
         <div>
           <label className="block text-sm font-medium text-gray-700 mb-1">Data da reunião *</label>
-          <input type="date" required value={data} onChange={e => setData(e.target.value)} className={inputCls} />
+          <DateInput required value={data} onChange={setData} className={inputCls} />
         </div>
         <div>
           <label className="block text-sm font-medium text-gray-700 mb-1">Local</label>
@@ -231,11 +238,10 @@ export default function AtaFormClient({ projetoId, ataId, mode, members, initial
             />
             <div className="flex flex-col sm:flex-row gap-2 items-stretch">
               <div className="sm:w-44">
-                <input
-                  type="date"
+                <DateInput
                   value={a.prazo}
-                  onChange={e => {
-                    const next = [...acoes]; next[i].prazo = e.target.value; setAcoes(next)
+                  onChange={v => {
+                    const next = [...acoes]; next[i].prazo = v; setAcoes(next)
                   }}
                   className={inputCls}
                 />

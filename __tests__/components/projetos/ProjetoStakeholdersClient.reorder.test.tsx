@@ -1,5 +1,6 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest'
 import { render, screen, fireEvent, waitFor } from '@testing-library/react'
+import { ToastProvider } from '@/components/ui/Toast'
 
 vi.mock('@/app/actions/stakeholders', () => ({
   createStakeholderAction: vi.fn(),
@@ -67,15 +68,17 @@ const DEFAULT_STAKEHOLDERS: StakeholderUnificado[] = [
 
 function renderComponent(stakeholders = DEFAULT_STAKEHOLDERS) {
   return render(
-    <ProjetoStakeholdersClient
-      projetoId={PROJ_ID}
-      stakeholders={stakeholders}
-      stakeholdersDisponiveis={[]}
-      usuariosDisponiveis={[]}
-      funcoesExistentes={[]}
-      departamentosExistentes={[]}
-      userRole="admin"
-    />,
+    <ToastProvider>
+      <ProjetoStakeholdersClient
+        projetoId={PROJ_ID}
+        stakeholders={stakeholders}
+        stakeholdersDisponiveis={[]}
+        usuariosDisponiveis={[]}
+        funcoesExistentes={[]}
+        departamentosExistentes={[]}
+        userRole="admin"
+      />
+    </ToastProvider>,
   )
 }
 

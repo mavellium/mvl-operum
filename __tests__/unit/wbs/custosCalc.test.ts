@@ -3,6 +3,8 @@ import {
   custoFolhaPrevisto,
   custoFolhaRealizado,
   computePlanilha,
+  minutosDeHoras,
+  minutosDeDias,
 } from '@/lib/custosCalc'
 import type { WbsNodeClient } from '@/types/wbs'
 
@@ -34,6 +36,36 @@ describe('custoFolhaPrevisto / custoFolhaRealizado', () => {
 
   it('arredonda para 2 casas', () => {
     expect(custoFolhaPrevisto(1, 0.12345, 0)).toBe(0.12)
+  })
+})
+
+describe('minutosDeHoras / minutosDeDias', () => {
+  it('converte horas decimais para minutos', () => {
+    expect(minutosDeHoras('5')).toBe(300)
+    expect(minutosDeHoras('5.5')).toBe(330)
+    expect(minutosDeHoras('5,5')).toBe(330)
+    expect(minutosDeHoras('0.25')).toBe(15)
+  })
+
+  it('converte h:mm para minutos', () => {
+    expect(minutosDeHoras('5:30')).toBe(330)
+    expect(minutosDeHoras('1:45')).toBe(105)
+    expect(minutosDeHoras('0:30')).toBe(30)
+  })
+
+  it('minutos em branco → 0; inválido → NaN', () => {
+    expect(minutosDeHoras('')).toBe(0)
+    expect(minutosDeHoras('  ')).toBe(0)
+    expect(Number.isNaN(minutosDeHoras('abc'))).toBe(true)
+    expect(Number.isNaN(minutosDeHoras('5:99'))).toBe(true) // minutos > 59
+  })
+
+  it('converte dias para minutos usando a jornada', () => {
+    expect(minutosDeDias('1', 8)).toBe(480)
+    expect(minutosDeDias('0.5', 8)).toBe(240)
+    expect(minutosDeDias('2', 6)).toBe(720)
+    expect(minutosDeDias('', 8)).toBe(0)
+    expect(Number.isNaN(minutosDeDias('x', 8))).toBe(true)
   })
 })
 

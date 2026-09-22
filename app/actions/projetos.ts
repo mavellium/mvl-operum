@@ -5,21 +5,53 @@ import { revalidatePath } from 'next/cache'
 import { projectsApi } from '@/lib/api-client'
 import prisma from '@/lib/prisma'
 import { isProjectManager, setProjectManagerRole, removeProjectRole } from '@/services/projectRoleService'
+import { getTree, syncMacrofasesComEap } from '@/services/wbsService'
+import { computarPlanilhaCustos, type Elaborador } from '@/lib/planilhaCustos'
 import { validateAvatarUrl } from '@/lib/validation/avatarUrl'
 
-async function upsertDepartamentos(tenantId: string, names: string[]) {
-  for (const deptName of names) {
-    const name = deptName.trim()
-    if (!name) continue
+/**
+ * Garante que o catálogo (Department) tenha os departamentos escolhidos e
+ * sincroniza as associações reais (ProjetoDepartamento) do projeto com essa
+ * seleção — o form de projeto agora fica conectado ao cadastro global.
+ */
+async function syncProjetoDepartamentos(projetoId: string, tenantId: string, names: string[]) {
+  const uniqueNames = [...new Set(names.map(n => n.trim()).filter(Boolean))]
+
+  // Resolve (ou cria) cada departamento no catálogo global do tenant.
+  const departmentIds: string[] = []
+  for (const name of uniqueNames) {
     const existing = await prisma.department.findFirst({
       where: { tenantId, name: { equals: name, mode: 'insensitive' } },
-      select: { id: true, deletedAt: true },
     })
-    if (!existing) {
-      await prisma.department.create({ data: { tenantId, name } })
-    } else if (existing.deletedAt !== null) {
-      await prisma.department.update({ where: { id: existing.id }, data: { deletedAt: null } })
+    let dept = existing
+    if (!dept) {
+      dept = await prisma.department.create({ data: { tenantId, name } })
+    } else if (dept.deletedAt !== null) {
+      dept = await prisma.department.update({ where: { id: dept.id }, data: { deletedAt: null } })
     }
+    departmentIds.push(dept.id)
+  }
+
+  const current = await prisma.projetoDepartamento.findMany({
+    where: { projetoId },
+    select: { id: true, departamentoId: true },
+  })
+  const currentIds = new Set(current.map(c => c.departamentoId))
+  const desired = new Set(departmentIds)
+
+  const toCreate = departmentIds.filter(id => !currentIds.has(id))
+  const toDelete = current.filter(c => !desired.has(c.departamentoId))
+
+  if (toCreate.length > 0) {
+    await prisma.projetoDepartamento.createMany({
+      data: toCreate.map(departamentoId => ({ projetoId, departamentoId })),
+      skipDuplicates: true,
+    })
+  }
+  if (toDelete.length > 0) {
+    await prisma.projetoDepartamento.deleteMany({
+      where: { projetoId, departamentoId: { in: toDelete.map(d => d.departamentoId) } },
+    })
   }
 }
 
@@ -63,6 +95,9 @@ export async function createProjetoAction(
 
     if (initialMemberId) {
       await projectsApi.addMember(projeto.id as string, { userId: initialMemberId })
+      // Vincula de verdade o papel de Gerente de Projeto (UserProjectRole) —
+      // antes só criava o membro e a função desaparecia nos stakeholders.
+      await setProjectManagerRole(initialMemberId, projeto.id as string, tenantId)
       // O novo membro pode estar parado em /no-project — libera o gate dele.
       revalidatePath('/no-project')
       revalidatePath('/')
@@ -70,13 +105,19 @@ export async function createProjetoAction(
 
     if (macroFases && macroFases.length > 0) {
       await projectsApi.upsertMacroFases(projeto.id as string, macroFases)
+      // Sincroniza macrofases do form com a árvore WBS/EAP (top-level nodes) —
+      // torna a EAP e a Planilha de Custos coerentes com o Cronograma do form.
+      const { userId } = await verifySession()
+      await syncMacrofasesComEap(projeto.id as string, tenantId, macroFases, userId)
     }
 
     if (rest.departamentos && rest.departamentos.length > 0) {
-      await upsertDepartamentos(tenantId, rest.departamentos)
+      await syncProjetoDepartamentos(projeto.id as string, tenantId, rest.departamentos)
     }
 
     revalidatePath('/projetos')
+    revalidatePath(`/projetos/${projeto.id}/wbs`)
+    revalidatePath(`/projetos/${projeto.id}/planilha-custos`)
     return { projeto }
   } catch (err) {
     return { error: err instanceof Error ? (err.message || 'Erro ao criar projeto') : 'Erro ao criar projeto' }
@@ -94,10 +135,49 @@ export async function getProjetosAction(): Promise<{ id: string; name: string }[
 
 export async function getProjetoAction(id: string) {
   try {
-    await verifySession()
+    const { tenantId } = await verifySession()
     const projeto = await projectsApi.get(id)
     if (!projeto) return { error: 'Projeto não encontrado' }
-    return { projeto }
+    const associados = await prisma.projetoDepartamento.findMany({
+      where: { projetoId: id },
+      select: { department: { select: { id: true, name: true } } },
+    })
+    const gerente = await prisma.userProjectRole.findFirst({
+      where: {
+        projectId: id,
+        deletedAt: null,
+        role: { is: { nameKey: 'gerente', scope: 'PROJETO' } },
+      },
+      select: { userId: true },
+    })
+
+    // Fonte única de macrofases = árvore WBS top-level (EAP/Planilha).
+    // Fallback: ProjectMacroFase (projetos legados sem árvore).
+    let macroFasesFromTree: Array<{ fase: string; dataLimite: string; custo: string }> | null = null
+    const tree = await getTree(id, tenantId)
+    if (tree.rootId && tree.nodes[tree.rootId]) {
+      const topLevelIds = tree.nodes[tree.rootId].childrenIds
+      if (topLevelIds.length > 0) {
+        macroFasesFromTree = topLevelIds.map(faseId => {
+          const fase = tree.nodes[faseId]
+          const props = (fase?.properties as Record<string, any>) ?? {}
+          return {
+            fase: fase?.title ?? '',
+            dataLimite: props.dataLimite ?? '',
+            custo: props.custo != null ? String(props.custo) : '',
+          }
+        }).filter(f => f.fase)
+      }
+    }
+
+    return {
+      projeto: {
+        ...projeto,
+        macroFases: macroFasesFromTree ?? projeto.macroFases ?? [],
+      },
+      departamentosAssociados: associados.map(a => a.department),
+      gerenteId: gerente?.userId ?? '',
+    }
   } catch (err) {
     return { error: err instanceof Error ? err.message : 'Erro ao buscar projeto' }
   }
@@ -110,7 +190,7 @@ export async function updateProjetoAction(
 ) {
   try {
     const { tenantId } = await verifySession()
-    const { ano: anoRaw, macroFases, startDate, endDate, ...rest } = data
+    const { ano: anoRaw, macroFases, startDate, endDate, initialMemberId, ...rest } = data
     const ano = anoRaw !== undefined && anoRaw !== '' ? Number(anoRaw) : undefined
     const toISO = (d: unknown) => (typeof d === 'string' && d) ? new Date(d).toISOString() : undefined
     const projeto = await projectsApi.update(id, {
@@ -122,15 +202,40 @@ export async function updateProjetoAction(
 
     if (macroFases) {
       await projectsApi.upsertMacroFases(id, macroFases)
+      // Sincroniza macrofases do form com a árvore WBS/EAP (bidirecional)
+      const { userId } = await verifySession()
+      await syncMacrofasesComEap(id, tenantId, macroFases, userId)
     }
 
     const departamentos = rest.departamentos as string[] | undefined
-    if (departamentos && departamentos.length > 0) {
-      await upsertDepartamentos(tenantId, departamentos)
+    if (departamentos) {
+      // Mantém o catálogo e as associações reais em sincronia com o form.
+      await syncProjetoDepartamentos(id, tenantId, departamentos)
+    }
+
+    // Gerente do Projeto: troca o responsável (ou remove quando "Ainda não definido")
+    if (initialMemberId !== undefined) {
+      if (initialMemberId) {
+        const gerenteUserId = initialMemberId as string
+        await projectsApi.addMember(id, { userId: gerenteUserId })
+        await setProjectManagerRole(gerenteUserId, id, tenantId)
+        revalidatePath('/no-project')
+      } else {
+        const gerente = await prisma.userProjectRole.findFirst({
+          where: {
+            projectId: id,
+            deletedAt: null,
+            role: { is: { nameKey: 'gerente', scope: 'PROJETO' } },
+          },
+        })
+        if (gerente) await removeProjectRole(gerente.userId, id)
+      }
     }
 
     revalidatePath('/projetos')
     revalidatePath(`/projetos/${id}`)
+    revalidatePath(`/projetos/${id}/wbs`)
+    revalidatePath(`/projetos/${id}/planilha-custos`)
     return { projeto }
   } catch (err) {
     return { error: err instanceof Error ? (err.message || 'Erro ao atualizar projeto') : 'Erro ao atualizar projeto' }

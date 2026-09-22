@@ -25,8 +25,8 @@ describe('EditSprintModal', () => {
   it('renders inputs for name, startDate and endDate with current values', () => {
     render(<EditSprintModal sprint={baseSprint} onClose={vi.fn()} onUpdated={vi.fn()} />)
     expect(screen.getByDisplayValue('Sprint 1')).toBeInTheDocument()
-    expect(screen.getByLabelText(/início|start/i)).toBeInTheDocument()
-    expect(screen.getByLabelText(/fim|end/i)).toBeInTheDocument()
+    expect(screen.getByLabelText(/^(início|start)$/i)).toBeInTheDocument()
+    expect(screen.getByLabelText(/^(fim|end)$/i)).toBeInTheDocument()
   })
 
   it('calls updateSprintMetaAction with updated name on submit', async () => {

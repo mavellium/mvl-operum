@@ -21,7 +21,11 @@ function buildAddress(e: {
 }
 
 function formatDate(d: Date): string {
-  return d.toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit', year: 'numeric' })
+  // startDate é gravado como meia-noite UTC do dia escolhido — usa componentes
+  // UTC para evitar "dia anterior" dependendo do TZ do servidor.
+  const day = String(d.getUTCDate()).padStart(2, '0')
+  const month = String(d.getUTCMonth() + 1).padStart(2, '0')
+  return `${day}/${month}/${d.getUTCFullYear()}`
 }
 
 export async function GET(

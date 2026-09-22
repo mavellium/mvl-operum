@@ -6,10 +6,16 @@ import { useReactToPrint } from 'react-to-print'
 import { Save, History, Download } from 'lucide-react'
 import Modal from '@/components/ui/Modal'
 import Drawer from '@/components/ui/Drawer'
+import DateInput from '@/components/ui/DateInput'
 import { useToast } from '@/components/ui/Toast'
 import { fetchWithSession } from '@/lib/clientFetch'
+import { formatDateBR, toDateInputValue } from '@/lib/date'
 import MacroFaseTable, { type MacroFase } from './MacroFaseTable'
 import ProjectCharterDocument from './ProjectCharterDocument'
+import MembroEquipeSelect, {
+  type MembroEquipeOption,
+  useMembrosEquipe,
+} from './MembroEquipeSelect'
 
 // ── Types ──────────────────────────────────────────────────────────────────────
 
@@ -57,7 +63,9 @@ interface DocumentVersion {
 
 interface VersionMeta {
   elaboradoPor: string
+  elaboradoPorUserId: string | null
   aprovadoPor: string
+  aprovadoPorUserId: string | null
   versao: string
   dataAprovacaoRaw: string
 }
@@ -73,13 +81,6 @@ const STATUS_LABEL: Record<DocumentVersion['status'], string> = {
   PENDING:  'Pendente',
   APPROVED: 'Aprovado',
   REJECTED: 'Rejeitado',
-}
-
-function toDisplayDate(raw: string): string {
-  if (!raw) return ''
-  return new Date(raw + 'T12:00:00').toLocaleDateString('pt-BR', {
-    day: '2-digit', month: '2-digit', year: 'numeric',
-  })
 }
 
 function useDebounce<T>(value: T, delay: number): T {
@@ -102,7 +103,7 @@ const sectionTitle = 'text-sm font-bold text-slate-700 uppercase tracking-wider 
 
 // ── Component ─────────────────────────────────────────────────────────────────
 
-export default function ProjectCharter() {
+export default function ProjectCharter({ membros = [] }: { membros?: MembroEquipeOption[] }) {
   const { projetoId } = useParams<{ projetoId: string }>()
   const printRef = useRef<HTMLDivElement>(null)
   const { toast } = useToast()
@@ -143,9 +144,14 @@ export default function ProjectCharter() {
   const [savingVersion, setSavingVersion] = useState(false)
   const [actingVersionId, setActingVersionId] = useState<string | null>(null)
   const [versionMeta, setVersionMeta] = useState<VersionMeta>({
-    elaboradoPor: '', aprovadoPor: '', versao: '1.0', dataAprovacaoRaw: '',
+    elaboradoPor: '', elaboradoPorUserId: null, aprovadoPor: '', aprovadoPorUserId: null, versao: '1.0', dataAprovacaoRaw: '',
   })
   const initializedMeta = useRef(false)
+
+  // Membros da equipe (responsável/aprovador devem ser membros) + criados na sessão (pendência)
+  const { todos: todosMembros, registrarCriado } = useMembrosEquipe(membros)
+  const todosMembrosRef = useRef(todosMembros)
+  todosMembrosRef.current = todosMembros
 
   // ── Load charter data ──────────────────────────────────────────────────────
 
@@ -209,11 +215,14 @@ export default function ProjectCharter() {
         const approved = list.find(v => v.status === 'APPROVED')
         if (approved) {
           initializedMeta.current = true
+          const atuais = todosMembrosRef.current
           setVersionMeta({
             elaboradoPor: approved.elaboradoPor,
+            elaboradoPorUserId: atuais.find(m => m.name === approved.elaboradoPor)?.id ?? null,
             aprovadoPor: approved.aprovadoPor,
+            aprovadoPorUserId: atuais.find(m => m.name === approved.aprovadoPor)?.id ?? null,
             versao: approved.versao,
-            dataAprovacaoRaw: approved.dataAprovacao,
+            dataAprovacaoRaw: toDateInputValue(approved.dataAprovacao),
           })
         }
       }
@@ -276,8 +285,50 @@ await fetchWithSession(`/api/projects/${projetoId}/macro-fases/${id}`, {
 
   // ── Commit (save version) ──────────────────────────────────────────────────
 
+  function validarResponsaveis(): string | null {
+    if (versionMeta.elaboradoPor && !versionMeta.elaboradoPorUserId) {
+      return 'Selecione um membro da equipe em "Elaborado por" — a pessoa informada não é um membro do projeto.'
+    }
+    if (versionMeta.aprovadoPor && !versionMeta.aprovadoPorUserId) {
+      return 'Selecione um membro da equipe em "Aprovado por" — a pessoa informada não é um membro do projeto.'
+    }
+    return null
+  }
+
+  function openCommitModal() {
+    const problema = validarResponsaveis()
+    if (problema) {
+      toast(problema, 'error')
+      return
+    }
+    setCommitTitle('')
+    setCommitModalOpen(true)
+  }
+
+  function handleSelectElaborado(membro: MembroEquipeOption | null) {
+    setVersionMeta(m => ({
+      ...m,
+      elaboradoPor: membro?.name ?? '',
+      elaboradoPorUserId: membro?.id ?? null,
+    }))
+  }
+
+  function handleSelectAprovado(membro: MembroEquipeOption | null) {
+    setVersionMeta(m => ({
+      ...m,
+      aprovadoPor: membro?.name ?? '',
+      aprovadoPorUserId: membro?.id ?? null,
+    }))
+  }
+
   async function handleConfirmCommit() {
     if (!projetoId || !commitTitle.trim()) return
+    const problema = validarResponsaveis()
+    if (problema) {
+      setCommitModalOpen(false)
+      toast(problema, 'error')
+      return
+    }
     setSavingVersion(true)
     try {
       const r = await fetchWithSession(`/api/projects/${projetoId}/charter/versions`, {
@@ -288,7 +339,7 @@ await fetchWithSession(`/api/projects/${projetoId}/macro-fases/${id}`, {
           versao: versionMeta.versao,
           elaboradoPor: versionMeta.elaboradoPor,
           aprovadoPor: versionMeta.aprovadoPor,
-          dataAprovacao: toDisplayDate(versionMeta.dataAprovacaoRaw) || versionMeta.dataAprovacaoRaw,
+          dataAprovacao: versionMeta.dataAprovacaoRaw,
         }),
       })
       if (r.ok) {
@@ -354,21 +405,46 @@ await fetchWithSession(`/api/projects/${projetoId}/macro-fases/${id}`, {
 
   const autoSaving = Object.values(faseSaving).some(Boolean)
 
+  const pendenciasResponsaveis = [
+    versionMeta.elaboradoPorUserId &&
+    todosMembros.find(m => m.id === versionMeta.elaboradoPorUserId)?.pendente
+      ? `Elaborado por: ${versionMeta.elaboradoPor}`
+      : null,
+    versionMeta.aprovadoPorUserId &&
+    todosMembros.find(m => m.id === versionMeta.aprovadoPorUserId)?.pendente
+      ? `Aprovado por: ${versionMeta.aprovadoPor}`
+      : null,
+  ].filter(Boolean) as string[]
+
   return (
     <div className="min-h-screen bg-gray-300 flex flex-col items-center py-8 gap-6">
       {/* ── Version meta ──────────────────────────────────────────────────── */}
       <div className="w-[210mm] bg-white rounded-xl shadow-md p-5 grid grid-cols-2 gap-4">
         <div>
-          <label className={labelClass}>Elaborado por</label>
-          <input className={inputClass} autoFocus value={versionMeta.elaboradoPor}
-            onChange={e => setVersionMeta(m => ({ ...m, elaboradoPor: e.target.value }))}
-            placeholder="Nome do responsável" />
+          <label className={labelClass} htmlFor="pc-elaborado-por">Elaborado por</label>
+          <MembroEquipeSelect
+            id="pc-elaborado-por"
+            membros={todosMembros}
+            projetoId={projetoId}
+            value={versionMeta.elaboradoPorUserId}
+            onChange={handleSelectElaborado}
+            onCriarMembro={registrarCriado}
+            placeholder="Selecionar membro da equipe"
+            className={inputClass}
+          />
         </div>
         <div>
-          <label className={labelClass}>Aprovado por</label>
-          <input className={inputClass} value={versionMeta.aprovadoPor}
-            onChange={e => setVersionMeta(m => ({ ...m, aprovadoPor: e.target.value }))}
-            placeholder="Nome do aprovador" />
+          <label className={labelClass} htmlFor="pc-aprovado-por">Aprovado por</label>
+          <MembroEquipeSelect
+            id="pc-aprovado-por"
+            membros={todosMembros}
+            projetoId={projetoId}
+            value={versionMeta.aprovadoPorUserId}
+            onChange={handleSelectAprovado}
+            onCriarMembro={registrarCriado}
+            placeholder="Selecionar membro da equipe"
+            className={inputClass}
+          />
         </div>
         <div>
           <label className={labelClass}>Versão</label>
@@ -378,8 +454,8 @@ await fetchWithSession(`/api/projects/${projetoId}/macro-fases/${id}`, {
         </div>
         <div>
           <label className={labelClass}>Data de aprovação</label>
-          <input type="date" className={inputClass} value={versionMeta.dataAprovacaoRaw}
-            onChange={e => setVersionMeta(m => ({ ...m, dataAprovacaoRaw: e.target.value }))} />
+          <DateInput className={inputClass} value={versionMeta.dataAprovacaoRaw}
+            onChange={v => setVersionMeta(m => ({ ...m, dataAprovacaoRaw: v }))} />
         </div>
       </div>
 
@@ -399,7 +475,7 @@ await fetchWithSession(`/api/projects/${projetoId}/macro-fases/${id}`, {
           )}
         </button>
         <button
-          onClick={() => { setCommitTitle(''); setCommitModalOpen(true) }}
+          onClick={openCommitModal}
           className="flex items-center gap-2 px-4 py-2 bg-emerald-600 text-white text-sm font-medium rounded-xl hover:bg-emerald-700 transition-colors shadow-sm"
         >
           <Save className="w-4 h-4" />
@@ -426,7 +502,7 @@ await fetchWithSession(`/api/projects/${projetoId}/macro-fases/${id}`, {
           elaboradoPor={versionMeta.elaboradoPor}
           aprovadoPor={versionMeta.aprovadoPor}
           versao={versionMeta.versao}
-          dataAprovacao={toDisplayDate(versionMeta.dataAprovacaoRaw) || versionMeta.dataAprovacaoRaw}
+          dataAprovacao={formatDateBR(versionMeta.dataAprovacaoRaw, '')}
           justificativa={fields.justificativa}
           objetivos={fields.objetivos}
           metodologia={fields.metodologia}
@@ -511,6 +587,12 @@ await fetchWithSession(`/api/projects/${projetoId}/macro-fases/${id}`, {
       {/* ── Commit modal ──────────────────────────────────────────────────── */}
       <Modal isOpen={commitModalOpen} onClose={() => setCommitModalOpen(false)} title="Salvar alteração" maxWidth="max-w-sm">
         <div className="flex flex-col gap-4 py-2">
+          {pendenciasResponsaveis.length > 0 && (
+            <div className="bg-amber-50 border border-amber-200 text-amber-800 rounded-lg px-3 py-2 text-xs leading-relaxed">
+              <strong>Pendência de cadastro:</strong> {pendenciasResponsaveis.join(' · ')} — membro(s)
+              criado(s) de forma simples; o 1º acesso (troca de senha) é necessário para regularizar.
+            </div>
+          )}
           <div>
             <label className={labelClass}>Título da alteração <span className="text-red-500">*</span></label>
             <input

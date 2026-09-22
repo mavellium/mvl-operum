@@ -1,5 +1,6 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest'
 import { render, screen, fireEvent } from '@testing-library/react'
+import { ToastProvider } from '@/components/ui/Toast'
 
 vi.mock('@/app/actions/stakeholders', () => ({
   createStakeholderAction: vi.fn(),
@@ -63,15 +64,17 @@ const makeInterno = (id: string, name: string): StakeholderUnificado => ({
 
 function renderWithInterno(member = makeInterno('m1', 'Joao Silva')) {
   const { container } = render(
-    <ProjetoStakeholdersClient
-      projetoId={PROJ_ID}
-      stakeholders={[member]}
-      stakeholdersDisponiveis={[]}
-      usuariosDisponiveis={[]}
-      funcoesExistentes={[]}
-      departamentosExistentes={[]}
-      userRole="admin"
-    />,
+    <ToastProvider>
+      <ProjetoStakeholdersClient
+        projetoId={PROJ_ID}
+        stakeholders={[member]}
+        stakeholdersDisponiveis={[]}
+        usuariosDisponiveis={[]}
+        funcoesExistentes={[]}
+        departamentosExistentes={[]}
+        userRole="admin"
+      />
+    </ToastProvider>,
   )
   // click pencil edit button to open detail panel
   fireEvent.click(screen.getByTitle('Editar'))

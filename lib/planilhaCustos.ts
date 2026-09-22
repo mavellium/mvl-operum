@@ -3,9 +3,13 @@ import { custoFolhaPrevisto, custoFolhaRealizado, round2 } from '@/lib/custosCal
 
 /**
  * Planilha de Custos — modelo IDÊNTICO (§F).
- * Fonte única: folhas da EAP (`WbsNode.properties`). Custo SEMPRE derivado:
- *   valorPorMinuto = valorReferencia / 30 / horasPorDia / 60  (§5.1 v1)
+ * Fonte única: folhas da EAP (`WbsNode.properties`). Custo SEMPRE derivado de
+ * quem elaborou a linha (membro do projeto):
+ *   jornada         = horasDiarias do elaborador
+ *   valorPorMinuto  = remuneracao / 30 / jornada / 60
  *   custo = min × valorPorMinuto + materiais.
+ * Sem elaborador (ou sem salário/jornada cadastrados) → valor NENHUM (null):
+ * não existe valor padrão (padrão é nenhum).
  */
 
 export interface PlanilhaConfig {
@@ -21,20 +25,22 @@ export interface LinhaAtividade {
   titulo: string
   elaboradoPor: string
   elaboradoPorUserId: string | null
-  /** valor por minuto efetivo (do membro, ou fallback valorReferencia) */
-  vpm: number
+  /** valor por minuto do elaborador da linha; null quando sem elaborador, sem salário ou sem jornada */
+  vpm: number | null
+  /** jornada diária (horas/dia) do elaborador; null quando não cadastrada */
+  jornadaDiaria: number | null
   // Orçado
   minOrcado: number
   materiaisOrcado: number
   dataPrevista: string | null
-  rOrcado: number
-  totalOrcado: number
+  rOrcado: number | null
+  totalOrcado: number | null
   // Realizado
   minReal: number
   materiaisReal: number
   dataRealizacao: string | null
-  rReal: number
-  totalReal: number
+  rReal: number | null
+  totalReal: number | null
   situacao: SituacaoAtividade
 }
 
@@ -72,7 +78,7 @@ export interface QuadroElaborador {
 }
 
 export interface PlanilhaDeCustos {
-  config: PlanilhaConfig & { valorPorMinuto: number }
+  config: PlanilhaConfig
   macrofases: LinhaMacrofase[]
   qtdeAtividades: number
   totalOrcado: number
@@ -94,15 +100,22 @@ export function valorPorMinutoDe(config: PlanilhaConfig): number {
 export interface Elaborador {
   userId: string
   name: string
-  /** salário mensal (R$); se vazio usa valorReferencia */
+  /** salário mensal (R$) para o valor/min da linha */
   remuneracao: number | null
   horasDiarias: number | null
 }
 
-/** valor por minuto do membro — remuneracao / 30 / horasDiarias / 60. */
-export function valorPorMinutoDoElaborador(e: Elaborador, config: PlanilhaConfig): number {
-  const remuneracao = e.remuneracao && e.remuneracao > 0 ? e.remuneracao : config.valorReferencia
-  const horas = e.horasDiarias && e.horasDiarias > 0 ? e.horasDiarias : config.horasPorDia
+/** jornada diária do elaborador; null quando não cadastrada (padrão é nenhum). */
+export function horasPorDiaDoElaborador(e: Elaborador | undefined): number | null {
+  const h = e?.horasDiarias ?? null
+  return h && h > 0 ? h : null
+}
+
+/** valor por minuto do elaborador — remuneracao / 30 / jornada / 60; null sem salário ou jornada. */
+export function valorPorMinutoDoElaborador(e: Elaborador): number | null {
+  const horas = horasPorDiaDoElaborador(e)
+  const remuneracao = e.remuneracao ?? null
+  if (!(remuneracao && remuneracao > 0) || horas === null) return null
   return remuneracao / 30 / horas / 60
 }
 
@@ -116,9 +129,12 @@ export function fmtDataBR(iso: string | null | undefined): string {
 
 export function situacaoDe(prevista: string | null, realizacao: string | null): SituacaoAtividade {
   if (!realizacao) return 'Pendente'
-  if (prevista) {
-    if (realizacao < prevista) return 'Antecipada'
-    if (realizacao === prevista) return 'No prazo'
+  // Compara apenas a data (aaaa-mm-dd) para não quebrar com datetime ("2026-03-10T...").
+  const prev = prevista?.slice(0, 10) ?? null
+  const real = realizacao.slice(0, 10)
+  if (prev) {
+    if (real < prev) return 'Antecipada'
+    if (real === prev) return 'No prazo'
   }
   return 'Atrasada'
 }
@@ -146,31 +162,30 @@ export function computarPlanilhaCustos(
   config: PlanilhaConfig,
   elaboradores?: Map<string, Elaborador>,
 ): PlanilhaDeCustos {
-  const vpmPadrao = valorPorMinutoDe(config)
-  const vpmDe = (userId: string | null): number => {
-    if (!userId) return vpmPadrao
-    const e = elaboradores?.get(userId)
-    return e ? valorPorMinutoDoElaborador(e, config) : vpmPadrao
-  }
   const fatura = (min: number, materiais: number, vpm: number) => custoFolhaPrevisto(min, vpm, materiais)
   const faturaReal = (min: number, materiais: number, vpm: number) => custoFolhaRealizado(min, vpm, materiais)
-
-  const rOrcado = (min: number, vpm: number) => round2(min * vpm)
-  const rReal = (min: number, vpm: number) => round2(min * vpm)
 
   const macrofases: LinhaMacrofase[] = []
   if (rootId && nodes[rootId]) {
     for (const faseId of nodes[rootId].childrenIds) {
       const fase = nodes[faseId]
-      if (!fase || fase.childrenIds.length === 0) continue
+      if (!fase) continue
 
-      const atividades: LinhaAtividade[] = coletaFolhas(nodes, faseId).map(n => {
+      // Mostra TODAS as macrofases (mesmo sem atividades) para refletir a estrutura completa da EAP.
+      // Macrofases sem atividades folha terão array vazio e totais zerados.
+      const atividades: LinhaAtividade[] = fase.childrenIds.length === 0
+        ? []
+        : coletaFolhas(nodes, faseId).map(n => {
         const p = n.properties
         const minOrcado = p.tempoMinutos ?? 0
         const materiaisOrcado = p.materiais ?? 0
         const minReal = p.tempoRealMinutos ?? 0
         const materiaisReal = p.materiaisReal ?? 0
-        const vpm = vpmDe(p.elaboradoPorUserId ?? null)
+        // Jornada/valor derivam SOMENTE de quem elaborou a linha; sem elaborador
+        // (ou sem salário/jornada) o valor é nenhum — não existe valor padrão.
+        const elaborador = p.elaboradoPorUserId ? elaboradores?.get(p.elaboradoPorUserId) : undefined
+        const jornadaDiaria = horasPorDiaDoElaborador(elaborador)
+        const vpm = elaborador ? valorPorMinutoDoElaborador(elaborador) : null
         return {
           nodeId: n.id,
           codigo: n.code,
@@ -178,16 +193,17 @@ export function computarPlanilhaCustos(
           elaboradoPor: p.elaboradoPor ?? '',
           elaboradoPorUserId: p.elaboradoPorUserId ?? null,
           vpm,
+          jornadaDiaria,
           minOrcado,
           materiaisOrcado,
           dataPrevista: p.dataPrevista ?? null,
-          rOrcado: rOrcado(minOrcado, vpm),
-          totalOrcado: fatura(minOrcado, materiaisOrcado, vpm),
+          rOrcado: vpm !== null ? round2(minOrcado * vpm) : null,
+          totalOrcado: vpm !== null ? fatura(minOrcado, materiaisOrcado, vpm) : null,
           minReal,
           materiaisReal,
           dataRealizacao: p.dataRealizacao ?? null,
-          rReal: rReal(minReal, vpm),
-          totalReal: faturaReal(minReal, materiaisReal, vpm),
+          rReal: vpm !== null ? round2(minReal * vpm) : null,
+          totalReal: vpm !== null ? faturaReal(minReal, materiaisReal, vpm) : null,
           situacao: situacaoDe(p.dataPrevista ?? null, p.dataRealizacao ?? null),
         }
       })
@@ -199,10 +215,10 @@ export function computarPlanilhaCustos(
         atividades,
         minOrcado: atividades.reduce((s, a) => s + a.minOrcado, 0),
         materiaisOrcado: atividades.reduce((s, a) => s + a.materiaisOrcado, 0),
-        totalOrcado: atividades.reduce((s, a) => s + a.totalOrcado, 0),
+        totalOrcado: atividades.reduce((s, a) => s + (a.totalOrcado ?? 0), 0),
         minReal: atividades.reduce((s, a) => s + a.minReal, 0),
         materiaisReal: atividades.reduce((s, a) => s + a.materiaisReal, 0),
-        totalReal: atividades.reduce((s, a) => s + a.totalReal, 0),
+        totalReal: atividades.reduce((s, a) => s + (a.totalReal ?? 0), 0),
       })
     }
   }
@@ -226,7 +242,7 @@ export function computarPlanilhaCustos(
     }))
 
   return {
-    config: { ...config, valorPorMinuto: vpmPadrao },
+    config,
     macrofases,
     qtdeAtividades: totalAtividades,
     totalOrcado: round2(macrofases.reduce((s, f) => s + f.totalOrcado, 0)),

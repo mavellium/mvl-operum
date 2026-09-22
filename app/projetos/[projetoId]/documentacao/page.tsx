@@ -34,6 +34,41 @@ export default async function DocumentacaoPage({ params }: { params: Promise<{ p
   }
   const gerente = (await isProjectManager(userId, projetoId)) || role === 'admin'
 
+  // Membros da equipe (responsáveis/aprovadores dos documentos devem ser membros).
+  // `pendente` indica cadastro iniciado de forma simples e ainda não concluído (1º acesso).
+  const membros = (
+    await prisma.userProject.findMany({
+      where: { projectId: projetoId, active: true },
+      include: {
+        user: {
+          select: {
+            id: true,
+            name: true,
+            signatureUrl: true,
+            deletedAt: true,
+            isActive: true,
+            forcePasswordChange: true,
+          },
+        },
+        department: { select: { name: true } },
+      },
+      orderBy: { order: 'asc' },
+    })
+  )
+    .filter(up => up.user.deletedAt === null && up.user.isActive)
+    .map(up => {
+      const cargos = up.role
+        ? up.role.split(',').map((s: string) => s.trim()).filter(Boolean)
+        : []
+      const setor = cargos[0] ?? up.department?.name ?? null
+      return {
+        id: up.userId,
+        name: up.user.name,
+        setor,
+        pendente: up.user.forcePasswordChange || undefined,
+      }
+    })
+
   return (
     <div className="h-full flex flex-col overflow-hidden">
       <DocumentacaoLayout
@@ -46,6 +81,7 @@ export default async function DocumentacaoPage({ params }: { params: Promise<{ p
           local: a.local,
         }))}
         gerente={gerente}
+        membros={membros}
       />
     </div>
   )

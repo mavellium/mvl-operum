@@ -2,6 +2,7 @@
 
 import { forwardRef } from 'react'
 import type { MacroFase } from './MacroFaseTable'
+import { formatDateBR } from '@/lib/date'
 
 // ── Types ──────────────────────────────────────────────────────────────────────
 
@@ -38,13 +39,6 @@ function parseCusto(value: string | null | undefined): number {
 function formatCusto(value: string | null | undefined): string {
   const n = parseCusto(value)
   return n === 0 ? '–' : n.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })
-}
-
-function formatDate(iso: string | null | undefined): string {
-  if (!iso) return '–'
-  return new Date(iso + 'T12:00:00').toLocaleDateString('pt-BR', {
-    day: '2-digit', month: '2-digit', year: 'numeric',
-  })
 }
 
 // ── Shared inline styles ───────────────────────────────────────────────────────
@@ -183,7 +177,7 @@ const ProjectCharterDocument = forwardRef<HTMLDivElement, CharterDocumentProps>(
               </td>
               <td style={cell}>
                 <span style={{ fontWeight: 'bold', fontSize: '8pt', color: '#475569' }}>Data de Emissão</span>
-                <br />{formatDate(startDate)}
+                <br />{formatDateBR(startDate)}
               </td>
             </tr>
           </tbody>
@@ -252,7 +246,7 @@ const ProjectCharterDocument = forwardRef<HTMLDivElement, CharterDocumentProps>(
               : fases.map(f => (
                 <tr key={f.id}>
                   <td style={cell}>{f.fase || '–'}</td>
-                  <td style={cell}>{formatDate(f.dataLimite)}</td>
+                  <td style={cell}>{formatDateBR(f.dataLimite)}</td>
                   <td style={{ ...cell, textAlign: 'right' }}>{formatCusto(f.custo)}</td>
                 </tr>
               ))

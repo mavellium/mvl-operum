@@ -44,6 +44,7 @@ export type WbsAction =
   | { type: 'SET_VIEWPORT'; payload: WbsViewport }
   | { type: 'SET_SYNC_STATUS'; payload: Partial<WbsTreeState['sync']> }
   | { type: 'RESET_TREE'; payload?: { rootTitle?: string } }
+  | { type: 'SET_TREE'; payload: { nodes: Record<string, WbsNodeClient>; rootId: string | null; serverVersion: number } }
 
 // ── Helpers ──────────────────────────────────────────────────────────────────
 
@@ -654,6 +655,23 @@ export function wbsReducer(state: WbsTreeState, action: WbsAction): WbsTreeState
         editingNodeId: null,
         history: pushHistory(state),
         sync: { ...state.sync, status: 'DIRTY' },
+      }
+    }
+
+    // Substitui a árvore inteira pelo resultado do servidor (usado após import).
+    // Sincroniza serverVersion para que o próximo autosave não entre em conflito.
+    case 'SET_TREE': {
+      return {
+        ...state,
+        nodes: action.payload.nodes,
+        rootId: action.payload.rootId,
+        selectedNodeIds: [],
+        editingNodeId: null,
+        focusNodeId: null,
+        clipboard: { nodes: [], copiedStyle: null, actionType: null },
+        history: { past: [], future: [] },
+        viewport: state.viewport,
+        sync: { status: 'IDLE', lastSavedAt: Date.now(), serverVersion: action.payload.serverVersion },
       }
     }
 

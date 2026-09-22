@@ -14,7 +14,7 @@ import Modal from '@/components/ui/Modal'
 import Tooltip from '@/components/ui/Tooltip'
 import { exportMspdi } from '@/lib/wbsExportMspdi'
 import { exportWbsSvg, exportWbsPng } from '@/lib/wbsExportSvg'
-import { importWbsAction } from '@/app/actions/wbs'
+import { importWbsAction, getWbsTreeAction } from '@/app/actions/wbs'
 import type { WbsAction } from '@/lib/wbsReducer'
 import type { WbsNodeClient } from '@/types/wbs'
 
@@ -297,6 +297,13 @@ export default function WbsMenubar({
       toast('Importando projeto...', 'success')
       const res = await importWbsAction(projetoId, data)
       if (res.ok) {
+        // Recarrega a árvore que o servidor acabou de gravar (códigos recalculados
+        // e serverVersion novo) e sincroniza o cliente — sem isso o próximo
+        // autosave envia a versão antiga e entra em conflito de edição.
+        const fresh = await getWbsTreeAction(projetoId)
+        if (fresh.ok) {
+          dispatch({ type: 'SET_TREE', payload: { nodes: fresh.nodes, rootId: fresh.rootId, serverVersion: fresh.serverVersion } })
+        }
         toast('Projeto importado com sucesso!', 'success')
         router.refresh()
       } else {

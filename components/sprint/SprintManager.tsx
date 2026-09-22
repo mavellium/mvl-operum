@@ -4,6 +4,7 @@ import { useState, useTransition } from 'react'
 import Link from 'next/link'
 import { SprintBadge } from './SprintBadge'
 import { createSprintAction } from '@/app/actions/sprints'
+import DateInput from '@/components/ui/DateInput'
 
 interface Sprint {
   id: string
@@ -84,24 +85,22 @@ export function SprintManager({ sprints: initialSprints, onSprintCreated }: Spri
         <div className="grid grid-cols-2 gap-2">
           <div>
             <label htmlFor="sprint-start" className="text-xs font-medium text-gray-600">Data de início</label>
-            <input
+            <DateInput
               id="sprint-start"
-              type="date"
               value={startDate}
-              onChange={(e) => setStartDate(e.target.value)}
+              onChange={setStartDate}
               className="w-full rounded border border-gray-300 px-2 py-1 text-sm text-gray-900 focus:outline-none focus:ring-2 focus:ring-blue-400"
-              aria-label="Data de início"
+              ariaLabel="Data de início"
             />
           </div>
           <div>
             <label htmlFor="sprint-end" className="text-xs font-medium text-gray-600">Data de fim</label>
-            <input
+            <DateInput
               id="sprint-end"
-              type="date"
               value={endDate}
-              onChange={(e) => setEndDate(e.target.value)}
+              onChange={setEndDate}
               className="w-full rounded border border-gray-300 px-2 py-1 text-sm text-gray-900 focus:outline-none focus:ring-2 focus:ring-blue-400"
-              aria-label="Data de fim"
+              ariaLabel="Data de fim"
             />
           </div>
         </div>

@@ -2,6 +2,7 @@ import { notFound } from 'next/navigation'
 import { verifySession } from '@/lib/dal'
 import { findById } from '@/services/projectService'
 import { isProjectManager, getProjectRoleForMember } from '@/services/projectRoleService'
+import { listarFuncoesAssociadas, listarDepartamentosAssociados } from '@/services/projetoCadastroService'
 import prisma from '@/lib/prisma'
 import ProjetoStakeholdersClient, {
   type StakeholderUnificado,
@@ -23,7 +24,7 @@ export default async function ProjetoStakeholdersPage({ params }: { params: Prom
 
   const userRole: 'admin' | 'gerente' = role === 'admin' ? 'admin' : 'gerente'
 
-  const [project, projectStakeholders, allGlobalStakeholders, userProjects, allUsers, rolesDb, departmentsDb] =
+  const [project, projectStakeholders, allGlobalStakeholders, userProjects, allUsers, rolesDb, departmentsDb, funcoesAssociadas, departamentosAssociados] =
     await Promise.all([
       findById(projetoId),
       prisma.projectStakeholder.findMany({
@@ -70,14 +71,16 @@ export default async function ProjetoStakeholdersPage({ params }: { params: Prom
       }),
       prisma.role.findMany({
         where: { tenantId, deletedAt: null },
-        select: { name: true },
+        select: { id: true, name: true },
         orderBy: { name: 'asc' },
       }),
       prisma.department.findMany({
         where: { tenantId, deletedAt: null },
-        select: { name: true },
+        select: { id: true, name: true },
         orderBy: { name: 'asc' },
       }),
+      listarFuncoesAssociadas(projetoId),
+      listarDepartamentosAssociados(projetoId),
     ])
 
   if (!project) notFound()
@@ -177,6 +180,13 @@ export default async function ProjetoStakeholdersPage({ params }: { params: Prom
 
   const todosStakeholders: StakeholderUnificado[] = [...membrosComRole, ...stakeholdersExternos]
 
+  // Somente funções e departamentos associados a este projeto são oferecidos
+  // como opções nos formulários de Cargos/Funções e Departamentos.
+  const funcoesDoProjeto = rolesDb.filter(r => funcoesAssociadas.includes(r.id)).map(r => r.name)
+  const departamentosDoProjeto = departmentsDb
+    .filter(d => departamentosAssociados.includes(d.id))
+    .map(d => d.name)
+
   return (
     <div className="min-h-screen bg-gray-50">
       <main className="max-w-7xl mx-auto px-4 py-8">
@@ -185,8 +195,8 @@ export default async function ProjetoStakeholdersPage({ params }: { params: Prom
           stakeholders={todosStakeholders}
           stakeholdersDisponiveis={stakeholdersDisponiveis}
           usuariosDisponiveis={usuariosDisponiveis}
-          funcoesExistentes={rolesDb.map(r => r.name)}
-          departamentosExistentes={departmentsDb.map(d => d.name)}
+          funcoesExistentes={funcoesDoProjeto}
+          departamentosExistentes={departamentosDoProjeto}
           userRole={userRole}
         />
       </main>

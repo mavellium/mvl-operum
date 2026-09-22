@@ -67,7 +67,7 @@ const PRESET_IMAGES = [
 
 function formatDate(d: Date | string | null) {
   if (!d) return null
-  return new Date(d).toLocaleDateString('pt-BR', { day: '2-digit', month: 'short' })
+  return new Date(d).toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit', year: 'numeric' })
 }
 
 export default function SprintHeader({ sprint, tags = [], onChangeBackground }: SprintHeaderProps) {

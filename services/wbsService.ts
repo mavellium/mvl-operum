@@ -525,16 +525,16 @@ export async function saveTree(
   return prisma.$transaction(async tx => {
     const { projectId, tenantId, serverVersion, nodes, rootId } = input
 
-    // Optimistic concurrency check via root node's version field
-    const currentRoot = rootId
-      ? await tx.wbsNode.findFirst({
-          where: { id: rootId, projectId, tenantId },
-          select: { version: true },
-        })
-      : await tx.wbsNode.findFirst({
-          where: { projectId, tenantId, parentId: null },
-          select: { version: true },
-        })
+    // Optimistic concurrency check via the project's ACTUAL root node's version.
+    // Important: for imports, `rootId` is the root id of the IMPORTED file, which
+    // may not exist in this project's DB (different project / older export). Looking
+    // it up by id would yield null → version 0 → false CONFLICT on every cross-project
+    // import. The version is only tracked on the real root (parentId = null), so we
+    // always resolve it there.
+    const currentRoot = await tx.wbsNode.findFirst({
+      where: { projectId, tenantId, parentId: null },
+      select: { version: true },
+    })
     const currentVersion = currentRoot?.version ?? 0
     if (currentVersion !== serverVersion) {
       return { ok: false, reason: 'CONFLICT' as const }
@@ -608,4 +608,121 @@ export async function resetTree(
     })
     return { nodeId: root.id, serverVersion: 1 }
   })
+}
+
+/**
+ * Sincroniza as macrofases do form (Cronograma e Custos) com os nós top-level da árvore WBS/EAP.
+ * - Garante a raiz da árvore (cria se não existir).
+ * - Para cada macrofase do form: procura nó top-level com título igual (case-insensitive).
+ *   - Se existe: atualiza título (se mudou) e properties (dataLimite, custo).
+ *   - Se não existe: cria nó filho da raiz com título = fase e properties = { dataLimite, custo }.
+ * - NÃO apaga nós existentes (preserva EAP construída, atividades e elaboradores).
+ * - Retorna mapa { fase (título normalizado) -> nodeId } para uso posterior.
+ */
+export async function syncMacrofasesComEap(
+  projectId: string,
+  tenantId: string,
+  macrofases: Array<{ fase: string; dataLimite?: string; custo?: string }>,
+  userId?: string,
+): Promise<Map<string, string>> {
+  // Normaliza título para match (trim + lower)
+  const norm = (s: string) => s.trim().toLowerCase()
+
+  // 1) Garante raiz (ou obtém existente)
+  let root = await prisma.wbsNode.findFirst({
+    where: { projectId, tenantId, parentId: null },
+    select: { id: true, version: true },
+  })
+
+  if (!root) {
+    // Cria raiz com nome do projeto
+    const projeto = await prisma.project.findUnique({ where: { id: projectId }, select: { name: true } })
+    const rootTitle = projeto?.name ?? 'Projeto'
+    const res = await resetTree({ projectId, tenantId, rootTitle }, userId ?? '')
+    root = { id: res.nodeId, version: res.serverVersion }
+  }
+
+  const rootId = root.id
+
+  // 2) Carrega nós top-level atuais (filhos diretos da raiz)
+  const topLevelRows = await prisma.wbsNode.findMany({
+    where: { projectId, tenantId, parentId: rootId },
+    select: { id: true, title: true, properties: true, order: true },
+  })
+  const topLevelByNorm = new Map<string, { id: string; title: string; properties: any }>()
+  for (const n of topLevelRows) {
+    topLevelByNorm.set(norm(n.title), { id: n.id, title: n.title, properties: n.properties })
+  }
+
+  const result = new Map<string, string>()
+
+  // 3) Para cada macrofase do form, upsert nó top-level
+  for (let i = 0; i < macrofases.length; i++) {
+    const { fase, dataLimite, custo } = macrofases[i]
+    const titulo = fase.trim()
+    if (!titulo) continue
+
+    const key = norm(titulo)
+    const existing = topLevelByNorm.get(key)
+
+    // properties a mesclar (mescla shallow — preserva outras chaves da EAP)
+    const newProps: Record<string, any> = {}
+    if (dataLimite) newProps.dataLimite = dataLimite
+    if (custo) {
+      const parsed = parseFloat(custo.replace(/\./g, '').replace(',', '.'))
+      if (!isNaN(parsed)) newProps.custo = parsed
+    }
+
+    if (existing) {
+      // Atualiza título se mudou + mescla properties
+      const needsTitleUpdate = existing.title !== titulo
+      const needsPropsUpdate = Object.keys(newProps).length > 0 &&
+        JSON.stringify(existing.properties ?? {}) !== JSON.stringify({ ...(existing.properties ?? {}), ...newProps })
+
+      if (needsTitleUpdate || needsPropsUpdate) {
+        await prisma.$transaction(async tx => {
+          if (needsTitleUpdate) {
+            await tx.wbsNode.update({ where: { id: existing.id }, data: { title: titulo } })
+          }
+          if (needsPropsUpdate) {
+            await tx.wbsNode.update({
+              where: { id: existing.id },
+              data: { properties: toJson({ ...(existing.properties ?? {}), ...newProps }) },
+            })
+          }
+          await syncCodes(tx, projectId, tenantId)
+          await bumpVersion(tx, projectId, tenantId)
+        })
+      }
+      result.set(key, existing.id)
+    } else {
+      // Cria novo nó top-level
+      const childCount = await prisma.wbsNode.count({ where: { parentId: rootId, projectId, tenantId } })
+      const newNode = await prisma.wbsNode.create({
+        data: {
+          tenantId, projectId, parentId: rootId,
+          order: childCount,
+          code: '', // recalcCodes vai preencher
+          title: titulo,
+          layout: 'LADO_A_LADO',
+          collapsed: false,
+          style: toJson(DEFAULT_STYLE),
+          properties: toJson(newProps),
+        },
+      })
+      await prisma.$transaction(async tx => {
+        await syncCodes(tx, projectId, tenantId)
+        await bumpVersion(tx, projectId, tenantId)
+      })
+      if (userId) {
+        await registrarAcao({
+          tenantId, userId, action: 'CREATE', entity: 'WbsNode',
+          entityId: newNode.id, details: { parentId: rootId, source: 'macroFaseSync' },
+        })
+      }
+      result.set(key, newNode.id)
+    }
+  }
+
+  return result
 }

@@ -1,6 +1,7 @@
 import 'dotenv/config'
-import prisma from '../lib/prisma' // 👈 Voltamos a usar a sua configuração pronta!
+import prisma from '../lib/prisma'
 import bcrypt from 'bcryptjs'
+import type { Prisma } from '@/lib/generated/prisma'
 
 async function main() {
   console.log('🌱 Starting seed...')
@@ -57,10 +58,38 @@ async function main() {
     users.push(user)
   }
 
+  // 4. Template EAP (matriz documental — estruturas iniciais em branco)
+  await ensureEapTemplate(tenant.id)
+
   console.log('✅ Seed completed!')
   console.log({
     emails: users.map((u) => u.email),
     tenant: tenant.name,
+  })
+}
+
+/** Garante o template EAP ativo do tenant com a estrutura padrão (SPEC §26). */
+async function ensureEapTemplate(tenantId: string) {
+  const { EAP_TEMPLATE_NAME, EAP_TEMPLATE_DESCRIPTION, createDefaultStructure } = await import('../lib/eapTemplate')
+  const structure = createDefaultStructure()
+
+  await prisma.eapTemplate.upsert({
+    where: { id: `eap-template-${tenantId}` },
+    update: {
+      name: EAP_TEMPLATE_NAME,
+      version: '1.0',
+      description: EAP_TEMPLATE_DESCRIPTION,
+      isActive: true,
+    },
+    create: {
+      id: `eap-template-${tenantId}`,
+      tenantId,
+      name: EAP_TEMPLATE_NAME,
+      version: '1.0',
+      description: EAP_TEMPLATE_DESCRIPTION,
+      isActive: true,
+      structure: structure as unknown as Prisma.JsonValue,
+    },
   })
 }
 

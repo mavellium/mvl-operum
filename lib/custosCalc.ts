@@ -30,6 +30,38 @@ export function round2(n: number): number {
   return Math.round(n * 100) / 100
 }
 
+/**
+ * Converte uma string digitada em HORAS para minutos inteiros.
+ * Aceita decimal ("5", "5.5", "5,5") ou h:mm ("5:30").
+ * Texto vazio → 0; texto inválido → NaN (chamador ignora).
+ */
+export function minutosDeHoras(texto: string): number {
+  const t = texto.trim().replace(',', '.')
+  if (t === '') return 0
+  const colon = t.match(/^(\d+):(\d{1,2})$/)
+  if (colon) {
+    const h = Number(colon[1])
+    const m = Number(colon[2])
+    if (m > 59) return Number.NaN
+    return Math.round(h * 60 + m)
+  }
+  const n = Number(t)
+  if (!Number.isFinite(n)) return Number.NaN
+  return Math.round(n * 60)
+}
+
+/**
+ * Converte uma string digitada em DIAS para minutos inteiros
+ * (dias × horasPorDia × 60). Texto vazio → 0; inválido → NaN.
+ */
+export function minutosDeDias(texto: string, horasPorDia: number): number {
+  const t = texto.trim().replace(',', '.')
+  if (t === '') return 0
+  const n = Number(t)
+  if (!Number.isFinite(n)) return Number.NaN
+  return Math.round(n * horasPorDia * 60)
+}
+
 export interface PlanilhaRow {
   id: string
   codigo: string

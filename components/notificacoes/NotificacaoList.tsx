@@ -1,6 +1,7 @@
 'use client'
 
 import { useState, useTransition } from 'react'
+import Link from 'next/link'
 import { markNotificacaoAsReadAction, markAllAsReadAction, archiveNotificacaoAction } from '@/app/actions/notificacoes'
 
 interface Notification {
@@ -71,6 +72,14 @@ function formatRelativeTime(iso: string) {
   const d = Math.floor(h / 24)
   if (d < 7) return `${d}d atrás`
   return new Date(iso).toLocaleDateString('pt-BR')
+}
+
+// O campo `reference` é usado como href do link "Ver". Só aceita rotas
+// relativas do app (/...) ou URLs absolutas — referências antigas que
+// guardavam IDs crus não geram link quebrado.
+const SAFE_REFERENCE_RE = /^(?:\/|https?:\/\/)/
+function isSafeReference(ref: string) {
+  return SAFE_REFERENCE_RE.test(ref) && !ref.includes('\n') && !ref.includes('\r')
 }
 
 export default function NotificacaoList({ initialNotificacoes }: Props) {
@@ -166,6 +175,26 @@ export default function NotificacaoList({ initialNotificacoes }: Props) {
             const icon = TYPE_ICONS[n.type]
             const color = TYPE_COLORS[n.type] ?? 'bg-gray-100 text-gray-600'
             const isUnread = n.status === 'UNREAD'
+            const link = n.reference && isSafeReference(n.reference) ? n.reference : null
+
+            // Corpo da notificação (ícone + título + mensagem). Com link, o
+            // corpo inteiro vira um <Link> para levar direto à tarefa no board.
+            const content = (
+              <>
+                <div className={`p-2 rounded-xl shrink-0 ${color}`}>
+                  {icon}
+                </div>
+                <div className="flex-1 min-w-0">
+                  <div className="flex items-start justify-between gap-2">
+                    <p className={`text-sm font-medium group-hover:text-blue-600 ${isUnread ? 'text-gray-900' : 'text-gray-700'}`}>
+                      {n.title}
+                    </p>
+                    <span className="text-xs text-gray-400 shrink-0">{formatRelativeTime(n.createdAt)}</span>
+                  </div>
+                  <p className="text-sm text-gray-500 mt-0.5 group-hover:text-gray-700">{n.message}</p>
+                </div>
+              </>
+            )
 
             return (
               <div
@@ -173,45 +202,42 @@ export default function NotificacaoList({ initialNotificacoes }: Props) {
                 className={`bg-white rounded-2xl border p-4 transition-all ${isUnread ? 'border-blue-100 bg-blue-50/30' : 'border-gray-100'}`}
               >
                 <div className="flex items-start gap-3">
-                  <div className={`p-2 rounded-xl shrink-0 ${color}`}>
-                    {icon}
-                  </div>
-                  <div className="flex-1 min-w-0">
-                    <div className="flex items-start justify-between gap-2">
-                      <p className={`text-sm font-medium ${isUnread ? 'text-gray-900' : 'text-gray-700'}`}>
-                        {n.title}
-                      </p>
-                      <span className="text-xs text-gray-400 shrink-0">{formatRelativeTime(n.createdAt)}</span>
+                  {link ? (
+                    <Link href={link} className="flex items-start gap-3 flex-1 min-w-0 rounded-lg group hover:bg-gray-50">
+                      {content}
+                    </Link>
+                  ) : (
+                    <div className="flex items-start gap-3 flex-1 min-w-0">
+                      {content}
                     </div>
-                    <p className="text-sm text-gray-500 mt-0.5">{n.message}</p>
-                    <div className="flex items-center gap-2 mt-2">
-                      {isUnread && (
-                        <button
-                          onClick={() => handleMarkRead(n.id)}
-                          disabled={isPending}
-                          className="text-xs text-blue-600 hover:underline disabled:opacity-50"
-                        >
-                          Marcar como lida
-                        </button>
-                      )}
-                      {n.status !== 'ARCHIVED' && (
-                        <button
-                          onClick={() => handleArchive(n.id)}
-                          disabled={isPending}
-                          className="text-xs text-gray-400 hover:text-gray-600 disabled:opacity-50"
-                        >
-                          Arquivar
-                        </button>
-                      )}
-                      {n.reference && (
-                        <a href={n.reference} className="text-xs text-blue-600 hover:underline ml-auto">
-                          Ver →
-                        </a>
-                      )}
-                    </div>
-                  </div>
+                  )}
                   {isUnread && (
                     <div className="w-2 h-2 rounded-full bg-blue-500 mt-1.5 shrink-0" />
+                  )}
+                </div>
+                <div className="flex items-center gap-2 mt-2">
+                  {isUnread && (
+                    <button
+                      onClick={() => handleMarkRead(n.id)}
+                      disabled={isPending}
+                      className="text-xs text-blue-600 hover:underline disabled:opacity-50"
+                    >
+                      Marcar como lida
+                    </button>
+                  )}
+                  {n.status !== 'ARCHIVED' && (
+                    <button
+                      onClick={() => handleArchive(n.id)}
+                      disabled={isPending}
+                      className="text-xs text-gray-400 hover:text-gray-600 disabled:opacity-50"
+                    >
+                      Arquivar
+                    </button>
+                  )}
+                  {link && (
+                    <Link href={link} className="text-xs text-blue-600 hover:underline ml-auto">
+                      Ver →
+                    </Link>
                   )}
                 </div>
               </div>
