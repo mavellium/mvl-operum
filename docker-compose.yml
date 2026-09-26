@@ -300,6 +300,29 @@ services:
     profiles:
       - migration
 
+  # Mantido por paridade com os demais serviços e para uso manual/CI pontual.
+  # A automação real do deploy vem do docker-entrypoint.sh do auth-service,
+  # que roda `prisma migrate deploy` no boot do container (o webhook de
+  # deploy só executa `up -d`, sem o profile `migration`).
+  migrate-auth-service:
+    image: ghcr.io/${GHCR_OWNER}/auth-service:${IMAGE_TAG}
+    command: prisma migrate deploy
+    read_only: true
+    tmpfs:
+      - /tmp
+    security_opt:
+      - no-new-privileges:true
+    env_file:
+      - .env
+    networks:
+      - internal
+    depends_on:
+      postgres:
+        condition: service_healthy
+    restart: "no"
+    profiles:
+      - migration
+
   # ── PostgreSQL ─────────────────────────────────────────────────────────────
   postgres:
     image: postgres:17-alpine
