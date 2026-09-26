@@ -76,4 +76,14 @@ export class RedisService implements OnModuleInit, OnModuleDestroy {
     if (!this.available) return
     await this.client.del(`reset_attempts:${userId}`).catch(() => undefined)
   }
+
+  /**
+   * Invalida o cache de introspecção de PAT no api-gateway (chave `pat:{tokenHash}`,
+   * TTL 60s). Chamado ao revogar um token para que o efeito seja imediato, em vez
+   * de esperar o cache expirar (SDD 5.3/5.4).
+   */
+  async deleteApiTokenCache(tokenHash: string): Promise<void> {
+    if (!this.available) return
+    await this.client.del(`pat:${tokenHash}`).catch(() => undefined)
+  }
 }
