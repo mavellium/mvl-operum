@@ -33,6 +33,44 @@ app.get('/health', (_req, res) => res.json({ status: 'ok' }))
 
 app.use(authMiddleware())
 
+// Rate limit adicional por PAT (20 req/s por token), além do limite global por IP acima.
+// x-auth-type/x-api-token-id só chegam aqui se authMiddleware() os definiu a
+// partir de uma introspecção válida — nunca são repassados de um valor
+// enviado pelo cliente (ver limpeza no início de authMiddleware).
+const PAT_RATE_LIMIT_MAX = 20
+const PAT_RATE_LIMIT_WINDOW_MS = 1000
+const PAT_RATE_LIMIT_MAX_BUCKETS = 10_000
+const patRateLimitBuckets = new Map<string, { count: number; windowStart: number }>()
+
+function sweepStaleRateLimitBuckets(now: number) {
+  if (patRateLimitBuckets.size < PAT_RATE_LIMIT_MAX_BUCKETS) return
+  for (const [key, bucket] of patRateLimitBuckets) {
+    if (now - bucket.windowStart >= PAT_RATE_LIMIT_WINDOW_MS * 2) {
+      patRateLimitBuckets.delete(key)
+    }
+  }
+}
+
+app.use((req, res, next) => {
+  if (req.headers['x-auth-type'] !== 'pat') return next()
+  const tokenId = req.headers['x-api-token-id'] as string | undefined
+  if (!tokenId) return next()
+
+  const now = Date.now()
+  const bucket = patRateLimitBuckets.get(tokenId)
+  if (!bucket || now - bucket.windowStart >= PAT_RATE_LIMIT_WINDOW_MS) {
+    sweepStaleRateLimitBuckets(now)
+    patRateLimitBuckets.set(tokenId, { count: 1, windowStart: now })
+    return next()
+  }
+
+  bucket.count += 1
+  if (bucket.count > PAT_RATE_LIMIT_MAX) {
+    return res.status(429).json({ error: 'Too many requests' })
+  }
+  next()
+})
+
 const INTERNAL_API_KEY = process.env.INTERNAL_API_KEY ?? ''
 
 const AUTH_SERVICE_URL = process.env.AUTH_SERVICE_URL ?? 'http://auth-service:4001'
