@@ -59,6 +59,7 @@ sprint-service/dist/
 sprint-service/lib/
 project-service/dist/
 project-service/lib/
+mcp-server/dist/
 
 # Build artifacts
 *.tsbuildinfo

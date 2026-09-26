@@ -41,6 +41,24 @@ services:
       - "traefik.http.routers.api-prod.service=api-gateway-${COMPOSE_PROJECT_NAME}"
       - "traefik.http.routers.api-prod.middlewares=secure-headers@file"
 
+  mcp-server:
+    image: ghcr.io/${GHCR_OWNER}/mcp-server:prod
+    deploy:
+      resources:
+        limits:
+          memory: 256M
+    env_file:
+      - .env
+    networks:
+      - traefik-public
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.mcp-prod.rule=Host(`mcp.operum.adm.br`)"
+      - "traefik.http.routers.mcp-prod.entrypoints=websecure"
+      - "traefik.http.routers.mcp-prod.tls.certresolver=myresolver"
+      - "traefik.http.routers.mcp-prod.service=mcp-server-${COMPOSE_PROJECT_NAME}"
+      - "traefik.http.routers.mcp-prod.middlewares=secure-headers@file"
+
   auth-service:
     image: ghcr.io/${GHCR_OWNER}/auth-service:prod
     deploy:
