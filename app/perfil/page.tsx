@@ -122,6 +122,21 @@ export default async function PerfilPage() {
           <h2 className="text-base font-semibold text-gray-900 mb-4">Alterar senha</h2>
           <ChangePasswordForm />
         </div>
+
+        <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-6">
+          <div className="flex items-center justify-between">
+            <div>
+              <h2 className="text-base font-semibold text-gray-900">Personal Access Tokens</h2>
+              <p className="text-sm text-gray-500 mt-1">Gerencie tokens para integrações como o Claude Code.</p>
+            </div>
+            <Link
+              href="/perfil/tokens"
+              className="text-sm font-medium text-blue-600 hover:text-blue-700 whitespace-nowrap"
+            >
+              Gerenciar tokens →
+            </Link>
+          </div>
+        </div>
       </main>
     </div>
   )

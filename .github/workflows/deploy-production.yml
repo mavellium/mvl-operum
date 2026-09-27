@@ -190,6 +190,17 @@ jobs:
           cache-from: type=registry,ref=ghcr.io/${{ steps.meta.outputs.owner }}/sprint-service:prod
           cache-to: type=inline
 
+      - name: Build and push mcp-server image
+        uses: docker/build-push-action@v6
+        with:
+          context: ./mcp-server
+          push: true
+          tags: |
+            ghcr.io/${{ steps.meta.outputs.owner }}/mcp-server:${{ github.sha }}
+            ghcr.io/${{ steps.meta.outputs.owner }}/mcp-server:prod
+          cache-from: type=registry,ref=ghcr.io/${{ steps.meta.outputs.owner }}/mcp-server:prod
+          cache-to: type=inline
+
       - name: Scan app image for vulnerabilities (Trivy)
         uses: aquasecurity/trivy-action@v0.35.0
         with:
@@ -248,6 +259,15 @@ jobs:
         uses: aquasecurity/trivy-action@v0.35.0
         with:
           image-ref: ghcr.io/${{ steps.meta.outputs.owner }}/sprint-service:${{ github.sha }}
+          format: table
+          exit-code: '1'
+          severity: CRITICAL,HIGH
+          trivyignores: .trivyignore
+
+      - name: Scan mcp-server image (Trivy)
+        uses: aquasecurity/trivy-action@v0.35.0
+        with:
+          image-ref: ghcr.io/${{ steps.meta.outputs.owner }}/mcp-server:${{ github.sha }}
           format: table
           exit-code: '1'
           severity: CRITICAL,HIGH

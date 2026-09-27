@@ -1,5 +1,5 @@
 {
-  "name": "api-gateway",
+  "name": "mcp-server",
   "version": "1.0.0",
   "private": true,
   "scripts": {
@@ -11,11 +11,9 @@
     "test:watch": "vitest"
   },
   "dependencies": {
-    "express": "^4.21.2",
-    "http-proxy-middleware": "^3.0.7",
-    "ioredis": "^5.6.1",
-    "jose": "^6.0.10",
-    "express-rate-limit": "^7.5.0",
+    "@modelcontextprotocol/sdk": "^1.30.1",
+    "express": "^5.2.1",
+    "zod": "^4.3.6",
     "dotenv": "^17.4.1"
   },
   "devDependencies": {

@@ -98,6 +98,31 @@ export const authApi = {
 
 type AdminUser = { id: string; name: string; email: string; role: string; avatarUrl?: string | null; isActive?: boolean; phone?: string; cep?: string; logradouro?: string; numero?: string; complemento?: string; bairro?: string; cidade?: string; estado?: string; notes?: string }
 
+type ApiTokenScope = 'read' | 'write'
+
+type ApiTokenSummary = {
+  id: string
+  name: string
+  prefix: string
+  scopes: ApiTokenScope[]
+  expiresAt: string | null
+  lastUsedAt: string | null
+  revokedAt: string | null
+  createdAt: string
+}
+
+type ApiTokenCreated = { id: string; token: string; prefix: string; expiresAt: string | null }
+
+export const apiTokensApi = {
+  list: () => request<ApiTokenSummary[]>('/auth/api-tokens'),
+
+  create: (data: { name: string; scopes: ApiTokenScope[]; expiresInDays?: number }) =>
+    request<ApiTokenCreated>('/auth/api-tokens', { method: 'POST', body: JSON.stringify(data) }),
+
+  revoke: (id: string) =>
+    request(`/auth/api-tokens/${id}`, { method: 'DELETE' }),
+}
+
 // ── Admin ─────────────────────────────────────────────────
 
 export const adminApi = {

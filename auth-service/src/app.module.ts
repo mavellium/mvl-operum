@@ -4,10 +4,11 @@ import { TenantModule } from './tenant/tenant.module'
 import { RedisModule } from './redis/redis.module'
 import { MailerModule } from './mailer/mailer.module'
 import { AdminModule } from './admin/admin.module'
+import { ApiTokensModule } from './api-tokens/api-tokens.module'
 import { HealthController } from './health/health.controller'
 
 @Module({
-  imports: [RedisModule, MailerModule, AuthModule, TenantModule, AdminModule],
+  imports: [RedisModule, MailerModule, AuthModule, TenantModule, AdminModule, ApiTokensModule],
   controllers: [HealthController],
 })
 export class AppModule {}

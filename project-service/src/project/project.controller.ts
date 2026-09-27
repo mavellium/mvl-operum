@@ -11,6 +11,7 @@ import {
   HttpCode,
   HttpStatus,
   BadRequestException,
+  ForbiddenException,
 } from '@nestjs/common'
 import { ProjectService, CreateProjectSchema, UpdateProjectSchema } from './project.service'
 
@@ -30,8 +31,16 @@ export class ProjectController {
   @Get('user/:userId')
   getUserProjects(
     @Param('userId') userId: string,
+    @Headers('x-user-id') requesterId: string,
+    @Headers('x-user-role') requesterRole: string,
     @Headers('x-tenant-id') tenantId: string,
   ) {
+    // O gateway injeta x-user-id/x-user-role a partir do token já verificado —
+    // sem esta checagem, qualquer chamador autenticado no tenant poderia listar
+    // os projetos de outro usuário só trocando o :userId na URL.
+    if (userId !== requesterId && requesterRole !== 'admin') {
+      throw new ForbiddenException('Você só pode consultar os próprios projetos')
+    }
     return this.projectService.getUserActiveProjects(userId, tenantId)
   }
 

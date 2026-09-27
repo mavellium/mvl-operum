@@ -103,6 +103,35 @@ services:
       sprint-service:
         condition: service_healthy
 
+  # ── MCP Server (Node/Express) ─────────────────────────────────────────────
+  # Cliente do api-gateway apenas — nunca acessa Prisma/DB diretamente (D2 do
+  # SDD de integração MCP). Autenticação é por PAT (Authorization: Bearer),
+  # repassado ao gateway a cada chamada; nenhum INTERNAL_API_KEY é necessário aqui.
+  mcp-server:
+    image: ghcr.io/${GHCR_OWNER}/mcp-server:${IMAGE_TAG}
+    restart: always
+    security_opt:
+      - no-new-privileges:true
+    environment:
+      - NODE_ENV=${NODE_ENV}
+      - API_GATEWAY_INTERNAL_URL=http://api-gateway:4000
+      - PORT=4006
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.services.mcp-server-${COMPOSE_PROJECT_NAME}.loadbalancer.server.port=4006"
+    healthcheck:
+      test: ["CMD-SHELL", "wget -qO- http://localhost:4006/health || exit 1"]
+      interval: 15s
+      timeout: 5s
+      retries: 3
+      start_period: 15s
+    networks:
+      - proxy
+      - internal
+    depends_on:
+      api-gateway:
+        condition: service_healthy
+
   # ── Auth Service (NestJS) ──────────────────────────────────────────────────
   auth-service:
     image: ghcr.io/${GHCR_OWNER}/auth-service:${IMAGE_TAG}

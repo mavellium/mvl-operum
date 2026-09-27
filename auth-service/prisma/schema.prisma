@@ -26,7 +26,8 @@ model Tenant {
   createdAt DateTime     @default(now())
   updatedAt DateTime     @updatedAt
 
-  users User[]
+  users     User[]
+  apiTokens ApiToken[]
 }
 
 model User {
@@ -65,5 +66,26 @@ model User {
   createdAt           DateTime  @default(now())
   updatedAt           DateTime  @updatedAt
 
+  apiTokens ApiToken[]
+
   @@unique([email, tenantId])
+}
+
+model ApiToken {
+  id         String    @id @default(cuid())
+  tenantId   String
+  userId     String
+  name       String
+  prefix     String
+  tokenHash  String    @unique
+  scopes     String[]
+  expiresAt  DateTime?
+  lastUsedAt DateTime?
+  revokedAt  DateTime?
+  createdAt  DateTime  @default(now())
+
+  tenant Tenant @relation(fields: [tenantId], references: [id])
+  user   User   @relation(fields: [userId], references: [id])
+
+  @@index([userId, tenantId])
 }

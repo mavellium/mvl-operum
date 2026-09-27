@@ -40,6 +40,23 @@ services:
       - "traefik.http.routers.api-staging.tls.certresolver=myresolver"
       - "traefik.http.routers.api-staging.service=api-gateway-${COMPOSE_PROJECT_NAME}"
 
+  mcp-server:
+    image: ghcr.io/${GHCR_OWNER}/mcp-server:staging
+    deploy:
+      resources:
+        limits:
+          memory: 128M
+    env_file:
+      - .env
+    networks:
+      - traefik-public
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.mcp-staging.rule=Host(`mcp-staging.operum.adm.br`)"
+      - "traefik.http.routers.mcp-staging.entrypoints=websecure"
+      - "traefik.http.routers.mcp-staging.tls.certresolver=myresolver"
+      - "traefik.http.routers.mcp-staging.service=mcp-server-${COMPOSE_PROJECT_NAME}"
+
   auth-service:
     image: ghcr.io/${GHCR_OWNER}/auth-service:staging
     deploy:
