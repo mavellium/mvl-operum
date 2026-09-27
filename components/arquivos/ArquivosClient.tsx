@@ -2,6 +2,7 @@
 
 import { useMemo, useState } from 'react'
 import Link from 'next/link'
+import { sprintPath } from '@/lib/sprintPath'
 
 interface Attachment {
   id: string
@@ -17,6 +18,7 @@ interface Attachment {
     title: string
     sprintId: string
     sprintName: string
+    projectId?: string | null
   }
   uploadedBy: string | null
 }
@@ -165,7 +167,7 @@ export default function ArquivosClient({ initialAttachments }: Props) {
                       Download
                     </a>
                     <Link
-                      href={`/sprints/${a.card.sprintId}`}
+                      href={sprintPath(a.card.sprintId, a.card.projectId)}
                       className="px-2.5 py-1 text-xs rounded-lg border border-gray-200 text-gray-600 hover:bg-gray-50"
                     >
                       Ver card

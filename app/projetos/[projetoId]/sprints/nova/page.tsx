@@ -6,6 +6,7 @@ import { createSprintAction } from '@/app/actions/sprints'
 import { getProjetosAction } from '@/app/actions/projetos'
 import Link from 'next/link'
 import DateInput from '@/components/ui/DateInput'
+import { sprintPath } from '@/lib/sprintPath'
 
 interface Projeto {
   id: string
@@ -63,7 +64,7 @@ function NovaSprintForm() {
         setError(result.error ?? 'Erro ao criar sprint')
         return
       }
-      router.push(`/sprints/${result.sprint.id}`)
+      router.push(sprintPath(result.sprint.id, form.projectId))
     })
   }
 

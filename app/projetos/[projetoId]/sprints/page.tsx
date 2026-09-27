@@ -8,6 +8,7 @@ import EmptyState from '@/components/ui/EmptyState'
 import DeleteSprintButton from '@/components/sprint/DeleteSprintButton'
 import Link from 'next/link'
 import type { Metadata } from 'next'
+import { sprintPath } from '@/lib/sprintPath'
 
 export const dynamic = 'force-dynamic'
 
@@ -119,7 +120,7 @@ export default async function ProjetoSprintsPage({
                   key={sprint.id}
                   className="group/sprint relative bg-white rounded-xl shadow-sm border border-gray-100 hover:shadow-md hover:border-blue-200 transition-all"
                 >
-                  <Link href={`/sprints/${sprint.id}`} className="block p-5">
+                  <Link href={sprintPath(sprint.id, projetoId)} className="block p-5">
                   {/* Topo do Card: Título, Status e Datas */}
                   <div className="flex items-start justify-between gap-3 mb-3">
                     <div className="flex-1 min-w-0">

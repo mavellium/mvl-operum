@@ -5,6 +5,7 @@ import Link from 'next/link'
 import { SprintBadge } from './SprintBadge'
 import { createSprintAction } from '@/app/actions/sprints'
 import DateInput from '@/components/ui/DateInput'
+import { sprintPath } from '@/lib/sprintPath'
 
 interface Sprint {
   id: string
@@ -12,6 +13,7 @@ interface Sprint {
   status: 'PLANNED' | 'ACTIVE' | 'COMPLETED'
   startDate?: Date | string | null
   endDate?: Date | string | null
+  projectId?: string | null
 }
 
 interface SprintManagerProps {
@@ -61,7 +63,7 @@ export function SprintManager({ sprints: initialSprints, onSprintCreated }: Spri
           <div key={sprint.id} className="flex items-center justify-between gap-2">
             <SprintBadge name={sprint.name} status={sprint.status} />
             <Link
-              href={`/sprints/${sprint.id}`}
+              href={sprintPath(sprint.id, sprint.projectId)}
               className="text-xs text-blue-600 hover:underline whitespace-nowrap"
               aria-label={`Abrir board da ${sprint.name}`}
             >

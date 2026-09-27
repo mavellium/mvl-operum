@@ -5,6 +5,7 @@ import { createPortal } from 'react-dom'
 import { useRouter } from 'next/navigation'
 import UserAvatar from '@/components/user/UserAvatar' // Adicionado para renderizar a foto do usuário
 import { fetchWithSession } from '@/lib/clientFetch'
+import { sprintPath } from '@/lib/sprintPath'
 
 // Tipagem atualizada para suportar 'member' e seus dados específicos
 interface SearchResult {
@@ -111,7 +112,7 @@ export default function GlobalSearch({
     if (result.type === 'project') {
       router.push(`/projetos/${result.id}`)
     } else if (result.type === 'card' && result.sprintId) {
-      router.push(`/sprints/${result.sprintId}?card=${result.id}`)
+      router.push(sprintPath(result.sprintId, result.projectId, result.id))
     } else if (result.type === 'member' && contextId) {
       // Se for membro, leva o usuário para a página de membros do projeto
       // Dica: Você pode usar '?user=id' na URL para dar um highlight na página depois!

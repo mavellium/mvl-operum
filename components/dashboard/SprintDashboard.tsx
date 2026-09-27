@@ -7,6 +7,7 @@ import KPICard from './KPICard'
 import UserAvatar from '@/components/user/UserAvatar'
 import OverdueCardsList from './OverdueCardsList'
 import { updateSprintMetaAction } from '@/app/actions/sprintBoard'
+import { sprintPath } from '@/lib/sprintPath'
 
 interface Sprint {
   id: string
@@ -16,6 +17,7 @@ interface Sprint {
   endDate: Date | string | null
   qualidade: number | null
   dificuldade: number | null
+  projectId?: string | null
 }
 
 interface SprintMetrics {
@@ -138,7 +140,7 @@ export default function SprintDashboard({
               {formatDate(sprint.startDate)} — {formatDate(sprint.endDate)}
             </p>
             <Link
-              href={`/sprints/${sprint.id}`}
+              href={sprintPath(sprint.id, sprint.projectId)}
               className="text-sm text-blue-600 hover:underline"
             >
               Abrir Board →

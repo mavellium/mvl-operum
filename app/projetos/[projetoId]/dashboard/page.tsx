@@ -10,6 +10,7 @@ import UserRankingTable from '@/components/dashboard/UserRankingTable'
 import OverdueCardsList from '@/components/dashboard/OverdueCardsList'
 import Link from 'next/link'
 import type { Metadata } from 'next'
+import { sprintPath } from '@/lib/sprintPath'
 
 export const dynamic = 'force-dynamic'
 
@@ -173,7 +174,7 @@ export default async function ProjetoDashboardPage({ params }: { params: Promise
                     return (
                       <tr key={s.id} className="border-b border-gray-50 last:border-0">
                         <td className="py-2.5">
-                          <Link href={`/sprints/${s.id}`} className="font-medium text-gray-900 hover:text-blue-600">
+                          <Link href={sprintPath(s.id, projetoId)} className="font-medium text-gray-900 hover:text-blue-600">
                             {s.name}
                           </Link>
                         </td>

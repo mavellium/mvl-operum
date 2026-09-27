@@ -4,6 +4,7 @@ import { cardsApi } from '@/lib/api-client'
 import NotificacaoList from '@/components/notificacoes/NotificacaoList'
 import Link from 'next/link'
 import type { Metadata } from 'next'
+import { sprintPath } from '@/lib/sprintPath'
 
 export const dynamic = 'force-dynamic'
 
@@ -30,10 +31,7 @@ async function healLegacyCardReferences(notifications: NotificacaoLeve[]): Promi
       try {
         const card = (await cardsApi.get(n.reference!)) as { sprintId?: string | null; projectId?: string | null }
         if (!card.sprintId) return null // card no backlog ou removido: sem deep link
-        const base = card.projectId
-          ? `/projetos/${card.projectId}/sprints/${card.sprintId}`
-          : `/sprints/${card.sprintId}`
-        return { id: n.id, path: `${base}?card=${n.reference}` }
+        return { id: n.id, path: sprintPath(card.sprintId, card.projectId, n.reference) }
       } catch {
         return null // best-effort: sem link
       }

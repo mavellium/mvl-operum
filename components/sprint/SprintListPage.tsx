@@ -11,6 +11,7 @@ import UserAvatar from '@/components/user/UserAvatar'
 import Modal from '@/components/ui/Modal'
 import { CsvImportModal } from '@/components/csv/CsvImportModal'
 import { TagManager } from '@/components/tag/TagManager'
+import { sprintPath } from '@/lib/sprintPath'
 
 interface Sprint {
   id: string
@@ -20,6 +21,7 @@ interface Sprint {
   endDate: Date | string | null | undefined
   qualidade: number | null | undefined
   dificuldade: number | null | undefined
+  projectId?: string | null
 }
 
 interface SprintMetrics {
@@ -237,7 +239,7 @@ export default function SprintListPage({
               return (
                 <Link
                   key={sprint.id}
-                  href={`/sprints/${sprint.id}`}
+                  href={sprintPath(sprint.id, sprint.projectId)}
                   className="block bg-white rounded-xl shadow-sm border border-gray-100 p-5 hover:shadow-md hover:border-blue-200 transition-all group"
                 >
                   <div className="flex items-start justify-between gap-3 mb-3">

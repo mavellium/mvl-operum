@@ -2,6 +2,8 @@ import { getSprintBoardAction } from '@/app/actions/sprintBoard'
 import { getCurrentUserAction } from '@/app/actions/users'
 import SprintBoard from '@/components/sprint/SprintBoard'
 import Link from 'next/link'
+import { redirect } from 'next/navigation'
+import { sprintPath } from '@/lib/sprintPath'
 import type { Metadata } from 'next'
 import { sprintsApi } from '@/lib/api-client'
 
@@ -37,6 +39,13 @@ export default async function SprintPage({ params, searchParams }: Props) {
         <Link href="/projetos" className="text-blue-600 hover:underline text-sm">Voltar aos projetos</Link>
       </div>
     )
+  }
+
+  // URL com projeto errado: redireciona para o projeto dono da sprint, para não
+  // misturar backlog/membros de um projeto com a sprint de outro.
+  const ownerProjectId = (result.sprint as { projectId?: string | null }).projectId
+  if (ownerProjectId && ownerProjectId !== projetoId) {
+    redirect(sprintPath(sprintId, ownerProjectId, initialCardId))
   }
 
   return (

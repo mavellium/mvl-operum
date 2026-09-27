@@ -7,6 +7,7 @@ import { redirect } from 'next/navigation'
 import type { Metadata } from 'next'
 import { sprintsApi } from '@/lib/api-client'
 import { findById } from '@/services/projectService'
+import { sprintPath } from '@/lib/sprintPath'
 
 export const dynamic = 'force-dynamic'
 
@@ -35,18 +36,18 @@ export default async function SprintPage({ params, searchParams }: Props) {
   const { sprintId } = await params
   const { card: initialCardId } = await searchParams
 
-  // Se a sprint pertence a um projeto, redireciona para a rota com contexto de
-  // projeto (/projetos/:id/sprints/:sprintId) — onde o menu lateral do projeto
+  // Rota legada: se a sprint pertence a um projeto, redireciona para a URL
+  // canônica (/projetos/:id/sprints/:sprintId), onde o menu lateral do projeto
   // é renderizado e o board abre o card apontado por ?card=.
+  // O redirect() fica FORA do try: ele lança NEXT_REDIRECT, que o catch engoliria.
+  let projectId: string | undefined
   try {
     const sprint = (await sprintsApi.get(sprintId)) as { projectId?: string }
-    if (sprint.projectId) {
-      const qs = initialCardId ? `?card=${encodeURIComponent(initialCardId)}` : ''
-      redirect(`/projetos/${sprint.projectId}/sprints/${sprintId}${qs}`)
-    }
+    projectId = sprint.projectId
   } catch {
     // segue o fluxo: o board resolve e reporta o erro
   }
+  if (projectId) redirect(sprintPath(sprintId, projectId, initialCardId))
 
   const [result, currentUser] = await Promise.all([
     getSprintBoardAction(sprintId),
@@ -62,8 +63,6 @@ export default async function SprintPage({ params, searchParams }: Props) {
     )
   }
 
-  const projectId = (result.sprint as { projectId?: string }).projectId ?? ''
-
   return (
     <SprintBoard
       sprint={{
@@ -72,7 +71,7 @@ export default async function SprintPage({ params, searchParams }: Props) {
       }}
       columns={result.columns}
       backlogCards={result.backlogCards}
-      projectId={projectId}
+      projectId={(result.sprint as { projectId?: string }).projectId ?? ''}
       users={result.users}
       tags={result.tags}
       currentUser={currentUser}

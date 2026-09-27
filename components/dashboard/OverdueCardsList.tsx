@@ -1,12 +1,13 @@
 import Link from 'next/link'
 import UserAvatar from '@/components/user/UserAvatar'
+import { sprintPath } from '@/lib/sprintPath'
 
 interface OverdueCard {
   id: string
   title: string
   color: string
   endDate: Date | string | null
-  sprint: { id: string; name: string } | null
+  sprint: { id: string; name: string; projectId?: string | null } | null
   sprintColumn: { title: string } | null
   responsibles: {
     user: { id: string; name: string; avatarUrl: string | null }
@@ -39,7 +40,7 @@ export default function OverdueCardsList({ cards }: Props) {
                 <span className="text-sm font-medium text-gray-900 truncate">{card.title}</span>
                 {card.sprint && (
                   <Link
-                    href={`/sprints/${card.sprint.id}?card=${card.id}`}
+                    href={sprintPath(card.sprint.id, card.sprint.projectId, card.id)}
                     className="text-xs text-blue-500 hover:underline shrink-0"
                   >
                     {card.sprint.name}

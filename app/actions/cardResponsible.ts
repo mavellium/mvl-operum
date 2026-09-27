@@ -5,6 +5,7 @@ import { cardsApi } from '@/lib/api-client'
 import prisma from '@/lib/prisma'
 import { publishNotification } from '@/lib/notificationPublisher'
 import { findById } from '@/services/projectService'
+import { sprintPath } from '@/lib/sprintPath'
 
 export async function addResponsibleAction(cardId: string, userId: string) {
   try {
@@ -31,10 +32,7 @@ async function notifyAssignedResponsible(cardId: string, userId: string) {
 
     let reference: string | undefined
     if (card.sprintId) {
-      const base = card.projectId
-        ? `/projetos/${card.projectId}/sprints/${card.sprintId}`
-        : `/sprints/${card.sprintId}`
-      reference = `${base}?card=${cardId}`
+      reference = sprintPath(card.sprintId, card.projectId, cardId)
     }
 
     // Nome do projeto para a mensagem — isolado em try/catch próprio: se a
