@@ -85,17 +85,18 @@ export class RoleController {
   // ── UserProjectRoles ───────────────────────────────────
 
   @Get('projects/:projectId/roles')
-  getUserProjectRoles(@Param('projectId') projectId: string) {
-    return this.roleService.getUserProjectRoles(projectId)
+  getUserProjectRoles(@Param('projectId') projectId: string, @Headers('x-tenant-id') tenantId: string) {
+    return this.roleService.getUserProjectRoles(projectId, tenantId)
   }
 
   @Post('projects/:projectId/roles')
   assignUserProjectRole(
     @Param('projectId') projectId: string,
+    @Headers('x-tenant-id') tenantId: string,
     @Body() body: { userId: string; roleId: string },
   ) {
     if (!body.userId || !body.roleId) throw new BadRequestException('userId e roleId são obrigatórios')
-    return this.roleService.assignUserProjectRole(body.userId, projectId, body.roleId)
+    return this.roleService.assignUserProjectRole(body.userId, projectId, body.roleId, tenantId)
   }
 
   @Delete('projects/:projectId/roles/:userId')
@@ -103,7 +104,8 @@ export class RoleController {
   removeUserProjectRole(
     @Param('projectId') projectId: string,
     @Param('userId') userId: string,
+    @Headers('x-tenant-id') tenantId: string,
   ) {
-    return this.roleService.removeUserProjectRole(userId, projectId)
+    return this.roleService.removeUserProjectRole(userId, projectId, tenantId)
   }
 }

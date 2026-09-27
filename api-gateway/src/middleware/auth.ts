@@ -20,6 +20,28 @@ const PUBLIC_PATHS = [
 // de qualquer tenant se fosse exposta publicamente.
 const BLOCKED_PATHS = ['/auth/api-tokens/introspect']
 
+// PATs servem à automação (MCP). No auth-service só alcançam leituras de
+// identidade — allowlist, não denylist: rotas de sessão/conta (switch-tenant,
+// join-tenant, logout, senha, admin, api-tokens) nunca aceitam PAT, inclusive
+// rotas novas que venham a ser criadas. O auth-service repete o bloqueio (NoPatGuard).
+const PAT_AUTH_ALLOWLIST = new Set(['GET /auth/me', 'GET /auth/my-tenants', 'GET /auth/all-users'])
+
+function normalizePath(path: string): string {
+  let decoded = path
+  try {
+    decoded = decodeURIComponent(path)
+  } catch {
+    // path malformado — mantém o original (não casará com a allowlist)
+  }
+  return ('/' + decoded.split('/').filter(Boolean).join('/')).toLowerCase()
+}
+
+export function isPatAllowed(method: string, path: string): boolean {
+  const normalized = normalizePath(path)
+  if (normalized !== '/auth' && !normalized.startsWith('/auth/')) return true
+  return PAT_AUTH_ALLOWLIST.has(`${method.toUpperCase()} ${normalized}`)
+}
+
 const PAT_PREFIX = 'opr_pat_'
 const PAT_CACHE_TTL_SECONDS = 60
 const WRITE_METHODS = new Set(['POST', 'PUT', 'PATCH', 'DELETE'])
@@ -178,6 +200,9 @@ export function authMiddleware() {
       }
       if (!introspection.active) {
         return res.status(401).json({ error: 'Token inválido ou revogado' })
+      }
+      if (!isPatAllowed(req.method, path)) {
+        return res.status(403).json({ error: 'Operação não permitida com Personal Access Token' })
       }
       if (WRITE_METHODS.has(req.method) && !introspection.scopes.includes('write')) {
         return res.status(403).json({ error: 'Token sem permissão de escrita (escopo read)' })

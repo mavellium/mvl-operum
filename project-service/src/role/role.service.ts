@@ -1,5 +1,6 @@
 import { Injectable, NotFoundException, ConflictException } from '@nestjs/common'
 import { prisma } from '../prisma'
+import { assertProjectInTenant, assertUserInTenant } from '../common/tenant-scope'
 import { z } from 'zod'
 
 export const CreateRoleSchema = z.object({
@@ -91,7 +92,10 @@ export class RoleService {
     return prisma.permission.create({ data: dto })
   }
 
-  async assignUserProjectRole(userId: string, projectId: string, roleId: string) {
+  async assignUserProjectRole(userId: string, projectId: string, roleId: string, tenantId: string) {
+    await assertProjectInTenant(projectId, tenantId)
+    await assertUserInTenant(userId, tenantId)
+    await this.findRole(roleId, tenantId)
     return prisma.userProjectRole.upsert({
       where: { userId_projectId: { userId, projectId } },
       create: { userId, projectId, roleId },
@@ -99,14 +103,16 @@ export class RoleService {
     })
   }
 
-  async removeUserProjectRole(userId: string, projectId: string) {
+  async removeUserProjectRole(userId: string, projectId: string, tenantId: string) {
+    await assertProjectInTenant(projectId, tenantId)
     await prisma.userProjectRole.update({
       where: { userId_projectId: { userId, projectId } },
       data: { deletedAt: new Date() },
     })
   }
 
-  async getUserProjectRoles(projectId: string) {
+  async getUserProjectRoles(projectId: string, tenantId: string) {
+    await assertProjectInTenant(projectId, tenantId)
     return prisma.userProjectRole.findMany({
       where: { projectId, deletedAt: null },
       include: { role: { include: { permissions: { include: { permission: true } } } } },

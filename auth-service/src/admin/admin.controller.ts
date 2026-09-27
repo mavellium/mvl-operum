@@ -8,8 +8,11 @@ import {
   Headers,
   HttpCode,
   HttpStatus,
+  UnauthorizedException,
+  UseGuards,
 } from '@nestjs/common'
 import { AdminService } from './admin.service'
+import { NoPatGuard } from '../guards/no-pat.guard'
 
 @Controller('auth')
 export class AdminController {
@@ -24,6 +27,7 @@ export class AdminController {
   }
 
   @Post('admin/users')
+  @UseGuards(NoPatGuard)
   @HttpCode(HttpStatus.CREATED)
   createUser(
     @Headers('x-tenant-id') tenantId: string,
@@ -50,6 +54,7 @@ export class AdminController {
   }
 
   @Patch('admin/users/:id')
+  @UseGuards(NoPatGuard)
   updateUser(
     @Param('id') userId: string,
     @Headers('x-user-role') role: string,
@@ -59,6 +64,7 @@ export class AdminController {
   }
 
   @Patch('admin/users/:id/active')
+  @UseGuards(NoPatGuard)
   toggleActive(
     @Param('id') userId: string,
     @Headers('x-user-role') role: string,
@@ -68,6 +74,7 @@ export class AdminController {
   }
 
   @Patch('admin/users/:id/role')
+  @UseGuards(NoPatGuard)
   setRole(
     @Param('id') userId: string,
     @Headers('x-user-role') role: string,
@@ -78,6 +85,8 @@ export class AdminController {
 
   @Get('all-users')
   listAllForTenant(@Headers('x-tenant-id') tenantId: string) {
+    // Sem tenant o filtro do Prisma vira `undefined` e listaria usuários de todos os tenants.
+    if (!tenantId) throw new UnauthorizedException()
     return this.adminService.listAllForTenant(tenantId)
   }
 }

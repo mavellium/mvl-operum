@@ -1,4 +1,5 @@
 import { Controller, Get, Post, Param, Body, Headers, BadRequestException } from '@nestjs/common'
+import { TenantId } from '../common/tenant-scope'
 import { DashboardService } from './dashboard.service'
 
 @Controller()
@@ -6,26 +7,28 @@ export class DashboardController {
   constructor(private readonly dashboardService: DashboardService) {}
 
   @Get('sprints/:sprintId/metrics')
-  getMetrics(@Param('sprintId') sprintId: string) {
-    return this.dashboardService.getMetrics(sprintId)
+  getMetrics(@TenantId() tenantId: string, @Param('sprintId') sprintId: string) {
+    return this.dashboardService.getMetrics(tenantId, sprintId)
   }
 
   @Post('sprints/:sprintId/metrics')
   upsertMetric(
+    @TenantId() tenantId: string,
     @Param('sprintId') sprintId: string,
     @Headers('x-user-id') userId: string,
     @Body() body: { horas?: number; tarefasPendentes?: number; custoTotal?: number; rankingPosicao?: number },
   ) {
-    return this.dashboardService.upsertMetric(sprintId, userId, body)
+    return this.dashboardService.upsertMetric(tenantId, sprintId, userId, body)
   }
 
   @Get('sprints/:sprintId/feedback')
-  getFeedbacks(@Param('sprintId') sprintId: string) {
-    return this.dashboardService.getFeedbacks(sprintId)
+  getFeedbacks(@TenantId() tenantId: string, @Param('sprintId') sprintId: string) {
+    return this.dashboardService.getFeedbacks(tenantId, sprintId)
   }
 
   @Post('sprints/:sprintId/feedback')
   upsertFeedback(
+    @TenantId() tenantId: string,
     @Param('sprintId') sprintId: string,
     @Headers('x-user-id') userId: string,
     @Body() body: { tarefasRealizadas?: string; dificuldades?: string; qualidade: number; dificuldade: number },
@@ -33,6 +36,6 @@ export class DashboardController {
     if (body.qualidade == null || body.dificuldade == null) {
       throw new BadRequestException('qualidade e dificuldade são obrigatórios')
     }
-    return this.dashboardService.upsertFeedback(sprintId, userId, body)
+    return this.dashboardService.upsertFeedback(tenantId, sprintId, userId, body)
   }
 }

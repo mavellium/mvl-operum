@@ -1,8 +1,16 @@
 const API_URL = (process.env.API_GATEWAY_INTERNAL_URL ?? 'http://api-gateway:4000').replace(/\/$/, '')
 const REQUEST_TIMEOUT_MS = 10_000
 
+const MAX_PUBLIC_MESSAGE_CHARS = 300
+
 export interface GatewayError extends Error {
   status?: number
+  /**
+   * Mensagem segura para devolver ao modelo: só existe quando veio do campo
+   * `message`/`error` (string) de um corpo JSON do serviço — nunca texto bruto,
+   * HTML de proxy ou o fallback com método/path interno.
+   */
+  publicMessage?: string
 }
 
 async function request<T>(token: string, path: string, init: RequestInit = {}): Promise<T> {
@@ -21,14 +29,20 @@ async function request<T>(token: string, path: string, init: RequestInit = {}): 
   if (!res.ok) {
     const body = await res.text().catch(() => '')
     let message = body
+    let publicMessage: string | undefined
     try {
-      const parsed = JSON.parse(body) as { message?: string; error?: string }
-      message = parsed.message ?? parsed.error ?? body
+      const parsed = JSON.parse(body) as { message?: unknown; error?: unknown }
+      const candidate = typeof parsed.message === 'string' ? parsed.message : typeof parsed.error === 'string' ? parsed.error : undefined
+      if (candidate) {
+        message = candidate
+        publicMessage = candidate.slice(0, MAX_PUBLIC_MESSAGE_CHARS)
+      }
     } catch {
-      // corpo não é JSON — usa o texto bruto
+      // corpo não é JSON — usa o texto bruto só para log interno
     }
     const err = new Error(message || `${init.method ?? 'GET'} ${path} -> ${res.status}`) as GatewayError
     err.status = res.status
+    err.publicMessage = publicMessage
     throw err
   }
 

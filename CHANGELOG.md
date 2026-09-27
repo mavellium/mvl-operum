@@ -7,6 +7,11 @@ As versões até 1.6.0 foram reconstruídas retroativamente a partir do históri
 1.0.0 marca a entrada em produção na arquitetura de microsserviços, e cada marco de
 funcionalidade depois disso é uma versão MINOR.
 
+## [Não lançado]
+- MCP: um servidor para todos os tenants do usuário (`X-Operum-Tokens`), 38 tools com saída JSON — leitura completa, CRUD de projetos/sprints/colunas/tarefas/etiquetas/comentários e migração de projetos entre tenants (`operum_copy_project`).
+- Segurança: escopo de tenant em todas as rotas do sprint-service; PAT restrito a leituras de identidade em `/auth/*` (gateway + auth-service); rotas de papéis, stakeholders e membros do project-service validadas por tenant.
+- Deploy de produção por SSH, sincronizando os `docker-compose*.yml` e esperando o health dos serviços.
+
 ## [1.6.1] — 2026-09-27
 - MCP exposto também em `https://api.operum.adm.br/mcp` (fallback enquanto `mcp.operum.adm.br` não tem DNS).
 - Versão do sistema exibida no rodapé da sidebar e na página Sobre.

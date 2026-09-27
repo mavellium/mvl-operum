@@ -12,6 +12,7 @@ import {
   HttpStatus,
   BadRequestException,
 } from '@nestjs/common'
+import { TenantId } from '../common/tenant-scope'
 import { CardService, CreateCardSchema, UpdateCardSchema } from './card.service'
 
 
@@ -20,93 +21,95 @@ export class CardController {
   constructor(private readonly cardService: CardService) {}
 
   @Get('sprints/:sprintId/cards')
-  listBySprint(@Param('sprintId') sprintId: string) {
-    return this.cardService.listBySprint(sprintId)
+  listBySprint(@TenantId() tenantId: string, @Param('sprintId') sprintId: string) {
+    return this.cardService.listBySprint(tenantId, sprintId)
   }
 
   @Get('cards/backlog')
-  listBacklog(@Query('projectId') projectId: string) {
+  listBacklog(@TenantId() tenantId: string, @Query('projectId') projectId: string) {
     if (!projectId) throw new BadRequestException('projectId é obrigatório')
-    return this.cardService.listBacklog(projectId)
+    return this.cardService.listBacklog(tenantId, projectId)
   }
 
   // Declarada ANTES de @Get('cards/:id') para não colidir com o parâmetro
   // dinâmico (senão "search" vira o :id e cai em findOne).
   @Get('cards/search')
   search(
+    @TenantId() tenantId: string,
     @Query('q') q?: string,
     @Query('sprintId') sprintId?: string,
     @Query('projectId') projectId?: string,
     @Query('responsibleUserId') responsibleUserId?: string,
   ) {
     if (!q || q.trim().length < 2) throw new BadRequestException('q é obrigatório (mínimo 2 caracteres)')
-    return this.cardService.search(q.trim(), { sprintId, projectId, responsibleUserId })
+    return this.cardService.search(tenantId, q.trim(), { sprintId, projectId, responsibleUserId })
   }
 
   @Get('cards/:id')
-  findOne(@Param('id') id: string) {
-    return this.cardService.findOne(id)
+  findOne(@TenantId() tenantId: string, @Param('id') id: string) {
+    return this.cardService.findOne(tenantId, id)
   }
 
   @Post('cards')
-  create(@Body() body: unknown) {
+  create(@TenantId() tenantId: string, @Body() body: unknown) {
     const parsed = CreateCardSchema.safeParse(body)
     if (!parsed.success) throw new BadRequestException(parsed.error.issues[0].message)
-    return this.cardService.create(parsed.data)
+    return this.cardService.create(tenantId, parsed.data)
   }
 
   @Get('cards/:id/movements')
-  listMovements(@Param('id') id: string) {
-    return this.cardService.listMovements(id)
+  listMovements(@TenantId() tenantId: string, @Param('id') id: string) {
+    return this.cardService.listMovements(tenantId, id)
   }
 
   @Patch('cards/:id')
   update(
+    @TenantId() tenantId: string,
     @Param('id') id: string,
     @Body() body: unknown,
     @Headers('x-user-id') userId?: string,
   ) {
     const parsed = UpdateCardSchema.safeParse({ ...(body as object), userId })
     if (!parsed.success) throw new BadRequestException(parsed.error.issues[0].message)
-    return this.cardService.update(id, parsed.data)
+    return this.cardService.update(tenantId, id, parsed.data)
   }
 
   @Delete('cards/:id')
   @HttpCode(HttpStatus.NO_CONTENT)
-  remove(@Param('id') id: string) {
-    return this.cardService.remove(id)
+  remove(@TenantId() tenantId: string, @Param('id') id: string) {
+    return this.cardService.remove(tenantId, id)
   }
 
   @Post('cards/:id/tags/:tagId')
-  addTag(@Param('id') cardId: string, @Param('tagId') tagId: string) {
-    return this.cardService.addTag(cardId, tagId)
+  addTag(@TenantId() tenantId: string, @Param('id') cardId: string, @Param('tagId') tagId: string) {
+    return this.cardService.addTag(tenantId, cardId, tagId)
   }
 
   @Delete('cards/:id/tags/:tagId')
   @HttpCode(HttpStatus.NO_CONTENT)
-  removeTag(@Param('id') cardId: string, @Param('tagId') tagId: string) {
-    return this.cardService.removeTag(cardId, tagId)
+  removeTag(@TenantId() tenantId: string, @Param('id') cardId: string, @Param('tagId') tagId: string) {
+    return this.cardService.removeTag(tenantId, cardId, tagId)
   }
 
   @Post('cards/:id/responsibles/:userId')
-  addResponsible(@Param('id') cardId: string, @Param('userId') userId: string) {
-    return this.cardService.addResponsible(cardId, userId)
+  addResponsible(@TenantId() tenantId: string, @Param('id') cardId: string, @Param('userId') userId: string) {
+    return this.cardService.addResponsible(tenantId, cardId, userId)
   }
 
   @Delete('cards/:id/responsibles/:userId')
   @HttpCode(HttpStatus.NO_CONTENT)
-  removeResponsible(@Param('id') cardId: string, @Param('userId') userId: string) {
-    return this.cardService.removeResponsible(cardId, userId)
+  removeResponsible(@TenantId() tenantId: string, @Param('id') cardId: string, @Param('userId') userId: string) {
+    return this.cardService.removeResponsible(tenantId, cardId, userId)
   }
 
   @Get('tags')
-  listTags(@Headers('x-tenant-id') tenantId: string) {
+  listTags(@TenantId() tenantId: string) {
     return this.cardService.listTags(tenantId)
   }
 
   @Post('tags')
   createTag(
-    @Headers('x-tenant-id') tenantId: string,
+    @TenantId() tenantId: string,
     @Headers('x-user-id') userId: string,
     @Body() body: { name: string; color?: string },
   ) {
@@ -116,7 +119,7 @@ export class CardController {
 
   @Delete('tags/:id')
   @HttpCode(HttpStatus.NO_CONTENT)
-  deleteTag(@Param('id') tagId: string) {
-    return this.cardService.deleteTag(tagId)
+  deleteTag(@TenantId() tenantId: string, @Param('id') tagId: string) {
+    return this.cardService.deleteTag(tenantId, tagId)
   }
 }

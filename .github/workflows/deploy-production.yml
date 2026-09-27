@@ -273,18 +273,96 @@ jobs:
           severity: CRITICAL,HIGH
           trivyignores: .trivyignore
 
-  # ── Trigger deploy on VPS ─────────────────────────────────────────────────────
+  # ── Deploy on VPS (SSH) ───────────────────────────────────────────────────────
+  # Sincroniza os docker-compose*.yml do repositório, baixa as imagens :prod e
+  # sobe os serviços esperando o health de todos (scripts/deploy/remote-deploy.sh).
+  # Secrets do environment `production`:
+  #   VPS_HOST, VPS_USER, VPS_SSH_KEY (chave privada ed25519 do usuário de deploy),
+  #   VPS_KNOWN_HOSTS (saída de `ssh-keyscan -t ed25519 <host>`), VPS_DEPLOY_PATH
+  #   (diretório absoluto com os compose files e o .env na VPS).
   deploy:
     name: Deploy
     needs: build
     runs-on: ubuntu-latest
     environment: production
+    # Nunca dois deploys ao mesmo tempo; um novo espera o anterior terminar.
+    concurrency:
+      group: deploy-production
+      cancel-in-progress: false
+    permissions:
+      contents: read
+      packages: read
+      deployments: write
     steps:
-      - name: Trigger production deploy
+      - uses: actions/checkout@v4
+        with:
+          sparse-checkout: |
+            docker-compose.yml
+            docker-compose.production.yml
+            scripts/deploy
+          sparse-checkout-cone-mode: false
+
+      - name: Configure SSH
+        env:
+          VPS_HOST: ${{ secrets.VPS_HOST }}
+          VPS_USER: ${{ secrets.VPS_USER }}
+          VPS_SSH_KEY: ${{ secrets.VPS_SSH_KEY }}
+          VPS_KNOWN_HOSTS: ${{ secrets.VPS_KNOWN_HOSTS }}
+          VPS_DEPLOY_PATH: ${{ secrets.VPS_DEPLOY_PATH }}
         run: |
-          curl -sf --max-time 300 \
-            -X POST \
-            -H "Content-Type: application/json" \
-            -H "X-Deploy-Token: ${{ secrets.DEPLOY_WEBHOOK_SECRET }}" \
-            -d '{"sha":"${{ github.sha }}","env":"production"}' \
-            "${{ secrets.PRODUCTION_WEBHOOK_URL }}"
+          for v in VPS_HOST VPS_USER VPS_SSH_KEY VPS_KNOWN_HOSTS VPS_DEPLOY_PATH; do
+            if [ -z "${!v}" ]; then echo "::error::secret $v não configurado no environment production"; exit 1; fi
+          done
+          install -m 700 -d ~/.ssh
+          printf '%s\n' "$VPS_SSH_KEY" > ~/.ssh/deploy_key
+          chmod 600 ~/.ssh/deploy_key
+          # known_hosts fixo (sem ssh-keyscan no CI): evita confiar em qualquer host na primeira conexão.
+          printf '%s\n' "$VPS_KNOWN_HOSTS" > ~/.ssh/known_hosts
+          cat > ~/.ssh/config <<EOF
+          Host vps
+            HostName $VPS_HOST
+            User $VPS_USER
+            IdentityFile ~/.ssh/deploy_key
+            IdentitiesOnly yes
+            StrictHostKeyChecking yes
+            UserKnownHostsFile ~/.ssh/known_hosts
+            ServerAliveInterval 30
+            ConnectTimeout 20
+          EOF
+
+      - name: Upload compose files and deploy script
+        env:
+          VPS_DEPLOY_PATH: ${{ secrets.VPS_DEPLOY_PATH }}
+        run: |
+          incoming="$VPS_DEPLOY_PATH/.deploy-incoming"
+          ssh vps "mkdir -p $(printf %q "$incoming")"
+          scp -q docker-compose.yml docker-compose.production.yml scripts/deploy/remote-deploy.sh "vps:$incoming/"
+
+      - name: Deploy
+        env:
+          VPS_DEPLOY_PATH: ${{ secrets.VPS_DEPLOY_PATH }}
+          GHCR_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          script="$VPS_DEPLOY_PATH/.deploy-incoming/remote-deploy.sh"
+          # O token vai por stdin — nunca na linha de comando (visível em `ps` na VPS).
+          printf '%s' "$GHCR_TOKEN" | ssh vps "bash $(printf %q "$script") $(printf %q "$VPS_DEPLOY_PATH") $(printf %q "$GITHUB_SHA") $(printf %q "$GITHUB_ACTOR")"
+
+      - name: Smoke test
+        run: |
+          check() {
+            local name=$1 expected=$2; shift 2
+            for i in 1 2 3 4 5 6; do
+              code=$(curl -s -o /dev/null -w '%{http_code}' --max-time 15 "$@" || true)
+              if [ "$code" = "$expected" ]; then echo "$name OK ($code)"; return 0; fi
+              sleep 10
+            done
+            echo "::error::$name respondeu $code (esperado $expected)"; return 1
+          }
+          check "api-gateway /health" 200 https://api.operum.adm.br/health
+          # Sem token o MCP precisa responder 401 — prova que o roteamento chega no mcp-server.
+          check "mcp-server /mcp" 401 -X POST https://api.operum.adm.br/mcp
+          check "app" 200 -L https://operum.adm.br/login
+
+      - name: Cleanup SSH
+        if: always()
+        run: rm -rf ~/.ssh

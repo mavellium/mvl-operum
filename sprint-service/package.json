@@ -7,7 +7,8 @@
     "start": "node dist/main",
     "start:dev": "nest build && nest start --watch",
     "lint": "eslint src",
-    "test": "jest"
+    "test": "vitest run",
+    "test:watch": "vitest"
   },
   "dependencies": {
     "@nestjs/common": "^11.0.0",
@@ -30,6 +31,7 @@
     "@types/pg": "^8.20.0",
     "dotenv": "^17.4.1",
     "prisma": "^7.7.0",
-    "typescript": "^5"
+    "typescript": "^5",
+    "vitest": "^4.1.2"
   }
 }

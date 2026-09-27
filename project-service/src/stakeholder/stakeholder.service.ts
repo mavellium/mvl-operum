@@ -1,5 +1,6 @@
 import { Injectable, NotFoundException } from '@nestjs/common'
 import { prisma } from '../prisma'
+import { assertProjectInTenant } from '../common/tenant-scope'
 import { z } from 'zod'
 
 export const CreateStakeholderSchema = z.object({
@@ -59,6 +60,7 @@ export class StakeholderService {
 
   async linkProject(stakeholderId: string, projectId: string, tenantId: string) {
     await this.findOne(stakeholderId, tenantId)
+    await assertProjectInTenant(projectId, tenantId)
     return prisma.projectStakeholder.upsert({
       where: { projectId_stakeholderId: { projectId, stakeholderId } },
       create: { projectId, stakeholderId },
@@ -73,7 +75,8 @@ export class StakeholderService {
     })
   }
 
-  async listByProject(projectId: string) {
+  async listByProject(projectId: string, tenantId: string) {
+    await assertProjectInTenant(projectId, tenantId)
     return prisma.projectStakeholder.findMany({
       where: { projectId },
       include: { stakeholder: true },
@@ -81,7 +84,8 @@ export class StakeholderService {
     })
   }
 
-  async reorderStakeholders(projectId: string, orderedIds: string[]) {
+  async reorderStakeholders(projectId: string, tenantId: string, orderedIds: string[]) {
+    await assertProjectInTenant(projectId, tenantId)
     await Promise.all(
       orderedIds.map((stakeholderId, index) =>
         prisma.projectStakeholder.updateMany({
