@@ -8,12 +8,14 @@ Este serviço **nunca** acessa o banco de dados diretamente — é apenas mais u
 
 Gere um PAT em `/perfil/tokens` no Operum.
 
+> Endpoint atual: `https://api.operum.adm.br/mcp`. O endereço definitivo `https://mcp.operum.adm.br/mcp` depende do registro DNS.
+
 ## Conectar no Claude Code
 
 Global (por usuário):
 
 ```bash
-claude mcp add --transport http operum https://mcp.operum.adm.br/mcp \
+claude mcp add --transport http operum https://api.operum.adm.br/mcp \
   --header "Authorization: Bearer opr_pat_XXXXXXXX"
 ```
 
@@ -24,7 +26,7 @@ Por projeto (`.mcp.json` versionado, token via variável de ambiente, nunca comm
   "mcpServers": {
     "operum": {
       "type": "http",
-      "url": "https://mcp.operum.adm.br/mcp",
+      "url": "https://api.operum.adm.br/mcp",
       "headers": { "Authorization": "Bearer ${OPERUM_TOKEN}" }
     }
   }

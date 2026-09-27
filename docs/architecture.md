@@ -2,7 +2,9 @@
 
 ## Visão Geral
 
-Plataforma de gerenciamento de projetos multi-tenant com board Kanban por sprint, rastreamento de tempo, controle de membros por projeto, dashboard analítico, auditoria, notificações e controle de acesso por papel. Construída com Next.js 16 App Router, PostgreSQL via Prisma e Tailwind CSS 4.
+Plataforma de gerenciamento de projetos multi-tenant com board Kanban por sprint, EAP/WBS (estrutura analítica do projeto), atas de reunião, planilha de custos, rastreamento de tempo, controle de membros/stakeholders por projeto, dashboard analítico, auditoria, notificações e controle de acesso por papel.
+
+A aplicação é um **Next.js 16 App Router** que atua como frontend + BFF, na frente de uma malha de **6 microsserviços** (1 API Gateway + 5 serviços de domínio) que compartilham um único PostgreSQL. Parte das funcionalidades mais novas (EAP, WBS, Atas, Cadastros) ainda roda direto no schema Prisma do monolito — ver [Migração incompleta](#migração-incompleta--o-que-ainda-é-monolito) e o [Roadmap](#roadmap-de-migração-strangler-fig).
 
 ---
 
@@ -16,7 +18,7 @@ Plataforma de gerenciamento de projetos multi-tenant com board Kanban por sprint
 | UI | React 19.2.4 |
 | Linguagem | TypeScript 5 |
 | Banco de dados | PostgreSQL 17 |
-| ORM | Prisma 7 (`prisma.config.ts`, gera em `lib/generated/prisma`) |
+| ORM | Prisma 7 (`prisma.config.ts`, gera em `lib/generated/prisma`), adapter `@prisma/adapter-pg` |
 | Estilização | Tailwind CSS 4 + PostCSS |
 | Drag & Drop | @hello-pangea/dnd 18.0.1 |
 | Autenticação | JWT RS256 via `jose` + `bcryptjs` (HS256 fallback em dev) |
@@ -27,24 +29,78 @@ Plataforma de gerenciamento de projetos multi-tenant com board Kanban por sprint
 | CSV | papaparse 5.5.3 |
 | Testes | Vitest 4.1.2, Testing Library, MSW, JSDOM |
 
+### Microsserviços
+
+Todos em NestJS 11 + Prisma 7, exceto o API Gateway (Express). Cada serviço tem seu próprio `prisma/schema.prisma`, mas **todos apontam para o mesmo banco PostgreSQL** (`schema=public`, exceto o file-service — ver [Banco de Dados](#banco-de-dados--estratégia-multi-schema)).
+
+| Serviço | Framework | Porta | Responsabilidade |
+|---------|-----------|-------|-------------------|
+| `api-gateway` | Express 5 + `http-proxy-middleware` | 4000 | Ponto de entrada único, autenticação JWT, rate limiting, proxy para os demais serviços |
+| `auth-service` | NestJS 11 + Prisma 7 | 4001 | Autenticação, usuários, tenants, sessões (Redis) |
+| `project-service` | NestJS 11 + Prisma 7 | 4002 | Projetos, departamentos, roles/permissões RBAC, stakeholders |
+| `sprint-service` | NestJS 11 + Prisma 7 | 4003 | Sprints, board Kanban (cards, colunas, tags), comentários, time tracking, dashboard de sprint, auditoria |
+| `notification-service` | NestJS 11 + Prisma 7 + BullMQ (consumer) | 4004 | Notificações (criação assíncrona via fila) |
+| `file-service` | NestJS 11 + Prisma 7 | 4005 | Upload/anexos via MinIO (schema Postgres próprio `files`) |
+
 ### Infraestrutura
 
 | Componente | Tecnologia |
 |------------|------------|
 | Containerização | Docker + Docker Compose |
 | Reverse proxy / TLS | Traefik v2.11 (Let's Encrypt automático) |
-| Gerenciador de pacotes | pnpm 10 via corepack |
-| CI/CD | GitHub Actions (SSH deploy para VPS) |
+| Gerenciador de pacotes | pnpm 11 via corepack, workspace real (`pnpm-workspace.yaml`: `packages: [".", "*"]`) |
+| CI/CD | GitHub Actions (build/scan/push de 7 imagens + SSH deploy para VPS) |
 | Servidor | VPS Hostinger (8 GB RAM, Ubuntu) |
-| Cache / Fila | Redis 7 |
+| Cache / Fila / Sessões | Redis 7 |
 | Object storage | MinIO (S3-compatible) |
 | Observabilidade (prod) | Prometheus + Loki + Grafana |
+| Segurança CI | TruffleHog (secrets), CodeQL (SAST), Trivy (scan de imagem), OWASP ZAP (DAST) |
 
-### Microserviços
+---
 
-| Serviço | Framework | Porta |
-|---------|-----------|-------|
-| notification-service | NestJS 11 + Prisma 7 + BullMQ (consumer) | 4004 |
+## Arquitetura de Serviços
+
+```
+                         ┌──────────────────────┐
+   Browser  ───────────► │   Next.js app (:3000) │  Traefik público (staging/prod)
+                         └──────────┬────────────┘
+                                    │ lib/api-client.ts (server-only)
+                                    │ Authorization: Bearer <session JWT>
+                                    ▼
+                         ┌──────────────────────┐
+                         │  api-gateway (:4000)  │  também exposto via Traefik
+                         │  - authMiddleware     │  (api-{staging,}.operum.adm.br)
+                         │  - rate limit 200/s   │
+                         │  - CORS (ALLOWED_ORIGINS)│
+                         └──────────┬────────────┘
+             X-Internal-Api-Key + X-User-ID/X-Tenant-ID/X-User-Role
+        ┌───────────┬───────────┬──┴────────┬──────────────┐
+        ▼           ▼           ▼            ▼              ▼
+  auth-service  project-service sprint-service notification- file-service
+    (:4001)        (:4002)       (:4003)     service (:4004)  (:4005)
+        │              │             │             │              │
+        └──────────────┴─────────────┴─────────────┴──────────────┘
+                                    │
+                          PostgreSQL 17 (mvloperum)
+                     schema public (compartilhado) + schema files
+```
+
+**Fluxo de autorização no gateway** (`api-gateway/src/middleware/auth.ts`):
+1. Rotas públicas (`/auth/login`, `/auth/tenants/*`, `/auth/password/request-reset|validate-code|reset`, `/auth/verify`, `/health`) passam sem token.
+2. Extrai token do header `Authorization: Bearer` ou do cookie `session`.
+3. Verifica JWT: tenta RS256 (`JWT_PUBLIC_KEY`) e cai para HS256 (`SESSION_SECRET`) se falhar.
+4. Se o payload tem `jti` **e** `NODE_ENV=production`, confere liveness da sessão no Redis (`session:{jti}`). Se o Redis estiver fora do ar, a checagem **falha aberta** (deixa passar) — comportamento intencional documentado no código.
+5. Em caso de sucesso, injeta `x-user-id`, `x-tenant-id`, `x-user-role` nos headers — os serviços downstream **confiam nesses headers sem revalidar o JWT**, protegidos apenas pelo segredo compartilhado `X-Internal-Api-Key` (`INTERNAL_API_KEY`), que só o gateway conhece e injeta em todo proxy.
+
+### Tabela de roteamento do gateway (`proxyRoutes` em `api-gateway/src/main.ts`)
+
+| Prefixo | Destino |
+|---------|---------|
+| `/auth` | auth-service |
+| `/projects`, `/departments`, `/roles`, `/permissions`, `/stakeholders` | project-service |
+| `/sprints`, `/cards`, `/tags`, `/time-entries`, `/audit` | sprint-service |
+| `/notifications` | notification-service |
+| `/files` | file-service |
 
 ---
 
@@ -52,10 +108,14 @@ Plataforma de gerenciamento de projetos multi-tenant com board Kanban por sprint
 
 ### URLs de Acesso
 
-| Ambiente | Aplicação | MinIO (storage) |
-|----------|-----------|-----------------|
-| **Staging** | https://staging.operum.adm.br | https://storage-staging.operum.adm.br |
-| **Produção** | https://operum.adm.br | https://storage-prod.operum.adm.br |
+| Ambiente | Aplicação | API Gateway | MinIO (storage) |
+|----------|-----------|-------------|------------------|
+| **Staging** | https://staging.operum.adm.br | https://api-staging.operum.adm.br | https://storage-staging.operum.adm.br |
+| **Produção** | https://operum.adm.br | https://api.operum.adm.br | https://storage-prod.operum.adm.br |
+
+O `api-gateway` é roteado publicamente pelo Traefik em ambos os ambientes — é o único ponto de entrada externo para a API além do próprio Next.js. Os demais 5 serviços (`auth-service`, `project-service`, `sprint-service`, `notification-service`, `file-service`) ficam **apenas na rede interna** (`internal`), sem exposição via Traefik.
+
+Em produção, `docker-compose.production.yml` também sobe `prometheus`, `loki` e `grafana` (Grafana exposto em `grafana.${BASE_DOMAIN}`), inexistentes em staging.
 
 ### Bancos de Dados (VPS `187.77.236.241`)
 
@@ -85,18 +145,6 @@ Plataforma de gerenciamento de projetos multi-tenant com board Kanban por sprint
 └── prod/            # docker-compose.yml + docker-compose.production.yml + .env
 ```
 
-### Variáveis de Ambiente por Ambiente
-
-| Variável | Staging | Produção |
-|----------|---------|----------|
-| `COMPOSE_PROJECT_NAME` | `staging` (default pelo dir) | `mvloperum-prod` |
-| `IMAGE_TAG` | `staging` | `prod` |
-| `DATABASE_URL` | `postgresql://...@postgres:5432/mvloperum` | `postgresql://...@postgres:5432/mvloperum_prod` |
-| `MINIO_BUCKET` | `mvloperum` | `mvloperum-prod` |
-| `MINIO_PUBLIC_URL` | `https://storage-staging.operum.adm.br` | `https://storage-prod.operum.adm.br` |
-| `JWT_PRIVATE_KEY` | Chave RS256 exclusiva | Chave RS256 exclusiva |
-| `JWT_PUBLIC_KEY` | Chave RS256 exclusiva | Chave RS256 exclusiva |
-
 ### Traefik Compartilhado
 
 Traefik roda em `/opt/mvloperum/shared` conectado à rede externa `traefik-public`. Ambos os ambientes se conectam a essa rede via `networks: traefik-public: external: true`. A configuração crítica é `--providers.docker.network=traefik-public` para que o Traefik descubra os containers corretos.
@@ -109,142 +157,82 @@ Traefik roda em `/opt/mvloperum/shared` conectado à rede externa `traefik-publi
 mvl-operum/
 ├── app/                          # Next.js App Router
 │   ├── (auth)/                   # Rotas públicas (sem sidebar)
-│   │   ├── login/page.tsx
-│   │   ├── register/page.tsx
-│   │   └── recuperar-senha/page.tsx
-│   ├── actions.ts                # Server Actions de nível raiz (ex-board/column)
-│   ├── actions/                  # Server Actions por domínio
-│   │   ├── admin.ts              # CRUD de usuários pelo admin
-│   │   ├── alterarSenha.ts       # Troca de senha obrigatória
-│   │   ├── attachments.ts        # Upload/remoção de anexos
-│   │   ├── auth.ts               # Login, registro, logout
-│   │   ├── cardResponsible.ts    # Responsáveis por card
-│   │   ├── comentarios.ts        # Comentários em cards
-│   │   ├── dashboard.ts          # Métricas e analytics
-│   │   ├── departments.ts        # CRUD de departamentos (renomeado de departamentos.ts)
-│   │   ├── migration.ts          # Migrações de dados
-│   │   ├── notificacoes.ts       # Leitura/arquivamento de notificações
-│   │   ├── profile.ts            # Edição de perfil
-│   │   ├── projects.ts           # CRUD de projetos (novo, en)
-│   │   ├── projetos.ts           # CRUD de projetos e membros (legado)
-│   │   ├── roles.ts              # CRUD de roles/permissões
-│   │   ├── sprintBoard.ts        # Ações do board (cards, colunas)
-│   │   ├── sprints.ts            # CRUD de sprints
-│   │   ├── tags.ts               # CRUD de tags
-│   │   ├── time.ts               # Controle de tempo
-│   │   └── users.ts              # Listagem de usuários
-│   ├── api/                      # Rotas REST (FormData / consumo direto)
-│   │   ├── csv/route.ts
-│   │   ├── me/route.ts
-│   │   ├── notificacoes/count/route.ts
-│   │   ├── search/route.ts
-│   │   └── uploads/route.ts
+│   ├── actions/                  # Server Actions por domínio (19 arquivos)
+│   ├── api/                      # Rotas REST do próprio monolito (FormData, export, health)
+│   │   ├── atas/[ataId]/export/
+│   │   ├── csv/, files/[attachmentId]/image/, health/, me/
+│   │   ├── notificacoes/count/, search/, uploads/
+│   │   └── projects/[projetoId]/
+│   │       ├── charter/, charter/versions/
+│   │       ├── documento/, documento/versions/, documento/versions/[versionId]/
+│   │       ├── eap/                       # GET/PUT/POST — geração de documento EAP
+│   │       └── macro-fases/, macro-fases/[faseId]/
 │   ├── admin/
-│   │   ├── layout.tsx
 │   │   ├── page.tsx              # Hub de navegação do admin
-│   │   ├── dashboard/page.tsx    # Métricas por projeto (admin)
-│   │   └── users/page.tsx        # Gerenciamento de usuários
-│   ├── alterar-senha/page.tsx    # Troca de senha forçada
+│   │   ├── dashboard/page.tsx    # Métricas por projeto
+│   │   ├── users/page.tsx        # Gerenciamento de usuários
+│   │   ├── tenants/page.tsx      # Workspaces (multi-tenant: listar/trocar/provisionar)
+│   │   └── cadastros/page.tsx    # Cadastro de departamentos/funções globais
+│   ├── alterar-senha/page.tsx
 │   ├── arquivos/page.tsx         # Galeria de anexos
-│   ├── dashboard/
-│   │   ├── page.tsx
-│   │   └── sprint/[sprintId]/page.tsx
-│   ├── no-project/page.tsx       # Tela para usuários sem projeto vinculado
+│   ├── dashboard/sprint/[sprintId]/page.tsx
+│   ├── equipe/page.tsx           # Redireciona para /sobre
+│   ├── sobre/page.tsx            # Página institucional
+│   ├── no-project/page.tsx
 │   ├── notificacoes/page.tsx
 │   ├── perfil/page.tsx
 │   ├── projetos/
-│   │   ├── page.tsx              # Lista de projetos
-│   │   ├── novo/page.tsx         # Criar projeto
+│   │   ├── page.tsx, novo/page.tsx
 │   │   └── [projetoId]/
-│   │       ├── layout.tsx
-│   │       ├── page.tsx          # Detalhe do projeto
-│   │       ├── dashboard/page.tsx
-│   │       ├── departamentos/page.tsx  # Departamentos do projeto
-│   │       ├── documentacao/page.tsx   # Documentação do projeto
-│   │       ├── funcoes/page.tsx        # Funções/papéis do projeto
-│   │       ├── membros/page.tsx        # Gerenciar membros
-│   │       └── sprints/
-│   │           ├── page.tsx            # Lista de sprints do projeto
-│   │           ├── nova/page.tsx       # Criar sprint no projeto
-│   │           └── [sprintId]/page.tsx # Board Kanban
-│   ├── sprints/
-│   │   └── [sprintId]/page.tsx   # Board Kanban (acesso global)
-│   ├── layout.tsx
-│   ├── page.tsx                  # Redireciona para /sprints
-│   └── globals.css
-├── components/
-│   ├── admin/                    # AdminCreateUserModal, AdminEditUserModal, UsersTable
-│   ├── arquivos/                 # ArquivosClient
-│   ├── auth/                     # Formulários de login/registro
-│   ├── board/                    # Column, ColumnHeader, ColumnList, BoardActionMenu
-│   ├── card/                     # Card, CardModal, CardTimer, CardAttachments, etc.
-│   ├── csv/                      # CsvImportModal
-│   ├── dashboard/                # KPICard, SprintDashboard (Recharts), tabelas
-│   ├── layout/                   # BottomNav
-│   ├── notificacoes/             # NotificacaoList
-│   ├── profile/                  # AvatarUpload, ProfileForm, ChangePasswordForm
-│   ├── projetos/                 # ProjetoMembrosClient
-│   ├── search/                   # GlobalSearch
-│   ├── sprint/                   # SprintBoard, SprintHeader, SprintManager, etc.
-│   ├── tag/                      # TagBadge, TagManager, TagSelector
-│   ├── ui/                       # Button, Modal, ConfirmDialog, InlineEdit
-│   └── user/                     # UserAvatar, UserSelector
+│   │       ├── page.tsx, dashboard/, departamentos/, documentacao/, funcoes/
+│   │       ├── membros/                   # Membros do projeto (UsuarioProjeto)
+│   │       ├── stakeholders/              # Stakeholders vinculados ao projeto
+│   │       ├── atas/, atas/[ataId]/, atas/nova/     # Atas de reunião
+│   │       ├── wbs/                       # Canvas interativo de EAP/WBS
+│   │       ├── planilha-custos/           # Planilha de custos do projeto
+│   │       └── sprints/, sprints/nova/, sprints/[sprintId]/
+│   ├── sprints/[sprintId]/page.tsx  # Board Kanban (acesso global)
+│   ├── layout.tsx, page.tsx, globals.css
+├── components/                   # atas/, wbs/, custos/, projetos/documentacao/, board/, card/, dashboard/, …
 ├── lib/
-│   ├── generated/prisma/         # Cliente Prisma gerado (não editar)
-│   ├── validation/               # Schemas Zod por domínio (pt + en em coexistência)
-│   ├── dal.ts                    # verifySession() — proteção de todas as rotas
-│   ├── defaultData.ts            # Colunas padrão do board
-│   ├── kanbanReducer.ts          # Reducer de drag-and-drop otimista
-│   ├── prisma.ts                 # Singleton do cliente Prisma
-│   ├── reorderUtils.ts           # Utilitários de reordenação
-│   └── session.ts                # Encrypt/decrypt JWT
-├── services/                     # Camada de negócio
-│   ├── adminService.ts
-│   ├── auditoriaService.ts
-│   ├── authService.ts
-│   ├── cardResponsibleService.ts
-│   ├── comentarioService.ts
-│   ├── csvImportService.ts
-│   ├── dashboardMetricService.ts
-│   ├── dashboardService.ts
-│   ├── departamentoService.ts    # legado
-│   ├── departmentService.ts      # renomeado (en)
-│   ├── fileUploadService.ts
-│   ├── migrationService.ts
-│   ├── notificacaoService.ts
-│   ├── permissionService.ts
-│   ├── projectRoleService.ts     # papéis por projeto (ex: getOrCreateGerenteProjetoRole)
-│   ├── projectService.ts         # CRUD de projetos (en)
-│   ├── projetoService.ts         # legado
-│   ├── roleService.ts
-│   ├── sprintColumnService.ts
-│   ├── sprintFeedbackService.ts
-│   ├── sprintService.ts
-│   ├── tagService.ts
-│   ├── tenantService.ts
-│   ├── timeService.ts
-│   └── userService.ts
+│   ├── generated/prisma/         # Cliente Prisma gerado (monolito, não editar)
+│   ├── validation/                # Schemas Zod (inclui ataSchemas, eapSchemas, wbsSchemas)
+│   ├── api-client.ts             # Cliente HTTP server-only → API Gateway (padrão atual)
+│   ├── authClient.ts, projectClient.ts, sprintClient.ts  # ver nota de código morto abaixo
+│   ├── wbsCode.ts, wbsRollup.ts, wbsExportSvg.ts, wbsExportMspdi.ts, eapCode.ts, eapTemplate.ts
+│   ├── dal.ts                    # verifySession()
+│   ├── kanbanReducer.ts, reorderUtils.ts, defaultData.ts, prisma.ts, session.ts
+├── services/                     # Camada de negócio legada (Prisma direto) — ainda viva, ver abaixo
 ├── types/
-│   ├── auth.ts                   # SessionPayload, tipos de sessão
-│   └── kanban.ts                 # Card, Column, Sprint, etc.
-├── prisma/
-│   ├── schema.prisma
-│   └── migrations/
+├── prisma/                       # schema.prisma + migrations/ do monolito (16 migrações)
 ├── __tests__/
-│   ├── api/, components/, integration/, middleware/, unit/
 ├── proxy.ts
+│
+├── api-gateway/                  # Express — gateway (ver Arquitetura de Serviços)
+├── auth-service/                 # NestJS — auth, users, tenants
+├── project-service/              # NestJS — projects, departments, RBAC, stakeholders
+├── sprint-service/                # NestJS — sprints, cards, tags, comments, time-entries, audit
+├── notification-service/         # NestJS — notifications (BullMQ)
+├── file-service/                 # NestJS — uploads (MinIO), schema Postgres próprio
 └── [config files]
 ```
+
+### Código morto conhecido
+
+`lib/projectClient.ts` e `lib/sprintClient.ts` implementam um cliente que fala **diretamente** com `project-service`/`sprint-service`, pulando o gateway. Nenhum outro arquivo os importa (`grep` não encontrou referências fora de si mesmos) — é resíduo de uma abordagem anterior, substituída por `lib/api-client.ts` → gateway. Candidatos a remoção.
 
 ---
 
 ## Multi-Tenancy
 
-Toda entidade do sistema está vinculada a um `Tenant`. O fluxo é:
+Toda entidade do sistema está vinculada a um `Tenant`. **O sistema já opera com múltiplos tenants ativos em produção** — há troca de workspace pelo usuário:
 
-1. No login, o sistema busca o primeiro tenant active no banco e inclui o `tenantId` no JWT.
-2. `verifySession()` em `lib/dal.ts` descriptografa o JWT e retorna `{ userId, tenantId, role, ... }`.
-3. Todas as Server Actions chamam `verifySession()` e passam o `tenantId` para isolar os dados.
+1. No login, o `auth-service` inclui o `tenantId` ativo no JWT.
+2. Usuário pode listar seus tenants (`GET /auth/my-tenants`), trocar de tenant (`POST /auth/switch-tenant` → emite novo JWT), entrar em um tenant existente (`POST /auth/join-tenant`) ou, se admin, provisionar-se como admin de um novo tenant (`POST /auth/provision-tenant-admin`).
+3. `verifySession()` em `lib/dal.ts` descriptografa o JWT/cookie de sessão e retorna `{ userId, tenantId, role, ... }`.
+4. `lib/api-client.ts` repassa o JWT como Bearer token ao gateway; o gateway injeta `x-tenant-id` nos headers para os serviços internos.
+5. Todas as Server Actions e controllers isolam dados por `tenantId`.
+6. `/admin/tenants` (só admin) lista todos os workspaces e permite trocar/entrar.
 
 ```
 Tenant 1 ─┬─ Users ─┬─ Projetos ─ Sprints ─ Cards
@@ -255,8 +243,6 @@ Tenant 1 ─┬─ Users ─┬─ Projetos ─ Sprints ─ Cards
            └─ Auditorias
 ```
 
-> Na prática atual o sistema opera com um único tenant. A estrutura já suporta múltiplos.
-
 ---
 
 ## Papéis e Controle de Acesso
@@ -265,7 +251,7 @@ Tenant 1 ─┬─ Users ─┬─ Projetos ─ Sprints ─ Cards
 
 | Valor | Acesso |
 |-------|--------|
-| `admin` | Painel `/admin/*`, gerenciamento de usuários e projetos |
+| `admin` | Painel `/admin/*`, gerenciamento de usuários, tenants e projetos |
 | `gerente` | Gerenciamento de membros em projetos que participa |
 | `member` | Apenas operações no board e perfil próprio |
 
@@ -281,124 +267,64 @@ Além do papel global, cada usuário pode ter um papel específico dentro de um 
 
 ---
 
-## Schema do Banco de Dados
+## Banco de Dados — Estratégia Multi-Schema
 
-### Tenant
+Não existe database-per-service: **todos os 5 microsserviços apontam para o mesmo banco PostgreSQL** (`mvloperum`/`mvloperum_prod`), cada um com seu próprio `prisma/schema.prisma` cobrindo apenas as tabelas que possui/usa. O **monolito continua com o schema mais completo** e é a fonte da verdade para tudo que ainda não foi extraído (ver seção abaixo).
 
-| Campo | Tipo | Descrição |
-|-------|------|-----------|
-| id | CUID | Chave primária |
-| nome | String | Nome do tenant |
-| subdominio | String (único) | Identificador único |
-| status | Enum | `ACTIVE`, `INACTIVE`, `SUSPENDED`, `REMOVED` |
-| config | Json? | Configurações customizáveis |
+**Duplicação intencional (read-models locais para joins):**
+- `Tenant` e `User` aparecem nos schemas de `project-service` e `sprint-service` além do `auth-service` (que é o dono canônico) — usados só para joins locais, não para escrita de identidade.
+- `Project` aparece em `sprint-service` além de `project-service` (dono canônico).
+- `Attachment` aparece nos schemas de `sprint-service` **e** `file-service`. O `file-service` é o dono canônico — a migração `add_attachment_schema` moveu a tabela para um schema Postgres dedicado (`files`), separado do `public` usado por todo o resto. A cópia em `sprint-service` é resquício e deveria ser tratada como read-only/candidata a remoção.
 
-### User
+### Modelos por serviço
 
-| Campo | Tipo | Descrição |
-|-------|------|-----------|
-| id | CUID | Chave primária |
-| tenantId | String | Tenant ao qual pertence |
-| name | String | Nome completo |
-| email | String | Único por tenant `(email, tenantId)` |
-| passwordHash | String | Senha com bcrypt |
-| role | String | `"admin"`, `"gerente"`, `"member"` |
-| avatarUrl | String? | URL da imagem de perfil |
-| cargo | String? | Cargo global (pode ser sobrescrito por projeto) |
-| departamento | String? | Departamento global |
-| valorHora | Float | Custo/hora global |
-| isActive | Boolean | Bloqueia login sem excluir dados |
-| forcePasswordChange | Boolean | Força troca de senha no próximo login |
-| tokenVersion | Int | Invalida sessões ao incrementar |
-| loginAttempts | Int | Controle de tentativas de login |
-| mfaEnabled / mfaSecret | Boolean/String? | Campos para MFA (reservado) |
+| Serviço | Modelos próprios (Prisma) |
+|---------|---------------------------|
+| `auth-service` | `Tenant`, `User` (dono canônico de identidade) |
+| `project-service` | `Project`, `ProjectMacroFase`, `Department`, `UserDepartment`, `UserProject`, `Role`, `Permission`, `RolePermission`, `UserProjectRole`, `Stakeholder`, `ProjectStakeholder` |
+| `sprint-service` | `Sprint`, `SprintColumn`, `Card`, `CardMovement`, `Tag`, `CardTag`, `CardResponsible`, `Comment`, `TimeEntry`, `DashboardMetric`, `SprintFeedback`, `AuditLog` |
+| `notification-service` | `Notification` |
+| `file-service` | `Attachment` (schema Postgres `files`) |
 
-### Projeto
+### Modelos que só existem no monolito (não extraídos)
 
-| Campo | Tipo | Descrição |
-|-------|------|-----------|
-| id | CUID | Chave primária |
-| tenantId | String | Tenant |
-| nome | String | Único por tenant `(nome, tenantId)` |
-| descricao | String? | Descrição |
-| status | Enum | `ACTIVE`, `INACTIVE`, `CONCLUIDO`, `ARQUIVADO` |
+`prisma/schema.prisma` (raiz) contém **todos** os modelos acima (como réplica/legado) **mais** os seguintes, exclusivos do monolito — nenhum microsserviço os conhece:
 
-### UsuarioProjeto
+| Modelo | Domínio |
+|--------|---------|
+| `ProjectDraft` | Rascunho de projeto antes da criação |
+| `ProjetoDepartamento`, `ProjetoFuncao` | Cadastros de departamento/função **por projeto** (distintos de `Department`/`Role` globais do project-service) |
+| `DocumentVersion` (+ enums `DocumentVersionStatus`, `DocumentType`) | Versionamento de documentos (charter, documento do projeto) |
+| `Ata`, `AtaPresente`, `AtaAcao`, `AtaAnexo` | Atas de reunião: presentes (com assinatura), ações, anexos |
+| `WbsNode` (+ enum `WbsLayoutOrientation`) | Nós do canvas interativo de EAP/WBS |
+| `EapTemplate`, `EapDocument` | Templates e documentos gerados de EAP |
 
-Tabela de junção entre User e Projeto. Armazena dados **contextuais ao projeto** — campos que variam por projeto, não por usuário globalmente.
+### Tabelas herdadas da versão anterior (ver detalhamento completo no histórico do doc)
 
-| Campo | Tipo | Descrição |
-|-------|------|-----------|
-| id | CUID | Chave primária |
-| userId | String | Usuário |
-| projetoId | String | Projeto |
-| active | Boolean | Membro active no projeto |
-| cargo | String? | Cargo neste projeto |
-| departamento | String? | Departamento neste projeto |
-| valorHora | Float? | Custo/hora neste projeto |
-| dataEntrada | DateTime | Quando entrou no projeto |
-| dataSaida | DateTime? | Quando saiu (histórico) |
+`Tenant`, `User`, `Projeto`/`Project`, `UsuarioProjeto`, `Departamento`/`UsuarioDepartamento`, `Role`/`Permission`/`RolePermission`/`UserProjectRole`, `Sprint`, `SprintColumn`/`Card`/`CardTag`/`CardResponsible`, `TimeEntry`, `Comentario`/`Notificacao`, `Auditoria`, `DashboardMetric`, `SprintFeedback`, `Tag`/`Attachment` — semântica inalterada em relação à versão anterior deste documento; o que mudou é **onde** cada um é escrito (serviço dono vs. monolito legado).
 
-> **Regra**: tudo que varia por projeto fica em `UsuarioProjeto`, não em `User`.
+---
 
-### Departamento / UsuarioDepartamento
+## Migração incompleta — o que ainda é monolito
 
-Departamentos globais do tenant. Um usuário pode pertencer a múltiplos departamentos via `UsuarioDepartamento`.
+As funcionalidades mais recentes (EAP, WBS, Atas, Cadastros) **não passam pelo gateway nem por nenhum microsserviço** — rodam via Prisma direto no schema do monolito, através de `services/*.ts`:
 
-### Role / Permission / RolePermission / UserProjectRole
+| Funcionalidade | Actions | Service | Páginas |
+|-----------------|---------|---------|---------|
+| WBS (canvas interativo de EAP) | `app/actions/wbs.ts` | `services/wbsService.ts` (`WbsNode`, `WbsConflictError` p/ concorrência otimista) | `app/projetos/[projetoId]/wbs/` |
+| EAP (documento gerado por template) | via `app/api/projects/[projetoId]/eap/route.ts` | `services/eapService.ts` (`EapTemplate`, `EapDocument`) | integrado à página de WBS/documentação |
+| Atas de reunião | `app/actions/atas.ts` | `services/ataService.ts` (`Ata`, `AtaPresente`, `AtaAcao`, `AtaAnexo`) | `app/projetos/[projetoId]/atas/` |
+| Cadastros (departamento/função por projeto) | `app/actions/cadastros.ts` | `services/projetoCadastroService.ts` (`ProjetoDepartamento`, `ProjetoFuncao`) | `app/admin/cadastros/` |
 
-Sistema RBAC:
-- `Role` — papel com escopo `TENANT` ou `PROJETO`, pertence a um tenant
-- `Permission` — ação sobre recurso (`recurso + acao`, único globalmente)
-- `RolePermission` — M2M entre Role e Permission
-- `UserProjectRole` — atribui um Role de escopo PROJETO a um usuário em um projeto específico
+`app/actions/stakeholders.ts` é misto: CRUD de stakeholder via `project-service` (gateway), mas grava `user.signatureUrl` (usado para assinatura de atas) direto via `lib/prisma` + upload MinIO.
 
-### Sprint
-
-| Campo | Tipo | Descrição |
-|-------|------|-----------|
-| id | CUID | Chave primária |
-| projetoId | String? | Projeto ao qual pertence (opcional para legado) |
-| name | String | Nome do sprint |
-| status | Enum | `PLANNED`, `ACTIVE`, `COMPLETED` |
-| startDate / endDate | DateTime? | Período |
-| createdBy | String? | Usuário criador |
-
-### SprintColumn / Card / CardTag / CardResponsible
-
-Estrutura do board Kanban (igual à versão anterior). Cards têm título, descrição, cor, prioridade, datas, múltiplos responsáveis, tags e anexos.
-
-### TimeEntry
-
-Entradas de tempo por usuário/card. Suporta timer active (`isRunning`) e entradas manuais (`isManual`).
-
-### Comentario / Notificacao
-
-- `Comentario` — texto com tipo `COMENTARIO` ou `FEEDBACK`, vinculado a card + usuário
-- `Notificacao` — notificação para um usuário com tipo, título, mensagem e status (`NAO_LIDA`, `LIDA`, `ARQUIVADA`)
-
-### Auditoria
-
-Log imutável de ações no sistema. Campos: `tenantId`, `userId?`, `acao`, `entidade`, `entidadeId?`, `detalhes (Json?)`, `timestamp`.
-
-### DashboardMetric
-
-Cache de métricas por sprint + usuário: `horas`, `tarefasPendentes`, `custoTotal`, `rankingPosicao`.
-
-### SprintFeedback
-
-Avaliação por usuário ao encerrar um sprint: `qualidade` e `dificuldade` (1–5) + campos texto. Único por `(sprintId, userId)`.
-
-### Tag / Attachment
-
-- `Tag` — etiqueta por usuário, vinculada a cards via `CardTag`
-- `Attachment` — arquivo anexado a card (MinIO), pode ser capa do card
+Isso significa que a frase "tudo passa pelo gateway" **ainda não é verdade** — ver [Roadmap](#roadmap-de-migração-strangler-fig) para o plano de extração.
 
 ---
 
 ## Fluxo de Dados
 
-### Fluxo padrão (ação do usuário)
+### Fluxo padrão — funcionalidade já extraída (gateway)
 
 ```
 Componente React (Client)
@@ -407,35 +333,53 @@ Server Action (app/actions/*.ts)
   - verifySession() → tenantId, userId, role
   - Validação Zod do input
        ↓
-Service Layer (services/*.ts)
-  - Lógica de negócio + consultas Prisma
+lib/api-client.ts
+  - fetch(`${API_GATEWAY_INTERNAL_URL}${path}`, { Authorization: Bearer <session> })
+       ↓
+api-gateway (:4000)
+  - authMiddleware() valida JWT (+ liveness no Redis em prod)
+  - injeta x-user-id / x-tenant-id / x-user-role
+  - proxy + X-Internal-Api-Key
+       ↓
+Microsserviço de domínio (Nest Controller → Service → Prisma)
        ↓
 PostgreSQL
        ↓
 revalidatePath() → Next.js revalida a rota
+```
+
+### Fluxo legado — funcionalidade ainda no monolito (WBS/EAP/Atas/Cadastros e parte de admin/roles/departments)
+
+```
+Componente React (Client)
        ↓
-Retorno ao componente
+Server Action (app/actions/*.ts)
+  - verifySession()
+  - Validação Zod
+       ↓
+services/*.ts (lógica de negócio + Prisma direto via lib/prisma.ts)
+       ↓
+PostgreSQL (schema do monolito)
+       ↓
+revalidatePath()
 ```
 
 ### Fluxo de autenticação
 
 ```
 Login:
-  → Zod valida email/senha
-  → authService busca usuário no banco (por email + tenantId)
-  → bcrypt compara senha
-  → JWT gerado com { userId, tenantId, role, tokenVersion }
+  → Zod valida email/senha (Server Action) → lib/api-client.ts → POST /auth/login (gateway → auth-service)
+  → auth-service busca usuário (por email + tenantId), bcrypt compara senha
+  → JWT gerado com { userId, tenantId, role, tokenVersion, jti }
+  → Sessão registrada no Redis: session:{jti}, TTL 7d
   → Cookie httpOnly "session" setado (7 dias)
   → Se forcePasswordChange=true → redirect /alterar-senha
-  → Senão → redirect /sprints
+  → Senão → redirect /projetos
 
-Cada requisição protegida (verifySession):
-  → Lê cookie "session"
-  → jose descriptografa JWT
-  → Busca usuário no banco
-  → Verifica isActive, tokenVersion e forcePasswordChange
+Cada requisição protegida:
+  → app: verifySession() lê/decripta cookie localmente (fallback) OU delega ao gateway
+  → api-gateway: valida JWT (RS256 c/ fallback HS256), checa Redis (fail-open se indisponível em prod)
   → Se forcePasswordChange=true → redirect /alterar-senha
-  → Retorna { userId, tenantId, role, ... }
 ```
 
 ### Fluxo de troca de senha forçada
@@ -444,128 +388,210 @@ Cada requisição protegida (verifySession):
 Admin cria usuário com forcePasswordChange=true
   → No próximo login, redirectiona para /alterar-senha
   → alterarSenhaAction lê cookie diretamente (bypass de verifySession para evitar loop)
-  → Atualiza passwordHash + forcePasswordChange=false + incrementa tokenVersion
+  → auth-service atualiza passwordHash + forcePasswordChange=false + incrementa tokenVersion
   → Deleta cookie de sessão → redirect /login?changed=1
 ```
 
 ### Gerenciamento de estado do board
 
 1. **useReducer + kanbanReducer** — atualização otimista local para drag-and-drop (evita flickering)
-2. **Server Actions + revalidatePath** — todas as mutações persistem no banco e revalidam a rota
+2. **Server Actions + revalidatePath** — todas as mutações persistem via gateway/sprint-service e revalidam a rota
 
 ---
 
-## Rotas de API REST
+## API Gateway e Microsserviços — Endpoints
+
+### auth-service (via `/auth/*`)
 
 | Método | Rota | Descrição |
 |--------|------|-----------|
-| `GET` | `/api/me` | Dados do usuário autenticado |
-| `GET` | `/api/search?q=query` | Busca global em cards e sprints |
-| `GET` | `/api/notificacoes/count` | Contagem de notificações não lidas |
-| `POST` | `/api/csv` | Importação de cards via CSV (multipart) |
-| `POST` | `/api/uploads` | Upload de arquivo (MinIO) |
-| `DELETE` | `/api/uploads?id=attachmentId` | Remove arquivo e registro |
+| POST | `/auth/login`, `/auth/register`, `/auth/logout` | Ciclo de sessão |
+| GET | `/auth/me` / PATCH `/auth/me` | Perfil do usuário autenticado |
+| GET | `/auth/verify` | Usado internamente para validar token |
+| POST | `/auth/password/request-reset`, `/validate-code`, `/reset`, `/change`, `/alterar` | Fluxos de senha (recuperação e troca) |
+| GET | `/auth/my-tenants` | Tenants do usuário |
+| POST | `/auth/switch-tenant`, `/auth/join-tenant`, `/auth/provision-tenant-admin` | Multi-tenant |
+| GET | `/auth/tenants/:subdomain` | Lookup público de tenant |
+| GET | `/auth/users`, `/auth/all-users` | Listagem (admin) |
+| POST | `/auth/admin/users` / PATCH `/auth/admin/users/:id`, `/:id/active`, `/:id/role` | CRUD de usuário pelo admin |
 
-A maioria das operações usa **Server Actions**, sem API REST. As rotas acima existem para `FormData` (uploads, CSV) ou polling de baixo custo (contagem de notificações).
+### project-service (via `/projects`, `/departments`, `/roles`, `/permissions`, `/stakeholders`)
+
+| Método | Rota | Descrição |
+|--------|------|-----------|
+| GET/POST | `/projects`, `/projects/:id` | CRUD de projetos |
+| GET | `/projects/user/:userId` | Projetos ativos do usuário |
+| PATCH/DELETE | `/projects/:id` | Editar/remover |
+| GET/POST | `/projects/:id/members` · DELETE `/projects/:id/members/:userId` · PATCH `/members/reorder` | Membros do projeto |
+| GET/POST | `/projects/:id/macro-fases` | Macro-fases do projeto |
+| GET/POST/PATCH/DELETE | `/roles`, `/roles/:id` | Roles RBAC |
+| POST/DELETE | `/roles/:roleId/permissions/:permissionId` | Vínculo role↔permission |
+| GET/POST | `/permissions` | Permissões |
+| GET/POST/DELETE | `/projects/:projectId/roles`, `/:userId` | Roles por projeto |
+| GET/POST/PATCH/DELETE | `/departments`, `/departments/:id` | Departamentos globais |
+| POST/DELETE | `/departments/:id/users/:userId` | Membros do departamento |
+| GET/POST/PATCH/DELETE | `/stakeholders`, `/stakeholders/:id` | Stakeholders |
+| GET | `/stakeholders/by-project/:projectId` | Stakeholders de um projeto |
+| POST/DELETE | `/stakeholders/:id/projects/:projectId` | Vínculo projeto↔stakeholder |
+| PATCH | `/stakeholders/by-project/:projectId/reorder` | Reordenar |
+
+### sprint-service (via `/sprints`, `/cards`, `/tags`, `/time-entries`, `/audit`)
+
+| Método | Rota | Descrição |
+|--------|------|-----------|
+| GET/POST/PATCH/DELETE | `/sprints`, `/sprints/:id` | CRUD de sprint |
+| GET/POST/PATCH/DELETE | `/sprints/:id/columns`, `/:columnId` | Colunas do board |
+| GET | `/sprints/:sprintId/metrics` · POST idem | Métricas de sprint |
+| GET/POST | `/sprints/:sprintId/feedback` | SprintFeedback |
+| GET | `/cards/backlog`, `/cards/search`, `/cards/:id` | Consultas de card |
+| GET | `/sprints/:sprintId/cards` | Cards de um sprint |
+| POST/PATCH/DELETE | `/cards`, `/cards/:id` | CRUD de card |
+| GET | `/cards/:id/movements` | Histórico de movimentação (CardMovement) |
+| POST/DELETE | `/cards/:id/tags/:tagId`, `/cards/:id/responsibles/:userId` | Tags e responsáveis |
+| GET/POST/PATCH/DELETE | `/tags`, `/tags/:id` | CRUD de tag |
+| GET/POST/PATCH/DELETE | `/cards/:cardId/comments`, `/:id` | Comentários |
+| GET | `/cards/:cardId/time-entries`, `/total`, `/active` · `/users/:userId/time-entries` | Consultas de tempo |
+| POST | `/cards/:cardId/time-entries/start`, `/manual` · `/time-entries/:id/stop` | Timer/entrada manual |
+| DELETE | `/time-entries/:id` | Remover entrada |
+| GET/POST | `/audit` | Log de auditoria |
+
+### notification-service (via `/notifications`)
+
+| Método | Rota | Descrição |
+|--------|------|-----------|
+| POST | `/notifications` | Criar (via BullMQ) |
+| GET | `/notifications?userId=&limit=&status=&type=` | Listar |
+| GET | `/notifications/count?userId=` | Contagem não lidas |
+| GET | `/notifications/:id` | Buscar por ID |
+| PATCH | `/notifications/:id/read`, `/:id/archive`, `/mark-all-read` | Mutações de status |
+| DELETE | `/notifications/:id` | Soft delete |
+
+### file-service (via `/files`)
+
+| Método | Rota | Descrição |
+|--------|------|-----------|
+| POST | `/files/upload`, `/files/avatar`, `/files/logo` | Upload (MinIO) |
+| GET | `/files/by-cards`, `/files/:attachmentId/url` | Consultas |
+| PATCH | `/files/:attachmentId`, `/:attachmentId/cover` | Renomear / definir capa |
+| DELETE | `/files/:attachmentId` | Remover |
+
+Todos os 5 serviços expõem `GET /health` (usado pelos healthchecks do Docker Compose).
+
+---
+
+## Rotas REST do próprio Monolito (`app/api/`)
+
+Além das rotas acima (via gateway), o Next.js expõe rotas próprias para `FormData`, exportação de arquivos e funcionalidades ainda não extraídas:
+
+| Método | Rota | Descrição |
+|--------|------|-----------|
+| GET | `/api/health` | Healthcheck do container `app` |
+| GET | `/api/me` | Dados do usuário autenticado |
+| GET | `/api/search?q=query` | Busca global em cards e sprints |
+| GET | `/api/notificacoes/count` | Contagem de notificações não lidas |
+| POST | `/api/csv` | Importação de cards via CSV (multipart) |
+| POST/DELETE | `/api/uploads` | Upload/remoção de arquivo (MinIO) |
+| GET | `/api/files/:attachmentId/image` | Servir imagem de anexo |
+| GET | `/api/atas/:ataId/export` | Exportar ata (PDF/documento) |
+| GET/PATCH | `/api/projects/:projetoId/charter` · GET/POST `/charter/versions` | Termo de abertura do projeto e versões |
+| GET | `/api/projects/:projetoId/documento` · GET/POST `/documento/versions` · PATCH `/versions/:versionId` | Documento do projeto e versionamento |
+| GET/PUT/POST | `/api/projects/:projetoId/eap` | Geração/edição do documento EAP |
+| GET/POST | `/api/projects/:projetoId/macro-fases` · PATCH/DELETE `/:faseId` | Macro-fases |
+| GET | `/api/projetos/:projetoId/planilha-custos/export` | Exportar planilha de custos |
 
 ---
 
 ## Páginas e Funcionalidades
 
 ### `/admin`
-Hub central do admin com links para: gerenciamento de usuários, projetos, configurações e dashboard.
+Hub central do admin com links para: usuários, workspaces (tenants), cadastros, dashboard.
 
 ### `/admin/dashboard`
-Métricas por projeto: % conclusão de cards, horas acumuladas, custo estimado, sprints actives. Dados calculados em tempo real via `getSprintMetrics`.
+Métricas por projeto: % conclusão de cards, horas acumuladas, custo estimado, sprints ativas.
 
 ### `/admin/users`
-Tabela de usuários com:
-- Criar usuário (nome, email, senha, isAdmin, forcePasswordChange)
-- Editar usuário: dados básicos (nome, email, senha, role global) + seção **Projetos** (ativar/desativar por projeto, editar cargo/departamento/valorHora por projeto, adicionar a novo projeto)
-- Ativar/desativar conta
+CRUD completo de usuários (criar, editar, ativar/desativar), incluindo dados por projeto.
+
+### `/admin/tenants`
+Gerenciamento de workspaces (multi-tenant): listar tenants, entrar em um, trocar tenant ativo, provisionar-se como admin de um novo.
+
+### `/admin/cadastros`
+Cadastro de departamentos e funções globais reutilizáveis pelos projetos (`ProjetoDepartamento`/`ProjetoFuncao` — legado, direto no Prisma do monolito).
 
 ### `/no-project`
-Tela exibida quando o usuário autenticado não está vinculado a nenhum projeto ativo. Oferece opção de logout.
+Tela exibida quando o usuário autenticado não está vinculado a nenhum projeto ativo.
 
-### `/projetos`
-Lista de projetos do tenant com status e contagem de sprints.
-
-### `/projetos/novo`
-Formulário de criação de projeto (nome, descrição).
-
-### `/projetos/:id`
-Detalhe do projeto: dados básicos, status, ações (dashboard, membros, sprints, departamentos, funções).
+### `/projetos`, `/projetos/novo`, `/projetos/:id`
+Lista, criação e detalhe de projeto (dados básicos, status, ações).
 
 ### `/projetos/:id/membros`
-Gerenciamento de membros com dados **por projeto** (lidos de `UsuarioProjeto`):
-- Listagem: nome, email, role global, cargo, departamento, valorHora do projeto
-- Edição inline por membro: cargo, departamento, valorHora
-- Adicionar membro da lista de usuários disponíveis
-- Remover membro (seta `active=false` em `UsuarioProjeto`)
+Gerenciamento de membros com dados **por projeto** (`UsuarioProjeto`): listagem, edição inline (cargo/departamento/valorHora), adicionar/remover.
 
-### `/projetos/:id/departamentos`
-Departamentos vinculados ao projeto. Usa `departmentService` (en) e schemas `departmentSchemas`.
+### `/projetos/:id/stakeholders`
+Cadastro e vínculo de stakeholders (internos/externos) ao projeto, com reordenação.
 
-### `/projetos/:id/funcoes`
-Papéis/funções do projeto (RBAC por projeto). Verifica se o usuário é gerente via `isProjectManager()` de `projectRoleService`.
+### `/projetos/:id/departamentos`, `/projetos/:id/funcoes`
+Departamentos e papéis/funções do projeto (RBAC por projeto).
 
 ### `/projetos/:id/documentacao`
-Documentação colaborativa do projeto (lista de membros e contribuições).
+Documentação colaborativa: termo de abertura (charter) e documento do projeto, com versionamento (`DocumentVersion`).
 
-### `/projetos/:id/sprints`
-Lista de sprints do projeto com criação inline. Sprint individual abre o board Kanban em `/projetos/:id/sprints/:sprintId`.
+### `/projetos/:id/wbs`
+Canvas interativo de EAP/WBS: árvore de nós com layout dinâmico, pan/scroll, cálculo de código hierárquico, rollup de custos/prazos, export SVG/MSPDI.
+
+### `/projetos/:id/atas`, `/atas/nova`, `/atas/:ataId`
+Atas de reunião: lista, criação e detalhe com presentes (assinatura), ações e anexos. Exportável via `/api/atas/:ataId/export`.
+
+### `/projetos/:id/planilha-custos`
+Planilha de custos do projeto, exportável via `/api/projetos/:id/planilha-custos/export`.
+
+### `/projetos/:id/sprints`, `/sprints/nova`, `/sprints/:sprintId`
+Lista de sprints do projeto e board Kanban.
 
 ### `/sprints/:id`
 Board Kanban — acesso global, sem contexto de projeto na URL.
 
 ### `/dashboard/sprint/:id`
-Dashboard de sprint com:
-- PieChart de cards por coluna (Recharts)
-- BarChart de horas por usuário (Recharts)
-- Tabela de ranking por usuário: horas, custo, cards concluídos
-- Lista de cards atrasados
-- SprintFeedback: qualidade/dificuldade médias + detalhes por usuário
+Dashboard de sprint: PieChart/BarChart (Recharts), ranking por usuário, cards atrasados, SprintFeedback.
 
-### `/notificacoes`
-Lista de notificações com filtros por status, marcar como lida, arquivar.
+### `/notificacoes`, `/arquivos`, `/perfil`, `/alterar-senha`
+Notificações, galeria de anexos, edição de perfil, troca de senha forçada.
 
-### `/arquivos`
-Galeria de todos os anexos do usuário, com preview e download.
-
-### `/alterar-senha`
-Página exclusiva para troca de senha forçada pelo admin. Inacessível via navegação normal — só via redirect automático.
+### `/sobre`, `/equipe`
+Página institucional (`/equipe` redireciona para `/sobre`).
 
 ---
 
 ## Serviços (`services/`)
 
-Cada serviço é responsável por um domínio:
+Continua sendo a camada de negócio para tudo que **não** foi extraído para microsserviço — ainda é código vivo, não legado morto. Backing das Server Actions "mistas" (admin, roles, departments) e **única** camada para WBS/EAP/Atas/Cadastros.
 
 | Serviço | Responsabilidade |
 |---------|-----------------|
-| `authService` | Login, registro, hash de senha |
+| `authService` | Login, registro, hash de senha (uso remanescente/local) |
 | `adminService` | CRUD de usuários pelo admin |
-| `projectService` | CRUD de projetos, membros (UsuarioProjeto) — versão en |
-| `projetoService` | CRUD de projetos (legado) |
+| `tenantService` | Lookup e listagem de tenants |
+| `projectService` / `projetoService` | CRUD de projetos (versões en/legado, ainda no monolito onde a action não passa pelo gateway) |
 | `projectRoleService` | Papéis por projeto; garante papel de gerente ao criar projeto |
-| `sprintService` | CRUD de sprints |
-| `sprintColumnService` | CRUD de colunas |
-| `dashboardService` | Métricas gerais e por sprint |
-| `dashboardMetricService` | Cache de métricas por sprint/usuário |
+| `sprintService` / `sprintColumnService` | CRUD de sprints/colunas (uso remanescente) |
+| `dashboardService` / `dashboardMetricService` | Métricas gerais e cache por sprint/usuário |
 | `sprintFeedbackService` | Feedbacks por sprint |
-| `comentarioService` | Comentários em cards |
-| `auditoriaService` | Registro de log de auditoria |
-| `notificacaoService` | CRUD de notificações |
-| `tagService` | CRUD de tags (requer tenantId) |
+| `comentarioService` | Comentários em cards (uso remanescente) |
+| `cardResponsibleService` | Responsáveis por card |
+| `auditoriaService` | Registro de log de auditoria (monolito) |
+| `notificacaoService` | CRUD de notificações (fallback direto no banco) |
+| `tagService` | CRUD de tags |
 | `timeService` | Timer e entradas manuais de tempo |
-| `fileUploadService` | Upload/delete no MinIO |
+| `fileUploadService` | Upload/delete no MinIO (uso remanescente no monolito) |
 | `csvImportService` | Parse e importação de CSV |
-| `roleService` | CRUD de roles RBAC |
-| `permissionService` | CRUD de permissões |
-| `departmentService` | CRUD de departamentos — versão en |
-| `departamentoService` | CRUD de departamentos (legado) |
-| `tenantService` | Lookup de tenant |
+| `roleService` / `permissionService` | CRUD de roles/permissões RBAC |
+| `departmentService` / `departamentoService` | CRUD de departamentos (en/legado) |
+| `projetoCadastroService` | `ProjetoDepartamento`/`ProjetoFuncao` — cadastros por projeto |
+| `wbsService` | Canvas de EAP/WBS: CRUD de nós, `WbsConflictError` (concorrência otimista) |
+| `eapService` | Templates e documentos EAP gerados |
+| `ataService` | Atas de reunião: presentes, ações, anexos |
 | `userService` | Listagem de usuários por tenant |
+| `migrationService` | Scripts de migração de dados |
 
 ---
 
@@ -576,20 +602,22 @@ Schemas em `lib/validation/`:
 | Arquivo | Schemas |
 |---------|---------|
 | `authSchemas.ts` | Login, registro, troca de senha |
+| `avatarUrl.ts` | Validação de URL de avatar |
+| `ataSchemas.ts` | Atas, presentes, ações, anexos |
 | `cardSchemas.ts` | Criação e edição de card |
 | `comentarioSchemas.ts` | Criação de comentário em card |
 | `csvSchemas.ts` | Estrutura de linha CSV |
-| `departamentoSchemas.ts` | Criação e edição de departamento (pt, legado) |
-| `departmentSchemas.ts` | Criação e edição de departamento (en) |
+| `departamentoSchemas.ts` / `departmentSchemas.ts` | Departamento (pt legado / en) |
+| `eapSchemas.ts` | Templates e documentos EAP |
 | `fileSchemas.ts` | Tipo e tamanho de arquivo |
 | `notificacaoSchemas.ts` | Notificações |
-| `projectSchemas.ts` | Criação e edição de projeto (en) |
-| `projetoSchemas.ts` | Criação e edição de projeto (pt, legado) |
-| `roleSchemas.ts` | Criação e edição de roles RBAC |
-| `sprintSchemas.ts` | Criação e edição de sprint |
-| `tagSchemas.ts` | Criação e edição de tag |
+| `projectSchemas.ts` / `projetoSchemas.ts` | Projeto (en / pt legado) |
+| `roleSchemas.ts` | Roles RBAC |
+| `sprintSchemas.ts` | Sprint |
+| `tagSchemas.ts` | Tag |
 | `tenantSchemas.ts` | Tenant |
-| `userSchemas.ts` | Edição de perfil e admin |
+| `userSchemas.ts` | Perfil e admin |
+| `wbsSchemas.ts` | Nós do canvas WBS |
 
 ---
 
@@ -598,78 +626,107 @@ Schemas em `lib/validation/`:
 | Mecanismo | Implementação |
 |-----------|---------------|
 | Senha | bcrypt rounds 10–12 |
-| Sessão | JWT RS256 httpOnly cookie, `SameSite=strict`, 7 dias |
+| Sessão | JWT RS256 httpOnly cookie, `SameSite=strict`, 7 dias, `jti` registrado no Redis (`session:{jti}`) |
 | Algoritmo JWT | RS256 em staging/produção; HS256 fallback em dev local (sem chaves configuradas) |
-| Invalidação de sessão | `tokenVersion` — incrementar invalida todas as sessões |
+| Invalidação de sessão | `tokenVersion` — incrementar invalida todas as sessões; liveness também checada via Redis no gateway (produção) |
 | Bloqueio de conta | `isActive=false` verificado em cada request |
 | Troca de senha forçada | `forcePasswordChange` verificado no login e em `verifySession` |
 | Isolamento de dados | Toda query usa `tenantId` da sessão |
 | Validação de input | Zod em todas as actions e API routes |
-| Auditoria | `Auditoria` registra ações críticas com userId, entidade e detalhes |
-| Middleware de auth | `proxy.ts` valida sessão via `http://localhost:PORT/api/me` antes de cada rota protegida |
+| Auditoria | `AuditLog`/`Auditoria` registra ações críticas com userId, entidade e detalhes |
+| Middleware de auth (monolito) | `proxy.ts` valida sessão via `http://localhost:PORT/api/me` antes de cada rota protegida |
+| Confiança gateway↔serviços | Serviços internos **não** revalidam o JWT — confiam nos headers `x-user-id`/`x-tenant-id`/`x-user-role` injetados pelo gateway, protegidos pelo segredo compartilhado `X-Internal-Api-Key` (`INTERNAL_API_KEY`). Rede `internal` do Docker Compose impede acesso direto de fora. |
+| Rate limiting | `api-gateway`: 200 req/s por IP (`express-rate-limit`) |
+| CORS | `api-gateway`: allow-list via `ALLOWED_ORIGINS` (⚠️ não documentado em `.env.example` — gap de configuração conhecido) |
+| Fail-open conhecido | Se o Redis estiver indisponível em produção, a checagem de liveness de sessão no gateway **deixa passar** a requisição em vez de bloquear — trade-off deliberado de disponibilidade sobre segurança estrita |
+| CI/CD | TruffleHog (secrets), CodeQL (SAST), Trivy (scan de todas as 7 imagens), OWASP ZAP (DAST) em `deploy-staging.yml`/`deploy-production.yml` |
 
 ---
 
 ## Migrações Aplicadas
 
+O monolito tem **16 migrações** em `prisma/migrations/`. As mais recentes (não presentes na versão anterior deste doc) refletem as funcionalidades novas:
+
 | Migração | O que faz |
 |----------|-----------|
-| `init` | Schema base: User, Sprint, Card, Tag, TimeEntry, Attachment |
-| `add_user_sprint_tags_attachments` | Relações adicionais |
-| `add_sprint_board_profile_time_tracking` | Board, perfil, time tracking |
-| `add_token_version` | Campo `tokenVersion` em User |
-| `init` (2406) | Multi-tenant: Tenant, Projeto, UsuarioProjeto, RBAC, Comentario, Notificacao |
-| `add_auditoria_dashboardmetric_sprintfeedback` | Auditoria, DashboardMetric, SprintFeedback |
-| `add_force_password_change` | Campo `forcePasswordChange` em User |
-| `add_usuario_projeto_fields` | Campos `active`, `cargo`, `departamento`, `valorHora` em UsuarioProjeto |
+| `add_card_movements` | Tabela `CardMovement` (histórico de arrasto de card) |
+| `add_wbs_node` | Tabela `WbsNode` + enum `WbsLayoutOrientation` |
+| `add_userproject_remuneracao_horas_diarias` | Campos de remuneração/carga horária em `UsuarioProjeto` |
+| `add_ata_cadastros_globais_custos` | `Ata`, `AtaPresente`, `AtaAcao`, `AtaAnexo`, `ProjetoDepartamento`, custos |
+| `add_projeto_funcao` | Tabela `ProjetoFuncao` |
+| `add_ata_member_refs` | Vínculo de presentes/ações de ata com `User` |
+| `add_eap_template_document` | Tabelas `EapTemplate`, `EapDocument` |
+
+Migrações anteriores (base multi-tenant, RBAC, auditoria, `DocumentVersion`, `ProjectDraft` etc.) seguem a mesma linha da versão anterior deste documento — ver histórico completo em `prisma/migrations/`.
+
+**Migração dos microsserviços — lacuna conhecida:** apenas `sprint-service` e `file-service` têm mecanismo automatizado de `prisma migrate deploy` no deploy (via profile `migrate-sprint-service`/`migrate-file-service`, e o `file-service` roda a migração também no próprio entrypoint do container, porque o deploy de produção normalmente não usa o profile `migration`). **`auth-service`, `project-service` e `notification-service` não têm nenhum mecanismo automatizado de migração** — mudanças de schema nesses três serviços precisam ser aplicadas manualmente. Isso deveria ser corrigido antes de qualquer mudança de schema nesses serviços.
 
 ---
 
 ## Configuração e Ambiente
 
-**Variáveis de ambiente (monolito):**
+### Monolito (`app`)
 
 | Variável | Uso |
 |----------|-----|
 | `DATABASE_URL` | Connection string do PostgreSQL |
-| `SESSION_SECRET` | Chave HS256 (fallback dev — sem `JWT_PRIVATE_KEY`) |
-| `JWT_PRIVATE_KEY` | Chave privada RS256 PEM (newlines como `\n` literal) |
-| `JWT_PUBLIC_KEY` | Chave pública RS256 PEM (newlines como `\n` literal) |
-| `REDIS_HOST` | Host do Redis (default: `redis`) |
-| `REDIS_PORT` | Porta do Redis (default: `6379`) |
-| `MINIO_ENDPOINT` | Hostname do MinIO (default: `localhost`) |
-| `MINIO_PORT` | Porta do MinIO (default: `9000`) |
-| `MINIO_USE_SSL` | `true` para HTTPS no cliente S3 |
-| `MINIO_ACCESS_KEY` | Access key do MinIO |
-| `MINIO_SECRET_KEY` | Secret key do MinIO |
-| `MINIO_BUCKET` | Nome do bucket |
-| `MINIO_PUBLIC_URL` | URL pública base para links de arquivos |
-| `NOTIFICATION_SERVICE_URL` | URL do notification-service (ex: `http://notification-service:4004`). Se não definido, usa banco direto. |
-| `NODE_ENV` | `development` ou `production` |
-| `PORT` | Porta do servidor Next.js (default: `3000`) |
+| `SESSION_SECRET` | Chave HS256 (fallback dev) |
+| `JWT_PRIVATE_KEY` / `JWT_PUBLIC_KEY` | Par de chaves RS256 (newlines como `\n` literal) |
+| `API_GATEWAY_INTERNAL_URL` | URL interna do gateway (server-side, ex: `http://api-gateway:4000`) |
+| `NEXT_PUBLIC_API_URL` | URL pública, fallback client-side |
+| `NOTIFICATION_SERVICE_URL`, `AUTH_SERVICE_URL`, `FILE_SERVICE_URL` | URLs diretas ainda injetadas no `app` (uso legado/parcial fora do gateway) |
+| `INTERNAL_API_KEY` | Segredo compartilhado gateway↔serviços |
+| `DEFAULT_TENANT_ID` | Tenant padrão para auto-registro |
+| `REDIS_HOST` / `REDIS_PORT` / `REDIS_PASSWORD` | Redis (fila + sessão) |
+| `MINIO_ENDPOINT` / `MINIO_PORT` / `MINIO_USE_SSL` / `MINIO_ACCESS_KEY` / `MINIO_SECRET_KEY` / `MINIO_BUCKET` / `MINIO_PUBLIC_URL` | Object storage |
+| `NODE_ENV`, `PORT` | Ambiente/porta do servidor Next.js |
 
-**Variáveis de ambiente (notification-service):**
+### api-gateway
 
 | Variável | Uso |
 |----------|-----|
-| `DATABASE_URL` | Connection string do PostgreSQL |
-| `REDIS_HOST` | Host do Redis |
-| `REDIS_PORT` | Porta do Redis |
+| `JWT_PUBLIC_KEY`, `SESSION_SECRET` | Validação de JWT (RS256 + fallback HS256) |
+| `INTERNAL_API_KEY` | Segredo injetado em todo proxy para os serviços |
+| `REDIS_HOST` / `PORT` / `PASSWORD` | Liveness de sessão |
+| `AUTH_SERVICE_URL`, `PROJECT_SERVICE_URL`, `SPRINT_SERVICE_URL`, `NOTIFICATION_SERVICE_URL`, `FILE_SERVICE_URL` | Destinos do proxy |
+| `ALLOWED_ORIGINS` | CORS allow-list (⚠️ ausente do `.env.example` raiz) |
+| `PORT` | 4000 |
+
+### Demais serviços (auth/project/sprint/notification/file-service)
+
+| Variável | Uso |
+|----------|-----|
+| `DATABASE_URL` | Connection string do PostgreSQL (compartilhada) |
+| `INTERNAL_API_KEY` | Valida requisições vindas do gateway |
+| `REDIS_HOST` / `PORT` / `PASSWORD` | Apenas `auth-service` (sessões) e `notification-service` (fila) |
+| `MINIO_*` | Apenas `file-service` |
+| `JWT_PRIVATE_KEY` / `JWT_PUBLIC_KEY` | Apenas `auth-service` (emissão) |
+| `PORT` | 4001–4005 conforme o serviço |
+
+### Observabilidade (produção)
+
+`BASE_DOMAIN`, `GRAFANA_PASSWORD` — usados só por `docker-compose.production.yml` (Prometheus + Loki + Grafana).
 
 **Comandos úteis:**
 
 ```bash
-pnpm dev                          # servidor de desenvolvimento
+pnpm dev                          # servidor de desenvolvimento (monolito)
 pnpm build                        # build de produção
-npx prisma migrate dev            # aplicar migrações (dev)
+npx prisma migrate dev            # aplicar migrações do monolito (dev)
 npx prisma generate               # regenerar cliente Prisma
 npx prisma studio                 # GUI do banco
+
+# Rodar um microsserviço isoladamente (workspace pnpm real)
+pnpm --dir auth-service start:dev
+pnpm --dir project-service start:dev
 
 # Deploy manual (staging)
 IMAGE_TAG=staging docker compose -f docker-compose.yml -f docker-compose.staging.yml --env-file .env up -d
 
-# Migrations manual (staging)
+# Migrations manual (staging) — cobre monolito + sprint-service + file-service apenas
 IMAGE_TAG=staging docker compose -f docker-compose.yml -f docker-compose.staging.yml --env-file .env --profile migration run --rm migrate
+IMAGE_TAG=staging docker compose -f docker-compose.yml -f docker-compose.staging.yml --env-file .env --profile migration run --rm migrate-sprint-service
+IMAGE_TAG=staging docker compose -f docker-compose.yml -f docker-compose.staging.yml --env-file .env --profile migration run --rm migrate-file-service
 ```
 
 ---
@@ -683,133 +740,56 @@ Objetivo: sair do Vercel/Neon e hospedar tudo em VPS Hostinger com Docker.
 **O que foi feito:**
 
 1. **Dockerização do monolito** — `Dockerfile` multi-stage (base → deps → builder → runner) usando Node 22 Alpine + pnpm via corepack. Output `standalone` do Next.js.
-
-2. **Docker Compose** — `docker-compose.yml` (base) + overrides `docker-compose.staging.yml` e `docker-compose.production.yml`. Serviços: `app`, `notification-service`, `postgres`, `redis`, `minio`, `migrate` (profile), observabilidade (prod).
-
-3. **Traefik como reverse proxy** — TLS automático via Let's Encrypt (ACME), HTTP→HTTPS redirect, roteamento por `Host()`. Roda separado em `/opt/mvloperum/shared`. Label crítica: `traefik.http.routers.<router>.service=app-${COMPOSE_PROJECT_NAME}` para evitar 504 (Traefik default porta 80).
-
-4. **Dois ambientes isolados** — staging e produção com `COMPOSE_PROJECT_NAME` distintos, bancos separados (`mvloperum` e `mvloperum_prod`), buckets MinIO separados, chaves JWT separadas.
-
-5. **Migração de MinIO → MinIO** — `fileUploadService.ts` e `minio.ts` substituem `@vercel/blob` por `@aws-sdk/client-s3` apontando para MinIO. Buckets públicos para avatars/logos.
-
-6. **JWT HS256 → RS256** — `lib/session.ts` suporta RS256 (chaves `JWT_PRIVATE_KEY`/`JWT_PUBLIC_KEY`) com fallback HS256 para desenvolvimento local sem chaves configuradas. Sessões existentes HS256 continuam válidas durante transição (dual-verify).
-
-7. **CI/CD via GitHub Actions**:
-   - `develop` → deploy staging automático
-   - `main` → deploy produção (automático no push)
-   - Pipeline: checkout → install → build imagens Docker → save tarballs → SCP para VPS → SSH: docker load + migrate + compose up
-
-8. **Fix middleware** — `proxy.ts` faz fetch interno para `/api/me`. Com Traefik (X-Forwarded-Proto: https), `request.url` fica com `https://`. Solução: usar `http://localhost:${PORT}/api/me` para evitar `ERR_SSL_PACKET_LENGTH_TOO_LONG`.
-
-9. **Prisma 7** — schema sem `url` no datasource (movido para `prisma.config.ts`). Gera cliente em `lib/generated/prisma` (não em `node_modules/@prisma/client`).
-
-**Problemas resolvidos:**
-- pnpm symlinks quebram ao copiar `node_modules` entre stages Docker → `pnpm install --prod` no runner (sem `--ignore-scripts` para Prisma baixar engines)
-- `pnpm-workspace.yaml` com `packages: []` em `notification-service` para ancorar lockfile do subdiretório
-- Container `migrate` precisa de `user: "0"` para escrever binários Prisma em `/pnpm`
-
----
+2. **Docker Compose** — `docker-compose.yml` (base) + overrides `docker-compose.staging.yml` e `docker-compose.production.yml`.
+3. **Traefik como reverse proxy** — TLS automático via Let's Encrypt (ACME), HTTP→HTTPS redirect, roteamento por `Host()`.
+4. **Dois ambientes isolados** — staging e produção com `COMPOSE_PROJECT_NAME` distintos, bancos separados, buckets MinIO separados, chaves JWT separadas.
+5. **Migração de storage** — `@aws-sdk/client-s3` apontando para MinIO no lugar de `@vercel/blob`.
+6. **JWT HS256 → RS256** — com fallback HS256 para sessões antigas.
+7. **CI/CD via GitHub Actions** — `develop` → staging automático, `main` → produção automático.
+8. **Fix middleware** — `proxy.ts` usa `http://localhost:${PORT}/api/me` para evitar erro de TLS via Traefik.
+9. **Prisma 7** — schema sem `url` no datasource (movido para `prisma.config.ts`).
 
 ### Fase 1 — Notification Service (concluída)
 
----
+Primeiro microsserviço extraído (Strangler Fig): zero dependências inbound, CRUD puro, bounded context perfeito. NestJS 11 + Prisma 7 + BullMQ worker, feature flag `NOTIFICATION_SERVICE_URL`.
 
 ### Fase 2 — Auth Service + File Service + API Gateway (concluída)
 
-Objetivo: centralizar autenticação, uploads e criar o ponto de entrada único da API.
+Centralização de autenticação, uploads e criação do ponto de entrada único da API:
 
-**Serviços criados:**
+1. **`auth-service`** (NestJS :4001) — autenticação centralizada, Redis session store.
+2. **`api-gateway`** (Express :4000) — proxy + autenticação JWT, rate limiting, CORS.
+3. **`file-service`** (NestJS :4005) — uploads via MinIO.
 
-1. **`auth-service/`** (NestJS :4001) — autenticação centralizada
-   - Prisma schema próprio: `Tenant`, `User`
-   - Redis session store: chave `session:{jti}`, TTL 7d
-   - Endpoints: `/auth/login`, `/auth/register`, `/auth/logout`, `/auth/me`, `/auth/verify`, `/auth/tenants/:subdomain`, `/auth/password/*`
-   - Feature flag no monolito: `AUTH_SERVICE_URL`
+### Fase 3 — Project Service + Sprint Service (concluída, não estava documentada)
 
-2. **`api-gateway/`** (Express :4000) — proxy + autenticação JWT
-   - Valida JWT RS256 (com fallback HS256 em dev)
-   - Verifica sessão ativa no Redis
-   - Injeta headers: `X-User-ID`, `X-Tenant-ID`, `X-User-Role`
-   - Rate limiting: 200 req/s por IP
-   - CORS configurável via `ALLOWED_ORIGINS`
-   - Roteamento: `/auth/*` → auth-service, `/files/*` → file-service, `/notifications/*` → notification-service
+Extração do restante do domínio de negócio principal:
 
-3. **`file-service/`** (NestJS :4005) — uploads via MinIO
-   - Prisma schema próprio: `Attachment`
-   - Endpoints: `POST /files/upload`, `DELETE /files/:id`, `GET /files/:id/url`, `POST /files/avatar`, `POST /files/logo`
-   - Feature flag no monolito: `FILE_SERVICE_URL`
+1. **`project-service`** (NestJS :4002) — projetos, departamentos, RBAC (roles/permissions), stakeholders. Owner canônico de `Project`, `Department`, `Role`/`Permission`, `Stakeholder`.
+2. **`sprint-service`** (NestJS :4003) — sprints, board Kanban completo (cards, colunas, tags, comentários), time tracking, dashboard de métricas de sprint, log de auditoria (`AuditLog`).
+3. **Gateway atualizado** — rotas `/projects`, `/departments`, `/roles`, `/permissions`, `/stakeholders` → project-service; `/sprints`, `/cards`, `/tags`, `/time-entries`, `/audit` → sprint-service.
+4. **`lib/api-client.ts`** — cliente HTTP unificado no monolito, substituindo o padrão anterior de múltiplos feature-flags por serviço (`AUTH_SERVICE_URL` direto etc.) para a maior parte das actions.
+5. **CI/CD** — pipelines agora buildam, escaneiam (Trivy) e publicam 7 imagens: `app`, `api-gateway`, `auth-service`, `project-service`, `sprint-service`, `notification-service`, `file-service`.
 
-**Monolito atualizado:**
-- `app/actions/auth.ts` — proxy para auth-service quando `AUTH_SERVICE_URL` definido
-- `app/api/uploads/route.ts` — proxy para file-service quando `FILE_SERVICE_URL` definido
-- `lib/authClient.ts` — cliente HTTP para auth-service
+**Lacunas conhecidas desta fase:** `auth-service`, `project-service` e `notification-service` não têm profile de migração automatizado no Compose (só `sprint-service` e `file-service` têm); `lib/projectClient.ts`/`lib/sprintClient.ts` (bypass direto do gateway) ficaram como código morto; a tabela `Attachment` ainda existe duplicada no schema do `sprint-service`.
 
-**Docker Compose atualizado:** `api-gateway`, `auth-service` e `file-service` adicionados à stack.
+### Fase 4 — Funcionalidades novas construídas direto no monolito (em andamento / não extraídas)
 
-**CI/CD:** pipelines de staging e produção buildando e publicando as 3 novas imagens.
-
-**Marco:** auth-service operacional. API Gateway como ponto de entrada externo. Uploads via file-service. Monolito delega auth e storage via feature flags.
-
-Objetivo: extrair o primeiro microserviço usando o padrão Strangler Fig.
-
-**Por que notificações primeiro:** zero dependências inbound, CRUD puro, bounded context perfeito.
-
-**Arquitetura:**
-
-```
-Monolito (Next.js)
-  └─ publishNotification()          ← lib/notificationPublisher.ts
-       ├─ se NOTIFICATION_SERVICE_URL definido → BullMQ Queue "notifications"
-       └─ senão → notificacaoService (DB direto, fallback)
-
-notification-service (NestJS :4004)
-  ├─ NotificationController          REST: GET/POST/PATCH/DELETE /notifications
-  ├─ NotificationService             Prisma → tabela Notification
-  └─ NotificationProcessor           BullMQ Worker "notifications" → cria via service
-
-Redis "notifications" queue ←→ BullMQ
-```
-
-**Feature flag:** `NOTIFICATION_SERVICE_URL` no `.env`.
-- **Não definido** → comportamento antigo (DB direto via `notificacaoService.ts`)
-- **Definido** → criações via BullMQ (async), leituras/mutações via HTTP REST
-
-**notification-service:**
-- NestJS 11 + Prisma 7 (schema próprio, só model `Notification`)
-- `prisma.config.ts` com try/catch no dotenv (Docker injeta `DATABASE_URL` diretamente)
-- Porta 4004, healthcheck `/health`
-- Dockerfile independente com `pnpm-workspace.yaml` próprio
-
-**API REST do notification-service:**
-
-| Método | Rota | Descrição |
-|--------|------|-----------|
-| `GET` | `/notifications?userId=&limit=&status=&type=` | Listar notificações |
-| `GET` | `/notifications/count?userId=` | Contagem não lidas |
-| `GET` | `/notifications/:id` | Buscar por ID |
-| `POST` | `/notifications` | Criar notificação |
-| `PATCH` | `/notifications/:id/read` | Marcar como lida |
-| `PATCH` | `/notifications/:id/archive` | Arquivar |
-| `PATCH` | `/notifications/mark-all-read` | Marcar todas como lidas (`{ userId }` no body) |
-| `DELETE` | `/notifications/:id` | Soft delete |
-| `GET` | `/health` | Health check |
+Em paralelo à extração de microsserviços, funcionalidades novas de maior superfície (EAP/WBS, Atas, Cadastros por projeto, Stakeholders) foram construídas **direto no monolito**, sem passar pelo gateway — ver [Migração incompleta](#migração-incompleta--o-que-ainda-é-monolito). Não há ainda um plano formal de extração para essas features; `project-service` seria o candidato natural para absorver Cadastros/Stakeholders/macro-fases, e um futuro `document-service` ou extensão do `project-service` para EAP/WBS/Atas.
 
 ---
 
 ## Decisões de Arquitetura Notáveis
 
-1. **Server Actions sobre API REST** — elimina camada extra. O cliente chama funções TypeScript que rodam no servidor. API REST é reservada para `FormData` e polling leve.
-
-2. **Services finas nas actions** — actions fazem apenas: `verifySession` + validação Zod + chamada de service + `revalidatePath`. Lógica de negócio fica nos services para testabilidade.
-
-3. **UsuarioProjeto como entidade central** — dados que variam por projeto (cargo, departamento, valorHora, active) ficam em `UsuarioProjeto`, não em `User`. Isso permite que o mesmo usuário tenha papéis e custos diferentes em cada projeto.
-
-4. **forcePasswordChange sem loop** — a action de `/alterar-senha` lê o cookie diretamente (sem chamar `verifySession`) para evitar redirect loop. Após trocar, incrementa `tokenVersion` e invalida a sessão.
-
-5. **Multi-tenant via JWT** — `tenantId` é embutido no token no login, não precisa de lookup em cada request. Toda query usa esse `tenantId` para isolar dados.
-
-6. **Drag-and-drop otimista** — `useReducer` com `kanbanReducer` atualiza o estado local imediatamente; a Server Action persiste em background. Se falhar, o estado local é corrigido na próxima renderização.
-
-7. **Prisma com adapter `pg`** — Next.js 16 exige o adapter explícito `@prisma/adapter-pg` para compatibilidade com o runtime.
-
-8. **`tokenVersion` para invalidação** — incrementar esse campo invalida todas as sessões ativas do usuário sem lista negra de tokens.
+1. **API Gateway como ponto único de entrada externo** — `api-gateway` é o único serviço de backend exposto via Traefik além do próprio Next.js; os 5 microsserviços de domínio ficam só na rede interna do Docker.
+2. **Confiança via headers + segredo compartilhado, não revalidação de JWT** — os serviços internos confiam em `x-user-id`/`x-tenant-id`/`x-user-role` injetados pelo gateway, protegidos por `INTERNAL_API_KEY` e isolamento de rede — não por revalidação criptográfica do token em cada serviço. Trade-off de simplicidade/performance sobre defesa em profundidade.
+3. **Banco compartilhado, não database-per-service** — todos os microsserviços apontam para o mesmo Postgres com schemas Prisma parciais e sobrepostos (read-models locais de `Tenant`/`User`/`Project`/`Attachment`) em vez de bancos isolados — reduz a complexidade operacional às custas de acoplamento de schema entre serviços.
+4. **Server Actions sobre API REST no cliente** — elimina camada extra. O componente chama funções TypeScript que rodam no servidor e, por baixo, fazem fetch ao gateway (ou, no caminho legado, Prisma direto).
+5. **Services finas nas actions (padrão extraído) / services grossas (padrão legado)** — actions que já foram extraídas fazem `verifySession` + Zod + `lib/api-client` + `revalidatePath`; actions ainda não extraídas (WBS/EAP/Atas/Cadastros) mantêm lógica de negócio em `services/*.ts` com Prisma direto.
+6. **UsuarioProjeto como entidade central** — dados que variam por projeto (cargo, departamento, valorHora, active) ficam em `UsuarioProjeto`, não em `User`.
+7. **Multi-tenant ativo, não só suportado** — usuários trocam de workspace em tempo real (`/admin/tenants`, `switch-tenant`), diferente da versão anterior deste doc onde o multi-tenant era apenas estrutural.
+8. **forcePasswordChange sem loop** — a action de `/alterar-senha` lê o cookie diretamente (sem chamar `verifySession`) para evitar redirect loop.
+9. **Drag-and-drop otimista** — `useReducer` com `kanbanReducer` atualiza o estado local imediatamente; a Server Action persiste em background.
+10. **Prisma com adapter `pg`** — Next.js 16 exige o adapter explícito `@prisma/adapter-pg` para compatibilidade com o runtime.
+11. **`tokenVersion` para invalidação** — incrementar esse campo invalida todas as sessões ativas do usuário sem lista negra de tokens; complementado por liveness check via Redis no gateway (com fail-open deliberado).
+12. **Fail-open no gateway sob falha do Redis** — prioriza disponibilidade sobre revogação imediata de sessão quando o Redis está fora do ar, em produção.
