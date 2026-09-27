@@ -106,7 +106,6 @@ export class SprintService {
           include: {
             tags: { include: { tag: true } },
             responsibles: { include: { user: { select: PUBLIC_USER_SELECT } } },
-            attachments: { where: { deletedAt: null } },
             timeEntries: { where: { deletedAt: null } },
           },
         },
