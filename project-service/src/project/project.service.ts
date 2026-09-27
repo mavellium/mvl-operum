@@ -1,5 +1,6 @@
 import { Injectable, NotFoundException, ConflictException } from '@nestjs/common'
 import { prisma } from '../prisma'
+import { assertUserInTenant } from '../common/tenant-scope'
 import { z } from 'zod'
 
 export const CreateProjectSchema = z.object({
@@ -23,7 +24,9 @@ export const CreateProjectSchema = z.object({
   departamentos: z.array(z.string()).optional(),
 })
 
-export const UpdateProjectSchema = CreateProjectSchema.partial().omit({ tenantId: true })
+export const UpdateProjectSchema = CreateProjectSchema.partial().omit({ tenantId: true }).extend({
+  status: z.enum(['ACTIVE', 'INACTIVE', 'COMPLETED', 'ARCHIVED']).optional(),
+})
 
 export type CreateProjectDto = z.infer<typeof CreateProjectSchema>
 export type UpdateProjectDto = z.infer<typeof UpdateProjectSchema>
@@ -117,6 +120,7 @@ export class ProjectService {
 
   async addMember(projectId: string, tenantId: string, userId: string, data: { role?: string; departmentId?: string; hourlyRate?: number }) {
     await this.findOne(projectId, tenantId)
+    await assertUserInTenant(userId, tenantId)
     return prisma.userProject.upsert({
       where: { userId_projectId: { userId, projectId } },
       create: { userId, projectId, ...data },

@@ -48,8 +48,8 @@ export class StakeholderController {
   }
 
   @Get('by-project/:projectId')
-  listByProject(@Param('projectId') projectId: string) {
-    return this.stakeholderService.listByProject(projectId)
+  listByProject(@Param('projectId') projectId: string, @Headers('x-tenant-id') tenantId: string) {
+    return this.stakeholderService.listByProject(projectId, tenantId)
   }
 
   @Post(':id/projects/:projectId')
@@ -75,8 +75,10 @@ export class StakeholderController {
   @HttpCode(HttpStatus.NO_CONTENT)
   reorder(
     @Param('projectId') projectId: string,
+    @Headers('x-tenant-id') tenantId: string,
     @Body() body: { orderedIds: string[] },
   ) {
-    return this.stakeholderService.reorderStakeholders(projectId, body.orderedIds)
+    if (!Array.isArray(body?.orderedIds)) throw new BadRequestException('orderedIds é obrigatório')
+    return this.stakeholderService.reorderStakeholders(projectId, tenantId, body.orderedIds)
   }
 }
