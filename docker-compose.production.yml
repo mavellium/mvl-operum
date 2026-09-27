@@ -119,6 +119,11 @@ services:
       - prod-redis-data:/data
 
   minio:
+    # Fixado na imagem que já roda em produção (RELEASE.2025-09-07T16-13-09Z).
+    # O base usa quay.io RELEASE.2025-04-08 — aplicá-lo aqui seria um downgrade
+    # do storage, e o MinIO não garante leitura de dados gravados por versão mais nova.
+    # Para atualizar: testar em staging e trocar o digest.
+    image: minio/minio@sha256:14cea493d9a34af32f524e538b8346cf79f3321eff8e708c1e2960462bd8936e
     volumes:
       - prod-minio-data:/data
     # Console disabled in production — omit --console-address entirely.
