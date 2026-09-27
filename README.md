@@ -62,15 +62,27 @@ O push na `main` dispara o workflow [Deploy to Production](.github/workflows/dep
 1. Varredura de segredos (TruffleHog) e CodeQL
 2. Lint, testes e `pnpm audit`
 3. Build das imagens, push para o GHCR (`:prod` e `:<sha>`) e scan com Trivy
-4. Webhook na VPS, que baixa as imagens e roda `docker compose up -d`
+4. Deploy por SSH ([`scripts/deploy/remote-deploy.sh`](scripts/deploy/remote-deploy.sh)):
+   - envia `docker-compose.yml` e `docker-compose.production.yml` para a VPS (com backup em `.deploy-backup/` e validação por `docker compose config`);
+   - baixa só as imagens da aplicação (`:prod`), com uma credencial temporária do GHCR;
+   - roda `docker compose up -d --wait` e falha se algum serviço não ficar saudável em 5 min;
+   - faz smoke test em `api.operum.adm.br/health`, `api.operum.adm.br/mcp` (espera 401) e `operum.adm.br/login`.
 
-O deploy **não** sincroniza os arquivos `docker-compose*.yml` da VPS. Mudanças neles (labels do Traefik, novos serviços) precisam ser aplicadas manualmente no servidor:
+As migrations continuam rodando no entrypoint dos containers; o profile `migration` não é executado no deploy.
 
-```bash
-docker compose -f docker-compose.yml -f docker-compose.production.yml up -d <serviço>
-```
+**Setup único na VPS** — secrets do environment `production` no GitHub:
 
-Staging usa `docker-compose.staging.yml` com o mesmo fluxo.
+| Secret | Valor |
+|---|---|
+| `VPS_HOST` | IP ou hostname da VPS |
+| `VPS_USER` | usuário de deploy (recomendado: um usuário dedicado no grupo `docker`, não `root`) |
+| `VPS_SSH_KEY` | chave privada ed25519 exclusiva do deploy (a pública vai no `authorized_keys` desse usuário) |
+| `VPS_KNOWN_HOSTS` | saída de `ssh-keyscan -t ed25519 <host>`, conferida com a fingerprint do servidor |
+| `VPS_DEPLOY_PATH` | diretório absoluto onde ficam os compose files e o `.env` de produção |
+
+Os secrets antigos `PRODUCTION_WEBHOOK_URL` e `DEPLOY_WEBHOOK_SECRET` não são mais usados em produção (o staging ainda usa o webhook).
+
+Staging usa `docker-compose.staging.yml` e ainda é disparado pelo webhook na VPS, que **não** sincroniza os compose files.
 
 ## Versionamento
 
