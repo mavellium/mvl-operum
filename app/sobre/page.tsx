@@ -8,7 +8,14 @@ export default function SobrePage() {
     <div className="min-h-screen bg-gray-50">
       <main className="max-w-4xl mx-auto px-4 py-8">
         <div className="mb-8">
-          <h1 className="text-2xl font-bold text-gray-900">Sobre o Operum</h1>
+          <div className="flex items-center gap-3">
+            <h1 className="text-2xl font-bold text-gray-900">Sobre o Operum</h1>
+            {process.env.NEXT_PUBLIC_APP_VERSION && (
+              <span className="text-xs font-medium text-blue-700 bg-blue-50 border border-blue-100 rounded-full px-2 py-0.5">
+                v{process.env.NEXT_PUBLIC_APP_VERSION}
+              </span>
+            )}
+          </div>
           <p className="text-sm text-gray-500 mt-1">
             Plataforma de gestão de projetos com Kanban, EAP, atas, custos e documentos.
           </p>

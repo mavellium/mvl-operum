@@ -162,6 +162,14 @@ export default function SidebarLayout({
             </button>
           </Tooltip>
         </div>
+        {process.env.NEXT_PUBLIC_APP_VERSION && (
+          <Link
+            href="/sobre"
+            className="block mt-2 text-center text-[10px] text-gray-400 hover:text-gray-600 transition-colors"
+          >
+            Operum v{process.env.NEXT_PUBLIC_APP_VERSION}
+          </Link>
+        )}
       </div>
       </div>
     </aside>

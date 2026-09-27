@@ -58,6 +58,13 @@ services:
       - "traefik.http.routers.mcp-prod.tls.certresolver=myresolver"
       - "traefik.http.routers.mcp-prod.service=mcp-server-${COMPOSE_PROJECT_NAME}"
       - "traefik.http.routers.mcp-prod.middlewares=secure-headers@file"
+      # TODO: remover este router quando o registro DNS de mcp.operum.adm.br existir.
+      # Fallback temporário: expõe o MCP em api.operum.adm.br/mcp
+      - "traefik.http.routers.mcp-prod-api.rule=Host(`api.operum.adm.br`) && Path(`/mcp`)"
+      - "traefik.http.routers.mcp-prod-api.entrypoints=websecure"
+      - "traefik.http.routers.mcp-prod-api.tls.certresolver=myresolver"
+      - "traefik.http.routers.mcp-prod-api.service=mcp-server-${COMPOSE_PROJECT_NAME}"
+      - "traefik.http.routers.mcp-prod-api.middlewares=secure-headers@file"
 
   auth-service:
     image: ghcr.io/${GHCR_OWNER}/auth-service:prod

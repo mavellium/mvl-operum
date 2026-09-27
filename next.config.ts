@@ -1,6 +1,10 @@
 import type { NextConfig } from "next";
+import { readFileSync } from "node:fs";
 
 const isDev = process.env.NODE_ENV === 'development'
+
+// Versão exibida na UI (sidebar e /sobre); fonte única: package.json.
+const APP_VERSION: string = JSON.parse(readFileSync(`${process.cwd()}/package.json`, 'utf8')).version
 
 const MINIO_PUBLIC = process.env.MINIO_PUBLIC_URL ?? 'http://localhost:9000'
 
@@ -18,6 +22,8 @@ const CSP = [
 ].join("; ");
 
 const nextConfig: NextConfig = {
+  env: { NEXT_PUBLIC_APP_VERSION: APP_VERSION },
+
   // TypeScript is checked separately via `tsc --noEmit` (Next.js worker OOMs on this machine).
   typescript: { ignoreBuildErrors: true },
 
