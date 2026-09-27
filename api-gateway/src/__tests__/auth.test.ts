@@ -11,7 +11,7 @@ vi.mock('ioredis', () => ({
   }),
 }))
 
-import { authMiddleware } from '../middleware/auth'
+import { authMiddleware, isPatAllowed } from '../middleware/auth'
 
 function makeReq(overrides: Partial<Request> = {}): Request {
   return {
@@ -215,5 +215,70 @@ describe('authMiddleware — Personal Access Tokens', () => {
     expect(req.headers['x-tenant-id']).toBeUndefined()
     expect(req.headers['x-user-role']).toBeUndefined()
     expect(next).toHaveBeenCalledTimes(1)
+  })
+})
+
+describe('isPatAllowed — allowlist de /auth para PAT', () => {
+  it('libera as leituras de identidade usadas pelo MCP', () => {
+    expect(isPatAllowed('GET', '/auth/me')).toBe(true)
+    expect(isPatAllowed('GET', '/auth/my-tenants')).toBe(true)
+    expect(isPatAllowed('GET', '/auth/all-users')).toBe(true)
+  })
+
+  it('bloqueia rotas de sessão/conta, inclusive com variações de path', () => {
+    for (const [method, path] of [
+      ['POST', '/auth/switch-tenant'],
+      ['POST', '/auth/switch-tenant/'],
+      ['POST', '//auth//switch-tenant'],
+      ['POST', '/AUTH/Switch-Tenant'],
+      ['POST', '/auth/switch%2Dtenant'],
+      ['POST', '/auth/join-tenant'],
+      ['POST', '/auth/logout'],
+      ['POST', '/auth/password/change'],
+      ['PATCH', '/auth/me'],
+      ['POST', '/auth/api-tokens'],
+      ['PATCH', '/auth/admin/users/u1/role'],
+      ['GET', '/auth/users'],
+      ['GET', '/auth'],
+    ]) {
+      expect(isPatAllowed(method, path), `${method} ${path}`).toBe(false)
+    }
+  })
+
+  it('não interfere nas rotas de domínio', () => {
+    expect(isPatAllowed('POST', '/cards')).toBe(true)
+    expect(isPatAllowed('GET', '/projects/p1')).toBe(true)
+    expect(isPatAllowed('GET', '/authors')).toBe(true)
+  })
+})
+
+describe('authMiddleware — PAT em rota de sessão', () => {
+  const middleware = authMiddleware()
+
+  beforeEach(() => {
+    vi.clearAllMocks()
+    vi.unstubAllGlobals()
+    process.env.INTERNAL_API_KEY = 'internal-key'
+    process.env.AUTH_SERVICE_URL = 'http://auth-service:4001'
+    mockRedis.get.mockReset()
+    mockRedis.set.mockReset()
+  })
+
+  it('PAT com escopo write não consegue chamar /auth/switch-tenant (403)', async () => {
+    mockRedis.get.mockResolvedValue(null)
+    mockRedis.set.mockResolvedValue('OK')
+    vi.stubGlobal(
+      'fetch',
+      vi.fn().mockResolvedValue({ ok: true, json: async () => introspectResponse({ scopes: ['read', 'write'] }) }),
+    )
+
+    const req = makeReq({ path: '/auth/switch-tenant', method: 'POST', headers: { authorization: 'Bearer opr_pat_abc' } })
+    const res = makeRes()
+    const next = vi.fn()
+
+    await middleware(req, res, next)
+
+    expect(res.status).toHaveBeenCalledWith(403)
+    expect(next).not.toHaveBeenCalled()
   })
 })

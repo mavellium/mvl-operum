@@ -15,6 +15,7 @@ import { AuthService } from './auth.service'
 import { JwtService } from './jwt.service'
 import { Public } from '../decorators/public.decorator'
 import { AdminGuard } from '../guards/admin.guard'
+import { NoPatGuard } from '../guards/no-pat.guard'
 import { LoginSchema } from './dto/login.dto'
 import { RegisterSchema } from './dto/register.dto'
 import {
@@ -51,6 +52,7 @@ export class AuthController {
   }
 
   @Post('logout')
+  @UseGuards(NoPatGuard)
   @HttpCode(HttpStatus.NO_CONTENT)
   async logout(@Headers('authorization') authorization: string) {
     const token = authorization?.replace('Bearer ', '')
@@ -100,6 +102,7 @@ export class AuthController {
   }
 
   @Post('password/change')
+  @UseGuards(NoPatGuard)
   @HttpCode(HttpStatus.NO_CONTENT)
   async changePassword(
     @Headers('x-user-id') userId: string,
@@ -111,6 +114,7 @@ export class AuthController {
   }
 
   @Patch('me')
+  @UseGuards(NoPatGuard)
   async updateProfile(
     @Headers('x-user-id') userId: string,
     @Body() body: Record<string, unknown>,
@@ -121,6 +125,7 @@ export class AuthController {
 
   // Endpoint for forced password change (forcePasswordChange flow)
   @Post('password/alterar')
+  @UseGuards(NoPatGuard)
   @HttpCode(HttpStatus.NO_CONTENT)
   async alterarSenha(
     @Headers('x-user-id') userId: string,
@@ -138,6 +143,7 @@ export class AuthController {
   }
 
   @Post('switch-tenant')
+  @UseGuards(NoPatGuard)
   @HttpCode(HttpStatus.OK)
   async switchTenant(
     @Headers('x-user-id') userId: string,
@@ -149,6 +155,7 @@ export class AuthController {
   }
 
   @Post('join-tenant')
+  @UseGuards(NoPatGuard)
   @HttpCode(HttpStatus.OK)
   async joinTenant(
     @Headers('x-user-id') userId: string,
@@ -161,7 +168,7 @@ export class AuthController {
 
   @Post('provision-tenant-admin')
   @HttpCode(HttpStatus.OK)
-  @UseGuards(AdminGuard)
+  @UseGuards(NoPatGuard, AdminGuard)
   async provisionTenantAdmin(
     @Headers('x-user-id') userId: string,
     @Body() body: { tenantId: string },
