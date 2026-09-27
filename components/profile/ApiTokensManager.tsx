@@ -169,6 +169,10 @@ export default function ApiTokensManager({ tokens }: { tokens: ApiTokenSummary[]
                   Copiar
                 </Button>
               </div>
+              <p className="text-xs text-gray-500 mt-2">
+                Participa de outros workspaces? Gere um token em cada um e adicione todos ao mesmo servidor com{' '}
+                <code className="bg-gray-100 rounded px-1">--header &quot;X-Operum-Tokens: opr_pat_...,opr_pat_...&quot;</code>.
+              </p>
             </div>
 
             <div className="flex justify-end">

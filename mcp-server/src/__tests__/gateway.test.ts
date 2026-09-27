@@ -41,6 +41,22 @@ describe('gateway', () => {
     })
   })
 
+  it('só marca publicMessage quando a mensagem vem de corpo JSON', async () => {
+    vi.stubGlobal('fetch', vi.fn().mockResolvedValue({ ok: false, status: 409, text: async () => JSON.stringify({ message: 'Projeto com esse nome já existe' }) }))
+    await expect(gateway('opr_pat_abc').post('/projects', {})).rejects.toMatchObject({ status: 409, publicMessage: 'Projeto com esse nome já existe' })
+
+    vi.stubGlobal('fetch', vi.fn().mockResolvedValue({ ok: false, status: 502, text: async () => '<html>Bad Gateway nginx</html>' }))
+    const err = await gateway('opr_pat_abc').get('/projects').catch(e => e)
+    expect(err.status).toBe(502)
+    expect(err.publicMessage).toBeUndefined()
+  })
+
+  it('limita o tamanho da publicMessage', async () => {
+    vi.stubGlobal('fetch', vi.fn().mockResolvedValue({ ok: false, status: 400, text: async () => JSON.stringify({ message: 'x'.repeat(5000) }) }))
+    const err = await gateway('opr_pat_abc').get('/projects').catch(e => e)
+    expect(err.publicMessage).toHaveLength(300)
+  })
+
   it('retorna undefined para 204 No Content', async () => {
     const fetchMock = vi.fn().mockResolvedValue({ ok: true, status: 204 })
     vi.stubGlobal('fetch', fetchMock)

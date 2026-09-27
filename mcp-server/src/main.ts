@@ -2,21 +2,21 @@ import 'dotenv/config'
 import express from 'express'
 import { StreamableHTTPServerTransport } from '@modelcontextprotocol/sdk/server/streamableHttp.js'
 import { buildServer } from './server.js'
+import { parseTokens, TenantRegistry } from './tenants.js'
 
 const app = express()
 app.use(express.json({ limit: '1mb' }))
 
-const PAT_PREFIX = 'opr_pat_'
-
 app.post('/mcp', async (req, res) => {
-  const auth = req.headers.authorization ?? ''
-  const token = auth.startsWith('Bearer ') ? auth.slice(7) : ''
-  if (!token.startsWith(PAT_PREFIX)) {
+  // Authorization: Bearer <pat> = tenant padrão; X-Operum-Tokens: <pat>,<pat> = demais tenants.
+  // A validação real de cada token acontece no api-gateway, a cada chamada.
+  const tokens = parseTokens(req.headers.authorization, req.headers['x-operum-tokens'])
+  if (!tokens) {
     res.status(401).set('WWW-Authenticate', 'Bearer realm="operum"').end()
     return
   }
 
-  const server = buildServer(token)
+  const server = buildServer(new TenantRegistry(tokens))
   const transport = new StreamableHTTPServerTransport({ sessionIdGenerator: undefined })
   res.on('close', () => {
     transport.close()
