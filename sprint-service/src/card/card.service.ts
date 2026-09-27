@@ -1,5 +1,15 @@
-import { Injectable, NotFoundException } from '@nestjs/common'
+import { BadRequestException, Injectable, NotFoundException } from '@nestjs/common'
 import { prisma } from '../prisma'
+import {
+  assertCard,
+  assertColumn,
+  assertProject,
+  assertSprint,
+  assertTag,
+  assertUserInTenant,
+  cardInTenant,
+  PUBLIC_USER_SELECT,
+} from '../common/tenant-scope'
 import { z } from 'zod'
 
 export const CreateCardSchema = z.object({
@@ -37,32 +47,35 @@ export type UpdateCardDto = z.infer<typeof UpdateCardSchema>
 
 @Injectable()
 export class CardService {
-  async listBacklog(projectId: string) {
+  async listBacklog(tenantId: string, projectId: string) {
+    await assertProject(tenantId, projectId)
     return prisma.card.findMany({
       where: { projectId, sprintId: null, deletedAt: null },
       include: {
         tags: { include: { tag: true } },
-        responsibles: { include: { user: true } },
+        responsibles: { include: { user: { select: PUBLIC_USER_SELECT } } },
         attachments: { where: { deletedAt: null } },
       },
       orderBy: { position: 'asc' },
     })
   }
 
-  async listBySprint(sprintId: string) {
+  async listBySprint(tenantId: string, sprintId: string) {
+    await assertSprint(tenantId, sprintId)
     return prisma.card.findMany({
       where: { sprintId, deletedAt: null },
       include: {
         tags: { include: { tag: true } },
-        responsibles: { include: { user: true } },
+        responsibles: { include: { user: { select: PUBLIC_USER_SELECT } } },
         attachments: { where: { deletedAt: null } },
       },
       orderBy: [{ sprintColumnId: 'asc' }, { position: 'asc' }],
     })
   }
 
-  async search(q: string, opts?: { sprintId?: string; projectId?: string; responsibleUserId?: string }) {
+  async search(tenantId: string, q: string, opts?: { sprintId?: string; projectId?: string; responsibleUserId?: string }) {
     const where: {
+      AND: ReturnType<typeof cardInTenant>[]
       deletedAt: null
       sprintId?: string
       projectId?: string
@@ -72,6 +85,7 @@ export class CardService {
         | { description: { contains: string; mode: 'insensitive' } }
       )[]
     } = {
+      AND: [cardInTenant(tenantId)],
       deletedAt: null,
       OR: [
         { title: { contains: q, mode: 'insensitive' } },
@@ -86,7 +100,7 @@ export class CardService {
       where,
       include: {
         tags: { include: { tag: true } },
-        responsibles: { include: { user: true } },
+        responsibles: { include: { user: { select: PUBLIC_USER_SELECT } } },
         attachments: { where: { deletedAt: null } },
         sprint: { select: { id: true, name: true } },
         sprintColumn: { select: { id: true, title: true } },
@@ -96,12 +110,12 @@ export class CardService {
     })
   }
 
-  async findOne(id: string) {
+  async findOne(tenantId: string, id: string) {
     const card = await prisma.card.findFirst({
-      where: { id, deletedAt: null },
+      where: { id, deletedAt: null, ...cardInTenant(tenantId) },
       include: {
         tags: { include: { tag: true } },
-        responsibles: { include: { user: true } },
+        responsibles: { include: { user: { select: PUBLIC_USER_SELECT } } },
         attachments: { where: { deletedAt: null } },
         comments: { where: { deletedAt: null }, orderBy: { createdAt: 'asc' }, include: { user: { select: { id: true, name: true } } } },
         timeEntries: { where: { deletedAt: null } },
@@ -111,7 +125,23 @@ export class CardService {
     return card
   }
 
-  async create(dto: CreateCardDto) {
+  /** Valida que projeto, sprint e coluna referenciados pertencem ao tenant e são coerentes entre si. */
+  private async assertPlacement(
+    tenantId: string,
+    placement: { projectId?: string | null; sprintId?: string | null; sprintColumnId?: string | null },
+  ) {
+    if (placement.projectId) await assertProject(tenantId, placement.projectId)
+    if (placement.sprintId) await assertSprint(tenantId, placement.sprintId)
+    if (placement.sprintColumnId) {
+      if (!placement.sprintId) throw new BadRequestException('sprintColumnId exige sprintId')
+      await assertColumn(tenantId, placement.sprintId, placement.sprintColumnId)
+    }
+  }
+
+  async create(tenantId: string, dto: CreateCardDto) {
+    // Card sem projeto nem sprint ficaria fora de qualquer tenant.
+    if (!dto.projectId && !dto.sprintId) throw new BadRequestException('projectId ou sprintId é obrigatório')
+    await this.assertPlacement(tenantId, dto)
     return prisma.card.create({
       data: {
         ...dto,
@@ -121,11 +151,28 @@ export class CardService {
     })
   }
 
-  async update(id: string, dto: UpdateCardDto) {
+  async update(tenantId: string, id: string, dto: UpdateCardDto) {
     const { reason, userId, ...cardData } = dto
+    const current = await this.findOne(tenantId, id)
+
+    const touchesPlacement =
+      cardData.projectId !== undefined || cardData.sprintId !== undefined || cardData.sprintColumnId !== undefined
+    if (touchesPlacement) {
+      await this.assertPlacement(tenantId, {
+        projectId: cardData.projectId !== undefined ? cardData.projectId : current.projectId,
+        sprintId: cardData.sprintId !== undefined ? cardData.sprintId : current.sprintId,
+        sprintColumnId: cardData.sprintColumnId !== undefined ? cardData.sprintColumnId : current.sprintColumnId,
+      })
+    }
+
+    // Card criado dentro de uma sprint pode não ter projectId; ao voltar para o
+    // backlog herda o projeto da sprint, senão sairia do escopo de qualquer tenant.
+    if (cardData.sprintId === null && !current.projectId && current.sprintId && cardData.projectId === undefined) {
+      const sprint = await prisma.sprint.findUnique({ where: { id: current.sprintId }, select: { projectId: true } })
+      if (sprint?.projectId) cardData.projectId = sprint.projectId
+    }
 
     if (cardData.sprintColumnId !== undefined) {
-      const current = await this.findOne(id)
       const currentColumnId = (current as { sprintColumnId?: string | null }).sprintColumnId
       if (cardData.sprintColumnId !== currentColumnId) {
         const [fromCol, toCol] = await Promise.all([
@@ -156,20 +203,22 @@ export class CardService {
     })
   }
 
-  async listMovements(cardId: string) {
+  async listMovements(tenantId: string, cardId: string) {
+    await assertCard(tenantId, cardId)
     return prisma.cardMovement.findMany({
       where: { cardId },
       orderBy: { movedAt: 'asc' },
     })
   }
 
-  async remove(id: string) {
-    await this.findOne(id)
+  async remove(tenantId: string, id: string) {
+    await assertCard(tenantId, id)
     await prisma.card.update({ where: { id }, data: { deletedAt: new Date() } })
   }
 
-  async addTag(cardId: string, tagId: string) {
-    await this.findOne(cardId)
+  async addTag(tenantId: string, cardId: string, tagId: string) {
+    await assertCard(tenantId, cardId)
+    await assertTag(tenantId, tagId)
     return prisma.cardTag.upsert({
       where: { cardId_tagId: { cardId, tagId } },
       create: { cardId, tagId },
@@ -177,12 +226,14 @@ export class CardService {
     })
   }
 
-  async removeTag(cardId: string, tagId: string) {
+  async removeTag(tenantId: string, cardId: string, tagId: string) {
+    await assertCard(tenantId, cardId)
     await prisma.cardTag.delete({ where: { cardId_tagId: { cardId, tagId } } })
   }
 
-  async addResponsible(cardId: string, userId: string) {
-    await this.findOne(cardId)
+  async addResponsible(tenantId: string, cardId: string, userId: string) {
+    await assertCard(tenantId, cardId)
+    await assertUserInTenant(tenantId, userId)
     return prisma.cardResponsible.upsert({
       where: { cardId_userId: { cardId, userId } },
       create: { cardId, userId },
@@ -190,7 +241,8 @@ export class CardService {
     })
   }
 
-  async removeResponsible(cardId: string, userId: string) {
+  async removeResponsible(tenantId: string, cardId: string, userId: string) {
+    await assertCard(tenantId, cardId)
     await prisma.cardResponsible.delete({ where: { cardId_userId: { cardId, userId } } })
   }
 
@@ -206,7 +258,8 @@ export class CardService {
     })
   }
 
-  async deleteTag(tagId: string) {
+  async deleteTag(tenantId: string, tagId: string) {
+    await assertTag(tenantId, tagId)
     await prisma.tag.delete({ where: { id: tagId } })
   }
 }

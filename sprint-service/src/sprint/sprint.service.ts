@@ -1,5 +1,6 @@
-import { Injectable, NotFoundException } from '@nestjs/common'
+import { BadRequestException, Injectable, NotFoundException } from '@nestjs/common'
 import { prisma } from '../prisma'
+import { assertColumn, assertProject, PUBLIC_USER_SELECT, sprintInTenant } from '../common/tenant-scope'
 import { z } from 'zod'
 
 export const CreateSprintSchema = z.object({
@@ -30,17 +31,17 @@ export const DEFAULT_SPRINT_COLUMNS = ['A Fazer', 'Em andamento', 'Em teste', 'C
 
 @Injectable()
 export class SprintService {
-  async list(projectId?: string) {
+  async list(tenantId: string, projectId?: string) {
     return prisma.sprint.findMany({
-      where: { deletedAt: null, ...(projectId ? { projectId } : {}) },
+      where: { deletedAt: null, ...sprintInTenant(tenantId), ...(projectId ? { projectId } : {}) },
       include: { sprintColumns: { orderBy: { position: 'asc' } } },
       orderBy: { createdAt: 'desc' },
     })
   }
 
-  async findOne(id: string) {
+  async findOne(tenantId: string, id: string) {
     const sprint = await prisma.sprint.findFirst({
-      where: { id, deletedAt: null },
+      where: { id, deletedAt: null, ...sprintInTenant(tenantId) },
       include: {
         sprintColumns: { orderBy: { position: 'asc' } },
         cards: { where: { deletedAt: null }, orderBy: { position: 'asc' } },
@@ -50,7 +51,10 @@ export class SprintService {
     return sprint
   }
 
-  async create(dto: CreateSprintDto) {
+  async create(tenantId: string, dto: CreateSprintDto) {
+    // Sprint sem projeto ficaria fora de qualquer tenant — projectId é obrigatório.
+    if (!dto.projectId) throw new BadRequestException('projectId é obrigatório')
+    await assertProject(tenantId, dto.projectId)
     const sprint = await prisma.sprint.create({
       data: {
         ...dto,
@@ -67,8 +71,9 @@ export class SprintService {
     return sprint
   }
 
-  async update(id: string, dto: UpdateSprintDto) {
-    await this.findOne(id)
+  async update(tenantId: string, id: string, dto: UpdateSprintDto) {
+    await this.findOne(tenantId, id)
+    if (dto.projectId) await assertProject(tenantId, dto.projectId)
     return prisma.sprint.update({
       where: { id },
       data: {
@@ -79,8 +84,8 @@ export class SprintService {
     })
   }
 
-  async remove(id: string) {
-    await this.findOne(id)
+  async remove(tenantId: string, id: string) {
+    await this.findOne(tenantId, id)
     // Devolver todos os cards ao backlog ao deletar a sprint
     await prisma.card.updateMany({
       where: { sprintId: id, deletedAt: null },
@@ -89,8 +94,8 @@ export class SprintService {
     await prisma.sprint.update({ where: { id }, data: { deletedAt: new Date() } })
   }
 
-  async listColumns(sprintId: string) {
-    await this.findOne(sprintId)
+  async listColumns(tenantId: string, sprintId: string) {
+    await this.findOne(tenantId, sprintId)
     return prisma.sprintColumn.findMany({
       where: { sprintId, deletedAt: null },
       orderBy: { position: 'asc' },
@@ -100,7 +105,7 @@ export class SprintService {
           orderBy: { sprintPosition: 'asc' },
           include: {
             tags: { include: { tag: true } },
-            responsibles: { include: { user: true } },
+            responsibles: { include: { user: { select: PUBLIC_USER_SELECT } } },
             attachments: { where: { deletedAt: null } },
             timeEntries: { where: { deletedAt: null } },
           },
@@ -109,16 +114,18 @@ export class SprintService {
     })
   }
 
-  async createColumn(sprintId: string, dto: CreateColumnDto) {
-    await this.findOne(sprintId)
+  async createColumn(tenantId: string, sprintId: string, dto: CreateColumnDto) {
+    await this.findOne(tenantId, sprintId)
     return prisma.sprintColumn.create({ data: { sprintId, ...dto } })
   }
 
-  async updateColumn(columnId: string, dto: Partial<CreateColumnDto>) {
+  async updateColumn(tenantId: string, sprintId: string, columnId: string, dto: Partial<CreateColumnDto>) {
+    await assertColumn(tenantId, sprintId, columnId)
     return prisma.sprintColumn.update({ where: { id: columnId }, data: dto })
   }
 
-  async deleteColumn(columnId: string) {
+  async deleteColumn(tenantId: string, sprintId: string, columnId: string) {
+    await assertColumn(tenantId, sprintId, columnId)
     await prisma.sprintColumn.update({ where: { id: columnId }, data: { deletedAt: new Date() } })
   }
 }
