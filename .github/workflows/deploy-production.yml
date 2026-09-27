@@ -283,6 +283,10 @@ jobs:
   deploy:
     name: Deploy
     needs: build
+    # O `success()` implícito exige sucesso em toda a cadeia de `needs`, inclusive
+    # no job `confirm`, que fica `skipped` em push — e o deploy era pulado sempre.
+    # O build já garante confirm/security-scan/test; basta exigir o build.
+    if: always() && needs.build.result == 'success'
     runs-on: ubuntu-latest
     environment: production
     # Nunca dois deploys ao mesmo tempo; um novo espera o anterior terminar.
