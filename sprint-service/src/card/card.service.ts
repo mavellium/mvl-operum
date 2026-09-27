@@ -54,7 +54,6 @@ export class CardService {
       include: {
         tags: { include: { tag: true } },
         responsibles: { include: { user: { select: PUBLIC_USER_SELECT } } },
-        attachments: { where: { deletedAt: null } },
       },
       orderBy: { position: 'asc' },
     })
@@ -67,7 +66,6 @@ export class CardService {
       include: {
         tags: { include: { tag: true } },
         responsibles: { include: { user: { select: PUBLIC_USER_SELECT } } },
-        attachments: { where: { deletedAt: null } },
       },
       orderBy: [{ sprintColumnId: 'asc' }, { position: 'asc' }],
     })
@@ -101,7 +99,6 @@ export class CardService {
       include: {
         tags: { include: { tag: true } },
         responsibles: { include: { user: { select: PUBLIC_USER_SELECT } } },
-        attachments: { where: { deletedAt: null } },
         sprint: { select: { id: true, name: true } },
         sprintColumn: { select: { id: true, title: true } },
       },
@@ -116,7 +113,6 @@ export class CardService {
       include: {
         tags: { include: { tag: true } },
         responsibles: { include: { user: { select: PUBLIC_USER_SELECT } } },
-        attachments: { where: { deletedAt: null } },
         comments: { where: { deletedAt: null }, orderBy: { createdAt: 'asc' }, include: { user: { select: { id: true, name: true } } } },
         timeEntries: { where: { deletedAt: null } },
       },

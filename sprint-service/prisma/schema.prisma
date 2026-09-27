@@ -114,7 +114,6 @@ model Card {
   updatedAt      DateTime      @updatedAt
 
   tags         CardTag[]
-  attachments  Attachment[]
   timeEntries  TimeEntry[]
   responsibles CardResponsible[]
   comments     Comment[]
@@ -185,20 +184,7 @@ model Comment {
   updatedAt DateTime    @updatedAt
 }
 
-// ── Attachment ────────────────────────────────────────────
-
-model Attachment {
-  id         String    @id @default(cuid())
-  cardId     String
-  card       Card      @relation(fields: [cardId], references: [id], onDelete: Cascade)
-  fileName   String
-  fileType   String
-  filePath   String
-  fileSize   Int
-  isCover    Boolean   @default(false)
-  deletedAt  DateTime?
-  uploadedAt DateTime  @default(now())
-}
+// Anexos: tabela files."Attachment", do file-service (não mapeada aqui).
 
 // ── Time Entries ──────────────────────────────────────────
 
