@@ -1,5 +1,7 @@
 'use server'
 
+import { SESSION_COOKIE_OPTIONS } from '@/lib/sessionCookie'
+import { LAST_SEEN_COOKIE, destinoInterno } from '@/lib/sessionIdle'
 import { cookies, headers } from 'next/headers'
 import { redirect } from 'next/navigation'
 import Redis from 'ioredis'
@@ -68,13 +70,7 @@ export async function signupAction(prevState: FormState, formData: FormData): Pr
     const expiresAt = new Date(Date.now() + SESSION_DURATION_MS)
     const token = await encrypt({ userId: user.id, role: user.role, tenantId: user.tenantId, tokenVersion: user.tokenVersion, expiresAt })
     const cookieStore = await cookies()
-    cookieStore.set('session', token, {
-      httpOnly: true,
-      secure: process.env.NODE_ENV === 'production',
-      sameSite: 'strict',
-      maxAge: 60 * 60 * 24 * 7, // 7 dias — coincidindo com o TTL do JWT
-      path: '/',
-    })
+    cookieStore.set('session', token, SESSION_COOKIE_OPTIONS)
   } catch (err) {
     return { message: err instanceof Error ? err.message : 'Erro ao criar conta. Tente novamente.' }
   }
@@ -103,13 +99,7 @@ export async function loginAction(prevState: FormState, formData: FormData): Pro
     const result = await authServiceLogin(email, password, subdomain)
     forcePasswordChange = result.forcePasswordChange
     const cookieStore = await cookies()
-    cookieStore.set('session', result.token, {
-      httpOnly: true,
-      secure: process.env.NODE_ENV === 'production',
-      sameSite: 'strict',
-      maxAge: 60 * 60 * 24 * 7, // 7 dias — coincidindo com o TTL do JWT
-      path: '/',
-    })
+    cookieStore.set('session', result.token, SESSION_COOKIE_OPTIONS)
     const { role, id: userId } = result.user
     if (role !== 'admin') {
       const projects = await projectsApi.getUserProjects(userId).catch(() => []) as unknown[]
@@ -123,7 +113,31 @@ export async function loginAction(prevState: FormState, formData: FormData): Pro
   }
 
   if (forcePasswordChange) redirect('/alterar-senha')
-  redirect(projectRedirect)
+  // Volta para onde o usuário estava (ex.: sessão expirada por inatividade),
+  // só para caminhos internos e se ele tiver algum projeto.
+  const from = destinoInterno(formData.get('from') as string | null)
+  redirect(from && projectRedirect !== '/no-project' ? from : projectRedirect)
+}
+
+/**
+ * Chamada pelo IdleLogout enquanto há atividade na tela sem requisições
+ * (ex.: lendo um card). Não faz nada: passar pelo proxy já renova o last_seen.
+ */
+export async function touchSessionAction() {
+  return { ok: true }
+}
+
+/** Sessão expirada por inatividade no navegador: encerra e volta ao login. */
+export async function expireSessionAction(from: string) {
+  const cookieStore = await cookies()
+  const token = cookieStore.get('session')?.value
+  if (token) await authServiceLogout(token).catch(() => {})
+  cookieStore.delete('session')
+  cookieStore.delete(LAST_SEEN_COOKIE)
+  const params = new URLSearchParams({ motivo: 'inatividade' })
+  const destino = destinoInterno(from)
+  if (destino) params.set('from', destino)
+  redirect(`/login?${params.toString()}`)
 }
 
 export async function logoutAction() {
@@ -131,6 +145,7 @@ export async function logoutAction() {
   const token = cookieStore.get('session')?.value
   if (token) await authServiceLogout(token)
   cookieStore.delete('session')
+  cookieStore.delete(LAST_SEEN_COOKIE)
   redirect('/login')
 }
 
@@ -249,13 +264,7 @@ export async function switchTenantAction(targetTenantId: string) {
   })
 
   const cookieStore = await cookies()
-  cookieStore.set('session', result.token, {
-    httpOnly: true,
-    secure: process.env.NODE_ENV === 'production',
-    sameSite: 'strict',
-    maxAge: 60 * 60 * 24 * 7, // 7 dias — coincidindo com o TTL do JWT
-    path: '/',
-  })
+  cookieStore.set('session', result.token, SESSION_COOKIE_OPTIONS)
 
   revalidatePath('/', 'layout')
   redirect('/projetos')

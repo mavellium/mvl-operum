@@ -72,7 +72,14 @@ describe('signupAction', () => {
     expect(cookieStore.set).toHaveBeenCalledWith(
       'session',
       'jwt-token',
-      expect.objectContaining({ httpOnly: true, maxAge: 60 * 60 * 24 * 7 }),
+      expect.objectContaining({ httpOnly: true }),
+    )
+    // Cookie de sessão do navegador: some ao fechar o navegador (inatividade no proxy).
+    expect(cookieStore.set.mock.calls[0][2]).not.toHaveProperty('maxAge')
+    expect(cookieStore.set).toHaveBeenCalledWith(
+      'session',
+      expect.any(String),
+      expect.objectContaining({ httpOnly: true }),
     )
   })
 })
@@ -98,8 +105,20 @@ describe('loginAction', () => {
     expect(cookieStore.set).toHaveBeenCalledWith(
       'session',
       'jwt-token',
-      expect.objectContaining({ httpOnly: true, sameSite: 'strict', maxAge: 60 * 60 * 24 * 7 }),
+      expect.objectContaining({ httpOnly: true, sameSite: 'strict' }),
     )
+    expect(cookieStore.set.mock.calls[0][2]).not.toHaveProperty('maxAge')
+  })
+
+  it('volta para a página de origem (from) depois do login; ignora destino externo', async () => {
+    mockLogin.mockResolvedValue({ token: 'jwt-token', forcePasswordChange: false, user: { role: 'admin', id: 'u1' } })
+    mockCookies.mockResolvedValue({ set: vi.fn(), delete: vi.fn(), get: vi.fn() })
+
+    await loginAction(undefined, makeFormData({ email: 'a@b.com', password: 'Test@1234', from: '/projetos/p1/sprints/s1' }))
+    expect(mockRedirect).toHaveBeenLastCalledWith('/projetos/p1/sprints/s1')
+
+    await loginAction(undefined, makeFormData({ email: 'a@b.com', password: 'Test@1234', from: '//evil.com' }))
+    expect(mockRedirect).toHaveBeenLastCalledWith('/projetos')
   })
 
   it('extrai o subdomain do host e o repassa a authServiceLogin', async () => {

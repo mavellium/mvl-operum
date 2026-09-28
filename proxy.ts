@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server'
 import type { NextRequest } from 'next/server'
 import { jwtVerify, importSPKI } from 'jose'
+import { LAST_SEEN_COOKIE, idleMs, isIdleExpired, isPassiveRequest } from '@/lib/sessionIdle'
 
 function normalizePem(raw: string): string {
   return raw.replace(/\\n/g, '\n')
@@ -53,7 +54,30 @@ export async function proxy(request: NextRequest) {
     return response
   }
 
-  return NextResponse.next()
+  // Sessão por inatividade: sem atividade real por mais que o limite, o
+  // usuário refaz o login (e volta para a mesma página depois).
+  const now = Date.now()
+  if (isIdleExpired(request.cookies.get(LAST_SEEN_COOKIE)?.value, now, idleMs())) {
+    const loginUrl = new URL('/login', request.url)
+    loginUrl.searchParams.set('from', request.nextUrl.pathname)
+    loginUrl.searchParams.set('motivo', 'inatividade')
+    const response = NextResponse.redirect(loginUrl)
+    response.cookies.delete('session')
+    response.cookies.delete(LAST_SEEN_COOKIE)
+    return response
+  }
+
+  const response = NextResponse.next()
+  // Polling e prefetch não renovam a atividade, senão a sessão nunca expiraria.
+  if (!isPassiveRequest(request.nextUrl.pathname, request.headers)) {
+    response.cookies.set(LAST_SEEN_COOKIE, String(now), {
+      httpOnly: true,
+      secure: process.env.NODE_ENV === 'production',
+      sameSite: 'strict',
+      path: '/',
+    })
+  }
+  return response
 }
 
 export const config = {
