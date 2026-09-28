@@ -22,7 +22,7 @@ const ADMIN_ITEMS = [
   { href: '/arquivos', label: 'Arquivos', Icon: Paperclip },
   { href: '/admin/cadastros', label: 'Departamentos', Icon: Building2 },
   { href: '/admin/cadastros', label: 'Funções', Icon: Briefcase },
-  { href: '/admin/tenants', label: 'Tenants', Icon: Landmark },
+  { href: '/admin/tenants', label: 'Instituições', Icon: Landmark },
 ]
 
 const FALLBACK_TITLES: Record<string, string> = {

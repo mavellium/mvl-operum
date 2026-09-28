@@ -568,7 +568,7 @@ function AdicionarElaborador({
     <div className="rounded-xl border border-gray-200 bg-gray-50 p-4">
       <div className="mb-2 text-xs font-bold text-gray-700 uppercase tracking-widest">Adicionar elaborador (membro do projeto)</div>
       {disponiveis.length === 0 ? (
-        <p className="text-xs text-gray-500">Todos os usuários do tenant já são membros deste projeto.</p>
+        <p className="text-xs text-gray-500">Todos os usuários da instituição já são membros deste projeto.</p>
       ) : (
         <div className="flex flex-wrap items-end gap-2">
           <select

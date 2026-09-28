@@ -63,7 +63,7 @@ export default function TenantSwitcher() {
         onClick={() => setOpen(v => !v)}
         disabled={isPending}
         className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-sm font-medium text-gray-700 bg-gray-100 hover:bg-gray-200 transition-colors disabled:opacity-60 focus:outline-none focus:ring-2 focus:ring-blue-100"
-        title="Trocar de workspace"
+        title="Trocar de instituição"
       >
         <span className="max-w-[120px] truncate">{current?.tenantName ?? '...'}</span>
         {tenants.length > 1 && (
@@ -86,7 +86,7 @@ export default function TenantSwitcher() {
           className="fixed z-[60] bg-white rounded-xl shadow-lg border border-gray-100 py-1 max-h-80 overflow-y-auto"
           style={{ left: dropRect.left, bottom: dropRect.bottom, width: dropRect.width }}
         >
-          <p className="px-3 pt-1 pb-1.5 text-xs font-semibold text-gray-400 uppercase tracking-wide">Trocar de workspace</p>
+          <p className="px-3 pt-1 pb-1.5 text-xs font-semibold text-gray-400 uppercase tracking-wide">Trocar de instituição</p>
           {tenants.map(t => (
             <button
               key={t.tenantId}

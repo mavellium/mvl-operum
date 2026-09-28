@@ -114,7 +114,7 @@ export default async function PerfilPage() {
         </div>
 
         <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-6">
-          <h2 className="text-base font-semibold text-gray-900 mb-4">Meus Workspaces</h2>
+          <h2 className="text-base font-semibold text-gray-900 mb-4">Minhas instituições</h2>
           <UserTenantsList />
         </div>
 

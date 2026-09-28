@@ -122,7 +122,7 @@ export async function createTenantAction(data: { name: string; subdomain: string
     return { tenant }
   } catch (err) {
     if (err instanceof ConflictError) return { error: 'Subdomínio já está em uso' }
-    return { error: err instanceof Error ? err.message : 'Erro ao criar workspace' }
+    return { error: err instanceof Error ? err.message : 'Erro ao criar instituição' }
   }
 }
 
@@ -133,7 +133,7 @@ export async function joinAsTenantAdminAction(tenantId: string) {
     revalidatePath('/admin/tenants')
     return {}
   } catch (err) {
-    return { error: err instanceof Error ? err.message : 'Erro ao entrar no workspace' }
+    return { error: err instanceof Error ? err.message : 'Erro ao entrar na instituição' }
   }
 }
 
@@ -170,6 +170,6 @@ export async function joinTenantAction(tenantId: string, password: string) {
     revalidatePath('/admin/tenants')
     return {}
   } catch (err) {
-    return { error: err instanceof Error ? err.message : 'Erro ao entrar no workspace' }
+    return { error: err instanceof Error ? err.message : 'Erro ao entrar na instituição' }
   }
 }

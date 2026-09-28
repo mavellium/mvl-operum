@@ -50,7 +50,7 @@ export default function UserTenantsList() {
   }
 
   if (tenants.length === 0) {
-    return <p className="text-sm text-gray-500">Nenhum workspace encontrado.</p>
+    return <p className="text-sm text-gray-500">Nenhuma instituição encontrada.</p>
   }
 
   return (

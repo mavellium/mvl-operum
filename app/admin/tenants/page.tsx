@@ -8,7 +8,7 @@ import type { Metadata } from 'next'
 
 export const dynamic = 'force-dynamic'
 
-export const metadata: Metadata = { title: 'Workspaces' }
+export const metadata: Metadata = { title: 'Instituições' }
 
 export default async function AdminTenantsPage() {
   const { role, userId } = await verifySession()
@@ -39,7 +39,7 @@ export default async function AdminTenantsPage() {
               </svg>
             </Link>
             <div>
-              <h1 className="text-xl font-bold text-gray-900">Workspaces</h1>
+              <h1 className="text-xl font-bold text-gray-900">Instituições</h1>
               <p className="text-sm text-gray-500 mt-0.5">Gerencie as empresas e o isolamento de dados da plataforma</p>
             </div>
           </div>
