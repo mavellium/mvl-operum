@@ -51,6 +51,7 @@ Tarefas que pedem a mesma coisa foram **fundidas**. A tabela abaixo mostra quais
 | 2 | 2.5 | Usar 100% da tela · Scroll ao mover card · "Carregando…" infinito no backlog · Timer move para "Em andamento" (itens em teste) | média |
 | 2 | 2.6 | Prazo: filtros e ordenação (continuação do 1.7) | alta |
 | 2 | 2.7 | Zerar os erros de TypeScript (`tsc`) já existentes | média |
+| 2 | 2.8 | Página /arquivos lê `public.Attachment`, que não existe mais | alta |
 | 3 | 3.1 | Ranking dos Membros: função dos stakeholders não aparece | média |
 | 3 | 3.2 | Stakeholders: adicionar pela barra de pesquisa de forma mais fácil | média |
 | 3 | 3.3 | Menu: trocar o nome "Tenants" | baixa |
@@ -284,6 +285,32 @@ O `pnpm build` passa porque o Next não bloqueia nesses pontos, mas `npx tsc -p 
 1. Corrigir os 11 erros tipando na origem, sem `as any`. `BacklogCard` e `SprintCard` passam a compartilhar um tipo base em `types/kanban.ts`.
 2. `tsconfig.check.json` volta a excluir os microsserviços (cada um já tem o próprio `tsc`).
 3. Adicionar `npx tsc -p tsconfig.check.json --noEmit` ao CI, para o problema não voltar.
+
+### 2.8 Página /arquivos lê uma tabela que não existe mais ✅ (achado durante a 2.7)
+`app/arquivos/page.tsx` consulta `prisma.attachment`, ou seja, `public."Attachment"`. A migration `fix_attachment_schema` do file-service moveu essa tabela para `files."Attachment"`, e em produção só existe `files."Attachment"` (confirmado em 28/09/2026). A página deve estar falhando lá, pelo mesmo motivo do item 1.1.
+
+**Corrigido:**
+- a página busca os cards do tenant no Prisma do app (a tabela `Card` continua no `public`) e os anexos no file-service, pela rota `/files/by-cards`, em lotes de 100;
+- a consulta filtra pelo tenant da sessão (antes listava anexos de todos os tenants);
+- card do backlog, que não tem sprint, não quebra mais a página;
+- se o file-service falhar, a página mostra um aviso em vez de dar erro.
+
+**Pendente (baixo risco):** remover o modelo `Attachment` do `prisma/schema.prisma` do app, junto com o código legado que ainda o usa (`services/fileUploadService.ts` e `scripts/migrate-blobs.ts`). A remoção precisa de uma migration que não tente apagar uma tabela que não existe mais.
+
+## Status da Fase 2 (28/09/2026)
+
+| Item | Situação |
+|---|---|
+| 2.1 Minicard | Feito: prioridade sempre visível num selo, ao lado do prazo |
+| 2.2 Busca unificada | Feita: sprint atual → outras sprints → backlog → cards da pessoa → projetos → pessoas |
+| 2.3 Responsáveis | Revisado: a atualização sem recarregar e o avatar ao reabrir já estavam corrigidos (itens "Em teste") |
+| 2.4 Menu do admin na sprint | Corrigido: o dashboard da sprint ganhou rota dentro do projeto |
+| 2.5 Itens "Em teste" | Posição do card ao arrastar: **corrigida** (o sprint-service renumera a coluna). 100% da tela, "Carregando…" e timer: o código já estava corrigido. Scroll lateral ao arrastar: **não reproduzido** sem o app rodando |
+| 2.6 Prazo: filtros e ordenação | Feito, no popover "Filtros" (que antes não funcionava) |
+| 2.7 Erros de tsc | Zerados; `pnpm typecheck` roda no CI |
+| 2.8 /arquivos | Corrigida: os anexos vêm do file-service, com filtro de tenant. Falta remover o modelo legado |
+
+A Fase 2 não foi testada manualmente com o app rodando: o ambiente de desenvolvimento não teve acesso ao Docker.
 
 ---
 

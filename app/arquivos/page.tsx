@@ -2,6 +2,7 @@ import { verifySession } from '@/lib/dal'
 import { redirect } from 'next/navigation'
 import { getProjectsWhereManager } from '@/services/projectRoleService'
 import prisma from '@/lib/prisma'
+import { filesApi } from '@/lib/api-client'
 import ArquivosClient from '@/components/arquivos/ArquivosClient'
 import Link from 'next/link'
 import type { Metadata } from 'next'
@@ -9,6 +10,15 @@ import type { Metadata } from 'next'
 export const dynamic = 'force-dynamic'
 
 export const metadata: Metadata = { title: 'Arquivos' }
+
+/** Quantos ids de card vão em cada chamada a /files/by-cards (limite de URL). */
+const CARDS_POR_LOTE = 100
+
+function chunk<T>(items: T[], size: number): T[][] {
+  const out: T[][] = []
+  for (let i = 0; i < items.length; i += size) out.push(items.slice(i, i + size))
+  return out
+}
 
 function formatBytes(bytes: number) {
   if (bytes < 1024) return `${bytes} B`
@@ -23,48 +33,64 @@ export default async function ArquivosPage() {
     if (manages.length === 0) redirect('/projetos')
   }
 
-  const attachments = await prisma.attachment.findMany({
-    // Só anexos de cards do tenant da sessão (antes listava todos os tenants).
+  // Os anexos ficam no file-service (schema `files`); o app só conhece os
+  // cards. Antes a página lia public."Attachment", que não existe mais.
+  const cards = await prisma.card.findMany({
     where: {
       deletedAt: null,
-      card: { OR: [{ project: { tenantId } }, { sprint: { project: { tenantId } } }] },
+      OR: [{ project: { tenantId } }, { sprint: { project: { tenantId } } }],
     },
-    include: {
-      card: {
-        select: {
-          id: true,
-          title: true,
-          projectId: true,
-          sprint: { select: { id: true, name: true, projectId: true } },
-          responsibles: {
-            select: { user: { select: { id: true, name: true } } },
-            take: 1,
-          },
-        },
+    select: {
+      id: true,
+      title: true,
+      projectId: true,
+      sprint: { select: { id: true, name: true, projectId: true } },
+      responsibles: {
+        select: { user: { select: { id: true, name: true } } },
+        take: 1,
       },
     },
-    orderBy: { uploadedAt: 'desc' },
   })
+  const cardById = new Map(cards.map(c => [c.id, c]))
 
-  const data = attachments.map(a => ({
-    id: a.id,
-    fileName: a.fileName,
-    fileType: a.fileType,
-    fileSize: a.fileSize,
-    fileSizeFormatted: formatBytes(a.fileSize),
-    filePath: a.filePath,
-    isCover: a.isCover,
-    uploadedAt: a.uploadedAt.toISOString(),
-    card: {
-      id: a.card.id,
-      title: a.card.title,
-      // Card do backlog não tem sprint.
-      sprintId: a.card.sprint?.id ?? null,
-      sprintName: a.card.sprint?.name ?? null,
-      projectId: a.card.sprint?.projectId ?? a.card.projectId,
-    },
-    uploadedBy: a.card.responsibles[0]?.user?.name ?? null,
-  }))
+  const lotes = await Promise.all(
+    chunk(cards.map(c => c.id), CARDS_POR_LOTE).map(ids =>
+      filesApi.listByCards(ids)
+        .then(items => ({ ok: true, items }))
+        .catch(err => {
+          console.error('[arquivos] falha ao listar anexos no file-service', err)
+          return { ok: false, items: [] as Awaited<ReturnType<typeof filesApi.listByCards>> }
+        }),
+    ),
+  )
+  const falhaAoCarregar = lotes.some(l => !l.ok)
+
+  const data = lotes
+    .flatMap(l => l.items)
+    .filter(a => cardById.has(a.cardId))
+    .sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime())
+    .map(a => {
+      const card = cardById.get(a.cardId)!
+      return {
+        id: a.id,
+        fileName: a.fileName,
+        fileType: a.fileType,
+        fileSize: a.fileSize,
+        fileSizeFormatted: formatBytes(a.fileSize),
+        filePath: a.filePath,
+        isCover: a.isCover,
+        uploadedAt: new Date(a.createdAt).toISOString(),
+        card: {
+          id: card.id,
+          title: card.title,
+          // Card do backlog não tem sprint.
+          sprintId: card.sprint?.id ?? null,
+          sprintName: card.sprint?.name ?? null,
+          projectId: card.sprint?.projectId ?? card.projectId,
+        },
+        uploadedBy: card.responsibles[0]?.user?.name ?? null,
+      }
+    })
 
   return (
     <div className="min-h-screen bg-gray-50">
@@ -80,6 +106,11 @@ export default async function ArquivosPage() {
       </header>
 
       <main className="max-w-6xl mx-auto px-4 py-8">
+        {falhaAoCarregar && (
+          <p role="alert" className="mb-4 rounded-lg border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-800">
+            Não foi possível carregar todos os anexos agora. A lista pode estar incompleta; tente recarregar a página.
+          </p>
+        )}
         <ArquivosClient initialAttachments={data} />
       </main>
     </div>
