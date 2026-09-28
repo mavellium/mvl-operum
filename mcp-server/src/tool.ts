@@ -78,7 +78,7 @@ export function defineTool<S extends ZodRawShape>(
         const data = await run(args, ctx, extra)
         return jsonResult({ tenant_id: ctx.tenantId, ...data })
       } catch (err) {
-        return toToolError(err, def.entity)
+        return toToolError(err, def.entity, name)
       }
     }) as never,
   )

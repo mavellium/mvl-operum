@@ -20,9 +20,10 @@ export class UserError extends Error {
  * serviço, ver gateway.ts) — nunca texto bruto, stack trace ou URL interna.
  * O detalhe completo fica apenas no log do servidor.
  */
-export function toToolError(err: unknown, entity?: string): ToolErrorResult {
+export function toToolError(err: unknown, entity?: string, tool?: string): ToolErrorResult {
   const status = (err as GatewayError | undefined)?.status
   const safe = (err as GatewayError | undefined)?.publicMessage
+  const ao = tool ? ` ao executar ${tool}` : ''
   let message: string
 
   switch (status) {
@@ -44,9 +45,22 @@ export function toToolError(err: unknown, entity?: string): ToolErrorResult {
       message = 'Limite de requisições do Operum atingido, aguarde alguns segundos e tente novamente.'
       break
     default:
-      console.error('[mcp-server] erro não mapeado', { status, message: err instanceof Error ? err.message : String(err) })
-      message = 'Operum indisponível no momento, tente novamente.'
+      console.error('[mcp-server] erro não mapeado', { tool, status, message: err instanceof Error ? err.message : String(err) })
+      if (status !== undefined && status >= 500) {
+        // O status e a mensagem de negócio (se houver) ajudam a diagnosticar
+        // sem expor o corpo bruto; o detalhe completo fica só no log acima.
+        message = `Erro ${status} no Operum${ao}.${safe ? ` Detalhe: ${safe}.` : ''} Tente de novo; se persistir, avise o administrador do Operum.`
+      } else if (isTimeout(err)) {
+        message = `O Operum não respondeu a tempo${ao} (timeout). Tente de novo em instantes.`
+      } else {
+        message = `Não foi possível conectar ao Operum${ao} (falha de rede). Operum indisponível no momento, tente novamente.`
+      }
   }
 
   return { content: [{ type: 'text', text: message }], isError: true }
+}
+
+function isTimeout(err: unknown): boolean {
+  const name = (err as { name?: string } | undefined)?.name
+  return name === 'TimeoutError' || name === 'AbortError'
 }
