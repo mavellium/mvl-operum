@@ -3,6 +3,7 @@
 import { useActionState, useRef, useState } from 'react'
 import Link from 'next/link'
 import { loginAction } from '@/app/actions/auth'
+import type { FormState } from '@/types/auth'
 
 export function LoginForm() {
   const [email, setEmail] = useState('')
@@ -14,7 +15,7 @@ export function LoginForm() {
   const passwordRef = useRef<HTMLInputElement>(null)
 
   const [state, formAction, pending] = useActionState(
-    async (prevState: unknown, formData: FormData) => {
+    async (prevState: FormState, formData: FormData) => {
       const result = await loginAction(prevState, formData)
       if (result?.message) {
         setPassword('')

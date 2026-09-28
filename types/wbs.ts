@@ -34,7 +34,7 @@ export interface WbsNodeProperties {
   /** Planilha de Custos — folha: nome/identificação de quem elaborou. */
   elaboradoPor?: string;
   /** Planilha de Custos — folha: id do membro (UserProject) que elaborou. */
-  elaboradoPorUserId?: string;
+  elaboradoPorUserId?: string | null;
   /** Planilha de Custos — folha: % de conclusão (0-100) para situação. */
   percentualConclusao?: number;
 }

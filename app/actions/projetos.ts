@@ -162,7 +162,7 @@ export async function getProjetoAction(id: string) {
           const props = (fase?.properties as Record<string, unknown>) ?? {}
           return {
             fase: fase?.title ?? '',
-            dataLimite: props.dataLimite ?? '',
+            dataLimite: typeof props.dataLimite === 'string' ? props.dataLimite : '',
             custo: props.custo != null ? String(props.custo) : '',
           }
         }).filter(f => f.fase)

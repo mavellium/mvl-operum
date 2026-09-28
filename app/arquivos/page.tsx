@@ -17,20 +17,25 @@ function formatBytes(bytes: number) {
 }
 
 export default async function ArquivosPage() {
-  const { role, userId } = await verifySession()
+  const { role, userId, tenantId } = await verifySession()
   if (role !== 'admin') {
     const manages = await getProjectsWhereManager(userId)
     if (manages.length === 0) redirect('/projetos')
   }
 
   const attachments = await prisma.attachment.findMany({
-    where: { deletedAt: null },
+    // Só anexos de cards do tenant da sessão (antes listava todos os tenants).
+    where: {
+      deletedAt: null,
+      card: { OR: [{ project: { tenantId } }, { sprint: { project: { tenantId } } }] },
+    },
     include: {
       card: {
         select: {
           id: true,
           title: true,
-          sprint: { select: { id: true, name: true } },
+          projectId: true,
+          sprint: { select: { id: true, name: true, projectId: true } },
           responsibles: {
             select: { user: { select: { id: true, name: true } } },
             take: 1,
@@ -53,8 +58,10 @@ export default async function ArquivosPage() {
     card: {
       id: a.card.id,
       title: a.card.title,
-      sprintId: a.card.sprint.id,
-      sprintName: a.card.sprint.name,
+      // Card do backlog não tem sprint.
+      sprintId: a.card.sprint?.id ?? null,
+      sprintName: a.card.sprint?.name ?? null,
+      projectId: a.card.sprint?.projectId ?? a.card.projectId,
     },
     uploadedBy: a.card.responsibles[0]?.user?.name ?? null,
   }))
