@@ -2,7 +2,8 @@ import { notFound } from 'next/navigation'
 import { verifySession } from '@/lib/dal'
 import { findById } from '@/services/projectService'
 import { isProjectManager, getProjectRoleForMember } from '@/services/projectRoleService'
-import { listarFuncoesAssociadas, listarDepartamentosAssociados } from '@/services/projetoCadastroService'
+import { listarDepartamentosAssociados } from '@/services/projetoCadastroService'
+import { nomesUnicosDeFuncoes } from '@/lib/funcoesDedupe'
 import prisma from '@/lib/prisma'
 import ProjetoStakeholdersClient, {
   type StakeholderUnificado,
@@ -24,7 +25,7 @@ export default async function ProjetoStakeholdersPage({ params }: { params: Prom
 
   const userRole: 'admin' | 'gerente' = role === 'admin' ? 'admin' : 'gerente'
 
-  const [project, projectStakeholders, allGlobalStakeholders, userProjects, allUsers, rolesDb, departmentsDb, funcoesAssociadas, departamentosAssociados] =
+  const [project, projectStakeholders, allGlobalStakeholders, userProjects, allUsers, rolesDb, departmentsDb, departamentosAssociados] =
     await Promise.all([
       findById(projetoId),
       prisma.projectStakeholder.findMany({
@@ -71,7 +72,7 @@ export default async function ProjetoStakeholdersPage({ params }: { params: Prom
       }),
       prisma.role.findMany({
         where: { tenantId, deletedAt: null },
-        select: { id: true, name: true },
+        select: { id: true, name: true, nameKey: true, scope: true, createdAt: true },
         orderBy: { name: 'asc' },
       }),
       prisma.department.findMany({
@@ -79,7 +80,6 @@ export default async function ProjetoStakeholdersPage({ params }: { params: Prom
         select: { id: true, name: true },
         orderBy: { name: 'asc' },
       }),
-      listarFuncoesAssociadas(projetoId),
       listarDepartamentosAssociados(projetoId),
     ])
 
@@ -180,9 +180,11 @@ export default async function ProjetoStakeholdersPage({ params }: { params: Prom
 
   const todosStakeholders: StakeholderUnificado[] = [...membrosComRole, ...stakeholdersExternos]
 
-  // Somente funções e departamentos associados a este projeto são oferecidos
-  // como opções nos formulários de Cargos/Funções e Departamentos.
-  const funcoesDoProjeto = rolesDb.filter(r => funcoesAssociadas.includes(r.id)).map(r => r.name)
+  // Funções são globais: todo o catálogo do tenant fica disponível em qualquer
+  // projeto, sem precisar associar (pedido do Prof. Fábio, 26/09/26). Nomes
+  // equivalentes ("Gerente de Projeto(s)") aparecem uma vez só.
+  // Departamentos continuam restritos aos associados ao projeto.
+  const funcoesDoProjeto = nomesUnicosDeFuncoes(rolesDb)
   const departamentosDoProjeto = departmentsDb
     .filter(d => departamentosAssociados.includes(d.id))
     .map(d => d.name)
