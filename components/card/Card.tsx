@@ -36,6 +36,8 @@ interface CardProps {
   onTimerStarted?: (cardId: string) => void
   /** Card numa coluna de conclusão: o prazo não aparece como atrasado. */
   concluido?: boolean
+  /** Desliga o arraste (ex.: quadro filtrado/ordenado, índices não batem). */
+  dragDisabled?: boolean
 }
 
 const PRIORIDADE_STYLE: Record<string, { label: string; cls: string; dot: string }> = {
@@ -63,7 +65,7 @@ function formatCardTimer(seconds: number): string {
   return `${m.toString().padStart(2, '0')}:${s.toString().padStart(2, '0')}`
 }
 
-export default function Card({ card, index, columnId, onDelete, onClick, onTimerStarted, concluido = false }: CardProps) {
+export default function Card({ card, index, columnId, onDelete, onClick, onTimerStarted, concluido = false, dragDisabled = false }: CardProps) {
   const [confirmOpen, setConfirmOpen] = useState(false)
   const [isTimerRunning, setIsTimerRunning] = useState(false)
   const [elapsedSeconds, setElapsedSeconds] = useState(0)
@@ -154,7 +156,7 @@ export default function Card({ card, index, columnId, onDelete, onClick, onTimer
 
   return (
     <>
-      <Draggable draggableId={card.id} index={index}>
+      <Draggable draggableId={card.id} index={index} isDragDisabled={dragDisabled}>
         {(provided, snapshot) => (
           <div
             ref={provided.innerRef}

@@ -2,6 +2,7 @@
 
 import { useState, useRef, useEffect } from 'react'
 import { sprintDashboardPath } from '@/lib/sprintPath'
+import { FILTROS_PADRAO, filtrosAtivos, type CardFilters, type FiltroPrazo } from '@/lib/cardFilters'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 import { updateSprintMetaAction } from '@/app/actions/sprintBoard'
@@ -41,6 +42,9 @@ interface SprintHeaderProps {
   onChangeBackground?: (bg: string) => void 
   /** Projeto da sprint: o dashboard abre dentro do projeto (menu do projeto). */
   projectId?: string | null
+  /** Filtros do quadro (aplicados na hora; sem eles o botão Filtros fica oculto). */
+  filters?: CardFilters
+  onFiltersChange?: (filters: CardFilters) => void
 }
 
 const STATUS_LABELS: Record<string, string> = {
@@ -73,7 +77,7 @@ function formatDate(d: Date | string | null) {
   return new Date(d).toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit', year: 'numeric' })
 }
 
-export default function SprintHeader({ sprint, tags = [], onChangeBackground, projectId }: SprintHeaderProps) {
+export default function SprintHeader({ sprint, tags = [], onChangeBackground, projectId, filters, onFiltersChange, currentUser }: SprintHeaderProps) {
   const router = useRouter()
 
   const [saving, setSaving] = useState(false)
@@ -196,40 +200,87 @@ export default function SprintHeader({ sprint, tags = [], onChangeBackground, pr
           {/* LADO DIREITO: Ações */}
           <div className="flex items-center gap-2 shrink-0 ml-4">
             
-            {/* NOVO: Botão de Filtros */}
+            {/* Filtros do quadro */}
+            {filters && onFiltersChange && (
             <div className="relative" ref={filterRef}>
               <button
                 onClick={() => setFilterOpen(!filterOpen)}
-                className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-sm font-medium transition-colors border ${filterOpen ? 'bg-blue-50 text-blue-700 border-blue-200' : 'bg-white text-gray-600 hover:bg-gray-50 border-gray-200'}`}
+                aria-expanded={filterOpen}
+                className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-sm font-medium transition-colors border ${filterOpen || filtrosAtivos(filters) ? 'bg-blue-50 text-blue-700 border-blue-200' : 'bg-white text-gray-600 hover:bg-gray-50 border-gray-200'}`}
               >
                 <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 4a1 1 0 011-1h16a1 1 0 011 1v2.586a1 1 0 01-.293.707l-6.414 6.414a1 1 0 00-.293.707V17l-4 4v-6.586a1 1 0 00-.293-.707L3.293 7.293A1 1 0 013 6.586V4z" /></svg>
                 Filtros
+                {filtrosAtivos(filters) && <span className="w-1.5 h-1.5 rounded-full bg-blue-600" aria-label="filtros ativos" />}
               </button>
 
-              {/* Popover Placeholder de Filtros */}
               {filterOpen && (
                 <div className="absolute right-0 top-full mt-2 w-64 bg-white rounded-xl shadow-xl border border-gray-100 p-4 z-50 animate-in fade-in slide-in-from-top-2">
-                  <h4 className="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-3">Filtrar Cards</h4>
+                  <h4 className="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-3">Filtrar cards</h4>
                   <div className="space-y-3">
                     <div>
-                      <label className="text-sm font-medium text-gray-700 mb-1.5 block">Por Responsável</label>
-                      <select className="w-full text-sm border-gray-200 rounded-lg p-2">
-                        <option>Qualquer um</option>
-                        <option>Atribuídos a mim</option>
+                      <label htmlFor="filtro-responsavel" className="text-sm font-medium text-gray-700 mb-1.5 block">Responsável</label>
+                      <select
+                        id="filtro-responsavel"
+                        value={filters.responsavel}
+                        onChange={e => onFiltersChange({ ...filters, responsavel: e.target.value as CardFilters['responsavel'] })}
+                        className="w-full text-sm border border-gray-200 rounded-lg p-2"
+                      >
+                        <option value="todos">Qualquer um</option>
+                        <option value="meus" disabled={!currentUser}>Atribuídos a mim</option>
                       </select>
                     </div>
                     <div>
-                      <label className="text-sm font-medium text-gray-700 mb-1.5 block">Por Tag</label>
-                      <select className="w-full text-sm border-gray-200 rounded-lg p-2">
-                        <option>Qualquer tag</option>
-                        {tags.map(t => <option key={t.id}>{t.name}</option>)}
+                      <label htmlFor="filtro-tag" className="text-sm font-medium text-gray-700 mb-1.5 block">Etiqueta</label>
+                      <select
+                        id="filtro-tag"
+                        value={filters.tagId ?? ''}
+                        onChange={e => onFiltersChange({ ...filters, tagId: e.target.value || null })}
+                        className="w-full text-sm border border-gray-200 rounded-lg p-2"
+                      >
+                        <option value="">Qualquer etiqueta</option>
+                        {tags.map(t => <option key={t.id} value={t.id}>{t.name}</option>)}
                       </select>
                     </div>
-                    <button className="w-full mt-2 py-2 text-sm font-medium text-white bg-blue-600 rounded-lg hover:bg-blue-700 transition-colors">Aplicar Filtros</button>
+                    <div>
+                      <label htmlFor="filtro-prazo" className="text-sm font-medium text-gray-700 mb-1.5 block">Prazo</label>
+                      <select
+                        id="filtro-prazo"
+                        value={filters.prazo}
+                        onChange={e => onFiltersChange({ ...filters, prazo: e.target.value as FiltroPrazo })}
+                        className="w-full text-sm border border-gray-200 rounded-lg p-2"
+                      >
+                        <option value="todos">Qualquer prazo</option>
+                        <option value="semana">Vence esta semana</option>
+                        <option value="atrasados">Atrasados</option>
+                        <option value="sem_prazo">Sem prazo</option>
+                      </select>
+                    </div>
+                    <label className="flex items-center gap-2 text-sm text-gray-700">
+                      <input
+                        type="checkbox"
+                        checked={filters.ordenarPorPrazo}
+                        onChange={e => onFiltersChange({ ...filters, ordenarPorPrazo: e.target.checked })}
+                        className="rounded border-gray-300"
+                      />
+                      Ordenar por prazo
+                    </label>
+                    {filtrosAtivos(filters) && (
+                      <>
+                        <p className="text-[11px] text-gray-400">Com filtros ativos, arrastar cards fica desativado.</p>
+                        <button
+                          type="button"
+                          onClick={() => onFiltersChange(FILTROS_PADRAO)}
+                          className="w-full py-2 text-sm font-medium text-gray-700 bg-gray-100 rounded-lg hover:bg-gray-200 transition-colors"
+                        >
+                          Limpar filtros
+                        </button>
+                      </>
+                    )}
                   </div>
                 </div>
               )}
             </div>
+            )}
 
             <Link
               href={sprintDashboardPath(sprint.id, projectId)}

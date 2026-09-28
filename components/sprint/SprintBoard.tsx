@@ -27,6 +27,9 @@ import { createCommentAction, getCommentsAction, updateCommentAction, deleteComm
 import { deleteAttachmentAction, setCoverAction, renameAttachmentAction, getAttachmentUrlAction } from '@/app/actions/attachments'
 import { addResponsibleAction } from '@/app/actions/cardResponsible'
 import { fetchWithSession } from '@/lib/clientFetch'
+import { aplicarFiltros, filtrosAtivos, FILTROS_PADRAO, type CardFilters } from '@/lib/cardFilters'
+import { isColunaConcluida } from '@/lib/cardUtils'
+import { useClientNow } from '@/hooks/useClientNow'
 
 interface SprintCard {
   id: string
@@ -126,6 +129,13 @@ export default function SprintBoard({ sprint, columns: initialColumns, backlogCa
   const [addingCardToColumn, setAddingCardToColumn] = useState<string | null>(null)
   const [boardBg, setBoardBg] = useState('bg-gradient-to-br from-slate-900 via-blue-950 to-slate-900')
   const [backlogCards, setBacklogCards] = useState<SprintCard[]>(initialBacklogCards ?? [])
+  const [filters, setFilters] = useState<CardFilters>(FILTROS_PADRAO)
+  const now = useClientNow()
+  const filtering = filtrosAtivos(filters)
+  // Com filtro/ordenação os índices exibidos não batem com os reais: o arraste
+  // fica desligado até limpar os filtros.
+  const visibleCards = (cards: SprintCard[], concluida: boolean) =>
+    filtering && now ? aplicarFiltros(cards, filters, { now, userId: currentUser?.id, concluida }) : cards
   const [addingBacklogCard, setAddingBacklogCard] = useState(false)
   const [pendingMove, setPendingMove] = useState<{
     cardId: string
@@ -510,6 +520,8 @@ export default function SprintBoard({ sprint, columns: initialColumns, backlogCa
         sprint={sprint} 
         currentUser={currentUser} 
         tags={tags}
+        filters={filters}
+        onFiltersChange={setFilters}
         onChangeBackground={setBoardBg} 
         projectId={projectId}
       />
@@ -555,7 +567,7 @@ export default function SprintBoard({ sprint, columns: initialColumns, backlogCa
                           Arraste cards aqui
                         </div>
                       )}
-                      {backlogCards.map((card, index) => (
+                      {visibleCards(backlogCards, false).map((card, index) => (
                         <div key={card.id} className="shrink-0">
                           <CardComponent
                             card={toCardType(card, sprint.id)}
@@ -567,6 +579,7 @@ export default function SprintBoard({ sprint, columns: initialColumns, backlogCa
                             boardTags={tags}
                             onClick={() => setOpenCardId(card.id)}
                             onTimerStarted={handleCardTimerStarted}
+                            dragDisabled={filtering}
                           />
                         </div>
                       ))}
@@ -599,7 +612,8 @@ export default function SprintBoard({ sprint, columns: initialColumns, backlogCa
                       <div key={col.id} className="h-full">
                         <ColumnComponent
                           column={toColumnType(col)}
-                          cards={col.cards.map(c => toCardType(c, sprint.id))}
+                          cards={visibleCards(col.cards, isColunaConcluida(col.title)).map(c => toCardType(c, sprint.id))}
+                          dragDisabled={filtering}
                           index={index}
                           onRenameColumn={handleRenameColumn}
                           onDeleteColumn={handleDeleteColumn}
