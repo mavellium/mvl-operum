@@ -4,6 +4,7 @@ import { verifySession } from '@/lib/dal'
 import { revalidatePath } from 'next/cache'
 import { sprintsApi, cardsApi, tagsApi, filesApi } from '@/lib/api-client'
 import prisma from '@/lib/prisma'
+import { z } from 'zod'
 
 type BacklogCard = { id: string; title: string; description: string; color: string; priority?: string | null; tags?: unknown[]; attachments?: unknown[]; responsibles?: { user: { id: string; name: string; avatarUrl?: string | null } }[] }
 
@@ -160,6 +161,14 @@ export async function getCardMovementsAction(cardId: string) {
   }
 }
 
+/** Só envia as datas preenchidas (o sprint-service exige ISO válido na criação). */
+function datasDoCard(input: { startDate?: string | null; endDate?: string | null }) {
+  return {
+    ...(input.startDate ? { startDate: input.startDate } : {}),
+    ...(input.endDate ? { endDate: input.endDate } : {}),
+  }
+}
+
 export async function createCardInSprintAction(input: {
   sprintId: string
   sprintColumnId: string
@@ -167,6 +176,8 @@ export async function createCardInSprintAction(input: {
   description?: string
   color?: string
   priority?: string
+  startDate?: string | null
+  endDate?: string | null
 }) {
   try {
     await verifySession()
@@ -177,6 +188,7 @@ export async function createCardInSprintAction(input: {
       priority: input.priority ?? 'media',
       sprintId: input.sprintId,
       sprintColumnId: input.sprintColumnId,
+      ...datasDoCard(input),
     })
     revalidatePath(`/sprints/${input.sprintId}`)
     return { card }
@@ -225,6 +237,33 @@ export async function updateCardInSprintAction(
   try {
     await verifySession()
     const card = await cardsApi.update(cardId, data as Record<string, unknown>)
+    revalidatePath(`/sprints/${sprintId}`)
+    return { card }
+  } catch (err) {
+    return { error: err instanceof Error ? err.message : 'Erro ao atualizar card' }
+  }
+}
+
+const PatchCardSchema = z
+  .object({
+    description: z.string().max(20000, 'Descrição muito longa').optional(),
+    startDate: z.string().datetime().nullable().optional(),
+    endDate: z.string().datetime().nullable().optional(),
+  })
+  .strict()
+
+export type PatchCardInput = z.infer<typeof PatchCardSchema>
+
+/**
+ * Atualização parcial de um card (autosave da descrição e datas). Só envia os
+ * campos informados; `null` em uma data remove a data.
+ */
+export async function patchCardAction(sprintId: string, cardId: string, patch: PatchCardInput) {
+  try {
+    await verifySession()
+    const parsed = PatchCardSchema.safeParse(patch)
+    if (!parsed.success) return { error: parsed.error.issues[0]?.message ?? 'Dados inválidos' }
+    const card = await cardsApi.update(cardId, parsed.data as Record<string, unknown>)
     revalidatePath(`/sprints/${sprintId}`)
     return { card }
   } catch (err) {
@@ -289,7 +328,7 @@ export async function moveCardToBacklogAction(cardId: string) {
 
 export async function createBacklogCardAction(
   projectId: string,
-  data: { title: string; description?: string; color?: string; priority?: string },
+  data: { title: string; description?: string; color?: string; priority?: string; startDate?: string | null; endDate?: string | null },
 ) {
   try {
     await verifySession()
@@ -299,6 +338,7 @@ export async function createBacklogCardAction(
       description: data.description ?? '',
       color: data.color,
       priority: data.priority,
+      ...datasDoCard(data),
     })
     return { card }
   } catch (err) {

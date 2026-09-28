@@ -47,10 +47,28 @@ describe('toToolError', () => {
     expect(toToolError(withStatus(429)).content[0].text).toMatch(/aguarde/)
   })
 
-  it('5xx ou erro sem status -> indisponibilidade genérica, sem detalhes internos', () => {
-    const result = toToolError(withStatus(500, 'connect ECONNREFUSED 10.0.0.5:4000'))
+  it('5xx -> informa o status e a tool, sem detalhes internos', () => {
+    const result = toToolError(withStatus(500, 'connect ECONNREFUSED 10.0.0.5:4000'), 'Tarefa', 'operum_list_tasks')
+    expect(result.content[0].text).toMatch(/^Erro 500 no Operum ao executar operum_list_tasks\./)
+    expect(result.content[0].text).not.toContain('10.0.0.5')
+    expect(result.content[0].text).not.toContain('Detalhe')
+  })
+
+  it('5xx com mensagem pública do serviço -> inclui o detalhe', () => {
+    const result = toToolError(withStatus(503, 'x', 'Banco em manutenção'))
+    expect(result.content[0].text).toMatch(/^Erro 503 no Operum\. Detalhe: Banco em manutenção\./)
+  })
+
+  it('timeout -> diz que o Operum não respondeu a tempo', () => {
+    const err = new Error('The operation was aborted due to timeout')
+    err.name = 'TimeoutError'
+    expect(toToolError(err).content[0].text).toMatch(/não respondeu a tempo/)
+  })
+
+  it('erro sem status -> falha de rede, sem detalhes internos', () => {
+    const result = toToolError(new Error('fetch failed 10.0.0.5'))
+    expect(result.content[0].text).toMatch(/falha de rede/)
     expect(result.content[0].text).toMatch(/indisponível/)
     expect(result.content[0].text).not.toContain('10.0.0.5')
-    expect(toToolError(new Error('timeout')).content[0].text).toMatch(/indisponível/)
   })
 })

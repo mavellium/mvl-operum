@@ -164,3 +164,27 @@ describe('Card responsible avatars', () => {
     expect(screen.getByText('+1')).toBeInTheDocument()
   })
 })
+
+describe('Card — selo de prazo', () => {
+  const dia = 24 * 60 * 60 * 1000
+
+  it('sem prazo, não mostra o selo', () => {
+    render(<Card {...defaultProps} card={makeCard()} />)
+    expect(screen.queryByTestId('card-prazo')).not.toBeInTheDocument()
+  })
+
+  it('prazo vencido fica "atrasado"', () => {
+    render(<Card {...defaultProps} card={makeCard({ endDate: new Date(Date.now() - dia) })} />)
+    expect(screen.getByTestId('card-prazo')).toHaveAttribute('data-status', 'atrasado')
+  })
+
+  it('vence em até 2 dias fica "proximo"', () => {
+    render(<Card {...defaultProps} card={makeCard({ endDate: new Date(Date.now() + dia) })} />)
+    expect(screen.getByTestId('card-prazo')).toHaveAttribute('data-status', 'proximo')
+  })
+
+  it('card concluído não fica atrasado', () => {
+    render(<Card {...defaultProps} concluido card={makeCard({ endDate: new Date(Date.now() - dia) })} />)
+    expect(screen.getByTestId('card-prazo')).toHaveAttribute('data-status', 'concluido')
+  })
+})

@@ -157,4 +157,79 @@ describe('CardModal extended', () => {
     render(<CardModal {...defaultProps} readOnly />)
     expect(screen.queryByPlaceholderText(/escreva um comentário/i)).not.toBeInTheDocument()
   })
+
+  describe('autosave da descrição', () => {
+    it('fechar pelo X logo após digitar grava a descrição (não perde o texto)', async () => {
+      const onPatch = vi.fn().mockResolvedValue(undefined)
+      const onClose = vi.fn()
+      render(<CardModal {...defaultProps} onClose={onClose} onPatch={onPatch} />)
+      await userEvent.click(screen.getByText('Description'))
+      const textarea = screen.getByPlaceholderText('Adicione detalhes, critérios de aceite...')
+      await userEvent.clear(textarea)
+      await userEvent.type(textarea, 'Texto novo')
+      await userEvent.click(screen.getByRole('button', { name: 'Fechar' }))
+      expect(onPatch).toHaveBeenCalledWith({ description: 'Texto novo' })
+      expect(onClose).toHaveBeenCalled()
+    })
+
+    it('sem onPatch mantém o fluxo antigo (Salvar/Cancelar)', async () => {
+      render(<CardModal {...defaultProps} />)
+      await userEvent.click(screen.getByText('Description'))
+      expect(screen.getByRole('button', { name: 'Cancelar' })).toBeInTheDocument()
+    })
+
+    it('mostra "Salvo" depois do autosave', async () => {
+      const onPatch = vi.fn().mockResolvedValue(undefined)
+      render(<CardModal {...defaultProps} onPatch={onPatch} />)
+      await userEvent.click(screen.getByText('Description'))
+      const textarea = screen.getByPlaceholderText('Adicione detalhes, critérios de aceite...')
+      await userEvent.type(textarea, '!')
+      await userEvent.tab()
+      expect(await screen.findByText('Salvo')).toBeInTheDocument()
+      expect(onPatch).toHaveBeenCalledWith({ description: 'Description!' })
+    })
+  })
+
+  describe('datas do card', () => {
+    it('definir o prazo grava pelo onPatch ao sair do campo', async () => {
+      const onPatch = vi.fn().mockResolvedValue(undefined)
+      render(<CardModal {...defaultProps} onPatch={onPatch} />)
+      const prazo = screen.getByLabelText('Prazo (entrega)')
+      await userEvent.type(prazo, '2026-09-30T23:59')
+      await userEvent.tab()
+      expect(onPatch).toHaveBeenCalledWith({ startDate: null, endDate: new Date('2026-09-30T23:59').toISOString() })
+    })
+
+    it('remover o prazo envia null', async () => {
+      const onPatch = vi.fn().mockResolvedValue(undefined)
+      const card = { ...baseCard, endDate: new Date('2026-09-30T23:59') }
+      render(<CardModal {...defaultProps} initialCard={card} onPatch={onPatch} />)
+      await userEvent.click(screen.getByRole('button', { name: 'Remover prazo (entrega)' }))
+      await userEvent.click(screen.getByRole('button', { name: 'Fechar' }))
+      expect(onPatch).toHaveBeenCalledWith({ startDate: null, endDate: null })
+    })
+
+    it('prazo antes do início mostra erro e não salva', async () => {
+      const onPatch = vi.fn().mockResolvedValue(undefined)
+      const card = { ...baseCard, startDate: new Date('2026-09-30T10:00') }
+      render(<CardModal {...defaultProps} initialCard={card} onPatch={onPatch} />)
+      await userEvent.type(screen.getByLabelText('Prazo (entrega)'), '2026-09-29T10:00')
+      await userEvent.tab()
+      expect(screen.getByRole('alert')).toHaveTextContent('O prazo não pode ser antes do início.')
+      expect(onPatch).not.toHaveBeenCalledWith(expect.objectContaining({ endDate: expect.any(String) }))
+    })
+
+    it('na criação, as datas vão junto do onSubmit', async () => {
+      const onSubmit = vi.fn()
+      render(<CardModal {...defaultProps} initialCard={undefined} onSubmit={onSubmit} />)
+      await userEvent.type(screen.getByPlaceholderText('Título da tarefa...'), 'Novo')
+      await userEvent.type(screen.getByLabelText('Prazo (entrega)'), '2026-10-01T09:00')
+      await userEvent.click(screen.getByRole('button', { name: /^(Salvar|Criar)/ }))
+      expect(onSubmit).toHaveBeenCalledWith(expect.objectContaining({
+        title: 'Novo',
+        endDate: new Date('2026-10-01T09:00').toISOString(),
+        startDate: null,
+      }))
+    })
+  })
 })

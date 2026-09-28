@@ -4,6 +4,7 @@ import { verifySession } from '@/lib/dal'
 import { revalidatePath } from 'next/cache'
 import { rolesApi } from '@/lib/api-client'
 import prisma from '@/lib/prisma'
+import { funcaoKey } from '@/lib/utils/normalize'
 
 export async function createRoleAction(
   _prevState: unknown,
@@ -63,7 +64,10 @@ export async function getOrCreateRoleAction(name: string) {
   try {
     await verifySession()
     const roles = await rolesApi.list() as Array<{ id: string; name: string }>
-    const existing = roles.find(r => r.name.toLowerCase() === name.toLowerCase())
+    // Equivalência por funcaoKey (acento, caixa e plural), em qualquer escopo:
+    // evita "Gerente de Projetos" ao lado do papel "Gerente de Projeto".
+    const key = funcaoKey(name)
+    const existing = roles.find(r => funcaoKey(r.name) === key)
     if (existing) return { role: existing }
     const role = await rolesApi.create({ name, scope: 'TENANT', nameKey: name.toLowerCase().trim().replace(/\s+/g, '-').replace(/[^a-z0-9-]/g, '') })
     revalidatePath('/projetos')
@@ -76,6 +80,10 @@ export async function getOrCreateRoleAction(name: string) {
 export async function updateRoleNameAction(id: string, name: string) {
   try {
     await verifySession()
+    const roles = await rolesApi.list() as Array<{ id: string; name: string }>
+    const key = funcaoKey(name)
+    const conflito = roles.find(r => r.id !== id && funcaoKey(r.name) === key)
+    if (conflito) return { error: `Já existe a função "${conflito.name}".` }
     const role = await rolesApi.update(id, { name: name.trim() })
     return { role }
   } catch (err) {

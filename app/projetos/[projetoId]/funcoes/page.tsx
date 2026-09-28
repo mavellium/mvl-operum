@@ -40,7 +40,7 @@ export default async function ProjetoFuncoesPage({ params }: { params: Promise<{
       <main className="max-w-3xl mx-auto px-4 py-8">
         <div className="mb-6">
           <h1 className="text-xl font-bold text-gray-900">Funções</h1>
-          <p className="text-sm text-gray-500 mt-1">Associe ao projeto as funções do catálogo global da organização.</p>
+          <p className="text-sm text-gray-500 mt-1">Todas as funções do catálogo global já ficam disponíveis neste projeto. Marcar uma função aqui é opcional e serve só para destacá-la no projeto.</p>
         </div>
 
         <ProjetoFuncoesClient

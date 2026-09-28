@@ -31,8 +31,18 @@ export async function POST(request: Request) {
     return Response.json({ error: `Tipo de arquivo não permitido. Use: ${ALLOWED_TYPES.join(', ')}` }, { status: 400 })
   }
 
-  // Verify card exists and is accessible
-  const card = await cardsApi.get(cardId).catch(() => null)
+  // Verify card exists and is accessible. Falha do sprint-service (5xx ou
+  // rede) não é "acesso negado": responder 403 aí escondia a causa real.
+  let card: unknown = null
+  try {
+    card = await cardsApi.get(cardId)
+  } catch (err) {
+    const status = (err as { status?: number }).status
+    if (status === undefined || status >= 500) {
+      console.error('[uploads POST] falha ao verificar o card', { cardId, status, err })
+      return Response.json({ error: 'Não foi possível verificar o card agora. Tente de novo.' }, { status: 502 })
+    }
+  }
   if (!card) return Response.json({ error: 'Acesso negado' }, { status: 403 })
 
   if (!FILE_SERVICE_URL) {
@@ -85,6 +95,7 @@ export async function DELETE(request: Request) {
     headers: {
       'X-Internal-Api-Key': INTERNAL_API_KEY,
       'X-User-Id': session.userId as string,
+      'X-Tenant-Id': session.tenantId as string,
     },
   })
   if (res.status === 204) return new Response(null, { status: 204 })

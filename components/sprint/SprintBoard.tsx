@@ -21,6 +21,7 @@ import {
   moveCardToSprintAction,
   moveCardToBacklogAction,
   createBacklogCardAction,
+  patchCardAction,
 } from '@/app/actions/sprintBoard'
 import { createCommentAction, getCommentsAction, updateCommentAction, deleteCommentAction } from '@/app/actions/comentarios'
 import { deleteAttachmentAction, setCoverAction, renameAttachmentAction, getAttachmentUrlAction } from '@/app/actions/attachments'
@@ -38,6 +39,19 @@ interface SprintCard {
   attachments?: { id: string; fileName: string; fileType: string; filePath: string; fileSize: number; isCover?: boolean; uploadedAt: string | Date }[]
   timeEntries?: { duration: number }[]
   responsibles?: { user: { id: string; name: string; avatarUrl: string | null } }[]
+  startDate?: string | Date | null
+  endDate?: string | Date | null
+}
+
+type NewCardData = {
+  title: string
+  description: string
+  color: CardColor
+  priority?: string
+  responsibles?: string[]
+  files?: File[]
+  startDate?: string | null
+  endDate?: string | null
 }
 
 interface SprintColumnData {
@@ -95,6 +109,8 @@ function toCardType(card: SprintCard, sprintId: string): CardType {
       uploadedAt: typeof a.uploadedAt === 'string' ? new Date(a.uploadedAt).getTime() : a.uploadedAt instanceof Date ? a.uploadedAt.getTime() : Date.now(),
     })) ?? [],
     responsibles: card.responsibles ?? [],
+    startDate: card.startDate ? new Date(card.startDate) : null,
+    endDate: card.endDate ? new Date(card.endDate) : null,
     createdAt: Date.now(),
     updatedAt: Date.now(),
   }
@@ -183,13 +199,15 @@ export default function SprintBoard({ sprint, columns: initialColumns, backlogCa
     }
   }
 
-  async function handleAddBacklogCardModal(data: { title: string; description: string; color: CardColor; priority?: string; responsibles?: string[]; files?: File[] }) {
+  async function handleAddBacklogCardModal(data: NewCardData) {
     if (!projectId) return
     const result = await createBacklogCardAction(projectId, {
       title: data.title,
       description: data.description,
       color: data.color,
       priority: data.priority,
+      startDate: data.startDate,
+      endDate: data.endDate,
     })
     if ('card' in result && result.card) {
       const c = result.card
@@ -225,6 +243,8 @@ export default function SprintBoard({ sprint, columns: initialColumns, backlogCa
         attachments,
         timeEntries: [],
         responsibles,
+        startDate: data.startDate ?? null,
+        endDate: data.endDate ?? null,
       }])
     }
     setAddingBacklogCard(false)
@@ -391,7 +411,7 @@ export default function SprintBoard({ sprint, columns: initialColumns, backlogCa
     setBacklogCards(prev => prev.map(c => c.id === cardId ? updater(c) : c))
   }
 
-  async function handleAddCard(columnId: string, data: { title: string; description: string; color: CardColor; priority?: string; responsibles?: string[]; files?: File[] }) {
+  async function handleAddCard(columnId: string, data: NewCardData) {
     const result = await createCardInSprintAction({
       sprintId: sprint.id,
       sprintColumnId: columnId,
@@ -399,6 +419,8 @@ export default function SprintBoard({ sprint, columns: initialColumns, backlogCa
       description: data.description,
       color: data.color,
       priority: data.priority,
+      startDate: data.startDate,
+      endDate: data.endDate,
     })
     if ('card' in result && result.card) {
       const responsibles = data.responsibles?.length
@@ -428,10 +450,13 @@ export default function SprintBoard({ sprint, columns: initialColumns, backlogCa
         title: result.card.title,
         description: result.card.description,
         color: result.card.color,
+        priority: result.card.priority ?? data.priority,
         tags: [],
         attachments,
         timeEntries: [],
         responsibles,
+        startDate: data.startDate ?? null,
+        endDate: data.endDate ?? null,
       }
       setColumns(cols => cols.map(col =>
         col.id === columnId ? { ...col, cards: [...col.cards, newCard] } : col
@@ -668,6 +693,12 @@ export default function SprintBoard({ sprint, columns: initialColumns, backlogCa
             users={users}
             boardTags={tags}
             onTimerStarted={handleCardTimerStarted}
+            onPatch={async patch => {
+              const cardId = openCardId
+              const result = await patchCardAction(sprint.id, cardId, patch)
+              if ('error' in result && result.error) return { error: result.error }
+              patchCardState(cardId, c => ({ ...c, ...patch }))
+            }}
             
             // Repassando os anexos (o componente CardModal já mapeia eles)
             attachments={openCardType.attachments}

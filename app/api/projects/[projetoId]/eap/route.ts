@@ -34,6 +34,29 @@ async function loadProject(tenantId: string, projetoId: string) {
   })
 }
 
+/**
+ * Converte falhas conhecidas em respostas úteis. Antes, qualquer erro fora de
+ * EapNotFoundError virava 500 "Erro interno" e a causa só aparecia no log.
+ */
+function errorResponse(err: unknown, where: string, projetoId: string) {
+  if (err instanceof EapNotFoundError) {
+    return NextResponse.json({ error: err.message }, { status: 403 })
+  }
+  if (err instanceof EapValidationError) {
+    return NextResponse.json({ error: err.message }, { status: 422 })
+  }
+  const code = (err as { code?: unknown } | null)?.code
+  console.error(`[eap ${where}]`, { projetoId, code }, err)
+  // P2021/P2022: tabela ou coluna inexistente — migration do app não aplicada.
+  if (code === 'P2021' || code === 'P2022') {
+    return NextResponse.json(
+      { error: 'Documento EAP indisponível: o banco de dados está desatualizado. Avise o administrador.' },
+      { status: 503 },
+    )
+  }
+  return NextResponse.json({ error: 'Erro interno ao carregar a EAP' }, { status: 500 })
+}
+
 /** GET — retorna o documento EAP do projeto (cria a partir do modelo no 1º acesso). */
 export async function GET(_: Request, { params }: RouteCtx) {
   const { projetoId } = await params
@@ -53,11 +76,7 @@ export async function GET(_: Request, { params }: RouteCtx) {
       instituicao: formatInstitucionalInfo(project),
     })
   } catch (err) {
-    if (err instanceof EapNotFoundError) {
-      return NextResponse.json({ error: err.message }, { status: 403 })
-    }
-    console.error('[eap GET]', err)
-    return NextResponse.json({ error: 'Erro interno' }, { status: 500 })
+    return errorResponse(err, 'GET', projetoId)
   }
 }
 
@@ -102,14 +121,7 @@ export async function PUT(request: Request, { params }: RouteCtx) {
 
     return NextResponse.json({ document })
   } catch (err) {
-    if (err instanceof EapNotFoundError) {
-      return NextResponse.json({ error: err.message }, { status: 403 })
-    }
-    if (err instanceof EapValidationError) {
-      return NextResponse.json({ error: err.message }, { status: 400 })
-    }
-    console.error('[eap PUT]', err)
-    return NextResponse.json({ error: 'Erro interno' }, { status: 500 })
+    return errorResponse(err, 'PUT', projetoId)
   }
 }
 
@@ -129,10 +141,6 @@ export async function POST(_: Request, { params }: RouteCtx) {
     const document = await resetDocument(projetoId, tenantId, project.name)
     return NextResponse.json({ document })
   } catch (err) {
-    if (err instanceof EapNotFoundError) {
-      return NextResponse.json({ error: err.message }, { status: 403 })
-    }
-    console.error('[eap POST]', err)
-    return NextResponse.json({ error: 'Erro interno' }, { status: 500 })
+    return errorResponse(err, 'POST', projetoId)
   }
 }

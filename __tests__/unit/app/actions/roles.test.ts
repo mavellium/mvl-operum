@@ -165,12 +165,22 @@ describe('Role Actions', () => {
       const result = await getOrCreateRoleAction('TI')
       expect(result).toHaveProperty('error')
     })
+
+    it('devolve a função equivalente em vez de criar duplicata (plural/acento)', async () => {
+      vi.mocked(verifySession).mockResolvedValue({ userId: 'u1', tenantId: 't1', role: 'admin' } as never)
+      vi.mocked(rolesApi.list).mockResolvedValue([{ id: 'g', name: 'Gerente de Projeto' }])
+
+      const result = await getOrCreateRoleAction('Gerente de Projetos')
+      expect((result as { role?: { id: string } }).role?.id).toBe('g')
+      expect(rolesApi.create).not.toHaveBeenCalled()
+    })
   })
 
   describe('updateRoleNameAction', () => {
     it('should update role name and return role', async () => {
       const mockSession = { userId: 'u1', tenantId: 't1', role: 'admin' }
       vi.mocked(verifySession).mockResolvedValue(mockSession)
+      vi.mocked(rolesApi.list).mockResolvedValue([])
       vi.mocked(rolesApi.update).mockResolvedValue({ id: 'r1', name: 'Technology' })
 
       const result = await updateRoleNameAction('r1', 'Technology')
@@ -185,6 +195,18 @@ describe('Role Actions', () => {
 
       const result = await updateRoleNameAction('nonexistent', 'X')
       expect(result).toHaveProperty('error')
+    })
+
+    it('recusa renomear para um nome equivalente a outra função', async () => {
+      vi.mocked(verifySession).mockResolvedValue({ userId: 'u1', tenantId: 't1', role: 'admin' } as never)
+      vi.mocked(rolesApi.list).mockResolvedValue([
+        { id: 'g', name: 'Gerente de Projeto' },
+        { id: 'a', name: 'Analista' },
+      ])
+
+      const result = await updateRoleNameAction('a', 'gerente de projetos')
+      expect((result as { error?: string }).error).toMatch(/Já existe a função "Gerente de Projeto"/)
+      expect(rolesApi.update).not.toHaveBeenCalled()
     })
   })
 

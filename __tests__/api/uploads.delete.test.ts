@@ -65,4 +65,12 @@ describe('DELETE /api/uploads', () => {
     const res = await DELETE(makeRequest('http://localhost/api/uploads?id=a1'))
     expect(res.status).toBe(204)
   })
+
+  it('envia o tenant da sessão ao file-service', async () => {
+    const fetchMock = vi.fn().mockResolvedValue(new Response(null, { status: 204 }))
+    global.fetch = fetchMock
+    await DELETE(makeRequest('http://localhost/api/uploads?id=a1'))
+    const headers = fetchMock.mock.calls[0][1].headers as Record<string, string>
+    expect(headers['X-Tenant-Id']).toBe('t1')
+  })
 })

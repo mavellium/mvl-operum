@@ -8,10 +8,13 @@
 #    <deploy_path>/.deploy-incoming/), com backup e validação.
 # 2. Baixa as imagens :prod da aplicação usando uma credencial temporária do
 #    GHCR (não sobrescreve a credencial Docker que já existe no servidor).
-# 3. Sobe os serviços e espera todos ficarem saudáveis.
+# 3. Aplica as migrations do app (serviço one-shot `migrate`).
+# 4. Sobe os serviços e espera todos ficarem saudáveis.
 #
-# Paridade com o webhook antigo: não roda o profile `migration` — as migrations
-# do auth-service/file-service rodam no entrypoint dos containers.
+# Migrations: as do auth-service/file-service rodam no entrypoint dos
+# containers; as do app (schema public) rodam aqui, no serviço one-shot
+# `migrate`, antes de trocar os containers. Sem isso, migrations novas do app
+# nunca chegavam à produção (ex.: EapDocument/EapTemplate, set/2026).
 set -euo pipefail
 set +x          # nunca ecoar comandos (o token chega por stdin)
 umask 077       # arquivos temporários (credencial do GHCR) só legíveis pelo dono
@@ -81,7 +84,16 @@ DOCKER_CONFIG="$TMP_DOCKER_CONFIG" docker login ghcr.io -u "$GHCR_USER" --passwo
 DOCKER_CONFIG="$TMP_DOCKER_CONFIG" "${COMPOSE[@]}" pull --quiet "${APP_SERVICES[@]}"
 cleanup
 
-# ── 3. Subida e espera por health ────────────────────────────────────────────
+# ── 3. Migrations do app ─────────────────────────────────────────────────────
+# Roda antes do `up -d`: se falhar, os containers em execução continuam os
+# mesmos (versão anterior) e o deploy aborta.
+echo "Aplicando migrations do app (prisma migrate deploy)"
+if ! "${COMPOSE[@]}" --profile migration run --rm migrate; then
+  echo "::error::prisma migrate deploy falhou — deploy abortado, serviços não foram trocados"
+  exit 1
+fi
+
+# ── 4. Subida e espera por health ────────────────────────────────────────────
 if ! "${COMPOSE[@]}" up -d --wait --wait-timeout 300; then
   echo "::error::serviços não ficaram saudáveis em 300s"
   "${COMPOSE[@]}" ps

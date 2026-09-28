@@ -7,6 +7,8 @@ import ConfirmDialog from '@/components/ui/ConfirmDialog'
 import { TagBadge } from '@/components/tag/TagBadge'
 import UserAvatar from '@/components/user/UserAvatar'
 import { startTimerAction, pauseTimerAction, getCardTimeAction, getActiveTimerAction } from '@/app/actions/time'
+import { prazoStatus, formatPrazoCurto, type PrazoStatus } from '@/lib/cardUtils'
+import { useClientNow } from '@/hooks/useClientNow'
 
 interface User {
   id: string
@@ -32,6 +34,15 @@ interface CardProps {
   onClick: () => void
   /** Disparado quando o timer é iniciado a partir do card fechado. */
   onTimerStarted?: (cardId: string) => void
+  /** Card numa coluna de conclusão: o prazo não aparece como atrasado. */
+  concluido?: boolean
+}
+
+const PRAZO_STYLE: Record<PrazoStatus, { cls: string; title: string }> = {
+  ok: { cls: 'bg-gray-100 text-gray-600', title: 'Prazo' },
+  proximo: { cls: 'bg-amber-100 text-amber-800', title: 'Vence em até 2 dias' },
+  atrasado: { cls: 'bg-red-100 text-red-700', title: 'Prazo vencido' },
+  concluido: { cls: 'bg-gray-100 text-gray-400 line-through', title: 'Prazo (card concluído)' },
 }
 
 function formatTempo(min?: number | null): string {
@@ -46,7 +57,7 @@ function formatCardTimer(seconds: number): string {
   return `${m.toString().padStart(2, '0')}:${s.toString().padStart(2, '0')}`
 }
 
-export default function Card({ card, index, columnId, onDelete, onClick, onTimerStarted }: CardProps) {
+export default function Card({ card, index, columnId, onDelete, onClick, onTimerStarted, concluido = false }: CardProps) {
   const [confirmOpen, setConfirmOpen] = useState(false)
   const [isTimerRunning, setIsTimerRunning] = useState(false)
   const [elapsedSeconds, setElapsedSeconds] = useState(0)
@@ -63,6 +74,10 @@ export default function Card({ card, index, columnId, onDelete, onClick, onTimer
   const realizadoMin = card.realizado_min ?? null
   const isOverrun = orcadoMin != null && realizadoMin != null && realizadoMin > orcadoMin
   const hasTempoData = orcadoMin != null || realizadoMin != null
+
+  // Depende do relógio e do fuso do navegador: só calcula no cliente.
+  const now = useClientNow()
+  const prazo = now ? prazoStatus(card.endDate, now, concluido) : null
 
   // Carrega o estado real do timer (mesma fonte de verdade do CardTimer no modal).
   useEffect(() => {
@@ -216,6 +231,21 @@ export default function Card({ card, index, columnId, onDelete, onClick, onTimer
                 >
                   {card.description}
                 </p>
+              )}
+
+              {/* Prazo */}
+              {prazo && card.endDate && (
+                <div className="mb-1">
+                  <span
+                    data-testid="card-prazo"
+                    data-status={prazo}
+                    title={`${PRAZO_STYLE[prazo].title}: ${new Date(card.endDate).toLocaleString('pt-BR', { dateStyle: 'short', timeStyle: 'short' })}`}
+                    className={`inline-flex items-center gap-1 text-[11px] font-semibold px-1.5 py-0.5 rounded ${PRAZO_STYLE[prazo].cls}`}
+                  >
+                    <span aria-hidden="true">📅</span>
+                    {formatPrazoCurto(card.endDate, now ?? undefined)}
+                  </span>
+                </div>
               )}
 
               <div className="flex-1" />

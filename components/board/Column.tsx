@@ -4,6 +4,7 @@ import { Draggable, Droppable } from '@hello-pangea/dnd'
 import { Column as ColumnType, Card as CardType, CardColor } from '@/types/kanban'
 import ColumnHeader from './ColumnHeader'
 import CardComponent from '@/components/card/Card'
+import { isColunaConcluida } from '@/lib/cardUtils'
 
 interface User { id: string; name: string; email: string }
 interface Tag { id: string; name: string; color: string }
@@ -32,6 +33,8 @@ export default function Column({
   onAddCard, onUpdateCard, onDeleteCard,
   users, boardTags, onCardClick, onTimerStarted
 }: ColumnProps) {
+
+  const concluida = !isBacklog && isColunaConcluida(column.title)
 
   const columnBg = isBacklog
     ? 'bg-slate-700/80 border-slate-500/30 backdrop-blur-md'
@@ -102,6 +105,7 @@ export default function Column({
                       boardTags={boardTags}
                       onClick={() => onCardClick(card.id)}
                       onTimerStarted={onTimerStarted}
+                      concluido={concluida}
                     />
                   </div>
                 ))}
