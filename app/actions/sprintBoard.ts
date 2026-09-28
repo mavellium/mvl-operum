@@ -6,11 +6,27 @@ import { sprintsApi, cardsApi, tagsApi, filesApi } from '@/lib/api-client'
 import prisma from '@/lib/prisma'
 import { z } from 'zod'
 
-type BacklogCard = { id: string; title: string; description: string; color: string; priority?: string | null; tags?: unknown[]; attachments?: unknown[]; responsibles?: { user: { id: string; name: string; avatarUrl?: string | null } }[] }
+/** Card como o board consome (colunas e backlog têm o mesmo formato). */
+type BoardCard = {
+  id: string
+  title: string
+  description: string
+  color: string
+  priority?: string | null
+  sprintPosition?: number | null
+  tags?: { tagId: string; tag: { id?: string; name: string; color: string } }[]
+  attachments?: { id: string; fileName: string; fileType: string; filePath: string; fileSize: number; isCover?: boolean; uploadedAt: string | Date }[]
+  timeEntries?: { duration: number }[]
+  responsibles?: { user: { id: string; name: string; avatarUrl: string | null } }[]
+  startDate?: string | Date | null
+  endDate?: string | Date | null
+}
+
+type BacklogCard = BoardCard
 
 type SprintBoardData = {
   sprint: { id: string; name: string; status: string; projectId?: string | null; startDate: Date | string | null; endDate: Date | string | null; description?: string | null; qualidade?: number | null; dificuldade?: number | null }
-  columns: { id: string; title: string; position: number; cards: { id: string; title: string; description: string; color: string; priority?: string | null; sprintPosition?: number | null; tags?: { tagId: string; tag: { id?: string; name: string; color: string } }[]; attachments?: { id: string; fileName: string; fileType: string; filePath: string; fileSize: number; isCover?: boolean; uploadedAt: string | Date }[]; timeEntries?: { duration: number }[]; responsibles?: { user: { id: string; name: string; avatarUrl: string | null } }[] }[] }[]
+  columns: { id: string; title: string; position: number; cards: BoardCard[] }[]
   backlogCards: BacklogCard[]
   users: { id: string; name: string; email: string; avatarUrl?: string | null }[]
   tags: { id: string; name: string; color: string }[]

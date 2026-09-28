@@ -59,29 +59,22 @@ beforeEach(() => {
 })
 
 describe('Card priority badge', () => {
-  it('renders alta priority badge with red color class', () => {
-    render(<Card {...defaultProps} card={makeCard({ priority: 'alta' })} />)
-    const container = screen.getByText('alta').closest('div')
-    expect(container?.innerHTML).toMatch(/red/)
-  })
-
-  it('renders media priority badge with amber color class', () => {
-    render(<Card {...defaultProps} card={makeCard({ priority: 'media' })} />)
-    const container = screen.getByText('media').closest('div')
-    expect(container?.innerHTML).toMatch(/amber/)
-  })
-
-  it('renders baixa priority badge with emerald color class', () => {
-    render(<Card {...defaultProps} card={makeCard({ priority: 'baixa' })} />)
-    const container = screen.getByText('baixa').closest('div')
-    expect(container?.innerHTML).toMatch(/emerald/)
+  it.each([
+    ['alta', 'Alta', /red/],
+    ['media', 'Média', /amber/],
+    ['baixa', 'Baixa', /emerald/],
+  ])('prioridade %s aparece sempre (sem hover) como "%s"', (priority, label, cor) => {
+    render(<Card {...defaultProps} card={makeCard({ priority })} />)
+    const badge = screen.getByTestId('card-prioridade')
+    expect(badge).toHaveTextContent(label)
+    expect(badge.className).toMatch(cor)
+    // Não pode estar dentro do bloco que só aparece no hover.
+    expect(badge.closest('.opacity-0')).toBeNull()
   })
 
   it('does not render priority badge when priority is not set', () => {
     render(<Card {...defaultProps} card={makeCard({ priority: undefined })} />)
-    expect(screen.queryByText('alta')).not.toBeInTheDocument()
-    expect(screen.queryByText('media')).not.toBeInTheDocument()
-    expect(screen.queryByText('baixa')).not.toBeInTheDocument()
+    expect(screen.queryByTestId('card-prioridade')).not.toBeInTheDocument()
   })
 })
 

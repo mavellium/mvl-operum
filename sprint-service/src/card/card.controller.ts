@@ -39,10 +39,15 @@ export class CardController {
     @Query('q') q?: string,
     @Query('sprintId') sprintId?: string,
     @Query('projectId') projectId?: string,
+    @Query('inProjectId') inProjectId?: string,
     @Query('responsibleUserId') responsibleUserId?: string,
   ) {
-    if (!q || q.trim().length < 2) throw new BadRequestException('q é obrigatório (mínimo 2 caracteres)')
-    return this.cardService.search(tenantId, q.trim(), { sprintId, projectId, responsibleUserId })
+    const text = q?.trim() ?? ''
+    // Sem texto só é permitido listando os cards de uma pessoa num projeto
+    // (busca "cards de <pessoa>"); senão a consulta traria o tenant inteiro.
+    const porPessoa = !!responsibleUserId && !!inProjectId
+    if (!porPessoa && text.length < 2) throw new BadRequestException('q é obrigatório (mínimo 2 caracteres)')
+    return this.cardService.search(tenantId, text, { sprintId, projectId, inProjectId, responsibleUserId })
   }
 
   @Get('cards/:id')

@@ -1,6 +1,6 @@
-import { getSprintDashboardAction } from '@/app/actions/dashboard'
-import SprintDashboard from '@/components/dashboard/SprintDashboard'
-import Link from 'next/link'
+import { redirect } from 'next/navigation'
+import SprintDashboardContent from '@/components/dashboard/SprintDashboardContent'
+import { sprintDashboardPath } from '@/lib/sprintPath'
 import type { Metadata } from 'next'
 import { sprintsApi } from '@/lib/api-client'
 import { findById } from '@/services/projectService'
@@ -29,30 +29,18 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
 
 export default async function SprintDashboardPage({ params }: Props) {
   const { sprintId } = await params
-  const result = await getSprintDashboardAction(sprintId)
 
-  if ('error' in result) {
-    return (
-      <div className="min-h-screen flex flex-col items-center justify-center gap-4">
-        <p className="text-gray-500">{result.error}</p>
-        <Link href="/projetos" className="text-blue-600 hover:underline text-sm">Voltar aos projetos</Link>
-      </div>
-    )
+  // Rota legada: fora de /projetos/:id o AppShell mostra o menu global (do
+  // admin). Se a sprint é de um projeto, vai para a rota canônica.
+  // O redirect() fica FORA do try: ele lança NEXT_REDIRECT, que o catch engoliria.
+  let projectId: string | undefined
+  try {
+    const sprint = (await sprintsApi.get(sprintId)) as { projectId?: string }
+    projectId = sprint.projectId
+  } catch {
+    // segue o fluxo: o dashboard resolve e reporta o erro
   }
+  if (projectId) redirect(sprintDashboardPath(sprintId, projectId))
 
-  return (
-    <SprintDashboard
-      sprint={{
-        ...result.sprint,
-        status: result.sprint.status as string,
-      }}
-      metrics={result.metrics}
-      userMetrics={result.userMetrics}
-      cardsByColumn={result.cardsByColumn}
-      overdueCards={result.overdueCards}
-      feedbacks={result.feedbacks}
-      avgQualidade={result.avgQualidade}
-      avgDificuldade={result.avgDificuldade}
-    />
-  )
+  return <SprintDashboardContent sprintId={sprintId} />
 }

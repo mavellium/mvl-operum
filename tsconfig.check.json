@@ -1,4 +1,14 @@
 {
   "extends": "./tsconfig.json",
-  "exclude": ["node_modules", "__tests__"]
+  "exclude": [
+    "node_modules",
+    "__tests__",
+    "notification-service",
+    "auth-service",
+    "api-gateway",
+    "file-service",
+    "project-service",
+    "sprint-service",
+    "mcp-server"
+  ]
 }

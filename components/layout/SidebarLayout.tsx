@@ -15,6 +15,8 @@ interface SidebarLayoutProps {
   searchPlaceholder: string
   searchContext: 'global_projects' | 'project_items' | 'sprint_items' | 'project_members' | 'default'
   contextId?: string
+  /** Sprint aberta: a busca mostra os cards dela primeiro. */
+  currentSprintId?: string
   collapsed?: boolean
   animated?: boolean
   onToggleCollapse?: () => void
@@ -38,6 +40,7 @@ export default function SidebarLayout({
   searchPlaceholder,
   searchContext,
   contextId,
+  currentSprintId,
   collapsed = false,
   animated = false,
   onToggleCollapse,
@@ -110,7 +113,7 @@ export default function SidebarLayout({
 
       {/* Barra de pesquisa */}
       <div className="px-3 pt-2 pb-1">
-        <GlobalSearch placeholder={searchPlaceholder} searchContext={searchContext} contextId={contextId} />
+        <GlobalSearch placeholder={searchPlaceholder} searchContext={searchContext} contextId={contextId} currentSprintId={currentSprintId} />
       </div>
 
       <div className="mx-3 mt-3 mb-1 border-b border-gray-100" />

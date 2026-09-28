@@ -24,6 +24,8 @@ interface ColumnProps {
   boardTags?: Tag[]
   onCardClick: (cardId: string) => void
   onTimerStarted?: (cardId: string) => void
+  /** Quadro filtrado/ordenado: cards não podem ser arrastados. */
+  dragDisabled?: boolean
 }
 
 export default function Column({
@@ -31,7 +33,7 @@ export default function Column({
   isBacklog = false, isVirtual = false,
   onRenameColumn, onDeleteColumn,
   onAddCard, onUpdateCard, onDeleteCard,
-  users, boardTags, onCardClick, onTimerStarted
+  users, boardTags, onCardClick, onTimerStarted, dragDisabled = false,
 }: ColumnProps) {
 
   const concluida = !isBacklog && isColunaConcluida(column.title)
@@ -106,6 +108,7 @@ export default function Column({
                       onClick={() => onCardClick(card.id)}
                       onTimerStarted={onTimerStarted}
                       concluido={concluida}
+                      dragDisabled={dragDisabled}
                     />
                   </div>
                 ))}

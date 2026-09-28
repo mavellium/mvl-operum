@@ -3,8 +3,16 @@
 import { useActionState, useRef, useState } from 'react'
 import Link from 'next/link'
 import { loginAction } from '@/app/actions/auth'
+import type { FormState } from '@/types/auth'
 
-export function LoginForm() {
+interface LoginFormProps {
+  /** Página para voltar depois do login (vinda do ?from= do proxy). */
+  from?: string
+  /** "inatividade": a sessão expirou por falta de uso. */
+  motivo?: string
+}
+
+export function LoginForm({ from, motivo }: LoginFormProps = {}) {
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
   const [showPassword, setShowPassword] = useState(false)
@@ -14,7 +22,7 @@ export function LoginForm() {
   const passwordRef = useRef<HTMLInputElement>(null)
 
   const [state, formAction, pending] = useActionState(
-    async (prevState: unknown, formData: FormData) => {
+    async (prevState: FormState, formData: FormData) => {
       const result = await loginAction(prevState, formData)
       if (result?.message) {
         setPassword('')
@@ -61,7 +69,14 @@ export function LoginForm() {
         </p>
       </div>
 
+      {motivo === 'inatividade' && !state?.message && (
+        <p role="status" className="mb-4 rounded-lg border border-amber-200 bg-amber-50 px-3 py-2 text-sm text-amber-800">
+          Sua sessão expirou por inatividade. Entre de novo para continuar de onde parou.
+        </p>
+      )}
+
       <form action={formAction} className="flex flex-col gap-5">
+        {from && <input type="hidden" name="from" value={from} />}
         {/* Email */}
         <div className="relative">
           <input

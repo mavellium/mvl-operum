@@ -66,4 +66,49 @@ describe('proxy middleware', () => {
     const location = res.headers.get('location') ?? ''
     expect(location).toContain('from=%2Fsprints%2Fs1')
   })
+
+  describe('sessão por inatividade', () => {
+    const MIN = 60_000
+
+    function reqCom(path: string, lastSeen: number | null, headers: Record<string, string> = {}) {
+      const cookie = ['session=valid-token', lastSeen !== null ? `last_seen=${lastSeen}` : ''].filter(Boolean).join('; ')
+      return new NextRequest(`http://localhost${path}`, { headers: { cookie, ...headers } })
+    }
+
+    beforeEach(() => {
+      vi.mocked(jwtVerify).mockResolvedValue({ payload: { userId: 'u1' } } as never)
+    })
+
+    it('mais de 30 min sem atividade: apaga a sessão e volta ao login com from e motivo', async () => {
+      const res = await proxy(reqCom('/projetos/p1', Date.now() - 31 * MIN))
+      expect(res.status).toBe(307)
+      const location = res.headers.get('location') ?? ''
+      expect(location).toContain('/login')
+      expect(location).toContain('from=%2Fprojetos%2Fp1')
+      expect(location).toContain('motivo=inatividade')
+      expect(res.headers.get('set-cookie')).toMatch(/session=;/)
+    })
+
+    it('dentro do limite: segue e renova o last_seen', async () => {
+      const res = await proxy(reqCom('/projetos/p1', Date.now() - 5 * MIN))
+      expect(res.status).toBe(200)
+      expect(res.headers.get('set-cookie')).toMatch(/last_seen=\d+/)
+    })
+
+    it('sessão sem last_seen (anterior à mudança) não é derrubada; o cookie é criado', async () => {
+      const res = await proxy(reqCom('/projetos', null))
+      expect(res.status).toBe(200)
+      expect(res.headers.get('set-cookie')).toMatch(/last_seen=\d+/)
+    })
+
+    it('polling de notificações e prefetch não renovam a atividade', async () => {
+      const lastSeen = Date.now() - 5 * MIN
+      const polling = await proxy(reqCom('/api/notificacoes/count', lastSeen))
+      expect(polling.status).toBe(200)
+      expect(polling.headers.get('set-cookie') ?? '').not.toMatch(/last_seen/)
+
+      const prefetch = await proxy(reqCom('/projetos', lastSeen, { 'next-router-prefetch': '1' }))
+      expect(prefetch.headers.get('set-cookie') ?? '').not.toMatch(/last_seen/)
+    })
+  })
 })

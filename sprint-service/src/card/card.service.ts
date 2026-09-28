@@ -78,25 +78,26 @@ export class CardService {
     })
   }
 
-  async search(tenantId: string, q: string, opts?: { sprintId?: string; projectId?: string; responsibleUserId?: string }) {
-    const where: {
-      AND: ReturnType<typeof cardInTenant>[]
-      deletedAt: null
-      sprintId?: string
-      projectId?: string
-      responsibles?: { some: { userId: string } }
-      OR: (
-        | { title: { contains: string; mode: 'insensitive' } }
-        | { description: { contains: string; mode: 'insensitive' } }
-      )[]
-    } = {
-      AND: [cardInTenant(tenantId)],
-      deletedAt: null,
-      OR: [
-        { title: { contains: q, mode: 'insensitive' } },
-        { description: { contains: q, mode: 'insensitive' } },
-      ],
+  async search(
+    tenantId: string,
+    q: string,
+    opts?: { sprintId?: string; projectId?: string; inProjectId?: string; responsibleUserId?: string },
+  ) {
+    const AND: object[] = [cardInTenant(tenantId)]
+    // Card do projeto no backlog (projectId) OU numa sprint do projeto (card
+    // criado dentro da sprint pode não ter projectId próprio).
+    if (opts?.inProjectId) {
+      AND.push({ OR: [{ projectId: opts.inProjectId }, { sprint: { projectId: opts.inProjectId } }] })
     }
+    if (q) {
+      AND.push({
+        OR: [
+          { title: { contains: q, mode: 'insensitive' } },
+          { description: { contains: q, mode: 'insensitive' } },
+        ],
+      })
+    }
+    const where: Record<string, unknown> = { AND, deletedAt: null }
     if (opts?.sprintId) where.sprintId = opts.sprintId
     if (opts?.projectId) where.projectId = opts.projectId
     if (opts?.responsibleUserId) where.responsibles = { some: { userId: opts.responsibleUserId } }
@@ -106,8 +107,9 @@ export class CardService {
       include: {
         tags: { include: { tag: true } },
         responsibles: { include: { user: { select: PUBLIC_USER_SELECT } } },
-        sprint: { select: { id: true, name: true } },
+        sprint: { select: { id: true, name: true, status: true, projectId: true } },
         sprintColumn: { select: { id: true, title: true } },
+        timeEntries: { where: { deletedAt: null }, select: { duration: true } },
       },
       take: 50,
       orderBy: { updatedAt: 'desc' },
@@ -196,7 +198,7 @@ export class CardService {
       }
     }
 
-    return prisma.card.update({
+    const updated = await prisma.card.update({
       where: { id },
       data: {
         ...cardData,
@@ -204,6 +206,38 @@ export class CardService {
         endDate: toDateUpdate(cardData.endDate),
       },
     })
+
+    // Gravar só a posição do card movido deixava posições repetidas na coluna
+    // (ex.: mover o 3º card para o topo deixava dois cards na posição 0) e a
+    // ordem mudava ao recarregar. Renumera destino e, se mudou, a origem.
+    if (typeof cardData.sprintPosition === 'number') {
+      const previousColumnId = (current as { sprintColumnId?: string | null }).sprintColumnId ?? null
+      const targetColumnId = cardData.sprintColumnId !== undefined ? cardData.sprintColumnId : previousColumnId
+      if (targetColumnId) await this.renumberColumn(targetColumnId, { id, index: cardData.sprintPosition })
+      if (previousColumnId && previousColumnId !== targetColumnId) await this.renumberColumn(previousColumnId)
+    }
+
+    return updated
+  }
+
+  /** Regrava sprintPosition 0..n-1 na coluna, com o card `moved` (se houver) no índice pedido. */
+  private async renumberColumn(columnId: string, moved?: { id: string; index: number }) {
+    const others = await prisma.card.findMany({
+      where: { sprintColumnId: columnId, deletedAt: null, ...(moved ? { id: { not: moved.id } } : {}) },
+      orderBy: [{ sprintPosition: 'asc' }, { createdAt: 'asc' }],
+      select: { id: true, sprintPosition: true },
+    })
+    const ordered = others.map(c => ({ id: c.id, sprintPosition: c.sprintPosition }))
+    if (moved) {
+      const index = Math.max(0, Math.min(moved.index, ordered.length))
+      // O update principal já gravou moved.index; só regrava se o índice foi ajustado.
+      ordered.splice(index, 0, { id: moved.id, sprintPosition: moved.index })
+    }
+    const updates = ordered
+      .map((c, position) => ({ ...c, position }))
+      .filter(c => c.sprintPosition !== c.position)
+      .map(c => prisma.card.update({ where: { id: c.id }, data: { sprintPosition: c.position } }))
+    if (updates.length > 0) await prisma.$transaction(updates)
   }
 
   async listMovements(tenantId: string, cardId: string) {

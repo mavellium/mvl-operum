@@ -201,4 +201,35 @@ describe('SprintBoard', () => {
     expect(screen.queryByRole('button', { name: /editar/i })).not.toBeInTheDocument()
     expect(screen.getAllByRole('button', { name: /fechar/i }).length).toBeGreaterThan(0)
   })
+
+  describe('filtros do quadro', () => {
+    const colunasComPrazo = [
+      {
+        id: 'sc1', title: 'A Fazer', position: 0,
+        cards: [
+          { id: 'c1', title: 'Tarefa vencida', description: '', color: '#3b82f6', endDate: new Date(Date.now() - 86400000).toISOString(), tags: [], attachments: [], timeEntries: [] },
+          { id: 'c2', title: 'Tarefa livre', description: '', color: '#3b82f6', tags: [{ tagId: 't1', tag: { id: 't1', name: 'Bug', color: '#ef4444' } }], attachments: [], timeEntries: [] },
+        ],
+      },
+    ]
+
+    it('filtro "Atrasados" mostra só os cards com prazo vencido; limpar volta tudo', () => {
+      renderWithProviders(<SprintBoard sprint={sprint} columns={colunasComPrazo} projectId="proj1" backlogCards={[]} />)
+      fireEvent.click(screen.getByRole('button', { name: /Filtros/ }))
+      fireEvent.change(screen.getByLabelText('Prazo'), { target: { value: 'atrasados' } })
+      expect(screen.getByText('Tarefa vencida')).toBeInTheDocument()
+      expect(screen.queryByText('Tarefa livre')).not.toBeInTheDocument()
+
+      fireEvent.click(screen.getByRole('button', { name: 'Limpar filtros' }))
+      expect(screen.getByText('Tarefa livre')).toBeInTheDocument()
+    })
+
+    it('filtro por etiqueta', () => {
+      renderWithProviders(<SprintBoard sprint={sprint} columns={colunasComPrazo} projectId="proj1" backlogCards={[]} tags={tags} />)
+      fireEvent.click(screen.getByRole('button', { name: /Filtros/ }))
+      fireEvent.change(screen.getByLabelText('Etiqueta'), { target: { value: 't1' } })
+      expect(screen.getByText('Tarefa livre')).toBeInTheDocument()
+      expect(screen.queryByText('Tarefa vencida')).not.toBeInTheDocument()
+    })
+  })
 })

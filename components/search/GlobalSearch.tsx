@@ -6,6 +6,7 @@ import { useRouter } from 'next/navigation'
 import UserAvatar from '@/components/user/UserAvatar' // Adicionado para renderizar a foto do usuário
 import { fetchWithSession } from '@/lib/clientFetch'
 import { sprintPath } from '@/lib/sprintPath'
+import { SEARCH_GROUP_LABEL, formatTempoBusca, type SearchGroup } from '@/lib/searchGroups'
 
 // Tipagem atualizada para suportar 'member' e seus dados específicos
 interface SearchResult {
@@ -20,18 +21,62 @@ interface SearchResult {
   sprintColumn?: string | null
   tags?: { name: string; color: string }[]
   avatarUrl?: string | null // Específico para o tipo 'member'
+  /** Grupo da busca unificada do projeto (ausente nos contextos antigos). */
+  group?: SearchGroup
+  sprintStatus?: string | null
+  priority?: string | null
+  responsibles?: string[]
+  tempoSegundos?: number
+  personName?: string
+}
+
+const SPRINT_STATUS_LABEL: Record<string, string> = {
+  PLANNED: 'planejada',
+  ACTIVE: 'ativa',
+  COMPLETED: 'concluída',
+}
+
+const PRIORITY_LABEL: Record<string, { label: string; cls: string }> = {
+  alta: { label: 'Alta', cls: 'text-red-600' },
+  media: { label: 'Média', cls: 'text-amber-700' },
+  baixa: { label: 'Baixa', cls: 'text-emerald-700' },
+}
+
+type Section = { key: string; label: string; items: SearchResult[] }
+
+/** Agrupa na ordem que veio da API; "cards da pessoa" vira uma seção por pessoa. */
+function buildSections(results: SearchResult[]): Section[] {
+  if (!results.some(r => r.group)) {
+    return [
+      { key: 'card', label: 'Cards e tarefas', items: results.filter(r => (r.type ?? 'card') === 'card') },
+      { key: 'project', label: 'Projetos', items: results.filter(r => r.type === 'project') },
+      { key: 'member', label: 'Pessoas', items: results.filter(r => r.type === 'member') },
+    ].filter(s => s.items.length > 0)
+  }
+  const sections: Section[] = []
+  for (const r of results) {
+    const group = r.group ?? 'outras_sprints'
+    const key = group === 'cards_pessoa' ? `${group}:${r.personName ?? ''}` : group
+    const label = group === 'cards_pessoa' && r.personName ? `Cards de ${r.personName}` : SEARCH_GROUP_LABEL[group]
+    const last = sections[sections.length - 1]
+    if (last?.key === key) last.items.push(r)
+    else sections.push({ key, label, items: [r] })
+  }
+  return sections
 }
 
 interface GlobalSearchProps {
   placeholder?: string
   searchContext?: 'global_projects' | 'project_items' | 'sprint_items' | 'project_members' | 'default'
   contextId?: string
+  currentSprintId?: string
 }
 
 export default function GlobalSearch({
   placeholder = 'Buscar...',
   searchContext = 'default',
-  contextId
+  contextId,
+  currentSprintId,
 }: GlobalSearchProps) {
   const router = useRouter()
   const [query, setQuery] = useState('')
@@ -69,7 +114,8 @@ export default function GlobalSearch({
       const queryParams = new URLSearchParams({
         q,
         context: searchContext,
-        ...(contextId && { contextId }) 
+        ...(contextId && { contextId }),
+        ...(currentSprintId && { sprintId: currentSprintId }),
       })
 
       const res = await fetchWithSession(`/api/search?${queryParams.toString()}`)
@@ -81,7 +127,7 @@ export default function GlobalSearch({
     } finally {
       setLoading(false)
     }
-  }, [searchContext, contextId])
+  }, [searchContext, contextId, currentSprintId])
 
   useEffect(() => {
     if (timerRef.current) clearTimeout(timerRef.current)
@@ -113,6 +159,12 @@ export default function GlobalSearch({
       router.push(`/projetos/${result.id}`)
     } else if (result.type === 'card' && result.sprintId) {
       router.push(sprintPath(result.sprintId, result.projectId, result.id))
+    } else if (result.type === 'card' && result.projectId) {
+      // Card do backlog: abre no board da sprint aberta (que mostra o backlog)
+      // ou na lista de sprints do projeto.
+      router.push(currentSprintId
+        ? sprintPath(currentSprintId, result.projectId, result.id)
+        : `/projetos/${result.projectId}/sprints`)
     } else if (result.type === 'member' && contextId) {
       // Se for membro, leva o usuário para a página de membros do projeto
       // Dica: Você pode usar '?user=id' na URL para dar um highlight na página depois!
@@ -155,11 +207,7 @@ export default function GlobalSearch({
           aria-label="Resultados da busca"
         >
           {(() => {
-            const sections = [
-              { key: 'card', label: 'Cards e tarefas', items: results.filter(r => (r.type ?? 'card') === 'card') },
-              { key: 'project', label: 'Projetos', items: results.filter(r => r.type === 'project') },
-              { key: 'member', label: 'Pessoas', items: results.filter(r => r.type === 'member') },
-            ].filter(s => s.items.length > 0)
+            const sections = buildSections(results)
 
             return sections.map(section => (
               <div key={section.key}>
@@ -168,7 +216,7 @@ export default function GlobalSearch({
                 </div>
                 {section.items.map(result => (
                   <div
-                    key={result.id}
+                    key={`${section.key}-${result.id}`}
                     className="px-4 py-2.5 hover:bg-gray-50 cursor-pointer transition-colors border-b border-gray-50 last:border-0"
                     role="option"
                     aria-selected={false}
@@ -201,10 +249,21 @@ export default function GlobalSearch({
                         {/* Descrição para Cards */}
                         {result.type === 'card' && (
                           <p className="text-xs text-gray-500 mt-0.5 truncate">
-                            {result.sprintColumn}
-                            {result.sprint && <span className="ml-1 text-blue-500">· {result.sprint}</span>}
+                            {result.sprint
+                              ? <span className="text-blue-600">{result.sprint}{result.sprintStatus && SPRINT_STATUS_LABEL[result.sprintStatus] ? ` (${SPRINT_STATUS_LABEL[result.sprintStatus]})` : ''}</span>
+                              : <span className="text-slate-500">Backlog</span>}
+                            {result.sprintColumn && <span> · {result.sprintColumn}</span>}
                           </p>
                         )}
+                        {result.type === 'card' && (result.priority || result.responsibles?.length || formatTempoBusca(result.tempoSegundos ?? 0)) ? (
+                          <p className="text-[11px] text-gray-400 mt-0.5 truncate">
+                            {result.priority && PRIORITY_LABEL[result.priority] && (
+                              <span className={`font-semibold ${PRIORITY_LABEL[result.priority].cls}`}>{PRIORITY_LABEL[result.priority].label}</span>
+                            )}
+                            {result.responsibles && result.responsibles.length > 0 && <span> · {result.responsibles.join(', ')}</span>}
+                            {formatTempoBusca(result.tempoSegundos ?? 0) && <span> · ⏱ {formatTempoBusca(result.tempoSegundos ?? 0)}</span>}
+                          </p>
+                        ) : null}
 
                         {/* Descrição para Projetos ou Membros (ex: Email ou Cargo) */}
                         {(result.type === 'project' || result.type === 'member') && result.description && (

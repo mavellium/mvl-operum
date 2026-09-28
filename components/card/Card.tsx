@@ -36,6 +36,14 @@ interface CardProps {
   onTimerStarted?: (cardId: string) => void
   /** Card numa coluna de conclusão: o prazo não aparece como atrasado. */
   concluido?: boolean
+  /** Desliga o arraste (ex.: quadro filtrado/ordenado, índices não batem). */
+  dragDisabled?: boolean
+}
+
+const PRIORIDADE_STYLE: Record<string, { label: string; cls: string; dot: string }> = {
+  alta: { label: 'Alta', cls: 'bg-red-50 text-red-700', dot: 'bg-red-500' },
+  media: { label: 'Média', cls: 'bg-amber-50 text-amber-800', dot: 'bg-amber-500' },
+  baixa: { label: 'Baixa', cls: 'bg-emerald-50 text-emerald-700', dot: 'bg-emerald-500' },
 }
 
 const PRAZO_STYLE: Record<PrazoStatus, { cls: string; title: string }> = {
@@ -57,7 +65,7 @@ function formatCardTimer(seconds: number): string {
   return `${m.toString().padStart(2, '0')}:${s.toString().padStart(2, '0')}`
 }
 
-export default function Card({ card, index, columnId, onDelete, onClick, onTimerStarted, concluido = false }: CardProps) {
+export default function Card({ card, index, columnId, onDelete, onClick, onTimerStarted, concluido = false, dragDisabled = false }: CardProps) {
   const [confirmOpen, setConfirmOpen] = useState(false)
   const [isTimerRunning, setIsTimerRunning] = useState(false)
   const [elapsedSeconds, setElapsedSeconds] = useState(0)
@@ -78,6 +86,7 @@ export default function Card({ card, index, columnId, onDelete, onClick, onTimer
   // Depende do relógio e do fuso do navegador: só calcula no cliente.
   const now = useClientNow()
   const prazo = now ? prazoStatus(card.endDate, now, concluido) : null
+  const prioridade = card.priority ? PRIORIDADE_STYLE[card.priority] : undefined
 
   // Carrega o estado real do timer (mesma fonte de verdade do CardTimer no modal).
   useEffect(() => {
@@ -147,7 +156,7 @@ export default function Card({ card, index, columnId, onDelete, onClick, onTimer
 
   return (
     <>
-      <Draggable draggableId={card.id} index={index}>
+      <Draggable draggableId={card.id} index={index} isDragDisabled={dragDisabled}>
         {(provided, snapshot) => (
           <div
             ref={provided.innerRef}
@@ -196,20 +205,7 @@ export default function Card({ card, index, columnId, onDelete, onClick, onTimer
                 <p className="text-[14px] font-bold text-gray-800 leading-snug flex-1 break-words">
                   {card.title}
                 </p>
-                <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity shrink-0 -mt-1 -mr-1">
-                  {/* Prioridade (à esquerda da lixeira) */}
-                  {card.priority && (
-                    <div className="flex items-center gap-1 px-1.5 py-1 rounded-md">
-                      <div className={`w-2 h-2 rounded-full ${
-                        card.priority === 'alta' ? 'bg-red-500 shadow-[0_0_4px_rgba(239,68,68,0.5)]' :
-                        card.priority === 'media' ? 'bg-amber-500 shadow-[0_0_4px_rgba(245,158,11,0.5)]' :
-                        'bg-emerald-500 shadow-[0_0_4px_rgba(16,185,129,0.5)]'
-                      }`} />
-                      <span className="text-[11px] font-bold text-gray-600 capitalize tracking-wide">
-                        {card.priority}
-                      </span>
-                    </div>
-                  )}
+                <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 focus-within:opacity-100 transition-opacity shrink-0 -mt-1 -mr-1">
                   <button
                     onClick={e => { e.stopPropagation(); setConfirmOpen(true) }}
                     className="p-1.5 rounded-md text-gray-400 hover:text-red-600 hover:bg-red-50 transition-colors"
@@ -233,9 +229,20 @@ export default function Card({ card, index, columnId, onDelete, onClick, onTimer
                 </p>
               )}
 
-              {/* Prazo */}
-              {prazo && card.endDate && (
-                <div className="mb-1">
+              {/* Prioridade + prazo: sempre visíveis (antes a prioridade só aparecia no hover) */}
+              {(prioridade || (prazo && card.endDate)) && (
+                <div className="flex flex-wrap items-center gap-1.5 mb-1">
+                  {prioridade && (
+                    <span
+                      data-testid="card-prioridade"
+                      title={`Prioridade ${prioridade.label.toLowerCase()}`}
+                      className={`inline-flex items-center gap-1 text-[11px] font-semibold px-1.5 py-0.5 rounded ${prioridade.cls}`}
+                    >
+                      <span className={`w-1.5 h-1.5 rounded-full ${prioridade.dot}`} aria-hidden="true" />
+                      {prioridade.label}
+                    </span>
+                  )}
+                  {prazo && card.endDate && (
                   <span
                     data-testid="card-prazo"
                     data-status={prazo}
@@ -245,6 +252,7 @@ export default function Card({ card, index, columnId, onDelete, onClick, onTimer
                     <span aria-hidden="true">📅</span>
                     {formatPrazoCurto(card.endDate, now ?? undefined)}
                   </span>
+                  )}
                 </div>
               )}
 

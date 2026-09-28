@@ -51,7 +51,7 @@ export async function GET(
         return {
           id: fase?.id,
           fase: fase?.title ?? '',
-          dataLimite: props.dataLimite ?? '',
+          dataLimite: typeof props.dataLimite === 'string' ? props.dataLimite : '',
           custo: props.custo != null ? String(props.custo) : '',
         }
       }).filter(f => f.fase)

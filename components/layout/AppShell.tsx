@@ -2,6 +2,7 @@
 
 import { usePathname } from 'next/navigation'
 import GlobalSidebar from '@/components/layout/GlobalSidebar'
+import IdleLogout from '@/components/auth/IdleLogout'
 
 const HIDDEN_PATHS = ['/login', '/register', '/recuperar-senha', '/alterar-senha', '/no-project']
 
@@ -21,10 +22,11 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
 
   const parts = pathname.split('/').filter(Boolean)
   const isProjectPage = parts[0] === 'projetos' && Boolean(parts[1]) && parts[1] !== 'novo'
-  if (isProjectPage) return <>{children}</>
+  if (isProjectPage) return <><IdleLogout />{children}</>
 
   return (
     <div className="flex flex-1 overflow-hidden">
+      <IdleLogout />
       <GlobalSidebar />
       <main className="flex-1 min-w-0 h-full overflow-y-auto">
         {children}
