@@ -79,10 +79,26 @@ describe('CardService — leitura escopada por tenant', () => {
     expect(db.card.findMany).not.toHaveBeenCalled()
   })
 
-  it('search sempre inclui o filtro de tenant', async () => {
+  it('search sempre inclui o filtro de tenant (primeiro item do AND)', async () => {
     db.card.findMany.mockResolvedValue([])
     await service.search('t1', 'bug')
-    expect(db.card.findMany.mock.calls[0][0].where.AND).toEqual([scope.cardInTenant('t1')])
+    expect(db.card.findMany.mock.calls[0][0].where.AND[0]).toEqual(scope.cardInTenant('t1'))
+  })
+
+  it('search por projeto acha cards do backlog e de sprints do projeto', async () => {
+    db.card.findMany.mockResolvedValue([])
+    await service.search('t1', 'bug', { inProjectId: 'p1' })
+    expect(db.card.findMany.mock.calls[0][0].where.AND).toContainEqual({
+      OR: [{ projectId: 'p1' }, { sprint: { projectId: 'p1' } }],
+    })
+  })
+
+  it('search sem texto (cards de uma pessoa) não filtra por título', async () => {
+    db.card.findMany.mockResolvedValue([])
+    await service.search('t1', '', { inProjectId: 'p1', responsibleUserId: 'u1' })
+    const where = db.card.findMany.mock.calls[0][0].where
+    expect(where.AND).toHaveLength(2)
+    expect(where.responsibles).toEqual({ some: { userId: 'u1' } })
   })
 })
 

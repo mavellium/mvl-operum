@@ -78,25 +78,26 @@ export class CardService {
     })
   }
 
-  async search(tenantId: string, q: string, opts?: { sprintId?: string; projectId?: string; responsibleUserId?: string }) {
-    const where: {
-      AND: ReturnType<typeof cardInTenant>[]
-      deletedAt: null
-      sprintId?: string
-      projectId?: string
-      responsibles?: { some: { userId: string } }
-      OR: (
-        | { title: { contains: string; mode: 'insensitive' } }
-        | { description: { contains: string; mode: 'insensitive' } }
-      )[]
-    } = {
-      AND: [cardInTenant(tenantId)],
-      deletedAt: null,
-      OR: [
-        { title: { contains: q, mode: 'insensitive' } },
-        { description: { contains: q, mode: 'insensitive' } },
-      ],
+  async search(
+    tenantId: string,
+    q: string,
+    opts?: { sprintId?: string; projectId?: string; inProjectId?: string; responsibleUserId?: string },
+  ) {
+    const AND: object[] = [cardInTenant(tenantId)]
+    // Card do projeto no backlog (projectId) OU numa sprint do projeto (card
+    // criado dentro da sprint pode não ter projectId próprio).
+    if (opts?.inProjectId) {
+      AND.push({ OR: [{ projectId: opts.inProjectId }, { sprint: { projectId: opts.inProjectId } }] })
     }
+    if (q) {
+      AND.push({
+        OR: [
+          { title: { contains: q, mode: 'insensitive' } },
+          { description: { contains: q, mode: 'insensitive' } },
+        ],
+      })
+    }
+    const where: Record<string, unknown> = { AND, deletedAt: null }
     if (opts?.sprintId) where.sprintId = opts.sprintId
     if (opts?.projectId) where.projectId = opts.projectId
     if (opts?.responsibleUserId) where.responsibles = { some: { userId: opts.responsibleUserId } }
@@ -106,8 +107,9 @@ export class CardService {
       include: {
         tags: { include: { tag: true } },
         responsibles: { include: { user: { select: PUBLIC_USER_SELECT } } },
-        sprint: { select: { id: true, name: true } },
+        sprint: { select: { id: true, name: true, status: true, projectId: true } },
         sprintColumn: { select: { id: true, title: true } },
+        timeEntries: { where: { deletedAt: null }, select: { duration: true } },
       },
       take: 50,
       orderBy: { updatedAt: 'desc' },
