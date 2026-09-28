@@ -23,6 +23,11 @@ services:
       - "traefik.http.routers.mvl-prod.service=app-${COMPOSE_PROJECT_NAME}"
       - "traefik.http.routers.mvl-prod.middlewares=app-ratelimit@file,secure-headers@file"
 
+  # Migrations do app (schema public) — mesma imagem :prod do serviço app.
+  # O remote-deploy.sh roda `run --rm migrate` antes do `up -d`.
+  migrate:
+    image: ghcr.io/${GHCR_OWNER}/app:prod
+
   api-gateway:
     image: ghcr.io/${GHCR_OWNER}/api-gateway:prod
     deploy:

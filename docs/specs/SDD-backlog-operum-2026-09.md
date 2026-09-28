@@ -50,6 +50,7 @@ Tarefas que pedem a mesma coisa foram **fundidas**. A tabela abaixo mostra quais
 | 2 | 2.4 | Em Sprint: o menu lateral está vindo o do admin | média |
 | 2 | 2.5 | Usar 100% da tela · Scroll ao mover card · "Carregando…" infinito no backlog · Timer move para "Em andamento" (itens em teste) | média |
 | 2 | 2.6 | Prazo: filtros e ordenação (continuação do 1.7) | alta |
+| 2 | 2.7 | Zerar os erros de TypeScript (`tsc`) já existentes | média |
 | 3 | 3.1 | Ranking dos Membros: função dos stakeholders não aparece | média |
 | 3 | 3.2 | Stakeholders: adicionar pela barra de pesquisa de forma mais fácil | média |
 | 3 | 3.3 | Menu: trocar o nome "Tenants" | baixa |
@@ -108,7 +109,13 @@ Cenário: erro 500 do serviço chega ao agente com o status
 **Solução:**
 - **Deploy:** em `remote-deploy.sh`, antes do `up -d`, rodar `docker compose … --profile migration run --rm migrate` (o `prisma migrate deploy` do app). Se falhar, aborta o deploy sem trocar as imagens em execução.
 - **Rota:** o `GET` passa a tratar `EapValidationError` (422, com a mensagem). Um erro Prisma de tabela inexistente (`P2021`) é logado com o código e devolve 503 "Documento EAP indisponível: banco desatualizado". Os logs trazem `projetoId` e o código do erro.
-- 🔎 **Confirmar em produção antes do deploy** (somente leitura): `select migration_name from "_prisma_migrations" order by finished_at desc limit 5;`
+- ✅ **Confirmado em produção em 28/09/2026** (consulta somente leitura):
+  - a última migration do app aplicada é a `20260902024539_add_ata_member_refs`, e as anteriores foram aplicadas à mão;
+  - a `20260921000000_add_eap_template_document` **não foi aplicada**;
+  - `EapDocument` e `EapTemplate` não existem.
+
+  A mesma tabela `_prisma_migrations` guarda as migrations do auth-service e do file-service, que rodam `migrate deploy` no boot sem problema. Isso mostra que as entradas de outros serviços não quebram o `migrate deploy` do app.
+- `docker-compose.production.yml` fixa o serviço `migrate` na imagem `app:prod`, a mesma do app. Antes ele herdava `${IMAGE_TAG}`.
 
 **Arquivos:** `scripts/deploy/remote-deploy.sh`, `app/api/projects/[projetoId]/eap/route.ts`, teste da rota.
 
@@ -255,6 +262,28 @@ Validar cada um e corrigir o que falhar:
 
 ### 2.6 Prazo: filtros e ordenação
 Filtros "Vence esta semana" e "Atrasados", e ordenação por prazo no quadro e no backlog.
+
+### 2.7 Zerar os erros de TypeScript
+O `pnpm build` passa porque o Next não bloqueia nesses pontos, mas `npx tsc -p tsconfig.check.json --noEmit` acusa erros que já existiam antes da Fase 1. São dois grupos.
+
+**App (11 erros):**
+
+| Arquivo | Erro |
+|---|---|
+| `app/actions/projetos.ts:160` e `app/api/projects/[projetoId]/charter/route.ts:48` | `dataLimite: {}` não é `string` (macro-fases) |
+| `app/arquivos/page.tsx:56-57` | `a.card.sprint` pode ser `null` |
+| `app/projetos/[projetoId]/sprints/[sprintId]/page.tsx:58` e `app/sprints/[sprintId]/page.tsx:73` | `BacklogCard[]` não é atribuível a `SprintCard[]` |
+| `components/auth/LoginForm.tsx:18` | `unknown` passado como `FormState` |
+| `lib/custosCalc.ts:170-171` | `string \| null` passado onde se espera `string \| undefined` |
+| `prisma/seed.ts:91` | `JsonValue` não é `InputJsonValue` |
+| `services/wbsService.ts:543` | `properties` do nó não bate com `WbsNodeClient` |
+
+**Configuração:** `tsconfig.check.json` redefine `exclude` e, com isso, volta a incluir os microsserviços NestJS (`sprint-service`, `project-service` etc.). Eles aparecem com erros de decorator (TS1206/TS1270) porque são checados com o tsconfig do Next, não com o deles.
+
+**Solução:**
+1. Corrigir os 11 erros tipando na origem, sem `as any`. `BacklogCard` e `SprintCard` passam a compartilhar um tipo base em `types/kanban.ts`.
+2. `tsconfig.check.json` volta a excluir os microsserviços (cada um já tem o próprio `tsc`).
+3. Adicionar `npx tsc -p tsconfig.check.json --noEmit` ao CI, para o problema não voltar.
 
 ---
 
