@@ -196,7 +196,7 @@ export class CardService {
       }
     }
 
-    return prisma.card.update({
+    const updated = await prisma.card.update({
       where: { id },
       data: {
         ...cardData,
@@ -204,6 +204,38 @@ export class CardService {
         endDate: toDateUpdate(cardData.endDate),
       },
     })
+
+    // Gravar só a posição do card movido deixava posições repetidas na coluna
+    // (ex.: mover o 3º card para o topo deixava dois cards na posição 0) e a
+    // ordem mudava ao recarregar. Renumera destino e, se mudou, a origem.
+    if (typeof cardData.sprintPosition === 'number') {
+      const previousColumnId = (current as { sprintColumnId?: string | null }).sprintColumnId ?? null
+      const targetColumnId = cardData.sprintColumnId !== undefined ? cardData.sprintColumnId : previousColumnId
+      if (targetColumnId) await this.renumberColumn(targetColumnId, { id, index: cardData.sprintPosition })
+      if (previousColumnId && previousColumnId !== targetColumnId) await this.renumberColumn(previousColumnId)
+    }
+
+    return updated
+  }
+
+  /** Regrava sprintPosition 0..n-1 na coluna, com o card `moved` (se houver) no índice pedido. */
+  private async renumberColumn(columnId: string, moved?: { id: string; index: number }) {
+    const others = await prisma.card.findMany({
+      where: { sprintColumnId: columnId, deletedAt: null, ...(moved ? { id: { not: moved.id } } : {}) },
+      orderBy: [{ sprintPosition: 'asc' }, { createdAt: 'asc' }],
+      select: { id: true, sprintPosition: true },
+    })
+    const ordered = others.map(c => ({ id: c.id, sprintPosition: c.sprintPosition }))
+    if (moved) {
+      const index = Math.max(0, Math.min(moved.index, ordered.length))
+      // O update principal já gravou moved.index; só regrava se o índice foi ajustado.
+      ordered.splice(index, 0, { id: moved.id, sprintPosition: moved.index })
+    }
+    const updates = ordered
+      .map((c, position) => ({ ...c, position }))
+      .filter(c => c.sprintPosition !== c.position)
+      .map(c => prisma.card.update({ where: { id: c.id }, data: { sprintPosition: c.position } }))
+    if (updates.length > 0) await prisma.$transaction(updates)
   }
 
   async listMovements(tenantId: string, cardId: string) {
