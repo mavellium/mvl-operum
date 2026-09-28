@@ -12,6 +12,7 @@ import { TagSelector } from '../tag/TagSelector'
 import MultiUserSelector from './MultiUserSelector'
 import { useAutosave } from '@/hooks/useAutosave'
 import { toDatetimeLocal, fromDatetimeLocal } from '@/lib/cardUtils'
+import { ATTACHMENT_ACCEPT, ATTACHMENT_TYPES_LABEL, MAX_ATTACHMENT_MB, erroDoAnexo } from '@/lib/attachmentTypes'
 
 interface User { id: string; name: string; email: string; avatarUrl?: string | null }
 interface Tag { id: string; name: string; color: string }
@@ -30,7 +31,8 @@ interface CardModalProps {
   users?: User[]
   boardTags?: Tag[]
   attachments?: Attachment[]
-  onAttachmentUpload?: (file: File) => void
+  /** Pode devolver a Promise do envio: o modal mostra "Enviando…" até ela terminar. */
+  onAttachmentUpload?: (file: File) => void | Promise<void>
   onAttachmentView?: (attachmentId: string) => Promise<string | null>
   onAttachmentRename?: (attachmentId: string, newName: string) => void
   onAttachmentDelete?: (attachmentId: string) => void
@@ -90,6 +92,13 @@ function AttachmentIcon({ fileType }: { fileType: string }) {
     return (
       <svg className="w-4 h-4 shrink-0 text-violet-500" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
         <path strokeLinecap="round" strokeLinejoin="round" d="m2.25 15.75 5.159-5.159a2.25 2.25 0 0 1 3.182 0l5.159 5.159m-1.5-1.5 1.409-1.409a2.25 2.25 0 0 1 3.182 0l2.909 2.909m-18 3.75h16.5a1.5 1.5 0 0 0 1.5-1.5V6a1.5 1.5 0 0 0-1.5-1.5H3.75A1.5 1.5 0 0 0 2.25 6v12a1.5 1.5 0 0 0 1.5 1.5Zm10.5-11.25h.008v.008h-.008V8.25Zm.375 0a.375.375 0 1 1-.75 0 .375.375 0 0 1 .75 0Z" />
+      </svg>
+    )
+  }
+  if (fileType.startsWith('video/')) {
+    return (
+      <svg className="w-4 h-4 shrink-0 text-sky-500" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
+        <path strokeLinecap="round" d="m15.75 10.5 4.72-4.72a.75.75 0 0 1 1.28.53v11.38a.75.75 0 0 1-1.28.53l-4.72-4.72M4.5 18.75h9a2.25 2.25 0 0 0 2.25-2.25v-9a2.25 2.25 0 0 0-2.25-2.25h-9A2.25 2.25 0 0 0 2.25 7.5v9a2.25 2.25 0 0 0 2.25 2.25Z" />
       </svg>
     )
   }
@@ -166,6 +175,8 @@ export default function CardModal({
   const dialogRef = useRef<HTMLDivElement>(null)
 
   const [pendingFiles, setPendingFiles] = useState<File[]>([])
+  const [anexoErro, setAnexoErro] = useState('')
+  const [enviandoAnexo, setEnviandoAnexo] = useState(false)
 
   const imageAttachments = attachments.filter(a => a.fileType.startsWith('image/'))
   const hasCover = imageAttachments.length > 0
@@ -525,29 +536,41 @@ export default function CardModal({
                   {!readOnly && (
                     <button
                       onClick={() => fileInputRef.current?.click()}
-                      className="text-xs text-slate-500 hover:text-slate-800 transition-colors cursor-pointer"
+                      disabled={enviandoAnexo}
+                      title={`${ATTACHMENT_TYPES_LABEL}, até ${MAX_ATTACHMENT_MB} MB`}
+                      className="text-xs text-slate-500 hover:text-slate-800 transition-colors cursor-pointer disabled:cursor-wait disabled:opacity-60"
                     >
-                      + Adicionar
+                      {enviandoAnexo ? 'Enviando…' : '+ Adicionar'}
                     </button>
                   )}
                   <input
                     ref={fileInputRef}
                     type="file"
-                    accept="image/*,.pdf,.docx,.xlsx"
+                    accept={ATTACHMENT_ACCEPT}
                     className="hidden"
-                    onChange={e => {
+                    data-testid="card-anexo-input"
+                    onChange={async e => {
                       const f = e.target.files?.[0]
-                      if (f) {
-                        if (isEditing) {
-                          onAttachmentUpload?.(f)
-                        } else {
-                          setPendingFiles(prev => [...prev, f])
-                        }
-                      }
                       e.target.value = ''
+                      if (!f) return
+                      // Recusa aqui, antes de subir um vídeo inteiro para o servidor recusar.
+                      const erro = erroDoAnexo(f)
+                      setAnexoErro(erro ?? '')
+                      if (erro) return
+                      if (!isEditing) {
+                        setPendingFiles(prev => [...prev, f])
+                        return
+                      }
+                      setEnviandoAnexo(true)
+                      try {
+                        await onAttachmentUpload?.(f)
+                      } finally {
+                        setEnviandoAnexo(false)
+                      }
                     }}
                   />
                 </div>
+                {anexoErro && <p role="alert" className="text-xs text-red-600 mb-2">{anexoErro}</p>}
                 {pendingFiles.length > 0 && (
                   <ul className="space-y-0.5 mb-2">
                     {pendingFiles.map((f, i) => (

@@ -119,6 +119,19 @@ function toCardType(card: SprintCard, sprintId: string): CardType {
   }
 }
 
+/** Anexo devolvido pelo file-service (createdAt) no formato do quadro (uploadedAt). */
+function toSprintAttachment(att: Record<string, unknown>): NonNullable<SprintCard['attachments']>[number] {
+  return {
+    id: att.id as string,
+    fileName: att.fileName as string,
+    fileType: att.fileType as string,
+    filePath: att.filePath as string,
+    fileSize: att.fileSize as number,
+    isCover: att.isCover as boolean | undefined,
+    uploadedAt: (att.uploadedAt as string | Date | undefined) ?? (att.createdAt as string | Date),
+  }
+}
+
 export default function SprintBoard({ sprint, columns: initialColumns, backlogCards: initialBacklogCards, users, tags, currentUser, initialCardId, projectId }: SprintBoardProps) {
   const { toast } = useToast()
   const [columns, setColumns] = useState(initialColumns)
@@ -231,17 +244,7 @@ export default function SprintBoard({ sprint, columns: initialColumns, backlogCa
       const attachments: SprintCard['attachments'] = []
       for (const file of data.files ?? []) {
         const att = await uploadCardAttachment(c.id, file)
-        if (att) {
-          attachments.push({
-            id: att.id as string,
-            fileName: att.fileName as string,
-            fileType: att.fileType as string,
-            filePath: att.filePath as string,
-            fileSize: att.fileSize as number,
-            isCover: att.isCover as boolean | undefined,
-            uploadedAt: (att.uploadedAt as string | Date | undefined) ?? (att.createdAt as string | Date),
-          })
-        }
+        if (att) attachments.push(toSprintAttachment(att))
       }
       setBacklogCards(prev => [...prev, {
         id: c.id,
@@ -443,17 +446,7 @@ export default function SprintBoard({ sprint, columns: initialColumns, backlogCa
       const attachments: SprintCard['attachments'] = []
       for (const file of data.files ?? []) {
         const att = await uploadCardAttachment(result.card.id, file)
-        if (att) {
-          attachments.push({
-            id: att.id as string,
-            fileName: att.fileName as string,
-            fileType: att.fileType as string,
-            filePath: att.filePath as string,
-            fileSize: att.fileSize as number,
-            isCover: att.isCover as boolean | undefined,
-            uploadedAt: (att.uploadedAt as string | Date | undefined) ?? (att.createdAt as string | Date),
-          })
-        }
+        if (att) attachments.push(toSprintAttachment(att))
       }
       const newCard: SprintCard = {
         id: result.card.id,
@@ -720,22 +713,8 @@ export default function SprintBoard({ sprint, columns: initialColumns, backlogCa
             
             onAttachmentUpload={async (file) => {
               if (!openCardId) return
-              const form = new FormData()
-              form.append('cardId', openCardId)
-              form.append('file', file)
-              try {
-                const res = await fetchWithSession('/api/uploads', { method: 'POST', body: form })
-                if (res.ok) {
-                  const att = await res.json()
-                  patchCardState(openCardId, c => ({ ...c, attachments: [...(c.attachments ?? []), att] }))
-                  toast('Anexo enviado com sucesso!', 'success')
-                } else {
-                  const body = await res.json().catch(() => ({})) as { error?: string; message?: string }
-                  toast(body.error ?? body.message ?? 'Falha ao enviar o anexo.', 'error')
-                }
-              } catch {
-                toast('Erro de rede ao enviar o anexo.', 'error')
-              }
+              const att = await uploadCardAttachment(openCardId, file)
+              if (att) patchCardState(openCardId, c => ({ ...c, attachments: [...(c.attachments ?? []), toSprintAttachment(att)] }))
             }}
             onAttachmentView={async (attachmentId) => {
               if (!openCardId) return null

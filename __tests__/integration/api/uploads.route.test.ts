@@ -17,6 +17,7 @@ vi.mock('@/lib/api-client', () => ({
 import { POST } from '@/app/api/uploads/route'
 import { verifyRouteSession } from '@/lib/routeAuth'
 import { cardsApi } from '@/lib/api-client'
+import { MAX_ATTACHMENT_BYTES } from '@/lib/attachmentTypes'
 
 const mockVerifyRoute = verifyRouteSession as ReturnType<typeof vi.fn>
 const originalFetch = global.fetch
@@ -58,9 +59,40 @@ describe('POST /api/uploads', () => {
   it('returns 400 for disallowed MIME type', async () => {
     const form = new FormData()
     form.set('cardId', 'c1')
-    form.set('file', new File(['data'], 'doc.txt', { type: 'text/plain' }))
+    form.set('file', new File(['<script></script>'], 'pagina.html', { type: 'text/html' }))
     const res = await POST(makeRequest(form, 'valid-token'))
     expect(res.status).toBe(400)
+    expect((await res.json()).error).toMatch(/Tipo de arquivo não aceito \(\.html\)/)
+  })
+
+  it('returns 413 when the file is over the size limit', async () => {
+    const form = new FormData()
+    form.set('cardId', 'c1')
+    form.set('file', new File([new Uint8Array(MAX_ATTACHMENT_BYTES + 1)], 'longo.mp4', { type: 'video/mp4' }))
+    const res = await POST(makeRequest(form, 'valid-token'))
+    expect(res.status).toBe(413)
+    expect((await res.json()).error).toMatch(/O limite é 50 MB/)
+    expect(cardsApi.get).not.toHaveBeenCalled()
+  })
+
+  it.each([
+    ['clip.mp4', 'video/mp4', 'video/mp4'],
+    // o navegador não informa o tipo do .mov: a rota resolve pela extensão
+    ['gravacao.mov', '', 'video/quicktime'],
+  ])('encaminha %s ao file-service como %s → %s', async (nome, tipoInformado, tipoEnviado) => {
+    vi.mocked(cardsApi.get).mockResolvedValue({ id: 'c1' } as never)
+    const fetchMock = vi.fn().mockResolvedValue(
+      new Response(JSON.stringify({ id: 'att1' }), { status: 201, headers: { 'Content-Type': 'application/json' } }),
+    )
+    global.fetch = fetchMock
+    const form = new FormData()
+    form.set('cardId', 'c1')
+    form.set('file', new File(['video'], nome, { type: tipoInformado }))
+    const res = await POST(makeRequest(form, 'valid-token'))
+    expect(res.status).toBe(201)
+    const enviado = (fetchMock.mock.calls[0][1].body as FormData).get('file') as File
+    expect(enviado.type).toBe(tipoEnviado)
+    expect(enviado.name).toBe(nome)
   })
 
   it('returns 201 with Attachment shape on success', async () => {

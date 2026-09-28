@@ -2,8 +2,7 @@
 
 import { useRef } from 'react'
 import { Attachment } from '@/types/kanban'
-
-const ALLOWED_MIME = 'image/png,image/jpeg,image/webp,image/gif,application/pdf,application/vnd.openxmlformats-officedocument.wordprocessingml.document,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
+import { ATTACHMENT_ACCEPT } from '@/lib/attachmentTypes'
 
 const IMAGE_TYPES = ['image/png', 'image/jpeg', 'image/webp', 'image/gif']
 
@@ -94,7 +93,7 @@ export default function CardAttachments({ attachments, onUpload, onDelete, onSet
       <input
         ref={inputRef}
         type="file"
-        accept={ALLOWED_MIME}
+        accept={ATTACHMENT_ACCEPT}
         onChange={handleFileChange}
         className="text-sm text-gray-600 file:mr-2 file:py-1 file:px-3 file:rounded-lg file:border-0 file:text-xs file:font-medium file:bg-blue-50 file:text-blue-600 hover:file:bg-blue-100"
       />

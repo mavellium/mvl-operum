@@ -1,16 +1,7 @@
 import { NextResponse } from 'next/server'
 import { verifyRouteSession } from '@/lib/routeAuth'
 import { cardsApi } from '@/lib/api-client'
-
-const ALLOWED_TYPES = [
-  'image/png',
-  'image/jpeg',
-  'image/webp',
-  'image/gif',
-  'application/pdf',
-  'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
-  'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
-]
+import { erroDoAnexo, tipoDoAnexo } from '@/lib/attachmentTypes'
 
 const FILE_SERVICE_URL = (process.env.FILE_SERVICE_URL ?? '').replace(/\/$/, '')
 const INTERNAL_API_KEY = process.env.INTERNAL_API_KEY ?? ''
@@ -27,8 +18,11 @@ export async function POST(request: Request) {
 
   if (!cardId) return Response.json({ error: 'cardId é obrigatório' }, { status: 400 })
   if (!file) return Response.json({ error: 'Arquivo é obrigatório' }, { status: 400 })
-  if (!ALLOWED_TYPES.includes(file.type)) {
-    return Response.json({ error: `Tipo de arquivo não permitido. Use: ${ALLOWED_TYPES.join(', ')}` }, { status: 400 })
+  const tipo = tipoDoAnexo(file)
+  const erro = erroDoAnexo(file)
+  if (!tipo || erro) {
+    // Tipo aceito com erro = arquivo grande demais.
+    return Response.json({ error: erro }, { status: tipo ? 413 : 400 })
   }
 
   // Verify card exists and is accessible. Falha do sprint-service (5xx ou
@@ -50,7 +44,8 @@ export async function POST(request: Request) {
   }
 
   const upstream = new FormData()
-  upstream.append('file', file)
+  // O file-service valida e grava pelo Content-Type da parte: manda o tipo resolvido.
+  upstream.append('file', tipo === file.type ? file : new File([file], file.name, { type: tipo }))
   let res: Response
   try {
     res = await fetch(`${FILE_SERVICE_URL}/files/upload?cardId=${encodeURIComponent(cardId)}`, {
