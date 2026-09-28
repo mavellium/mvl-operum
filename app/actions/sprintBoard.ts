@@ -4,6 +4,7 @@ import { verifySession } from '@/lib/dal'
 import { revalidatePath } from 'next/cache'
 import { sprintsApi, cardsApi, tagsApi, filesApi } from '@/lib/api-client'
 import prisma from '@/lib/prisma'
+import { z } from 'zod'
 
 type BacklogCard = { id: string; title: string; description: string; color: string; priority?: string | null; tags?: unknown[]; attachments?: unknown[]; responsibles?: { user: { id: string; name: string; avatarUrl?: string | null } }[] }
 
@@ -225,6 +226,33 @@ export async function updateCardInSprintAction(
   try {
     await verifySession()
     const card = await cardsApi.update(cardId, data as Record<string, unknown>)
+    revalidatePath(`/sprints/${sprintId}`)
+    return { card }
+  } catch (err) {
+    return { error: err instanceof Error ? err.message : 'Erro ao atualizar card' }
+  }
+}
+
+const PatchCardSchema = z
+  .object({
+    description: z.string().max(20000, 'Descrição muito longa').optional(),
+    startDate: z.string().datetime().nullable().optional(),
+    endDate: z.string().datetime().nullable().optional(),
+  })
+  .strict()
+
+export type PatchCardInput = z.infer<typeof PatchCardSchema>
+
+/**
+ * Atualização parcial de um card (autosave da descrição e datas). Só envia os
+ * campos informados; `null` em uma data remove a data.
+ */
+export async function patchCardAction(sprintId: string, cardId: string, patch: PatchCardInput) {
+  try {
+    await verifySession()
+    const parsed = PatchCardSchema.safeParse(patch)
+    if (!parsed.success) return { error: parsed.error.issues[0]?.message ?? 'Dados inválidos' }
+    const card = await cardsApi.update(cardId, parsed.data as Record<string, unknown>)
     revalidatePath(`/sprints/${sprintId}`)
     return { card }
   } catch (err) {

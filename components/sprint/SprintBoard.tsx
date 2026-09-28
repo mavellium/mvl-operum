@@ -21,6 +21,7 @@ import {
   moveCardToSprintAction,
   moveCardToBacklogAction,
   createBacklogCardAction,
+  patchCardAction,
 } from '@/app/actions/sprintBoard'
 import { createCommentAction, getCommentsAction, updateCommentAction, deleteCommentAction } from '@/app/actions/comentarios'
 import { deleteAttachmentAction, setCoverAction, renameAttachmentAction, getAttachmentUrlAction } from '@/app/actions/attachments'
@@ -668,6 +669,12 @@ export default function SprintBoard({ sprint, columns: initialColumns, backlogCa
             users={users}
             boardTags={tags}
             onTimerStarted={handleCardTimerStarted}
+            onPatch={async patch => {
+              const cardId = openCardId
+              const result = await patchCardAction(sprint.id, cardId, patch)
+              if ('error' in result && result.error) return { error: result.error }
+              patchCardState(cardId, c => ({ ...c, ...patch }))
+            }}
             
             // Repassando os anexos (o componente CardModal já mapeia eles)
             attachments={openCardType.attachments}

@@ -10,6 +10,7 @@ import UserAvatar from '@/components/user/UserAvatar'
 import ColorPicker from './ColorPicker'
 import { TagSelector } from '../tag/TagSelector'
 import MultiUserSelector from './MultiUserSelector'
+import { useAutosave } from '@/hooks/useAutosave'
 
 interface User { id: string; name: string; email: string; avatarUrl?: string | null }
 interface Tag { id: string; name: string; color: string }
@@ -41,6 +42,17 @@ interface CardModalProps {
   onResponsiblesChange?: (responsibles: Responsible[]) => void
   /** Disparado quando o timer é iniciado dentro do modal (Correção 6). */
   onTimerStarted?: (cardId: string) => void
+  /**
+   * Grava alterações parciais de um card existente (autosave da descrição).
+   * Sem ele, a descrição só é enviada pelo botão "Salvar" do modal.
+   */
+  onPatch?: (patch: CardPatch) => Promise<{ error?: string } | void>
+}
+
+export interface CardPatch {
+  description?: string
+  startDate?: string | null
+  endDate?: string | null
 }
 
 const DEFAULT_COLOR: CardColor = '#94a3b8'
@@ -104,7 +116,7 @@ function AttachmentIcon({ fileType }: { fileType: string }) {
 export default function CardModal({
   isOpen, onClose, onSubmit, initialCard, readOnly = false, users, boardTags,
   attachments = [], onAttachmentUpload, onAttachmentView, onAttachmentRename, onAttachmentDelete, onAttachmentSetCover,
-  comments = [], onAddComment, onEditComment, onDeleteComment, currentUser, onResponsiblesChange, onTimerStarted,
+  comments = [], onAddComment, onEditComment, onDeleteComment, currentUser, onResponsiblesChange, onTimerStarted, onPatch,
 }: CardModalProps) {
 
   const [title, setTitle]                   = useState('')
@@ -155,6 +167,25 @@ export default function CardModal({
   const isEditing = !!initialCard
 
   const initialCardId = initialCard?.id
+
+  const autosaveEnabled = isOpen && isEditing && !readOnly && !!onPatch
+  const descAutosave = useAutosave(
+    draftDescription,
+    async (description: string) => {
+      const res = await onPatch?.({ description })
+      if (res && res.error) throw new Error(res.error)
+      setSavedDescription(description)
+    },
+    { enabled: autosaveEnabled },
+  )
+  const resetDescAutosave = descAutosave.reset
+
+  // O pai recria o objeto `initialCard` a cada render; reinicializar o
+  // formulário por referência apagaria o que o usuário está digitando.
+  // Só reinicializa quando abre ou quando troca de card.
+  const initialCardRef = useRef(initialCard)
+  useEffect(() => { initialCardRef.current = initialCard })
+
   const reloadTimeEntries = useCallback(async () => {
     if (!initialCardId) return
     const res = await getTimeEntriesAction(initialCardId)
@@ -164,6 +195,8 @@ export default function CardModal({
 
   useEffect(() => {
     if (!isOpen) { document.body.style.overflow = 'unset'; return }
+    const initialCard = initialCardRef.current
+    resetDescAutosave(initialCard?.description ?? '')
 
     startTransition(() => {
       setTitle(initialCard?.title ?? '')
@@ -200,7 +233,7 @@ export default function CardModal({
     }
 
     return () => { document.body.style.overflow = 'unset' }
-  }, [isOpen, initialCard])
+  }, [isOpen, initialCardId, resetDescAutosave])
 
   const handleTagToggle = async (tagId: string) => {
     if (!initialCard) return
@@ -212,9 +245,10 @@ export default function CardModal({
 
   const handleSave = () => {
     if (!title.trim()) { setError('O título é obrigatório para salvar.'); return }
+    void descAutosave.flush()
     onSubmit({
       title: title.trim(),
-      description: savedDescription,
+      description: draftDescription,
       color,
       priority,
       responsibles: selectedResponsibleIds,
@@ -223,7 +257,11 @@ export default function CardModal({
     onClose()
   }
 
-  const handleCancel = () => onClose()
+  const handleCancel = () => {
+    // Fechar pelo X/fundo não pode perder a descrição digitada.
+    void descAutosave.flush()
+    onClose()
+  }
 
   const handleDialogKeyDown = (e: React.KeyboardEvent) => {
     if (e.key !== 'Tab' || !dialogRef.current) return
@@ -246,6 +284,11 @@ export default function CardModal({
 
   const handleSaveDescription = () => {
     setSavedDescription(draftDescription)
+    setIsEditingDesc(false)
+  }
+
+  const handleCloseDescEditor = () => {
+    void descAutosave.flush()
     setIsEditingDesc(false)
   }
 
@@ -303,6 +346,15 @@ export default function CardModal({
     setDraftDescription(prev => prev + `${prefix}texto${suffix}`)
 
   const hasUnsavedDescription = draftDescription !== savedDescription
+
+  const autosaveLabel: Record<string, { text: string; cls: string } | null> = {
+    idle: null,
+    pending: { text: 'Salvando…', cls: 'text-slate-400' },
+    saving: { text: 'Salvando…', cls: 'text-slate-400' },
+    saved: { text: 'Salvo', cls: 'text-emerald-600' },
+    error: { text: 'Erro ao salvar. Tentar de novo', cls: 'text-red-600 hover:underline cursor-pointer' },
+  }
+  const autosaveInfo = autosaveEnabled ? autosaveLabel[descAutosave.status] : null
 
   if (!isOpen) return null
 
@@ -365,7 +417,18 @@ export default function CardModal({
               <div className="flex items-center justify-between mb-2">
                 <h3 className="text-xs font-semibold text-slate-500 uppercase tracking-wider">Descrição</h3>
                 <div className="flex items-center gap-2">
-                  {hasUnsavedDescription && !isEditingDesc && (
+                  {autosaveInfo && (
+                    <button
+                      type="button"
+                      aria-live="polite"
+                      disabled={descAutosave.status !== 'error'}
+                      onClick={() => { void descAutosave.flush() }}
+                      className={`text-[11px] font-medium ${autosaveInfo.cls}`}
+                    >
+                      {autosaveInfo.text}
+                    </button>
+                  )}
+                  {!autosaveEnabled && hasUnsavedDescription && !isEditingDesc && (
                     <span className="text-[10px] font-semibold bg-amber-100 text-amber-700 px-2 py-0.5 rounded-full">não salvo</span>
                   )}
                   {!isEditingDesc && !readOnly && (
@@ -397,12 +460,19 @@ export default function CardModal({
                     autoFocus
                     value={draftDescription}
                     onChange={e => setDraftDescription(e.target.value)}
+                    onBlur={() => { void descAutosave.flush() }}
                     placeholder="Adicione detalhes, critérios de aceite..."
                     className="w-full p-3 text-sm text-slate-700 outline-none min-h-[120px] resize-y"
                   />
                   <div className="flex gap-2 p-2 bg-slate-50 border-t border-slate-200">
-                    <button onClick={handleSaveDescription} className="px-3 py-1.5 bg-blue-600 hover:bg-blue-700 text-white text-xs font-medium rounded-md transition-colors cursor-pointer">Salvar</button>
-                    <button onClick={() => setIsEditingDesc(false)} className="px-3 py-1.5 text-slate-500 hover:text-slate-700 text-xs rounded-md transition-colors cursor-pointer">Cancelar</button>
+                    {autosaveEnabled ? (
+                      <button onClick={handleCloseDescEditor} className="px-3 py-1.5 bg-blue-600 hover:bg-blue-700 text-white text-xs font-medium rounded-md transition-colors cursor-pointer">Concluir</button>
+                    ) : (
+                      <>
+                        <button onClick={handleSaveDescription} className="px-3 py-1.5 bg-blue-600 hover:bg-blue-700 text-white text-xs font-medium rounded-md transition-colors cursor-pointer">Salvar</button>
+                        <button onClick={() => { setDraftDescription(savedDescription); setIsEditingDesc(false) }} className="px-3 py-1.5 text-slate-500 hover:text-slate-700 text-xs rounded-md transition-colors cursor-pointer">Cancelar</button>
+                      </>
+                    )}
                   </div>
                 </div>
               ) : (

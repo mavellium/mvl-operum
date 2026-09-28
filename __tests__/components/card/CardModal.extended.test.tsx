@@ -157,4 +157,36 @@ describe('CardModal extended', () => {
     render(<CardModal {...defaultProps} readOnly />)
     expect(screen.queryByPlaceholderText(/escreva um comentário/i)).not.toBeInTheDocument()
   })
+
+  describe('autosave da descrição', () => {
+    it('fechar pelo X logo após digitar grava a descrição (não perde o texto)', async () => {
+      const onPatch = vi.fn().mockResolvedValue(undefined)
+      const onClose = vi.fn()
+      render(<CardModal {...defaultProps} onClose={onClose} onPatch={onPatch} />)
+      await userEvent.click(screen.getByText('Description'))
+      const textarea = screen.getByPlaceholderText('Adicione detalhes, critérios de aceite...')
+      await userEvent.clear(textarea)
+      await userEvent.type(textarea, 'Texto novo')
+      await userEvent.click(screen.getByRole('button', { name: 'Fechar' }))
+      expect(onPatch).toHaveBeenCalledWith({ description: 'Texto novo' })
+      expect(onClose).toHaveBeenCalled()
+    })
+
+    it('sem onPatch mantém o fluxo antigo (Salvar/Cancelar)', async () => {
+      render(<CardModal {...defaultProps} />)
+      await userEvent.click(screen.getByText('Description'))
+      expect(screen.getByRole('button', { name: 'Cancelar' })).toBeInTheDocument()
+    })
+
+    it('mostra "Salvo" depois do autosave', async () => {
+      const onPatch = vi.fn().mockResolvedValue(undefined)
+      render(<CardModal {...defaultProps} onPatch={onPatch} />)
+      await userEvent.click(screen.getByText('Description'))
+      const textarea = screen.getByPlaceholderText('Adicione detalhes, critérios de aceite...')
+      await userEvent.type(textarea, '!')
+      await userEvent.tab()
+      expect(await screen.findByText('Salvo')).toBeInTheDocument()
+      expect(onPatch).toHaveBeenCalledWith({ description: 'Description!' })
+    })
+  })
 })
