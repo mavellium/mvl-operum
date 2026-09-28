@@ -1,5 +1,5 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest'
-import { render, screen } from '@testing-library/react'
+import { render, screen, act } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import CardModal from '@/components/card/CardModal'
 
@@ -231,5 +231,48 @@ describe('CardModal extended', () => {
         startDate: null,
       }))
     })
+  })
+})
+
+describe('CardModal — anexos', () => {
+  it('recusa arquivo de tipo não aceito sem chamar o upload', async () => {
+    const user = userEvent.setup({ applyAccept: false })
+    const onAttachmentUpload = vi.fn()
+    render(<CardModal {...defaultProps} onAttachmentUpload={onAttachmentUpload} />)
+    await user.upload(screen.getByTestId('card-anexo-input'), new File(['x'], 'setup.exe', { type: 'application/x-msdownload' }))
+    expect(screen.getByRole('alert')).toHaveTextContent(/Tipo de arquivo não aceito \(\.exe\)/)
+    expect(onAttachmentUpload).not.toHaveBeenCalled()
+  })
+
+  it('recusa vídeo acima do limite antes de enviar', async () => {
+    const user = userEvent.setup()
+    const onAttachmentUpload = vi.fn()
+    render(<CardModal {...defaultProps} onAttachmentUpload={onAttachmentUpload} />)
+    const video = new File(['x'], 'longo.mp4', { type: 'video/mp4' })
+    Object.defineProperty(video, 'size', { value: 60 * 1024 * 1024 })
+    await user.upload(screen.getByTestId('card-anexo-input'), video)
+    expect(screen.getByRole('alert')).toHaveTextContent('"longo.mp4" tem 60,0 MB. O limite é 50 MB.')
+    expect(onAttachmentUpload).not.toHaveBeenCalled()
+  })
+
+  it('envia vídeo e mostra "Enviando…" até o upload terminar', async () => {
+    const user = userEvent.setup()
+    let terminar!: () => void
+    const onAttachmentUpload = vi.fn(() => new Promise<void>(resolve => { terminar = resolve }))
+    render(<CardModal {...defaultProps} onAttachmentUpload={onAttachmentUpload} />)
+    const video = new File(['x'], 'clip.mp4', { type: 'video/mp4' })
+    await user.upload(screen.getByTestId('card-anexo-input'), video)
+    expect(onAttachmentUpload).toHaveBeenCalledWith(video)
+    expect(screen.getByRole('button', { name: 'Enviando…' })).toBeDisabled()
+    await act(async () => { terminar() })
+    expect(screen.getByRole('button', { name: '+ Adicionar' })).toBeEnabled()
+    expect(screen.queryByRole('alert')).not.toBeInTheDocument()
+  })
+
+  it('no card novo, o vídeo fica na lista para subir ao salvar', async () => {
+    const user = userEvent.setup()
+    render(<CardModal {...defaultProps} initialCard={undefined} />)
+    await user.upload(screen.getByTestId('card-anexo-input'), new File(['x'], 'clip.mov', { type: '' }))
+    expect(screen.getByText('clip.mov')).toBeInTheDocument()
   })
 })

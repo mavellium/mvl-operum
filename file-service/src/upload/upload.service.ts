@@ -9,31 +9,17 @@ import {
 import { prisma } from '../prisma'
 import { v4 as uuidv4 } from 'uuid'
 import { MinioService } from '../minio/minio.service'
-
-const ALLOWED_TYPES = [
-  'image/png',
-  'image/jpeg',
-  'image/webp',
-  'image/gif',
-  'application/pdf',
-  'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
-  'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
-]
-
-// Explicit whitelist — never derive extension from user-controlled filename
-const MIME_TO_EXT: Record<string, string> = {
-  'image/png':  '.png',
-  'image/jpeg': '.jpg',
-  'image/webp': '.webp',
-  'image/gif':  '.gif',
-  'application/pdf': '.pdf',
-  'application/vnd.openxmlformats-officedocument.wordprocessingml.document': '.docx',
-  'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet': '.xlsx',
-}
+import { ATTACHMENT_EXT_BY_MIME } from './attachment-types'
 
 const MAX_FILENAME_LENGTH = 255
 // Reject path separators and null bytes to prevent traversal / injection
 const SAFE_FILENAME_RE = /^[^/\\:*?"<>|\x00]+$/
+
+/** Tabela ou coluna inexistente: migration do file-service não aplicada. */
+function bancoDesatualizado(error: unknown): boolean {
+  const code = (error as { code?: string } | null)?.code
+  return code === 'P2021' || code === 'P2022'
+}
 
 function assertUser(userId: string | undefined): asserts userId is string {
   if (!userId) throw new ForbiddenException('Usuário não identificado')
@@ -57,12 +43,12 @@ export class UploadService {
 
   async upload(file: Express.Multer.File, cardId: string, userId: string) {
     assertUser(userId)
-    if (!ALLOWED_TYPES.includes(file.mimetype)) {
+    if (!Object.prototype.hasOwnProperty.call(ATTACHMENT_EXT_BY_MIME, file.mimetype)) {
       throw new BadRequestException(`Tipo de arquivo não permitido: ${file.mimetype}`)
     }
     validateFileName(file.originalname)
 
-    const ext = MIME_TO_EXT[file.mimetype] ?? ''
+    const ext = ATTACHMENT_EXT_BY_MIME[file.mimetype]
     const key = this.minio.buildKey('uploads', cardId, `${uuidv4()}${ext}`)
 
     let fileUrl: string
@@ -93,7 +79,11 @@ export class UploadService {
         `upload: falha ao registrar anexo — key=${key} cardId=${cardId}`,
         error instanceof Error ? error.stack : String(error),
       )
-      throw new InternalServerErrorException('Falha ao registrar o anexo')
+      throw new InternalServerErrorException(
+        bancoDesatualizado(error)
+          ? 'Falha ao registrar o anexo: o banco do serviço de arquivos está desatualizado (migration pendente).'
+          : 'Falha ao registrar o anexo',
+      )
     }
   }
 
@@ -221,7 +211,7 @@ export class UploadService {
       throw new BadRequestException('Apenas imagens são permitidas para avatar')
     }
 
-    const ext = MIME_TO_EXT[file.mimetype] ?? '.jpg'
+    const ext = ATTACHMENT_EXT_BY_MIME[file.mimetype] ?? '.jpg'
     const key = this.minio.buildKey('avatars', userId, `${userId}${ext}`)
 
     try {
@@ -238,7 +228,7 @@ export class UploadService {
       throw new BadRequestException('Apenas imagens são permitidas para logo')
     }
 
-    const ext = MIME_TO_EXT[file.mimetype] ?? '.png'
+    const ext = ATTACHMENT_EXT_BY_MIME[file.mimetype] ?? '.png'
     const key = `logos/${type}s/${entityId}${ext}`
 
     try {

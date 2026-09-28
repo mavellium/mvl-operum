@@ -17,7 +17,9 @@ import {
 import { FileInterceptor } from '@nestjs/platform-express'
 import { memoryStorage } from 'multer'
 import { UploadService } from './upload.service'
+import { MAX_ATTACHMENT_SIZE } from './attachment-types'
 
+// Avatar e logo; anexos de card usam MAX_ATTACHMENT_SIZE (vídeos).
 const MAX_FILE_SIZE = 10 * 1024 * 1024 // 10 MB
 
 function requireUserId(userId: string | undefined): asserts userId is string {
@@ -29,7 +31,7 @@ export class UploadController {
   constructor(private readonly uploadService: UploadService) {}
 
   @Post('upload')
-  @UseInterceptors(FileInterceptor('file', { storage: memoryStorage(), limits: { fileSize: MAX_FILE_SIZE } }))
+  @UseInterceptors(FileInterceptor('file', { storage: memoryStorage(), limits: { fileSize: MAX_ATTACHMENT_SIZE } }))
   async upload(
     @UploadedFile() file: Express.Multer.File,
     @Query('cardId') cardId: string,
