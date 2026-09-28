@@ -16,8 +16,8 @@ interface Attachment {
   card: {
     id: string
     title: string
-    sprintId: string
-    sprintName: string
+    sprintId: string | null
+    sprintName: string | null
     projectId?: string | null
   }
   uploadedBy: string | null
@@ -62,7 +62,7 @@ export default function ArquivosClient({ initialAttachments }: Props) {
 
   const sprints = useMemo(() => {
     const map = new Map<string, string>()
-    initialAttachments.forEach(a => map.set(a.card.sprintId, a.card.sprintName))
+    initialAttachments.forEach(a => { if (a.card.sprintId) map.set(a.card.sprintId, a.card.sprintName ?? '') })
     return Array.from(map.entries()).map(([id, name]) => ({ id, name }))
   }, [initialAttachments])
 
@@ -149,7 +149,7 @@ export default function ArquivosClient({ initialAttachments }: Props) {
                 </td>
                 <td className="px-4 py-3 hidden md:table-cell">
                   <p className="text-gray-700 truncate max-w-[180px]">{a.card.title}</p>
-                  <p className="text-xs text-gray-400">{a.card.sprintName}</p>
+                  <p className="text-xs text-gray-400">{a.card.sprintName ?? 'Backlog'}</p>
                 </td>
                 <td className="px-4 py-3 text-gray-600 hidden lg:table-cell">{a.uploadedBy ?? '—'}</td>
                 <td className="px-4 py-3 text-right text-gray-600 hidden sm:table-cell">{a.fileSizeFormatted}</td>
@@ -166,12 +166,14 @@ export default function ArquivosClient({ initialAttachments }: Props) {
                     >
                       Download
                     </a>
-                    <Link
-                      href={sprintPath(a.card.sprintId, a.card.projectId)}
-                      className="px-2.5 py-1 text-xs rounded-lg border border-gray-200 text-gray-600 hover:bg-gray-50"
-                    >
-                      Ver card
-                    </Link>
+                    {a.card.sprintId && (
+                      <Link
+                        href={sprintPath(a.card.sprintId, a.card.projectId, a.card.id)}
+                        className="px-2.5 py-1 text-xs rounded-lg border border-gray-200 text-gray-600 hover:bg-gray-50"
+                      >
+                        Ver card
+                      </Link>
+                    )}
                   </div>
                 </td>
               </tr>

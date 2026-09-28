@@ -102,4 +102,48 @@ describe('GlobalSearch', () => {
     await waitFor(() => expect(screen.queryByRole('listbox')).not.toBeInTheDocument())
     expect(screen.getByRole('searchbox')).toHaveValue('')
   })
+
+  describe('busca unificada do projeto', () => {
+    const results = [
+      { id: 'a', title: 'Card atual', type: 'card', group: 'sprint_atual', sprintId: 's1', sprint: 'Sprint 1', sprintStatus: 'ACTIVE', sprintColumn: 'A Fazer', priority: 'alta', responsibles: ['Ana'], tempoSegundos: 4200, projectId: 'p1' },
+      { id: 'o', title: 'Card antigo', type: 'card', group: 'outras_sprints', sprintId: 's0', sprint: 'Sprint 0', sprintStatus: 'COMPLETED', sprintColumn: 'Concluído', projectId: 'p1' },
+      { id: 'b', title: 'Card backlog', type: 'card', group: 'backlog', sprint: null, projectId: 'p1' },
+      { id: 'm', title: 'Card do Márcio', type: 'card', group: 'cards_pessoa', personName: 'Márcio', sprintId: 's0', sprint: 'Sprint 0', projectId: 'p1' },
+    ]
+
+    beforeEach(() => {
+      vi.stubGlobal('fetch', vi.fn().mockResolvedValue({ ok: true, json: async () => ({ results }) }))
+    })
+
+    it('envia a sprint atual e mostra os grupos na ordem, com sprint, status, prioridade, responsável e tempo', async () => {
+      const user = userEvent.setup()
+      render(<GlobalSearch searchContext="project_items" contextId="p1" currentSprintId="s1" />)
+      await user.type(screen.getByRole('searchbox'), 'card')
+      await waitFor(() => expect(screen.getByText('Card atual')).toBeInTheDocument(), { timeout: 2000 })
+
+      const url = String(vi.mocked(fetch).mock.calls.at(-1)?.[0])
+      expect(url).toContain('sprintId=s1')
+
+      const listbox = screen.getByRole('listbox')
+      const headers = ['Nesta sprint', 'Outras sprints', 'Backlog do projeto', 'Cards de Márcio']
+      const text = listbox.textContent ?? ''
+      const posicoes = headers.map(h => text.indexOf(h))
+      expect(posicoes.every(p => p >= 0)).toBe(true)
+      expect([...posicoes].sort((x, y) => x - y)).toEqual(posicoes)
+
+      expect(screen.getByText('Sprint 0 (concluída)', { exact: false })).toBeInTheDocument()
+      expect(text).toContain('Alta')
+      expect(text).toContain('Ana')
+      expect(text).toContain('1h 10m')
+    })
+
+    it('card do backlog abre no board da sprint aberta', async () => {
+      const user = userEvent.setup()
+      render(<GlobalSearch searchContext="project_items" contextId="p1" currentSprintId="s1" />)
+      await user.type(screen.getByRole('searchbox'), 'card')
+      await waitFor(() => expect(screen.getByText('Card backlog')).toBeInTheDocument(), { timeout: 2000 })
+      await user.click(screen.getByText('Card backlog'))
+      expect(mockPush).toHaveBeenCalledWith('/projetos/p1/sprints/s1?card=b')
+    })
+  })
 })

@@ -380,10 +380,11 @@ export const cardsApi = {
   createManualEntry: (cardId: string, data: Record<string, unknown>) =>
     request(`/cards/${cardId}/time-entries/manual`, { method: 'POST', body: JSON.stringify(data) }),
 
-  search: (q: string, opts?: { sprintId?: string; projectId?: string; responsibleUserId?: string }) => {
+  search: (q: string, opts?: { sprintId?: string; projectId?: string; inProjectId?: string; responsibleUserId?: string }) => {
     const params = new URLSearchParams({ q })
     if (opts?.sprintId) params.set('sprintId', opts.sprintId)
     if (opts?.projectId) params.set('projectId', opts.projectId)
+    if (opts?.inProjectId) params.set('inProjectId', opts.inProjectId)
     if (opts?.responsibleUserId) params.set('responsibleUserId', opts.responsibleUserId)
     return request<unknown[]>(`/cards/search?${params.toString()}`)
   },

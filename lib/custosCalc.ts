@@ -83,7 +83,7 @@ export interface PlanilhaResult {
   totalReal: number
 }
 
-const limparData = (iso?: string): string | null => {
+const limparData = (iso?: string | null): string | null => {
   if (!iso) return null
   const d = new Date(iso)
   if (Number.isNaN(d.getTime())) return null

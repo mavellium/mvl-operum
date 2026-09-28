@@ -105,13 +105,16 @@ export default function ProjectSidebar({ projetoId, canManageMembers }: Props) {
   ]
 
   // Contexto da busca conforme a sub-rota do projeto.
-  const subRoute = pathname.split('/')[3] ?? ''
+  const parts = pathname.split('/')
+  const subRoute = parts[3] ?? ''
+  // /projetos/:id/sprints/:sprintId → a busca prioriza os cards desta sprint.
+  const currentSprintId = subRoute === 'sprints' && parts[4] && parts[4] !== 'nova' ? parts[4] : undefined
   const search: { placeholder: string; context: 'global_projects' | 'project_items' | 'sprint_items' | 'project_members' | 'default'; contextId?: string } = (
     subRoute === 'membros'
       ? { placeholder: 'Buscar membros no projeto...', context: 'project_members', contextId: projetoId }
       : subRoute === 'funcoes' || subRoute === 'departamentos'
         ? { placeholder: 'Buscar cards e sprints no projeto...', context: 'default' }
-        : { placeholder: 'Buscar cards e sprints no projeto...', context: 'project_items', contextId: projetoId }
+        : { placeholder: 'Buscar cards, sprints e pessoas...', context: 'project_items', contextId: projetoId }
   )
 
   const title = navItems.find(i => isActive(i.href))?.label ?? 'Projeto'
@@ -125,6 +128,7 @@ export default function ProjectSidebar({ projetoId, canManageMembers }: Props) {
         searchPlaceholder={search.placeholder}
         searchContext={search.context}
         contextId={search.contextId}
+        currentSprintId={currentSprintId}
         collapsed={collapsed}
         animated={animated}
         onToggleCollapse={toggleCollapsed}

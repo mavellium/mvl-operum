@@ -11,6 +11,7 @@ vi.mock('../prisma', () => ({
     cardTag: { upsert: vi.fn(), delete: vi.fn() },
     cardResponsible: { upsert: vi.fn(), delete: vi.fn() },
     tag: { delete: vi.fn() },
+    $transaction: vi.fn(),
   },
 }))
 
@@ -32,8 +33,10 @@ import * as scope from '../common/tenant-scope'
 import { CardService } from './card.service'
 
 const db = prisma as unknown as {
+  $transaction: ReturnType<typeof vi.fn>
   card: Record<string, ReturnType<typeof vi.fn>>
   sprint: Record<string, ReturnType<typeof vi.fn>>
+  sprintColumn: Record<string, ReturnType<typeof vi.fn>>
   cardResponsible: Record<string, ReturnType<typeof vi.fn>>
   cardTag: Record<string, ReturnType<typeof vi.fn>>
   tag: Record<string, ReturnType<typeof vi.fn>>
@@ -76,10 +79,26 @@ describe('CardService — leitura escopada por tenant', () => {
     expect(db.card.findMany).not.toHaveBeenCalled()
   })
 
-  it('search sempre inclui o filtro de tenant', async () => {
+  it('search sempre inclui o filtro de tenant (primeiro item do AND)', async () => {
     db.card.findMany.mockResolvedValue([])
     await service.search('t1', 'bug')
-    expect(db.card.findMany.mock.calls[0][0].where.AND).toEqual([scope.cardInTenant('t1')])
+    expect(db.card.findMany.mock.calls[0][0].where.AND[0]).toEqual(scope.cardInTenant('t1'))
+  })
+
+  it('search por projeto acha cards do backlog e de sprints do projeto', async () => {
+    db.card.findMany.mockResolvedValue([])
+    await service.search('t1', 'bug', { inProjectId: 'p1' })
+    expect(db.card.findMany.mock.calls[0][0].where.AND).toContainEqual({
+      OR: [{ projectId: 'p1' }, { sprint: { projectId: 'p1' } }],
+    })
+  })
+
+  it('search sem texto (cards de uma pessoa) não filtra por título', async () => {
+    db.card.findMany.mockResolvedValue([])
+    await service.search('t1', '', { inProjectId: 'p1', responsibleUserId: 'u1' })
+    const where = db.card.findMany.mock.calls[0][0].where
+    expect(where.AND).toHaveLength(2)
+    expect(where.responsibles).toEqual({ some: { userId: 'u1' } })
   })
 })
 
@@ -143,6 +162,36 @@ describe('CardService — escrita escopada por tenant', () => {
 
     await service.update('t1', 'c1', { endDate: '2026-09-30T23:59:00.000Z' })
     expect(db.card.update.mock.calls[1][0].data.endDate).toEqual(new Date('2026-09-30T23:59:00.000Z'))
+  })
+
+  it('mover para o topo renumera a coluna inteira (sem posições repetidas)', async () => {
+    db.card.findFirst.mockResolvedValue({ id: 'C', projectId: 'p1', sprintId: 's1', sprintColumnId: 'col' })
+    db.card.update.mockImplementation(async (args: { where: { id: string }; data: object }) => ({ id: args.where.id, ...args.data }))
+    db.card.findMany.mockResolvedValue([
+      { id: 'A', sprintPosition: 0 },
+      { id: 'B', sprintPosition: 1 },
+    ])
+    db.$transaction.mockResolvedValue([])
+
+    await service.update('t1', 'C', { sprintColumnId: 'col', sprintPosition: 0 })
+
+    const renumber = db.card.update.mock.calls.slice(1).map(([a]) => [a.where.id, a.data.sprintPosition])
+    // C já foi gravado na posição 0 pelo update principal; A e B descem uma posição.
+    expect(renumber).toEqual([['A', 1], ['B', 2]])
+    expect(db.card.findMany.mock.calls[0][0].where).toMatchObject({ sprintColumnId: 'col', id: { not: 'C' } })
+  })
+
+  it('mudar de coluna renumera também a coluna de origem', async () => {
+    db.card.findFirst.mockResolvedValue({ id: 'X', projectId: 'p1', sprintId: 's1', sprintColumnId: 'origem' })
+    db.sprintColumn.findUnique.mockResolvedValue({ title: 'col' })
+    db.card.update.mockResolvedValue({})
+    db.card.findMany.mockResolvedValueOnce([]).mockResolvedValueOnce([{ id: 'Y', sprintPosition: 1 }])
+    db.$transaction.mockResolvedValue([])
+
+    await service.update('t1', 'X', { sprintColumnId: 'destino', sprintPosition: 0 })
+
+    expect(db.card.findMany.mock.calls.map(([a]) => a.where.sprintColumnId)).toEqual(['destino', 'origem'])
+    expect(db.card.update).toHaveBeenCalledWith({ where: { id: 'Y' }, data: { sprintPosition: 0 } })
   })
 
   it('addResponsible rejeita usuário de outro tenant', async () => {

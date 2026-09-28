@@ -88,7 +88,7 @@ async function ensureEapTemplate(tenantId: string) {
       version: '1.0',
       description: EAP_TEMPLATE_DESCRIPTION,
       isActive: true,
-      structure: structure as unknown as Prisma.JsonValue,
+      structure: structure as unknown as Prisma.InputJsonValue,
     },
   })
 }
