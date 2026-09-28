@@ -511,6 +511,7 @@ export default function SprintBoard({ sprint, columns: initialColumns, backlogCa
         currentUser={currentUser} 
         tags={tags}
         onChangeBackground={setBoardBg} 
+        projectId={projectId}
       />
 
       <div
