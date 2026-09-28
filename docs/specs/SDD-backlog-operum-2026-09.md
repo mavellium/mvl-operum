@@ -331,7 +331,16 @@ Um único combobox:
 - Timeout configurável por `SESSION_IDLE_MINUTES` (padrão de 30 min).
 - Um componente cliente `IdleLogout` observa a atividade (mouse, teclado, visibilidade). Com o tempo esgotado, chama a action de logout e redireciona para `/login?from=<rota>`. Aviso 1 minuto antes: "Sua sessão vai expirar".
 - O cookie `session` vira cookie de sessão (sem `maxAge`), o que encerra a sessão ao fechar o navegador. O JWT mantém o `exp` atual como teto.
-- ⚠️ **DECISÃO:** confirmar o tempo padrão (30 min).
+- ✅ Padrão de 30 min, ajustável por variável de ambiente.
+
+### Status da Fase 3 (28/09/2026)
+
+| Item | Situação |
+|---|---|
+| 3.1 Ranking | Corrigido: mostra os cargos do membro no projeto (`UserProject.role`), com o cargo global como fallback (`lib/cargos.ts`) |
+| 3.2 Stakeholders pela busca | Feito: ao digitar, o painel "Adicionar ao projeto" traz o diretório global (Vincular), os usuários da instituição (Adicionar) e as opções de criar |
+| 3.3 "Tenants" | Renomeado para "Instituições" em toda a interface (menu, admin, perfil, trocador, mensagens). Antes a página dizia "Workspaces" |
+| 3.4 Sessão | Feita, com o padrão de 30 min (`NEXT_PUBLIC_SESSION_IDLE_MINUTES`). O servidor controla pelo `last_seen` no proxy; o navegador mostra um aviso 1 min antes. Fechar o navegador encerra a sessão. O login volta para a página de origem |
 
 ---
 
