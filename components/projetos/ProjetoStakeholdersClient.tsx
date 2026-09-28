@@ -494,7 +494,25 @@ export default function ProjetoStakeholdersClient({
     searchProjeto.trim().length > 0
       ? dispExterno.find(s => s.name.toLowerCase() === searchProjeto.trim().toLowerCase())
       : undefined
-  const vinculandoDiretorio = candidatoDiretorio ? loadingId === candidatoDiretorio.id : false
+
+  // Ao digitar na busca do projeto, sugere também quem ainda NÃO está no
+  // projeto: stakeholders do diretório global e usuários da instituição.
+  const termoProjeto = searchProjeto.trim().toLowerCase()
+  const MAX_SUGESTOES = 5
+  const sugestoesExternos = termoProjeto
+    ? dispExterno
+        .filter(s =>
+          s.name.toLowerCase().includes(termoProjeto) ||
+          (s.company ?? '').toLowerCase().includes(termoProjeto) ||
+          (s.email ?? '').toLowerCase().includes(termoProjeto),
+        )
+        .slice(0, MAX_SUGESTOES)
+    : []
+  const sugestoesInternos = termoProjeto
+    ? dispInterno
+        .filter(u => u.name.toLowerCase().includes(termoProjeto) || u.email.toLowerCase().includes(termoProjeto))
+        .slice(0, MAX_SUGESTOES)
+    : []
 
   // ── Form helpers
   function setField<K extends keyof FormState>(key: K, value: FormState[K]) {
@@ -1253,36 +1271,6 @@ export default function ProjetoStakeholdersClient({
                   : 'Nenhum stakeholder no projeto.'
                 : 'Nenhum resultado para a busca.'}
             </p>
-            {isAdmin && searchProjeto.trim().length > 0 && (
-              candidatoDiretorio ? (
-                <button
-                  onClick={handleQuickCreateProjeto}
-                  disabled={vinculandoDiretorio}
-                  className="mt-4 inline-flex items-center gap-2 px-4 py-2 text-sm font-semibold text-blue-700 bg-blue-50 border border-blue-100 rounded-xl hover:bg-blue-100 transition-colors disabled:opacity-50"
-                >
-                  {vinculandoDiretorio ? <Spinner /> : <UserPlus className="w-4 h-4" />}
-                  Vincular &quot;{candidatoDiretorio.name}&quot; ao projeto
-                </button>
-              ) : (
-                <div className="mt-4 flex flex-col gap-2 items-stretch">
-                  <button
-                    onClick={handleCreateMembroDaBusca}
-                    className="inline-flex items-center justify-center gap-2 px-4 py-2 text-sm font-semibold text-indigo-700 bg-indigo-50 border border-indigo-100 rounded-xl hover:bg-indigo-100 transition-colors"
-                  >
-                    <Users className="w-4 h-4" />
-                    Criar &quot;{searchProjeto.trim()}&quot; como membro da equipe
-                  </button>
-                  <button
-                    onClick={handleQuickCreateProjeto}
-                    disabled={quickLoading === 'col1'}
-                    className="inline-flex items-center justify-center gap-2 px-4 py-2 text-sm font-semibold text-blue-700 bg-blue-50 border border-blue-100 rounded-xl hover:bg-blue-100 transition-colors disabled:opacity-50"
-                  >
-                    {quickLoading === 'col1' ? <Spinner /> : <Building2 className="w-4 h-4" />}
-                    Criar &quot;{searchProjeto.trim()}&quot; como externo
-                  </button>
-                </div>
-              )
-            )}
           </div>
         ) : (
           <ul className={`space-y-2 overflow-y-auto max-h-[600px] px-2 py-2${isReordering ? ' opacity-70' : ''}`}>
@@ -1371,6 +1359,86 @@ export default function ProjetoStakeholdersClient({
               </li>
             ))}
           </ul>
+        )}
+
+        {/* Adicionar a partir da busca: diretório global, usuários e criação */}
+        {isAdmin && termoProjeto && (
+          <div className="border-t border-gray-100 px-4 py-3 space-y-3 bg-slate-50/50" aria-label="Adicionar ao projeto">
+            <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest">Adicionar ao projeto</p>
+
+            {sugestoesExternos.length > 0 && (
+              <div>
+                <p className="text-[11px] font-semibold text-slate-500 mb-1">Diretório de stakeholders</p>
+                <ul className="space-y-1">
+                  {sugestoesExternos.map(s => (
+                    <li key={s.id} className="flex items-center gap-2 p-2 rounded-lg bg-white border border-slate-100">
+                      <Avatar name={s.name} url={s.logoUrl} size="sm" />
+                      <div className="flex-1 min-w-0">
+                        <p className="text-sm font-medium text-gray-900 truncate">{s.name}</p>
+                        {s.company && <p className="text-[11px] text-gray-400 truncate">{s.company}</p>}
+                      </div>
+                      <button
+                        onClick={() => { handleBindExterno(s); setSearchProjeto('') }}
+                        disabled={loadingId === s.id}
+                        aria-label={`Vincular "${s.name}" ao projeto`}
+                        className="inline-flex items-center gap-1 px-2 py-1 text-xs font-semibold text-blue-700 bg-blue-50 border border-blue-100 rounded-lg hover:bg-blue-100 disabled:opacity-50"
+                      >
+                        {loadingId === s.id ? <Spinner /> : <UserPlus className="w-3.5 h-3.5" />}
+                        Vincular
+                      </button>
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            )}
+
+            {sugestoesInternos.length > 0 && (
+              <div>
+                <p className="text-[11px] font-semibold text-slate-500 mb-1">Usuários da instituição</p>
+                <ul className="space-y-1">
+                  {sugestoesInternos.map(u => (
+                    <li key={u.id} className="flex items-center gap-2 p-2 rounded-lg bg-white border border-slate-100">
+                      <Avatar name={u.name} url={u.avatarUrl} size="sm" />
+                      <div className="flex-1 min-w-0">
+                        <p className="text-sm font-medium text-gray-900 truncate">{u.name}</p>
+                        <p className="text-[11px] text-gray-400 truncate">{u.email}</p>
+                      </div>
+                      <button
+                        onClick={() => { handleAddInterno(u); setSearchProjeto('') }}
+                        disabled={loadingId === u.id}
+                        aria-label={`Adicionar "${u.name}" ao projeto`}
+                        className="inline-flex items-center gap-1 px-2 py-1 text-xs font-semibold text-indigo-700 bg-indigo-50 border border-indigo-100 rounded-lg hover:bg-indigo-100 disabled:opacity-50"
+                      >
+                        {loadingId === u.id ? <Spinner /> : <UserPlus className="w-3.5 h-3.5" />}
+                        Adicionar
+                      </button>
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            )}
+
+            {/* Criar: só quando não há um externo com o mesmo nome (evita duplicata) */}
+            {!candidatoDiretorio && (
+              <div className="flex flex-col gap-2 items-stretch">
+                <button
+                  onClick={handleCreateMembroDaBusca}
+                  className="inline-flex items-center justify-center gap-2 px-4 py-2 text-sm font-semibold text-indigo-700 bg-indigo-50 border border-indigo-100 rounded-xl hover:bg-indigo-100 transition-colors"
+                >
+                  <Users className="w-4 h-4" />
+                  Criar &quot;{searchProjeto.trim()}&quot; como membro da equipe
+                </button>
+                <button
+                  onClick={handleQuickCreateProjeto}
+                  disabled={quickLoading === 'col1'}
+                  className="inline-flex items-center justify-center gap-2 px-4 py-2 text-sm font-semibold text-blue-700 bg-blue-50 border border-blue-100 rounded-xl hover:bg-blue-100 transition-colors disabled:opacity-50"
+                >
+                  {quickLoading === 'col1' ? <Spinner /> : <Building2 className="w-4 h-4" />}
+                  Criar &quot;{searchProjeto.trim()}&quot; como externo
+                </button>
+              </div>
+            )}
+          </div>
         )}
       </div>
 
