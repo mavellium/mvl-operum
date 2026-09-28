@@ -7,6 +7,7 @@ import KPICard from '@/components/dashboard/KPICard'
 import SprintCostChart from '@/components/dashboard/SprintCostChart'
 import UserHoursChart from '@/components/dashboard/UserHoursChart'
 import UserRankingTable from '@/components/dashboard/UserRankingTable'
+import { cargoNoProjeto } from '@/lib/cargos'
 import OverdueCardsList from '@/components/dashboard/OverdueCardsList'
 import Link from 'next/link'
 import type { Metadata } from 'next'
@@ -69,7 +70,9 @@ async function getProjetoDashboardData(projetoId: string) {
       return {
         id: m.userId,
         name: m.user.name,
-        cargo: m.user.cargo,
+        // Função no projeto (a mesma de Stakeholders); o cargo global do
+        // usuário quase nunca é preenchido e fica só como fallback.
+        cargo: cargoNoProjeto(m.role, m.user.cargo),
         avatarUrl: m.user.avatarUrl,
         horasTotais,
         custoTotal,

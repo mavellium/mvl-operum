@@ -2,6 +2,8 @@
 
 > **Escopo:** as 36 tarefas abertas do projeto **Operum** (tenant "Fábio", Sprint 1 + backlog), levantadas em 28/09/2026. Inclui os pedidos do documento "07 - Ajustes e melhorias sistema Operum 26-09-26" (Prof. Fábio), bugs do quadro e melhorias do MCP.
 >
+> **Atualização (28/09, noite):** 11 tarefas criadas depois da primeira versão entraram nas novas Fases 4 (correções rápidas) e 5 (permissões) e no item 7.4 (Termo de Abertura). As fases seguintes foram renumeradas: EAP 4→6, Documentos 5→7, MCP 6→8.
+>
 > Segue a arquitetura do repo: Next.js 16 (App Router, `proxy.ts`), React 19, Prisma 7, Zod 4, Vitest 4, microsserviços NestJS atrás do api-gateway e multi-tenant via `verifySession`. Actions finas → services → auditoria.
 >
 > Marcações: **✅** causa confirmada no código • **🔎** hipótese a confirmar em produção • **⚠️ DECISÃO** pendente • **⛔** bloqueado por insumo externo.
@@ -13,9 +15,11 @@
 - [Fase 1 — Erros, perda de dados e prioridade alta](#fase-1--erros-perda-de-dados-e-prioridade-alta)
 - [Fase 2 — Kanban e card no uso diário](#fase-2--kanban-e-card-no-uso-diário)
 - [Fase 3 — Cadastros, ranking e sessão](#fase-3--cadastros-ranking-e-sessão)
-- [Fase 4 — EAP / WBS](#fase-4--eap--wbs)
-- [Fase 5 — Documentos (⛔ aguardando modelos)](#fase-5--documentos--aguardando-modelos)
-- [Fase 6 — MCP](#fase-6--mcp)
+- [Fase 4 — Correções rápidas (tarefas de 28/09)](#fase-4--correções-rápidas-tarefas-de-2809)
+- [Fase 5 — Permissões por função e por usuário](#fase-5--permissões-por-função-e-por-usuário)
+- [Fase 6 — EAP / WBS](#fase-6--eap--wbs)
+- [Fase 7 — Documentos](#fase-7--documentos)
+- [Fase 8 — MCP](#fase-8--mcp)
 - [Fora do escopo](#fora-do-escopo)
 - [Processo por tarefa](#processo-por-tarefa)
 
@@ -56,15 +60,24 @@ Tarefas que pedem a mesma coisa foram **fundidas**. A tabela abaixo mostra quais
 | 3 | 3.2 | Stakeholders: adicionar pela barra de pesquisa de forma mais fácil | média |
 | 3 | 3.3 | Menu: trocar o nome "Tenants" | baixa |
 | 3 | 3.4 | Adicionar controle de sessão (expirar por inatividade) | média |
-| 4 | 4.1 | EAP: ícone de expansão na parte inferior central, só "+" | média |
-| 4 | 4.2 | A EAP só organiza na forma normal e vertical · Adicionar o jeito de visualizar do vídeo | média |
-| 4 | 4.3 | EAP: modos "WBS Chart View Details" e "WBS Hours and Cost View" | média |
-| 4 | 4.4 | Gráfico de Gantt do projeto | média |
-| 5 | 5.1 | Documentos: Formulário de Partes Interessadas em paisagem | média ⛔ |
-| 5 | 5.2 | Documentos: corrigir Termo de Abertura | média ⛔ |
-| 5 | 5.3 | Documentos: corrigir Atas | média ⛔ |
-| 6 | 6.1 | MCP: copiar/importar para dentro de um projeto existente | média |
-| 6 | 6.2 | MCP: tool para anexar arquivos em cards | média |
+| 4 | 4.1 | Ao pesquisar por um card, ele aparece, mas clicar não abre o card | média (bug) |
+| 4 | 4.2 | Ao cadastrar um novo stakeholder, já trazer a tela correta para não ter que editar de novo | média |
+| 4 | 4.3 | Validação de horas por dia no cadastro do stakeholder | média |
+| 4 | 4.4 | Redefinir senha: adicionar um olho para visualizar a senha | média |
+| 4 | 4.5 | Planilha de custos baixada: subtotal alinhado à direita | média |
+| 5 | 5.1 | Definir o que o usuário tem de acesso · O acesso às permissões é feito em Funções e no próprio usuário | média (épico) |
+| 5 | 5.2 | Usuários comuns têm acesso a todos os documentos · Usuário comum edita e gera nova versão, aprovada pelo gerente | média |
+| 5 | 5.3 | Planilha de Custos: usuário comum edita o realizado das linhas em que é "Elaborado por" | média |
+| 6 | 6.1 | EAP: ícone de expansão na parte inferior central, só "+" | média |
+| 6 | 6.2 | A EAP só organiza na forma normal e vertical · Adicionar o jeito de visualizar do vídeo | média |
+| 6 | 6.3 | EAP: modos "WBS Chart View Details" e "WBS Hours and Cost View" | média |
+| 6 | 6.4 | Gráfico de Gantt do projeto | média |
+| 7 | 7.1 | Documentos: Formulário de Partes Interessadas em paisagem | média ⛔ |
+| 7 | 7.2 | Documentos: corrigir Termo de Abertura | média ⛔ |
+| 7 | 7.3 | Documentos: corrigir Atas | média ⛔ |
+| 7 | 7.4 | Termo de Abertura: formulário para digitar e botão para gerar o documento, com histórico | média |
+| 8 | 8.1 | MCP: copiar/importar para dentro de um projeto existente | média |
+| 8 | 8.2 | MCP: tool para anexar arquivos em cards | média |
 | — | — | Integrar Operum com MCP Claude (entregue na PR #19, validar e fechar) | média |
 | — | — | Adicionar plano de custo (já existe em `/projetos/:id/planilha-custos`, validar e fechar) | média |
 | — | — | Integração com o Zoom (vai para SDD próprio) | média |
@@ -331,31 +344,160 @@ Um único combobox:
 - Timeout configurável por `SESSION_IDLE_MINUTES` (padrão de 30 min).
 - Um componente cliente `IdleLogout` observa a atividade (mouse, teclado, visibilidade). Com o tempo esgotado, chama a action de logout e redireciona para `/login?from=<rota>`. Aviso 1 minuto antes: "Sua sessão vai expirar".
 - O cookie `session` vira cookie de sessão (sem `maxAge`), o que encerra a sessão ao fechar o navegador. O JWT mantém o `exp` atual como teto.
-- ⚠️ **DECISÃO:** confirmar o tempo padrão (30 min).
+- ✅ Padrão de 30 min, ajustável por variável de ambiente.
+
+### Status da Fase 3 (28/09/2026)
+
+| Item | Situação |
+|---|---|
+| 3.1 Ranking | Corrigido: mostra os cargos do membro no projeto (`UserProject.role`), com o cargo global como fallback (`lib/cargos.ts`) |
+| 3.2 Stakeholders pela busca | Feito: ao digitar, o painel "Adicionar ao projeto" traz o diretório global (Vincular), os usuários da instituição (Adicionar) e as opções de criar |
+| 3.3 "Tenants" | Renomeado para "Instituições" em toda a interface (menu, admin, perfil, trocador, mensagens). Antes a página dizia "Workspaces" |
+| 3.4 Sessão | Feita, com o padrão de 30 min (`NEXT_PUBLIC_SESSION_IDLE_MINUTES`). O servidor controla pelo `last_seen` no proxy; o navegador mostra um aviso 1 min antes. Fechar o navegador encerra a sessão. O login volta para a página de origem |
 
 ---
 
-## Fase 4 — EAP / WBS
+## Fase 4 — Correções rápidas (tarefas de 28/09)
+
+Tarefas criadas em 28/09/2026, depois do SDD original. São correções pequenas, sem dependência entre si. A 4.1 é bug e vem primeiro.
+
+### 4.1 Clicar num card da busca não abre o card ✅ causa confirmada
+**Problema:** a busca mostra o card, mas clicar nele não abre o card.
+
+**Causa:** o clique navega para `/projetos/:p/sprints/:s?card=<id>`, e o `SprintBoard` só lê o card da URL na montagem (`useState(initialCardId)`, em `components/sprint/SprintBoard.tsx`). Quando o usuário já está numa sprint, o Next reaproveita o componente e o `?card=` novo é ignorado. O mesmo acontece ao ir para outra sprint pela busca. O bug continua depois da Fase 2, que mudou a busca, mas não o board.
+
+**Solução:** o board passa a reagir à mudança de `initialCardId`, abrindo o card sempre que a URL traz um `?card=` diferente. Ao fechar o card, o `?card=` sai da URL (`router.replace`), para que clicar de novo no mesmo resultado também funcione. Teste: renderizar o board, trocar o `initialCardId` e ver o modal abrir.
+
+### 4.2 Stakeholder novo já "na tela certa" ✅ causa confirmada
+**Problema:** depois de cadastrar um stakeholder, é preciso abri-lo de novo em "Editar" para completar os dados.
+
+**Causa:** em `components/projetos/ProjetoStakeholdersClient.tsx` → `handleSave`:
+- **Membro da equipe:** a criação envia só nome, e-mail, senha e endereço. Cargos, departamento, remuneração e horas por dia preenchidos no formulário são **descartados**, e o formulário fecha.
+- **Externo:** o formulário fecha, e o stakeholder criado vai para o diretório sem ficar aberto.
+- **Criação rápida pela busca:** cria só com o nome e não abre nada.
+
+**Solução:**
+1. Depois de criar e vincular um membro, gravar na mesma ação os dados do projeto (cargos, departamento, remuneração, horas/dia) pelo mesmo caminho da edição (`updateProjetoMemberAction`).
+2. Ao terminar qualquer criação (formulário ou busca), abrir o stakeholder recém-criado **em modo de edição**, com os dados preenchidos, em vez de fechar o formulário.
+
+### 4.3 Validação de horas por dia
+**Problema:** o campo "Horas por dia" do stakeholder aceita qualquer valor positivo (ex.: 30). O servidor (`app/actions/projetos.ts`) só exige que seja maior que zero, e o valor entra no cálculo de valor/hora e da planilha de custos.
+
+**Solução:**
+- regra única em `lib/validation`: número maior que 0 e até 24, com no máximo 2 casas decimais;
+- mensagem no próprio campo ("Informe entre 0,5 e 24 horas");
+- o botão Salvar fica bloqueado enquanto o valor for inválido;
+- a mesma validação na action, porque o cliente não é confiável;
+- aceitar vírgula como separador decimal ("7,5").
+
+### 4.4 Olho para mostrar a senha
+**Problema:** só o login tem o botão de mostrar a senha. As telas de redefinir senha (`RecuperarSenhaForm`), primeiro acesso (`app/alterar-senha`), perfil (`ChangePasswordForm`) e cadastro de usuário (admin e stakeholders) não têm.
+
+**Solução:** um componente `PasswordInput`, com o botão de olho, `aria-label` "Mostrar senha"/"Ocultar senha" e `aria-pressed`, extraído do `LoginForm` e usado em todos os campos de senha.
+
+### 4.5 Subtotal da planilha exportada alinhado à direita
+**Problema:** em `lib/exports/planilhaCustosXlsx.ts`, o rótulo "Sub-total …" (células A:C mescladas) fica alinhado à esquerda.
+
+**Solução:** `alignment: { horizontal: 'right' }` no rótulo do subtotal e também no do "TOTAL GERAL", para ficarem consistentes. Teste lendo o `.xlsx` gerado com o exceljs.
+
+---
+
+## Fase 5 — Permissões por função e por usuário
+
+Épico que junta cinco tarefas de 28/09. Ele vem antes da EAP porque define o que o usuário comum pode fazer nos documentos e na planilha: sem ele, a Fase 7 teria de ser refeita.
+
+**Situação atual:**
+- As tabelas `Permission` e `RolePermission` existem no banco, mas **nenhum código as consulta**.
+- A autorização é binária: `role === 'admin' || isProjectManager(...)`, espalhada por cerca de 25 arquivos.
+- O Termo de Abertura já tem o fluxo "membro salva versão pendente → gerente aprova" (`charter/versions`), mas os outros documentos não têm.
+
+### 5.1 Modelo de permissões (funções + ajuste por usuário)
+Pedido: as permissões vêm da função (definida pelo admin no cadastro de funções, vale para todos os projetos) e podem ser ajustadas por usuário, para mais ou para menos, de forma global ou só num projeto.
+
+**Catálogo de permissões** (seed idempotente em `Permission`, por recurso e ação):
+
+| Recurso | Ações |
+|---|---|
+| `projeto` | ver · editar dados · gerenciar membros e stakeholders |
+| `quadro` | ver · criar/editar cards · mover · excluir cards · gerenciar sprints e colunas |
+| `documentos` | ver · editar (gera versão pendente) · aprovar versões · excluir |
+| `planilha` | ver · editar orçado · editar realizado próprio · editar realizado de todos |
+| `cadastros` | gerenciar funções e departamentos |
+
+**Funções padrão** (o admin pode mudar tudo depois):
+
+| Função | Permissões |
+|---|---|
+| Gerente de Projeto | todas as do projeto |
+| Membro (sem função com permissão) | ver tudo · criar/editar/mover cards · documentos: editar (versão pendente) · planilha: realizado próprio |
+| Tech Lead ⚠️ | as do membro + gerenciar sprints e colunas + planilha: realizado de todos |
+| PO ⚠️ | as do membro + editar dados do projeto + gerenciar stakeholders |
+
+**Ajuste por usuário:** tabela nova `UserPermission { userId, projectId?, permissionId, effect: GRANT | DENY }`. Sem `projectId`, o ajuste vale para todos os projetos.
+
+**Resolução**, numa função pura `resolverPermissoes()`:
+1. Admin tem tudo.
+2. Base: a união das permissões das funções do usuário no projeto.
+3. Aplicam-se os GRANT e DENY globais.
+4. Por último, os do projeto. Um DENY no projeto vence um GRANT global.
+
+**Aplicação:**
+- `services/authz.ts` com `can(session, projectId, 'documentos:aprovar')`, usado nas actions e rotas, substituindo aos poucos os `isProjectManager`;
+- a interface usa o mesmo resultado para esconder ou desabilitar botões.
+
+**Telas:**
+- Cadastro de Funções (admin): matriz de permissões por função.
+- Usuário (admin) e Stakeholders do projeto: "Permissões" com herdadas, concedidas e negadas.
+
+**⚠️ DECISÕES:**
+1. Confirmar as permissões de Tech Lead e PO.
+2. Definir de onde vêm as "funções do usuário no projeto". Hoje há duas fontes: os cargos em texto (`UserProject.role`, vários por pessoa, os que aparecem em Stakeholders) e o `UserProjectRole` (um por pessoa, usado para o gerente). Recomendação: **os cargos**, que são o que o usuário vê e edita. Cada cargo é casado com a `Role` pela `funcaoKey`, e a pessoa recebe a união das permissões.
+
+### 5.2 Usuário comum nos documentos (versão pendente e logs)
+**Pedido:**
+- usuários comuns veem **todos** os documentos do projeto;
+- podem editar e gerar uma nova versão, que fica pendente até o gerente aprovar;
+- tudo fica registrado nos logs.
+
+**Solução:**
+- Estender a todos os documentos (EAP, Atas, Partes Interessadas, Termo) o fluxo que o Termo já tem: com `documentos:editar`, a pessoa salva uma versão `PENDING`; com `documentos:aprovar`, aprova ou rejeita.
+- A versão aprovada vira a vigente. A pendente aparece destacada no histórico, com quem fez e o que mudou.
+- Cada ação (editar, salvar versão, aprovar, rejeitar, excluir) grava no `AuditLog` via `registrarAcao`, com o documento, a versão e o usuário.
+- O histórico de cada documento ganha uma aba **Registro**, que lê esses logs. Hoje nenhuma tela lê o `AuditLog` (ver `docs/mcp/gaps.md`).
+
+### 5.3 Planilha de Custos: realizado das próprias linhas
+**Pedido:** o usuário comum edita o valor **realizado** das linhas em que ele é o "Elaborado por", e a cor diferencia o que ele pode e o que não pode editar.
+
+**Solução:**
+- **Interface** (`components/custos/PlanilhaCustosView.tsx`): hoje `canEdit` vale para a linha inteira. Passa a haver permissão por campo e por linha:
+  - campos do realizado (tempo real, materiais reais, data de realização) editáveis quando `planilha:realizado-proprio` e `elaboradoPor = usuário`, ou quando `planilha:realizado-todos`;
+  - campos do orçado só com `planilha:editar-orcado`.
+- **Cor:** células editáveis com fundo branco e borda azul-clara; as bloqueadas com fundo cinza e cadeado no hover. Uma legenda no topo explica.
+- **Servidor:** a action que salva a planilha recusa a gravação de qualquer campo fora dessas regras, porque o cliente não é confiável.
+
+---
+
+## Fase 6 — EAP / WBS
 
 Referências: vídeo wbstool (0:47, menu Organizar) e https://youtu.be/YL4v4YgHMW4 (1:59, modos de visualização; 2:56, Gantt). SPEC anterior: `docs/SPEC-Ajustes-Operum-v1.md` §2 e §3.
 
-### 4.1 Botão de expansão
+### 6.1 Botão de expansão
 Toggle centralizado na borda inferior do nó, meio para fora do card, mostrando "+" quando recolhido e "−" quando expandido. Sem contagem de filhos. Arquivo: `components/wbs/WbsNode.tsx`.
 
-### 4.2 Layout vertical (menu Organizar)
+### 6.2 Layout vertical (menu Organizar)
 Hoje só o layout horizontal funciona. Implementar em `lib/wbsLayout.ts`:
 - **Vertical:** filhos empilhados à direita do pai, indentados, com conector em cotovelo (layout `ABAIXO_L` da SPEC v1).
 - **Misto:** por nó.
 
 Testes de geometria sem sobreposição.
 
-### 4.3 Modos de visualização
+### 6.3 Modos de visualização
 - **Chart View Details:** o nó mostra código, título, responsável, duração, datas e custo.
 - **Hours and Cost View:** o nó mostra horas e custo, orçado × real, com rollup (`lib/wbsRollup.ts`, `lib/custosCalc.ts`).
 
 Alternância na `WbsMenubar`.
 
-### 4.4 Gráfico de Gantt
+### 6.4 Gráfico de Gantt
 Nova visão em `/projetos/:id/wbs?view=gantt`:
 - barras por nó da EAP com datas;
 - agrupamento pela hierarquia (recolher e expandir);
@@ -366,23 +508,35 @@ Nós sem data aparecem sem barra. Primeiro só leitura; arrastar barras para edi
 
 ---
 
-## Fase 5 — Documentos (⛔ aguardando modelos)
+## Fase 7 — Documentos
 
-Bloqueada até o usuário enviar os modelos do Prof. Fábio (Termo de Abertura, Formulário de Partes Interessadas e Ata). Com os modelos em mãos, cada item passa por quatro passos:
+Os itens 7.1 a 7.3 (⛔) estão bloqueados até o usuário enviar os modelos do Prof. Fábio (Termo de Abertura, Formulário de Partes Interessadas e Ata). O 7.4 não depende dos modelos. Com os modelos em mãos, cada item bloqueado passa por quatro passos:
 1. Mapear campo a campo o modelo contra os dados do Operum.
 2. Listar os campos que faltam no banco.
 3. Reproduzir o layout: paisagem para Partes Interessadas; tabelas e assinaturas iguais ao modelo.
 4. Exportar em `.docx` e imprimir.
 
-- **5.1** Formulário de Partes Interessadas em paisagem: `components/projetos/StakeholderDocument.tsx`.
-- **5.2** Termo de Abertura: `components/projetos/documentacao/ProjectCharterDocument.tsx`.
-- **5.3** Atas: `components/atas/AtaFormClient.tsx`, `lib/exports/ataDocx.ts`. O texto das 11 etapas do documento de ajustes serve de referência para a seção "Assuntos tratados".
+- **7.1** Formulário de Partes Interessadas em paisagem: `components/projetos/StakeholderDocument.tsx`.
+- **7.2** Termo de Abertura: `components/projetos/documentacao/ProjectCharterDocument.tsx`.
+- **7.3** Atas: `components/atas/AtaFormClient.tsx`, `lib/exports/ataDocx.ts`. O texto das 11 etapas do documento de ajustes serve de referência para a seção "Assuntos tratados".
+
+### 7.4 Termo de Abertura: formulário separado e histórico de alterações
+**Pedido (cliente):** não quer ver a edição e o documento pronto na mesma tela, e quer o histórico de alterações salvo.
+
+**Hoje:** `ProjectCharter.tsx` edita direto na folha A4 (`ProjectCharterDocument`). O histórico já existe, mas registra só versões, com título, status e aprovação.
+
+**Solução:**
+- **Duas telas:**
+  - **Formulário** (padrão): campos agrupados por seção do Termo (dados do projeto, justificativa, objetivos, metodologia, produto, premissas, restrições, limites de autoridade, macrofases, responsáveis);
+  - **Documento**: aberto pelo botão **Gerar documento**, mostra só a folha pronta, com "Baixar PDF" e "Voltar ao formulário".
+- **Histórico de alterações:** cada versão salva guarda o *diff* por campo em relação à anterior (campo, antes, depois, quem, quando). O histórico mostra essa lista e permite abrir o documento de qualquer versão. As regras de quem aprova seguem a Fase 5.
+- Quando o modelo do Prof. Fábio chegar (7.2), muda só o layout da tela Documento, e o formulário continua igual.
 
 ---
 
-## Fase 6 — MCP
+## Fase 8 — MCP
 
-### 6.1 Copiar ou importar para um projeto existente
+### 8.1 Copiar ou importar para um projeto existente
 `target_project_id` opcional em `operum_copy_project` e `operum_import_project` (`mcp-server/src/migration/importer.ts`):
 - sprints e colunas são casadas pelo nome normalizado (as que não existirem são criadas);
 - tarefas com título igual, ou com similaridade de pelo menos 0,9, são puladas;
@@ -390,7 +544,7 @@ Bloqueada até o usuário enviar os modelos do Prof. Fábio (Termo de Abertura, 
 
 Continua `dry_run=true` por padrão.
 
-### 6.2 Anexos pelo MCP
+### 8.2 Anexos pelo MCP
 `operum_upload_attachment(task_id, file_name, mime_type, content_base64 | url)` e `operum_delete_attachment(attachment_id, confirm)`, via file-service pelo gateway:
 - mesma lista de tipos permitidos de `app/api/uploads/route.ts`;
 - o limite de tamanho aparece na mensagem de erro;

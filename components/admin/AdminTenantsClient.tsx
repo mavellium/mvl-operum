@@ -140,7 +140,7 @@ export default function AdminTenantsClient({
     <div className="space-y-6">
       {/* Toolbar */}
       <div className="flex items-center justify-between">
-        <p className="text-sm text-gray-500">{tenants.length} workspace{tenants.length !== 1 ? 's' : ''}</p>
+        <p className="text-sm text-gray-500">{tenants.length} {tenants.length !== 1 ? 'instituições' : 'instituição'}</p>
         <button
           onClick={() => { setShowForm(v => !v); setFormError('') }}
           className="flex items-center gap-2 px-4 py-2 bg-blue-600 text-white text-sm font-medium rounded-xl hover:bg-blue-700 transition-colors"
@@ -148,14 +148,14 @@ export default function AdminTenantsClient({
           <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
           </svg>
-          Novo workspace
+          Nova instituição
         </button>
       </div>
 
       {/* Create form */}
       {showForm && (
         <div className="bg-blue-50 border border-blue-200 rounded-2xl p-5 space-y-4">
-          <h3 className="text-sm font-semibold text-blue-900">Novo workspace</h3>
+          <h3 className="text-sm font-semibold text-blue-900">Nova instituição</h3>
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
             <div>
               <label className="block text-xs font-medium text-gray-700 mb-1">Nome</label>
@@ -184,7 +184,7 @@ export default function AdminTenantsClient({
             </button>
             <button onClick={handleCreate} disabled={isPending}
               className="px-4 py-2 bg-blue-600 text-white text-sm font-medium rounded-xl hover:bg-blue-700 transition-colors disabled:opacity-60">
-              {isPending ? 'Criando…' : 'Criar workspace'}
+              {isPending ? 'Criando…' : 'Criar instituição'}
             </button>
           </div>
         </div>
@@ -192,7 +192,7 @@ export default function AdminTenantsClient({
 
       {/* Tenants list */}
       {tenants.length === 0 ? (
-        <div className="text-center py-12 text-gray-400 text-sm">Nenhum workspace cadastrado.</div>
+        <div className="text-center py-12 text-gray-400 text-sm">Nenhuma instituição cadastrada.</div>
       ) : (
         <div className="space-y-3">
           {tenants.map(t => {

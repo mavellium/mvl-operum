@@ -1,7 +1,13 @@
 import { AuthBrandPanel } from '@/components/auth/AuthBrandPanel'
 import { LoginForm } from '@/components/auth/LoginForm'
+import { destinoInterno } from '@/lib/sessionIdle'
 
-export default function LoginPage() {
+interface Props {
+  searchParams: Promise<{ from?: string; motivo?: string }>
+}
+
+export default async function LoginPage({ searchParams }: Props) {
+  const { from, motivo } = await searchParams
   return (
     <div className="min-h-screen lg:grid lg:grid-cols-[58fr_42fr]">
       <AuthBrandPanel />
@@ -14,7 +20,7 @@ export default function LoginPage() {
           style={{ background: 'linear-gradient(90deg, var(--brand-1), var(--brand-2), var(--brand-3))' }}
         />
         <div className="flex flex-1 items-center justify-center p-6">
-          <LoginForm />
+          <LoginForm from={destinoInterno(from) ?? undefined} motivo={motivo} />
         </div>
       </div>
     </div>
