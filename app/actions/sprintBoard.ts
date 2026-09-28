@@ -161,6 +161,14 @@ export async function getCardMovementsAction(cardId: string) {
   }
 }
 
+/** Só envia as datas preenchidas (o sprint-service exige ISO válido na criação). */
+function datasDoCard(input: { startDate?: string | null; endDate?: string | null }) {
+  return {
+    ...(input.startDate ? { startDate: input.startDate } : {}),
+    ...(input.endDate ? { endDate: input.endDate } : {}),
+  }
+}
+
 export async function createCardInSprintAction(input: {
   sprintId: string
   sprintColumnId: string
@@ -168,6 +176,8 @@ export async function createCardInSprintAction(input: {
   description?: string
   color?: string
   priority?: string
+  startDate?: string | null
+  endDate?: string | null
 }) {
   try {
     await verifySession()
@@ -178,6 +188,7 @@ export async function createCardInSprintAction(input: {
       priority: input.priority ?? 'media',
       sprintId: input.sprintId,
       sprintColumnId: input.sprintColumnId,
+      ...datasDoCard(input),
     })
     revalidatePath(`/sprints/${input.sprintId}`)
     return { card }
@@ -317,7 +328,7 @@ export async function moveCardToBacklogAction(cardId: string) {
 
 export async function createBacklogCardAction(
   projectId: string,
-  data: { title: string; description?: string; color?: string; priority?: string },
+  data: { title: string; description?: string; color?: string; priority?: string; startDate?: string | null; endDate?: string | null },
 ) {
   try {
     await verifySession()
@@ -327,6 +338,7 @@ export async function createBacklogCardAction(
       description: data.description ?? '',
       color: data.color,
       priority: data.priority,
+      ...datasDoCard(data),
     })
     return { card }
   } catch (err) {

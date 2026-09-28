@@ -134,6 +134,17 @@ describe('CardService — escrita escopada por tenant', () => {
     expect(db.card.update.mock.calls[0][0].data).toMatchObject({ projectId: 'p1', sprintId: null })
   })
 
+  it('update com endDate null remove o prazo; sem endDate não mexe', async () => {
+    db.card.findFirst.mockResolvedValue({ id: 'c1', projectId: 'p1', sprintId: null, sprintColumnId: null })
+    db.card.update.mockResolvedValue({})
+    await service.update('t1', 'c1', { endDate: null })
+    expect(db.card.update.mock.calls[0][0].data.endDate).toBeNull()
+    expect(db.card.update.mock.calls[0][0].data.startDate).toBeUndefined()
+
+    await service.update('t1', 'c1', { endDate: '2026-09-30T23:59:00.000Z' })
+    expect(db.card.update.mock.calls[1][0].data.endDate).toEqual(new Date('2026-09-30T23:59:00.000Z'))
+  })
+
   it('addResponsible rejeita usuário de outro tenant', async () => {
     assert.assertUserInTenant.mockImplementation(notFound)
     await expect(service.addResponsible('t1', 'c1', 'u-outro')).rejects.toThrow(NotFoundException)

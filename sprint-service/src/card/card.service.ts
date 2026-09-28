@@ -36,11 +36,18 @@ export const UpdateCardSchema = z.object({
   sprintPosition: z.number().int().nullable().optional(),
   projectId: z.string().optional(),
   priority: z.string().optional(),
-  startDate: z.string().datetime().optional(),
-  endDate: z.string().datetime().optional(),
+  // null remove a data (ex.: tirar o prazo do card pela interface).
+  startDate: z.string().datetime().nullable().optional(),
+  endDate: z.string().datetime().nullable().optional(),
   reason: z.string().optional(),
   userId: z.string().optional(),
 })
+
+/** undefined = não mexe; null = remove; string = nova data. */
+function toDateUpdate(value: string | null | undefined): Date | null | undefined {
+  if (value === undefined) return undefined
+  return value === null ? null : new Date(value)
+}
 
 export type CreateCardDto = z.infer<typeof CreateCardSchema>
 export type UpdateCardDto = z.infer<typeof UpdateCardSchema>
@@ -193,8 +200,8 @@ export class CardService {
       where: { id },
       data: {
         ...cardData,
-        startDate: cardData.startDate ? new Date(cardData.startDate) : undefined,
-        endDate: cardData.endDate ? new Date(cardData.endDate) : undefined,
+        startDate: toDateUpdate(cardData.startDate),
+        endDate: toDateUpdate(cardData.endDate),
       },
     })
   }
