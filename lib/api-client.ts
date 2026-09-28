@@ -44,7 +44,9 @@ async function request<T>(path: string, init: RequestInit = {}): Promise<T> {
       redirect('/login')
     }
 
-    throw new Error(errorMessage || `${init.method ?? 'GET'} ${path} → ${res.status}`)
+    const err = new Error(errorMessage || `${init.method ?? 'GET'} ${path} → ${res.status}`) as Error & { status: number }
+    err.status = res.status
+    throw err
   }
 
   return res.json() as Promise<T>

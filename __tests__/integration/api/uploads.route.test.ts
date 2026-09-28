@@ -86,4 +86,24 @@ describe('POST /api/uploads', () => {
     const body = await res.json()
     expect(body).toMatchObject({ id: 'att1', cardId: 'c1' })
   })
+
+  it('returns 403 when the card is not accessible (404 do sprint-service)', async () => {
+    vi.mocked(cardsApi.get).mockRejectedValue(Object.assign(new Error('Card not found'), { status: 404 }))
+    const form = new FormData()
+    form.set('cardId', 'c1')
+    form.set('file', new File(['data'], 'photo.jpg', { type: 'image/jpeg' }))
+    const res = await POST(makeRequest(form, 'valid-token'))
+    expect(res.status).toBe(403)
+  })
+
+  it('returns 502 (não 403) quando o sprint-service falha ao verificar o card', async () => {
+    vi.spyOn(console, 'error').mockImplementation(() => {})
+    vi.mocked(cardsApi.get).mockRejectedValue(Object.assign(new Error('Internal server error'), { status: 500 }))
+    const form = new FormData()
+    form.set('cardId', 'c1')
+    form.set('file', new File(['data'], 'photo.jpg', { type: 'image/jpeg' }))
+    const res = await POST(makeRequest(form, 'valid-token'))
+    expect(res.status).toBe(502)
+    expect((await res.json()).error).toMatch(/verificar o card/)
+  })
 })
