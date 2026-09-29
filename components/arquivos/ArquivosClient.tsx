@@ -3,6 +3,7 @@
 import { useMemo, useState } from 'react'
 import Link from 'next/link'
 import { sprintPath } from '@/lib/sprintPath'
+import { isLinkAttachment, linkHost, linkHref } from '@/lib/attachmentTypes'
 
 interface Attachment {
   id: string
@@ -28,6 +29,13 @@ interface Props {
 }
 
 function getFileIcon(fileType: string) {
+  if (isLinkAttachment(fileType)) {
+    return (
+      <svg className="w-5 h-5 text-blue-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13.828 10.172a4 4 0 00-5.656 0l-4 4a4 4 0 105.656 5.656l1.102-1.101m-.758-4.899a4 4 0 005.656 0l4-4a4 4 0 00-5.656-5.656l-1.1 1.1" />
+      </svg>
+    )
+  }
   if (fileType.startsWith('image/')) {
     return (
       <svg className="w-5 h-5 text-green-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -50,6 +58,7 @@ function getFileIcon(fileType: string) {
 }
 
 function getFileCategory(fileType: string) {
+  if (isLinkAttachment(fileType)) return 'link'
   if (fileType.startsWith('image/')) return 'imagem'
   if (fileType === 'application/pdf') return 'pdf'
   return 'outro'
@@ -97,6 +106,7 @@ export default function ArquivosClient({ initialAttachments }: Props) {
           <option value="">Todos os tipos</option>
           <option value="imagem">Imagens</option>
           <option value="pdf">PDFs</option>
+          <option value="link">Links</option>
           <option value="outro">Outros</option>
         </select>
         <select
@@ -136,14 +146,18 @@ export default function ArquivosClient({ initialAttachments }: Props) {
                 </td>
               </tr>
             )}
-            {filtered.map(a => (
+            {filtered.map(a => {
+              // Link: abre a URL (só http/https); arquivo: baixa.
+              const link = isLinkAttachment(a.fileType)
+              const href = link ? linkHref(a.filePath) : a.filePath
+              return (
               <tr key={a.id} className="border-b border-gray-50 last:border-0 hover:bg-gray-50">
                 <td className="px-4 py-3">
                   <div className="flex items-center gap-2">
                     {getFileIcon(a.fileType)}
                     <div>
                       <p className="font-medium text-gray-900 truncate max-w-[200px]">{a.fileName}</p>
-                      <p className="text-xs text-gray-400">{a.fileType}</p>
+                      <p className="text-xs text-gray-400">{isLinkAttachment(a.fileType) ? linkHost(a.filePath) : a.fileType}</p>
                     </div>
                   </div>
                 </td>
@@ -158,14 +172,16 @@ export default function ArquivosClient({ initialAttachments }: Props) {
                 </td>
                 <td className="px-4 py-3">
                   <div className="flex items-center justify-end gap-1">
-                    <a
-                      href={a.filePath}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="px-2.5 py-1 text-xs rounded-lg border border-gray-200 text-gray-600 hover:bg-gray-50"
-                    >
-                      Download
-                    </a>
+                    {href && (
+                      <a
+                        href={href}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="px-2.5 py-1 text-xs rounded-lg border border-gray-200 text-gray-600 hover:bg-gray-50"
+                      >
+                        {link ? 'Abrir' : 'Download'}
+                      </a>
+                    )}
                     {a.card.sprintId && (
                       <Link
                         href={sprintPath(a.card.sprintId, a.card.projectId, a.card.id)}
@@ -177,7 +193,8 @@ export default function ArquivosClient({ initialAttachments }: Props) {
                   </div>
                 </td>
               </tr>
-            ))}
+              )
+            })}
           </tbody>
         </table>
       </div>

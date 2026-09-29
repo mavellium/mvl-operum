@@ -43,6 +43,17 @@ export class UploadController {
     return this.uploadService.upload(file, cardId, userId)
   }
 
+  @Post('link')
+  async addLink(
+    @Query('cardId') cardId: string,
+    @Body() body: { url?: string; title?: string },
+    @Headers('x-user-id') userId: string,
+  ) {
+    requireUserId(userId)
+    if (!cardId) throw new BadRequestException('cardId é obrigatório')
+    return this.uploadService.addLink(cardId, body?.url, body?.title, userId)
+  }
+
   @Get('by-cards')
   async listByCards(
     @Query('cardIds') cardIdsParam: string,

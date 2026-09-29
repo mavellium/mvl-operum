@@ -276,3 +276,27 @@ describe('CardModal — anexos', () => {
     expect(screen.getByText('clip.mov')).toBeInTheDocument()
   })
 })
+
+describe('CardModal — anexo de link', () => {
+  const link = (filePath: string) => ({
+    id: 'l1', fileName: 'Aula da EAP', fileType: 'text/uri-list', filePath, fileSize: 0, uploadedAt: Date.now(),
+  })
+
+  it('vídeo do YouTube: miniatura, link que abre em outra aba e o host no lugar do tamanho', () => {
+    render(<CardModal {...defaultProps} attachments={[link('https://www.youtube.com/watch?v=dQw4w9WgXcQ')]} />)
+    const a = screen.getByRole('link', { name: 'Aula da EAP' })
+    expect(a).toHaveAttribute('href', 'https://www.youtube.com/watch?v=dQw4w9WgXcQ')
+    expect(a).toHaveAttribute('target', '_blank')
+    expect(a).toHaveAttribute('rel', 'noopener noreferrer')
+    expect(screen.getByTestId('anexo-link-miniatura')).toHaveAttribute('src', 'https://i.ytimg.com/vi/dQw4w9WgXcQ/mqdefault.jpg')
+    expect(screen.getByText('youtube.com')).toBeInTheDocument()
+    expect(screen.queryByText('0 B')).not.toBeInTheDocument()
+  })
+
+  it('link com esquema perigoso não vira href', () => {
+    render(<CardModal {...defaultProps} attachments={[link('javascript:alert(1)')]} />)
+    expect(screen.queryByRole('link', { name: 'Aula da EAP' })).not.toBeInTheDocument()
+    expect(screen.getByText('Aula da EAP')).toBeInTheDocument()
+    expect(screen.queryByTestId('anexo-link-miniatura')).not.toBeInTheDocument()
+  })
+})
