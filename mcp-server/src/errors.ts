@@ -41,6 +41,9 @@ export function toToolError(err: unknown, entity?: string, tool?: string): ToolE
     case 422:
       message = safe ?? 'Dados inválidos.'
       break
+    case 413:
+      message = safe && !/too large/i.test(safe) ? safe : 'Arquivo acima do limite de 50 MB do Operum.'
+      break
     case 429:
       message = 'Limite de requisições do Operum atingido, aguarde alguns segundos e tente novamente.'
       break

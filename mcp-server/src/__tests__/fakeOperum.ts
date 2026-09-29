@@ -12,6 +12,7 @@ type Row = Record<string, unknown> & { id: string }
 const STATIC_SEGMENTS = new Set([
   'auth', 'me', 'my-tenants', 'all-users', 'projects', 'user', 'members', 'macro-fases', 'stakeholders',
   'tags', 'sprints', 'columns', 'cards', 'backlog', 'responsibles', 'comments', 'movements', 'audit',
+  'files', 'upload', 'link', 'by-cards',
 ])
 
 let seq = 0
@@ -48,6 +49,9 @@ export class FakeOperum {
   cardResponsibles: { cardId: string; userId: string }[] = []
   tags: Row[] = []
   comments: Row[] = []
+  /** file-service: como o real, não conhece tenant (quem valida o card é o chamador). */
+  attachments: Row[] = []
+  attachmentBytes = new Map<string, Buffer>()
   audit: Row[] = []
   calls: { tenantId: string; method: string; path: string; body?: unknown }[] = []
   /** Permite simular falhas: retorna um erro para interromper a chamada. */
@@ -79,6 +83,10 @@ export class FakeOperum {
       post: (path, body) => call('POST', path, body) as never,
       patch: (path, body) => call('PATCH', path, body) as never,
       delete: path => call('DELETE', path) as never,
+      upload: async (path, form) => {
+        const file = form.get('file') as File
+        return call('POST', path, { fileName: file.name, fileType: file.type, bytes: Buffer.from(await file.arrayBuffer()) }) as never
+      },
     }
   }
 
@@ -112,7 +120,6 @@ export class FakeOperum {
           const u = this.users.find(u => u.id === r.userId)!
           return { ...r, user: { id: u.id, name: u.name, email: u.email } }
         }),
-      attachments: [],
       ...(withComments ? { comments: this.commentsOf(c.id) } : {}),
     }
   }
@@ -322,6 +329,36 @@ export class FakeOperum {
       }
       case 'GET /audit':
         return this.audit.filter(a => a.tenantId === t && (!q.entity || a.entity === q.entity) && (!q.entityId || a.entityId === q.entityId))
+
+      case 'POST /files/upload': {
+        const bytes = body.bytes as Buffer
+        const { bytes: _omit, ...meta } = body
+        const a = {
+          id: newId('att'), cardId: q.cardId, ...meta, filePath: `https://minio.test/operum/uploads/${q.cardId}/${seq}`,
+          fileSize: bytes.length, isCover: false, deletedAt: null, createdAt: now, updatedAt: now,
+        }
+        this.attachments.push(a)
+        this.attachmentBytes.set(a.id, bytes)
+        return a
+      }
+      case 'POST /files/link': {
+        const a = {
+          id: newId('att'), cardId: q.cardId, fileName: body.title, fileType: 'text/uri-list', filePath: body.url,
+          fileSize: 0, isCover: false, deletedAt: null, createdAt: now, updatedAt: now,
+        }
+        this.attachments.push(a)
+        return a
+      }
+      case 'GET /files/by-cards': {
+        const ids = (q.cardIds ?? '').split(',').filter(Boolean)
+        return this.attachments.filter(a => ids.includes(a.cardId as string) && !a.deletedAt)
+      }
+      case 'DELETE /files/:id': {
+        const a = this.attachments.find(a => a.id === seg[1] && !a.deletedAt)
+        if (!a) throw httpError(404, 'Anexo não encontrado')
+        a.deletedAt = now
+        return undefined
+      }
     }
     throw httpError(404, `rota não implementada no fake: ${route}`)
   }

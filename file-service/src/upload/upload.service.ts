@@ -9,7 +9,7 @@ import {
 import { prisma } from '../prisma'
 import { v4 as uuidv4 } from 'uuid'
 import { MinioService } from '../minio/minio.service'
-import { ATTACHMENT_EXT_BY_MIME } from './attachment-types'
+import { ATTACHMENT_EXT_BY_MIME, LINK_ATTACHMENT_TYPE, MAX_LINK_URL_LENGTH } from './attachment-types'
 
 const MAX_FILENAME_LENGTH = 255
 // Reject path separators and null bytes to prevent traversal / injection
@@ -32,6 +32,33 @@ function validateFileName(name: string): void {
   if (!SAFE_FILENAME_RE.test(name)) {
     throw new BadRequestException('Nome de arquivo contém caracteres inválidos')
   }
+}
+
+/** URL de um anexo do tipo link: só http(s), sem usuário/senha embutidos. */
+function parseLinkUrl(raw: string | undefined): URL {
+  const value = raw?.trim() ?? ''
+  if (!value || value.length > MAX_LINK_URL_LENGTH) {
+    throw new BadRequestException(`A URL do link deve ter entre 1 e ${MAX_LINK_URL_LENGTH} caracteres`)
+  }
+  let url: URL
+  try {
+    url = new URL(value)
+  } catch {
+    throw new BadRequestException('URL do link inválida')
+  }
+  if (url.protocol !== 'https:' && url.protocol !== 'http:') {
+    throw new BadRequestException('O link deve começar com http:// ou https://')
+  }
+  if (url.username || url.password) {
+    throw new BadRequestException('O link não pode conter usuário ou senha')
+  }
+  return url
+}
+
+/** Título do link: sem caracteres de controle; sem título, usa host + caminho. */
+function linkTitle(raw: string | undefined, url: URL): string {
+  const title = (raw ?? '').replace(/[\x00-\x1f\x7f]/g, ' ').replace(/\s+/g, ' ').trim()
+  return (title || `${url.hostname}${url.pathname === '/' ? '' : url.pathname}`).slice(0, MAX_FILENAME_LENGTH)
 }
 
 @Injectable()
@@ -83,6 +110,30 @@ export class UploadService {
         bancoDesatualizado(error)
           ? 'Falha ao registrar o anexo: o banco do serviço de arquivos está desatualizado (migration pendente).'
           : 'Falha ao registrar o anexo',
+      )
+    }
+  }
+
+  /** Anexo do tipo link: grava só a URL (filePath), sem objeto no MinIO. */
+  async addLink(cardId: string, rawUrl: string | undefined, rawTitle: string | undefined, userId: string) {
+    assertUser(userId)
+    const url = parseLinkUrl(rawUrl)
+    try {
+      return await this.prisma.attachment.create({
+        data: {
+          cardId,
+          fileName: linkTitle(rawTitle, url),
+          fileType: LINK_ATTACHMENT_TYPE,
+          filePath: url.toString(),
+          fileSize: 0,
+        },
+      })
+    } catch (error) {
+      this.logger.error(`addLink: falha ao registrar link — cardId=${cardId}`, error instanceof Error ? error.stack : String(error))
+      throw new InternalServerErrorException(
+        bancoDesatualizado(error)
+          ? 'Falha ao registrar o link: o banco do serviço de arquivos está desatualizado (migration pendente).'
+          : 'Falha ao registrar o link',
       )
     }
   }

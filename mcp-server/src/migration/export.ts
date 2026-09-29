@@ -3,6 +3,7 @@ import type { TenantContext } from '../tenants.js'
 import { mapLimit } from '../concurrency.js'
 import { serializeProject } from '../serializers.js'
 import type { ProgressFn } from '../tool.js'
+import { fetchAttachments } from '../tools/attachments.js'
 
 export const BUNDLE_FORMAT = 'operum-project/v1'
 
@@ -99,6 +100,9 @@ export async function exportProject(
   const backlog = await gw.get<Raw[]>('/cards/backlog', { projectId })
   const sprintCards = await mapLimit(orderedSprints, 4, sp => gw.get<Raw[]>(`/sprints/${sp.id}/cards`))
   const cards = [...backlog, ...sprintCards.flat()]
+  // Anexos vêm do file-service (o sprint-service não os inclui). Só metadados:
+  // o import não copia arquivos, mas o relatório avisa quantos ficaram de fora.
+  const attachmentsByCard = await fetchAttachments(gw, cards.map(c => String(c.id))).catch(() => new Map<string, Raw[]>())
 
   const commentsByCard = new Map<string, Raw[]>()
   if (opts.includeComments) {
@@ -128,7 +132,7 @@ export async function exportProject(
       end_date: s(card.endDate),
       source_tag_ids: cardTags.map(t => String(t.id)),
       responsibles: ((card.responsibles as Raw[]) ?? []).map(r => person(r.userId ?? (r.user as Raw)?.id, (r.user as Raw)?.name)),
-      attachments: ((card.attachments as Raw[]) ?? []).map(a => ({
+      attachments: (attachmentsByCard.get(String(card.id)) ?? []).map(a => ({
         file_name: s(a.fileName),
         file_type: s(a.fileType),
         file_size: n(a.fileSize),

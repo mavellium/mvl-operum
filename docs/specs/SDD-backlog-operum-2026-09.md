@@ -2,6 +2,12 @@
 
 > **Escopo:** as 36 tarefas abertas do projeto **Operum** (tenant "Fábio", Sprint 1 + backlog), levantadas em 28/09/2026. Inclui os pedidos do documento "07 - Ajustes e melhorias sistema Operum 26-09-26" (Prof. Fábio), bugs do quadro e melhorias do MCP.
 >
+> **Atualização (28/09, noite):** 11 tarefas criadas depois da primeira versão entraram nas novas Fases 4 (correções rápidas) e 5 (permissões) e no item 7.4 (Termo de Abertura). As fases seguintes foram renumeradas: EAP 4→6, Documentos 5→7, MCP 6→8.
+>
+> **Atualização (29/09):**
+> - Entrou o **4.1** (segurança: o file-service não confere o tenant), achado ao fazer o 8.2, e os antigos 4.1 a 4.5 viraram 4.2 a 4.6.
+> - Entraram o **8.3** (URL de upload de uso único) e o **8.4** (timer pelo MCP), que é necessário para a regra "ao começar uma tarefa, iniciar o timer".
+>
 > Segue a arquitetura do repo: Next.js 16 (App Router, `proxy.ts`), React 19, Prisma 7, Zod 4, Vitest 4, microsserviços NestJS atrás do api-gateway e multi-tenant via `verifySession`. Actions finas → services → auditoria.
 >
 > Marcações: **✅** causa confirmada no código • **🔎** hipótese a confirmar em produção • **⚠️ DECISÃO** pendente • **⛔** bloqueado por insumo externo.
@@ -13,9 +19,11 @@
 - [Fase 1 — Erros, perda de dados e prioridade alta](#fase-1--erros-perda-de-dados-e-prioridade-alta)
 - [Fase 2 — Kanban e card no uso diário](#fase-2--kanban-e-card-no-uso-diário)
 - [Fase 3 — Cadastros, ranking e sessão](#fase-3--cadastros-ranking-e-sessão)
-- [Fase 4 — EAP / WBS](#fase-4--eap--wbs)
-- [Fase 5 — Documentos (⛔ aguardando modelos)](#fase-5--documentos--aguardando-modelos)
-- [Fase 6 — MCP](#fase-6--mcp)
+- [Fase 4 — Correções rápidas (tarefas de 28/09)](#fase-4--correções-rápidas-tarefas-de-2809)
+- [Fase 5 — Permissões por função e por usuário](#fase-5--permissões-por-função-e-por-usuário)
+- [Fase 6 — EAP / WBS](#fase-6--eap--wbs)
+- [Fase 7 — Documentos](#fase-7--documentos)
+- [Fase 8 — MCP](#fase-8--mcp)
 - [Fora do escopo](#fora-do-escopo)
 - [Processo por tarefa](#processo-por-tarefa)
 
@@ -56,15 +64,27 @@ Tarefas que pedem a mesma coisa foram **fundidas**. A tabela abaixo mostra quais
 | 3 | 3.2 | Stakeholders: adicionar pela barra de pesquisa de forma mais fácil | média |
 | 3 | 3.3 | Menu: trocar o nome "Tenants" | baixa |
 | 3 | 3.4 | Adicionar controle de sessão (expirar por inatividade) | média |
-| 4 | 4.1 | EAP: ícone de expansão na parte inferior central, só "+" | média |
-| 4 | 4.2 | A EAP só organiza na forma normal e vertical · Adicionar o jeito de visualizar do vídeo | média |
-| 4 | 4.3 | EAP: modos "WBS Chart View Details" e "WBS Hours and Cost View" | média |
-| 4 | 4.4 | Gráfico de Gantt do projeto | média |
-| 5 | 5.1 | Documentos: Formulário de Partes Interessadas em paisagem | média ⛔ |
-| 5 | 5.2 | Documentos: corrigir Termo de Abertura | média ⛔ |
-| 5 | 5.3 | Documentos: corrigir Atas | média ⛔ |
-| 6 | 6.1 | MCP: copiar/importar para dentro de um projeto existente | média |
-| 6 | 6.2 | MCP: tool para anexar arquivos em cards | média |
+| 4 | 4.1 | Segurança: file-service não confere a instituição (tenant) dos anexos | alta (segurança) |
+| 4 | 4.2 | Ao pesquisar por um card, ele aparece, mas clicar não abre o card | média (bug) |
+| 4 | 4.3 | Ao cadastrar um novo stakeholder, já trazer a tela correta para não ter que editar de novo | média |
+| 4 | 4.4 | Validação de horas por dia no cadastro do stakeholder | média |
+| 4 | 4.5 | Redefinir senha: adicionar um olho para visualizar a senha | média |
+| 4 | 4.6 | Planilha de custos baixada: subtotal alinhado à direita | média |
+| 5 | 5.1 | Definir o que o usuário tem de acesso · O acesso às permissões é feito em Funções e no próprio usuário | média (épico) |
+| 5 | 5.2 | Usuários comuns têm acesso a todos os documentos · Usuário comum edita e gera nova versão, aprovada pelo gerente | média |
+| 5 | 5.3 | Planilha de Custos: usuário comum edita o realizado das linhas em que é "Elaborado por" | média |
+| 6 | 6.1 | EAP: ícone de expansão na parte inferior central, só "+" | média |
+| 6 | 6.2 | A EAP só organiza na forma normal e vertical · Adicionar o jeito de visualizar do vídeo | média |
+| 6 | 6.3 | EAP: modos "WBS Chart View Details" e "WBS Hours and Cost View" | média |
+| 6 | 6.4 | Gráfico de Gantt do projeto | média |
+| 7 | 7.1 | Documentos: Formulário de Partes Interessadas em paisagem | média ⛔ |
+| 7 | 7.2 | Documentos: corrigir Termo de Abertura | média ⛔ |
+| 7 | 7.3 | Documentos: corrigir Atas | média ⛔ |
+| 7 | 7.4 | Termo de Abertura: formulário para digitar e botão para gerar o documento, com histórico | média |
+| 8 | 8.1 | MCP: copiar/importar para dentro de um projeto existente | média |
+| 8 | 8.2 | MCP: anexar imagens e links de vídeo em cards | alta |
+| 8 | 8.3 | MCP: URL de upload de uso único para anexar arquivo que está no computador | média |
+| 8 | 8.4 | MCP: iniciar e parar o timer das tarefas | alta |
 | — | — | Integrar Operum com MCP Claude (entregue na PR #19, validar e fechar) | média |
 | — | — | Adicionar plano de custo (já existe em `/projetos/:id/planilha-custos`, validar e fechar) | média |
 | — | — | Integração com o Zoom (vai para SDD próprio) | média |
@@ -344,27 +364,180 @@ Um único combobox:
 
 ---
 
-## Fase 4 — EAP / WBS
+## Fase 4 — Correções rápidas (tarefas de 28/09)
+
+Tarefas criadas em 28/09/2026, depois do SDD original. São correções pequenas, sem dependência entre si. Ordem: primeiro a 4.1 (falha de segurança, achada em 29/09), depois a 4.2 (bug) e as demais.
+
+### 4.1 Segurança: file-service não confere o tenant dos anexos ✅ causa confirmada
+**Card:** "Segurança: file-service não confere a instituição (tenant) dos anexos" (alta). Achado ao fazer o 8.2.
+
+**Problema:** o api-gateway repassa `/files/*` ao file-service para qualquer JWT ou PAT válido, com `x-user-id` e `x-tenant-id`. O file-service assume que o chamador já validou tudo (comentários em `upload.service.ts`). Nenhuma rota confere o tenant:
+
+| Rota | O que outro tenant consegue fazer |
+|---|---|
+| `POST /files/upload?cardId=` e `POST /files/link?cardId=` | anexar arquivo ou link ao card dele |
+| `GET /files/by-cards?cardIds=` | listar os anexos (nome, tipo, tamanho, URL do link) |
+| `PATCH /files/:id`, `PATCH /files/:id/cover`, `DELETE /files/:id` | renomear, trocar a capa, excluir |
+| `GET /files/:id/url` | obter a URL assinada e baixar o arquivo |
+| `POST /files/logo?entityId=&type=` | sobrescrever o logo de projeto ou stakeholder (chave previsível `logos/<type>s/<id>.<ext>`) |
+
+No app, `getAttachmentUrlAction`, `deleteAttachmentAction` e `renameAttachmentAction` conferem que o **card** é do tenant, mas não que o **anexo** é desse card. Assim, um card próprio mais o id de um anexo alheio passam na checagem. O `setCoverAction` não confere nem o card, só a sessão.
+
+Os ids são cuid, difíceis de adivinhar, mas vazam por log, print, export e compartilhamento. As tools do MCP (8.2) já conferem a tarefa antes de chamar o file-service. O furo continua para quem chama o gateway direto.
+
+**Solução:**
+1. **`x-tenant-id` obrigatório** em todas as rotas do file-service, exceto `/health`. As chamadas do app passam pelo gateway (JWT) ou pela `app/api/uploads`, que já envia o cabeçalho.
+2. **`TenantGuard` / `assertCardInTenant(cardId, tenantId)`:** o file-service consulta o sprint-service (`GET /cards/:id` com `X-Tenant-Id` e a chave interna; 404 vira 404), com cache curto em memória (30 s) para o `by-cards` não virar N chamadas repetidas.
+   - **Rotas por anexo:** carregam o anexo, pegam o `cardId` e conferem.
+   - **`by-cards`:** filtra os `cardIds` pelo tenant antes de consultar, com uma rota interna nova no sprint-service: `POST /cards/owned { ids }` → ids do tenant.
+3. **Anexo pertence ao card:** `rename`, `cover`, `url` e `delete` recebem o `cardId` (query ou corpo) e recusam com 404 se `attachment.cardId` for diferente. O app passa a enviar o `cardId` que já tem.
+4. **Logo:** confere o projeto ou stakeholder no project-service antes de gravar.
+5. **Testes:** o file-service não tem nenhum teste nem runner. Adicionar Vitest, como no mcp-server, e cobrir cada rota com "mesmo tenant ok" e "outro tenant 404".
+
+**BDD:**
+- Dado um card da instituição B, quando alguém da instituição A chama `POST /files/upload?cardId=<card de B>`, então a resposta é 404 e nada é gravado no MinIO nem no banco.
+- Dado um anexo do card X, quando alguém chama `DELETE /files/<anexo>?cardId=<card Y>`, então a resposta é 404.
+- Dado o usuário no próprio card, quando ele anexa, lista, renomeia, marca capa, vê e exclui, então tudo funciona como hoje.
+
+**Arquivos:** `file-service/src/upload/*`, `file-service/src/guards/`, `sprint-service/src/card/card.controller.ts` (rota interna), `app/actions/attachments.ts`, `lib/api-client.ts` (`filesApi` com `cardId`).
+
+### 4.2 Clicar num card da busca não abre o card ✅ causa confirmada
+**Problema:** a busca mostra o card, mas clicar nele não abre o card.
+
+**Causa:** o clique navega para `/projetos/:p/sprints/:s?card=<id>`, e o `SprintBoard` só lê o card da URL na montagem (`useState(initialCardId)`, em `components/sprint/SprintBoard.tsx`). Quando o usuário já está numa sprint, o Next reaproveita o componente e o `?card=` novo é ignorado. O mesmo acontece ao ir para outra sprint pela busca. O bug continua depois da Fase 2, que mudou a busca, mas não o board.
+
+**Solução:** o board passa a reagir à mudança de `initialCardId`, abrindo o card sempre que a URL traz um `?card=` diferente. Ao fechar o card, o `?card=` sai da URL (`router.replace`), para que clicar de novo no mesmo resultado também funcione. Teste: renderizar o board, trocar o `initialCardId` e ver o modal abrir.
+
+### 4.3 Stakeholder novo já "na tela certa" ✅ causa confirmada
+**Problema:** depois de cadastrar um stakeholder, é preciso abri-lo de novo em "Editar" para completar os dados.
+
+**Causa:** em `components/projetos/ProjetoStakeholdersClient.tsx` → `handleSave`:
+- **Membro da equipe:** a criação envia só nome, e-mail, senha e endereço. Cargos, departamento, remuneração e horas por dia preenchidos no formulário são **descartados**, e o formulário fecha.
+- **Externo:** o formulário fecha, e o stakeholder criado vai para o diretório sem ficar aberto.
+- **Criação rápida pela busca:** cria só com o nome e não abre nada.
+
+**Solução:**
+1. Depois de criar e vincular um membro, gravar na mesma ação os dados do projeto (cargos, departamento, remuneração, horas/dia) pelo mesmo caminho da edição (`updateProjetoMemberAction`).
+2. Ao terminar qualquer criação (formulário ou busca), abrir o stakeholder recém-criado **em modo de edição**, com os dados preenchidos, em vez de fechar o formulário.
+
+### 4.4 Validação de horas por dia
+**Problema:** o campo "Horas por dia" do stakeholder aceita qualquer valor positivo (ex.: 30). O servidor (`app/actions/projetos.ts`) só exige que seja maior que zero, e o valor entra no cálculo de valor/hora e da planilha de custos.
+
+**Solução:**
+- regra única em `lib/validation`: número maior que 0 e até 24, com no máximo 2 casas decimais;
+- mensagem no próprio campo ("Informe entre 0,5 e 24 horas");
+- o botão Salvar fica bloqueado enquanto o valor for inválido;
+- a mesma validação na action, porque o cliente não é confiável;
+- aceitar vírgula como separador decimal ("7,5").
+
+### 4.5 Olho para mostrar a senha
+**Problema:** só o login tem o botão de mostrar a senha. As telas de redefinir senha (`RecuperarSenhaForm`), primeiro acesso (`app/alterar-senha`), perfil (`ChangePasswordForm`) e cadastro de usuário (admin e stakeholders) não têm.
+
+**Solução:** um componente `PasswordInput`, com o botão de olho, `aria-label` "Mostrar senha"/"Ocultar senha" e `aria-pressed`, extraído do `LoginForm` e usado em todos os campos de senha.
+
+### 4.6 Subtotal da planilha exportada alinhado à direita
+**Problema:** em `lib/exports/planilhaCustosXlsx.ts`, o rótulo "Sub-total …" (células A:C mescladas) fica alinhado à esquerda.
+
+**Solução:** `alignment: { horizontal: 'right' }` no rótulo do subtotal e também no do "TOTAL GERAL", para ficarem consistentes. Teste lendo o `.xlsx` gerado com o exceljs.
+
+---
+
+## Fase 5 — Permissões por função e por usuário
+
+Épico que junta cinco tarefas de 28/09. Ele vem antes da EAP porque define o que o usuário comum pode fazer nos documentos e na planilha: sem ele, a Fase 7 teria de ser refeita.
+
+**Situação atual:**
+- As tabelas `Permission` e `RolePermission` existem no banco, mas **nenhum código as consulta**.
+- A autorização é binária: `role === 'admin' || isProjectManager(...)`, espalhada por cerca de 25 arquivos.
+- O Termo de Abertura já tem o fluxo "membro salva versão pendente → gerente aprova" (`charter/versions`), mas os outros documentos não têm.
+
+### 5.1 Modelo de permissões (funções + ajuste por usuário)
+Pedido: as permissões vêm da função (definida pelo admin no cadastro de funções, vale para todos os projetos) e podem ser ajustadas por usuário, para mais ou para menos, de forma global ou só num projeto.
+
+**Catálogo de permissões** (seed idempotente em `Permission`, por recurso e ação):
+
+| Recurso | Ações |
+|---|---|
+| `projeto` | ver · editar dados · gerenciar membros e stakeholders |
+| `quadro` | ver · criar/editar cards · mover · excluir cards · gerenciar sprints e colunas |
+| `documentos` | ver · editar (gera versão pendente) · aprovar versões · excluir |
+| `planilha` | ver · editar orçado · editar realizado próprio · editar realizado de todos |
+| `cadastros` | gerenciar funções e departamentos |
+
+**Funções padrão** (o admin pode mudar tudo depois):
+
+| Função | Permissões |
+|---|---|
+| Gerente de Projeto | todas as do projeto |
+| Membro (sem função com permissão) | ver tudo · criar/editar/mover cards · documentos: editar (versão pendente) · planilha: realizado próprio |
+| Tech Lead ⚠️ | as do membro + gerenciar sprints e colunas + planilha: realizado de todos |
+| PO ⚠️ | as do membro + editar dados do projeto + gerenciar stakeholders |
+
+**Ajuste por usuário:** tabela nova `UserPermission { userId, projectId?, permissionId, effect: GRANT | DENY }`. Sem `projectId`, o ajuste vale para todos os projetos.
+
+**Resolução**, numa função pura `resolverPermissoes()`:
+1. Admin tem tudo.
+2. Base: a união das permissões das funções do usuário no projeto.
+3. Aplicam-se os GRANT e DENY globais.
+4. Por último, os do projeto. Um DENY no projeto vence um GRANT global.
+
+**Aplicação:**
+- `services/authz.ts` com `can(session, projectId, 'documentos:aprovar')`, usado nas actions e rotas, substituindo aos poucos os `isProjectManager`;
+- a interface usa o mesmo resultado para esconder ou desabilitar botões.
+
+**Telas:**
+- Cadastro de Funções (admin): matriz de permissões por função.
+- Usuário (admin) e Stakeholders do projeto: "Permissões" com herdadas, concedidas e negadas.
+
+**⚠️ DECISÕES:**
+1. Confirmar as permissões de Tech Lead e PO.
+2. Definir de onde vêm as "funções do usuário no projeto". Hoje há duas fontes: os cargos em texto (`UserProject.role`, vários por pessoa, os que aparecem em Stakeholders) e o `UserProjectRole` (um por pessoa, usado para o gerente). Recomendação: **os cargos**, que são o que o usuário vê e edita. Cada cargo é casado com a `Role` pela `funcaoKey`, e a pessoa recebe a união das permissões.
+
+### 5.2 Usuário comum nos documentos (versão pendente e logs)
+**Pedido:**
+- usuários comuns veem **todos** os documentos do projeto;
+- podem editar e gerar uma nova versão, que fica pendente até o gerente aprovar;
+- tudo fica registrado nos logs.
+
+**Solução:**
+- Estender a todos os documentos (EAP, Atas, Partes Interessadas, Termo) o fluxo que o Termo já tem: com `documentos:editar`, a pessoa salva uma versão `PENDING`; com `documentos:aprovar`, aprova ou rejeita.
+- A versão aprovada vira a vigente. A pendente aparece destacada no histórico, com quem fez e o que mudou.
+- Cada ação (editar, salvar versão, aprovar, rejeitar, excluir) grava no `AuditLog` via `registrarAcao`, com o documento, a versão e o usuário.
+- O histórico de cada documento ganha uma aba **Registro**, que lê esses logs. Hoje nenhuma tela lê o `AuditLog` (ver `docs/mcp/gaps.md`).
+
+### 5.3 Planilha de Custos: realizado das próprias linhas
+**Pedido:** o usuário comum edita o valor **realizado** das linhas em que ele é o "Elaborado por", e a cor diferencia o que ele pode e o que não pode editar.
+
+**Solução:**
+- **Interface** (`components/custos/PlanilhaCustosView.tsx`): hoje `canEdit` vale para a linha inteira. Passa a haver permissão por campo e por linha:
+  - campos do realizado (tempo real, materiais reais, data de realização) editáveis quando `planilha:realizado-proprio` e `elaboradoPor = usuário`, ou quando `planilha:realizado-todos`;
+  - campos do orçado só com `planilha:editar-orcado`.
+- **Cor:** células editáveis com fundo branco e borda azul-clara; as bloqueadas com fundo cinza e cadeado no hover. Uma legenda no topo explica.
+- **Servidor:** a action que salva a planilha recusa a gravação de qualquer campo fora dessas regras, porque o cliente não é confiável.
+
+---
+
+## Fase 6 — EAP / WBS
 
 Referências: vídeo wbstool (0:47, menu Organizar) e https://youtu.be/YL4v4YgHMW4 (1:59, modos de visualização; 2:56, Gantt). SPEC anterior: `docs/SPEC-Ajustes-Operum-v1.md` §2 e §3.
 
-### 4.1 Botão de expansão
+### 6.1 Botão de expansão
 Toggle centralizado na borda inferior do nó, meio para fora do card, mostrando "+" quando recolhido e "−" quando expandido. Sem contagem de filhos. Arquivo: `components/wbs/WbsNode.tsx`.
 
-### 4.2 Layout vertical (menu Organizar)
+### 6.2 Layout vertical (menu Organizar)
 Hoje só o layout horizontal funciona. Implementar em `lib/wbsLayout.ts`:
 - **Vertical:** filhos empilhados à direita do pai, indentados, com conector em cotovelo (layout `ABAIXO_L` da SPEC v1).
 - **Misto:** por nó.
 
 Testes de geometria sem sobreposição.
 
-### 4.3 Modos de visualização
+### 6.3 Modos de visualização
 - **Chart View Details:** o nó mostra código, título, responsável, duração, datas e custo.
 - **Hours and Cost View:** o nó mostra horas e custo, orçado × real, com rollup (`lib/wbsRollup.ts`, `lib/custosCalc.ts`).
 
 Alternância na `WbsMenubar`.
 
-### 4.4 Gráfico de Gantt
+### 6.4 Gráfico de Gantt
 Nova visão em `/projetos/:id/wbs?view=gantt`:
 - barras por nó da EAP com datas;
 - agrupamento pela hierarquia (recolher e expandir);
@@ -375,23 +548,35 @@ Nós sem data aparecem sem barra. Primeiro só leitura; arrastar barras para edi
 
 ---
 
-## Fase 5 — Documentos (⛔ aguardando modelos)
+## Fase 7 — Documentos
 
-Bloqueada até o usuário enviar os modelos do Prof. Fábio (Termo de Abertura, Formulário de Partes Interessadas e Ata). Com os modelos em mãos, cada item passa por quatro passos:
+Os itens 7.1 a 7.3 (⛔) estão bloqueados até o usuário enviar os modelos do Prof. Fábio (Termo de Abertura, Formulário de Partes Interessadas e Ata). O 7.4 não depende dos modelos. Com os modelos em mãos, cada item bloqueado passa por quatro passos:
 1. Mapear campo a campo o modelo contra os dados do Operum.
 2. Listar os campos que faltam no banco.
 3. Reproduzir o layout: paisagem para Partes Interessadas; tabelas e assinaturas iguais ao modelo.
 4. Exportar em `.docx` e imprimir.
 
-- **5.1** Formulário de Partes Interessadas em paisagem: `components/projetos/StakeholderDocument.tsx`.
-- **5.2** Termo de Abertura: `components/projetos/documentacao/ProjectCharterDocument.tsx`.
-- **5.3** Atas: `components/atas/AtaFormClient.tsx`, `lib/exports/ataDocx.ts`. O texto das 11 etapas do documento de ajustes serve de referência para a seção "Assuntos tratados".
+- **7.1** Formulário de Partes Interessadas em paisagem: `components/projetos/StakeholderDocument.tsx`.
+- **7.2** Termo de Abertura: `components/projetos/documentacao/ProjectCharterDocument.tsx`.
+- **7.3** Atas: `components/atas/AtaFormClient.tsx`, `lib/exports/ataDocx.ts`. O texto das 11 etapas do documento de ajustes serve de referência para a seção "Assuntos tratados".
+
+### 7.4 Termo de Abertura: formulário separado e histórico de alterações
+**Pedido (cliente):** não quer ver a edição e o documento pronto na mesma tela, e quer o histórico de alterações salvo.
+
+**Hoje:** `ProjectCharter.tsx` edita direto na folha A4 (`ProjectCharterDocument`). O histórico já existe, mas registra só versões, com título, status e aprovação.
+
+**Solução:**
+- **Duas telas:**
+  - **Formulário** (padrão): campos agrupados por seção do Termo (dados do projeto, justificativa, objetivos, metodologia, produto, premissas, restrições, limites de autoridade, macrofases, responsáveis);
+  - **Documento**: aberto pelo botão **Gerar documento**, mostra só a folha pronta, com "Baixar PDF" e "Voltar ao formulário".
+- **Histórico de alterações:** cada versão salva guarda o *diff* por campo em relação à anterior (campo, antes, depois, quem, quando). O histórico mostra essa lista e permite abrir o documento de qualquer versão. As regras de quem aprova seguem a Fase 5.
+- Quando o modelo do Prof. Fábio chegar (7.2), muda só o layout da tela Documento, e o formulário continua igual.
 
 ---
 
-## Fase 6 — MCP
+## Fase 8 — MCP
 
-### 6.1 Copiar ou importar para um projeto existente
+### 8.1 Copiar ou importar para um projeto existente
 `target_project_id` opcional em `operum_copy_project` e `operum_import_project` (`mcp-server/src/migration/importer.ts`):
 - sprints e colunas são casadas pelo nome normalizado (as que não existirem são criadas);
 - tarefas com título igual, ou com similaridade de pelo menos 0,9, são puladas;
@@ -399,11 +584,91 @@ Bloqueada até o usuário enviar os modelos do Prof. Fábio (Termo de Abertura, 
 
 Continua `dry_run=true` por padrão.
 
-### 6.2 Anexos pelo MCP
-`operum_upload_attachment(task_id, file_name, mime_type, content_base64 | url)` e `operum_delete_attachment(attachment_id, confirm)`, via file-service pelo gateway:
-- mesma lista de tipos permitidos de `app/api/uploads/route.ts`;
-- o limite de tamanho aparece na mensagem de erro;
-- para `url`, só HTTPS, com timeout e limite de bytes (proteção contra SSRF).
+### 8.2 Anexos pelo MCP ✅
+**Card:** "MCP: anexar imagens e links de vídeo em cards".
+
+**Entregue** (branch `feat/mcp-anexos`):
+- **`operum_upload_attachment(task_id, file_name?, mime_type?, content_base64 | url)`.**
+  - O base64 aceita até 10 MB e também `data:` URL. A `url` é baixada pelo servidor e aceita até 50 MB.
+  - A lista de tipos é a do app e do file-service, com teste de paridade entre os três.
+  - O nome do arquivo é limpo (sem `: / \ * ? " < > |`) e ganha a extensão do tipo, se faltar.
+- **`operum_add_link(task_id, url, title?)`.**
+  - Grava só a URL, como anexo do tipo `text/uri-list`. O file-service ganhou a rota `POST /files/link` para isso.
+  - O mesmo link na mesma tarefa não é duplicado.
+  - No card, vídeo do YouTube ganha miniatura (`i.ytimg.com` liberado no CSP), e na página `/arquivos` há o filtro "Links".
+- **`operum_delete_attachment(task_id, attachment_id, confirm)`.**
+  - Recebe também o `task_id`, que a spec não previa. O file-service não sabe a qual tenant o anexo pertence; com o `task_id`, a tool confere a tarefa e só exclui um anexo que esteja nela.
+- **Checagem de tenant:** toda tool confere antes, por `GET /cards/:id`, se a tarefa é do tenant do token. Os ids são validados por regex, para que `../` não mude o caminho chamado.
+- **Proteção contra SSRF no download por `url`** (`mcp-server/src/download.ts`):
+  - só HTTPS na porta 443;
+  - recusa IP privado, loopback, link-local (metadados de nuvem) e reservado, conferindo no `lookup` da própria conexão (resiste a DNS rebinding);
+  - cada redirecionamento passa pela mesma checagem, no máximo 3;
+  - conexão sem pool;
+  - limite de bytes (Content-Length e contagem do stream) e prazo total de 60 s.
+- **Leitura:** `operum_get_task`, `operum_list_tasks` com `fields="full"` e `operum_export_project` voltaram a trazer os anexos, agora buscados no file-service. Desde `06b376d1` vinham sempre vazios.
+- **Erros:** o 413 do file-service vira "Arquivo acima do limite de 50 MB do Operum." (antes aparecia como "falha de rede").
+
+**Limitação:** `content_base64` depende de o modelo escrever o arquivo inteiro na chamada da tool. Isso só é viável para arquivos pequenos, e não para uma imagem local de centenas de KB. A solução é o item 8.3.
+
+**Achado:** o file-service não confere o tenant nas rotas expostas pelo gateway. Virou o item 4.1.
+
+### 8.3 URL de upload de uso único (arquivo que está no computador)
+**Card:** "MCP: URL de upload de uso único para anexar arquivo que está no computador" (média).
+
+**Problema:** no `operum_upload_attachment` (8.2), o arquivo chega em `content_base64` ou por `url` pública. Arquivo local e grande não tem URL, e em base64 o modelo precisaria escrever centenas de milhares de caracteres na chamada. Foi o caso da imagem da EAP que estava no `.docx`.
+
+**Solução:** tool `operum_create_upload_link(task_id, file_name?)`.
+- Confere a tarefa no tenant (`GET /cards/:id`) e devolve `{ upload_url, expires_at, curl }`, com `curl` = `curl -F "file=@<caminho>" "<upload_url>"`.
+- O Claude Code roda o comando no terminal, e o arquivo vai direto ao mcp-server, sem passar pelo modelo.
+- **Rota pública nova no mcp-server:** `POST /uploads/:token` (multipart, campo `file`). Ela:
+  - decifra o token;
+  - confere validade e uso único;
+  - repassa o arquivo em stream ao `/files/upload?cardId=` do gateway, com o PAT de dentro do token;
+  - devolve o anexo em JSON.
+  - Tipos e limite de 50 MB iguais aos do 8.2, com as mesmas mensagens.
+- **Token:** AES-256-GCM com a chave `MCP_UPLOAD_SECRET`. O conteúdo cifrado é `{ pat, taskId, tenantId, exp, nonce }`, com validade de 10 minutos. O PAT não aparece em claro na URL nem nos logs do Traefik.
+- **Uso único:** o nonce fica num `Map` em memória até expirar. Vale com uma réplica do mcp-server, como o `idempotency_key`. Com mais réplicas, é preciso passar para o Redis.
+- **Limite de taxa** por IP na rota pública.
+
+**Configuração nova em produção** (`.env` da VPS e `docker-compose.production.yml`):
+- `MCP_UPLOAD_SECRET`: 32 bytes aleatórios, em base64;
+- `MCP_PUBLIC_URL`: a URL pública do mcp-server no Traefik.
+
+Sem essas variáveis, a tool responde com erro claro dizendo o que falta configurar.
+
+**BDD:**
+- Dado um link gerado para a tarefa X, quando o `curl` envia `eap.png` (800 KB), então o anexo aparece no card X.
+- Dado um link já usado, ou vencido há mais de 10 minutos, quando alguém envia de novo, então a resposta é 410 e nada é gravado.
+- Dado um token adulterado, então a resposta é 400 sem detalhe do motivo.
+
+**Arquivos:** `mcp-server/src/tools/attachments.ts`, `mcp-server/src/uploadLink.ts` (cifra e nonce), `mcp-server/src/main.ts` (rota), `docker-compose.production.yml`, `.env.example`, README do MCP.
+
+### 8.4 Timer das tarefas pelo MCP
+**Card:** "MCP: iniciar e parar o timer das tarefas" (alta).
+
+**Contexto:** em 29/09 ficou combinado que, ao **começar** uma tarefa, o Claude move o card para "Em andamento" e inicia o timer. Ao **abrir a PR**, para o timer e move o card para "Em teste". O MCP não tem tool de tempo, então hoje o timer não tem como correr.
+
+**Base existente:**
+- **sprint-service:** `POST /cards/:id/time-entries/start` (um timer rodando por usuário; um segundo dá 400 "Já existe um timer em andamento"), `POST /time-entries/:id/stop`, `POST /cards/:id/time-entries/manual`, `GET /cards/:id/time-entries/active` e `GET /cards/:id/time-entries/total`.
+- **Mover para "Em andamento" ao iniciar o timer:** hoje só existe na tela (`handleCardTimerStarted` em `components/sprint/SprintBoard.tsx`). Ele procura a coluna com o título "em andamento" e só move para frente.
+
+**Entregar:**
+- **`operum_start_timer(task_id, description?, stop_running?)`:**
+  - inicia o timer do dono do token;
+  - repete a regra da tela: se o card está numa sprint e numa coluna anterior a "Em andamento", move para lá, registrando o motivo "timer iniciado pelo MCP";
+  - com `stop_running: true`, para antes o timer que estiver rodando em outra tarefa;
+  - sem essa opção, o erro diz em qual tarefa o timer está rodando.
+- **`operum_stop_timer(task_id?)`:** para o timer rodando do usuário (na tarefa informada, ou no que estiver ativo) e devolve a duração.
+- **`operum_log_time(task_id, started_at, ended_at, description?)`:** lança tempo manual, para registrar trabalho feito sem timer.
+- **`operum_get_task`:** passa a trazer `time: { total_seconds, running: { started_at } | null }`.
+- **Auditoria:** as três escritas vão para o AuditLog (`via: "mcp"`).
+
+**BDD:**
+- Dado um card em "A Fazer", quando o Claude chama `operum_start_timer`, então o card vai para "Em andamento" e a tela mostra o timer correndo.
+- Dado um timer rodando no card A, quando o Claude inicia o timer do card B com `stop_running: true`, então o timer de A para com a duração gravada e o de B começa.
+- Dado um card em "Em teste", quando o timer é iniciado, então o card não volta de coluna.
+
+**Arquivos:** `mcp-server/src/tools/time.ts` (novo), `mcp-server/src/tools/tasks.ts` (`get_task`), `mcp-server/src/server.ts`, testes com o Operum falso (rotas de time entries).
 
 ---
 
@@ -418,12 +683,13 @@ Continua `dry_run=true` por padrão.
 
 ## Processo por tarefa
 
+0. **Ao começar**, no Operum: mover o card para "Em andamento" e iniciar o timer (`operum_start_timer`, depois do 8.4).
 1. Lógica pura com teste Vitest primeiro, quando houver lógica.
 2. Service.
 3. Action: `verifySession` → autorização → Zod → service → `registrarAcao` → `revalidatePath`.
 4. UI.
 5. `pnpm test:run`, `pnpm lint`, `npx tsc -p tsconfig.check.json` e `pnpm build`.
 6. Um commit por item.
-7. No Operum, mover o card para "Em teste" e comentar o hash do commit.
+7. **Ao abrir a PR**, no Operum: parar o timer, mover o card para "Em teste" e comentar a PR e os commits.
 
 Cada fase sai numa branch e PR próprias e para para revisão antes da seguinte.

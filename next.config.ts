@@ -13,7 +13,8 @@ const CSP = [
   // unsafe-eval required by React dev tools (reconstructing callstacks); never used in production
   `script-src 'self' 'unsafe-inline'${isDev ? " 'unsafe-eval'" : ""}`,
   "style-src 'self' 'unsafe-inline'",
-  `img-src 'self' data: blob: https://*.operum.adm.br ${isDev ? MINIO_PUBLIC : ''}`.trim(),
+  // i.ytimg.com: miniatura dos anexos que são link de vídeo do YouTube.
+  `img-src 'self' data: blob: https://*.operum.adm.br https://i.ytimg.com ${isDev ? MINIO_PUBLIC : ''}`.trim(),
   "font-src 'self'",
   "connect-src 'self' https://*.operum.adm.br https://viacep.com.br",
   "frame-ancestors 'none'",

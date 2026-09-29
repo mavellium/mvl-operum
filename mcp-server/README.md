@@ -70,6 +70,7 @@ Toda tool aceita `tenant_id` (omitido = tenant do token padrão) e responde JSON
 | Sprints e colunas | `operum_list_sprints`, `operum_get_sprint`, `operum_create_sprint`, `operum_update_sprint`, `operum_delete_sprint`, `operum_create_column`, `operum_update_column`, `operum_delete_column` |
 | Tarefas | `operum_list_tasks`, `operum_get_task`, `operum_create_task`, `operum_update_task`, `operum_move_task`, `operum_delete_task`, `operum_set_task_tags`, `operum_set_task_responsibles`, `operum_bulk_update_tasks` |
 | Etiquetas | `operum_list_tags`, `operum_create_tag` |
+| Anexos | `operum_upload_attachment`, `operum_add_link`, `operum_delete_attachment` (a leitura vem em `operum_get_task` e `operum_list_tasks` com `fields="full"`) |
 | Comentários | `operum_list_comments`, `operum_create_comment`, `operum_update_comment`, `operum_delete_comment` |
 | Histórico | `operum_get_activity` |
 | Migração | `operum_export_project`, `operum_import_project`, `operum_copy_project` |
@@ -80,6 +81,13 @@ Segurança das escritas:
 - `bulk_update_tasks`, `import_project` e `copy_project` rodam em `dry_run` por padrão.
 - `create_task` aceita `idempotency_key` (memória de 24h por token; vale com uma réplica do servidor).
 - Toda escrita é registrada no `AuditLog` do Operum com `details.via = "mcp"`; o sprint-service acrescenta `authType`/`apiTokenId` a partir dos headers do gateway.
+
+### Anexos
+
+- `operum_upload_attachment` recebe o arquivo em `content_base64` (até 10 MB; aceita `data:` URL) ou em `url`, que o servidor baixa (até 50 MB). Tipos aceitos: imagens, vídeos MP4/WebM/MOV, PDF, Word, Excel, PowerPoint, OpenDocument, TXT, CSV e ZIP. A lista é a mesma do app e do file-service, e um teste de paridade garante isso.
+- O download por `url` só aceita HTTPS na porta 443. Ele recusa endereço privado, loopback, link-local (metadados de nuvem) e reservado. A checagem acontece no momento da conexão (resiste a DNS rebinding) e vale também para cada redirecionamento, no máximo 3. O prazo total é de 60 s.
+- `operum_add_link` anexa só a URL (YouTube, Vimeo, Loom, Drive...), sem baixar nada. No card, vídeo do YouTube ganha miniatura. O mesmo link na mesma tarefa não é duplicado.
+- Toda tool confere antes, por `GET /cards/:id`, se a tarefa é do tenant do token. O file-service não conhece tenant.
 
 ### Migração entre tenants
 

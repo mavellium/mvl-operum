@@ -12,7 +12,10 @@ import { TagSelector } from '../tag/TagSelector'
 import MultiUserSelector from './MultiUserSelector'
 import { useAutosave } from '@/hooks/useAutosave'
 import { toDatetimeLocal, fromDatetimeLocal } from '@/lib/cardUtils'
-import { ATTACHMENT_ACCEPT, ATTACHMENT_TYPES_LABEL, MAX_ATTACHMENT_MB, erroDoAnexo } from '@/lib/attachmentTypes'
+import {
+  ATTACHMENT_ACCEPT, ATTACHMENT_TYPES_LABEL, MAX_ATTACHMENT_MB, erroDoAnexo,
+  isLinkAttachment, linkHref, linkHost, linkThumbnail,
+} from '@/lib/attachmentTypes'
 
 interface User { id: string; name: string; email: string; avatarUrl?: string | null }
 interface Tag { id: string; name: string; color: string }
@@ -88,6 +91,13 @@ function formatBytes(bytes: number): string {
 }
 
 function AttachmentIcon({ fileType }: { fileType: string }) {
+  if (isLinkAttachment(fileType)) {
+    return (
+      <svg className="w-4 h-4 shrink-0 text-blue-500" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
+        <path strokeLinecap="round" strokeLinejoin="round" d="M13.19 8.688a4.5 4.5 0 0 1 1.242 7.244l-4.5 4.5a4.5 4.5 0 0 1-6.364-6.364l1.757-1.757m13.35-.622 1.757-1.757a4.5 4.5 0 0 0-6.364-6.364l-4.5 4.5a4.5 4.5 0 0 0 1.242 7.244" />
+      </svg>
+    )
+  }
   if (fileType.startsWith('image/')) {
     return (
       <svg className="w-4 h-4 shrink-0 text-violet-500" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
@@ -597,9 +607,16 @@ export default function CardModal({
                   ? (pendingFiles.length === 0 && <p className="text-sm text-slate-400 italic">Nenhum anexo ainda.</p>)
                   : (
                     <ul className="space-y-0.5">
-                      {attachments.map(a => (
+                      {attachments.map(a => {
+                        // Link (vídeo do YouTube etc.): abre a URL direto, sem URL assinada do MinIO.
+                        const href = isLinkAttachment(a.fileType) ? linkHref(a.filePath) : null
+                        const thumb = href ? linkThumbnail(href) : null
+                        return (
                         <li key={a.id} className="flex items-center gap-2 group rounded-md px-2 py-1.5 hover:bg-slate-50">
-                          <AttachmentIcon fileType={a.fileType} />
+                          {thumb
+                            // eslint-disable-next-line @next/next/no-img-element
+                            ? <img src={thumb} alt="" data-testid="anexo-link-miniatura" className="w-12 h-7 shrink-0 rounded object-cover bg-slate-100" />
+                            : <AttachmentIcon fileType={a.fileType} />}
                           {renamingId === a.id ? (
                             <form
                               className="flex-1 flex items-center gap-1"
@@ -621,14 +638,27 @@ export default function CardModal({
                             </form>
                           ) : (
                             <>
-                              <span className="flex-1 min-w-0 truncate text-sm text-slate-700">{a.fileName}</span>
-                              <span className="text-xs text-slate-400 shrink-0">{formatBytes(a.fileSize)}</span>
+                              {href ? (
+                                <a
+                                  href={href}
+                                  target="_blank"
+                                  rel="noopener noreferrer"
+                                  className="flex-1 min-w-0 truncate text-sm text-blue-600 hover:underline"
+                                >
+                                  {a.fileName}
+                                </a>
+                              ) : (
+                                <span className="flex-1 min-w-0 truncate text-sm text-slate-700">{a.fileName}</span>
+                              )}
+                              <span className="text-xs text-slate-400 shrink-0">{href ? linkHost(href) : formatBytes(a.fileSize)}</span>
                               <div className="flex items-center gap-0.5 opacity-0 group-hover:opacity-100 transition-opacity shrink-0">
                                 <button
-                                  title="Ver arquivo"
+                                  title={href ? 'Abrir link' : 'Ver arquivo'}
                                   className="p-1 rounded hover:bg-slate-200 text-slate-400 hover:text-slate-700 cursor-pointer"
                                   onClick={async () => {
-                                    if (onAttachmentView) {
+                                    if (href) {
+                                      window.open(href, '_blank', 'noopener,noreferrer')
+                                    } else if (onAttachmentView) {
                                       const url = await onAttachmentView(a.id)
                                       if (url) window.open(url, '_blank', 'noopener,noreferrer')
                                     } else {
@@ -677,7 +707,8 @@ export default function CardModal({
                             </>
                           )}
                         </li>
-                      ))}
+                        )
+                      })}
                     </ul>
                   )
                 }

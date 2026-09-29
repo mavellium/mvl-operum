@@ -1,5 +1,7 @@
 const API_URL = (process.env.API_GATEWAY_INTERNAL_URL ?? 'http://api-gateway:4000').replace(/\/$/, '')
 const REQUEST_TIMEOUT_MS = 10_000
+/** Upload de anexo (até 50 MB) passa pelo gateway até o file-service e o MinIO. */
+const UPLOAD_TIMEOUT_MS = 120_000
 
 const MAX_PUBLIC_MESSAGE_CHARS = 300
 
@@ -13,15 +15,17 @@ export interface GatewayError extends Error {
   publicMessage?: string
 }
 
-async function request<T>(token: string, path: string, init: RequestInit = {}): Promise<T> {
+async function request<T>(token: string, path: string, init: RequestInit = {}, timeoutMs = REQUEST_TIMEOUT_MS): Promise<T> {
+  // FormData: o fetch monta o Content-Type multipart com o boundary.
+  const isForm = init.body instanceof FormData
   const res = await fetch(`${API_URL}${path}`, {
     ...init,
     headers: {
-      'Content-Type': 'application/json',
+      ...(isForm ? {} : { 'Content-Type': 'application/json' }),
       Authorization: `Bearer ${token}`,
       ...(init.headers as Record<string, string> | undefined),
     },
-    signal: AbortSignal.timeout(REQUEST_TIMEOUT_MS),
+    signal: AbortSignal.timeout(timeoutMs),
   })
 
   if (res.status === 204) return undefined as T
@@ -61,6 +65,8 @@ export interface Gateway {
   post: <T>(path: string, body?: unknown) => Promise<T>
   patch: <T>(path: string, body?: unknown) => Promise<T>
   delete: <T>(path: string) => Promise<T>
+  /** POST multipart/form-data (upload de anexo), com prazo maior. */
+  upload: <T>(path: string, form: FormData) => Promise<T>
 }
 
 /** Cliente HTTP do api-gateway autenticado com o PAT do chamador. Nunca fala com Prisma/serviços de domínio diretamente (D2). */
@@ -70,5 +76,6 @@ export function gateway(token: string): Gateway {
     post: (path, body) => request(token, path, { method: 'POST', body: body !== undefined ? JSON.stringify(body) : undefined }),
     patch: (path, body) => request(token, path, { method: 'PATCH', body: body !== undefined ? JSON.stringify(body) : undefined }),
     delete: (path) => request(token, path, { method: 'DELETE' }),
+    upload: (path, form) => request(token, path, { method: 'POST', body: form }, UPLOAD_TIMEOUT_MS),
   }
 }

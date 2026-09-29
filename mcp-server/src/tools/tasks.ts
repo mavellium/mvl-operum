@@ -3,14 +3,16 @@ import type { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js'
 import type { TenantContext, TenantRegistry } from '../tenants.js'
 import { audit, confirmShape, defineTool, requireConfirm } from '../tool.js'
 import { paginate, paginationShape } from '../pagination.js'
-import { serializeMovement, serializeAudit, serializeTask, serializeTag, serializeComment, type SerializedTask } from '../serializers.js'
+import { serializeMovement, serializeAudit, serializeTask, serializeTag, serializeComment, serializeAttachment, type SerializedTask } from '../serializers.js'
 import { dateInput, toIso } from '../dates.js'
 import { UserError } from '../errors.js'
 import { mapLimit } from '../concurrency.js'
 import { withIdempotency } from '../idempotency.js'
+import { fetchAttachments } from './attachments.js'
 
 export const PRIORITIES = ['baixa', 'media', 'alta'] as const
 const READ_CONCURRENCY = 4
+const ATTACHMENTS_UNAVAILABLE = 'Não foi possível carregar os anexos agora (serviço de arquivos). Tente de novo.'
 const MAX_BULK = 100
 
 type RawCard = Record<string, unknown>
@@ -192,7 +194,15 @@ export function registerTaskTools(server: McpServer, registry: TenantRegistry) {
         return true
       })
       const page = paginate(tasks, args.cursor, args.limit)
-      return { ...page, items: args.fields === 'full' ? page.items : page.items.map(summarize) }
+      if (args.fields !== 'full') return { ...page, items: page.items.map(summarize) }
+
+      // Anexos só da página, pelo file-service; se ele falhar, a lista sai sem anexos e avisa.
+      const byCard = await fetchAttachments(ctx.gw, page.items.map(t => t.id!)).catch(() => null)
+      return {
+        ...page,
+        items: byCard ? page.items.map(t => ({ ...t, attachments: (byCard.get(t.id!) ?? []).map(serializeAttachment) })) : page.items,
+        ...(byCard ? {} : { attachments_error: ATTACHMENTS_UNAVAILABLE }),
+      }
     },
   )
 
@@ -213,8 +223,11 @@ export function registerTaskTools(server: McpServer, registry: TenantRegistry) {
         ctx.gw.get<RawCard>(`/cards/${task_id}`),
         include_history ? ctx.gw.get<Record<string, unknown>[]>(`/cards/${task_id}/movements`) : Promise.resolve(null),
       ])
+      // Depois do card: só lista anexos de uma tarefa que o tenant enxerga.
+      const byCard = await fetchAttachments(ctx.gw, [task_id]).catch(() => null)
       return {
-        task: serializeTask(card, { comments: true }),
+        task: serializeTask({ ...card, attachments: byCard?.get(task_id) ?? [] }, { comments: true }),
+        ...(byCard ? {} : { attachments_error: ATTACHMENTS_UNAVAILABLE }),
         ...(movements ? { history: movements.map(serializeMovement) } : {}),
       }
     },

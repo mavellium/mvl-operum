@@ -4,6 +4,8 @@
  * sensível adicionado no futuro a um include do Prisma vaze para o agente.
  */
 
+import { LINK_ATTACHMENT_TYPE } from './attachmentTypes.js'
+
 type Raw = Record<string, unknown> | null | undefined
 
 const str = (v: unknown): string | null => (typeof v === 'string' ? v : v == null ? null : String(v))
@@ -134,13 +136,17 @@ export function serializeComment(c: Raw) {
 }
 
 export function serializeAttachment(a: Raw) {
+  const isLink = a?.fileType === LINK_ATTACHMENT_TYPE
   return {
     id: str(a?.id),
+    kind: isLink ? ('link' as const) : ('file' as const),
     file_name: str(a?.fileName),
     file_type: str(a?.fileType),
     file_size: num(a?.fileSize),
     is_cover: bool(a?.isCover),
     uploaded_at: str(a?.uploadedAt ?? a?.createdAt),
+    // Link é conteúdo do usuário (a URL do vídeo); de arquivo não expõe o caminho interno no MinIO.
+    ...(isLink ? { url: str(a?.filePath) } : {}),
   }
 }
 

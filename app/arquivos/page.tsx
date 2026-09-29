@@ -6,6 +6,7 @@ import { filesApi } from '@/lib/api-client'
 import ArquivosClient from '@/components/arquivos/ArquivosClient'
 import Link from 'next/link'
 import type { Metadata } from 'next'
+import { isLinkAttachment } from '@/lib/attachmentTypes'
 
 export const dynamic = 'force-dynamic'
 
@@ -76,7 +77,7 @@ export default async function ArquivosPage() {
         fileName: a.fileName,
         fileType: a.fileType,
         fileSize: a.fileSize,
-        fileSizeFormatted: formatBytes(a.fileSize),
+        fileSizeFormatted: isLinkAttachment(a.fileType) ? 'Link' : formatBytes(a.fileSize),
         filePath: a.filePath,
         isCover: a.isCover,
         uploadedAt: new Date(a.createdAt).toISOString(),

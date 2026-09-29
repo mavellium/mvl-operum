@@ -33,3 +33,7 @@ export const ATTACHMENT_EXT_BY_MIME: Record<string, string> = {
 
 export const MAX_ATTACHMENT_MB = 50
 export const MAX_ATTACHMENT_SIZE = MAX_ATTACHMENT_MB * 1024 * 1024
+
+/** Anexo que é só um link (vídeo do YouTube etc.): filePath guarda a URL, sem arquivo no MinIO. */
+export const LINK_ATTACHMENT_TYPE = 'text/uri-list'
+export const MAX_LINK_URL_LENGTH = 2048

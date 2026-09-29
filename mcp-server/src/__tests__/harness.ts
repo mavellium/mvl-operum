@@ -4,6 +4,7 @@ import { buildServer } from '../server'
 import { TenantRegistry, clearIdentityCache } from '../tenants'
 import { clearIdempotencyStore } from '../idempotency'
 import { FakeOperum } from './fakeOperum'
+import type { Downloader } from '../download'
 
 export const PAT_MAV = 'opr_pat_MavelliumMavelliumMav1'
 export const PAT_FAB = 'opr_pat_FabioFabioFabioFabio12'
@@ -21,7 +22,7 @@ export interface Harness {
  * Dois tenants: Mavellium (tenant padrão, Vinícius admin, Ana, Bruno) e Fábio
  * (Vinícius e Ana existem por e-mail; Bruno não). Tokens do Vinícius nos dois.
  */
-export async function setupHarness(opts: { tokens?: string[] } = {}): Promise<Harness> {
+export async function setupHarness(opts: { tokens?: string[]; download?: Downloader } = {}): Promise<Harness> {
   // Sem espera real entre chamadas nos testes (o throttle é testado à parte).
   process.env.OPERUM_MCP_RPS = '1000000'
   clearIdentityCache()
@@ -37,7 +38,9 @@ export async function setupHarness(opts: { tokens?: string[] } = {}): Promise<Ha
 
   const tokenUser: Record<string, string> = { [PAT_MAV]: 'u-vini-mav', [PAT_FAB]: 'u-vini-fab' }
   const registry = new TenantRegistry(opts.tokens ?? [PAT_MAV, PAT_FAB], t => op.gateway(tokenUser[t]))
-  const server = buildServer(registry)
+  const server = buildServer(registry, {
+    attachments: { download: opts.download ?? (async () => { throw new Error('download não configurado no teste') }) },
+  })
   const client = new Client({ name: 'test', version: '1.0.0' })
   const [serverSide, clientSide] = InMemoryTransport.createLinkedPair()
   await Promise.all([server.connect(serverSide), client.connect(clientSide)])

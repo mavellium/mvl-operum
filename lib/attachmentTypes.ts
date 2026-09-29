@@ -75,3 +75,57 @@ export function erroDoAnexo(file: { name: string; type: string; size: number }):
   }
   return null
 }
+
+/** Anexo que é só um link (vídeo do YouTube etc.): filePath guarda a URL, sem arquivo no MinIO. */
+export const LINK_ATTACHMENT_TYPE = 'text/uri-list'
+export const MAX_LINK_URL_LENGTH = 2048
+
+export function isLinkAttachment(fileType: string): boolean {
+  return fileType === LINK_ATTACHMENT_TYPE
+}
+
+/** URL do link só se for http(s): nada de `javascript:` vindo do banco num href. */
+export function linkHref(filePath: string): string | null {
+  try {
+    const url = new URL(filePath)
+    return url.protocol === 'https:' || url.protocol === 'http:' ? url.toString() : null
+  } catch {
+    return null
+  }
+}
+
+export function linkHost(href: string): string {
+  try {
+    return new URL(href).hostname.replace(/^www\./, '')
+  } catch {
+    return ''
+  }
+}
+
+const YOUTUBE_ID_RE = /^[A-Za-z0-9_-]{11}$/
+
+/** Id do vídeo em youtube.com/watch?v=, youtu.be/, /shorts/, /embed/ e /live/. */
+export function youtubeVideoId(href: string): string | null {
+  let url: URL
+  try {
+    url = new URL(href)
+  } catch {
+    return null
+  }
+  const host = url.hostname.replace(/^(www|m|music)\./, '')
+  let id: string | null = null
+  if (host === 'youtu.be') {
+    id = url.pathname.split('/')[1] ?? null
+  } else if (host === 'youtube.com' || host === 'youtube-nocookie.com') {
+    id = url.pathname === '/watch'
+      ? url.searchParams.get('v')
+      : (url.pathname.match(/^\/(?:embed|shorts|live|v)\/([^/]+)/)?.[1] ?? null)
+  }
+  return id && YOUTUBE_ID_RE.test(id) ? id : null
+}
+
+/** Miniatura do vídeo (só YouTube, servida por i.ytimg.com, liberado no CSP). */
+export function linkThumbnail(href: string): string | null {
+  const id = youtubeVideoId(href)
+  return id ? `https://i.ytimg.com/vi/${id}/mqdefault.jpg` : null
+}
