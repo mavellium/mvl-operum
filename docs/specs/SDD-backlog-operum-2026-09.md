@@ -77,7 +77,7 @@ Tarefas que pedem a mesma coisa foram **fundidas**. A tabela abaixo mostra quais
 | 7 | 7.3 | Documentos: corrigir Atas | média ⛔ |
 | 7 | 7.4 | Termo de Abertura: formulário para digitar e botão para gerar o documento, com histórico | média |
 | 8 | 8.1 | MCP: copiar/importar para dentro de um projeto existente | média |
-| 8 | 8.2 | MCP: tool para anexar arquivos em cards | média |
+| 8 | 8.2 | MCP: anexar imagens e links de vídeo em cards | alta |
 | — | — | Integrar Operum com MCP Claude (entregue na PR #19, validar e fechar) | média |
 | — | — | Adicionar plano de custo (já existe em `/projetos/:id/planilha-custos`, validar e fechar) | média |
 | — | — | Integração com o Zoom (vai para SDD próprio) | média |
@@ -544,11 +544,33 @@ Os itens 7.1 a 7.3 (⛔) estão bloqueados até o usuário enviar os modelos do 
 
 Continua `dry_run=true` por padrão.
 
-### 8.2 Anexos pelo MCP
-`operum_upload_attachment(task_id, file_name, mime_type, content_base64 | url)` e `operum_delete_attachment(attachment_id, confirm)`, via file-service pelo gateway:
-- mesma lista de tipos permitidos de `app/api/uploads/route.ts`;
-- o limite de tamanho aparece na mensagem de erro;
-- para `url`, só HTTPS, com timeout e limite de bytes (proteção contra SSRF).
+### 8.2 Anexos pelo MCP ✅
+**Card:** "MCP: anexar imagens e links de vídeo em cards".
+
+**Entregue** (branch `feat/mcp-anexos`):
+- **`operum_upload_attachment(task_id, file_name?, mime_type?, content_base64 | url)`.**
+  - O base64 aceita até 10 MB e também `data:` URL. A `url` é baixada pelo servidor e aceita até 50 MB.
+  - A lista de tipos é a do app e do file-service, com teste de paridade entre os três.
+  - O nome do arquivo é limpo (sem `: / \ * ? " < > |`) e ganha a extensão do tipo, se faltar.
+- **`operum_add_link(task_id, url, title?)`.**
+  - Grava só a URL, como anexo do tipo `text/uri-list`. O file-service ganhou a rota `POST /files/link` para isso.
+  - O mesmo link na mesma tarefa não é duplicado.
+  - No card, vídeo do YouTube ganha miniatura (`i.ytimg.com` liberado no CSP), e na página `/arquivos` há o filtro "Links".
+- **`operum_delete_attachment(task_id, attachment_id, confirm)`.**
+  - Recebe também o `task_id`, que a spec não previa. O file-service não sabe a qual tenant o anexo pertence; com o `task_id`, a tool confere a tarefa e só exclui um anexo que esteja nela.
+- **Checagem de tenant:** toda tool confere antes, por `GET /cards/:id`, se a tarefa é do tenant do token. Os ids são validados por regex, para que `../` não mude o caminho chamado.
+- **Proteção contra SSRF no download por `url`** (`mcp-server/src/download.ts`):
+  - só HTTPS na porta 443;
+  - recusa IP privado, loopback, link-local (metadados de nuvem) e reservado, conferindo no `lookup` da própria conexão (resiste a DNS rebinding);
+  - cada redirecionamento passa pela mesma checagem, no máximo 3;
+  - conexão sem pool;
+  - limite de bytes (Content-Length e contagem do stream) e prazo total de 60 s.
+- **Leitura:** `operum_get_task`, `operum_list_tasks` com `fields="full"` e `operum_export_project` voltaram a trazer os anexos, agora buscados no file-service. Desde `06b376d1` vinham sempre vazios.
+- **Erros:** o 413 do file-service vira "Arquivo acima do limite de 50 MB do Operum." (antes aparecia como "falha de rede").
+
+**Limitação:** `content_base64` depende de o modelo escrever o arquivo inteiro na chamada da tool. Isso só é viável para arquivos pequenos, e não para uma imagem local de centenas de KB. Para arquivo que está só no computador do usuário, o caminho prático seria uma tool que devolve uma URL de upload de uso único, para enviar com `curl`. Isso fica como próximo passo, porque exige segredo novo e rota pública no mcp-server.
+
+**Achado (pendente):** o gateway expõe `/files/*` a qualquer JWT ou PAT, e o file-service não confere o tenant do card nem do anexo. Quem conhece o id de um card ou de um anexo de outro tenant consegue anexar, renomear ou excluir. As tools do MCP já se protegem sozinhas, mas o correto é o file-service validar o tenant (via sprint-service) em todas as rotas.
 
 ---
 
