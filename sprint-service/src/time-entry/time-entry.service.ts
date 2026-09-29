@@ -49,6 +49,11 @@ export class TimeEntryService {
     await assertCard(tenantId, cardId)
     const start = new Date(data.startedAt)
     const end = new Date(data.endedAt)
+    if (Number.isNaN(start.getTime()) || Number.isNaN(end.getTime())) {
+      throw new BadRequestException('startedAt e endedAt devem ser datas válidas')
+    }
+    // Sem isto, fim antes do início gravava duração negativa e abatia o total do card.
+    if (end <= start) throw new BadRequestException('endedAt deve ser depois de startedAt')
     const duration = Math.floor((end.getTime() - start.getTime()) / 1000)
     return prisma.timeEntry.create({
       data: { cardId, userId, startedAt: start, endedAt: end, duration, isManual: true, description: data.description },
@@ -70,6 +75,18 @@ export class TimeEntryService {
     return prisma.timeEntry.findFirst({
       where: { cardId, isRunning: true, deletedAt: null },
     })
+  }
+
+  /**
+   * Timer rodando do usuário, em qualquer card do tenant, ou null. Vem
+   * embrulhado em { entry } porque um null puro sai como corpo vazio.
+   */
+  async getRunning(tenantId: string, userId: string) {
+    const entry = await prisma.timeEntry.findFirst({
+      where: { userId, isRunning: true, deletedAt: null, user: { tenantId } },
+      include: { card: { select: { id: true, title: true, sprintId: true, deletedAt: true } } },
+    })
+    return { entry }
   }
 
   async remove(tenantId: string, id: string) {

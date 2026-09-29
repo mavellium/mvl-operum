@@ -37,6 +37,12 @@ export class TimeEntryController {
     return this.timeEntryService.listByUser(tenantId, userId)
   }
 
+  @Get('time-entries/running')
+  getRunning(@TenantId() tenantId: string, @Headers('x-user-id') userId: string) {
+    if (!userId) throw new BadRequestException('x-user-id header é obrigatório')
+    return this.timeEntryService.getRunning(tenantId, userId)
+  }
+
   @Post('cards/:cardId/time-entries/start')
   start(
     @TenantId() tenantId: string,
