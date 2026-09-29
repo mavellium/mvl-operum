@@ -4,6 +4,10 @@
 >
 > **Atualização (28/09, noite):** 11 tarefas criadas depois da primeira versão entraram nas novas Fases 4 (correções rápidas) e 5 (permissões) e no item 7.4 (Termo de Abertura). As fases seguintes foram renumeradas: EAP 4→6, Documentos 5→7, MCP 6→8.
 >
+> **Atualização (29/09):**
+> - Entrou o **4.1** (segurança: o file-service não confere o tenant), achado ao fazer o 8.2, e os antigos 4.1 a 4.5 viraram 4.2 a 4.6.
+> - Entraram o **8.3** (URL de upload de uso único) e o **8.4** (timer pelo MCP), que é necessário para a regra "ao começar uma tarefa, iniciar o timer".
+>
 > Segue a arquitetura do repo: Next.js 16 (App Router, `proxy.ts`), React 19, Prisma 7, Zod 4, Vitest 4, microsserviços NestJS atrás do api-gateway e multi-tenant via `verifySession`. Actions finas → services → auditoria.
 >
 > Marcações: **✅** causa confirmada no código • **🔎** hipótese a confirmar em produção • **⚠️ DECISÃO** pendente • **⛔** bloqueado por insumo externo.
@@ -60,11 +64,12 @@ Tarefas que pedem a mesma coisa foram **fundidas**. A tabela abaixo mostra quais
 | 3 | 3.2 | Stakeholders: adicionar pela barra de pesquisa de forma mais fácil | média |
 | 3 | 3.3 | Menu: trocar o nome "Tenants" | baixa |
 | 3 | 3.4 | Adicionar controle de sessão (expirar por inatividade) | média |
-| 4 | 4.1 | Ao pesquisar por um card, ele aparece, mas clicar não abre o card | média (bug) |
-| 4 | 4.2 | Ao cadastrar um novo stakeholder, já trazer a tela correta para não ter que editar de novo | média |
-| 4 | 4.3 | Validação de horas por dia no cadastro do stakeholder | média |
-| 4 | 4.4 | Redefinir senha: adicionar um olho para visualizar a senha | média |
-| 4 | 4.5 | Planilha de custos baixada: subtotal alinhado à direita | média |
+| 4 | 4.1 | Segurança: file-service não confere a instituição (tenant) dos anexos | alta (segurança) |
+| 4 | 4.2 | Ao pesquisar por um card, ele aparece, mas clicar não abre o card | média (bug) |
+| 4 | 4.3 | Ao cadastrar um novo stakeholder, já trazer a tela correta para não ter que editar de novo | média |
+| 4 | 4.4 | Validação de horas por dia no cadastro do stakeholder | média |
+| 4 | 4.5 | Redefinir senha: adicionar um olho para visualizar a senha | média |
+| 4 | 4.6 | Planilha de custos baixada: subtotal alinhado à direita | média |
 | 5 | 5.1 | Definir o que o usuário tem de acesso · O acesso às permissões é feito em Funções e no próprio usuário | média (épico) |
 | 5 | 5.2 | Usuários comuns têm acesso a todos os documentos · Usuário comum edita e gera nova versão, aprovada pelo gerente | média |
 | 5 | 5.3 | Planilha de Custos: usuário comum edita o realizado das linhas em que é "Elaborado por" | média |
@@ -78,6 +83,8 @@ Tarefas que pedem a mesma coisa foram **fundidas**. A tabela abaixo mostra quais
 | 7 | 7.4 | Termo de Abertura: formulário para digitar e botão para gerar o documento, com histórico | média |
 | 8 | 8.1 | MCP: copiar/importar para dentro de um projeto existente | média |
 | 8 | 8.2 | MCP: anexar imagens e links de vídeo em cards | alta |
+| 8 | 8.3 | MCP: URL de upload de uso único para anexar arquivo que está no computador | média |
+| 8 | 8.4 | MCP: iniciar e parar o timer das tarefas | alta |
 | — | — | Integrar Operum com MCP Claude (entregue na PR #19, validar e fechar) | média |
 | — | — | Adicionar plano de custo (já existe em `/projetos/:id/planilha-custos`, validar e fechar) | média |
 | — | — | Integração com o Zoom (vai para SDD próprio) | média |
@@ -359,16 +366,49 @@ Um único combobox:
 
 ## Fase 4 — Correções rápidas (tarefas de 28/09)
 
-Tarefas criadas em 28/09/2026, depois do SDD original. São correções pequenas, sem dependência entre si. A 4.1 é bug e vem primeiro.
+Tarefas criadas em 28/09/2026, depois do SDD original. São correções pequenas, sem dependência entre si. Ordem: primeiro a 4.1 (falha de segurança, achada em 29/09), depois a 4.2 (bug) e as demais.
 
-### 4.1 Clicar num card da busca não abre o card ✅ causa confirmada
+### 4.1 Segurança: file-service não confere o tenant dos anexos ✅ causa confirmada
+**Card:** "Segurança: file-service não confere a instituição (tenant) dos anexos" (alta). Achado ao fazer o 8.2.
+
+**Problema:** o api-gateway repassa `/files/*` ao file-service para qualquer JWT ou PAT válido, com `x-user-id` e `x-tenant-id`. O file-service assume que o chamador já validou tudo (comentários em `upload.service.ts`). Nenhuma rota confere o tenant:
+
+| Rota | O que outro tenant consegue fazer |
+|---|---|
+| `POST /files/upload?cardId=` e `POST /files/link?cardId=` | anexar arquivo ou link ao card dele |
+| `GET /files/by-cards?cardIds=` | listar os anexos (nome, tipo, tamanho, URL do link) |
+| `PATCH /files/:id`, `PATCH /files/:id/cover`, `DELETE /files/:id` | renomear, trocar a capa, excluir |
+| `GET /files/:id/url` | obter a URL assinada e baixar o arquivo |
+| `POST /files/logo?entityId=&type=` | sobrescrever o logo de projeto ou stakeholder (chave previsível `logos/<type>s/<id>.<ext>`) |
+
+No app, `getAttachmentUrlAction`, `deleteAttachmentAction` e `renameAttachmentAction` conferem que o **card** é do tenant, mas não que o **anexo** é desse card. Assim, um card próprio mais o id de um anexo alheio passam na checagem. O `setCoverAction` não confere nem o card, só a sessão.
+
+Os ids são cuid, difíceis de adivinhar, mas vazam por log, print, export e compartilhamento. As tools do MCP (8.2) já conferem a tarefa antes de chamar o file-service. O furo continua para quem chama o gateway direto.
+
+**Solução:**
+1. **`x-tenant-id` obrigatório** em todas as rotas do file-service, exceto `/health`. As chamadas do app passam pelo gateway (JWT) ou pela `app/api/uploads`, que já envia o cabeçalho.
+2. **`TenantGuard` / `assertCardInTenant(cardId, tenantId)`:** o file-service consulta o sprint-service (`GET /cards/:id` com `X-Tenant-Id` e a chave interna; 404 vira 404), com cache curto em memória (30 s) para o `by-cards` não virar N chamadas repetidas.
+   - **Rotas por anexo:** carregam o anexo, pegam o `cardId` e conferem.
+   - **`by-cards`:** filtra os `cardIds` pelo tenant antes de consultar, com uma rota interna nova no sprint-service: `POST /cards/owned { ids }` → ids do tenant.
+3. **Anexo pertence ao card:** `rename`, `cover`, `url` e `delete` recebem o `cardId` (query ou corpo) e recusam com 404 se `attachment.cardId` for diferente. O app passa a enviar o `cardId` que já tem.
+4. **Logo:** confere o projeto ou stakeholder no project-service antes de gravar.
+5. **Testes:** o file-service não tem nenhum teste nem runner. Adicionar Vitest, como no mcp-server, e cobrir cada rota com "mesmo tenant ok" e "outro tenant 404".
+
+**BDD:**
+- Dado um card da instituição B, quando alguém da instituição A chama `POST /files/upload?cardId=<card de B>`, então a resposta é 404 e nada é gravado no MinIO nem no banco.
+- Dado um anexo do card X, quando alguém chama `DELETE /files/<anexo>?cardId=<card Y>`, então a resposta é 404.
+- Dado o usuário no próprio card, quando ele anexa, lista, renomeia, marca capa, vê e exclui, então tudo funciona como hoje.
+
+**Arquivos:** `file-service/src/upload/*`, `file-service/src/guards/`, `sprint-service/src/card/card.controller.ts` (rota interna), `app/actions/attachments.ts`, `lib/api-client.ts` (`filesApi` com `cardId`).
+
+### 4.2 Clicar num card da busca não abre o card ✅ causa confirmada
 **Problema:** a busca mostra o card, mas clicar nele não abre o card.
 
 **Causa:** o clique navega para `/projetos/:p/sprints/:s?card=<id>`, e o `SprintBoard` só lê o card da URL na montagem (`useState(initialCardId)`, em `components/sprint/SprintBoard.tsx`). Quando o usuário já está numa sprint, o Next reaproveita o componente e o `?card=` novo é ignorado. O mesmo acontece ao ir para outra sprint pela busca. O bug continua depois da Fase 2, que mudou a busca, mas não o board.
 
 **Solução:** o board passa a reagir à mudança de `initialCardId`, abrindo o card sempre que a URL traz um `?card=` diferente. Ao fechar o card, o `?card=` sai da URL (`router.replace`), para que clicar de novo no mesmo resultado também funcione. Teste: renderizar o board, trocar o `initialCardId` e ver o modal abrir.
 
-### 4.2 Stakeholder novo já "na tela certa" ✅ causa confirmada
+### 4.3 Stakeholder novo já "na tela certa" ✅ causa confirmada
 **Problema:** depois de cadastrar um stakeholder, é preciso abri-lo de novo em "Editar" para completar os dados.
 
 **Causa:** em `components/projetos/ProjetoStakeholdersClient.tsx` → `handleSave`:
@@ -380,7 +420,7 @@ Tarefas criadas em 28/09/2026, depois do SDD original. São correções pequenas
 1. Depois de criar e vincular um membro, gravar na mesma ação os dados do projeto (cargos, departamento, remuneração, horas/dia) pelo mesmo caminho da edição (`updateProjetoMemberAction`).
 2. Ao terminar qualquer criação (formulário ou busca), abrir o stakeholder recém-criado **em modo de edição**, com os dados preenchidos, em vez de fechar o formulário.
 
-### 4.3 Validação de horas por dia
+### 4.4 Validação de horas por dia
 **Problema:** o campo "Horas por dia" do stakeholder aceita qualquer valor positivo (ex.: 30). O servidor (`app/actions/projetos.ts`) só exige que seja maior que zero, e o valor entra no cálculo de valor/hora e da planilha de custos.
 
 **Solução:**
@@ -390,12 +430,12 @@ Tarefas criadas em 28/09/2026, depois do SDD original. São correções pequenas
 - a mesma validação na action, porque o cliente não é confiável;
 - aceitar vírgula como separador decimal ("7,5").
 
-### 4.4 Olho para mostrar a senha
+### 4.5 Olho para mostrar a senha
 **Problema:** só o login tem o botão de mostrar a senha. As telas de redefinir senha (`RecuperarSenhaForm`), primeiro acesso (`app/alterar-senha`), perfil (`ChangePasswordForm`) e cadastro de usuário (admin e stakeholders) não têm.
 
 **Solução:** um componente `PasswordInput`, com o botão de olho, `aria-label` "Mostrar senha"/"Ocultar senha" e `aria-pressed`, extraído do `LoginForm` e usado em todos os campos de senha.
 
-### 4.5 Subtotal da planilha exportada alinhado à direita
+### 4.6 Subtotal da planilha exportada alinhado à direita
 **Problema:** em `lib/exports/planilhaCustosXlsx.ts`, o rótulo "Sub-total …" (células A:C mescladas) fica alinhado à esquerda.
 
 **Solução:** `alignment: { horizontal: 'right' }` no rótulo do subtotal e também no do "TOTAL GERAL", para ficarem consistentes. Teste lendo o `.xlsx` gerado com o exceljs.
@@ -568,9 +608,67 @@ Continua `dry_run=true` por padrão.
 - **Leitura:** `operum_get_task`, `operum_list_tasks` com `fields="full"` e `operum_export_project` voltaram a trazer os anexos, agora buscados no file-service. Desde `06b376d1` vinham sempre vazios.
 - **Erros:** o 413 do file-service vira "Arquivo acima do limite de 50 MB do Operum." (antes aparecia como "falha de rede").
 
-**Limitação:** `content_base64` depende de o modelo escrever o arquivo inteiro na chamada da tool. Isso só é viável para arquivos pequenos, e não para uma imagem local de centenas de KB. Para arquivo que está só no computador do usuário, o caminho prático seria uma tool que devolve uma URL de upload de uso único, para enviar com `curl`. Isso fica como próximo passo, porque exige segredo novo e rota pública no mcp-server.
+**Limitação:** `content_base64` depende de o modelo escrever o arquivo inteiro na chamada da tool. Isso só é viável para arquivos pequenos, e não para uma imagem local de centenas de KB. A solução é o item 8.3.
 
-**Achado (pendente):** o gateway expõe `/files/*` a qualquer JWT ou PAT, e o file-service não confere o tenant do card nem do anexo. Quem conhece o id de um card ou de um anexo de outro tenant consegue anexar, renomear ou excluir. As tools do MCP já se protegem sozinhas, mas o correto é o file-service validar o tenant (via sprint-service) em todas as rotas.
+**Achado:** o file-service não confere o tenant nas rotas expostas pelo gateway. Virou o item 4.1.
+
+### 8.3 URL de upload de uso único (arquivo que está no computador)
+**Card:** "MCP: URL de upload de uso único para anexar arquivo que está no computador" (média).
+
+**Problema:** no `operum_upload_attachment` (8.2), o arquivo chega em `content_base64` ou por `url` pública. Arquivo local e grande não tem URL, e em base64 o modelo precisaria escrever centenas de milhares de caracteres na chamada. Foi o caso da imagem da EAP que estava no `.docx`.
+
+**Solução:** tool `operum_create_upload_link(task_id, file_name?)`.
+- Confere a tarefa no tenant (`GET /cards/:id`) e devolve `{ upload_url, expires_at, curl }`, com `curl` = `curl -F "file=@<caminho>" "<upload_url>"`.
+- O Claude Code roda o comando no terminal, e o arquivo vai direto ao mcp-server, sem passar pelo modelo.
+- **Rota pública nova no mcp-server:** `POST /uploads/:token` (multipart, campo `file`). Ela:
+  - decifra o token;
+  - confere validade e uso único;
+  - repassa o arquivo em stream ao `/files/upload?cardId=` do gateway, com o PAT de dentro do token;
+  - devolve o anexo em JSON.
+  - Tipos e limite de 50 MB iguais aos do 8.2, com as mesmas mensagens.
+- **Token:** AES-256-GCM com a chave `MCP_UPLOAD_SECRET`. O conteúdo cifrado é `{ pat, taskId, tenantId, exp, nonce }`, com validade de 10 minutos. O PAT não aparece em claro na URL nem nos logs do Traefik.
+- **Uso único:** o nonce fica num `Map` em memória até expirar. Vale com uma réplica do mcp-server, como o `idempotency_key`. Com mais réplicas, é preciso passar para o Redis.
+- **Limite de taxa** por IP na rota pública.
+
+**Configuração nova em produção** (`.env` da VPS e `docker-compose.production.yml`):
+- `MCP_UPLOAD_SECRET`: 32 bytes aleatórios, em base64;
+- `MCP_PUBLIC_URL`: a URL pública do mcp-server no Traefik.
+
+Sem essas variáveis, a tool responde com erro claro dizendo o que falta configurar.
+
+**BDD:**
+- Dado um link gerado para a tarefa X, quando o `curl` envia `eap.png` (800 KB), então o anexo aparece no card X.
+- Dado um link já usado, ou vencido há mais de 10 minutos, quando alguém envia de novo, então a resposta é 410 e nada é gravado.
+- Dado um token adulterado, então a resposta é 400 sem detalhe do motivo.
+
+**Arquivos:** `mcp-server/src/tools/attachments.ts`, `mcp-server/src/uploadLink.ts` (cifra e nonce), `mcp-server/src/main.ts` (rota), `docker-compose.production.yml`, `.env.example`, README do MCP.
+
+### 8.4 Timer das tarefas pelo MCP
+**Card:** "MCP: iniciar e parar o timer das tarefas" (alta).
+
+**Contexto:** em 29/09 ficou combinado que, ao **começar** uma tarefa, o Claude move o card para "Em andamento" e inicia o timer. Ao **abrir a PR**, para o timer e move o card para "Em teste". O MCP não tem tool de tempo, então hoje o timer não tem como correr.
+
+**Base existente:**
+- **sprint-service:** `POST /cards/:id/time-entries/start` (um timer rodando por usuário; um segundo dá 400 "Já existe um timer em andamento"), `POST /time-entries/:id/stop`, `POST /cards/:id/time-entries/manual`, `GET /cards/:id/time-entries/active` e `GET /cards/:id/time-entries/total`.
+- **Mover para "Em andamento" ao iniciar o timer:** hoje só existe na tela (`handleCardTimerStarted` em `components/sprint/SprintBoard.tsx`). Ele procura a coluna com o título "em andamento" e só move para frente.
+
+**Entregar:**
+- **`operum_start_timer(task_id, description?, stop_running?)`:**
+  - inicia o timer do dono do token;
+  - repete a regra da tela: se o card está numa sprint e numa coluna anterior a "Em andamento", move para lá, registrando o motivo "timer iniciado pelo MCP";
+  - com `stop_running: true`, para antes o timer que estiver rodando em outra tarefa;
+  - sem essa opção, o erro diz em qual tarefa o timer está rodando.
+- **`operum_stop_timer(task_id?)`:** para o timer rodando do usuário (na tarefa informada, ou no que estiver ativo) e devolve a duração.
+- **`operum_log_time(task_id, started_at, ended_at, description?)`:** lança tempo manual, para registrar trabalho feito sem timer.
+- **`operum_get_task`:** passa a trazer `time: { total_seconds, running: { started_at } | null }`.
+- **Auditoria:** as três escritas vão para o AuditLog (`via: "mcp"`).
+
+**BDD:**
+- Dado um card em "A Fazer", quando o Claude chama `operum_start_timer`, então o card vai para "Em andamento" e a tela mostra o timer correndo.
+- Dado um timer rodando no card A, quando o Claude inicia o timer do card B com `stop_running: true`, então o timer de A para com a duração gravada e o de B começa.
+- Dado um card em "Em teste", quando o timer é iniciado, então o card não volta de coluna.
+
+**Arquivos:** `mcp-server/src/tools/time.ts` (novo), `mcp-server/src/tools/tasks.ts` (`get_task`), `mcp-server/src/server.ts`, testes com o Operum falso (rotas de time entries).
 
 ---
 
@@ -585,12 +683,13 @@ Continua `dry_run=true` por padrão.
 
 ## Processo por tarefa
 
+0. **Ao começar**, no Operum: mover o card para "Em andamento" e iniciar o timer (`operum_start_timer`, depois do 8.4).
 1. Lógica pura com teste Vitest primeiro, quando houver lógica.
 2. Service.
 3. Action: `verifySession` → autorização → Zod → service → `registrarAcao` → `revalidatePath`.
 4. UI.
 5. `pnpm test:run`, `pnpm lint`, `npx tsc -p tsconfig.check.json` e `pnpm build`.
 6. Um commit por item.
-7. No Operum, mover o card para "Em teste" e comentar o hash do commit.
+7. **Ao abrir a PR**, no Operum: parar o timer, mover o card para "Em teste" e comentar a PR e os commits.
 
 Cada fase sai numa branch e PR próprias e para para revisão antes da seguinte.
