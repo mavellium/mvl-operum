@@ -12,6 +12,9 @@ export const tenantIdShape = {
     .describe('Tenant alvo (ver operum_list_tenants). Omitido = tenant do token padrão (header Authorization).'),
 }
 
+/** Ids do Operum são cuid: barra ou ponto no id mudariam o caminho chamado no gateway. */
+export const idSchema = z.string().regex(/^[A-Za-z0-9_-]{1,64}$/, 'id inválido')
+
 export const confirmShape = {
   confirm: z.boolean().optional().describe('Obrigatório true: operação destrutiva.'),
 }

@@ -643,8 +643,17 @@ Sem essas variáveis, a tool responde com erro claro dizendo o que falta configu
 
 **Arquivos:** `mcp-server/src/tools/attachments.ts`, `mcp-server/src/uploadLink.ts` (cifra e nonce), `mcp-server/src/main.ts` (rota), `docker-compose.production.yml`, `.env.example`, README do MCP.
 
-### 8.4 Timer das tarefas pelo MCP
+### 8.4 Timer das tarefas pelo MCP ✅
 **Card:** "MCP: iniciar e parar o timer das tarefas" (alta).
+
+**Entregue** (branch `feat/mcp-timer`, empilhada na `feat/mcp-anexos`):
+- `operum_start_timer`, `operum_stop_timer` e `operum_log_time` (`mcp-server/src/tools/time.ts`). A `operum_get_task` ganhou o campo `time { total_seconds, running[] }`, calculado das `timeEntries` que o `GET /cards/:id` já traz, sem chamada extra.
+- **sprint-service:**
+  - rota nova `GET /time-entries/running`, com o timer rodando do usuário do `x-user-id` no tenant, devolvido em `{ entry }`. Sem ela, só dava para achar o timer card a card, e a rota por usuário (`/users/:id/time-entries`) não passa pelo gateway;
+  - o lançamento manual passou a recusar data inválida e fim antes do início. Antes gravava duração negativa, que abatia o total do card.
+- Se o card não conseguir ir para "Em andamento", o timer continua rodando e a resposta traz `warning`.
+
+O plano original está abaixo.
 
 **Contexto:** em 29/09 ficou combinado que, ao **começar** uma tarefa, o Claude move o card para "Em andamento" e inicia o timer. Ao **abrir a PR**, para o timer e move o card para "Em teste". O MCP não tem tool de tempo, então hoje o timer não tem como correr.
 

@@ -150,6 +150,32 @@ export function serializeAttachment(a: Raw) {
   }
 }
 
+export function serializeTimeEntry(e: Raw) {
+  const card = obj(e?.card)
+  return {
+    id: str(e?.id),
+    task_id: str(e?.cardId),
+    ...(card ? { task_title: str(card.title) } : {}),
+    user_id: str(e?.userId),
+    started_at: str(e?.startedAt),
+    ended_at: str(e?.endedAt),
+    duration_seconds: num(e?.duration),
+    is_running: bool(e?.isRunning),
+    is_manual: bool(e?.isManual),
+    description: str(e?.description),
+  }
+}
+
+/** Tempo da tarefa a partir das timeEntries que o sprint-service inclui no card. */
+function serializeTaskTime(entries: Raw[]) {
+  return {
+    total_seconds: entries.filter(e => !e?.isRunning).reduce((sum, e) => sum + (num(e?.duration) ?? 0), 0),
+    running: entries
+      .filter(e => e?.isRunning)
+      .map(e => ({ entry_id: str(e?.id), user_id: str(e?.userId), started_at: str(e?.startedAt) })),
+  }
+}
+
 export function serializeMovement(m: Raw) {
   return {
     id: str(m?.id),
@@ -199,6 +225,7 @@ export function serializeTask(c: Raw, include: { comments?: boolean } = {}) {
     tags: arr(c.tags).map(ct => serializeTag(obj(ct?.tag) ?? ct)),
     responsibles: arr(c.responsibles).map(r => serializeUser(obj(r?.user) ?? { id: r?.userId })),
     attachments: arr(c.attachments).map(serializeAttachment),
+    ...(Array.isArray(c.timeEntries) ? { time: serializeTaskTime(c.timeEntries as Raw[]) } : {}),
     ...(include.comments ? { comments: arr(c.comments).map(serializeComment) } : {}),
   }
 }

@@ -71,6 +71,7 @@ Toda tool aceita `tenant_id` (omitido = tenant do token padrão) e responde JSON
 | Tarefas | `operum_list_tasks`, `operum_get_task`, `operum_create_task`, `operum_update_task`, `operum_move_task`, `operum_delete_task`, `operum_set_task_tags`, `operum_set_task_responsibles`, `operum_bulk_update_tasks` |
 | Etiquetas | `operum_list_tags`, `operum_create_tag` |
 | Anexos | `operum_upload_attachment`, `operum_add_link`, `operum_delete_attachment` (a leitura vem em `operum_get_task` e `operum_list_tasks` com `fields="full"`) |
+| Tempo | `operum_start_timer`, `operum_stop_timer`, `operum_log_time` (o total e os timers rodando vêm em `operum_get_task`, no campo `time`) |
 | Comentários | `operum_list_comments`, `operum_create_comment`, `operum_update_comment`, `operum_delete_comment` |
 | Histórico | `operum_get_activity` |
 | Migração | `operum_export_project`, `operum_import_project`, `operum_copy_project` |
@@ -88,6 +89,13 @@ Segurança das escritas:
 - O download por `url` só aceita HTTPS na porta 443. Ele recusa endereço privado, loopback, link-local (metadados de nuvem) e reservado. A checagem acontece no momento da conexão (resiste a DNS rebinding) e vale também para cada redirecionamento, no máximo 3. O prazo total é de 60 s.
 - `operum_add_link` anexa só a URL (YouTube, Vimeo, Loom, Drive...), sem baixar nada. No card, vídeo do YouTube ganha miniatura. O mesmo link na mesma tarefa não é duplicado.
 - Toda tool confere antes, por `GET /cards/:id`, se a tarefa é do tenant do token. O file-service não conhece tenant.
+
+### Tempo
+
+- `operum_start_timer` inicia o timer do dono do token. Como na tela do quadro, leva o card para a coluna "Em andamento" só se ele estiver numa coluna anterior. Card do backlog, em "Em teste" ou em "Concluído" não muda de lugar.
+- Só pode haver um timer rodando por usuário. Com `stop_running: true`, o timer da outra tarefa é parado antes; sem isso, o erro diz qual tarefa está com o timer. Chamar de novo na mesma tarefa não cria outro (`already_running: true`).
+- `operum_stop_timer` para o timer rodando e devolve a duração. Sem timer rodando, responde `stopped: false`.
+- `operum_log_time` lança um período já trabalhado. Aceita até 168 h por lançamento (igual ao app) e recusa fim antes do início ou no futuro.
 
 ### Migração entre tenants
 
