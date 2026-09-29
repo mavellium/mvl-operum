@@ -5,6 +5,7 @@ import { registerProjectTools } from './tools/projects.js'
 import { registerSprintTools } from './tools/sprints.js'
 import { registerTaskTools } from './tools/tasks.js'
 import { registerMigrationTools } from './tools/migration.js'
+import { registerAttachmentTools, defaultAttachmentDeps, type AttachmentDeps } from './tools/attachments.js'
 
 export const SERVER_INSTRUCTIONS = [
   'Operum: gestão de projetos. Hierarquia: tenant → projeto → sprint → coluna → tarefa (card).',
@@ -15,13 +16,14 @@ export const SERVER_INSTRUCTIONS = [
 ].join('\n')
 
 /** Constrói um McpServer novo por requisição (stateless, D3), com os tenants dos PATs do chamador. */
-export function buildServer(registry: TenantRegistry): McpServer {
+export function buildServer(registry: TenantRegistry, deps: { attachments?: AttachmentDeps } = {}): McpServer {
   const server = new McpServer({ name: 'operum', version: '2.0.0' }, { instructions: SERVER_INSTRUCTIONS })
 
   registerContextTools(server, registry)
   registerProjectTools(server, registry)
   registerSprintTools(server, registry)
   registerTaskTools(server, registry)
+  registerAttachmentTools(server, registry, deps.attachments ?? defaultAttachmentDeps)
   registerMigrationTools(server, registry)
 
   return server

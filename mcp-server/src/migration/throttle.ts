@@ -54,5 +54,6 @@ export function throttledGateway(gw: Gateway, opts: ThrottleOptions = {}): Gatew
     post: (path, body) => call('POST', () => gw.post(path, body)),
     patch: (path, body) => call('PATCH', () => gw.patch(path, body)),
     delete: path => call('DELETE', () => gw.delete(path)),
+    upload: (path, form) => call('POST', () => gw.upload(path, form)),
   }
 }

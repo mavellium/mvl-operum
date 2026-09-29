@@ -24,7 +24,7 @@ Resposta ao spec "MCP do Operum (acesso total para agentes)". O MCP foi implemen
 | Campos personalizados | Não há modelo para eles. | **Mesmo épico:** definição de campo por projeto + valores por card. |
 | Seções/status configuráveis por projeto | As colunas são por sprint; não há um status global do projeto. | Avaliar junto com o épico; hoje o MCP trata a coluna como status. |
 | Documentos do projeto (WBS, EAP, atas, termo em versões) | Existem só no monólito Next.js, acessados direto pelo Prisma, fora do api-gateway. | Migrar essas rotas para um serviço atrás do gateway e então expor pelo MCP. |
-| Anexos (listar/baixar/enviar) | O file-service existe, mas não foi exposto nesta fase. | Fase 4 do spec. A migração lista os anexos como não copiados. |
+| Anexos: baixar o arquivo | Enviar, anexar link, excluir e listar (metadados) já existem (`operum_upload_attachment`, `operum_add_link`, `operum_delete_attachment`, `operum_get_task`). Falta devolver o conteúdo ou uma URL assinada. | A migração lista os anexos como não copiados. |
 | Busca global, resumos, "minhas tarefas", horas | Adiados (fase 4 do spec). | `operum_list_tasks` já filtra por responsável, prazo e texto dentro de um projeto. |
 | Autoria "Claude via MCP" visível na tela de atividade | O `AuditLog` grava (`details.via = "mcp"`, `authType`, `apiTokenId`), mas nenhuma tela do Operum lê o `AuditLog`. | Criar a tela de atividade (ou um painel no card) que leia `GET /audit`. |
 | Datas e autoria originais na importação | A API não aceita `createdAt` nem autor. | A data e o autor originais entram no texto do comentário, e a origem da importação entra na descrição do projeto. |

@@ -71,4 +71,11 @@ describe('toToolError', () => {
     expect(result.content[0].text).toMatch(/indisponível/)
     expect(result.content[0].text).not.toContain('10.0.0.5')
   })
+
+  it('413 -> limite de tamanho em português, mesmo com a mensagem do multer em inglês', () => {
+    const multer = toToolError(withStatus(413, 'File too large', 'File too large'), 'Tarefa')
+    expect(multer.content[0].text).toBe('Arquivo acima do limite de 50 MB do Operum.')
+    const propria = toToolError(withStatus(413, 'x', '"clip.mp4" tem 60,0 MB. O limite é 50 MB.'), 'Tarefa')
+    expect(propria.content[0].text).toBe('"clip.mp4" tem 60,0 MB. O limite é 50 MB.')
+  })
 })

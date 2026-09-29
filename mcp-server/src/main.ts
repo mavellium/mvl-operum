@@ -5,9 +5,12 @@ import { buildServer } from './server.js'
 import { parseTokens, TenantRegistry } from './tenants.js'
 
 const app = express()
-app.use(express.json({ limit: '1mb' }))
+// 15 MB: operum_upload_attachment aceita até 10 MB em content_base64 (≈13,4 MB em base64).
+// O parse vem depois da checagem do token, para requisição sem PAT não fazer o
+// servidor ler um corpo desse tamanho.
+const jsonBody = express.json({ limit: '15mb' })
 
-app.post('/mcp', async (req, res) => {
+app.post('/mcp', (req, res, next) => {
   // Authorization: Bearer <pat> = tenant padrão; X-Operum-Tokens: <pat>,<pat> = demais tenants.
   // A validação real de cada token acontece no api-gateway, a cada chamada.
   const tokens = parseTokens(req.headers.authorization, req.headers['x-operum-tokens'])
@@ -15,7 +18,10 @@ app.post('/mcp', async (req, res) => {
     res.status(401).set('WWW-Authenticate', 'Bearer realm="operum"').end()
     return
   }
-
+  res.locals.tokens = tokens
+  next()
+}, jsonBody, async (req, res) => {
+  const tokens = res.locals.tokens as string[]
   const server = buildServer(new TenantRegistry(tokens))
   const transport = new StreamableHTTPServerTransport({ sessionIdGenerator: undefined })
   res.on('close', () => {
