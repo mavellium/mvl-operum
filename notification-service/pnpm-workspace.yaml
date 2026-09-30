@@ -8,6 +8,10 @@ overrides:
   js-yaml: ">=4.3.0"
   deepmerge-ts: ">=8.0.0"
   mysql2: ">=3.22.0"
+  # GHSA-qhr7-859c-m2p7 (DoS em chaves aninhadas): correção dentro de cada major.
+  "brace-expansion@<1.1.20": ">=1.1.20 <2.0.0"
+  "brace-expansion@>=2.0.0 <2.1.6": ">=2.1.6 <3.0.0"
+  "brace-expansion@>=4.0.0 <5.0.11": ">=5.0.11 <6.0.0"
 allowBuilds:
   '@nestjs/core': true
   '@prisma/engines': true
