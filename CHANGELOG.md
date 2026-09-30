@@ -9,6 +9,11 @@ funcionalidade depois disso é uma versão MINOR.
 
 ## [Não lançado]
 
+## [1.7.1] — 2026-09-30
+- **Segurança (dependências):** o deploy da 1.7.0 parou no `pnpm audit` por dois alertas publicados no mesmo dia.
+  - `brace-expansion` (GHSA-qhr7-859c-m2p7, DoS com chaves aninhadas): overrides para 1.1.20+, 2.1.6+ e 5.0.11+, sem trocar de versão principal, na raiz e nos lockfiles dos cinco serviços.
+  - `nodemailer` 9 → 10 no auth-service (GHSA-v53p-9fqp-m79j, ReDoS no parser de endereços): a única quebra da 10 é exigir Node 20, e as imagens usam Node 22.
+
 ## [1.7.0] — 2026-09-30
 
 ### Fase 4 do backlog
