@@ -18,14 +18,14 @@ enum TenantStatus {
 }
 
 model Tenant {
-  id         String       @id @default(cuid())
-  name       String
+  id        String       @id @default(cuid())
+  name      String
   subdomain String       @unique
-  status     TenantStatus @default(ACTIVE)
-  config     Json?
-  deletedAt  DateTime?
-  createdAt  DateTime     @default(now())
-  updatedAt  DateTime     @updatedAt
+  status    TenantStatus @default(ACTIVE)
+  config    Json?
+  deletedAt DateTime?
+  createdAt DateTime     @default(now())
+  updatedAt DateTime     @updatedAt
 
   users         User[]
   tags          Tag[]
@@ -50,49 +50,50 @@ enum ProjectStatus {
 }
 
 model Project {
-  id          String        @id @default(cuid())
+  id          String  @id @default(cuid())
   tenantId    String
-  tenant      Tenant        @relation(fields: [tenantId], references: [id])
+  tenant      Tenant  @relation(fields: [tenantId], references: [id])
   name        String
   description String?
 
-  logoUrl     String?
-  slogan      String?
-  location    String?
-  startDate   DateTime?
-  endDate     DateTime?
+  logoUrl   String?
+  slogan    String?
+  location  String?
+  startDate DateTime?
+  endDate   DateTime?
 
-  justificativa      String?  @db.Text
-  objetivos          String?  @db.Text
-  metodologia        String?  @db.Text
-  descricaoProduto   String?  @db.Text
-  premissas          String?  @db.Text
-  restricoes         String?  @db.Text
-  limitesAutoridade  String?  @db.Text
+  justificativa     String? @db.Text
+  objetivos         String? @db.Text
+  metodologia       String? @db.Text
+  descricaoProduto  String? @db.Text
+  premissas         String? @db.Text
+  restricoes        String? @db.Text
+  limitesAutoridade String? @db.Text
 
-  semestre           String?
-  ano                Int?
-  departamentos      String[]
+  semestre      String?
+  ano           Int?
+  departamentos String[]
 
   /// Planilha de Custos: salário mínimo de referência e jornada diária (federação tempo→custo)
   valorReferencia Float?
   horasPorDia     Float?
 
-  status      ProjectStatus @default(ACTIVE)
-  deletedAt   DateTime?
-  createdAt   DateTime      @default(now())
-  updatedAt   DateTime      @updatedAt
+  status    ProjectStatus @default(ACTIVE)
+  deletedAt DateTime?
+  createdAt DateTime      @default(now())
+  updatedAt DateTime      @updatedAt
 
-  sprints         Sprint[]
-  cards           Card[]
-  members         UserProject[]
-  usuariosRole    UserProjectRole[]
-  macroFases      ProjectMacroFase[]
+  sprints            Sprint[]
+  cards              Card[]
+  members            UserProject[]
+  usuariosRole       UserProjectRole[]
+  permissoesUsuarios UserPermission[]
+  macroFases         ProjectMacroFase[]
 
-  stakeholders      ProjectStakeholder[]
-  documentVersions  DocumentVersion[]
-  drafts            ProjectDraft[]
-  wbsNodes          WbsNode[]
+  stakeholders     ProjectStakeholder[]
+  documentVersions DocumentVersion[]
+  drafts           ProjectDraft[]
+  wbsNodes         WbsNode[]
 
   projetoDepartamentos ProjetoDepartamento[]
   projetoFuncoes       ProjetoFuncao[]
@@ -103,14 +104,14 @@ model Project {
 }
 
 model ProjectMacroFase {
-  id          String   @id @default(cuid())
-  projectId   String
-  project     Project  @relation(fields: [projectId], references: [id], onDelete: Cascade)
-  fase        String
-  dataLimite  String?
-  custo       String?
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
+  id         String   @id @default(cuid())
+  projectId  String
+  project    Project  @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  fase       String
+  dataLimite String?
+  custo      String?
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
 }
 
 model ProjectDraft {
@@ -138,8 +139,8 @@ model Department {
   createdAt   DateTime  @default(now())
   updatedAt   DateTime  @updatedAt
 
-  users        UserDepartment[]
-  userProjects UserProject[]
+  users                UserDepartment[]
+  userProjects         UserProject[]
   projetoDepartamentos ProjetoDepartamento[]
 
   @@unique([name, tenantId])
@@ -177,10 +178,10 @@ model UserProject {
 
 // Associação de um departamento do catálogo global do tenant a um projeto
 model ProjetoDepartamento {
-  id             String     @id @default(cuid())
+  id             String   @id @default(cuid())
   projetoId      String
   departamentoId String
-  createdAt      DateTime   @default(now())
+  createdAt      DateTime @default(now())
 
   project    Project    @relation(fields: [projetoId], references: [id], onDelete: Cascade)
   department Department @relation(fields: [departamentoId], references: [id], onDelete: Cascade)
@@ -211,20 +212,22 @@ enum RoleScope {
 }
 
 model Role {
-  id          String      @id @default(cuid())
-  tenantId    String
-  tenant      Tenant      @relation(fields: [tenantId], references: [id])
-  name        String      @map("nome")
-  nameKey     String      @map("nomeKey")
-  scope       RoleScope   @map("escopo")
-  description String?     @map("descricao")
-  deletedAt   DateTime?
-  createdAt   DateTime    @default(now())
-  updatedAt   DateTime    @updatedAt
+  id                    String    @id @default(cuid())
+  tenantId              String
+  tenant                Tenant    @relation(fields: [tenantId], references: [id])
+  name                  String    @map("nome")
+  nameKey               String    @map("nomeKey")
+  scope                 RoleScope @map("escopo")
+  description           String?   @map("descricao")
+  /// Quando o admin salvou a matriz desta função. Nulo = usa o padrão (lib/permissoes.ts).
+  permissoesDefinidasEm DateTime?
+  deletedAt             DateTime?
+  createdAt             DateTime  @default(now())
+  updatedAt             DateTime  @updatedAt
 
-  permissions         RolePermission[]
-  userProjectRoles    UserProjectRole[]
-  projetoFuncoes      ProjetoFuncao[]
+  permissions      RolePermission[]
+  userProjectRoles UserProjectRole[]
+  projetoFuncoes   ProjetoFuncao[]
 
   @@unique([nameKey, tenantId, scope])
 }
@@ -239,9 +242,36 @@ model Permission {
   createdAt   DateTime  @default(now())
   updatedAt   DateTime  @updatedAt
 
-  roles RolePermission[]
+  roles    RolePermission[]
+  usuarios UserPermission[]
 
   @@unique([resource, action])
+}
+
+enum PermissionEffect {
+  GRANT
+  DENY
+}
+
+/// Ajuste de permissão por usuário (SDD 5.1): concede ou nega a mais ou a menos
+/// do que as funções dão. Sem projectId vale para todos os projetos; com
+/// projectId, só naquele projeto (e vence o ajuste global).
+/// Índice único parcial (userId, permissionId) WHERE projectId IS NULL criado na
+/// migration: o Postgres não trata NULL como igual no @@unique abaixo.
+model UserPermission {
+  id           String           @id @default(cuid())
+  userId       String
+  projectId    String?
+  permissionId String
+  effect       PermissionEffect
+  createdAt    DateTime         @default(now())
+  updatedAt    DateTime         @updatedAt
+  user         User             @relation(fields: [userId], references: [id], onDelete: Cascade)
+  project      Project?         @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  permission   Permission       @relation(fields: [permissionId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, projectId, permissionId])
+  @@index([userId])
 }
 
 model RolePermission {
@@ -255,15 +285,15 @@ model RolePermission {
 }
 
 model UserProjectRole {
-  id        String   @id @default(cuid())
+  id        String    @id @default(cuid())
   userId    String
-  projectId String   @map("projetoId")
+  projectId String    @map("projetoId")
   roleId    String
-  project   Project  @relation(fields: [projectId], references: [id], onDelete: Cascade)
-  role      Role     @relation(fields: [roleId], references: [id], onDelete: Cascade)
+  project   Project   @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  role      Role      @relation(fields: [roleId], references: [id], onDelete: Cascade)
   deletedAt DateTime?
-  createdAt DateTime @default(now()) @map("criadoEm")
-  updatedAt DateTime @updatedAt
+  createdAt DateTime  @default(now()) @map("criadoEm")
+  updatedAt DateTime  @updatedAt
 
   @@unique([userId, projectId])
 }
@@ -271,59 +301,60 @@ model UserProjectRole {
 // ── Users ─────────────────────────────────────────────────
 
 model User {
-  id            String    @id @default(cuid())
-  tenantId      String
-  tenant        Tenant    @relation(fields: [tenantId], references: [id])
-  name          String
-  email         String
-  passwordHash  String
-  role          String    @default("member")
-  avatarUrl     String?
-  signatureUrl  String?
-  cargo         String?
-  departamento  String?
-  hourlyRate    Float     @default(0)
-  isActive      Boolean   @default(true)
-  status        String    @default("active")
+  id                  String    @id @default(cuid())
+  tenantId            String
+  tenant              Tenant    @relation(fields: [tenantId], references: [id])
+  name                String
+  email               String
+  passwordHash        String
+  role                String    @default("member")
+  avatarUrl           String?
+  signatureUrl        String?
+  cargo               String?
+  departamento        String?
+  hourlyRate          Float     @default(0)
+  isActive            Boolean   @default(true)
+  status              String    @default("active")
   mfaEnabled          Boolean   @default(false)
   mfaSecret           String?
   loginAttempts       Int       @default(0)
   forcePasswordChange Boolean   @default(false)
-  lastLogin     DateTime?
-  tokenVersion  Int       @default(0)
-  resetToken       String?
-  resetTokenExpiry DateTime?
-  deletedAt     DateTime?
-  createdAt     DateTime  @default(now())
-  updatedAt     DateTime  @updatedAt
-  phone        String?
-  cep          String?
-  logradouro   String?
-  numero       String?
-  complemento  String?
-  bairro       String?
-  cidade       String?
-  estado       String?
-  notes        String? @db.Text
+  lastLogin           DateTime?
+  tokenVersion        Int       @default(0)
+  resetToken          String?
+  resetTokenExpiry    DateTime?
+  deletedAt           DateTime?
+  createdAt           DateTime  @default(now())
+  updatedAt           DateTime  @updatedAt
+  phone               String?
+  cep                 String?
+  logradouro          String?
+  numero              String?
+  complemento         String?
+  bairro              String?
+  cidade              String?
+  estado              String?
+  notes               String?   @db.Text
 
-  tags              Tag[]
-  sprints           Sprint[]
-  timeEntries       TimeEntry[]
-  responsibleCards  CardResponsible[]
-  departments       UserDepartment[]
-  projects          UserProject[]
-  comments          Comment[]
-  notifications     Notification[]
-  dashboardMetrics  DashboardMetric[]
-  sprintFeedbacks   SprintFeedback[]
+  tags             Tag[]
+  sprints          Sprint[]
+  timeEntries      TimeEntry[]
+  responsibleCards CardResponsible[]
+  departments      UserDepartment[]
+  projects         UserProject[]
+  permissoes       UserPermission[]
+  comments         Comment[]
+  notifications    Notification[]
+  dashboardMetrics DashboardMetric[]
+  sprintFeedbacks  SprintFeedback[]
 
-  documentVersionsAuthored  DocumentVersion[] @relation("DocumentVersionAuthor")
-  documentVersionsApproved  DocumentVersion[] @relation("DocumentVersionApprover")
+  documentVersionsAuthored DocumentVersion[] @relation("DocumentVersionAuthor")
+  documentVersionsApproved DocumentVersion[] @relation("DocumentVersionApprover")
 
-  atasPresentes            AtaPresente[]
-  atasAcoesResponsaveis    AtaAcao[]           @relation("AtaAcaoResponsavel")
-  atasElaboradas           Ata[]               @relation("AtaElaboradoPor")
-  atasAprovadas            Ata[]               @relation("AtaAprovadoPor")
+  atasPresentes         AtaPresente[]
+  atasAcoesResponsaveis AtaAcao[]     @relation("AtaAcaoResponsavel")
+  atasElaboradas        Ata[]         @relation("AtaElaboradoPor")
+  atasAprovadas         Ata[]         @relation("AtaAprovadoPor")
 
   @@unique([email, tenantId])
 }
@@ -335,18 +366,18 @@ enum SprintStatus {
 }
 
 model Sprint {
-  id            String         @id @default(cuid())
-  name          String
-  description   String?
-  status        SprintStatus   @default(PLANNED)
-  startDate     DateTime?
-  endDate       DateTime?
-  qualidade     Float?
-  dificuldade   Float?
-  projectId     String?
-  project       Project?       @relation(fields: [projectId], references: [id])
-  createdBy     String?
-  creator       User?          @relation(fields: [createdBy], references: [id])
+  id               String            @id @default(cuid())
+  name             String
+  description      String?
+  status           SprintStatus      @default(PLANNED)
+  startDate        DateTime?
+  endDate          DateTime?
+  qualidade        Float?
+  dificuldade      Float?
+  projectId        String?
+  project          Project?          @relation(fields: [projectId], references: [id])
+  createdBy        String?
+  creator          User?             @relation(fields: [createdBy], references: [id])
   cards            Card[]
   sprintColumns    SprintColumn[]
   dashboardMetrics DashboardMetric[]
@@ -480,19 +511,19 @@ enum NotificationStatus {
 }
 
 model Notification {
-  id             String             @id @default(cuid())
-  userId         String
-  user           User               @relation(fields: [userId], references: [id], onDelete: Cascade)
-  type           NotificationType
-  title          String
-  message        String
-  reference      String?
-  referenceType  String?
-  status         NotificationStatus @default(UNREAD)
-  deletedAt      DateTime?
-  createdAt      DateTime           @default(now())
-  readAt         DateTime?
-  updatedAt      DateTime           @updatedAt
+  id            String             @id @default(cuid())
+  userId        String
+  user          User               @relation(fields: [userId], references: [id], onDelete: Cascade)
+  type          NotificationType
+  title         String
+  message       String
+  reference     String?
+  referenceType String?
+  status        NotificationStatus @default(UNREAD)
+  deletedAt     DateTime?
+  createdAt     DateTime           @default(now())
+  readAt        DateTime?
+  updatedAt     DateTime           @updatedAt
 }
 
 model Attachment {
@@ -528,15 +559,15 @@ model TimeEntry {
 // ── AuditLog ──────────────────────────────────────────────
 
 model AuditLog {
-  id         String   @id @default(cuid())
-  tenantId   String
-  tenant     Tenant   @relation(fields: [tenantId], references: [id])
-  userId     String?
-  action     String
-  entity     String
-  entityId   String?
-  details    Json?
-  timestamp  DateTime @default(now())
+  id        String   @id @default(cuid())
+  tenantId  String
+  tenant    Tenant   @relation(fields: [tenantId], references: [id])
+  userId    String?
+  action    String
+  entity    String
+  entityId  String?
+  details   Json?
+  timestamp DateTime @default(now())
 }
 
 // ── DashboardMetric ───────────────────────────────────────
@@ -578,27 +609,27 @@ model SprintFeedback {
 model Stakeholder {
   id          String   @id @default(cuid())
   tenantId    String
-  name        String   // Nome
-  logoUrl     String?  // Logo do Stakeholder
-  company     String?  // Empresa
-  competence  String?  // Competência
-  email       String?  // e-mail
-  phone        String?  // Telefone/Fax
-  cep          String?
-  logradouro   String?
-  numero       String?
-  complemento  String?
-  bairro       String?
-  cidade       String?
-  estado       String?
-  notes        String?  @db.Text // Observações
+  name        String // Nome
+  logoUrl     String? // Logo do Stakeholder
+  company     String? // Empresa
+  competence  String? // Competência
+  email       String? // e-mail
+  phone       String? // Telefone/Fax
+  cep         String?
+  logradouro  String?
+  numero      String?
+  complemento String?
+  bairro      String?
+  cidade      String?
+  estado      String?
+  notes       String?  @db.Text // Observações
   isActive    Boolean  @default(true)
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
 
-  projects    ProjectStakeholder[]
-  
-  tenant      Tenant   @relation(fields: [tenantId], references: [id])
+  projects ProjectStakeholder[]
+
+  tenant Tenant @relation(fields: [tenantId], references: [id])
 }
 
 // Tabela de Vínculo (Projeto <-> Stakeholder)
@@ -608,9 +639,9 @@ model ProjectStakeholder {
   stakeholderId String
   createdAt     DateTime @default(now())
 
-  order         Int         @default(0)
-  project       Project     @relation(fields: [projectId], references: [id], onDelete: Cascade)
-  stakeholder   Stakeholder @relation(fields: [stakeholderId], references: [id], onDelete: Cascade)
+  order       Int         @default(0)
+  project     Project     @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  stakeholder Stakeholder @relation(fields: [stakeholderId], references: [id], onDelete: Cascade)
 
   @@unique([projectId, stakeholderId])
 }
@@ -649,28 +680,28 @@ model DocumentVersion {
 // ── Atas de Reunião ───────────────────────────────────────
 
 model Ata {
-  id            String   @id @default(cuid())
-  tenantId      String
-  projetoId     String
-  numero        Int
-  nomeProjeto   String
-  local         String?
-  data          DateTime
-  elaboradoPor  String
+  id                 String    @id @default(cuid())
+  tenantId           String
+  projetoId          String
+  numero             Int
+  nomeProjeto        String
+  local              String?
+  data               DateTime
+  elaboradoPor       String
   elaboradoPorUserId String?
-  elaboradoPorUser   User?    @relation("AtaElaboradoPor", fields: [elaboradoPorUserId], references: [id], onDelete: SetNull)
-  aprovadoPor   String?
+  elaboradoPorUser   User?     @relation("AtaElaboradoPor", fields: [elaboradoPorUserId], references: [id], onDelete: SetNull)
+  aprovadoPor        String?
   aprovadoPorUserId  String?
-  aprovadoPorUser    User?    @relation("AtaAprovadoPor", fields: [aprovadoPorUserId], references: [id], onDelete: SetNull)
-  assuntosTratados String? @db.Text
-  decisoesTomadas  String? @db.Text
-  observacoes      String? @db.Text
-  copiasPara       String[]
-  createdAt     DateTime @default(now())
-  updatedAt     DateTime @updatedAt
-  deletedAt     DateTime?
+  aprovadoPorUser    User?     @relation("AtaAprovadoPor", fields: [aprovadoPorUserId], references: [id], onDelete: SetNull)
+  assuntosTratados   String?   @db.Text
+  decisoesTomadas    String?   @db.Text
+  observacoes        String?   @db.Text
+  copiasPara         String[]
+  createdAt          DateTime  @default(now())
+  updatedAt          DateTime  @updatedAt
+  deletedAt          DateTime?
 
-  project   Project     @relation(fields: [projetoId], references: [id], onDelete: Cascade)
+  project   Project       @relation(fields: [projetoId], references: [id], onDelete: Cascade)
   presentes AtaPresente[]
   acoes     AtaAcao[]
   anexos    AtaAnexo[]
@@ -681,40 +712,40 @@ model Ata {
 }
 
 model AtaPresente {
-  id           String   @id @default(cuid())
+  id           String  @id @default(cuid())
   ataId        String
   nome         String
   setorEmpresa String?
   userId       String?
-  user         User?    @relation(fields: [userId], references: [id], onDelete: SetNull)
-  ata          Ata      @relation(fields: [ataId], references: [id], onDelete: Cascade)
+  user         User?   @relation(fields: [userId], references: [id], onDelete: SetNull)
+  ata          Ata     @relation(fields: [ataId], references: [id], onDelete: Cascade)
 }
 
 model AtaAcao {
-  id                  String   @id @default(cuid())
-  ataId               String
-  acao                String   @db.Text
-  prazo               DateTime?
-  responsavel         String?
-  responsavelUserId   String?
-  responsavelUser     User?    @relation("AtaAcaoResponsavel", fields: [responsavelUserId], references: [id], onDelete: SetNull)
-  ata                 Ata      @relation(fields: [ataId], references: [id], onDelete: Cascade)
+  id                String    @id @default(cuid())
+  ataId             String
+  acao              String    @db.Text
+  prazo             DateTime?
+  responsavel       String?
+  responsavelUserId String?
+  responsavelUser   User?     @relation("AtaAcaoResponsavel", fields: [responsavelUserId], references: [id], onDelete: SetNull)
+  ata               Ata       @relation(fields: [ataId], references: [id], onDelete: Cascade)
 }
 
 model AtaAnexo {
-  id     String  @id @default(cuid())
-  ataId  String
-  nome   String
-  url    String?
-  ata    Ata     @relation(fields: [ataId], references: [id], onDelete: Cascade)
+  id    String  @id @default(cuid())
+  ataId String
+  nome  String
+  url   String?
+  ata   Ata     @relation(fields: [ataId], references: [id], onDelete: Cascade)
 }
 
 // ── WBS / EAP ─────────────────────────────────────────────
 
 enum WbsLayoutOrientation {
   LADO_A_LADO // filhos lado a lado (organograma / WBS-chart)
-  ABAIXO      // filhos empilhados verticalmente, alinhados ao pai
-  ABAIXO_L    // filhos empilhados com conector em L
+  ABAIXO // filhos empilhados verticalmente, alinhados ao pai
+  ABAIXO_L // filhos empilhados com conector em L
 }
 
 model WbsNode {
@@ -724,10 +755,10 @@ model WbsNode {
   parentId  String?
 
   /// posição 0-based entre irmãos — FONTE DE VERDADE da ordenação
-  order     Int
+  order Int
   /// DERIVADO ("1.2.1"); recalculado pelo servidor — sem @@unique para permitir renumeração transacional
-  code      String  @db.VarChar(255)
-  title     String  @db.VarChar(500)
+  code  String @db.VarChar(255)
+  title String @db.VarChar(500)
 
   layout    WbsLayoutOrientation @default(LADO_A_LADO)
   collapsed Boolean              @default(false)
@@ -738,14 +769,14 @@ model WbsNode {
   properties Json
 
   /// optimistic concurrency da árvore
-  version   Int      @default(0)
+  version Int @default(0)
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
-  tenant   Tenant   @relation(fields: [tenantId], references: [id], onDelete: Cascade)
-  project  Project  @relation(fields: [projectId], references: [id], onDelete: Cascade)
-  parent   WbsNode? @relation("WbsHierarchy", fields: [parentId], references: [id], onDelete: Cascade)
+  tenant   Tenant    @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  project  Project   @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  parent   WbsNode?  @relation("WbsHierarchy", fields: [parentId], references: [id], onDelete: Cascade)
   children WbsNode[] @relation("WbsHierarchy")
 
   @@unique([parentId, order])
@@ -759,19 +790,19 @@ model WbsNode {
 /// Matriz protegida: define a estrutura/layout do documento-modelo.
 /// Não é editada pelos usuários — apenas usada para criar documentos.
 model EapTemplate {
-  id          String   @id @default(cuid())
+  id          String  @id @default(cuid())
   name        String
-  version     String   @default("1.0")
+  version     String  @default("1.0")
   description String?
-  isActive    Boolean  @default(true)
+  isActive    Boolean @default(true)
 
   /// EapNode[] — estrutura inicial (placeholders) usada ao criar documentos.
-  structure  Json
-  createdAt  DateTime @default(now())
-  updatedAt  DateTime @updatedAt
+  structure Json
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 
   tenantId String
-  tenant   Tenant   @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  tenant   Tenant @relation(fields: [tenantId], references: [id], onDelete: Cascade)
 
   documents EapDocument[]
 
@@ -781,17 +812,17 @@ model EapTemplate {
 /// Documento EAP — instância independente criada a partir do template
 /// (SPEC §15: alterar um documento nunca altera o template).
 model EapDocument {
-  id         String   @id @default(cuid())
+  id         String @id @default(cuid())
   tenantId   String
-  projectId  String   @unique
+  projectId  String @unique
   templateId String
 
-  projectName    String   @default("")
-  projectManager String   @default("")
-  preparedBy     String   @default("")
-  version        String   @default("1.0")
-  approvedBy     String   @default("")
-  signature      String   @default("")
+  projectName    String  @default("")
+  projectManager String  @default("")
+  preparedBy     String  @default("")
+  version        String  @default("1.0")
+  approvedBy     String  @default("")
+  signature      String  @default("")
   /// aaaa-mm-dd (string para evitar viés de fuso, padrão do app)
   approvalDate   String?
 

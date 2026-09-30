@@ -1,0 +1,109 @@
+import 'server-only'
+import { cache } from 'react'
+import prisma from '@/lib/prisma'
+import { funcaoKey } from '@/lib/utils/normalize'
+import {
+  BASE_MEMBRO_KEY,
+  PERMISSOES,
+  TODAS,
+  cargosDoTexto,
+  isPermissao,
+  resolverPermissoes,
+  type Ajuste,
+  type Permissao,
+} from '@/lib/permissoes'
+
+/**
+ * Autorização por permissão (SDD 5.1). Substitui aos poucos o
+ * `role === 'admin' || isProjectManager(...)` espalhado pelo app.
+ *
+ * As funções da pessoa no projeto são os cargos dela (UserProject.role),
+ * casados com o cadastro de funções do tenant pela funcaoKey, mais o papel de
+ * gerente (UserProjectRole), mais a função-base "Membro do projeto".
+ */
+
+export interface SessaoAuthz {
+  userId: string
+  tenantId: string
+  role: string
+}
+
+type LinhaPermissao = { permission: { resource: string; action: string } }
+
+function paraPermissoes(linhas: LinhaPermissao[]): Permissao[] {
+  // Identifica por resource:action (único na tabela), não pelo nome.
+  return linhas.map(l => `${l.permission.resource}:${l.permission.action}`).filter(isPermissao)
+}
+
+function paraAjustes(linhas: (LinhaPermissao & { effect: 'GRANT' | 'DENY' })[]): Ajuste[] {
+  return linhas.flatMap(l => {
+    const chave = `${l.permission.resource}:${l.permission.action}`
+    return isPermissao(chave) ? [{ permissao: chave, efeito: l.effect }] : []
+  })
+}
+
+/** Permissões do usuário no projeto. Memorizado por requisição (argumentos primitivos). */
+export const permissoesNoProjeto = cache(
+  async (userId: string, tenantId: string, role: string, projectId: string): Promise<Set<Permissao>> => {
+    if (role === 'admin') return new Set(TODAS)
+
+    const [projeto, vinculo, papelGerente, funcoes, ajustes] = await Promise.all([
+      prisma.project.findFirst({ where: { id: projectId, tenantId, deletedAt: null }, select: { id: true } }),
+      prisma.userProject.findUnique({
+        where: { userId_projectId: { userId, projectId } },
+        select: { role: true, active: true },
+      }),
+      prisma.userProjectRole.findFirst({ where: { userId, projectId, deletedAt: null }, select: { roleId: true } }),
+      prisma.role.findMany({
+        where: { tenantId, deletedAt: null },
+        select: {
+          id: true,
+          name: true,
+          nameKey: true,
+          scope: true,
+          permissoesDefinidasEm: true,
+          permissions: { select: { permission: { select: { resource: true, action: true } } } },
+        },
+      }),
+      prisma.userPermission.findMany({
+        where: { userId, OR: [{ projectId: null }, { projectId }] },
+        select: { projectId: true, effect: true, permission: { select: { resource: true, action: true } } },
+      }),
+    ])
+
+    const base = funcoes.find(f => f.nameKey === BASE_MEMBRO_KEY && f.scope === 'PROJETO')
+    const cargos = new Set(cargosDoTexto(vinculo?.role).map(funcaoKey))
+    const minhas = funcoes.filter(
+      f => f !== base && (cargos.has(funcaoKey(f.name)) || f.id === papelGerente?.roleId),
+    )
+
+    return resolverPermissoes({
+      admin: false,
+      membro: Boolean(projeto && vinculo?.active),
+      base: base?.permissoesDefinidasEm ? paraPermissoes(base.permissions) : null,
+      funcoes: minhas.map(f => ({
+        chave: f.nameKey === 'gerente' && f.scope === 'PROJETO' ? 'gerente' : funcaoKey(f.name),
+        definidas: f.permissoesDefinidasEm ? paraPermissoes(f.permissions) : null,
+      })),
+      ajustesGlobais: paraAjustes(ajustes.filter(a => a.projectId === null)),
+      ajustesProjeto: paraAjustes(ajustes.filter(a => a.projectId === projectId)),
+    })
+  },
+)
+
+export async function can(sessao: SessaoAuthz, projectId: string, permissao: Permissao): Promise<boolean> {
+  return (await permissoesNoProjeto(sessao.userId, sessao.tenantId, sessao.role, projectId)).has(permissao)
+}
+
+export class SemPermissaoError extends Error {
+  constructor(readonly permissao: Permissao) {
+    const rotulo = PERMISSOES.find(p => p.chave === permissao)?.rotulo ?? permissao
+    super(`Sem permissão: ${rotulo.charAt(0).toLowerCase()}${rotulo.slice(1)}.`)
+    this.name = 'SemPermissaoError'
+  }
+}
+
+/** Lança SemPermissaoError se faltar a permissão. */
+export async function exigirPermissao(sessao: SessaoAuthz, projectId: string, permissao: Permissao): Promise<void> {
+  if (!(await can(sessao, projectId, permissao))) throw new SemPermissaoError(permissao)
+}
