@@ -22,7 +22,7 @@ vi.mock('@/components/ui/AddressFields', () => ({
   emptyAddress: { cep: '', logradouro: '', numero: '', complemento: '', bairro: '', cidade: '', estado: '' },
 }))
 
-import ProjetoStakeholdersClient from '@/components/projetos/ProjetoStakeholdersClient'
+import ProjetoStakeholdersClient, { type StakeholderUnificado } from '@/components/projetos/ProjetoStakeholdersClient'
 import { createStakeholderAction } from '@/app/actions/stakeholders'
 import { addMemberAction } from '@/app/actions/projects'
 import { updateProjetoMemberAction } from '@/app/actions/projetos'
@@ -72,7 +72,7 @@ describe('SDD 4.4 — stakeholder novo já na tela certa', () => {
       horasDiarias: 8,
     }))
     await waitFor(() => expect(screen.getByText('Editar Membro')).toBeInTheDocument())
-    expect(screen.getByLabelText('Horas por dia')).toHaveValue(8)
+    expect(screen.getByLabelText('Horas por dia')).toHaveValue('8')
   })
 
   it('membro sem dados do projeto preenchidos: não chama a atualização à toa, mas abre em edição', async () => {
@@ -109,5 +109,62 @@ describe('SDD 4.4 — stakeholder novo já na tela certa', () => {
     await waitFor(() => expect(createStakeholderAction).toHaveBeenCalled())
     expect(vi.mocked(createStakeholderAction).mock.calls[0][1]).toBe(PROJ)
     await waitFor(() => expect(screen.getByText('Editar Stakeholder')).toBeInTheDocument())
+  })
+})
+
+describe('SDD 4.5 — horas por dia fracionadas e validadas', () => {
+  const membro: StakeholderUnificado = {
+    id: 'u1', tipo: 'interno', userId: 'u1', name: 'Bia', email: 'bia@x.com', avatarUrl: null,
+    phone: null, cep: null, logradouro: null, numero: null, complemento: null, bairro: null,
+    cidade: null, estado: null, notes: null, cargos: [], departamento: [], isGerente: false,
+    hourlyRate: null, horasDiarias: 7.5, startDate: '2026-09-01T00:00:00.000Z', userRole: 'member',
+  }
+
+  function editarBia() {
+    render(
+      <ToastProvider>
+        <ProjetoStakeholdersClient
+          projetoId={PROJ}
+          stakeholders={[membro]}
+          stakeholdersDisponiveis={[]}
+          usuariosDisponiveis={[]}
+          funcoesExistentes={[]}
+          departamentosExistentes={[]}
+          userRole="admin"
+        />
+      </ToastProvider>,
+    )
+    fireEvent.click(screen.getByTitle('Editar'))
+    return screen.getByLabelText('Horas por dia')
+  }
+
+  it('mostra o valor salvo com vírgula', () => {
+    expect(editarBia()).toHaveValue('7,5')
+  })
+
+  it('"8,5" (vírgula, que o Firefox perdia) é salvo como 8,5', async () => {
+    vi.mocked(updateProjetoMemberAction).mockResolvedValue({ success: true } as never)
+    fireEvent.change(editarBia(), { target: { value: '8,5' } })
+    fireEvent.click(screen.getByRole('button', { name: 'Salvar Dados' }))
+    await waitFor(() => expect(updateProjetoMemberAction).toHaveBeenCalled())
+    expect(vi.mocked(updateProjetoMemberAction).mock.calls[0][2]).toMatchObject({ horasDiarias: 8.5 })
+  })
+
+  it('"8:30" mostra a conversão e salva 8,5', async () => {
+    vi.mocked(updateProjetoMemberAction).mockResolvedValue({ success: true } as never)
+    fireEvent.change(editarBia(), { target: { value: '8:30' } })
+    expect(screen.getByText('= 8,5 h')).toBeInTheDocument()
+    fireEvent.click(screen.getByRole('button', { name: 'Salvar Dados' }))
+    await waitFor(() => expect(updateProjetoMemberAction).toHaveBeenCalled())
+    expect(vi.mocked(updateProjetoMemberAction).mock.calls[0][2]).toMatchObject({ horasDiarias: 8.5 })
+  })
+
+  it('"30" mostra o erro e bloqueia o Salvar, sem gravar nada', () => {
+    const campo = editarBia()
+    fireEvent.change(campo, { target: { value: '30' } })
+    expect(campo).toHaveAttribute('aria-invalid', 'true')
+    expect(screen.getByText(/entre 0 e 24/)).toBeInTheDocument()
+    expect(screen.getByRole('button', { name: 'Salvar Dados' })).toBeDisabled()
+    expect(updateProjetoMemberAction).not.toHaveBeenCalled()
   })
 })

@@ -32,6 +32,7 @@ import {
 import { addMemberAction, removeMemberAction } from '@/app/actions/projects'
 import { updateProjetoMemberAction } from '@/app/actions/projetos'
 import { adminCreateUserAction } from '@/app/actions/admin'
+import { parseHoras, formatHoras } from '@/lib/validation/horas'
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -572,7 +573,7 @@ export default function ProjetoStakeholdersClient({
         s.remuneracao != null
           ? s.remuneracao.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })
           : '',
-      horasDiarias: s.horasDiarias != null ? String(s.horasDiarias) : '',
+      horasDiarias: s.horasDiarias != null ? formatHoras(s.horasDiarias) : '',
       password: '',
       forcePasswordChange: false,
     })
@@ -947,6 +948,10 @@ export default function ProjetoStakeholdersClient({
   async function handleSave() {
     setFormError(null)
 
+    // Horas por dia inválidas nunca são descartadas em silêncio (SDD 4.5).
+    const ehMembro = (isCreating && !selected && addMode === 'interno') || selected?.tipo === 'interno'
+    if (ehMembro && horasCheck.erro) { setFormError(horasCheck.erro); return }
+
     // Create new internal user (tenant member)
     if (isCreating && !selected && addMode === 'interno') {
       if (!isAdmin) return
@@ -997,7 +1002,7 @@ export default function ProjetoStakeholdersClient({
       // era preciso editar de novo (SDD 4.4). Mesmo caminho da edição.
       const dadosProjeto = {
         remuneracao: parseBRLFloat(formState.remuneracao) ?? undefined,
-        horasDiarias: parseFloat(formState.horasDiarias) || undefined,
+        horasDiarias: parseHoras(formState.horasDiarias).valor ?? undefined,
         cargos: formState.cargos,
         departamento: formState.departamento,
         isGerente: formState.isGerente,
@@ -1172,7 +1177,7 @@ export default function ProjetoStakeholdersClient({
         estado: formState.address.estado || undefined,
         notes: formState.notes || undefined,
         remuneracao: isAdmin ? (parseBRLFloat(formState.remuneracao) ?? undefined) : undefined,
-        horasDiarias: isAdmin ? (parseFloat(formState.horasDiarias) || undefined) : undefined,
+        horasDiarias: isAdmin ? (parseHoras(formState.horasDiarias).valor ?? undefined) : undefined,
         cargos: formState.cargos,
         departamento: formState.departamento,
         isGerente: formState.isGerente,
@@ -1201,7 +1206,7 @@ export default function ProjetoStakeholdersClient({
                 departamento: formState.departamento,
                 isGerente: formState.isGerente,
                 remuneracao: isAdmin ? (parseBRLFloat(formState.remuneracao) ?? x.remuneracao) : x.remuneracao,
-                horasDiarias: isAdmin ? (parseFloat(formState.horasDiarias) || x.horasDiarias) : x.horasDiarias,
+                horasDiarias: isAdmin ? (parseHoras(formState.horasDiarias).valor ?? x.horasDiarias) : x.horasDiarias,
               }
             : x,
         ),
@@ -1216,6 +1221,8 @@ export default function ProjetoStakeholdersClient({
     const numberValue = parseInt(value, 10) / 100
     setField('remuneracao', numberValue.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 }))
   }
+
+  const horasCheck = parseHoras(formState.horasDiarias)
 
   const col3Title = isCreating && addMode === 'interno'
     ? 'Novo Membro da Equipe'
@@ -1784,24 +1791,32 @@ export default function ProjetoStakeholdersClient({
                   </div>
                   <div>
                     <label htmlFor="field-horas-diarias" className="block text-xs font-medium text-gray-600 mb-1">Horas por dia</label>
+                    {/* Texto, não type="number": no Firefox o number com vírgula ("8,5") chegava vazio. */}
                     <input
                       id="field-horas-diarias"
-                      type="number"
-                      min="0"
-                      step="0.5"
+                      type="text"
+                      inputMode="decimal"
                       value={formState.horasDiarias}
                       onChange={e => setField('horasDiarias', e.target.value)}
                       disabled={!isAdmin}
-                      placeholder="ex: 8"
-                      className={`${inputCls} ${disabledCls}`}
+                      placeholder="ex.: 8, 8,5 ou 8:30"
+                      aria-invalid={horasCheck.erro ? true : undefined}
+                      aria-describedby="field-horas-diarias-ajuda"
+                      className={`${inputCls} ${disabledCls} ${horasCheck.erro ? 'border-red-400 focus:ring-red-300' : ''}`}
                     />
+                    <p id="field-horas-diarias-ajuda" className={`mt-1 text-[11px] ${horasCheck.erro ? 'text-red-600' : 'text-gray-400'}`}>
+                      {horasCheck.erro
+                        ?? (horasCheck.valor !== null && formState.horasDiarias.includes(':')
+                          ? `= ${formatHoras(horasCheck.valor)} h`
+                          : null)}
+                    </p>
                   </div>
                 </div>
 
                 {/* Valores calculados */}
                 {(() => {
                   const remNum = parseBRLFloat(formState.remuneracao) ?? 0
-                  const horasNum = parseFloat(formState.horasDiarias) || 0
+                  const horasNum = parseHoras(formState.horasDiarias).valor ?? 0
                   const valid = horasNum > 0
                   const fmtBRL = (v: number) =>
                     v.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL', minimumFractionDigits: 2, maximumFractionDigits: 2 })
@@ -1974,7 +1989,7 @@ export default function ProjetoStakeholdersClient({
                 <button
                   type="button"
                   onClick={handleSave}
-                  disabled={loadingId === 'form'}
+                  disabled={loadingId === 'form' || Boolean(horasCheck.erro)}
                   className="flex-1 flex items-center justify-center gap-2 px-4 py-2.5 text-sm font-medium bg-blue-600 text-white rounded-xl hover:bg-blue-700 disabled:opacity-50 transition-colors"
                 >
                   {loadingId === 'form' && <Spinner />}

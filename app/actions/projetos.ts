@@ -7,6 +7,7 @@ import prisma from '@/lib/prisma'
 import { isProjectManager, setProjectManagerRole, removeProjectRole } from '@/services/projectRoleService'
 import { getTree, syncMacrofasesComEap } from '@/services/wbsService'
 import { validateAvatarUrl } from '@/lib/validation/avatarUrl'
+import { parseHoras } from '@/lib/validation/horas'
 
 /**
  * Garante que o catálogo (Department) tenha os departamentos escolhidos e
@@ -363,10 +364,13 @@ export async function updateProjetoMemberAction(
       if (!isNaN(n)) remuneracao = n
     }
 
+    // Mesma regra da tela (SDD 4.5): "8,5", "8.5" e "8:30" valem 8,5 h; fora de
+    // 0–24 é recusado. Antes Number("8,5") virava NaN e o valor sumia em silêncio.
     let horasDiarias: number | undefined
     if (rawHorasDiarias !== undefined) {
-      const h = Number(rawHorasDiarias)
-      if (!isNaN(h) && h > 0) horasDiarias = h
+      const { valor, erro } = parseHoras(rawHorasDiarias)
+      if (erro) throw new Error(erro)
+      if (valor !== null) horasDiarias = valor
     }
 
     const derivedHourlyRate =

@@ -28,6 +28,7 @@ vi.mock('@/lib/prisma', () => ({
     projetoDepartamento: { findMany: vi.fn().mockResolvedValue([]) },
     userProjectRole: { findFirst: vi.fn().mockResolvedValue(null) },
     wbsNode: { findMany: vi.fn().mockResolvedValue([]) },
+    user: { update: vi.fn() },
   },
 }))
 
@@ -40,7 +41,9 @@ import {
   getProjetoAction,
   updateProjetoAction,
   deleteProjetoAction,
+  updateProjetoMemberAction,
 } from '@/app/actions/projetos'
+import { ERRO_HORAS } from '@/lib/validation/horas'
 
 const mockSession = { isAuth: true, userId: 'u1', tenantId: 't1', role: 'admin' }
 
@@ -158,5 +161,14 @@ describe('Projeto Actions', () => {
       expect(result).toHaveProperty('error')
       expect(prisma.projectDraft.deleteMany).not.toHaveBeenCalled()
     })
+  })
+})
+
+describe('updateProjetoMemberAction — horas por dia (SDD 4.5)', () => {
+  it.each(['30', '8,555', 'oito', '0'])('recusa "%s" antes de gravar qualquer coisa', async horas => {
+    vi.mocked(verifySession).mockResolvedValue(mockSession as never)
+    const res = await updateProjetoMemberAction('u2', 'p1', { horasDiarias: horas })
+    expect(res).toEqual({ error: ERRO_HORAS })
+    expect(prisma.user.update).not.toHaveBeenCalled()
   })
 })
