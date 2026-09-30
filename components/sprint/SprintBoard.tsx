@@ -1,6 +1,7 @@
 'use client'
 
 import { useState, useEffect, useRef } from 'react'
+import { useSearchParams } from 'next/navigation'
 import { useToast } from '@/components/ui/Toast'
 import { DragDropContext, Droppable, DropResult } from '@hello-pangea/dnd'
 import SprintHeader from './SprintHeader'
@@ -137,7 +138,26 @@ export default function SprintBoard({ sprint, columns: initialColumns, backlogCa
   const [columns, setColumns] = useState(initialColumns)
   const [newColTitle, setNewColTitle] = useState('')
   const [addingCol, setAddingCol] = useState(false)
-  const [openCardId, setOpenCardId] = useState<string | null>(initialCardId ?? null)
+  // O ?card= é lido no cliente: com o quadro já montado (busca, link para a
+  // mesma sprint), o Next reaproveita o componente e um useState(initialCardId)
+  // ignorava o card novo (SDD 4.3).
+  const searchParams = useSearchParams()
+  const cardDaUrl = searchParams?.get('card') ?? null
+  const [openCardId, setOpenCardId] = useState<string | null>(cardDaUrl ?? initialCardId ?? null)
+  const [cardDaUrlAnterior, setCardDaUrlAnterior] = useState(cardDaUrl)
+  if (cardDaUrl !== cardDaUrlAnterior) {
+    setCardDaUrlAnterior(cardDaUrl)
+    if (cardDaUrl) setOpenCardId(cardDaUrl)
+  }
+
+  /** Fecha o card e tira o ?card= da URL (sem ida ao servidor), para o mesmo resultado da busca abrir de novo. */
+  function fecharCard() {
+    setOpenCardId(null)
+    const url = new URL(window.location.href)
+    if (!url.searchParams.has('card')) return
+    url.searchParams.delete('card')
+    window.history.replaceState(null, '', `${url.pathname}${url.search}${url.hash}`)
+  }
   const [cardComments, setCardComments] = useState<{ id: string; user: { id: string; name: string; avatarUrl?: string | null }; content: string; createdAt: Date }[]>([])
   const [addingCardToColumn, setAddingCardToColumn] = useState<string | null>(null)
   const [boardBg, setBoardBg] = useState('bg-gradient-to-br from-slate-900 via-blue-950 to-slate-900')
@@ -691,7 +711,7 @@ export default function SprintBoard({ sprint, columns: initialColumns, backlogCa
           <CardModal
             isOpen
             readOnly={readOnly}
-            onClose={() => setOpenCardId(null)}
+            onClose={fecharCard}
             onSubmit={data => {
               if (readOnly) return
               if (isBacklog) handleUpdateBacklogCard(openCardId, data)
