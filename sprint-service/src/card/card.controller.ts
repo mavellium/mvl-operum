@@ -13,7 +13,7 @@ import {
   BadRequestException,
 } from '@nestjs/common'
 import { TenantId } from '../common/tenant-scope'
-import { CardService, CreateCardSchema, UpdateCardSchema } from './card.service'
+import { CardService, CardsInTenantSchema, CreateCardSchema, UpdateCardSchema } from './card.service'
 
 
 @Controller()
@@ -48,6 +48,16 @@ export class CardController {
     const porPessoa = !!responsibleUserId && !!inProjectId
     if (!porPessoa && text.length < 2) throw new BadRequestException('q é obrigatório (mínimo 2 caracteres)')
     return this.cardService.search(tenantId, text, { sprintId, projectId, inProjectId, responsibleUserId })
+  }
+
+  // Antes das rotas com :id. Só devolve ids do próprio tenant, então pode
+  // ficar exposta pelo gateway sem vazar nada.
+  @Post('cards/in-tenant')
+  @HttpCode(HttpStatus.OK)
+  idsInTenant(@TenantId() tenantId: string, @Body() body: unknown) {
+    const parsed = CardsInTenantSchema.safeParse(body)
+    if (!parsed.success) throw new BadRequestException(parsed.error.issues[0].message)
+    return this.cardService.idsInTenant(tenantId, parsed.data.ids)
   }
 
   @Get('cards/:id')

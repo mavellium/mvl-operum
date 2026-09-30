@@ -208,7 +208,7 @@ export function registerAttachmentTools(server: McpServer, registry: TenantRegis
       const attachment = (await fetchAttachments(ctx.gw, [task_id])).get(task_id)?.find(a => a.id === attachment_id)
       if (!attachment) throw new UserError('Anexo não encontrado nesta tarefa. Confira os ids em operum_get_task.')
 
-      await ctx.gw.delete(`/files/${attachment_id}`)
+      await ctx.gw.delete(`/files/${attachment_id}?cardId=${task_id}`)
       await audit(ctx, 'operum_delete_attachment', 'DELETE', 'attachment', attachment_id, {
         cardId: task_id,
         fileName: attachment.fileName,

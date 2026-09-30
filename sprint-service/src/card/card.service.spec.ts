@@ -30,7 +30,7 @@ vi.mock('../common/tenant-scope', async (importOriginal) => {
 
 import { prisma } from '../prisma'
 import * as scope from '../common/tenant-scope'
-import { CardService } from './card.service'
+import { CardService, CardsInTenantSchema } from './card.service'
 
 const db = prisma as unknown as {
   $transaction: ReturnType<typeof vi.fn>
@@ -222,5 +222,28 @@ describe('CardService — escrita escopada por tenant', () => {
     assert.assertTag.mockImplementation(notFound)
     await expect(service.deleteTag('t1', 'g-outra')).rejects.toThrow(NotFoundException)
     expect(db.tag.delete).not.toHaveBeenCalled()
+  })
+})
+
+describe('idsInTenant (conferência do file-service)', () => {
+  it('filtra pelo tenant, ignora excluídos e não repete ids na consulta', async () => {
+    db.card.findMany.mockResolvedValue([{ id: 'c1' }])
+    const r = await new CardService().idsInTenant('t1', ['c1', 'c-outro', 'c1'])
+    expect(r).toEqual({ ids: ['c1'] })
+    expect(db.card.findMany).toHaveBeenCalledWith({
+      where: { id: { in: ['c1', 'c-outro'] }, deletedAt: null, ...scope.cardInTenant('t1') },
+      select: { id: true },
+    })
+  })
+
+  it('lista vazia não consulta o banco', async () => {
+    await expect(new CardService().idsInTenant('t1', [])).resolves.toEqual({ ids: [] })
+    expect(db.card.findMany).not.toHaveBeenCalled()
+  })
+
+  it('o schema recusa campo extra e mais de 500 ids', () => {
+    expect(CardsInTenantSchema.safeParse({ ids: ['c1'], tenantId: 'outro' }).success).toBe(false)
+    expect(CardsInTenantSchema.safeParse({ ids: Array.from({ length: 501 }, (_, i) => `c${i}`) }).success).toBe(false)
+    expect(CardsInTenantSchema.safeParse({ ids: ['c1', 'c2'] }).success).toBe(true)
   })
 })
