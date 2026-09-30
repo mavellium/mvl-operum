@@ -145,8 +145,10 @@ export function serializeAttachment(a: Raw) {
     file_size: num(a?.fileSize),
     is_cover: bool(a?.isCover),
     uploaded_at: str(a?.uploadedAt ?? a?.createdAt),
-    // Link é conteúdo do usuário (a URL do vídeo); de arquivo não expõe o caminho interno no MinIO.
+    // Link é conteúdo do usuário (a URL do vídeo); de arquivo não expõe o caminho interno no MinIO,
+    // só a URL assinada (válida por 1 h) quando o get_task a pede ao file-service.
     ...(isLink ? { url: str(a?.filePath) } : {}),
+    ...(!isLink && typeof a?.downloadUrl === 'string' ? { download_url: a.downloadUrl } : {}),
   }
 }
 

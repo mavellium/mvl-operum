@@ -6,6 +6,7 @@ import { getUserProjetosAction, addMemberAction, updateUsuarioProjetoAction } fr
 import { getProjetosAction } from '@/app/actions/projetos'
 import AddressFields, { type AddressValues } from '@/components/ui/AddressFields'
 import type { AdminUser } from './AdminCreateUserModal'
+import PasswordInput from '@/components/ui/PasswordInput'
 
 interface Props {
   user: AdminUser
@@ -375,12 +376,21 @@ function Field({
   return (
     <div>
       <label className="block text-xs font-medium text-gray-600 mb-1">{label}</label>
-      <input
-        type={type}
-        value={value}
-        onChange={e => onChange(e.target.value)}
-        className="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
-      />
+      {type === 'password' ? (
+        <PasswordInput
+          value={value}
+          onChange={e => onChange(e.target.value)}
+          aria-label={label}
+          className="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+        />
+      ) : (
+        <input
+          type={type}
+          value={value}
+          onChange={e => onChange(e.target.value)}
+          className="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+        />
+      )}
     </div>
   )
 }

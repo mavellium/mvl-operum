@@ -1,6 +1,7 @@
-import { describe, it, expect, vi, beforeEach } from 'vitest'
+import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest'
 import { render, screen, fireEvent } from '@testing-library/react'
 import SprintBoard from '@/components/sprint/SprintBoard'
+import { useSearchParams } from 'next/navigation'
 import { ToastProvider } from '@/components/ui/Toast'
 
 function renderWithProviders(ui: React.ReactElement) {
@@ -231,5 +232,55 @@ describe('SprintBoard', () => {
       expect(screen.getByText('Tarefa livre')).toBeInTheDocument()
       expect(screen.queryByText('Tarefa vencida')).not.toBeInTheDocument()
     })
+  })
+})
+
+describe('SprintBoard — card da URL (?card=), SDD 4.3', () => {
+  const cols = [
+    { ...columns[0], cards: [columns[0].cards[0], { ...columns[0].cards[0], id: 'c2', title: 'Task 2' }] },
+    columns[1],
+  ]
+  const naUrl = (card?: string) =>
+    vi.mocked(useSearchParams).mockReturnValue(new URLSearchParams(card ? `card=${card}` : '') as never)
+  const quadro = () => <ToastProvider><SprintBoard sprint={sprint} columns={cols} projectId="proj1" /></ToastProvider>
+
+  beforeEach(() => {
+    window.history.replaceState(null, '', '/projetos/proj1/sprints/s1')
+  })
+  afterEach(() => naUrl())
+
+  it('abre o card da URL ao montar', () => {
+    naUrl('c1')
+    render(quadro())
+    expect(screen.getByRole('dialog')).toBeInTheDocument()
+    expect(screen.getByDisplayValue('Task 1')).toBeInTheDocument()
+  })
+
+  it('com o quadro já montado, um ?card= novo (clique na busca) abre o card', () => {
+    naUrl()
+    const { rerender } = render(quadro())
+    expect(screen.queryByRole('dialog')).not.toBeInTheDocument()
+
+    naUrl('c2')
+    rerender(quadro())
+    expect(screen.getByDisplayValue('Task 2')).toBeInTheDocument()
+  })
+
+  it('fechar tira o ?card= da URL, e clicar de novo no mesmo resultado reabre', () => {
+    window.history.replaceState(null, '', '/projetos/proj1/sprints/s1?card=c1')
+    const replace = vi.spyOn(window.history, 'replaceState')
+    naUrl('c1')
+    const { rerender } = render(quadro())
+
+    fireEvent.click(screen.getByRole('button', { name: 'Fechar' }))
+    expect(screen.queryByRole('dialog')).not.toBeInTheDocument()
+    expect(replace).toHaveBeenCalledWith(null, '', '/projetos/proj1/sprints/s1')
+
+    // O Next sincroniza o useSearchParams com o replaceState.
+    naUrl()
+    rerender(quadro())
+    naUrl('c1')
+    rerender(quadro())
+    expect(screen.getByDisplayValue('Task 1')).toBeInTheDocument()
   })
 })

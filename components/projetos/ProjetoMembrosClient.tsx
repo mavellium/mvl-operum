@@ -7,6 +7,7 @@ import { updateProjetoMemberAction } from '@/app/actions/projetos'
 import UserAvatar from '@/components/user/UserAvatar'
 import AvatarUpload from '@/components/profile/AvatarUpload'
 import AddressFields, { type AddressValues, emptyAddress } from '@/components/ui/AddressFields'
+import PasswordInput from '@/components/ui/PasswordInput'
 
 interface Usuario {
   id: string
@@ -760,7 +761,7 @@ export default function ProjetoMembrosClient({
             {isCreating && (
               <div>
                 <label className="block text-xs font-medium text-gray-600 mb-1">Senha *</label>
-                <input type="password" value={formState.password} onChange={e => setField('password', e.target.value)} disabled={!isAdmin} className={`${inputCls} ${disabledCls}`} />
+                <PasswordInput value={formState.password} onChange={e => setField('password', e.target.value)} disabled={!isAdmin} className={`${inputCls} ${disabledCls}`} />
               </div>
             )}
 

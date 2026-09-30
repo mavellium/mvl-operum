@@ -3,6 +3,7 @@
 import { useState } from 'react'
 import { adminCreateUserAction } from '@/app/actions/admin'
 import AddressFields, { type AddressValues, emptyAddress } from '@/components/ui/AddressFields'
+import PasswordInput from '@/components/ui/PasswordInput'
 
 interface Props {
   onClose: () => void
@@ -98,8 +99,7 @@ export default function AdminCreateUserModal({ onClose, onCreated }: Props) {
           </div>
           <div>
             <label className="block text-xs font-medium text-gray-600 mb-1">Senha *</label>
-            <input
-              type="password"
+            <PasswordInput
               value={form.password}
               onChange={e => setForm(f => ({ ...f, password: e.target.value }))}
               className="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"

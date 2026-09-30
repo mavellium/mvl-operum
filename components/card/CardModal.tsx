@@ -36,7 +36,6 @@ interface CardModalProps {
   attachments?: Attachment[]
   /** Pode devolver a Promise do envio: o modal mostra "Enviando…" até ela terminar. */
   onAttachmentUpload?: (file: File) => void | Promise<void>
-  onAttachmentView?: (attachmentId: string) => Promise<string | null>
   onAttachmentRename?: (attachmentId: string, newName: string) => void
   onAttachmentDelete?: (attachmentId: string) => void
   onAttachmentSetCover?: (attachmentId: string) => void
@@ -82,6 +81,14 @@ function formatDate(dateStr: string) {
   return new Date(dateStr).toLocaleDateString('pt-BR', {
     day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit',
   })
+}
+
+/** Tipos que a rota /api/files/:id/image serve (e o lightbox mostra). */
+const PREVIEW_TYPES = new Set(['image/png', 'image/jpeg', 'image/webp', 'image/gif'])
+
+/** Link para abrir o arquivo: a rota confere a sessão e redireciona para a URL assinada (SDD 4.2). */
+function downloadHref(attachmentId: string, cardId: string): string {
+  return `/api/files/${attachmentId}/download?cardId=${encodeURIComponent(cardId)}`
 }
 
 function formatBytes(bytes: number): string {
@@ -135,7 +142,7 @@ function AttachmentIcon({ fileType }: { fileType: string }) {
 
 export default function CardModal({
   isOpen, onClose, onSubmit, initialCard, readOnly = false, users, boardTags,
-  attachments = [], onAttachmentUpload, onAttachmentView, onAttachmentRename, onAttachmentDelete, onAttachmentSetCover,
+  attachments = [], onAttachmentUpload, onAttachmentRename, onAttachmentDelete, onAttachmentSetCover,
   comments = [], onAddComment, onEditComment, onDeleteComment, currentUser, onResponsiblesChange, onTimerStarted, onPatch,
 }: CardModalProps) {
 
@@ -186,6 +193,19 @@ export default function CardModal({
 
   const [pendingFiles, setPendingFiles] = useState<File[]>([])
   const [anexoErro, setAnexoErro] = useState('')
+  const [preview, setPreview] = useState<Attachment | null>(null)
+
+  // Esc fecha só o lightbox; o card continua aberto.
+  useEffect(() => {
+    if (!preview) return
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key !== 'Escape') return
+      e.stopPropagation()
+      setPreview(null)
+    }
+    window.addEventListener('keydown', onKey, true)
+    return () => window.removeEventListener('keydown', onKey, true)
+  }, [preview])
   const [enviandoAnexo, setEnviandoAnexo] = useState(false)
 
   const imageAttachments = attachments.filter(a => a.fileType.startsWith('image/'))
@@ -609,8 +629,13 @@ export default function CardModal({
                     <ul className="space-y-0.5">
                       {attachments.map(a => {
                         // Link (vídeo do YouTube etc.): abre a URL direto, sem URL assinada do MinIO.
-                        const href = isLinkAttachment(a.fileType) ? linkHref(a.filePath) : null
+                        // Link com esquema que não é http(s) fica sem href (nunca cai na rota de download).
+                        const isLink = isLinkAttachment(a.fileType)
+                        const href = isLink ? linkHref(a.filePath) : null
                         const thumb = href ? linkThumbnail(href) : null
+                        // Arquivo: imagem abre no lightbox; o resto, pela rota de download.
+                        const podeVer = !isLink && PREVIEW_TYPES.has(a.fileType)
+                        const abrir = isLink ? href : initialCard ? downloadHref(a.id, initialCard.id) : null
                         return (
                         <li key={a.id} className="flex items-center gap-2 group rounded-md px-2 py-1.5 hover:bg-slate-50">
                           {thumb
@@ -631,16 +656,25 @@ export default function CardModal({
                                 autoFocus
                                 value={renameValue}
                                 onChange={e => setRenameValue(e.target.value)}
-                                className="flex-1 min-w-0 border border-slate-300 rounded px-1.5 py-0.5 text-xs focus:outline-none focus:ring-1 focus:ring-blue-400"
+                                aria-label="Novo nome do anexo"
+                                className="flex-1 min-w-0 rounded border border-slate-500 bg-white px-1.5 py-0.5 text-xs text-slate-900 focus:outline-none focus:border-blue-600 focus:ring-2 focus:ring-blue-500/40"
                               />
                               <button type="submit" className="text-xs text-blue-600 hover:text-blue-800 cursor-pointer shrink-0">OK</button>
                               <button type="button" onClick={() => setRenamingId(null)} className="text-xs text-slate-400 hover:text-slate-600 cursor-pointer shrink-0">Cancelar</button>
                             </form>
                           ) : (
                             <>
-                              {href ? (
+                              {podeVer ? (
+                                <button
+                                  type="button"
+                                  onClick={() => setPreview(a)}
+                                  className="flex-1 min-w-0 truncate text-left text-sm text-blue-600 hover:underline cursor-pointer"
+                                >
+                                  {a.fileName}
+                                </button>
+                              ) : abrir ? (
                                 <a
-                                  href={href}
+                                  href={abrir}
                                   target="_blank"
                                   rel="noopener noreferrer"
                                   className="flex-1 min-w-0 truncate text-sm text-blue-600 hover:underline"
@@ -652,24 +686,33 @@ export default function CardModal({
                               )}
                               <span className="text-xs text-slate-400 shrink-0">{href ? linkHost(href) : formatBytes(a.fileSize)}</span>
                               <div className="flex items-center gap-0.5 opacity-0 group-hover:opacity-100 transition-opacity shrink-0">
-                                <button
-                                  title={href ? 'Abrir link' : 'Ver arquivo'}
-                                  className="p-1 rounded hover:bg-slate-200 text-slate-400 hover:text-slate-700 cursor-pointer"
-                                  onClick={async () => {
-                                    if (href) {
-                                      window.open(href, '_blank', 'noopener,noreferrer')
-                                    } else if (onAttachmentView) {
-                                      const url = await onAttachmentView(a.id)
-                                      if (url) window.open(url, '_blank', 'noopener,noreferrer')
-                                    } else {
-                                      window.open(a.filePath, '_blank', 'noopener,noreferrer')
-                                    }
-                                  }}
-                                >
-                                  <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-                                    <path strokeLinecap="round" strokeLinejoin="round" d="M13.5 6H5.25A2.25 2.25 0 0 0 3 8.25v10.5A2.25 2.25 0 0 0 5.25 21h10.5A2.25 2.25 0 0 0 18 18.75V10.5m-10.5 6L21 3m0 0h-5.25M21 3v5.25" />
-                                  </svg>
-                                </button>
+                                {podeVer ? (
+                                  <button
+                                    type="button"
+                                    title="Ver imagem"
+                                    aria-label={`Ver ${a.fileName}`}
+                                    onClick={() => setPreview(a)}
+                                    className="p-1 rounded hover:bg-slate-200 text-slate-400 hover:text-slate-700 cursor-pointer"
+                                  >
+                                    <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                                      <path strokeLinecap="round" strokeLinejoin="round" d="M2.036 12.322a1.012 1.012 0 0 1 0-.639C3.423 7.51 7.36 4.5 12 4.5c4.638 0 8.573 3.007 9.963 7.178.07.207.07.431 0 .639C20.577 16.49 16.64 19.5 12 19.5c-4.638 0-8.573-3.007-9.963-7.178Z" />
+                                      <path strokeLinecap="round" strokeLinejoin="round" d="M15 12a3 3 0 1 1-6 0 3 3 0 0 1 6 0Z" />
+                                    </svg>
+                                  </button>
+                                ) : abrir && (
+                                  <a
+                                    href={abrir}
+                                    target="_blank"
+                                    rel="noopener noreferrer"
+                                    title={href ? 'Abrir link' : 'Abrir arquivo'}
+                                    aria-label={`Abrir ${a.fileName}`}
+                                    className="p-1 rounded hover:bg-slate-200 text-slate-400 hover:text-slate-700 cursor-pointer"
+                                  >
+                                    <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                                      <path strokeLinecap="round" strokeLinejoin="round" d="M13.5 6H5.25A2.25 2.25 0 0 0 3 8.25v10.5A2.25 2.25 0 0 0 5.25 21h10.5A2.25 2.25 0 0 0 18 18.75V10.5m-10.5 6L21 3m0 0h-5.25M21 3v5.25" />
+                                    </svg>
+                                  </a>
+                                )}
                                 {!readOnly && onAttachmentRename && (
                                   <button
                                     title="Renomear"
@@ -1150,6 +1193,46 @@ export default function CardModal({
           )}
         </div>
       </div>
+
+      {preview && initialCard && (
+        <div
+          role="dialog"
+          aria-modal="true"
+          aria-label={`Visualizar ${preview.fileName}`}
+          className="fixed inset-0 z-[110] flex flex-col items-center justify-center gap-3 bg-slate-950/85 p-4"
+          onClick={() => setPreview(null)}
+        >
+          <div className="flex w-full max-w-5xl items-center gap-3 text-sm text-white" onClick={e => e.stopPropagation()}>
+            <span className="flex-1 min-w-0 truncate font-medium">{preview.fileName}</span>
+            <a
+              href={downloadHref(preview.id, initialCard.id)}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="shrink-0 rounded-md border border-white/30 px-2.5 py-1 hover:bg-white/10"
+            >
+              Abrir em nova aba
+            </a>
+            <button
+              type="button"
+              autoFocus
+              aria-label="Fechar visualização"
+              onClick={() => setPreview(null)}
+              className="shrink-0 rounded-md p-1.5 hover:bg-white/10 cursor-pointer"
+            >
+              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={2}>
+                <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
+              </svg>
+            </button>
+          </div>
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img
+            src={`/api/files/${preview.id}/image`}
+            alt={preview.fileName}
+            onClick={e => e.stopPropagation()}
+            className="max-h-[85vh] max-w-full rounded-lg bg-white object-contain shadow-2xl"
+          />
+        </div>
+      )}
     </div>
   )
 }

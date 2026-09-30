@@ -32,6 +32,8 @@ import {
 import { addMemberAction, removeMemberAction } from '@/app/actions/projects'
 import { updateProjetoMemberAction } from '@/app/actions/projetos'
 import { adminCreateUserAction } from '@/app/actions/admin'
+import { parseHoras, formatHoras } from '@/lib/validation/horas'
+import PasswordInput from '@/components/ui/PasswordInput'
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -572,7 +574,7 @@ export default function ProjetoStakeholdersClient({
         s.remuneracao != null
           ? s.remuneracao.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })
           : '',
-      horasDiarias: s.horasDiarias != null ? String(s.horasDiarias) : '',
+      horasDiarias: s.horasDiarias != null ? formatHoras(s.horasDiarias) : '',
       password: '',
       forcePasswordChange: false,
     })
@@ -687,6 +689,8 @@ export default function ProjetoStakeholdersClient({
       setProjeto(prev => (prev.some(x => x.id === unified.id) ? prev : [...prev, unified]))
       setSearchProjeto('')
       toast(`Stakeholder "${raw.name}" criado e adicionado ao projeto!`, 'success')
+      // Criado só com o nome: abre o cadastro para completar os dados (SDD 4.4).
+      handleOpenEdit(unified)
     })
   }
 
@@ -945,6 +949,10 @@ export default function ProjetoStakeholdersClient({
   async function handleSave() {
     setFormError(null)
 
+    // Horas por dia inválidas nunca são descartadas em silêncio (SDD 4.5).
+    const ehMembro = (isCreating && !selected && addMode === 'interno') || selected?.tipo === 'interno'
+    if (ehMembro && horasCheck.erro) { setFormError(horasCheck.erro); return }
+
     // Create new internal user (tenant member)
     if (isCreating && !selected && addMode === 'interno') {
       if (!isAdmin) return
@@ -986,34 +994,63 @@ export default function ProjetoStakeholdersClient({
       setLoadingId(null)
       if ('error' in addResult) {
         toast(addResult.error ?? 'Erro ao vincular usuário ao projeto', 'error')
-      } else {
-        const unified: StakeholderUnificado = {
-          id: novoUsuario.id,
-          tipo: 'interno',
-          userId: novoUsuario.id,
-          name: novoUsuario.name,
-          email: novoUsuario.email,
-          avatarUrl: novoUsuario.avatarUrl,
-          phone: null,
-          cep: null,
-          logradouro: null,
-          numero: null,
-          complemento: null,
-          bairro: null,
-          cidade: null,
-          estado: null,
-          notes: null,
-          cargos: [],
-          departamento: [],
-          isGerente: false,
-          hourlyRate: null,
-          startDate: new Date().toISOString(),
-          userRole: novoUsuario.role,
-        }
-        setProjeto(prev => [...prev, unified])
-        toast('Usuário criado e vinculado ao projeto!', 'success')
+        handleClearSelection()
+        return
       }
-      handleClearSelection()
+
+      // Dados do projeto preenchidos no formulário (cargos, departamento,
+      // remuneração, horas/dia, gerente): antes eram descartados na criação e
+      // era preciso editar de novo (SDD 4.4). Mesmo caminho da edição.
+      const dadosProjeto = {
+        remuneracao: parseBRLFloat(formState.remuneracao) ?? undefined,
+        horasDiarias: parseHoras(formState.horasDiarias).valor ?? undefined,
+        cargos: formState.cargos,
+        departamento: formState.departamento,
+        isGerente: formState.isGerente,
+      }
+      const temDadosProjeto =
+        dadosProjeto.remuneracao !== undefined || dadosProjeto.horasDiarias !== undefined ||
+        dadosProjeto.cargos.length > 0 || dadosProjeto.departamento.length > 0 || dadosProjeto.isGerente
+      let dadosGravados = true
+      if (temDadosProjeto) {
+        setLoadingId('form')
+        const upd = await updateProjetoMemberAction(novoUsuario.id, projetoId, dadosProjeto)
+        setLoadingId(null)
+        if ('error' in upd) {
+          dadosGravados = false
+          toast(`Membro criado, mas os dados do projeto não foram salvos: ${upd.error}`, 'error')
+        }
+      }
+
+      const unified: StakeholderUnificado = {
+        id: novoUsuario.id,
+        tipo: 'interno',
+        userId: novoUsuario.id,
+        name: novoUsuario.name,
+        email: novoUsuario.email,
+        avatarUrl: novoUsuario.avatarUrl,
+        phone: formState.phone || null,
+        cep: formState.address.cep || null,
+        logradouro: formState.address.logradouro || null,
+        numero: formState.address.numero || null,
+        complemento: formState.address.complemento || null,
+        bairro: formState.address.bairro || null,
+        cidade: formState.address.cidade || null,
+        estado: formState.address.estado || null,
+        notes: formState.notes || null,
+        cargos: dadosGravados ? formState.cargos : [],
+        departamento: dadosGravados ? formState.departamento : [],
+        isGerente: dadosGravados ? formState.isGerente : false,
+        remuneracao: dadosGravados ? (dadosProjeto.remuneracao ?? null) : null,
+        horasDiarias: dadosGravados ? (dadosProjeto.horasDiarias ?? null) : null,
+        hourlyRate: null,
+        startDate: new Date().toISOString(),
+        userRole: novoUsuario.role,
+      }
+      setProjeto(prev => [...prev, unified])
+      toast('Usuário criado e vinculado ao projeto!', 'success')
+      // Já abre o cadastro do membro, com o que foi salvo, em vez de fechar o formulário.
+      handleOpenEdit(unified)
       return
     }
 
@@ -1023,8 +1060,10 @@ export default function ProjetoStakeholdersClient({
       if (!formState.name.trim()) { setFormError('O nome é obrigatório.'); return }
 
       setLoadingId('form')
-      // Cria sem projectId: o stakeholder entra no diretório do Tenant,
-      // não é auto-vinculado — o usuário vincula manualmente no Nível 2.
+      // O formulário é aberto pelo "Adicionar ao projeto": cria já vinculado ao
+      // projeto e abre o cadastro em edição (SDD 4.4). Antes criava só no
+      // diretório e fechava, e era preciso achar, vincular e editar de novo.
+      // Quem quiser só o diretório usa a criação rápida da busca do diretório.
       const result = await createStakeholderAction({
         name: formState.name.trim(),
         logoUrl: formState.avatarUrl || undefined,
@@ -1040,36 +1079,35 @@ export default function ProjetoStakeholdersClient({
         cidade: formState.address.cidade || undefined,
         estado: formState.address.estado || undefined,
         notes: formState.notes || undefined,
-      })
+      }, projetoId)
       setLoadingId(null)
 
       if ('error' in result) { setFormError(result.error ?? 'Erro ao criar stakeholder'); return }
-      if (result.stakeholder) {
-        const raw = result.stakeholder as { id: string; tenantId: string }
-        // Adiciona ao diretório (Col2) para que o usuário possa vincular ao projeto
-        const novoExterno: StakeholderExterno = {
-          id: raw.id,
-          tenantId: raw.tenantId,
-          name: formState.name.trim(),
-          logoUrl: formState.avatarUrl || null,
-          company: formState.company || null,
-          competence: formState.competence || null,
-          email: formState.email || null,
-          phone: formState.phone || null,
-          cep: formState.address.cep || null,
-          logradouro: formState.address.logradouro || null,
-          numero: formState.address.numero || null,
-          complemento: formState.address.complemento || null,
-          bairro: formState.address.bairro || null,
-          cidade: formState.address.cidade || null,
-          estado: formState.address.estado || null,
-          notes: formState.notes || null,
-          isActive: true,
-        }
-        setDispExterno(prev => [novoExterno, ...prev])
+      const raw = result.stakeholder as { id: string; tenantId: string }
+      const unified: StakeholderUnificado = {
+        id: raw.id,
+        tipo: 'externo',
+        stakeholderId: raw.id,
+        tenantId: raw.tenantId,
+        name: formState.name.trim(),
+        avatarUrl: formState.avatarUrl || null,
+        company: formState.company || null,
+        competence: formState.competence || null,
+        email: formState.email || null,
+        phone: formState.phone || null,
+        cep: formState.address.cep || null,
+        logradouro: formState.address.logradouro || null,
+        numero: formState.address.numero || null,
+        complemento: formState.address.complemento || null,
+        bairro: formState.address.bairro || null,
+        cidade: formState.address.cidade || null,
+        estado: formState.address.estado || null,
+        notes: formState.notes || null,
+        isActive: true,
       }
-      // Fecha o formulário (Col3) mas mantém o diretório aberto (Col2)
-      handleClearSelection()
+      setProjeto(prev => (prev.some(x => x.id === unified.id) ? prev : [...prev, unified]))
+      toast(`Stakeholder "${unified.name}" criado e adicionado ao projeto!`, 'success')
+      handleOpenEdit(unified)
       return
     }
 
@@ -1140,7 +1178,7 @@ export default function ProjetoStakeholdersClient({
         estado: formState.address.estado || undefined,
         notes: formState.notes || undefined,
         remuneracao: isAdmin ? (parseBRLFloat(formState.remuneracao) ?? undefined) : undefined,
-        horasDiarias: isAdmin ? (parseFloat(formState.horasDiarias) || undefined) : undefined,
+        horasDiarias: isAdmin ? (parseHoras(formState.horasDiarias).valor ?? undefined) : undefined,
         cargos: formState.cargos,
         departamento: formState.departamento,
         isGerente: formState.isGerente,
@@ -1169,7 +1207,7 @@ export default function ProjetoStakeholdersClient({
                 departamento: formState.departamento,
                 isGerente: formState.isGerente,
                 remuneracao: isAdmin ? (parseBRLFloat(formState.remuneracao) ?? x.remuneracao) : x.remuneracao,
-                horasDiarias: isAdmin ? (parseFloat(formState.horasDiarias) || x.horasDiarias) : x.horasDiarias,
+                horasDiarias: isAdmin ? (parseHoras(formState.horasDiarias).valor ?? x.horasDiarias) : x.horasDiarias,
               }
             : x,
         ),
@@ -1184,6 +1222,8 @@ export default function ProjetoStakeholdersClient({
     const numberValue = parseInt(value, 10) / 100
     setField('remuneracao', numberValue.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 }))
   }
+
+  const horasCheck = parseHoras(formState.horasDiarias)
 
   const col3Title = isCreating && addMode === 'interno'
     ? 'Novo Membro da Equipe'
@@ -1680,8 +1720,7 @@ export default function ProjetoStakeholdersClient({
                   <label className="block text-xs font-medium text-gray-600 mb-1">
                     Senha <span className="text-red-400">*</span>
                   </label>
-                  <input
-                    type="password"
+                  <PasswordInput
                     value={formState.password}
                     onChange={e => setField('password', e.target.value)}
                     placeholder="Mínimo 8 caracteres"
@@ -1729,7 +1768,9 @@ export default function ProjetoStakeholdersClient({
             )}
 
             {/* Campos específicos de Interno */}
-            {selected?.tipo === 'interno' && (
+            {/* Dados do projeto também na criação de membro (SDD 4.4): antes só apareciam
+                em "Editar", e era preciso abrir o cadastro de novo para preencher. */}
+            {(selected?.tipo === 'interno' || (isCreating && !selected && addMode === 'interno')) && (
               <>
                 {/* Remuneração + Horas por dia */}
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
@@ -1750,24 +1791,32 @@ export default function ProjetoStakeholdersClient({
                   </div>
                   <div>
                     <label htmlFor="field-horas-diarias" className="block text-xs font-medium text-gray-600 mb-1">Horas por dia</label>
+                    {/* Texto, não type="number": no Firefox o number com vírgula ("8,5") chegava vazio. */}
                     <input
                       id="field-horas-diarias"
-                      type="number"
-                      min="0"
-                      step="0.5"
+                      type="text"
+                      inputMode="decimal"
                       value={formState.horasDiarias}
                       onChange={e => setField('horasDiarias', e.target.value)}
                       disabled={!isAdmin}
-                      placeholder="ex: 8"
-                      className={`${inputCls} ${disabledCls}`}
+                      placeholder="ex.: 8, 8,5 ou 8:30"
+                      aria-invalid={horasCheck.erro ? true : undefined}
+                      aria-describedby="field-horas-diarias-ajuda"
+                      className={`${inputCls} ${disabledCls} ${horasCheck.erro ? 'border-red-400 focus:ring-red-300' : ''}`}
                     />
+                    <p id="field-horas-diarias-ajuda" className={`mt-1 text-[11px] ${horasCheck.erro ? 'text-red-600' : 'text-gray-400'}`}>
+                      {horasCheck.erro
+                        ?? (horasCheck.valor !== null && formState.horasDiarias.includes(':')
+                          ? `= ${formatHoras(horasCheck.valor)} h`
+                          : null)}
+                    </p>
                   </div>
                 </div>
 
                 {/* Valores calculados */}
                 {(() => {
                   const remNum = parseBRLFloat(formState.remuneracao) ?? 0
-                  const horasNum = parseFloat(formState.horasDiarias) || 0
+                  const horasNum = parseHoras(formState.horasDiarias).valor ?? 0
                   const valid = horasNum > 0
                   const fmtBRL = (v: number) =>
                     v.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL', minimumFractionDigits: 2, maximumFractionDigits: 2 })
@@ -1940,7 +1989,7 @@ export default function ProjetoStakeholdersClient({
                 <button
                   type="button"
                   onClick={handleSave}
-                  disabled={loadingId === 'form'}
+                  disabled={loadingId === 'form' || Boolean(horasCheck.erro)}
                   className="flex-1 flex items-center justify-center gap-2 px-4 py-2.5 text-sm font-medium bg-blue-600 text-white rounded-xl hover:bg-blue-700 disabled:opacity-50 transition-colors"
                 >
                   {loadingId === 'form' && <Spinner />}

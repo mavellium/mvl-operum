@@ -9,6 +9,7 @@ import { UserError } from '../errors.js'
 import { mapLimit } from '../concurrency.js'
 import { withIdempotency } from '../idempotency.js'
 import { fetchAttachments } from './attachments.js'
+import { LINK_ATTACHMENT_TYPE } from '../attachmentTypes.js'
 
 export const PRIORITIES = ['baixa', 'media', 'alta'] as const
 const READ_CONCURRENCY = 4
@@ -58,6 +59,23 @@ async function collectTasks(
 
   const perSprint = await mapLimit(sprints, READ_CONCURRENCY, s => ctx.gw.get<RawCard[]>(`/sprints/${s.id}/cards`))
   return { cards: [...backlog, ...perSprint.flat()], labels }
+}
+
+/**
+ * Anexos de arquivo ganham a URL assinada do file-service (1 h), para o agente
+ * conseguir abrir o arquivo. Links já trazem a própria URL. Best-effort: se a
+ * assinatura de um anexo falhar, ele sai sem download_url.
+ */
+async function withDownloadUrls(ctx: TenantContext, taskId: string, attachments: Record<string, unknown>[]) {
+  return mapLimit(attachments, READ_CONCURRENCY, async a => {
+    if (a.fileType === LINK_ATTACHMENT_TYPE) return a
+    try {
+      const { url } = await ctx.gw.get<{ url: string }>(`/files/${String(a.id)}/url`, { cardId: taskId })
+      return { ...a, downloadUrl: url }
+    } catch {
+      return a
+    }
+  })
 }
 
 function withLabels(task: SerializedTask, labels: Labels) {
@@ -213,7 +231,7 @@ export function registerTaskTools(server: McpServer, registry: TenantRegistry) {
     {
       title: 'Detalhar tarefa',
       description:
-        'Todos os campos da tarefa: título, descrição (markdown), prioridade, cor, projeto/sprint/coluna, datas, responsáveis, etiquetas, anexos (metadados) e comentários. include_history=true traz também as movimentações entre colunas.',
+        'Todos os campos da tarefa: título, descrição (markdown), prioridade, cor, projeto/sprint/coluna, datas, tempo, responsáveis, etiquetas, anexos e comentários. Anexo de arquivo traz download_url (válida por 1 h); anexo de link traz url. include_history=true traz também as movimentações entre colunas.',
       inputSchema: { task_id: z.string(), include_history: z.boolean().optional() },
       entity: 'Tarefa',
       annotations: { readOnlyHint: true },
@@ -225,8 +243,9 @@ export function registerTaskTools(server: McpServer, registry: TenantRegistry) {
       ])
       // Depois do card: só lista anexos de uma tarefa que o tenant enxerga.
       const byCard = await fetchAttachments(ctx.gw, [task_id]).catch(() => null)
+      const attachments = await withDownloadUrls(ctx, task_id, byCard?.get(task_id) ?? [])
       return {
-        task: serializeTask({ ...card, attachments: byCard?.get(task_id) ?? [] }, { comments: true }),
+        task: serializeTask({ ...card, attachments }, { comments: true }),
         ...(byCard ? {} : { attachments_error: ATTACHMENTS_UNAVAILABLE }),
         ...(movements ? { history: movements.map(serializeMovement) } : {}),
       }

@@ -8,9 +8,40 @@ As versões até 1.6.0 foram reconstruídas retroativamente a partir do históri
 funcionalidade depois disso é uma versão MINOR.
 
 ## [Não lançado]
-- MCP: um servidor para todos os tenants do usuário (`X-Operum-Tokens`), 38 tools com saída JSON — leitura completa, CRUD de projetos/sprints/colunas/tarefas/etiquetas/comentários e migração de projetos entre tenants (`operum_copy_project`).
-- Segurança: escopo de tenant em todas as rotas do sprint-service; PAT restrito a leituras de identidade em `/auth/*` (gateway + auth-service); rotas de papéis, stakeholders e membros do project-service validadas por tenant.
-- Deploy de produção por SSH, sincronizando os `docker-compose*.yml` e esperando o health dos serviços.
+
+## [1.7.0] — 2026-09-30
+
+### Fase 4 do backlog
+- **Segurança:** o file-service passa a conferir a instituição (tenant) do card antes de anexar, listar, renomear, trocar a capa, abrir ou excluir anexos. Antes, com o id de um card ou anexo de outra instituição, dava para mexer nele pelo gateway. As rotas `/files/avatar` e `/files/logo`, expostas e sem uso, foram removidas. Marcar a capa pelo app passou a conferir o card.
+- **Anexos:** o arquivo abre no primeiro clique. A URL assinada usava o host interno do storage (`minio:9000`); agora usa o público. Imagem abre num lightbox no card, e `/arquivos` baixa pela mesma rota. O `operum_get_task` do MCP devolve `download_url`.
+- **Busca:** clicar num card abre o card mesmo com a sprint já aberta.
+- **Stakeholders:** o cadastro novo já abre em edição. A criação de membro traz cargos, departamento, remuneração, horas e gerente, e o externo criado pelo "Adicionar ao projeto" já fica no projeto. Horas por dia aceitam "8,5", "8.5" e "8:30", entre 0 e 24, e o servidor recusa valor inválido.
+- **Senhas:** botão para mostrar e ocultar a senha em todos os campos de senha.
+- **Planilha de custos:** sub-total e TOTAL GERAL alinhados à direita no `.xlsx`.
+- **Interface:** campos sem `type` (como o de renomear anexo) ficavam ilegíveis com o sistema em modo escuro. Foi removido o modo escuro do template.
+
+### Já em produção antes desta versão, sem registro (28 e 29/09; registro retroativo)
+- **MCP:**
+  - um servidor para todos os tenants do usuário (`X-Operum-Tokens`), com saída JSON, CRUD de projetos, sprints, colunas, tarefas, etiquetas e comentários, e migração de projetos entre tenants (`operum_copy_project`);
+  - erros do Operum chegam ao agente com status e tool;
+  - anexar arquivo ou link e excluir anexo (PR #27);
+  - iniciar, parar e lançar o tempo das tarefas (PR #29).
+- **Segurança:** escopo de tenant em todas as rotas do sprint-service. PAT restrito a leituras de identidade em `/auth/*`. Rotas de papéis, stakeholders e membros do project-service validadas por tenant.
+- **Deploy:** por SSH, sincronizando os `docker-compose*.yml`, rodando as migrations do app antes de subir e esperando o health dos serviços.
+- **Anexos:** corrigida a "Falha ao registrar o anexo" (colunas de `files.Attachment`). Aceita vídeos, PowerPoint, OpenDocument, TXT, CSV e ZIP, até 50 MB (PR #26). Anexo do tipo link, com miniatura do YouTube (PR #27).
+- **Card:** a descrição salva sozinha, e o prazo (início e entrega) pode ser editado e removido, com selo colorido no quadro. Há filtros "vence esta semana" e "atrasados".
+- **Kanban:**
+  - prioridade sempre visível no minicard;
+  - posições renumeradas ao arrastar;
+  - busca unificada (sprint atual, outras sprints, backlog, projetos e pessoas);
+  - dashboard da sprint com o menu do projeto.
+- **Cadastros:**
+  - funções sem duplicata e catálogo global nos stakeholders;
+  - ranking com a função no projeto;
+  - "Tenants" passa a se chamar "Instituições";
+  - stakeholders adicionados pela barra de pesquisa;
+  - o documento EAP explica a falha em vez de "Erro interno".
+- **Sessão:** expira após 30 min sem uso e ao fechar o navegador; o login volta para a página de origem.
 
 ## [1.6.2] — 2026-09-29
 - Corrige a inicialização dos serviços em imagens de produção: `dotenv`, importado em runtime, passa de dependência de desenvolvimento para dependência de execução nos cinco serviços NestJS. Evita `Cannot find module 'dotenv/config'` após instalação com `--prod`.

@@ -87,3 +87,12 @@ describe('calcularSituacaoStatus', () => {
     expect(calcularSituacaoStatus(new Date(), null)).toBeNull()
   })
 })
+
+describe('calcularDerivados com horas fracionadas (SDD 4.5)', () => {
+  it('8,5 h/dia: 510 min são 1 dia inteiro e o custo usa a jornada fracionada', () => {
+    const r = calcularDerivados({ minutos: 510, horasDiarias: 8.5, remuneracao: 5100 })
+    expect(r.dias).toBe(1)
+    expect(r.valorPorMinuto).toBeCloseTo(5100 / 510, 10)
+    expect(r.total).toBeCloseTo(5100, 6)
+  })
+})

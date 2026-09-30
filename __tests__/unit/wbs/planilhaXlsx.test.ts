@@ -97,6 +97,14 @@ describe('gerarPlanilhaXlsx — modelo IDÊNTICO', () => {
     expect(totalI.formula.startsWith('SUM(')).toBe(true)
   })
 
+  it('rótulos do sub-total e do TOTAL GERAL alinhados à direita (SDD 4.7)', async () => {
+    const wb = await lerWorkbook()
+    const ws = wb.getWorksheet('Planilha de Custos')
+    expect(String(ws.getCell('A10').value)).toMatch(/^Sub-total/)
+    expect(ws.getCell('A10').alignment).toMatchObject({ horizontal: 'right' })
+    expect(ws.getCell('A11').alignment).toMatchObject({ horizontal: 'right' })
+  })
+
   it('R$/Horas/Dias por atividade derivam de fórmulas com referências', async () => {
     const wb = await lerWorkbook()
     const ws = wb.getWorksheet('Planilha de Custos')

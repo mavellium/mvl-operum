@@ -1,27 +1,9 @@
 import { verifyRouteSession } from '@/lib/routeAuth'
 import { filesApi } from '@/lib/api-client'
+import { isSafeStorageUrl } from '@/lib/storageUrl'
 
 const CUID_RE = /^c[a-z0-9]{20,30}$/
 const ALLOWED_TYPES = new Set(['image/jpeg', 'image/png', 'image/webp', 'image/gif'])
-
-// Must be set — fail closed if missing to prevent SSRF via unconfigured origin
-const MINIO_PUBLIC_URL = (process.env.MINIO_PUBLIC_URL ?? '').replace(/\/$/, '')
-
-function isSafePresignedUrl(rawUrl: string): boolean {
-  if (!MINIO_PUBLIC_URL) return false
-  let url: URL
-  let allowed: URL
-  try {
-    url = new URL(rawUrl)
-    allowed = new URL(MINIO_PUBLIC_URL)
-  } catch {
-    return false
-  }
-  if (url.protocol !== 'http:' && url.protocol !== 'https:') return false
-  if (url.hostname !== allowed.hostname) return false
-  if (allowed.port && url.port !== allowed.port) return false
-  return true
-}
 
 export async function GET(
   request: Request,
@@ -41,7 +23,8 @@ export async function GET(
     return new Response('Anexo não encontrado', { status: 404 })
   }
 
-  if (!isSafePresignedUrl(presignedUrl)) {
+  // Só o host do storage (MINIO_PUBLIC_URL): fail closed contra SSRF.
+  if (!isSafeStorageUrl(presignedUrl)) {
     return new Response('URL de origem não autorizada', { status: 400 })
   }
 

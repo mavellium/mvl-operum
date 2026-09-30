@@ -29,6 +29,7 @@ export async function setCoverAction(cardId: string, attachmentId: string) {
     assertCuid(cardId, 'cardId')
     assertCuid(attachmentId, 'attachmentId')
     await verifySession()
+    await cardsApi.get(cardId)  // IDOR guard: antes esta action não conferia nem o card
     await filesApi.setCover(cardId, attachmentId)
     return { success: true }
   } catch (err) {
@@ -44,7 +45,7 @@ export async function renameAttachmentAction(attachmentId: string, cardId: strin
     // Verify session and that the caller has read access to the card (IDOR guard)
     await verifySession()
     await cardsApi.get(cardId)  // throws if card is inaccessible to this user's tenant
-    await filesApi.rename(attachmentId, safeName)
+    await filesApi.rename(attachmentId, safeName, cardId)  // file-service confere que o anexo é desse card
     return { success: true }
   } catch (err) {
     return { error: err instanceof Error ? err.message : 'Erro ao renomear anexo' }
@@ -57,7 +58,7 @@ export async function getAttachmentUrlAction(attachmentId: string, cardId: strin
     assertCuid(cardId, 'cardId')
     await verifySession()
     await cardsApi.get(cardId)  // IDOR guard
-    const { url } = await filesApi.getPresignedUrl(attachmentId)
+    const { url } = await filesApi.getPresignedUrl(attachmentId, cardId)
     return { url }
   } catch (err) {
     return { error: err instanceof Error ? err.message : 'Erro ao obter URL do anexo' }
@@ -72,7 +73,7 @@ export async function deleteAttachmentAction(attachmentId: string, cardId?: stri
       assertCuid(cardId, 'cardId')
       await cardsApi.get(cardId)  // IDOR guard: verify card is accessible
     }
-    await filesApi.delete(attachmentId)
+    await filesApi.delete(attachmentId, cardId)
     revalidatePath('/arquivos')
     return { success: true }
   } catch (err) {

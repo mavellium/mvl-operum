@@ -440,9 +440,14 @@ export const notificationsApi = {
 
 // ── Files ─────────────────────────────────────────────────
 
+/** `?cardId=`: o file-service recusa (404) se o anexo não for desse card (SDD 4.1). */
+function cardQuery(cardId?: string): string {
+  return cardId ? `?cardId=${encodeURIComponent(cardId)}` : ''
+}
+
 export const filesApi = {
-  getPresignedUrl: (attachmentId: string) =>
-    request<{ url: string }>(`/files/${attachmentId}/url`),
+  getPresignedUrl: (attachmentId: string, cardId?: string) =>
+    request<{ url: string }>(`/files/${attachmentId}/url${cardQuery(cardId)}`),
 
   listByCards: (cardIds: string[]) => {
     const CUID_RE = /^c[a-z0-9]{20,30}$/
@@ -455,17 +460,15 @@ export const filesApi = {
     )
   },
 
-  // Path is /files/:id/cover — the controller never had an /attachments/ sub-path.
-  // Resource-type safety is enforced by the service: findUnique on the Attachment model
-  // returns 404 if the ID is not a valid, non-deleted attachment record.
+  // O file-service confere que o anexo é desse card e que o card é do tenant (SDD 4.1).
   setCover: (cardId: string, attachmentId: string) =>
     request(`/files/${attachmentId}/cover`, { method: 'PATCH', body: JSON.stringify({ cardId }) }),
 
-  rename: (attachmentId: string, fileName: string) =>
-    request<{ id: string; fileName: string }>(`/files/${attachmentId}`, { method: 'PATCH', body: JSON.stringify({ fileName }) }),
+  rename: (attachmentId: string, fileName: string, cardId?: string) =>
+    request<{ id: string; fileName: string }>(`/files/${attachmentId}${cardQuery(cardId)}`, { method: 'PATCH', body: JSON.stringify({ fileName }) }),
 
-  delete: (attachmentId: string) =>
-    request(`/files/${attachmentId}`, { method: 'DELETE' }),
+  delete: (attachmentId: string, cardId?: string) =>
+    request(`/files/${attachmentId}${cardQuery(cardId)}`, { method: 'DELETE' }),
 }
 
 // ── Audit ──────────────────────────────────────────────────

@@ -107,8 +107,10 @@ describe('ProjetoStakeholdersClient — criação rápida a partir das buscas', 
     await waitFor(() => {
       expect(createStakeholderAction).toHaveBeenCalledWith({ name: 'Nova Empresa' }, PROJ_ID)
     })
-    await waitFor(() => expect(screen.getByText('Nova Empresa')).toBeInTheDocument())
+    await waitFor(() => expect(screen.getAllByText('Nova Empresa').length).toBeGreaterThan(0))
     await waitFor(() => expect(screen.getByText(/criado e adicionado ao projeto/i)).toBeInTheDocument())
+    // SDD 4.4: criado só com o nome, já abre o cadastro para completar os dados.
+    expect(screen.getByText('Editar Stakeholder')).toBeInTheDocument()
   })
 
   it('Col 1: oferta criar como membro da equipe (usuário interno) quando a busca não encontra', () => {

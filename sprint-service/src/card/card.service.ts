@@ -26,6 +26,11 @@ export const CreateCardSchema = z.object({
   endDate: z.string().datetime().optional(),
 })
 
+/** Ids a conferir (file-service): quais são cards do tenant. */
+export const CardsInTenantSchema = z
+  .object({ ids: z.array(z.string().min(1).max(64)).max(500) })
+  .strict()
+
 export const UpdateCardSchema = z.object({
   title: z.string().min(1).optional(),
   description: z.string().optional(),
@@ -114,6 +119,20 @@ export class CardService {
       take: 50,
       orderBy: { updatedAt: 'desc' },
     })
+  }
+
+  /**
+   * Dos ids informados, os de cards não excluídos do tenant. O file-service usa
+   * para conferir o tenant antes de gravar ou devolver anexos: ele não conhece
+   * cards nem tenants.
+   */
+  async idsInTenant(tenantId: string, ids: string[]): Promise<{ ids: string[] }> {
+    if (ids.length === 0) return { ids: [] }
+    const found = await prisma.card.findMany({
+      where: { id: { in: [...new Set(ids)] }, deletedAt: null, ...cardInTenant(tenantId) },
+      select: { id: true },
+    })
+    return { ids: found.map(c => c.id) }
   }
 
   async findOne(tenantId: string, id: string) {

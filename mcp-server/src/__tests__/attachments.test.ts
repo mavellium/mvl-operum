@@ -177,12 +177,24 @@ describe('leitura dos anexos (vêm do file-service)', () => {
     await h.call('operum_add_link', { task_id: taskId, url: YOUTUBE })
   })
 
-  it('get_task traz arquivo e link', async () => {
+  it('get_task traz arquivo (com download_url assinada) e link (com url)', async () => {
     const res = await h.call('operum_get_task', { task_id: taskId })
     const atts = (res.task as { attachments: Record<string, unknown>[] }).attachments
     expect(atts.map(a => a.kind)).toEqual(['file', 'link'])
+    expect(atts[0].download_url).toMatch(/^https:\/\/storage\.test\/.*X-Amz-Signature=/)
     expect(atts[1]).toMatchObject({ url: YOUTUBE })
+    expect(atts[1]).not.toHaveProperty('download_url')
     expect(res).not.toHaveProperty('attachments_error')
+    // A URL é pedida com o cardId, para o file-service conferir que o anexo é da tarefa.
+    expect(h.op.calls.find(c => c.path.endsWith('/url'))).toBeTruthy()
+  })
+
+  it('se assinar a URL falhar, o anexo sai sem download_url e o get_task responde', async () => {
+    h.op.failWhen = (_m, path) => (path.endsWith('/url') ? Object.assign(new Error('x'), { status: 500 }) : null)
+    const res = await h.call('operum_get_task', { task_id: taskId })
+    const atts = (res.task as { attachments: Record<string, unknown>[] }).attachments
+    expect(atts).toHaveLength(2)
+    expect(atts[0]).not.toHaveProperty('download_url')
   })
 
   it('list_tasks full traz os anexos; summary não', async () => {
