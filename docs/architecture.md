@@ -1,5 +1,11 @@
 # Arquitetura do Projeto — MVL Operum
 
+## Manutenção deste documento
+
+Revisar o impacto arquitetural em cada PR e atualizar as seções afetadas na mesma entrega. Ao concluir uma fase do SDD ou preparar uma release, conferir a consistência das áreas alteradas. Não há periodicidade fixa: mudanças relevantes disparam a atualização, conforme as regras do [AGENTS.md](../AGENTS.md).
+
+Este documento descreve a arquitetura; o [registro de decisões](decisions.md) guarda contexto, motivos e consequências das escolhas. O registro inicial é retrospectivo e não representa uma auditoria de toda a arquitetura.
+
 ## Visão Geral
 
 Plataforma de gerenciamento de projetos multi-tenant com board Kanban por sprint, EAP/WBS (estrutura analítica do projeto), atas de reunião, planilha de custos, rastreamento de tempo, controle de membros/stakeholders por projeto, dashboard analítico, auditoria, notificações e controle de acesso por papel.
@@ -807,6 +813,8 @@ Em paralelo à extração de microsserviços, funcionalidades novas de maior sup
 
 ## Decisões de Arquitetura Notáveis
 
+O detalhamento e a evolução das decisões ficam em [docs/decisions.md](decisions.md). A lista abaixo preserva o resumo existente; seus itens ainda sem registro detalhado devem ser documentados quando forem revisados, sem presumir justificativas históricas.
+
 1. **API Gateway como ponto único de entrada externo** — `api-gateway` é o único serviço de backend exposto via Traefik além do próprio Next.js; os 5 microsserviços de domínio ficam só na rede interna do Docker.
 2. **Confiança via headers + segredo compartilhado, não revalidação de JWT** — os serviços internos confiam em `x-user-id`/`x-tenant-id`/`x-user-role` injetados pelo gateway, protegidos por `INTERNAL_API_KEY` e isolamento de rede — não por revalidação criptográfica do token em cada serviço. Trade-off de simplicidade/performance sobre defesa em profundidade.
 3. **Banco compartilhado, não database-per-service** — todos os microsserviços apontam para o mesmo Postgres com schemas Prisma parciais e sobrepostos (read-models locais de `Tenant`/`User`/`Project`/`Attachment`) em vez de bancos isolados — reduz a complexidade operacional às custas de acoplamento de schema entre serviços.
@@ -819,3 +827,14 @@ Em paralelo à extração de microsserviços, funcionalidades novas de maior sup
 10. **Prisma com adapter `pg`** — Next.js 16 exige o adapter explícito `@prisma/adapter-pg` para compatibilidade com o runtime.
 11. **`tokenVersion` para invalidação** — incrementar esse campo invalida todas as sessões ativas do usuário sem lista negra de tokens; complementado por liveness check via Redis no gateway (com fail-open deliberado).
 12. **Fail-open no gateway sob falha do Redis** — prioriza disponibilidade sobre revogação imediata de sessão quando o Redis está fora do ar, em produção.
+
+
+## Permissões configuráveis — fase 5 em andamento (30/09/2026)
+
+O núcleo da branch `feat/fase-5-permissoes` lê `Permission`/`RolePermission` e resolve o acesso em `services/authz.ts`, usando o catálogo puro de `lib/permissoes.ts`. A migration do app adiciona `Role.permissoesDefinidasEm` e `UserPermission` (usuário, permissão, efeito GRANT/DENY e projeto opcional), com unicidade dos ajustes globais por índice parcial.
+
+A ordem é: admin recebe tudo; não membro ativo recebe nada; membro recebe a união da função-base e dos cargos de `UserProject.role` normalizados por `funcaoKey`, além do papel de `UserProjectRole`; ajustes globais são aplicados antes dos ajustes do projeto. A matriz explicitamente vazia se distingue de configuração ausente. Tech Lead e PO não têm privilégios adicionais por padrão.
+
+`app/actions/permissoes.ts` autentica e restringe a configuração ao admin, valida os dados e registra auditoria. `services/permissoesService.ts` confere o tenant dos alvos; tanto leitura quanto escrita de ajustes conferem o projeto. `components/permissoes/PermissoesFuncoes.tsx` atende Cadastros → Funções; `PermissoesUsuario.tsx` atende Usuários (global) e Stakeholders (projeto). A UI só confirma ajuste após resposta de sucesso e preserva escolhas da matriz em falhas.
+
+**Limite implementado:** estas telas configuram o modelo; não substituem, por si, as verificações binárias existentes. A adoção de `can`/`exigirPermissao` nos consumidores do app e a equivalência de proteção nas APIs/MCP ainda precisam ser concluídas e testadas antes de considerar a fase 5 encerrada. O fluxo de documentos com versão pendente (5.2) e o realizado próprio da planilha (5.3) permanecem pendentes. Não há novo endpoint público nem nova responsabilidade de microsserviço nesta continuação. Ver [ADR-008](decisions.md#adr-008--permissões-por-função-e-ajustes-por-usuário) e [SDD](specs/SDD-backlog-operum-2026-09.md).

@@ -1,5 +1,7 @@
 'use client'
 
+import PermissoesFuncoes from '@/components/permissoes/PermissoesFuncoes'
+
 import { useState, useTransition } from 'react'
 import {
   getOrCreateDepartmentAction,
@@ -94,6 +96,7 @@ export default function AdminCadastrosClient({ departamentosIniciais, funcoesIni
           onItems={setFuncoes as unknown as (items: { id: string; name: string }[]) => void}
         />
       )}
+      {section === 'funcoes' && <PermissoesFuncoes key={funcoes.map(f => f.id + f.name).join(',')} />}
     </div>
   )
 }

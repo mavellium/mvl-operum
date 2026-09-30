@@ -1,5 +1,7 @@
 'use client'
 
+import PermissoesUsuario from '@/components/permissoes/PermissoesUsuario'
+
 import { useState, useTransition, useEffect, useRef } from 'react'
 import {
   Plus,
@@ -1675,6 +1677,12 @@ export default function ProjetoStakeholdersClient({
 
           <div className="px-5 py-5 space-y-4 overflow-y-auto flex-1 min-h-0">
 
+            {isAdmin && selected?.tipo === 'interno' && selected.userId && !isCreating && (
+              <details className="rounded-xl border border-gray-200 p-3">
+                <summary className="cursor-pointer text-sm font-medium text-blue-700">Permissões neste projeto</summary>
+                <div className="pt-3"><PermissoesUsuario key={`${selected.userId}:${projetoId}`} userId={selected.userId} projectId={projetoId} /></div>
+              </details>
+            )}
             {/* Avatar */}
             <div className="flex justify-center pb-2">
               <AvatarUpload

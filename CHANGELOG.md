@@ -9,6 +9,13 @@ funcionalidade depois disso é uma versão MINOR.
 
 ## [Não lançado]
 
+## [1.8.0] — 2026-09-30
+- **Permissões (SDD 5.1, configuração):** administrador configura a matriz por função, restaura padrões e concede/nega permissões por usuário, globalmente ou no projeto. Editores disponíveis em Cadastros → Funções, Usuários → Permissões e Stakeholders → Permissões neste projeto, com feedback de gravação e preservação do estado em falhas.
+- **Modelo de autorização:** catálogo e resolução por base de membro, união de funções e ajustes globais/de projeto; tabelas e migration do núcleo incluídas nesta branch. Tech Lead e PO seguem a base do membro até configuração explícita.
+- **Isolamento:** leitura de ajustes por usuário também exige projeto da instituição atual.
+- **Limite desta entrega:** a adoção do resolvedor nas operações existentes é incremental e permanece pendente; documentos com aprovação (5.2) e realizado da planilha por responsável (5.3) ainda não estão concluídos.
+- **Planejamento:** SDD inclui os 23 novos cards da avaliação geral, com IDs, evidências, critérios de aceite e dependências, nas fases 9–11.
+
 ## [1.7.1] — 2026-09-30
 - **Segurança (dependências):** o deploy da 1.7.0 parou no `pnpm audit` por dois alertas publicados no mesmo dia.
   - `brace-expansion` (GHSA-qhr7-859c-m2p7, DoS com chaves aninhadas): overrides para 1.1.20+, 2.1.6+ e 5.0.11+, sem trocar de versão principal, na raiz e nos lockfiles dos cinco serviços.

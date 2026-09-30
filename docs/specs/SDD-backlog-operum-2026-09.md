@@ -13,6 +13,8 @@
 > - **4.5:** o card das horas fracionadas foi fundido à validação de horas por dia.
 > - **4.8:** contraste do campo de renomear anexo.
 >
+> **Atualização (30/09, continuação):** incorporados os 23 cards da avaliação geral nas fases 9–11 e no mapa de tarefas. O card de upload de arquivos grandes/privados foi vinculado ao item 8.3 já existente. A configuração de permissões (5.1) agora tem telas; a fase 5 continua em andamento.
+>
 > Segue a arquitetura do repo: Next.js 16 (App Router, `proxy.ts`), React 19, Prisma 7, Zod 4, Vitest 4, microsserviços NestJS atrás do api-gateway e multi-tenant via `verifySession`. Actions finas → services → auditoria.
 >
 > Marcações: **✅** causa confirmada no código • **🔎** hipótese a confirmar em produção • **⚠️ DECISÃO** pendente • **⛔** bloqueado por insumo externo.
@@ -29,6 +31,9 @@
 - [Fase 6 — EAP / WBS](#fase-6--eap--wbs)
 - [Fase 7 — Documentos](#fase-7--documentos)
 - [Fase 8 — MCP](#fase-8--mcp)
+- [Fase 9 — Integridade e contratos](#fase-9--integridade-e-contratos)
+- [Fase 10 — Experiência e acessibilidade](#fase-10--experiência-e-acessibilidade)
+- [Fase 11 — Segurança e operação](#fase-11--segurança-e-operação)
 - [Fora do escopo](#fora-do-escopo)
 - [Processo por tarefa](#processo-por-tarefa)
 
@@ -92,6 +97,29 @@ Tarefas que pedem a mesma coisa foram **fundidas**. A tabela abaixo mostra quais
 | 8 | 8.2 | MCP: anexar imagens e links de vídeo em cards | alta |
 | 8 | 8.3 | MCP: URL de upload de uso único para anexar arquivo que está no computador | média |
 | 8 | 8.4 | MCP: iniciar e parar o timer das tarefas | alta |
+| 9 | 9.1 | Preservar vínculo com projeto e atomicidade ao excluir uma sprint (`cmuo1gdyc002901ndubbhff73`) | alta |
+| 9 | 9.2 | Garantir timer único sob concorrência e parada idempotente (`cmuo1gmkx002b01ndq67spd28`) | alta |
+| 9 | 9.3 | Tornar movimentação de card, histórico e ordenação uma operação atômica (`cmuo1gmoo002d01ndf42zbz7f`) | alta |
+| 9 | 9.4 | Substituir macrofases sem janela de perda de dados (`cmuo1gmrs002f01ndhl51fd03`) | alta |
+| 9 | 9.5 | Restaurar contratos dos dashboards global e por sprint, com teste integrado de rota (`cmuo1gmu4002h01ndvuxtgkht`) | alta |
+| 9 | 9.6 | Paginar tarefas no serviço de origem e reduzir varreduras MCP (`cmuo1gmvx002j01ndsdfhjthj`) | media |
+| 9 | 9.7 | Consolidar serviços legados e definir fronteiras de domínio verificáveis (`cmuo1gn0b002l01nd62w0nvb1`) | media |
+| 10 | 10.1 | Reverter alterações otimistas do Kanban quando a API falhar (`cmuo1h9rx002p01ndby9xzsgq`) | alta |
+| 10 | 10.2 | Preservar o formulário do card até a criação/edição ser confirmada (`cmuo1hanh002r01nd1uepu4jr`) | alta |
+| 10 | 10.3 | Manter timer sincronizado quando pausar/iniciar falhar (`cmuo1hbit002t01ndbwlhgrnp`) | alta |
+| 10 | 10.4 | Confirmar autosave do Termo antes de salvar versão ou sair (`cmuo1hcdi002v01ndlcro8f8u`) | alta |
+| 10 | 10.5 | Permitir abrir cards pelo teclado independentemente do arraste (`cmuo1hdar002x01nd1isa1gx2`) | media |
+| 10 | 10.6 | Retirar sidebar recolhida da ordem de foco (`cmuo1he4u002z01ndi88juuae`) | media |
+| 10 | 10.7 | Unificar gestão de foco de Drawer e Modal (`cmuo1heyw003101ndy6pb87pm`) | media |
+| 10 | 10.8 | Adaptar navegação lateral para celular com menu sobreposto (`cmuo1hfvo003301nddf04r2fs`) | media |
+| 11 | 11.1 | Garantir revogação de sessões no gateway com Redis saudável ou indisponível (`cmuo1hh27003501ndsy2521z5`) | alta |
+| 11 | 11.2 | Isolar filas e sessões do Redis sujeito a eviction (`cmuo1hi2p003701ndlu2bq8ws`) | alta |
+| 11 | 11.3 | Implantar imagens imutáveis do SHA aprovado e promover tags somente após validação (`cmuo1hj0u003901nd2z599pt2`) | alta |
+| 11 | 11.4 | Rodar checks dos serviços e smoke das imagens de produção antes do merge/deploy (`cmuo1hjxo003b01ndi9qq30u5`) | alta |
+| 11 | 11.5 | Registrar e ensaiar rollback por release sem retag manual (`cmuo1hkrs003e01ndh7uaymeh`) | alta |
+| 11 | 11.6 | Versionar backup de PostgreSQL/MinIO e comprovar restauração (`cmuo1hlmw003g01ndu19fu0cs`) | alta |
+| 11 | 11.7 | Separar liveness e readiness com verificação das dependências essenciais (`cmuo1hmh3003i01ndo06yaob0`) | media |
+| 11 | 11.8 | Tornar a observabilidade implantável e conectar métricas, logs e alertas (`cmuo1hnaz003k01ndec1y9yqh`) | media |
 | — | — | Integrar Operum com MCP Claude (entregue na PR #19, validar e fechar) | média |
 | — | — | Adicionar plano de custo (já existe em `/projetos/:id/planilha-custos`, validar e fechar) | média |
 | — | — | Integração com o Zoom (vai para SDD próprio) | média |
@@ -527,10 +555,13 @@ Branch `feat/backlog-fase-4`. Cada item foi um commit, com o card movido para "E
 
 Épico que junta cinco tarefas de 28/09. Ele vem antes da EAP porque define o que o usuário comum pode fazer nos documentos e na planilha: sem ele, a Fase 7 teria de ser refeita.
 
-**Situação atual:**
-- As tabelas `Permission` e `RolePermission` existem no banco, mas **nenhum código as consulta**.
-- A autorização é binária: `role === 'admin' || isProjectManager(...)`, espalhada por cerca de 25 arquivos.
-- O Termo de Abertura já tem o fluxo "membro salva versão pendente → gerente aprova" (`charter/versions`), mas os outros documentos não têm.
+**Situação na branch `feat/fase-5-permissoes` (30/09):**
+- Núcleo implementado em `12d427e0`: catálogo, migration de `UserPermission` e `Role.permissoesDefinidasEm`, resolvedor puro e `services/authz.ts`. `Permission` e `RolePermission` já são consultadas pelo resolvedor.
+- Serviço e actions implementados em `ef7f1bbb`: configuração restrita ao admin, validação e auditoria.
+- Nesta continuação: matriz no cadastro de funções, ajustes globais em Usuários e por projeto em Stakeholders, restauração de padrão e tratamento de falhas. A consulta de ajustes recusa projeto de outro tenant.
+- **Pendente para concluir 5.1:** adoção gradual de `can`/`exigirPermissao` nas actions, rotas e controles existentes de projeto/quadro/cadastros. As telas de configuração não significam que todos os consumidores já aplicam o catálogo.
+- **5.2 e 5.3 continuam pendentes.** O Termo de Abertura já tem o fluxo "membro salva versão pendente → gerente aprova" (`charter/versions`), mas o fluxo unificado para todos os documentos e a edição do realizado próprio ainda devem ser implementados.
+- Esta fase permanece em andamento; não foi declarada pronta para merge/deploy.
 
 ### 5.1 Modelo de permissões (funções + ajuste por usuário)
 Pedido: as permissões vêm da função (definida pelo admin no cadastro de funções, vale para todos os projetos) e podem ser ajustadas por usuário, para mais ou para menos, de forma global ou só num projeto.
@@ -551,8 +582,8 @@ Pedido: as permissões vêm da função (definida pelo admin no cadastro de fun�
 |---|---|
 | Gerente de Projeto | todas as do projeto |
 | Membro (sem função com permissão) | ver tudo · criar/editar/mover cards · documentos: editar (versão pendente) · planilha: realizado próprio |
-| Tech Lead ⚠️ | as do membro + gerenciar sprints e colunas + planilha: realizado de todos |
-| PO ⚠️ | as do membro + editar dados do projeto + gerenciar stakeholders |
+| Tech Lead | base do membro; permissões adicionais somente quando definidas pelo admin |
+| PO | base do membro; permissões adicionais somente quando definidas pelo admin |
 
 **Ajuste por usuário:** tabela nova `UserPermission { userId, projectId?, permissionId, effect: GRANT | DENY }`. Sem `projectId`, o ajuste vale para todos os projetos.
 
@@ -570,9 +601,15 @@ Pedido: as permissões vêm da função (definida pelo admin no cadastro de fun�
 - Cadastro de Funções (admin): matriz de permissões por função.
 - Usuário (admin) e Stakeholders do projeto: "Permissões" com herdadas, concedidas e negadas.
 
-**⚠️ DECISÕES:**
-1. Confirmar as permissões de Tech Lead e PO.
-2. Definir de onde vêm as "funções do usuário no projeto". Hoje há duas fontes: os cargos em texto (`UserProject.role`, vários por pessoa, os que aparecem em Stakeholders) e o `UserProjectRole` (um por pessoa, usado para o gerente). Recomendação: **os cargos**, que são o que o usuário vê e edita. Cada cargo é casado com a `Role` pela `funcaoKey`, e a pessoa recebe a união das permissões.
+**Decisões confirmadas nos commits de 30/09 (`12d427e0`, `ef7f1bbb`):**
+1. Só o administrador configura a matriz e os ajustes de usuário. Tech Lead e PO não recebem privilégios adicionais por padrão.
+2. As funções vêm dos cargos `UserProject.role`, casados pela `funcaoKey`, somadas ao papel de gerente em `UserProjectRole` e à base Membro do projeto.
+3. Admin tem todas as permissões; não membro ativo não recebe nenhuma. Para membros: base ∪ funções → ajustes globais → ajustes do projeto. Um ajuste do projeto vence o global, tanto para conceder quanto para negar.
+4. Matriz vazia explicitamente salva difere de padrão não configurado (`permissoesDefinidasEm`); restaurar remove a configuração explícita.
+
+**Aceite da configuração:** admin salva/restaura a matriz; gerente/membro não escreve; conceder/negar/herdar respeita o escopo; falha mantém o estado confirmado; projeto/usuário de outra instituição é recusado. Testes em `__tests__/unit/components/permissoes/editores.test.tsx`, `__tests__/unit/services/permissoesService.test.ts` e `__tests__/unit/app/actions/permissoes.test.ts`.
+
+**Validação desta continuação (30/09):** `pnpm test:run` passou (157 arquivos, 1.571 testes); `pnpm lint`, `pnpm typecheck` e `pnpm build` passaram. Isso valida a configuração implementada, sem declarar concluída a adoção de permissões nos consumidores ou a validação em produção.
 
 ### 5.2 Usuário comum nos documentos (versão pendente e logs)
 **Pedido:**
@@ -761,6 +798,353 @@ O plano original está abaixo.
 **Arquivos:** `mcp-server/src/tools/time.ts` (novo), `mcp-server/src/tools/tasks.ts` (`get_task`), `mcp-server/src/server.ts`, testes com o Operum falso (rotas de time entries).
 
 ---
+
+
+## Ampliação de 30/09 — avaliação geral
+
+Conferência ao vivo em 30/09/2026: 79 cards no projeto, sem outra página de resultados. Os 23 cards da avaliação geral abaixo estavam ausentes deste SDD. Todos continuam **pendentes**; análise estática não equivale a incidente reproduzido. Os IDs das fases anteriores ficam preservados.
+
+**Ordem de execução:** concluir a fase 5 em andamento; antes das novas funcionalidades das fases 6–8, priorizar os itens de segurança, perda de dados e prioridade alta das fases 9–11 conforme o critério deste documento. Cada fase mantém branch/PR própria e revisão. Dependências explícitas: 11.5 depende de 11.3; 11.8 acompanha a instrumentação de 11.7. A fase 10.8 começa por reprodução visual; 11.6 começa pelo inventário com o operador. Mudanças de produção não estão autorizadas por esta inclusão no backlog.
+
+**Deduplicação:** o card `cmunhin8f001801ndqc89ymsl` (arquivos grandes/privados por URL de uso único) é outra origem do item 8.3; não cria uma segunda implementação. As relações temáticas dos novos cards com itens anteriores não os substituem: revogação de sessões é distinta de inatividade (3.4); acessibilidade/mobile é distinta de ocupar a tela da sprint (2.5).
+
+## Fase 9 — Integridade e contratos
+
+| Item | Card no Operum | Prioridade | Status |
+|---|---|---|---|
+| 9.1 | Preservar vínculo com projeto e atomicidade ao excluir uma sprint (`cmuo1gdyc002901ndubbhff73`) | alta | Pendente |
+| 9.2 | Garantir timer único sob concorrência e parada idempotente (`cmuo1gmkx002b01ndq67spd28`) | alta | Pendente |
+| 9.3 | Tornar movimentação de card, histórico e ordenação uma operação atômica (`cmuo1gmoo002d01ndf42zbz7f`) | alta | Pendente |
+| 9.4 | Substituir macrofases sem janela de perda de dados (`cmuo1gmrs002f01ndhl51fd03`) | alta | Pendente |
+| 9.5 | Restaurar contratos dos dashboards global e por sprint, com teste integrado de rota (`cmuo1gmu4002h01ndvuxtgkht`) | alta | Pendente |
+| 9.6 | Paginar tarefas no serviço de origem e reduzir varreduras MCP (`cmuo1gmvx002j01ndsdfhjthj`) | media | Pendente |
+| 9.7 | Consolidar serviços legados e definir fronteiras de domínio verificáveis (`cmuo1gn0b002l01nd62w0nvb1`) | media | Pendente |
+
+### 9.1 Preservar vínculo com projeto e atomicidade ao excluir uma sprint
+
+**Card:** `cmuo1gdyc002901ndubbhff73`. **Prioridade:** alta. **Status:** pendente.
+
+**Avaliação A1 · Arquitetura e código**
+
+**Origem:** avaliação geral do Operum, 30/09/2026. Revisão `d90456ff`; análise estática, sem execução em produção.
+
+**Evidência:** Confirmado por fluxo estático.
+
+- `SprintService.remove` limpa `sprintId`, `sprintColumnId` e `sprintPosition`, mas não preenche `projectId`; em seguida exclui logicamente a sprint, fora de transação. A criação de card permite apenas `sprintId`, sem `projectId`; o retorno individual ao backlog já reconhece e corrige essa situação, mas a exclusão da sprint não. O backlog consulta obrigatoriamente `projectId`, logo cards criados só com sprint deixam de aparecer e também deixam de ser encontrados por `cardInTenant`. Fontes: [remoção, linhas 87–95](https://github.com/mavellium/mvl-operum/blob/d90456ff/sprint-service/src/sprint/sprint.service.ts#L87), [criação, linha 146](https://github.com/mavellium/mvl-operum/blob/d90456ff/sprint-service/src/card/card.service.ts#L146), [retorno individual, linha 173](https://github.com/mavellium/mvl-operum/blob/d90456ff/sprint-service/src/card/card.service.ts#L173), [backlog, linha 57](https://github.com/mavellium/mvl-operum/blob/d90456ff/sprint-service/src/card/card.service.ts#L57), [escopo, linha 25](https://github.com/mavellium/mvl-operum/blob/d90456ff/sprint-service/src/common/tenant-scope.ts#L25).
+- Impacto: tarefas ficam inacessíveis ao excluir a sprint. Não foi constatada exclusão física dos dados.
+- Escopo: herdar projeto da sprint quando ausente, validar coerência dos vínculos existentes, definir posição no backlog e envolver transferência + exclusão na mesma transação. Diagnóstico de dados históricos deve ser tarefa controlada, sem inferir automaticamente o projeto de órfãos sem evidência.
+- Aceite: criar card apenas com sprintId, excluir sprint e localizar card no backlog e pelo id, preservando comentários/tempos; falha intermediária mantém sprint e cards no estado anterior; casos com projectId pré-existente cobertos por integração.
+- SDD: não duplica item existente; complementa integridade do quadro da fase 2.
+
+### 9.2 Garantir timer único sob concorrência e parada idempotente
+
+**Card:** `cmuo1gmkx002b01ndq67spd28`. **Prioridade:** alta. **Status:** pendente.
+
+**Avaliação A2 · Arquitetura e código**
+
+**Origem:** avaliação geral do Operum, 30/09/2026. Revisão `d90456ff`; análise estática, sem execução em produção.
+
+**Evidência:** Confirmado por código; corrida não reproduzida em banco.
+
+- `start` consulta timer ativo e depois insere em operações separadas; `TimeEntry` não declara unicidade de timer ativo por usuário e não encontrei índice parcial nas migrations. `stop` aceita registro já parado e substitui `endedAt`/`duration` pela hora de cada nova chamada. Fontes: [start/stop, linhas 22–45](https://github.com/mavellium/mvl-operum/blob/d90456ff/sprint-service/src/time-entry/time-entry.service.ts#L22), [schema, linha 191](https://github.com/mavellium/mvl-operum/blob/d90456ff/sprint-service/prisma/schema.prisma#L191), [testes existentes, linha 24](https://github.com/mavellium/mvl-operum/blob/d90456ff/sprint-service/src/time-entry/time-entry.service.spec.ts#L24).
+- Impacto: dois inícios simultâneos podem gravar dois timers; retry de stop altera horas já encerradas, afetando custos.
+- Escopo: proteção no banco/controle transacional para um timer ativo, tratamento de conflito previsível e stop condicional/idempotente; decidir tratamento de duplicados históricos antes da restrição.
+- Aceite: duas chamadas concorrentes produzem apenas um timer ativo; stop repetido mantém exatamente endedAt e duration originais; falha/retry não duplica tempo; teste real de concorrência em PostgreSQL, além dos mocks.
+- SDD: extensão de confiabilidade do 8.4 já entregue, não recriar as ferramentas MCP.
+
+### 9.3 Tornar movimentação de card, histórico e ordenação uma operação atômica
+
+**Card:** `cmuo1gmoo002d01ndf42zbz7f`. **Prioridade:** alta. **Status:** pendente.
+
+**Avaliação A3 · Arquitetura e código**
+
+**Origem:** avaliação geral do Operum, 30/09/2026. Revisão `d90456ff`; análise estática, sem execução em produção.
+
+**Evidência:** Confirmado por código; falha parcial não injetada.
+
+- `CardService.update` grava `cardMovement` antes de `card.update`, depois renumera destino e origem; cada `renumberColumn` faz sua própria transação de updates, mas leituras e operação completa ficam fora dela. Fontes: [histórico, linha 180](https://github.com/mavellium/mvl-operum/blob/d90456ff/sprint-service/src/card/card.service.ts#L180), [update/renumeração, linha 201](https://github.com/mavellium/mvl-operum/blob/d90456ff/sprint-service/src/card/card.service.ts#L201), [transação parcial, linha 224](https://github.com/mavellium/mvl-operum/blob/d90456ff/sprint-service/src/card/card.service.ts#L224).
+- Impacto: uma falha pode registrar movimento inexistente ou deixar ordenação parcial; movimentações simultâneas podem sobrescrever posições calculadas sobre estado antigo.
+- Escopo: serviço transacional único com estratégia explícita de concorrência por coluna/sprint, histórico só de movimentos efetivados e retorno com posição final normalizada.
+- Aceite: falha após qualquer escrita reverte movimento, card e posições; movimentos concorrentes deixam ordem determinística e posições válidas; histórico condiz com estado final; não regredir drag-and-drop simples.
+- SDD: sobreposição parcial com 2.5, que corrigiu renumeração simples; este card trata atomicidade e concorrência ainda ausentes.
+
+### 9.4 Substituir macrofases sem janela de perda de dados
+
+**Card:** `cmuo1gmrs002f01ndhl51fd03`. **Prioridade:** alta. **Status:** pendente.
+
+**Avaliação A4 · Arquitetura e código**
+
+**Origem:** avaliação geral do Operum, 30/09/2026. Revisão `d90456ff`; análise estática, sem execução em produção.
+
+**Evidência:** Confirmado por código; falha parcial não injetada.
+
+- `upsertMacroFase` executa `deleteMany` e `createMany` separados. A action atualiza primeiro o projeto, depois macrofases via HTTP, depois sincroniza a EAP localmente, permitindo etapas persistidas quando a seguinte falha. Fontes: [serviço, linha 151](https://github.com/mavellium/mvl-operum/blob/d90456ff/project-service/src/project/project.service.ts#L151), [action, linha 195](https://github.com/mavellium/mvl-operum/blob/d90456ff/app/actions/projetos.ts#L195).
+- Impacto: erro na recriação deixa macrofases vazias; projeto/macrofases/EAP podem divergir após atualização parcialmente concluída.
+- Escopo mínimo: validar lote antes de mutar e transacionar substituição no project-service. Complemento: definir fonte canônica e mecanismo de reconciliação/retry idempotente para sincronização EAP; não propor transação de banco mantida aberta através de HTTP.
+- Aceite: erro de inserção preserva macrofases anteriores; lote válido substitui tudo uma vez; interrupção na sincronização aparece como pendência rastreável e retry converge sem duplicar fases; documentar responsabilidade de cada armazenamento.
+- SDD: relacionado a EAP/documentos, mas não duplica layouts nem versionamento das fases 6/7.
+
+### 9.5 Restaurar contratos dos dashboards global e por sprint, com teste integrado de rota
+
+**Card:** `cmuo1gmu4002h01ndvuxtgkht`. **Prioridade:** alta. **Status:** pendente.
+
+**Avaliação A5 · Arquitetura e código**
+
+**Origem:** avaliação geral do Operum, 30/09/2026. Revisão `d90456ff`; análise estática, sem execução em produção.
+
+**Evidência:** Confirmado no repositório.
+
+- O cliente chama `/dashboard/global` e `/sprints/:id/dashboard`; as actions repassam essas chamadas. O gateway não roteia `/dashboard`, e o controller de dashboard do sprint-service só registra `/sprints/:id/metrics` e `/sprints/:id/feedback`, sem dashboard agregado. Os consumidores exibem erro se a action falha. Fontes: [cliente, linha 314](https://github.com/mavellium/mvl-operum/blob/d90456ff/lib/api-client.ts#L314), [actions, linha 14](https://github.com/mavellium/mvl-operum/blob/d90456ff/app/actions/dashboard.ts#L14), [gateway, linha 86](https://github.com/mavellium/mvl-operum/blob/d90456ff/api-gateway/src/main.ts#L86), [controller](https://github.com/mavellium/mvl-operum/blob/d90456ff/sprint-service/src/dashboard/dashboard.controller.ts#L1), [dashboard global, linha 26](https://github.com/mavellium/mvl-operum/blob/d90456ff/app/dashboard/page.tsx#L26), [sprint, linha 6](https://github.com/mavellium/mvl-operum/blob/d90456ff/components/dashboard/SprintDashboardContent.tsx#L6).
+- Impacto: caminhos de dashboard não conseguem obter o contrato esperado por essas rotas. O dashboard global citado é o de usuário comum; admin é redirecionado a outra tela, não generalizar o achado a ela.
+- Escopo: implementar agregação e roteamento ou alinhar BFF à API canônica; definir schemas de resposta compartilhados/validados, sem casts mascarando contratos inexistentes.
+- Aceite: fixtures com tempos/cards/feedbacks resultam em KPIs corretos nas duas telas; caso vazio renderiza zeros/listas vazias; teste percorre BFF→gateway→controller real e valida formato e status; preservação do escopo de projeto/tenant testada pelo responsável de segurança.
+- SDD: não duplica item 3.1 sobre cargo no ranking nem 2.4 sobre navegação; pré-requisito para as telas funcionarem.
+
+### 9.6 Paginar tarefas no serviço de origem e reduzir varreduras MCP
+
+**Card:** `cmuo1gmvx002j01ndsdfhjthj`. **Prioridade:** media. **Status:** pendente.
+
+**Avaliação A6 · Arquitetura e código**
+
+**Origem:** avaliação geral do Operum, 30/09/2026. Revisão `d90456ff`; análise estática, sem execução em produção.
+
+**Evidência:** Consulta completa confirmada; lentidão ainda não medida.
+
+- `collectTasks` carrega sprints, backlog e cards de cada sprint; só depois `operum_list_tasks` filtra e aplica `paginate`. Assim pedir limit pequeno não limita leituras de banco nem payload interno do projeto inteiro. `listColumns` também inclui todos os timeEntries de todos os cards. Fontes: [coleta, linha 41](https://github.com/mavellium/mvl-operum/blob/d90456ff/mcp-server/src/tools/tasks.ts#L41), [paginação tardia, linha 180](https://github.com/mavellium/mvl-operum/blob/d90456ff/mcp-server/src/tools/tasks.ts#L180), [board, linha 97](https://github.com/mavellium/mvl-operum/blob/d90456ff/sprint-service/src/sprint/sprint.service.ts#L97).
+- Impacto: custo de cada página cresce com total de sprints/cards; risco de latência/memória, sem evidência de incidente atual.
+- Escopo: endpoint de listagem com filtros e cursor estável aplicado na origem; MCP delega busca sem varrer todo projeto. Medir payload do board e substituir histórico de tempos por resumo/ativo onde não se precisa do detalhe.
+- Aceite: fixture grande com limite 20 devolve 20 cards sem carregar todos; percorrer páginas não perde/duplica itens sob a semântica documentada; cards sem projectId direto continuam contemplados por sprint; medir quantidade de consultas, bytes e latência antes/depois; anexos continuam carregados apenas da página.
+- SDD: não duplica busca 4.2, importação 8.1 ou anexos 8.2/8.3.
+
+### 9.7 Consolidar serviços legados e definir fronteiras de domínio verificáveis
+
+**Card:** `cmuo1gn0b002l01nd62w0nvb1`. **Prioridade:** media. **Status:** pendente.
+
+**Avaliação A7 · Arquitetura e código**
+
+**Origem:** avaliação geral do Operum, 30/09/2026. Revisão `d90456ff`; análise estática, sem execução em produção.
+
+**Evidência:** Duplicação confirmada; remoção depende de inventário completo.
+
+- `services/departmentService.ts` e `services/departamentoService.ts` implementam quase o mesmo CRUD direto no Prisma; a busca de referências encontrou o primeiro nos testes unitários e nenhum consumidor de runtime para esses dois módulos. Há ainda CRUD em `project-service/src/department`. A arquitetura reconhece migração incompleta e clientes diretos mortos `lib/projectClient.ts`/`lib/sprintClient.ts`. Fontes: [serviço inglês](https://github.com/mavellium/mvl-operum/blob/d90456ff/services/departmentService.ts#L1), [serviço português](https://github.com/mavellium/mvl-operum/blob/d90456ff/services/departamentoService.ts#L1), [serviço Nest](https://github.com/mavellium/mvl-operum/blob/d90456ff/project-service/src/department/department.service.ts#L1), [teste legado](https://github.com/mavellium/mvl-operum/blob/d90456ff/__tests__/unit/services/departmentService.test.ts#L36), [arquitetura, linha 784](https://github.com/mavellium/mvl-operum/blob/d90456ff/docs/architecture.md#L784).
+- Impacto: manutenção/testes podem ocorrer numa implementação não usada pela aplicação; coexistência confunde escolha do caminho canônico e deixa regras divergirem. Não afirmar que duplicação por si só causa bug.
+- Escopo: mapa de propriedade por domínio (API Nest versus módulos ainda locais), inventário de imports/entrypoints/scripts; retirar módulos comprovadamente mortos e levar testes de comportamento ao caminho ativo. Agrupar código por domínio gradualmente; manter BFF como adaptação de transporte e serviços locais explicitamente delimitados.
+- Aceite: toda remoção respaldada por ausência de consumidor incluindo scripts/testes/dynamic imports; fluxos de departamentos/projetos/sprints passam pelo caminho documentado; testes exercitam implementação ativa; verificação de imports impede novos clientes diretos legados; architecture/decisions explicam exceções temporárias. Sem exigir big-bang de pastas.
+- SDD: não duplica remoção de Attachment da fase 2; é dívida de arquitetura já reconhecida no roadmap, detalhada para execução.
+
+## Fase 10 — Experiência e acessibilidade
+
+| Item | Card no Operum | Prioridade | Status |
+|---|---|---|---|
+| 10.1 | Reverter alterações otimistas do Kanban quando a API falhar (`cmuo1h9rx002p01ndby9xzsgq`) | alta | Pendente |
+| 10.2 | Preservar o formulário do card até a criação/edição ser confirmada (`cmuo1hanh002r01nd1uepu4jr`) | alta | Pendente |
+| 10.3 | Manter timer sincronizado quando pausar/iniciar falhar (`cmuo1hbit002t01ndbwlhgrnp`) | alta | Pendente |
+| 10.4 | Confirmar autosave do Termo antes de salvar versão ou sair (`cmuo1hcdi002v01ndlcro8f8u`) | alta | Pendente |
+| 10.5 | Permitir abrir cards pelo teclado independentemente do arraste (`cmuo1hdar002x01nd1isa1gx2`) | media | Pendente |
+| 10.6 | Retirar sidebar recolhida da ordem de foco (`cmuo1he4u002z01ndi88juuae`) | media | Pendente |
+| 10.7 | Unificar gestão de foco de Drawer e Modal (`cmuo1heyw003101ndy6pb87pm`) | media | Pendente |
+| 10.8 | Adaptar navegação lateral para celular com menu sobreposto (`cmuo1hfvo003301nddf04r2fs`) | media | Pendente |
+
+### 10.1 Reverter alterações otimistas do Kanban quando a API falhar
+
+**Card:** `cmuo1h9rx002p01ndby9xzsgq`. **Prioridade:** alta. **Status:** pendente.
+
+**Avaliação UX01 · Interface e experiência**
+
+**Origem:** avaliação geral do Operum, 30/09/2026. Revisão `d90456ff`; análise estática, comportamento empírico a validar.
+
+- Evidência: arraste de colunas/cards/backlog aplica estado local e ignora o resultado da action; renomear e excluir seguem o mesmo padrão. As actions capturam exceções e retornam `{error}`, logo `await` sozinho não detecta fracasso. Fontes: [SprintBoard.tsx:266](https://github.com/mavellium/mvl-operum/blob/d90456ff/components/sprint/SprintBoard.tsx#L266), [SprintBoard.tsx:412](https://github.com/mavellium/mvl-operum/blob/d90456ff/components/sprint/SprintBoard.tsx#L412), [sprintBoard.ts:155](https://github.com/mavellium/mvl-operum/blob/d90456ff/app/actions/sprintBoard.ts#L155).
+- Impacto inferido: usuário acredita ter movido/excluído um item; ao recarregar ele reaparece ou retorna à posição anterior, com perda de confiança no quadro.
+**Escopo e critérios de aceite:** em 403, 500 e falha de rede, restaurar o estado anterior ou reconciliar com servidor, mostrar mensagem acionável e permitir retry; manter operações simultâneas independentes sem rollback apagar uma mudança válida posterior; testes de falha em mover, renomear e excluir.
+- Não duplica SDD 2.5: trata persistência/recuperação em todas as movimentações, não regra de motivos para retrocesso.
+
+### 10.2 Preservar o formulário do card até a criação/edição ser confirmada
+
+**Card:** `cmuo1hanh002r01nd1uepu4jr`. **Prioridade:** alta. **Status:** pendente.
+
+**Avaliação UX02 · Interface e experiência**
+
+**Origem:** avaliação geral do Operum, 30/09/2026. Revisão `d90456ff`; análise estática, comportamento empírico a validar.
+
+- Evidência: contrato `onSubmit` retorna `void`; `handleSave` chama-o e fecha imediatamente. A criação de backlog também fecha mesmo sem `result.card`; criação no quadro só atua no sucesso, sem mostrar erro. Fontes: [CardModal.tsx:27](https://github.com/mavellium/mvl-operum/blob/d90456ff/components/card/CardModal.tsx#L27), [CardModal.tsx:291](https://github.com/mavellium/mvl-operum/blob/d90456ff/components/card/CardModal.tsx#L291), [SprintBoard.tsx:225](https://github.com/mavellium/mvl-operum/blob/d90456ff/components/sprint/SprintBoard.tsx#L225), [SprintBoard.tsx:427](https://github.com/mavellium/mvl-operum/blob/d90456ff/components/sprint/SprintBoard.tsx#L427).
+- Impacto inferido: título, descrição e seleção de anexos precisam ser preenchidos novamente após erro; fechamento transmite sucesso falso.
+**Escopo e critérios de aceite:** contrato assíncrono com resultado explícito, estado salvando e prevenção de envio duplo; manter campos/anexos selecionados em erro; fechar apenas no sucesso; distinguir card criado com falha parcial de anexo/responsável e oferecer retentativa sem duplicar card.
+- Escopo distinto de autosave da descrição já previsto no SDD 1.6.
+
+### 10.3 Manter timer sincronizado quando pausar/iniciar falhar
+
+**Card:** `cmuo1hbit002t01ndbwlhgrnp`. **Prioridade:** alta. **Status:** pendente.
+
+**Avaliação UX03 · Interface e experiência**
+
+**Origem:** avaliação geral do Operum, 30/09/2026. Revisão `d90456ff`; análise estática, comportamento empírico a validar.
+
+- Evidência: minicard define timer parado antes de `pauseTimerAction`, ignora erro e apaga entryId; modal também seta parado e apaga entryId mesmo quando recebe erro. Inicialização converte erro em zero/sem timer. Fontes: [Card.tsx:91](https://github.com/mavellium/mvl-operum/blob/d90456ff/components/card/Card.tsx#L91), [Card.tsx:131](https://github.com/mavellium/mvl-operum/blob/d90456ff/components/card/Card.tsx#L131), [CardTimer.tsx:134](https://github.com/mavellium/mvl-operum/blob/d90456ff/components/card/CardTimer.tsx#L134), [time.ts:45](https://github.com/mavellium/mvl-operum/blob/d90456ff/app/actions/time.ts#L45).
+- Impacto inferido: contador parece pausado enquanto registro continua rodando no servidor; possível lançamento excessivo de horas. Não é a validação de horas/dia do SDD 4.4.
+**Escopo e critérios de aceite:** confirmar parada antes de descartar entryId; falha mantém estado confirmado ou estado desconhecido explícito, com reconciliação/retry; erro de carregamento não vira 00:00; minicard e modal refletem o mesmo estado; testar pause rejeitado, timeout e cliques rápidos.
+
+### 10.4 Confirmar autosave do Termo antes de salvar versão ou sair
+
+**Card:** `cmuo1hcdi002v01ndlcro8f8u`. **Prioridade:** alta. **Status:** pendente.
+
+**Avaliação UX04 · Interface e experiência**
+
+**Origem:** avaliação geral do Operum, 30/09/2026. Revisão `d90456ff`; análise estática, comportamento empírico a validar.
+
+- Evidência: campos de texto são enviados após debounce de 1200 ms; PATCH malsucedido não gera feedback e catch é silencioso. Criar versão envia apenas metadados e não aguarda flush dos campos atuais; o indicador autoSaving considera apenas macrofases. Fontes: [ProjectCharter.tsx:127](https://github.com/mavellium/mvl-operum/blob/d90456ff/components/projetos/documentacao/ProjectCharter.tsx#L127), [ProjectCharter.tsx:184](https://github.com/mavellium/mvl-operum/blob/d90456ff/components/projetos/documentacao/ProjectCharter.tsx#L184), [ProjectCharter.tsx:324](https://github.com/mavellium/mvl-operum/blob/d90456ff/components/projetos/documentacao/ProjectCharter.tsx#L324), [ProjectCharter.tsx:406](https://github.com/mavellium/mvl-operum/blob/d90456ff/components/projetos/documentacao/ProjectCharter.tsx#L406).
+- Impacto inferido: versão salva logo após digitação pode conter conteúdo anterior; falha de rede pode deixar texto apenas na tela sem aviso.
+**Escopo e critérios de aceite:** estados pendente/salvando/salvo/erro para todos os campos; flush confirmado antes de versionar; não criar versão se flush falhar; preservar rascunho recuperável e avisar na saída com pendências; testes com debounce e PATCH lento/rejeitado, inclusive respostas fora de ordem.
+- Complementa SDD 7.4, sem repetir separação de formulário ou histórico por campo: aqui é consistência e confiabilidade do salvamento existente.
+
+### 10.5 Permitir abrir cards pelo teclado independentemente do arraste
+
+**Card:** `cmuo1hdar002x01nd1isa1gx2`. **Prioridade:** media. **Status:** pendente.
+
+**Avaliação UX05 · Interface e experiência**
+
+**Origem:** avaliação geral do Operum, 30/09/2026. Revisão `d90456ff`; análise estática, comportamento empírico a validar.
+
+- Evidência: superfície principal do card é div com props do Draggable e apenas `onClick={onClick}`; título é parágrafo e não há link/botão dedicado para abrir. Com filtro, drag é desativado. O teste de clique usa mock com dragHandleProps vazio e não verifica abertura com teclado. Fontes: [Card.tsx:159](https://github.com/mavellium/mvl-operum/blob/d90456ff/components/card/Card.tsx#L159), [SprintBoard.tsx:147](https://github.com/mavellium/mvl-operum/blob/d90456ff/components/sprint/SprintBoard.tsx#L147), [Card.click.test.tsx:7](https://github.com/mavellium/mvl-operum/blob/d90456ff/__tests__/components/card/Card.click.test.tsx#L7).
+- Impacto inferido: foco/teclas destinadas a arrastar não oferecem uma ação inequívoca para abrir detalhes, especialmente com filtros ativos.
+**Escopo e critérios de aceite:** botão/link de abertura acessível pelo nome do card, Enter/Space conforme semântica, foco visível; arraste com teclado continua disponível sem conflito; validar sem mouse com e sem filtro e preservar ações de timer/excluir.
+- Distinto do SDD 4.2: aqui não é resultado da busca, é o próprio minicard do Kanban.
+
+### 10.6 Retirar sidebar recolhida da ordem de foco
+
+**Card:** `cmuo1he4u002z01ndi88juuae`. **Prioridade:** media. **Status:** pendente.
+
+**Avaliação UX06 · Interface e experiência**
+
+**Origem:** avaliação geral do Operum, 30/09/2026. Revisão `d90456ff`; análise estática, comportamento empírico a validar.
+
+- Evidência: recolhimento aplica `w-0` e transform ao conteúdo, mantendo links, busca, troca de instituição e botão de sair montados; não aplica inert/hidden. Fontes: [SidebarLayout.tsx:74](https://github.com/mavellium/mvl-operum/blob/d90456ff/components/layout/SidebarLayout.tsx#L74), [SidebarLayout.tsx:114](https://github.com/mavellium/mvl-operum/blob/d90456ff/components/layout/SidebarLayout.tsx#L114).
+- Impacto inferido: Tab pode percorrer controles invisíveis e leitor de tela continuar anunciando navegação recolhida.
+**Escopo e critérios de aceite:** região recolhida sem foco/interação nem exposição indevida; foco vai ao botão expandir ao recolher e volta a ponto previsível ao expandir; aria-expanded sincronizado; teste com Tab/Shift+Tab, links e campo de busca.
+
+### 10.7 Unificar gestão de foco de Drawer e Modal
+
+**Card:** `cmuo1heyw003101ndy6pb87pm`. **Prioridade:** media. **Status:** pendente.
+
+**Avaliação UX07 · Interface e experiência**
+
+**Origem:** avaliação geral do Operum, 30/09/2026. Revisão `d90456ff`; análise estática, comportamento empírico a validar.
+
+- Evidência: Drawer declara `aria-modal` mas só implementa Escape e foco inicial, sem contenção/restauração de foco. Modal tem trap, mas título usa ID fixo `modal-title`, cada instância registra Escape no document e não restaura o acionador. Fontes: [Drawer.tsx:28](https://github.com/mavellium/mvl-operum/blob/d90456ff/components/ui/Drawer.tsx#L28), [Modal.tsx:60](https://github.com/mavellium/mvl-operum/blob/d90456ff/components/ui/Modal.tsx#L60), [Modal.tsx:98](https://github.com/mavellium/mvl-operum/blob/d90456ff/components/ui/Modal.tsx#L98). Drawer é usado no histórico do Termo: [ProjectCharter.tsx:623](https://github.com/mavellium/mvl-operum/blob/d90456ff/components/projetos/documentacao/ProjectCharter.tsx#L623).
+- Impacto inferido: teclado alcança página atrás do histórico; overlays sobrepostos podem competir por foco e Escape; título pode apontar ao modal errado.
+**Escopo e critérios de aceite:** trap e restauração consistentes; só overlay superior reage a Escape; fundo sem interação; IDs de título únicos; testes com histórico e diálogo aninhado, abertura/fechamento e nenhum controle focável.
+
+### 10.8 Adaptar navegação lateral para celular com menu sobreposto
+
+**Card:** `cmuo1hfvo003301nddf04r2fs`. **Prioridade:** media. **Status:** pendente.
+
+**Avaliação UX08 · Interface e experiência**
+
+**Origem:** avaliação geral do Operum, 30/09/2026. Revisão `d90456ff`; análise estática, comportamento empírico a validar.
+
+**Primeira etapa obrigatória:** reproduzir o layout em viewports 360, 390 e 768 px; confirmar impacto antes de implementar a adaptação proposta. Não houve teste visual nesta auditoria.
+
+- Evidência: AppShell coloca sidebar e main em flex horizontal; SidebarLayout reserva `w-56` sem breakpoint, e GlobalSidebar/ProjectSidebar iniciam `collapsed=false`, alterando apenas via localStorage ou botão. Fontes: [AppShell.tsx:27](https://github.com/mavellium/mvl-operum/blob/d90456ff/components/layout/AppShell.tsx#L27), [SidebarLayout.tsx:74](https://github.com/mavellium/mvl-operum/blob/d90456ff/components/layout/SidebarLayout.tsx#L74), [GlobalSidebar.tsx:43](https://github.com/mavellium/mvl-operum/blob/d90456ff/components/layout/GlobalSidebar.tsx#L43), [ProjectSidebar.tsx:65](https://github.com/mavellium/mvl-operum/blob/d90456ff/components/layout/ProjectSidebar.tsx#L65).
+- Impacto inferido: primeira visita em viewport de 360–390 px deixa pequena parte da largura para conteúdo até recolher manualmente. Não afirmo sobreposição observada, pois a análise foi estática.
+**Escopo e critérios de aceite:** em telas estreitas, conteúdo usa largura disponível e menu abre como overlay acessível; navegação fecha após escolha; comportamento desktop preservado; validar 360, 390 e 768 px em projetos, sprint e documentação, inclusive rotação, teclado e zoom; sem rolagem horizontal da página fora de áreas explicitamente bidimensionais.
+
+## Fase 11 — Segurança e operação
+
+| Item | Card no Operum | Prioridade | Status |
+|---|---|---|---|
+| 11.1 | Garantir revogação de sessões no gateway com Redis saudável ou indisponível (`cmuo1hh27003501ndsy2521z5`) | alta | Pendente |
+| 11.2 | Isolar filas e sessões do Redis sujeito a eviction (`cmuo1hi2p003701ndlu2bq8ws`) | alta | Pendente |
+| 11.3 | Implantar imagens imutáveis do SHA aprovado e promover tags somente após validação (`cmuo1hj0u003901nd2z599pt2`) | alta | Pendente |
+| 11.4 | Rodar checks dos serviços e smoke das imagens de produção antes do merge/deploy (`cmuo1hjxo003b01ndi9qq30u5`) | alta | Pendente |
+| 11.5 | Registrar e ensaiar rollback por release sem retag manual (`cmuo1hkrs003e01ndh7uaymeh`) | alta | Pendente |
+| 11.6 | Versionar backup de PostgreSQL/MinIO e comprovar restauração (`cmuo1hlmw003g01ndu19fu0cs`) | alta | Pendente |
+| 11.7 | Separar liveness e readiness com verificação das dependências essenciais (`cmuo1hmh3003i01ndo06yaob0`) | media | Pendente |
+| 11.8 | Tornar a observabilidade implantável e conectar métricas, logs e alertas (`cmuo1hnaz003k01ndec1y9yqh`) | media | Pendente |
+
+### 11.1 Garantir revogação de sessões no gateway com Redis saudável ou indisponível
+
+**Card:** `cmuo1hh27003501ndsy2521z5`. **Prioridade:** alta. **Status:** pendente.
+
+**Avaliação OPS01-02 · Segurança e operação**
+
+**Origem:** avaliação geral do Operum, 30/09/2026. Revisão `c92d3934`; análise estática, sem exploração da produção.
+
+Bug confirmado por fluxo estático, sem reproduzir em produção. A troca/reset incrementa tokenVersion; auth.verify consulta versão, estado e exclusão do usuário; gateway verifica assinatura e existência da sessão, mas não consulta versão/estado. O comentário do reset diz que o gateway rejeita versões antigas, porém as sessões Redis permanecem. Isso permite continuar usando JWT anterior nas APIs que confiam na identidade do gateway enquanto a sessão existir. Fontes: [auth.service.ts:206](https://github.com/mavellium/mvl-operum/blob/c92d3934/auth-service/src/auth/auth.service.ts#L206), [auth.service.ts:239](https://github.com/mavellium/mvl-operum/blob/c92d3934/auth-service/src/auth/auth.service.ts#L239), [auth.service.ts:418](https://github.com/mavellium/mvl-operum/blob/c92d3934/auth-service/src/auth/auth.service.ts#L418), [gateway auth.ts:220](https://github.com/mavellium/mvl-operum/blob/c92d3934/api-gateway/src/middleware/auth.ts#L220), [guard interno project-service:17](https://github.com/mavellium/mvl-operum/blob/c92d3934/project-service/src/guards/internal-auth.guard.ts#L17). Proposta: centralizar verificação revogável da sessão/versão e invalidar todas as sessões nas mudanças sensíveis. Aceite: token pré-reset/troca de senha/desativação é recusado em rotas de project/sprint via gateway; sessão válida continua; teste integrado cobre ambos. Não é o timeout por inatividade do SDD 3.4.
+
+**Indisponibilidade do Redis — mesmo contrato de sessão:**
+
+Comportamento confirmado, não incidente observado: o gateway deliberadamente ignora a falha do Redis; auth.getSession devolve um objeto válido quando available=false, inclusive em produção, embora o comentário mencione desenvolvimento. Logout durante indisponibilidade pode não remover a sessão, pois deleteSession retorna silenciosamente. Fontes: [gateway auth.ts:225](https://github.com/mavellium/mvl-operum/blob/c92d3934/api-gateway/src/middleware/auth.ts#L225), [redis.service.ts:40](https://github.com/mavellium/mvl-operum/blob/c92d3934/auth-service/src/redis/redis.service.ts#L40), [arquitetura:651](https://github.com/mavellium/mvl-operum/blob/c92d3934/docs/architecture.md#L651). Proposta: formalizar decisão de disponibilidade versus revogação; em produção negar operações autenticadas sem comprovação de sessão, ou oferecer alternativa explicitamente revogável com prazo limitado. Aceite: teste com Redis indisponível e recuperado demonstra que logout/revogação não readmite token; resposta de indisponibilidade diferenciada; decisão/documentação atualizada. Distinto de OPS-01: um ocorre com Redis saudável, o outro em pane.
+
+**Escopo delimitado:** unificar a política de validade e revogação em ambos os caminhos, sem substituir o modelo de permissões funcionais do SDD. Cobrir reset, troca de senha, desativação, logout e recuperação do Redis. Decisões de disponibilidade devem ser registradas em `docs/decisions.md` antes da implementação.
+
+### 11.2 Isolar filas e sessões do Redis sujeito a eviction
+
+**Card:** `cmuo1hi2p003701ndlu2bq8ws`. **Prioridade:** alta. **Status:** pendente.
+
+**Avaliação OPS03 · Segurança e operação**
+
+**Origem:** avaliação geral do Operum, 30/09/2026. Revisão `c92d3934`; análise estática, sem exploração da produção.
+
+Configuração confirmada; perda efetiva não observada. Redis de produção usa 256 MB e allkeys-lru; BullMQ e sessões apontam ao mesmo serviço redis. Sob pressão, chaves de fila/sessões entram no universo de descarte. Fontes: [compose produção:115](https://github.com/mavellium/mvl-operum/blob/c92d3934/docker-compose.production.yml#L115), [BullMQ:8](https://github.com/mavellium/mvl-operum/blob/c92d3934/notification-service/src/app.module.ts#L8), [sessões:14](https://github.com/mavellium/mvl-operum/blob/c92d3934/auth-service/src/redis/redis.service.ts#L14), [compose:256](https://github.com/mavellium/mvl-operum/blob/c92d3934/docker-compose.yml#L256). Proposta: separar cache descartável de Redis de fila/sessão, definir noeviction para fila e alertar memória; documentar persistência e dimensionamento. Aceite: teste controlado de pressão confirma jobs não descartados, falha de escrita observável, sessões não expulsas por cache; recuperação/retry testados.
+
+### 11.3 Implantar imagens imutáveis do SHA aprovado e promover tags somente após validação
+
+**Card:** `cmuo1hj0u003901nd2z599pt2`. **Prioridade:** alta. **Status:** pendente.
+
+**Avaliação OPS04 · Segurança e operação**
+
+**Origem:** avaliação geral do Operum, 30/09/2026. Revisão `c92d3934`; análise estática, sem exploração da produção.
+
+Risco confirmado na configuração. Build publica cada imagem como SHA e prod antes dos scans. Só o job deploy tem concurrency; outro build pode trocar prod enquanto um deploy anterior baixa imagens. SHA recebido pelo script serve para validação/nome do backup e log, não seleciona imagens. Fontes: [workflow:117](https://github.com/mavellium/mvl-operum/blob/c92d3934/.github/workflows/deploy-production.yml#L117), [workflow:207](https://github.com/mavellium/mvl-operum/blob/c92d3934/.github/workflows/deploy-production.yml#L207), [workflow:296](https://github.com/mavellium/mvl-operum/blob/c92d3934/.github/workflows/deploy-production.yml#L296), [compose produção:6](https://github.com/mavellium/mvl-operum/blob/c92d3934/docker-compose.production.yml#L6), [deploy script:84](https://github.com/mavellium/mvl-operum/blob/c92d3934/scripts/deploy/remote-deploy.sh#L84). Proposta: manifest com digest/SHA por serviço, migrate e app com mesma imagem; prod só promovida após checks; registrar versão realmente implantada. Aceite: duas execuções concorrentes não misturam versões; imagem reprovada no scan nunca vira candidata ativa; SHA implantado verificável.
+
+### 11.4 Rodar checks dos serviços e smoke das imagens de produção antes do merge/deploy
+
+**Card:** `cmuo1hjxo003b01ndi9qq30u5`. **Prioridade:** alta. **Status:** pendente.
+
+**Avaliação OPS05 · Segurança e operação**
+
+**Origem:** avaliação geral do Operum, 30/09/2026. Revisão `c92d3934`; análise estática, sem exploração da produção.
+
+Lacuna confirmada. Workflow de PR contém CodeQL/secrets; testes/lint/audit estão em push de main/develop e apenas comandos da raiz. Vitest raiz exclui auth-service, notification-service e project-service. Não há boot das imagens antes do deploy; smoke externo vem depois da troca. Fontes: [CodeQL:4](https://github.com/mavellium/mvl-operum/blob/c92d3934/.github/workflows/codeql.yml#L4), [produção:3](https://github.com/mavellium/mvl-operum/blob/c92d3934/.github/workflows/deploy-production.yml#L3), [produção:73](https://github.com/mavellium/mvl-operum/blob/c92d3934/.github/workflows/deploy-production.yml#L73), [Vitest:31](https://github.com/mavellium/mvl-operum/blob/c92d3934/vitest.config.mts#L31), [produção:357](https://github.com/mavellium/mvl-operum/blob/c92d3934/.github/workflows/deploy-production.yml#L357). Proposta: workflow PR com matriz por pacote, frozen-lockfile, testes existentes, build, audit/Trivy e smoke efêmero das imagens finais com dependências isoladas. Aceite: falha de teste auth/project bloqueia check; pacote runtime ausente faz smoke falhar antes da promoção; evidência de cada pacote testado. Inclui prevenção das classes de incidente PR30/31, não reabre correções já feitas.
+
+### 11.5 Registrar e ensaiar rollback por release sem retag manual
+
+**Card:** `cmuo1hkrs003e01ndh7uaymeh`. **Prioridade:** alta. **Status:** pendente.
+
+**Avaliação OPS06 · Segurança e operação**
+
+**Origem:** avaliação geral do Operum, 30/09/2026. Revisão `c92d3934`; análise estática, sem exploração da produção.
+
+Limitação confirmada. Quando up falha, script imprime logs e manda retaggear imagem anterior manualmente; backup guarda apenas dois composes. Migrations já rodaram antes da troca. Fontes: [script:39](https://github.com/mavellium/mvl-operum/blob/c92d3934/scripts/deploy/remote-deploy.sh#L39), [script:54](https://github.com/mavellium/mvl-operum/blob/c92d3934/scripts/deploy/remote-deploy.sh#L54), [script:87](https://github.com/mavellium/mvl-operum/blob/c92d3934/scripts/deploy/remote-deploy.sh#L87), [script:97](https://github.com/mavellium/mvl-operum/blob/c92d3934/scripts/deploy/remote-deploy.sh#L97). Proposta: salvar manifest anterior com digests e procedimento/comando de rollback seguro; política expand/contract para migrations e bloqueio de reversão incompatível; automatizar somente quando seguro. Aceite: simular serviço unhealthy em staging e restaurar release conhecida; confirmar dados íntegros e registrar duração; jamais desfazer schema destrutivamente por padrão. Dependência: OPS-04.
+
+### 11.6 Versionar backup de PostgreSQL/MinIO e comprovar restauração
+
+**Card:** `cmuo1hlmw003g01ndu19fu0cs`. **Prioridade:** alta. **Status:** pendente.
+
+**Avaliação OPS07 · Segurança e operação**
+
+**Origem:** avaliação geral do Operum, 30/09/2026. Revisão `c92d3934`; análise estática, sem exploração da produção.
+
+Lacuna do repositório, situação real da VPS desconhecida. Exemplo de backup existe na Arquitetura Desejada, mas inventário de scripts não contém backup/restore implementado; script de deploy copia apenas compose. Fontes: [proposta backup:1052](https://github.com/mavellium/mvl-operum/blob/c92d3934/docs/Arquitetura%20Desejada.md#L1052), [scripts](https://github.com/mavellium/mvl-operum/blob/c92d3934/scripts), [backup compose:54](https://github.com/mavellium/mvl-operum/blob/c92d3934/scripts/deploy/remote-deploy.sh#L54), [volumes produção:110](https://github.com/mavellium/mvl-operum/blob/c92d3934/docker-compose.production.yml#L110). Proposta: primeiro inventariar eventual rotina existente, incorporá-la ao controle de versão; definir retenção, cópia fora da VPS, cifragem/acesso, RPO/RTO e restore conjunto de metadados e objetos. Aceite: restaurar ambiente isolado com projetos, usuários e anexos amostrados íntegros; registrar tempo/ponto recuperável e alerta de falha; sem tocar dados vivos. Não afirmar que produção está sem backup, pois não houve inspeção.
+
+### 11.7 Separar liveness e readiness com verificação das dependências essenciais
+
+**Card:** `cmuo1hmh3003i01ndo06yaob0`. **Prioridade:** media. **Status:** pendente.
+
+**Avaliação OPS08 · Segurança e operação**
+
+**Origem:** avaliação geral do Operum, 30/09/2026. Revisão `c92d3934`; análise estática, sem exploração da produção.
+
+Lacuna confirmada. Health do app, auth e project retorna status ok constante; compose usa esses endpoints como service_healthy. Fontes: [app health:1](https://github.com/mavellium/mvl-operum/blob/c92d3934/app/api/health/route.ts#L1), [auth health:5](https://github.com/mavellium/mvl-operum/blob/c92d3934/auth-service/src/health/health.controller.ts#L5), [project health:5](https://github.com/mavellium/mvl-operum/blob/c92d3934/project-service/src/health/health.controller.ts#L5), [compose:152](https://github.com/mavellium/mvl-operum/blob/c92d3934/docker-compose.yml#L152), [compose:211](https://github.com/mavellium/mvl-operum/blob/c92d3934/docker-compose.yml#L211). Proposta: liveness simples e readiness com consultas leves/timeouts ao banco, Redis/storage conforme responsabilidade; evitar cascata de reinícios em indisponibilidade externa. Aceite: processo vivo sem banco responde liveness 200 e readiness 503; deploy não conclui antes da prontidão; resposta pública não contém credenciais/topologia sensível.
+
+### 11.8 Tornar a observabilidade implantável e conectar métricas, logs e alertas
+
+**Card:** `cmuo1hnaz003k01ndec1y9yqh`. **Prioridade:** media. **Status:** pendente.
+
+**Avaliação OPS09 · Segurança e operação**
+
+**Origem:** avaliação geral do Operum, 30/09/2026. Revisão `c92d3934`; análise estática, sem exploração da produção.
+
+Lacuna confirmada no repo. Prometheus aponta app:3000/api/metrics, mas inventário app/api não contém essa rota; não há scrape dos serviços de domínio. Compose sobe Loki/Grafana, porém não define agente de envio nem provisioning; deploy só sincroniza compose/script, apesar de montar ./observability/prometheus.yml. Fontes: [Prometheus:5](https://github.com/mavellium/mvl-operum/blob/c92d3934/observability/prometheus.yml#L5), [rotas app](https://github.com/mavellium/mvl-operum/blob/c92d3934/app/api), [compose produção:153](https://github.com/mavellium/mvl-operum/blob/c92d3934/docker-compose.production.yml#L153), [workflow:307](https://github.com/mavellium/mvl-operum/blob/c92d3934/.github/workflows/deploy-production.yml#L307), [workflow:346](https://github.com/mavellium/mvl-operum/blob/c92d3934/.github/workflows/deploy-production.yml#L346). Proposta: implementar endpoints métricos e scrape por serviço; versionar collector/datasources/dashboards/regras e sincronizar assets no deploy; propagação de request ID e logs sem segredos. Aceite: ambiente vazio recebe toda a configuração; cada target esperado UP; erro de teste rastreável app→gateway→serviço; indisponibilidade gera alerta em destino configurado. Configuração manual existente não foi consultada, portanto não afirmar que Grafana real está vazio.
 
 ## Fora do escopo
 
