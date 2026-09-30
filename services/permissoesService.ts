@@ -147,6 +147,10 @@ export async function listarAjustesDoUsuario(
 ): Promise<AjustesDoUsuario> {
   const usuario = await prisma.user.findFirst({ where: { id: userId, tenantId, deletedAt: null }, select: { id: true } })
   if (!usuario) throw new Error('Usuário não encontrado.')
+  if (projectId) {
+    const projeto = await prisma.project.findFirst({ where: { id: projectId, tenantId, deletedAt: null }, select: { id: true } })
+    if (!projeto) throw new Error('Projeto não encontrado.')
+  }
 
   const linhas = await prisma.userPermission.findMany({
     where: { userId, projectId },

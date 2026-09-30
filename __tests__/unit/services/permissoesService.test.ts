@@ -144,5 +144,7 @@ describe('ajustes por usuário', () => {
   it('projeto de outro tenant: erro', async () => {
     db.project.findFirst.mockResolvedValue(null)
     await expect(salvarAjusteDoUsuario('t1', 'u1', 'p-x', 'projeto:ver', 'GRANT')).rejects.toThrow('Projeto não encontrado.')
+    await expect(listarAjustesDoUsuario('t1', 'u1', 'p-x')).rejects.toThrow('Projeto não encontrado.')
+    expect(db.userPermission.findMany).not.toHaveBeenCalled()
   })
 })

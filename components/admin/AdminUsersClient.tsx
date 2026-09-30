@@ -1,5 +1,8 @@
 'use client'
 
+import Modal from '@/components/ui/Modal'
+import PermissoesUsuario from '@/components/permissoes/PermissoesUsuario'
+
 import { useMemo, useState } from 'react'
 import UserAvatar from '@/components/user/UserAvatar'
 import AdminCreateUserModal, { type AdminUser } from './AdminCreateUserModal'
@@ -19,6 +22,7 @@ const ROLE_LABELS: Record<string, { label: string; cls: string }> = {
 
 export default function AdminUsersClient({ initialUsers }: Props) {
   const [users, setUsers] = useState<AdminUser[]>(initialUsers)
+  const [permissoesUser, setPermissoesUser] = useState<AdminUser | null>(null)
   const [showCreate, setShowCreate] = useState(false)
   const [editUser, setEditUser] = useState<AdminUser | null>(null)
   const [loading, setLoading] = useState<string | null>(null)
@@ -155,6 +159,7 @@ export default function AdminUsersClient({ initialUsers }: Props) {
                   </td>
                   <td className="px-4 py-3">
                     <div className="flex items-center justify-end gap-1">
+                      <button type="button" onClick={() => setPermissoesUser(user)} className="px-2.5 py-1 text-xs rounded-lg border border-gray-200 text-blue-700">Permissões</button>
                       <button
                         onClick={() => setEditUser(user)}
                         className="px-2.5 py-1 text-xs rounded-lg border border-gray-200 text-gray-600 hover:bg-gray-50"
@@ -177,6 +182,7 @@ export default function AdminUsersClient({ initialUsers }: Props) {
         </table>
       </div>
 
+      {permissoesUser && <Modal isOpen onClose={() => setPermissoesUser(null)} title={`Permissões — ${permissoesUser.name}`} maxWidth="max-w-3xl"><PermissoesUsuario key={permissoesUser.id} userId={permissoesUser.id} projectId={null} /></Modal>}
       {showCreate && (
         <AdminCreateUserModal onClose={() => setShowCreate(false)} onCreated={handleCreated} />
       )}
