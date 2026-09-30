@@ -444,7 +444,7 @@ Os ids são cuid, difíceis de adivinhar, mas vazam por log, print, export e com
 **Problema:** depois de cadastrar um stakeholder, é preciso abri-lo de novo em "Editar" para completar os dados.
 
 **Causa:** em `components/projetos/ProjetoStakeholdersClient.tsx` → `handleSave`:
-- **Membro da equipe:** a criação envia só nome, e-mail, senha e endereço. Cargos, departamento, remuneração e horas por dia preenchidos no formulário são **descartados**, e o formulário fecha.
+- **Membro da equipe:** a criação envia só nome, e-mail, senha e endereço, e o formulário fecha. *(Corrigido em 30/09 ao implementar: os campos de cargos, departamento, remuneração, horas por dia e gerente não eram descartados; eles **nem apareciam** na criação, só em "Editar" (`selected?.tipo === 'interno'`).)*
 - **Externo:** o formulário fecha, e o stakeholder criado vai para o diretório sem ficar aberto.
 - **Criação rápida pela busca:** cria só com o nome e não abre nada.
 
@@ -500,6 +500,26 @@ Os ids são cuid, difíceis de adivinhar, mas vazam por log, print, export e com
 **BDD:** dado o sistema em modo escuro, quando o usuário renomeia um anexo, então o texto digitado aparece escuro sobre o fundo branco.
 
 **Arquivos:** `components/card/CardModal.tsx`, `app/globals.css`.
+
+
+### Status da Fase 4 (30/09/2026)
+
+Branch `feat/backlog-fase-4`. Cada item foi um commit, com o card movido para "Em andamento" e o timer ligado no início, e para "Em teste" no fim.
+
+| Item | Commit | Situação |
+|---|---|---|
+| 4.1 Tenant no file-service | `398a26fa` | Feito. O file-service exige `x-tenant-id` e confere o card no sprint-service (`POST /cards/in-tenant`) antes de gravar, listar, renomear, trocar a capa, assinar ou excluir. Falha fechada (503) e cache de 30 s só para respostas positivas. `/files/avatar` e `/files/logo` foram removidas, porque eram expostas e sem uso. O `setCoverAction` passou a conferir o card. O file-service ganhou Vitest (35 testes). |
+| 4.2 Anexo não abre | `488eb3f3` | Feito. Um `S3Client` só para assinar, com `MINIO_PUBLIC_URL`. Rota `/api/files/:id/download` (302 para a URL assinada), lightbox para imagem e `/arquivos` pela rota nova. O `get_task` do MCP devolve `download_url`. |
+| 4.3 Busca não abre o card | `c92d3934` | Feito. O quadro lê o `?card=` com `useSearchParams` e abre o card quando o valor muda. Fechar tira o `?card=` com `history.replaceState`. |
+| 4.4 Stakeholder na tela certa | `1c4fae85` | Feito. Os dados do projeto aparecem já na criação de membro e são gravados junto. Toda criação a partir do projeto abre o cadastro em edição, e o externo pelo "Adicionar ao projeto" já sai vinculado. |
+| 4.5 Horas por dia | `f68f5742` | Feito. `lib/validation/horas.ts` aceita "8,5", "8.5" e "8:30", entre 0 e 24. O campo é de texto e mostra o erro nele mesmo. A action recusa valor inválido. |
+| 4.6 Olho na senha | `eba7eed4` | Feito. `components/ui/PasswordInput` em todos os campos de senha; o login mantém o dele. |
+| 4.7 Subtotal à direita | `39e337ee` | Feito. Sub-total e TOTAL GERAL alinhados à direita no `.xlsx`. |
+| 4.8 Contraste do renomear | `0adda4f7` | Feito. Removido o bloco de modo escuro do template, e `input:not([type])` recebe texto escuro. O campo de renomear tem cor, borda e foco próprios. |
+
+**Achados durante a fase:**
+- `updateProjetoMemberAction` (`app/actions/projetos.ts`) ainda cria funções com o gerador de chave antigo, e não com o `funcaoKey` do 1.5. "Gerente de Projeto" ainda pode duplicar "Gerente de Projetos" por esse caminho. Pendente, fica para a Fase 5, que mexe em funções.
+- O timer da 4.4 parou sozinho enquanto a sessão do agente ficou pausada. O trecho feito depois da retomada foi lançado à mão, com o início estimado pelo horário do primeiro arquivo alterado.
 
 ---
 

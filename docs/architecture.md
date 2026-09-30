@@ -235,7 +235,7 @@ Toda entidade do sistema está vinculada a um `Tenant`. **O sistema já opera co
 2. Usuário pode listar seus tenants (`GET /auth/my-tenants`), trocar de tenant (`POST /auth/switch-tenant` → emite novo JWT), entrar em um tenant existente (`POST /auth/join-tenant`) ou, se admin, provisionar-se como admin de um novo tenant (`POST /auth/provision-tenant-admin`).
 3. `verifySession()` em `lib/dal.ts` descriptografa o JWT/cookie de sessão e retorna `{ userId, tenantId, role, ... }`.
 4. `lib/api-client.ts` repassa o JWT como Bearer token ao gateway; o gateway injeta `x-tenant-id` nos headers para os serviços internos.
-5. Todas as Server Actions e controllers isolam dados por `tenantId`.
+5. Todas as Server Actions e controllers isolam dados por `tenantId`. O file-service, que não conhece cards nem tenants, confere cada card no sprint-service (`POST /cards/in-tenant`) antes de tocar em anexos (SDD 4.1).
 6. `/admin/tenants` (só admin) lista todos os workspaces e permite trocar/entrar.
 
 ```
@@ -457,6 +457,8 @@ Admin cria usuário com forcePasswordChange=true
 | GET | `/cards/:cardId/time-entries`, `/total`, `/active` · `/users/:userId/time-entries` | Consultas de tempo |
 | POST | `/cards/:cardId/time-entries/start`, `/manual` · `/time-entries/:id/stop` | Timer/entrada manual |
 | DELETE | `/time-entries/:id` | Remover entrada |
+| GET | `/time-entries/running` | Timer rodando do usuário (`x-user-id`) no tenant, em `{ entry }` (usado pelo MCP) |
+| POST | `/cards/in-tenant` | Dos `ids` informados, os de cards do tenant. É como o file-service confere o dono de um card |
 | GET/POST | `/audit` | Log de auditoria |
 
 ### notification-service (via `/notifications`)
@@ -474,10 +476,29 @@ Admin cria usuário com forcePasswordChange=true
 
 | Método | Rota | Descrição |
 |--------|------|-----------|
-| POST | `/files/upload`, `/files/avatar`, `/files/logo` | Upload (MinIO) |
-| GET | `/files/by-cards`, `/files/:attachmentId/url` | Consultas |
-| PATCH | `/files/:attachmentId`, `/:attachmentId/cover` | Renomear / definir capa |
-| DELETE | `/files/:attachmentId` | Remover |
+| POST | `/files/upload?cardId=` | Upload de anexo (MinIO), até 50 MB |
+| POST | `/files/link?cardId=` | Anexo do tipo link: grava só a URL (`text/uri-list`), sem objeto no MinIO |
+| GET | `/files/by-cards?cardIds=` | Anexos dos cards (até 500 por consulta); só devolve os de cards do tenant |
+| GET | `/files/:attachmentId/url[?cardId=]` | URL assinada (1 h), gerada com o host público do storage |
+| PATCH | `/files/:attachmentId[?cardId=]`, `/:attachmentId/cover` | Renomear / definir capa |
+| DELETE | `/files/:attachmentId[?cardId=]` | Remover |
+
+**Tenant no file-service (SDD 4.1):**
+- Toda rota exige `x-tenant-id`. O serviço não conhece cards nem tenants, então confere o card no sprint-service (`POST /cards/in-tenant`, com a chave interna) antes de gravar, listar, assinar, renomear ou excluir.
+- Nas rotas por anexo, a conferência é pelo card do próprio anexo. Com `cardId`, o anexo precisa ser desse card.
+- Falha fechada: responde 503 se o sprint-service não responder. Guarda em cache por 30 s só as respostas positivas.
+- Variável `SPRINT_SERVICE_URL`, com padrão `http://sprint-service:4003`.
+- `/files/avatar` e `/files/logo` foram removidas em 30/09: estavam expostas pelo gateway, sem uso e sem conferência de dono. Avatar e logo são gravados pelo app direto no MinIO (`uploadAvatarAction`).
+
+**URL assinada (SDD 4.2):** um segundo `S3Client`, que só assina e não faz chamada de rede, usa `MINIO_PUBLIC_URL`. A assinatura SigV4 inclui o host, então a URL assinada com o endpoint interno (`minio:9000`) não abria no navegador.
+
+### mcp-server (`/mcp`)
+
+Servidor MCP remoto e sem estado. Cada chamada usa o PAT do usuário contra o api-gateway, e o mcp-server nunca fala direto com os serviços. A lista de tools e as regras estão em [`mcp-server/README.md`](../mcp-server/README.md).
+- **Tenant:** as tools de anexo (`operum_upload_attachment`, `operum_add_link`, `operum_delete_attachment`) também conferem a tarefa no tenant antes de chamar o file-service.
+- **SSRF:** o download por `url` é protegido (`mcp-server/src/download.ts`).
+- **Tempo:** as tools de timer (`operum_start_timer`, `operum_stop_timer`, `operum_log_time`) usam as rotas de time entries do sprint-service.
+- **Leitura:** o `operum_get_task` devolve os anexos com `download_url` (arquivo) ou `url` (link) e o tempo da tarefa.
 
 Todos os 5 serviços expõem `GET /health` (usado pelos healthchecks do Docker Compose).
 
@@ -495,7 +516,8 @@ Além das rotas acima (via gateway), o Next.js expõe rotas próprias para `Form
 | GET | `/api/notificacoes/count` | Contagem de notificações não lidas |
 | POST | `/api/csv` | Importação de cards via CSV (multipart) |
 | POST/DELETE | `/api/uploads` | Upload/remoção de arquivo (MinIO) |
-| GET | `/api/files/:attachmentId/image` | Servir imagem de anexo |
+| GET | `/api/files/:attachmentId/image` | Servir imagem de anexo (proxy da URL assinada, só do host do storage) |
+| GET | `/api/files/:attachmentId/download?cardId=` | Abrir anexo de arquivo: confere a sessão e responde 302 para a URL assinada. É o link usado no card e em `/arquivos` |
 | GET | `/api/atas/:ataId/export` | Exportar ata (PDF/documento) |
 | GET/PATCH | `/api/projects/:projetoId/charter` · GET/POST `/charter/versions` | Termo de abertura do projeto e versões |
 | GET | `/api/projects/:projetoId/documento` · GET/POST `/documento/versions` · PATCH `/versions/:versionId` | Documento do projeto e versionamento |
