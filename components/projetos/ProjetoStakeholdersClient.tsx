@@ -33,6 +33,7 @@ import { addMemberAction, removeMemberAction } from '@/app/actions/projects'
 import { updateProjetoMemberAction } from '@/app/actions/projetos'
 import { adminCreateUserAction } from '@/app/actions/admin'
 import { parseHoras, formatHoras } from '@/lib/validation/horas'
+import PasswordInput from '@/components/ui/PasswordInput'
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -1719,8 +1720,7 @@ export default function ProjetoStakeholdersClient({
                   <label className="block text-xs font-medium text-gray-600 mb-1">
                     Senha <span className="text-red-400">*</span>
                   </label>
-                  <input
-                    type="password"
+                  <PasswordInput
                     value={formState.password}
                     onChange={e => setField('password', e.target.value)}
                     placeholder="Mínimo 8 caracteres"

@@ -3,6 +3,7 @@
 import { useActionState } from 'react'
 import Link from 'next/link'
 import { signupAction } from '@/app/actions/auth'
+import PasswordInput from '@/components/ui/PasswordInput'
 
 export function RegisterForm() {
   const [state, action, pending] = useActionState(signupAction, undefined)
@@ -43,13 +44,12 @@ export function RegisterForm() {
         <label htmlFor="password" className="text-sm font-medium text-gray-700">
           Senha
         </label>
-        <input
+        <PasswordInput
           id="password"
           name="password"
-          type="password"
           required
           autoComplete="new-password"
-          className="rounded-lg border border-gray-300 px-3 py-2 text-sm text-gray-900 focus:outline-none focus:ring-2 focus:ring-blue-500"
+          className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm text-gray-900 focus:outline-none focus:ring-2 focus:ring-blue-500"
         />
         <p className="text-xs text-gray-500">Mínimo 8 caracteres, com número e caractere especial</p>
         {state?.errors?.password && <p className="text-xs text-red-600">{state.errors.password}</p>}

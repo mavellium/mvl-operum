@@ -3,6 +3,7 @@
 import { useActionState, useState } from 'react'
 import { alterarSenhaObrigatoriaAction } from '@/app/actions/alterarSenha'
 import { PasswordCriteria } from '@/components/auth/PasswordCriteria'
+import PasswordInput from '@/components/ui/PasswordInput'
 
 export default function AlterarSenhaPage() {
   const [state, action, pending] = useActionState(alterarSenhaObrigatoriaAction, undefined)
@@ -29,10 +30,9 @@ export default function AlterarSenhaPage() {
             <label htmlFor="novaSenha" className="block text-sm font-medium text-gray-700 mb-1">
               Nova senha
             </label>
-            <input
+            <PasswordInput
               id="novaSenha"
               name="novaSenha"
-              type="password"
               required
               minLength={8}
               autoFocus
@@ -48,10 +48,9 @@ export default function AlterarSenhaPage() {
             <label htmlFor="confirmacao" className="block text-sm font-medium text-gray-700 mb-1">
               Confirmar senha
             </label>
-            <input
+            <PasswordInput
               id="confirmacao"
               name="confirmacao"
-              type="password"
               required
               autoComplete="new-password"
               placeholder="Repita a nova senha"

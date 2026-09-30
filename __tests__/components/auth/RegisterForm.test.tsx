@@ -11,7 +11,8 @@ describe('RegisterForm', () => {
     render(<RegisterForm />)
     expect(screen.getByLabelText(/nome/i)).toBeInTheDocument()
     expect(screen.getByLabelText(/email/i)).toBeInTheDocument()
-    expect(screen.getByLabelText(/senha/i)).toBeInTheDocument()
+    expect(screen.getByLabelText(/^senha$/i)).toBeInTheDocument()
+    expect(screen.getByRole('button', { name: 'Mostrar senha' })).toBeInTheDocument()
   })
 
   it('renders submit button', () => {

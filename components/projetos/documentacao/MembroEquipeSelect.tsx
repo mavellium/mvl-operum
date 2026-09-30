@@ -5,6 +5,7 @@ import Modal from '@/components/ui/Modal'
 import { useToast } from '@/components/ui/Toast'
 import { criarMembroEquipeAction } from '@/app/actions/membros'
 import { Loader2, Plus } from 'lucide-react'
+import PasswordInput from '@/components/ui/PasswordInput'
 
 export interface MembroEquipeOption {
   id: string
@@ -173,8 +174,7 @@ export default function MembroEquipeSelect({
           </div>
           <div>
             <label className={fieldCls}>Senha provisória <span className="text-red-500">*</span></label>
-            <input
-              type="password"
+            <PasswordInput
               className={inputCls}
               value={form.password}
               onChange={e => setForm(f => ({ ...f, password: e.target.value }))}

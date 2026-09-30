@@ -8,6 +8,7 @@ import {
   resetPasswordAction,
 } from '@/app/actions/auth'
 import { PasswordCriteria } from '@/components/auth/PasswordCriteria'
+import { Eye, EyeOff } from 'lucide-react'
 
 type Step = 'email' | 'code' | 'password' | 'done'
 
@@ -41,17 +42,32 @@ function FloatingInput({
   maxLength?: number; autoComplete?: string; required?: boolean
 }) {
   const floating = focused || value !== ''
+  // Senha ganha o botão de mostrar/ocultar (SDD 4.6).
+  const ehSenha = type === 'password'
+  const [visivel, setVisivel] = useState(false)
   return (
     <div className="relative">
       <input
-        id={id} name={name} type={type} required={required}
+        id={id} name={name} type={ehSenha && visivel ? 'text' : type} required={required}
         autoComplete={autoComplete} maxLength={maxLength}
         value={value} placeholder=" "
         onChange={(e) => onChange(e.target.value)}
         onFocus={onFocus} onBlur={onBlur}
-        className="w-full rounded-xl px-4 pt-6 pb-2 text-sm transition-all duration-150"
+        className={`w-full rounded-xl px-4 pt-6 pb-2 text-sm transition-all duration-150${ehSenha ? ' pr-11' : ''}`}
         style={{ ...inputBase, ...(focused ? inputFocus : {}) }}
       />
+      {ehSenha && (
+        <button
+          type="button"
+          onClick={() => setVisivel(v => !v)}
+          aria-label={visivel ? 'Ocultar senha' : 'Mostrar senha'}
+          aria-pressed={visivel}
+          className="absolute inset-y-0 right-0 flex items-center px-3.5 cursor-pointer"
+          style={{ color: 'var(--text-secondary)' }}
+        >
+          {visivel ? <EyeOff className="w-4 h-4" aria-hidden /> : <Eye className="w-4 h-4" aria-hidden />}
+        </button>
+      )}
       <label
         htmlFor={id}
         className="pointer-events-none absolute left-4 transition-all duration-150"
