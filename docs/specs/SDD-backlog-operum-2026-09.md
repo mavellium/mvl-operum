@@ -8,6 +8,11 @@
 > - Entrou o **4.1** (segurança: o file-service não confere o tenant), achado ao fazer o 8.2, e os antigos 4.1 a 4.5 viraram 4.2 a 4.6.
 > - Entraram o **8.3** (URL de upload de uso único) e o **8.4** (timer pelo MCP), que é necessário para a regra "ao começar uma tarefa, iniciar o timer".
 >
+> **Atualização (30/09):** 3 cards novos, todos na Fase 4. Os antigos 4.2 a 4.6 viraram 4.3 a 4.7.
+> - **4.2:** anexo de arquivo não abre, porque a URL é assinada com o host interno do MinIO (bug em produção, alta).
+> - **4.5:** o card das horas fracionadas foi fundido à validação de horas por dia.
+> - **4.8:** contraste do campo de renomear anexo.
+>
 > Segue a arquitetura do repo: Next.js 16 (App Router, `proxy.ts`), React 19, Prisma 7, Zod 4, Vitest 4, microsserviços NestJS atrás do api-gateway e multi-tenant via `verifySession`. Actions finas → services → auditoria.
 >
 > Marcações: **✅** causa confirmada no código • **🔎** hipótese a confirmar em produção • **⚠️ DECISÃO** pendente • **⛔** bloqueado por insumo externo.
@@ -65,11 +70,13 @@ Tarefas que pedem a mesma coisa foram **fundidas**. A tabela abaixo mostra quais
 | 3 | 3.3 | Menu: trocar o nome "Tenants" | baixa |
 | 3 | 3.4 | Adicionar controle de sessão (expirar por inatividade) | média |
 | 4 | 4.1 | Segurança: file-service não confere a instituição (tenant) dos anexos | alta (segurança) |
-| 4 | 4.2 | Ao pesquisar por um card, ele aparece, mas clicar não abre o card | média (bug) |
-| 4 | 4.3 | Ao cadastrar um novo stakeholder, já trazer a tela correta para não ter que editar de novo | média |
-| 4 | 4.4 | Validação de horas por dia no cadastro do stakeholder | média |
-| 4 | 4.5 | Redefinir senha: adicionar um olho para visualizar a senha | média |
-| 4 | 4.6 | Planilha de custos baixada: subtotal alinhado à direita | média |
+| 4 | 4.2 | Anexos: arquivo não abre, URL aponta para "minio:9000" (host interno) | alta (bug em produção) |
+| 4 | 4.3 | Ao pesquisar por um card, ele aparece, mas clicar não abre o card | média (bug) |
+| 4 | 4.4 | Ao cadastrar um novo stakeholder, já trazer a tela correta para não ter que editar de novo | média |
+| 4 | 4.5 | Validação de horas por dia no cadastro do stakeholder · Stakeholders: permitir horas fracionadas em "horas por dia" ao editar membro | média |
+| 4 | 4.6 | Redefinir senha: adicionar um olho para visualizar a senha | média |
+| 4 | 4.7 | Planilha de custos baixada: subtotal alinhado à direita | média |
+| 4 | 4.8 | Anexos: melhorar contraste do campo de editar o nome | média |
 | 5 | 5.1 | Definir o que o usuário tem de acesso · O acesso às permissões é feito em Funções e no próprio usuário | média (épico) |
 | 5 | 5.2 | Usuários comuns têm acesso a todos os documentos · Usuário comum edita e gera nova versão, aprovada pelo gerente | média |
 | 5 | 5.3 | Planilha de Custos: usuário comum edita o realizado das linhas em que é "Elaborado por" | média |
@@ -366,7 +373,7 @@ Um único combobox:
 
 ## Fase 4 — Correções rápidas (tarefas de 28/09)
 
-Tarefas criadas em 28/09/2026, depois do SDD original. São correções pequenas, sem dependência entre si. Ordem: primeiro a 4.1 (falha de segurança, achada em 29/09), depois a 4.2 (bug) e as demais.
+Tarefas criadas em 28 e 30/09/2026, depois do SDD original. São correções pequenas, sem dependência entre si. Ordem: primeiro os anexos, com a 4.1 (falha de segurança, achada em 29/09) e a 4.2 (anexo não abre em produção), que mexem nos mesmos arquivos. Depois vêm a 4.3 (bug) e as demais.
 
 ### 4.1 Segurança: file-service não confere o tenant dos anexos ✅ causa confirmada
 **Card:** "Segurança: file-service não confere a instituição (tenant) dos anexos" (alta). Achado ao fazer o 8.2.
@@ -401,14 +408,39 @@ Os ids são cuid, difíceis de adivinhar, mas vazam por log, print, export e com
 
 **Arquivos:** `file-service/src/upload/*`, `file-service/src/guards/`, `sprint-service/src/card/card.controller.ts` (rota interna), `app/actions/attachments.ts`, `lib/api-client.ts` (`filesApi` com `cardId`).
 
-### 4.2 Clicar num card da busca não abre o card ✅ causa confirmada
+### 4.2 Anexo de arquivo não abre (URL com o host interno do MinIO) ✅ causa confirmada
+**Card:** "Anexos: arquivo não abre, URL aponta para 'minio:9000' (host interno)" (alta), criado em 30/09.
+
+**Problema:** clicar num anexo de arquivo não faz nada. Depois de vários cliques, o navegador abre `http://minio:9000/mvloperum-prod/uploads/...?X-Amz-...` e dá "Server Not Found".
+
+**Causa:**
+1. **URL assinada com o host interno.** `MinioService.getPresignedUrl` (`file-service/src/minio/minio.service.ts`) assina com o mesmo `S3Client` do upload, cujo endpoint é `http://${MINIO_ENDPOINT}:${MINIO_PORT}` = `http://minio:9000`, o nome do container. A assinatura SigV4 inclui o host, então não dá para trocar o host depois de assinar.
+2. **Efeito colateral:** a rota das miniaturas e da capa (`app/api/files/[attachmentId]/image/route.ts`) só aceita URL assinada do host de `MINIO_PUBLIC_URL` (`isSafePresignedUrl`). Com o host `minio`, ela responde 400 "URL de origem não autorizada". As imagens dos cards também devem estar quebradas em produção.
+3. **Vários cliques:** "Ver arquivo" no `CardModal` chama uma server action e só depois faz `window.open`. A janela abre fora do clique do usuário, e o bloqueador de pop-up (Firefox) pode barrar.
+
+**Solução:**
+- **file-service:** um segundo `S3Client` só para assinar, com `endpoint` = `MINIO_PUBLIC_URL` (`https://storage-prod.operum.adm.br`) e `forcePathStyle`. Assinar não faz chamada de rede, então o container não precisa alcançar o host público para isso. Upload, exclusão e leitura continuam no cliente interno.
+- **Rota de download no app:** `app/api/files/[attachmentId]/download?cardId=` confere a sessão, o card no tenant e se o anexo é desse card (a mesma checagem da 4.1). Depois responde 302 para a URL assinada.
+  - O anexo vira um link de verdade (`<a href>`), sem `window.open` depois de um `await`, então o primeiro clique abre.
+  - Imagem abre num **lightbox** dentro do card, usando a rota `/image`. Os outros tipos abrem em nova aba.
+- **Proxy de imagem** (`/image`): continua buscando a URL assinada pelo servidor. Se o container do app não alcançar o host público (hairpin), ele passa a pedir ao file-service uma URL assinada com o endpoint interno, só para esse uso.
+- **MCP:** `operum_get_task` passa a devolver `download_url` (URL assinada pública, válida por 1 h) nos anexos de arquivo. Hoje vêm sem URL.
+
+**BDD:**
+- Dado o anexo `eap-menu-organizar.jpg` no card, quando o usuário clica uma vez no nome, pelo Firefox e fora da rede do servidor, então a imagem abre num lightbox.
+- Dado um PDF anexado, quando o usuário clica, então o PDF abre em nova aba, a partir de `https://storage-prod.operum.adm.br/...`.
+- Dado um card com imagem de capa, quando o quadro carrega, então a capa aparece.
+
+**Arquivos:** `file-service/src/minio/minio.service.ts`, `app/api/files/[attachmentId]/download/route.ts` (nova), `components/card/CardModal.tsx` (link e lightbox), `components/card/CardAttachments.tsx`, `mcp-server/src/tools/tasks.ts`, `mcp-server/src/serializers.ts`.
+
+### 4.3 Clicar num card da busca não abre o card ✅ causa confirmada
 **Problema:** a busca mostra o card, mas clicar nele não abre o card.
 
 **Causa:** o clique navega para `/projetos/:p/sprints/:s?card=<id>`, e o `SprintBoard` só lê o card da URL na montagem (`useState(initialCardId)`, em `components/sprint/SprintBoard.tsx`). Quando o usuário já está numa sprint, o Next reaproveita o componente e o `?card=` novo é ignorado. O mesmo acontece ao ir para outra sprint pela busca. O bug continua depois da Fase 2, que mudou a busca, mas não o board.
 
 **Solução:** o board passa a reagir à mudança de `initialCardId`, abrindo o card sempre que a URL traz um `?card=` diferente. Ao fechar o card, o `?card=` sai da URL (`router.replace`), para que clicar de novo no mesmo resultado também funcione. Teste: renderizar o board, trocar o `initialCardId` e ver o modal abrir.
 
-### 4.3 Stakeholder novo já "na tela certa" ✅ causa confirmada
+### 4.4 Stakeholder novo já "na tela certa" ✅ causa confirmada
 **Problema:** depois de cadastrar um stakeholder, é preciso abri-lo de novo em "Editar" para completar os dados.
 
 **Causa:** em `components/projetos/ProjetoStakeholdersClient.tsx` → `handleSave`:
@@ -420,25 +452,54 @@ Os ids são cuid, difíceis de adivinhar, mas vazam por log, print, export e com
 1. Depois de criar e vincular um membro, gravar na mesma ação os dados do projeto (cargos, departamento, remuneração, horas/dia) pelo mesmo caminho da edição (`updateProjetoMemberAction`).
 2. Ao terminar qualquer criação (formulário ou busca), abrir o stakeholder recém-criado **em modo de edição**, com os dados preenchidos, em vez de fechar o formulário.
 
-### 4.4 Validação de horas por dia
-**Problema:** o campo "Horas por dia" do stakeholder aceita qualquer valor positivo (ex.: 30). O servidor (`app/actions/projetos.ts`) só exige que seja maior que zero, e o valor entra no cálculo de valor/hora e da planilha de custos.
+### 4.5 Horas por dia: fracionadas e validadas ✅ causa confirmada
+**Cards (fundidos):** "Validação de horas por dia no cadastro do stakeholder" (28/09) e "Stakeholders: permitir horas fracionadas em 'horas por dia' ao editar membro" (30/09).
+
+**Problema:**
+- o campo aceita qualquer valor positivo (ex.: 30);
+- ao editar um membro, não dá para informar 8,5 (8h30).
+
+**Causa:**
+- **Banco:** já é decimal (`horasDiarias Float?`, no app e no project-service). Os cálculos (`lib/planilhaCustos.ts`, `lib/cardUtils.ts`, `lib/custosCalc.ts`) já usam número fracionado.
+- **Campo:** o input é `type="number" step="0.5"` (`ProjetoStakeholdersClient.tsx`). No Firefox, um `type="number"` com **vírgula** ("8,5") entrega valor vazio. O código faz `parseFloat('') || undefined` e **descarta sem avisar**. "8:30" não é aceito em nenhum navegador, e o `step="0.5"` recusa 8,25.
+- **Servidor:** `app/actions/projetos.ts` faz `Number(raw)`, e `Number("8,5")` é `NaN`, também ignorado em silêncio. Aceita qualquer valor acima de zero.
 
 **Solução:**
-- regra única em `lib/validation`: número maior que 0 e até 24, com no máximo 2 casas decimais;
-- mensagem no próprio campo ("Informe entre 0,5 e 24 horas");
-- o botão Salvar fica bloqueado enquanto o valor for inválido;
-- a mesma validação na action, porque o cliente não é confiável;
-- aceitar vírgula como separador decimal ("7,5").
+- **Regra única** em `lib/validation/horas.ts`: `parseHoras(texto)` aceita "8", "8,5", "8.5" e "8:30" (todos viram 8,5). O resultado precisa ser maior que 0 e no máximo 24, com até 2 casas decimais.
+- **Campo:** `type="text" inputMode="decimal"`. Mostra a conversão ao lado ("8:30 = 8,5 h") e o erro no próprio campo ("Informe entre 0,5 e 24 horas", por exemplo "8,5" ou "8:30"). O Salvar fica bloqueado enquanto o valor for inválido. Nunca descartar em silêncio.
+- **Servidor:** a action usa o mesmo `parseHoras` e responde com erro se o valor for inválido, porque o cliente não é confiável.
+- **Cálculos:** testes com 8,5 h no valor/hora, na planilha de custos e no custo do card.
 
-### 4.5 Olho para mostrar a senha
+**BDD:**
+- Dado o membro em edição, quando o usuário digita "8,5" no Firefox e salva, então o valor volta como 8,5 depois de recarregar.
+- Quando digita "8:30", então o campo mostra "= 8,5 h" e salva 8,5.
+- Quando digita "30", então aparece o erro e o Salvar fica bloqueado. Se o valor chegar ao servidor mesmo assim, a action recusa.
+
+### 4.6 Olho para mostrar a senha
 **Problema:** só o login tem o botão de mostrar a senha. As telas de redefinir senha (`RecuperarSenhaForm`), primeiro acesso (`app/alterar-senha`), perfil (`ChangePasswordForm`) e cadastro de usuário (admin e stakeholders) não têm.
 
 **Solução:** um componente `PasswordInput`, com o botão de olho, `aria-label` "Mostrar senha"/"Ocultar senha" e `aria-pressed`, extraído do `LoginForm` e usado em todos os campos de senha.
 
-### 4.6 Subtotal da planilha exportada alinhado à direita
+### 4.7 Subtotal da planilha exportada alinhado à direita
 **Problema:** em `lib/exports/planilhaCustosXlsx.ts`, o rótulo "Sub-total …" (células A:C mescladas) fica alinhado à esquerda.
 
 **Solução:** `alignment: { horizontal: 'right' }` no rótulo do subtotal e também no do "TOTAL GERAL", para ficarem consistentes. Teste lendo o `.xlsx` gerado com o exceljs.
+
+### 4.8 Contraste do campo de renomear anexo ✅ causa confirmada
+**Card:** "Anexos: melhorar contraste do campo de editar o nome" (média), criado em 30/09.
+
+**Problema:** ao renomear um anexo, o texto digitado fica cinza-claro sobre o fundo branco e quase não se lê.
+
+**Causa:** o `app/globals.css` ainda tem o bloco `@media (prefers-color-scheme: dark)` do template do Next, que troca `--foreground` para `#ededed`, e o `body` usa essa cor. O app não tem tema escuro: o modal do card é sempre claro. O input de renomear (`CardModal.tsx`) não define cor de texto nem de fundo, e o Tailwind faz o input herdar a cor. Com o sistema operacional em modo escuro, o texto sai quase branco no fundo branco. Outros inputs sem cor explícita têm o mesmo problema.
+
+**Solução:**
+- input de renomear com `text-slate-800 bg-white` e foco visível (`focus:ring-2`), com contraste de pelo menos 4,5:1 (WCAG AA);
+- remover o bloco de modo escuro do `globals.css`, que não corresponde a nenhum tema do app, ou ao menos parar de aplicá-lo ao `body`;
+- varrer os inputs sem cor explícita (`grep` por `<input` sem `text-`) nos modais e formulários, e corrigir os que herdam cor.
+
+**BDD:** dado o sistema em modo escuro, quando o usuário renomeia um anexo, então o texto digitado aparece escuro sobre o fundo branco.
+
+**Arquivos:** `components/card/CardModal.tsx`, `app/globals.css`.
 
 ---
 
