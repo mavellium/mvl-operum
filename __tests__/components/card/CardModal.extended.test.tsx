@@ -300,3 +300,43 @@ describe('CardModal — anexo de link', () => {
     expect(screen.queryByTestId('anexo-link-miniatura')).not.toBeInTheDocument()
   })
 })
+
+describe('CardModal — abrir anexo de arquivo (SDD 4.2)', () => {
+  const arquivo = (id: string, fileName: string, fileType: string) => ({
+    id, fileName, fileType, filePath: `https://storage/operum/uploads/c1/${id}`, fileSize: 1024, uploadedAt: Date.now(),
+  })
+
+  it('PDF: o nome é um link para a rota de download (abre no primeiro clique, sem window.open)', () => {
+    const open = vi.spyOn(window, 'open')
+    render(<CardModal {...defaultProps} attachments={[arquivo('a1', 'ata.pdf', 'application/pdf')]} />)
+    const link = screen.getByRole('link', { name: 'ata.pdf' })
+    expect(link).toHaveAttribute('href', '/api/files/a1/download?cardId=c1')
+    expect(link).toHaveAttribute('target', '_blank')
+    expect(screen.getByRole('link', { name: 'Abrir ata.pdf' })).toHaveAttribute('href', '/api/files/a1/download?cardId=c1')
+    expect(open).not.toHaveBeenCalled()
+  })
+
+  it('imagem: abre no lightbox, com link para nova aba; Esc fecha só o lightbox', async () => {
+    const user = userEvent.setup()
+    const onClose = vi.fn()
+    render(<CardModal {...defaultProps} onClose={onClose} attachments={[arquivo('a2', 'eap-menu-organizar.jpg', 'image/jpeg')]} />)
+
+    await user.click(screen.getByRole('button', { name: 'eap-menu-organizar.jpg' }))
+    const lightbox = screen.getByRole('dialog', { name: 'Visualizar eap-menu-organizar.jpg' })
+    expect(lightbox.querySelector('img')).toHaveAttribute('src', '/api/files/a2/image')
+    expect(screen.getByRole('link', { name: 'Abrir em nova aba' })).toHaveAttribute('href', '/api/files/a2/download?cardId=c1')
+
+    await user.keyboard('{Escape}')
+    expect(screen.queryByRole('dialog', { name: /Visualizar/ })).not.toBeInTheDocument()
+    expect(onClose).not.toHaveBeenCalled()
+    expect(screen.getByText('Anexos')).toBeInTheDocument()
+  })
+
+  it('botão de fechar do lightbox', async () => {
+    const user = userEvent.setup()
+    render(<CardModal {...defaultProps} attachments={[arquivo('a2', 'foto.png', 'image/png')]} />)
+    await user.click(screen.getByRole('button', { name: 'Ver foto.png' }))
+    await user.click(screen.getByRole('button', { name: 'Fechar visualização' }))
+    expect(screen.queryByRole('dialog', { name: /Visualizar/ })).not.toBeInTheDocument()
+  })
+})

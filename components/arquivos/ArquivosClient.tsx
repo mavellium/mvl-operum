@@ -147,9 +147,10 @@ export default function ArquivosClient({ initialAttachments }: Props) {
               </tr>
             )}
             {filtered.map(a => {
-              // Link: abre a URL (só http/https); arquivo: baixa.
+              // Link: abre a URL (só http/https). Arquivo: pela rota que confere a
+              // sessão e redireciona para a URL assinada (o filePath não abre direto).
               const link = isLinkAttachment(a.fileType)
-              const href = link ? linkHref(a.filePath) : a.filePath
+              const href = link ? linkHref(a.filePath) : `/api/files/${a.id}/download?cardId=${encodeURIComponent(a.card.id)}`
               return (
               <tr key={a.id} className="border-b border-gray-50 last:border-0 hover:bg-gray-50">
                 <td className="px-4 py-3">

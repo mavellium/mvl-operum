@@ -12,7 +12,7 @@ type Row = Record<string, unknown> & { id: string }
 const STATIC_SEGMENTS = new Set([
   'auth', 'me', 'my-tenants', 'all-users', 'projects', 'user', 'members', 'macro-fases', 'stakeholders',
   'tags', 'sprints', 'columns', 'cards', 'backlog', 'responsibles', 'comments', 'movements', 'audit',
-  'files', 'upload', 'link', 'by-cards',
+  'files', 'upload', 'link', 'by-cards', 'url',
   'time-entries', 'running', 'start', 'stop', 'manual',
 ])
 
@@ -396,6 +396,12 @@ export class FakeOperum {
       case 'GET /files/by-cards': {
         const ids = (q.cardIds ?? '').split(',').filter(Boolean)
         return this.attachments.filter(a => ids.includes(a.cardId as string) && !a.deletedAt)
+      }
+      case 'GET /files/:id/url': {
+        // Como o file-service depois da 4.1: com cardId, o anexo precisa ser desse card.
+        const a = this.attachments.find(a => a.id === seg[1] && !a.deletedAt && (!q.cardId || a.cardId === q.cardId))
+        if (!a) throw httpError(404, 'Anexo não encontrado')
+        return { url: a.fileType === 'text/uri-list' ? a.filePath : `https://storage.test/operum/${a.id}?X-Amz-Signature=fake` }
       }
       case 'DELETE /files/:id': {
         const a = this.attachments.find(a => a.id === seg[1] && !a.deletedAt)

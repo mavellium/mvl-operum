@@ -19,7 +19,10 @@ describe('ArquivosClient — links', () => {
     const abrir = screen.getAllByRole('link', { name: 'Abrir' })
     expect(abrir).toHaveLength(1)
     expect(abrir[0]).toHaveAttribute('href', 'https://youtu.be/dQw4w9WgXcQ')
-    expect(screen.getAllByRole('link', { name: 'Download' })).toHaveLength(1)
+    const download = screen.getAllByRole('link', { name: 'Download' })
+    expect(download).toHaveLength(1)
+    // Arquivo abre pela rota que assina a URL; o filePath (storage privado) não abre direto.
+    expect(download[0]).toHaveAttribute('href', '/api/files/a1/download?cardId=c1')
   })
 
   it('filtro "Links" mostra só os links', async () => {

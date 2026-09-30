@@ -24,7 +24,7 @@ import {
   patchCardAction,
 } from '@/app/actions/sprintBoard'
 import { createCommentAction, getCommentsAction, updateCommentAction, deleteCommentAction } from '@/app/actions/comentarios'
-import { deleteAttachmentAction, setCoverAction, renameAttachmentAction, getAttachmentUrlAction } from '@/app/actions/attachments'
+import { deleteAttachmentAction, setCoverAction, renameAttachmentAction } from '@/app/actions/attachments'
 import { addResponsibleAction } from '@/app/actions/cardResponsible'
 import { fetchWithSession } from '@/lib/clientFetch'
 import { aplicarFiltros, filtrosAtivos, FILTROS_PADRAO, type CardFilters } from '@/lib/cardFilters'
@@ -715,12 +715,6 @@ export default function SprintBoard({ sprint, columns: initialColumns, backlogCa
               if (!openCardId) return
               const att = await uploadCardAttachment(openCardId, file)
               if (att) patchCardState(openCardId, c => ({ ...c, attachments: [...(c.attachments ?? []), toSprintAttachment(att)] }))
-            }}
-            onAttachmentView={async (attachmentId) => {
-              if (!openCardId) return null
-              const result = await getAttachmentUrlAction(attachmentId, openCardId)
-              if ('error' in result) { toast(result.error as string, 'error'); return null }
-              return result.url
             }}
             onAttachmentRename={async (attachmentId, newName) => {
               if (!openCardId) return
