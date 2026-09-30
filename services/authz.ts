@@ -10,6 +10,7 @@ import {
   isPermissao,
   resolverPermissoes,
   type Ajuste,
+  type EntradaResolucao,
   type Permissao,
 } from '@/lib/permissoes'
 
@@ -42,11 +43,12 @@ function paraAjustes(linhas: (LinhaPermissao & { effect: 'GRANT' | 'DENY' })[]):
   })
 }
 
-/** Permissões do usuário no projeto. Memorizado por requisição (argumentos primitivos). */
-export const permissoesNoProjeto = cache(
-  async (userId: string, tenantId: string, role: string, projectId: string): Promise<Set<Permissao>> => {
-    if (role === 'admin') return new Set(TODAS)
-
+/**
+ * Entrada da resolução para um usuário (não admin) num projeto: base, funções
+ * e ajustes, já lidos do banco. Memorizado por requisição (argumentos primitivos).
+ */
+export const entradaDoUsuario = cache(
+  async (userId: string, tenantId: string, projectId: string): Promise<EntradaResolucao> => {
     const [projeto, vinculo, papelGerente, funcoes, ajustes] = await Promise.all([
       prisma.project.findFirst({ where: { id: projectId, tenantId, deletedAt: null }, select: { id: true } }),
       prisma.userProject.findUnique({
@@ -77,7 +79,7 @@ export const permissoesNoProjeto = cache(
       f => f !== base && (cargos.has(funcaoKey(f.name)) || f.id === papelGerente?.roleId),
     )
 
-    return resolverPermissoes({
+    return {
       admin: false,
       membro: Boolean(projeto && vinculo?.active),
       base: base?.permissoesDefinidasEm ? paraPermissoes(base.permissions) : null,
@@ -87,9 +89,20 @@ export const permissoesNoProjeto = cache(
       })),
       ajustesGlobais: paraAjustes(ajustes.filter(a => a.projectId === null)),
       ajustesProjeto: paraAjustes(ajustes.filter(a => a.projectId === projectId)),
-    })
+    }
   },
 )
+
+/** Permissões do usuário no projeto. */
+export async function permissoesNoProjeto(
+  userId: string,
+  tenantId: string,
+  role: string,
+  projectId: string,
+): Promise<Set<Permissao>> {
+  if (role === 'admin') return new Set(TODAS)
+  return resolverPermissoes(await entradaDoUsuario(userId, tenantId, projectId))
+}
 
 export async function can(sessao: SessaoAuthz, projectId: string, permissao: Permissao): Promise<boolean> {
   return (await permissoesNoProjeto(sessao.userId, sessao.tenantId, sessao.role, projectId)).has(permissao)
