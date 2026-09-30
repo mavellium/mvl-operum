@@ -6,6 +6,15 @@ ENV PNPM_HOME="/pnpm"
 ENV PATH="$PNPM_HOME:$PNPM_HOME/bin:$PATH"
 RUN corepack enable
 
+# ── Stage: Download Prisma schema-engine ──────────────────────────────────────
+FROM node:22-alpine AS engine-dl
+RUN apk update && apk upgrade --no-cache libcrypto3 libssl3
+RUN npm install -g prisma@7.7.0 \
+ && find /usr/local/lib/node_modules -name "schema-engine-linux-musl-openssl-3.0.x" -type f \
+     | head -1 \
+     | xargs cp -t /tmp/ \
+ && test -f /tmp/schema-engine-linux-musl-openssl-3.0.x
+
 # ── Stage 1: Install dependencies ─────────────────────────────────────────────
 FROM base AS deps
 WORKDIR /app
@@ -16,6 +25,11 @@ RUN pnpm install --frozen-lockfile --ignore-scripts
 FROM base AS builder
 WORKDIR /app
 COPY --from=deps /app/node_modules ./node_modules
+# Copy schema-engine binary from engine-dl stage so prisma generate doesn't
+# need to download it (avoids network flakes in CI).
+COPY --from=engine-dl /tmp/schema-engine-linux-musl-openssl-3.0.x /usr/local/bin/prisma-schema-engine
+RUN chmod 755 /usr/local/bin/prisma-schema-engine
+ENV PRISMA_SCHEMA_ENGINE_BINARY=/usr/local/bin/prisma-schema-engine
 COPY . .
 # Set NODE_ENV before build so tree-shaking eliminates dev code paths.
 ENV NODE_ENV=production

@@ -25,6 +25,11 @@ RUN pnpm install --frozen-lockfile --ignore-scripts
 FROM base AS builder
 WORKDIR /app
 COPY --from=deps /app/node_modules ./node_modules
+# Copy schema-engine binary from engine-dl stage so prisma generate doesn't
+# need to download it (avoids network flakes in CI).
+COPY --from=engine-dl /tmp/schema-engine-linux-musl-openssl-3.0.x /usr/local/bin/prisma-schema-engine
+RUN chmod 755 /usr/local/bin/prisma-schema-engine
+ENV PRISMA_SCHEMA_ENGINE_BINARY=/usr/local/bin/prisma-schema-engine
 COPY . .
 ENV NODE_ENV=production
 RUN pnpm exec prisma generate
