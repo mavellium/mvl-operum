@@ -202,6 +202,7 @@ export async function gerarPlanilhaXlsx(
 
     if (fase.atividades.length === 0) {
       ws.getCell(nextRow, 1).value = 'Sub-total (sem atividades)'
+      ws.getCell(nextRow, 1).alignment = { horizontal: 'right', vertical: 'middle' }
     } else {
       // Sub-total da macrofase (cinza)
       const s = nextRow
@@ -209,6 +210,8 @@ export async function gerarPlanilhaXlsx(
       ws.mergeCells(`A${s}:C${s}`)
       ws.getCell(s, 1).value = `Sub-total ${fase.codigo} ${fase.titulo}`
       ws.getCell(s, 1).font = { bold: true, italic: true }
+      // Rótulo encostado nos valores (SDD 4.7), no modelo do Prof. Fábio.
+      ws.getCell(s, 1).alignment = { horizontal: 'right', vertical: 'middle' }
       const cols = [4, 5, 6, 7, 8, 9, 11, 12, 13, 14, 15, 16]
       for (const c of cols) {
         const letter = ws.getColumn(c).letter
@@ -234,6 +237,7 @@ export async function gerarPlanilhaXlsx(
     ws.mergeCells(`A${t}:C${t}`)
     ws.getCell(t, 1).value = 'TOTAL GERAL'
     ws.getCell(t, 1).font = { bold: true, size: 12 }
+    ws.getCell(t, 1).alignment = { horizontal: 'right', vertical: 'middle' }
     const lista = subTotalRows.join(',')
     const cols = [4, 5, 6, 7, 8, 9, 11, 12, 13, 14, 15, 16]
     for (const c of cols) {
