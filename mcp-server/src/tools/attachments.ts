@@ -2,7 +2,7 @@ import { z } from 'zod'
 import type { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js'
 import type { TenantContext, TenantRegistry } from '../tenants.js'
 import type { Gateway } from '../gateway.js'
-import { audit, confirmShape, defineTool, requireConfirm } from '../tool.js'
+import { audit, confirmShape, defineTool, idSchema, requireConfirm } from '../tool.js'
 import { serializeAttachment } from '../serializers.js'
 import { UserError } from '../errors.js'
 import { safeDownload, type Downloader } from '../download.js'
@@ -26,9 +26,6 @@ export interface AttachmentDeps {
 }
 
 export const defaultAttachmentDeps: AttachmentDeps = { download: safeDownload }
-
-/** Ids do Operum são cuid: barra ou ponto no id mudariam o caminho chamado no gateway. */
-const idSchema = z.string().regex(/^[A-Za-z0-9_-]{1,64}$/, 'id inválido')
 
 const BY_CARDS_BATCH = 100
 

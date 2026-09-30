@@ -6,6 +6,7 @@ import { registerSprintTools } from './tools/sprints.js'
 import { registerTaskTools } from './tools/tasks.js'
 import { registerMigrationTools } from './tools/migration.js'
 import { registerAttachmentTools, defaultAttachmentDeps, type AttachmentDeps } from './tools/attachments.js'
+import { registerTimeTools } from './tools/time.js'
 
 export const SERVER_INSTRUCTIONS = [
   'Operum: gestão de projetos. Hierarquia: tenant → projeto → sprint → coluna → tarefa (card).',
@@ -24,6 +25,7 @@ export function buildServer(registry: TenantRegistry, deps: { attachments?: Atta
   registerSprintTools(server, registry)
   registerTaskTools(server, registry)
   registerAttachmentTools(server, registry, deps.attachments ?? defaultAttachmentDeps)
+  registerTimeTools(server, registry)
   registerMigrationTools(server, registry)
 
   return server

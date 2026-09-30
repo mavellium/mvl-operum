@@ -13,6 +13,7 @@ const STATIC_SEGMENTS = new Set([
   'auth', 'me', 'my-tenants', 'all-users', 'projects', 'user', 'members', 'macro-fases', 'stakeholders',
   'tags', 'sprints', 'columns', 'cards', 'backlog', 'responsibles', 'comments', 'movements', 'audit',
   'files', 'upload', 'link', 'by-cards',
+  'time-entries', 'running', 'start', 'stop', 'manual',
 ])
 
 let seq = 0
@@ -52,6 +53,7 @@ export class FakeOperum {
   /** file-service: como o real, não conhece tenant (quem valida o card é o chamador). */
   attachments: Row[] = []
   attachmentBytes = new Map<string, Buffer>()
+  timeEntries: Row[] = []
   audit: Row[] = []
   calls: { tenantId: string; method: string; path: string; body?: unknown }[] = []
   /** Permite simular falhas: retorna um erro para interromper a chamada. */
@@ -120,6 +122,7 @@ export class FakeOperum {
           const u = this.users.find(u => u.id === r.userId)!
           return { ...r, user: { id: u.id, name: u.name, email: u.email } }
         }),
+      timeEntries: this.timeEntries.filter(e => e.cardId === c.id && !e.deletedAt),
       ...(withComments ? { comments: this.commentsOf(c.id) } : {}),
     }
   }
@@ -329,6 +332,47 @@ export class FakeOperum {
       }
       case 'GET /audit':
         return this.audit.filter(a => a.tenantId === t && (!q.entity || a.entity === q.entity) && (!q.entityId || a.entityId === q.entityId))
+
+      // sprint-service: um timer rodando por usuário (userId é por tenant).
+      case 'GET /time-entries/running': {
+        const e = this.timeEntries.find(e => e.userId === user.id && e.isRunning && !e.deletedAt)
+        if (!e) return { entry: null }
+        const c = this.cards.find(c => c.id === e.cardId)
+        return { entry: { ...e, card: c ? { id: c.id, title: c.title, sprintId: c.sprintId ?? null, deletedAt: null } : null } }
+      }
+      case 'POST /cards/:id/time-entries/start': {
+        this.card(t, seg[1])
+        if (this.timeEntries.some(e => e.userId === user.id && e.isRunning && !e.deletedAt)) {
+          throw httpError(400, 'Já existe um timer em andamento')
+        }
+        const e = {
+          id: newId('te'), cardId: seg[1], userId: user.id, startedAt: now, endedAt: null, duration: 0,
+          isRunning: true, isManual: false, description: body.description ?? null, deletedAt: null,
+        }
+        this.timeEntries.push(e)
+        return e
+      }
+      case 'POST /time-entries/:id/stop': {
+        const e = this.timeEntries.find(e => e.id === seg[1] && !e.deletedAt)
+        if (!e || e.userId !== user.id) throw httpError(404, 'Time entry não encontrada')
+        const ended = new Date()
+        Object.assign(e, {
+          endedAt: ended.toISOString(),
+          duration: Math.floor((ended.getTime() - Date.parse(String(e.startedAt))) / 1000),
+          isRunning: false,
+        })
+        return e
+      }
+      case 'POST /cards/:id/time-entries/manual': {
+        this.card(t, seg[1])
+        const e = {
+          id: newId('te'), cardId: seg[1], userId: user.id, startedAt: body.startedAt, endedAt: body.endedAt,
+          duration: Math.floor((Date.parse(String(body.endedAt)) - Date.parse(String(body.startedAt))) / 1000),
+          isRunning: false, isManual: true, description: body.description ?? null, deletedAt: null,
+        }
+        this.timeEntries.push(e)
+        return e
+      }
 
       case 'POST /files/upload': {
         const bytes = body.bytes as Buffer

@@ -15,7 +15,7 @@ const READ_CONCURRENCY = 4
 const ATTACHMENTS_UNAVAILABLE = 'Não foi possível carregar os anexos agora (serviço de arquivos). Tente de novo.'
 const MAX_BULK = 100
 
-type RawCard = Record<string, unknown>
+export type RawCard = Record<string, unknown>
 type RawSprint = Record<string, unknown> & { sprintColumns?: Record<string, unknown>[] }
 
 /** Nomes de sprint/coluna para enriquecer tarefas vindas de endpoints que não os incluem. */
@@ -92,7 +92,7 @@ async function firstColumnId(ctx: TenantContext, sprintId: string): Promise<stri
   return String(first.id)
 }
 
-async function nextSprintPosition(ctx: TenantContext, sprintId: string, columnId: string): Promise<number> {
+export async function nextSprintPosition(ctx: TenantContext, sprintId: string, columnId: string): Promise<number> {
   const cards = await ctx.gw.get<RawCard[]>(`/sprints/${sprintId}/cards`)
   return cards.filter(c => c.sprintColumnId === columnId).length
 }
