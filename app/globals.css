@@ -20,12 +20,10 @@
   --font-mono: var(--font-geist-mono);
 }
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
-  }
-}
+/* Sem bloco prefers-color-scheme: dark. O app só tem tema claro, e o bloco do
+   template do Next trocava o texto do body para #ededed no sistema em modo
+   escuro; campos que herdam a cor ficavam quase brancos no fundo branco
+   (SDD 4.8, campo de renomear anexo). */
 
 body {
   background: var(--background);
@@ -44,8 +42,13 @@ label {
   color: #374151; /* gray-700 — contraste forte para labels */
 }
 
-/* Ensure form inputs have readable text */
+/* Ensure form inputs have readable text. `input:not([type])` cobre campos sem
+   o atributo type (ex.: renomear anexo), que antes herdavam a cor do body. */
+input:not([type]),
 input[type="text"],
+input[type="search"],
+input[type="tel"],
+input[type="url"],
 input[type="email"],
 input[type="password"],
 input[type="number"],

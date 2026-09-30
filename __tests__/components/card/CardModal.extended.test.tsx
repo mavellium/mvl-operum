@@ -340,3 +340,23 @@ describe('CardModal — abrir anexo de arquivo (SDD 4.2)', () => {
     expect(screen.queryByRole('dialog', { name: /Visualizar/ })).not.toBeInTheDocument()
   })
 })
+
+describe('CardModal — campo de renomear anexo legível (SDD 4.8)', () => {
+  it('tem cor de texto e fundo próprios (não herda a cor do body) e foco visível', async () => {
+    const user = userEvent.setup()
+    const onAttachmentRename = vi.fn()
+    render(
+      <CardModal
+        {...defaultProps}
+        onAttachmentRename={onAttachmentRename}
+        attachments={[{ id: 'a1', fileName: 'ata.pdf', fileType: 'application/pdf', filePath: '/x', fileSize: 10, uploadedAt: Date.now() }]}
+      />,
+    )
+    await user.click(screen.getByTitle('Renomear'))
+    const campo = screen.getByRole('textbox', { name: 'Novo nome do anexo' })
+    expect(campo).toHaveValue('ata.pdf')
+    expect(campo.className).toMatch(/\btext-slate-900\b/)
+    expect(campo.className).toMatch(/\bbg-white\b/)
+    expect(campo.className).toMatch(/\bfocus:ring-2\b/)
+  })
+})

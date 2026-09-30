@@ -656,7 +656,8 @@ export default function CardModal({
                                 autoFocus
                                 value={renameValue}
                                 onChange={e => setRenameValue(e.target.value)}
-                                className="flex-1 min-w-0 border border-slate-300 rounded px-1.5 py-0.5 text-xs focus:outline-none focus:ring-1 focus:ring-blue-400"
+                                aria-label="Novo nome do anexo"
+                                className="flex-1 min-w-0 rounded border border-slate-500 bg-white px-1.5 py-0.5 text-xs text-slate-900 focus:outline-none focus:border-blue-600 focus:ring-2 focus:ring-blue-500/40"
                               />
                               <button type="submit" className="text-xs text-blue-600 hover:text-blue-800 cursor-pointer shrink-0">OK</button>
                               <button type="button" onClick={() => setRenamingId(null)} className="text-xs text-slate-400 hover:text-slate-600 cursor-pointer shrink-0">Cancelar</button>
