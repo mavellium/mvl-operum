@@ -266,6 +266,9 @@ importers:
       nodemailer:
         specifier: ^9.1.1
         version: 9.1.1
+      dotenv:
+        specifier: ^17.4.1
+        version: 17.4.2
       pg:
         specifier: ^8.20.0
         version: 8.21.0
@@ -300,9 +303,6 @@ importers:
       '@types/uuid':
         specifier: ^10.0.0
         version: 10.0.0
-      dotenv:
-        specifier: ^17.4.1
-        version: 17.4.2
       prisma:
         specifier: ^7.7.0
         version: 7.7.0(@types/node@20.19.41)(@types/react-dom@19.2.3(@types/react@19.2.16))(@types/react@19.2.18)(react-dom@19.2.4(react@19.2.4))(react@19.2.4)(typescript@5.9.3)
@@ -348,6 +348,9 @@ importers:
       multer:
         specifier: '>=2.3.0'
         version: 2.4.0
+      dotenv:
+        specifier: ^17.4.1
+        version: 17.4.2
       pg:
         specifier: ^8.13.0
         version: 8.21.0
@@ -382,9 +385,6 @@ importers:
       '@types/uuid':
         specifier: ^10.0.0
         version: 10.0.0
-      dotenv:
-        specifier: ^17.4.1
-        version: 17.4.2
       prisma:
         specifier: ^7.7.0
         version: 7.7.0(@types/node@20.19.41)(@types/react-dom@19.2.3(@types/react@19.2.16))(@types/react@19.2.18)(react-dom@19.2.4(react@19.2.4))(react@19.2.4)(typescript@5.9.3)
@@ -455,6 +455,9 @@ importers:
       class-validator:
         specifier: ^0.15.1
         version: 0.15.1
+      dotenv:
+        specifier: ^17.4.1
+        version: 17.4.2
       pg:
         specifier: ^8.13.0
         version: 8.21.0
@@ -483,9 +486,6 @@ importers:
       '@types/pg':
         specifier: ^8.20.0
         version: 8.20.0
-      dotenv:
-        specifier: ^17.4.1
-        version: 17.4.2
       prisma:
         specifier: ^7.7.0
         version: 7.7.0(@types/node@20.19.41)(@types/react-dom@19.2.3(@types/react@19.2.16))(@types/react@19.2.18)(react-dom@19.2.4(react@19.2.4))(react@19.2.4)(typescript@5.9.3)
@@ -519,6 +519,9 @@ importers:
       class-validator:
         specifier: ^0.15.1
         version: 0.15.1
+      dotenv:
+        specifier: ^17.4.1
+        version: 17.4.2
       pg:
         specifier: ^8.13.0
         version: 8.21.0
@@ -544,9 +547,6 @@ importers:
       '@types/pg':
         specifier: ^8.20.0
         version: 8.20.0
-      dotenv:
-        specifier: ^17.4.1
-        version: 17.4.2
       prisma:
         specifier: ^7.7.0
         version: 7.7.0(@types/node@20.19.41)(@types/react-dom@19.2.3(@types/react@19.2.16))(@types/react@19.2.18)(react-dom@19.2.4(react@19.2.4))(react@19.2.4)(typescript@5.9.3)
@@ -583,6 +583,9 @@ importers:
       class-validator:
         specifier: ^0.15.1
         version: 0.15.1
+      dotenv:
+        specifier: ^17.4.1
+        version: 17.4.2
       pg:
         specifier: ^8.13.0
         version: 8.21.0
@@ -608,9 +611,6 @@ importers:
       '@types/pg':
         specifier: ^8.20.0
         version: 8.20.0
-      dotenv:
-        specifier: ^17.4.1
-        version: 17.4.2
       prisma:
         specifier: ^7.7.0
         version: 7.7.0(@types/node@20.19.41)(@types/react-dom@19.2.3(@types/react@19.2.16))(@types/react@19.2.18)(react-dom@19.2.4(react@19.2.4))(react@19.2.4)(typescript@5.9.3)
