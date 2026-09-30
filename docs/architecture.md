@@ -42,6 +42,10 @@ Todos em NestJS 11 + Prisma 7, exceto o API Gateway (Express). Cada serviço tem
 | `notification-service` | NestJS 11 + Prisma 7 + BullMQ (consumer) | 4004 | Notificações (criação assíncrona via fila) |
 | `file-service` | NestJS 11 + Prisma 7 | 4005 | Upload/anexos via MinIO (schema Postgres próprio `files`) |
 
+### Dependências de execução dos serviços
+
+Os estágios finais das imagens instalam apenas dependências de produção (`pnpm install --frozen-lockfile --prod --ignore-scripts`). Todo pacote importado pelo código executado no container deve estar em `dependencies` do serviço. Isso inclui `dotenv`, carregado por `src/main.ts` nos cinco serviços NestJS. Validar esse tipo de alteração com instalação isolada de produção; o workspace de desenvolvimento pode mascarar pacotes ausentes.
+
 ### Infraestrutura
 
 | Componente | Tecnologia |

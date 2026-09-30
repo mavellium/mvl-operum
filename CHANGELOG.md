@@ -12,6 +12,9 @@ funcionalidade depois disso é uma versão MINOR.
 - Segurança: escopo de tenant em todas as rotas do sprint-service; PAT restrito a leituras de identidade em `/auth/*` (gateway + auth-service); rotas de papéis, stakeholders e membros do project-service validadas por tenant.
 - Deploy de produção por SSH, sincronizando os `docker-compose*.yml` e esperando o health dos serviços.
 
+## [1.6.2] — 2026-09-29
+- Corrige a inicialização dos serviços em imagens de produção: `dotenv`, importado em runtime, passa de dependência de desenvolvimento para dependência de execução nos cinco serviços NestJS. Evita `Cannot find module 'dotenv/config'` após instalação com `--prod`.
+
 ## [1.6.1] — 2026-09-27
 - MCP exposto também em `https://api.operum.adm.br/mcp` (fallback enquanto `mcp.operum.adm.br` não tem DNS).
 - Versão do sistema exibida no rodapé da sidebar e na página Sobre.
