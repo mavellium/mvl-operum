@@ -146,3 +146,15 @@ Ao substituir uma decisão, manter o texto histórico, alterar seu status e liga
 - **Consequências:** exige migration, auditoria, isolamento de tenant e aplicação consistente nos consumidores. Configurar uma permissão não basta para proteger uma operação que ainda usa o teste antigo. UI de configuração, núcleo, services e actions estão implementados; migração dos consumidores, documentos com aprovação e planilha por responsável continuam pendentes.
 - **Condição de revisão:** conclusão da fase 5 e extensão do contrato de autorização às APIs/MCP; mudança da fonte de cargos ou das regras de associação a projetos.
 - **Referências:** [catálogo e resolvedor](../lib/permissoes.ts), [autorização](../services/authz.ts), [serviço](../services/permissoesService.ts), [actions](../app/actions/permissoes.ts), [SDD 5.1](specs/SDD-backlog-operum-2026-09.md#51-modelo-de-permissões-funções--ajuste-por-usuário); commits `12d427e0` e `ef7f1bbb`.
+
+## ADR-009 — Validar custos pelo responsável persistido na transação
+
+- **Data do registro:** 01/10/2026.
+- **Status:** implementada localmente na continuação do SDD 5.3; sem validação em produção.
+- **Contexto:** um membro pode editar realizado das próprias linhas. O mesmo patch de propriedades também permite orçamento e troca de responsável; confiar no responsável enviado pelo cliente permitiria contornar o controle.
+- **Escolha:** exigir contexto de autorização no serviço, separar permissões por campo e ler o responsável persistido após bloquear a linha por ID/projeto/tenant com `FOR UPDATE`. Persistência e auditoria usam a mesma transação. Exportação segue as permissões de leitura da página.
+- **Justificativa:** a identidade da linha deve ser conferida no servidor, e uma troca concorrente de responsável deve ser serializada com a edição do realizado. Erro na auditoria não deve produzir edição confirmada sem registro.
+- **Alternativas consideradas nesta continuação:** apenas bloquear inputs (insuficiente para chamadas diretas); validar o ID enviado junto ao patch (permite autoatribuição); validar antes da transação (permite corrida com troca de responsável); registrar auditoria depois do commit (pode confirmar apenas parte da operação).
+- **Consequências:** a edição aguarda outras gravações na mesma linha; falha de permissão ou auditoria aborta a transação. Permissão de orçamento não implica realizado, nem o inverso. Substituição da árvore e importação exigem edição de ambos para não contornar o controle por campo.
+- **Condição de revisão:** revisar a serialização se a planilha migrar de JSON de `WbsNode` para um modelo próprio ou se houver gravações em outro serviço.
+- **Referências:** `lib/permissoesCustos.ts`, `services/wbsService.ts` (`updateNodeProperties`), `app/actions/wbs.ts`, `app/api/projetos/[projetoId]/planilha-custos/export/route.ts`, `__tests__/unit/services/wbsCustosPermissions.test.ts`, SDD 5.3 e ADR-008.

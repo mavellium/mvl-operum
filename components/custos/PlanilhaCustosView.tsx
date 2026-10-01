@@ -17,6 +17,10 @@ interface Props {
   inicioProjeto: string
   fimProjeto: string
   canEdit: boolean
+  currentUserId?: string
+  canEditOwnActual?: boolean
+  canEditAllActual?: boolean
+  canManageMembers?: boolean
   planilha: PlanilhaDeCustos
   elaboradores: Elaborador[]
   usuariosDisponiveis: { id: string; name: string; email: string }[]
@@ -61,7 +65,7 @@ const brl = (n: number) => n.toLocaleString('pt-BR', { style: 'currency', curren
 const dois = (n: number) => n.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })
 
 export default function PlanilhaCustosView({
-  projetoId, nomeProjeto, inicioProjeto, fimProjeto, canEdit, planilha, elaboradores, usuariosDisponiveis, exportUrl,
+  projetoId, nomeProjeto, inicioProjeto, fimProjeto, canEdit, currentUserId, canEditOwnActual = false, canEditAllActual = false, canManageMembers = false, planilha, elaboradores, usuariosDisponiveis, exportUrl,
 }: Props) {
   const router = useRouter()
   const { toast } = useToast()
@@ -158,6 +162,7 @@ export default function PlanilhaCustosView({
 
   return (
     <div className="p-4 sm:p-6">
+      <p className="mb-3 text-sm text-gray-600">Campos brancos com borda azul são editáveis. Campos cinza estão bloqueados. O realizado próprio depende do membro salvo em Elaborado por.</p>
       {/* ── Cabeçalho (F.1) ─────────────────────────────────────────────── */}
       <div className="flex flex-col gap-4 rounded-2xl border border-gray-200 bg-white p-5">
         <div className="flex flex-wrap items-center justify-between gap-4">
@@ -191,7 +196,7 @@ export default function PlanilhaCustosView({
           >
             <RefreshCw className="h-4 w-4" /> Recalcular a partir da EAP
           </button>
-          {canEdit && (
+          {canManageMembers && (
             <>
               <button
                 type="button"
@@ -211,7 +216,7 @@ export default function PlanilhaCustosView({
               </button>
             </>
           )}
-          {canEdit && dirtyCount > 0 && (
+          {(canEdit || canEditOwnActual || canEditAllActual) && dirtyCount > 0 && (
             <button
               type="button"
               onClick={salvarManual}
@@ -223,7 +228,7 @@ export default function PlanilhaCustosView({
           )}
         </div>
 
-        {canEdit && mostrarNovoMembro && (
+        {canManageMembers && mostrarNovoMembro && (
           <AdicionarElaborador
             projetoId={projetoId}
             elaboradores={elaboradores}
@@ -263,6 +268,9 @@ export default function PlanilhaCustosView({
                   fase={fase}
                   rascunho={rascunho}
                   canEdit={canEdit}
+                  currentUserId={currentUserId}
+                  canEditOwnActual={canEditOwnActual}
+                  canEditAllActual={canEditAllActual}
                   elaboradores={elaboradores}
                   onCampoChange={setCampo}
                   horasPorDiaPadrao={planilha.config.horasPorDia}
@@ -288,11 +296,14 @@ export default function PlanilhaCustosView({
 
 
 const FaseFragment = memo(function FaseFragment({
-  fase, rascunho, canEdit, elaboradores, onCampoChange, horasPorDiaPadrao,
+  fase, rascunho, canEdit, currentUserId, canEditOwnActual, canEditAllActual, elaboradores, onCampoChange, horasPorDiaPadrao,
 }: {
   fase: PlanilhaDeCustos['macrofases'][number]
   rascunho: Record<string, CampoLinha>
   canEdit: boolean
+  currentUserId?: string
+  canEditOwnActual: boolean
+  canEditAllActual: boolean
   elaboradores: Elaborador[]
   onCampoChange: (nodeId: string, campo: keyof CampoLinha, valor: string) => void
   /** jornada padrão do projeto (config.horasPorDia) usada quando a linha não tem elaborador com jornada */
@@ -374,8 +385,8 @@ const FaseFragment = memo(function FaseFragment({
     }
     return { min, dias, total, temDias, temR }
   }
-  const texto = (v: string) => <span className="text-xs tabular-nums text-gray-700">{v}</span>
-  const clsCampo = 'w-full min-w-[64px] rounded border border-gray-300 bg-white px-1.5 py-0.5 text-right text-xs focus:border-blue-500 focus:outline-none'
+  const texto = (v: string) => <span title="🔒 Campo calculado ou sem permissão de edição" className="block rounded bg-gray-100 px-1 text-xs tabular-nums text-gray-700">{v}</span>
+  const clsCampo = 'w-full min-w-[64px] rounded border border-blue-200 bg-white px-1.5 py-0.5 text-right text-xs focus:border-blue-500 focus:outline-none'
   const campoInput = (nodeId: string, campo: keyof CampoLinha, original: string | number | null | undefined) => {
     if (campo === 'dataPrevista' || campo === 'dataRealizacao') {
       return (
@@ -448,6 +459,7 @@ const FaseFragment = memo(function FaseFragment({
         <td colSpan={18} className="border border-gray-200 px-3 py-1.5 text-sm">{fase.codigo} {fase.titulo}</td>
       </tr>
       {fase.atividades.map(a => {
+        const canReal = canEditAllActual || (canEditOwnActual && !!currentUserId && a.elaboradoPorUserId === currentUserId)
         const minO = num(rascunho[a.nodeId]?.minOrcado, a.minOrcado)
         const matO = num(rascunho[a.nodeId]?.materiaisOrcado, a.materiaisOrcado)
         const minR = num(rascunho[a.nodeId]?.minReal, a.minReal)
@@ -468,7 +480,8 @@ const FaseFragment = memo(function FaseFragment({
                 <select
                   value={userId}
                   onChange={e => onCampoChange(a.nodeId, 'elaboradoPorUserId', e.target.value)}
-                  className="w-full min-w-[110px] rounded border border-gray-300 bg-white px-1.5 py-0.5 text-xs focus:border-blue-500 focus:outline-none"
+                  aria-label={`Elaborado por — ${a.titulo}`}
+                  className="w-full min-w-[110px] rounded border border-blue-200 bg-white px-1.5 py-0.5 text-xs focus:border-blue-500 focus:outline-none"
                 >
                   <option value="">—</option>
                   {elaboradores.map(e => (
@@ -495,21 +508,21 @@ const FaseFragment = memo(function FaseFragment({
               {canEdit ? campoInput(a.nodeId, 'dataPrevista', a.dataPrevista) : texto(fmtDataBR(a.dataPrevista))}
             </td>
             <td className="border border-gray-100 px-1 py-1 text-right">
-              {canEdit ? campoInput(a.nodeId, 'minReal', a.minReal) : texto(String(a.minReal))}
+              {canReal ? campoInput(a.nodeId, 'minReal', a.minReal) : texto(String(a.minReal))}
             </td>
             <td className="border border-gray-100 px-2 py-1 text-right">
-              {canEdit ? campoHoras(a.nodeId, 'minReal', minR) : texto(hhmm(minR))}
+              {canReal ? campoHoras(a.nodeId, 'minReal', minR) : texto(hhmm(minR))}
             </td>
             <td className="border border-gray-100 px-2 py-1 text-right">
-              {canEdit ? campoDias(a.nodeId, 'minReal', minR, horasLinha) : texto(dois(minR / 60 / horasLinha))}
+              {canReal ? campoDias(a.nodeId, 'minReal', minR, horasLinha) : texto(dois(minR / 60 / horasLinha))}
             </td>
             <td className="border border-gray-100 px-2 py-1 text-right">{texto(brutoR === null ? '—' : brl(brutoR))}</td>
             <td className="border border-gray-100 px-1 py-1 text-right">
-              {canEdit ? campoInput(a.nodeId, 'materiaisReal', a.materiaisReal) : texto(dois(matR))}
+              {canReal ? campoInput(a.nodeId, 'materiaisReal', a.materiaisReal) : texto(dois(matR))}
             </td>
             <td className="border border-gray-100 px-2 py-1 text-right font-semibold text-gray-900">{texto(brutoR === null ? '—' : brl(brutoR + matR))}</td>
             <td className="border border-gray-100 px-1 py-1">
-              {canEdit ? campoInput(a.nodeId, 'dataRealizacao', a.dataRealizacao) : texto(fmtDataBR(a.dataRealizacao))}
+              {canReal ? campoInput(a.nodeId, 'dataRealizacao', a.dataRealizacao) : texto(fmtDataBR(a.dataRealizacao))}
             </td>
             <td className="border border-gray-100 px-1 py-1 text-center">
               <span className={`inline-block rounded-full px-2 py-0.5 text-[10px] font-semibold ${SITUACAO_CLASS[situacaoAtual(a.nodeId, a.dataPrevista, a.dataRealizacao)]}`}>
@@ -736,4 +749,3 @@ const GraficoValor = memo(function GraficoValor({ planilha }: { planilha: Planil
     </div>
   )
 })
-

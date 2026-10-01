@@ -53,10 +53,17 @@ function cenario(o: {
 beforeEach(() => vi.clearAllMocks())
 
 describe('permissoesNoProjeto (SDD 5.1)', () => {
-  it('admin: todas, sem consultar o banco', async () => {
+  it('admin: todas apenas para projeto da instituição atual', async () => {
+    cenario({ projeto: true })
     const r = await permissoesNoProjeto('u1', 't1', 'admin', 'p1')
     expect(lista(r)).toEqual([...TODAS].sort())
+    expect(db.project.findFirst).toHaveBeenCalledWith({ where: { id: 'p1', tenantId: 't1', deletedAt: null }, select: { id: true } })
     expect(db.role.findMany).not.toHaveBeenCalled()
+  })
+
+  it('admin não recebe permissões para projeto excluído, inexistente ou de outro tenant', async () => {
+    cenario({ projeto: false })
+    expect((await permissoesNoProjeto('u1', 't1', 'admin', 'p1')).size).toBe(0)
   })
 
   it('não é membro do projeto: nada', async () => {

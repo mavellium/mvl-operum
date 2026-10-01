@@ -1,5 +1,6 @@
 'use server'
 
+import { exigirPermissao, permissoesNoProjeto } from '@/services/authz'
 import { verifySession } from '@/lib/dal'
 import { revalidatePath } from 'next/cache'
 import {
@@ -51,7 +52,9 @@ const wbsPath = (projetoId: string) => `/projetos/${projetoId}/wbs`
 
 export async function getWbsTreeAction(projetoId: string): Promise<Result<GetTreeResult>> {
   try {
-    const { tenantId } = await verifySession()
+    const sessao = await verifySession()
+    const { tenantId } = sessao
+    await exigirPermissao(sessao, projetoId, 'planilha:ver')
     const tree = await getTree(projetoId, tenantId)
     return { ok: true, ...tree }
   } catch (e) {
@@ -66,7 +69,9 @@ export async function insertChildAction(
   parentId: string,
 ): Promise<Result<{ nodeId: string; serverVersion: number }>> {
   try {
-    const { userId, tenantId } = await verifySession()
+    const sessao = await verifySession()
+    const { userId, tenantId } = sessao
+    await exigirPermissao(sessao, projetoId, 'projeto:editar')
     const parsed = InsertChildSchema.safeParse({ parentId, projectId: projetoId, tenantId })
     if (!parsed.success) return { ok: false, error: parsed.error.issues[0].message }
 
@@ -83,7 +88,9 @@ export async function insertSiblingAction(
   siblingId: string,
 ): Promise<Result<{ nodeId: string; serverVersion: number }>> {
   try {
-    const { userId, tenantId } = await verifySession()
+    const sessao = await verifySession()
+    const { userId, tenantId } = sessao
+    await exigirPermissao(sessao, projetoId, 'projeto:editar')
     const parsed = InsertSiblingSchema.safeParse({ siblingId, projectId: projetoId, tenantId })
     if (!parsed.success) return { ok: false, error: parsed.error.issues[0].message }
 
@@ -100,7 +107,11 @@ export async function deleteNodeAction(
   nodeId: string,
 ): Promise<Result<{ serverVersion: number }>> {
   try {
-    const { userId, tenantId } = await verifySession()
+    const sessao = await verifySession()
+    const { userId, tenantId } = sessao
+    await exigirPermissao(sessao, projetoId, 'projeto:editar')
+    await exigirPermissao(sessao, projetoId, 'planilha:orcado')
+    await exigirPermissao(sessao, projetoId, 'planilha:realizado-todos')
     const parsed = DeleteNodeSchema.safeParse({ nodeId, projectId: projetoId, tenantId })
     if (!parsed.success) return { ok: false, error: parsed.error.issues[0].message }
 
@@ -117,7 +128,9 @@ export async function moveNodeAction(
   payload: { nodeId: string; targetId: string; position: 'INSIDE' | 'BEFORE' | 'AFTER' },
 ): Promise<Result<{ serverVersion: number }>> {
   try {
-    const { userId, tenantId } = await verifySession()
+    const sessao = await verifySession()
+    const { userId, tenantId } = sessao
+    await exigirPermissao(sessao, projetoId, 'projeto:editar')
     const parsed = MoveNodeSchema.safeParse({ ...payload, projectId: projetoId, tenantId })
     if (!parsed.success) return { ok: false, error: parsed.error.issues[0].message }
 
@@ -137,7 +150,9 @@ export async function renameNodeAction(
   title: string,
 ): Promise<Result<{ serverVersion: number }>> {
   try {
-    const { tenantId } = await verifySession()
+    const sessao = await verifySession()
+    const { tenantId } = sessao
+    await exigirPermissao(sessao, projetoId, 'projeto:editar')
     const parsed = RenameNodeSchema.safeParse({ nodeId, title, projectId: projetoId, tenantId })
     if (!parsed.success) return { ok: false, error: parsed.error.issues[0].message }
 
@@ -154,7 +169,9 @@ export async function updateNodeStyleAction(
   style: Record<string, unknown>,
 ): Promise<Result<{ serverVersion: number }>> {
   try {
-    const { tenantId } = await verifySession()
+    const sessao = await verifySession()
+    const { tenantId } = sessao
+    await exigirPermissao(sessao, projetoId, 'projeto:editar')
     const parsed = UpdateNodeStyleSchema.safeParse({ nodeId, style, projectId: projetoId, tenantId })
     if (!parsed.success) return { ok: false, error: parsed.error.issues[0].message }
 
@@ -171,11 +188,16 @@ export async function updateNodePropertiesAction(
   properties: Record<string, unknown>,
 ): Promise<Result<{ serverVersion: number }>> {
   try {
-    const { tenantId } = await verifySession()
+    const sessao = await verifySession()
+    const { tenantId } = sessao
     const parsed = UpdateNodePropertiesSchema.safeParse({ nodeId, properties, projectId: projetoId, tenantId })
     if (!parsed.success) return { ok: false, error: parsed.error.issues[0].message }
 
-    const result = await updateNodeProperties(parsed.data)
+    await exigirPermissao(sessao, projetoId, 'projeto:ver')
+    await exigirPermissao(sessao, projetoId, 'planilha:ver')
+    const permissoes = await permissoesNoProjeto(sessao.userId, tenantId, sessao.role, projetoId)
+    const result = await updateNodeProperties(parsed.data, { userId: sessao.userId, permissoes })
+    revalidatePath(`/projetos/${projetoId}/planilha-custos`)
     return { ok: true, ...result }
   } catch (e) {
     return err(e)
@@ -188,7 +210,9 @@ export async function setLayoutAction(
   layout: 'LADO_A_LADO' | 'ABAIXO' | 'ABAIXO_L',
 ): Promise<Result<{ serverVersion: number }>> {
   try {
-    const { tenantId } = await verifySession()
+    const sessao = await verifySession()
+    const { tenantId } = sessao
+    await exigirPermissao(sessao, projetoId, 'projeto:editar')
     const parsed = SetLayoutSchema.safeParse({ nodeId, layout, projectId: projetoId, tenantId })
     if (!parsed.success) return { ok: false, error: parsed.error.issues[0].message }
 
@@ -205,7 +229,9 @@ export async function setCollapsedAction(
   collapsed: boolean,
 ): Promise<Result<{ serverVersion: number }>> {
   try {
-    const { tenantId } = await verifySession()
+    const sessao = await verifySession()
+    const { tenantId } = sessao
+    await exigirPermissao(sessao, projetoId, 'projeto:editar')
     const parsed = SetCollapsedSchema.safeParse({ nodeId, collapsed, projectId: projetoId, tenantId })
     if (!parsed.success) return { ok: false, error: parsed.error.issues[0].message }
 
@@ -222,8 +248,12 @@ export async function saveTreeAction(
   payload: Omit<Parameters<typeof saveTree>[0], 'tenantId' | 'projectId'> & { projetoId: string },
 ): Promise<Result<{ serverVersion: number }>> {
   try {
-    const { userId, tenantId } = await verifySession()
+    const sessao = await verifySession()
+    const { userId, tenantId } = sessao
     const { projetoId, ...rest } = payload
+    await exigirPermissao(sessao, projetoId, 'projeto:editar')
+    await exigirPermissao(sessao, projetoId, 'planilha:orcado')
+    await exigirPermissao(sessao, projetoId, 'planilha:realizado-todos')
     const parsed = SaveTreeSchema.safeParse({ ...rest, projectId: projetoId, tenantId })
     if (!parsed.success) return { ok: false, error: parsed.error.issues[0].message }
 
@@ -242,7 +272,11 @@ export async function importWbsAction(
   rawData: unknown,
 ): Promise<Result<{ serverVersion: number }>> {
   try {
-    const { userId, tenantId } = await verifySession()
+    const sessao = await verifySession()
+    const { userId, tenantId } = sessao
+    await exigirPermissao(sessao, projetoId, 'projeto:editar')
+    await exigirPermissao(sessao, projetoId, 'planilha:orcado')
+    await exigirPermissao(sessao, projetoId, 'planilha:realizado-todos')
 
     const parsed = WbsImportSchema.safeParse(rawData)
     if (!parsed.success) return { ok: false, error: parsed.error.issues[0].message }

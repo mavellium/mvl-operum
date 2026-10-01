@@ -1,7 +1,7 @@
 import { notFound } from 'next/navigation'
 import { verifySession } from '@/lib/dal'
 import { findById } from '@/services/projectService'
-import { isProjectManager } from '@/services/projectRoleService'
+import { permissoesNoProjeto } from '@/services/authz'
 import { getTree } from '@/services/wbsService'
 import { computarPlanilhaCustos, fmtDataBR, type Elaborador } from '@/lib/planilhaCustos'
 import prisma from '@/lib/prisma'
@@ -23,7 +23,9 @@ export default async function PlanilhaCustosPage({
   const project = await findById(projetoId)
   if (!project) notFound()
 
-  const canEdit = role === 'admin' || await isProjectManager(userId, projetoId)
+  const permissoes = await permissoesNoProjeto(userId, tenantId, role, projetoId)
+  if (!permissoes.has('projeto:ver') || !permissoes.has('planilha:ver')) notFound()
+  const canEdit = permissoes.has('planilha:orcado')
 
   const valorReferencia = project.valorReferencia ?? 4000
   const horasPorDia = project.horasPorDia ?? 8
@@ -67,6 +69,10 @@ export default async function PlanilhaCustosPage({
       inicioProjeto={project.startDate ? fmtDataBR(project.startDate.toISOString()) : '—'}
       fimProjeto={project.endDate ? fmtDataBR(project.endDate.toISOString()) : '—'}
       canEdit={canEdit}
+      currentUserId={userId}
+      canEditOwnActual={permissoes.has('planilha:realizado-proprio')}
+      canEditAllActual={permissoes.has('planilha:realizado-todos')}
+      canManageMembers={permissoes.has('projeto:equipe')}
       planilha={planilha}
       elaboradores={elaboradores}
       usuariosDisponiveis={usuariosDisponiveis}
