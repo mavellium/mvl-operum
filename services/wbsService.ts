@@ -1,3 +1,5 @@
+import { validarCamposCustos } from '@/lib/permissoesCustos'
+import type { Permissao } from '@/lib/permissoes'
 import prisma from '@/lib/prisma'
 import type { Prisma } from '@/lib/generated/prisma'
 import { registrarAcao } from './auditoriaService'
@@ -473,16 +475,23 @@ export async function updateNodeStyle(input: UpdateNodeStyleInput): Promise<Muta
 }
 
 /** Merges properties (cost, durationDays, owner, description) into the node. */
-export async function updateNodeProperties(input: UpdateNodePropertiesInput): Promise<MutationResult> {
+export async function updateNodeProperties(input: UpdateNodePropertiesInput, acesso: { userId: string; permissoes: ReadonlySet<Permissao> }): Promise<MutationResult> {
   return prisma.$transaction(async tx => {
     const { nodeId, properties, projectId, tenantId } = input
+    // Serializa alterações da mesma linha, inclusive troca do elaborador.
+    await tx.$queryRaw`SELECT id FROM "WbsNode" WHERE id = ${nodeId} AND "projectId" = ${projectId} AND "tenantId" = ${tenantId} FOR UPDATE`
     const node = await tx.wbsNode.findFirst({ where: { id: nodeId, projectId, tenantId } })
     if (!node) throw new WbsNotFoundError('Nó não encontrado')
+    validarCamposCustos(acesso.permissoes, acesso.userId, (node.properties as Record<string, unknown>) ?? {}, properties)
     await tx.wbsNode.update({
       where: { id: nodeId },
       data: { properties: toJson({ ...(node.properties as object), ...properties }) },
     })
     const serverVersion = await bumpVersion(tx, projectId, tenantId)
+    await tx.auditLog.create({ data: {
+      tenantId, userId: acesso.userId, action: 'PLANILHA_EDITAR', entity: 'WbsNode', entityId: nodeId,
+      details: { projetoId: projectId, campos: Object.keys(properties) },
+    } })
     return { serverVersion }
   })
 }

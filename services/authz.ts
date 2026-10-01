@@ -100,7 +100,10 @@ export async function permissoesNoProjeto(
   role: string,
   projectId: string,
 ): Promise<Set<Permissao>> {
-  if (role === 'admin') return new Set(TODAS)
+  if (role === 'admin') {
+    const project = await prisma.project.findFirst({ where: { id: projectId, tenantId, deletedAt: null }, select: { id: true } })
+    return new Set(project ? TODAS : [])
+  }
   return resolverPermissoes(await entradaDoUsuario(userId, tenantId, projectId))
 }
 

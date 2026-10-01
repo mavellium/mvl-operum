@@ -9,6 +9,11 @@ funcionalidade depois disso é uma versão MINOR.
 
 ## [Não lançado]
 
+## [1.9.0] — 2026-10-01
+- **Planilha de custos (SDD 5.3):** permissões independentes para orçado, realizado próprio e realizado de todos. A validação usa o responsável persistido, bloqueia a linha durante a gravação e salva a auditoria na mesma transação. Interface distingue campos editáveis/bloqueados; exportação exige leitura autorizada.
+- **Isolamento:** administrador também precisa de projeto ativo da instituição atual para receber permissões.
+- **Validação:** item 5.3 verificado localmente; autorização geral e revisão documental da fase 5 continuam em desenvolvimento. Sem validação em produção.
+
 ## [1.8.0] — 2026-09-30
 - **Permissões (SDD 5.1, configuração):** administrador configura a matriz por função, restaura padrões e concede/nega permissões por usuário, globalmente ou no projeto. Editores disponíveis em Cadastros → Funções, Usuários → Permissões e Stakeholders → Permissões neste projeto, com feedback de gravação e preservação do estado em falhas.
 - **Modelo de autorização:** catálogo e resolução por base de membro, união de funções e ajustes globais/de projeto; tabelas e migration do núcleo incluídas nesta branch. Tech Lead e PO seguem a base do membro até configuração explícita.

@@ -560,7 +560,8 @@ Branch `feat/backlog-fase-4`. Cada item foi um commit, com o card movido para "E
 - Serviço e actions implementados em `ef7f1bbb`: configuração restrita ao admin, validação e auditoria.
 - Nesta continuação: matriz no cadastro de funções, ajustes globais em Usuários e por projeto em Stakeholders, restauração de padrão e tratamento de falhas. A consulta de ajustes recusa projeto de outro tenant.
 - **Pendente para concluir 5.1:** adoção gradual de `can`/`exigirPermissao` nas actions, rotas e controles existentes de projeto/quadro/cadastros. As telas de configuração não significam que todos os consumidores já aplicam o catálogo.
-- **5.2 e 5.3 continuam pendentes.** O Termo de Abertura já tem o fluxo "membro salva versão pendente → gerente aprova" (`charter/versions`), mas o fluxo unificado para todos os documentos e a edição do realizado próprio ainda devem ser implementados.
+- **5.2 continua em desenvolvimento.** Há alterações locais de revisão documental ainda não validadas; o fluxo unificado não está concluído.
+- **5.3 implementado localmente em 01/10:** validação por campo/responsável persistido, bloqueio transacional da linha, auditoria atômica, controles na interface e permissão de leitura na exportação. Sem validação em produção.
 - Esta fase permanece em andamento; não foi declarada pronta para merge/deploy.
 
 ### 5.1 Modelo de permissões (funções + ajuste por usuário)
@@ -632,6 +633,14 @@ Pedido: as permissões vêm da função (definida pelo admin no cadastro de fun�
   - campos do orçado só com `planilha:editar-orcado`.
 - **Cor:** células editáveis com fundo branco e borda azul-clara; as bloqueadas com fundo cinza e cadeado no hover. Uma legenda no topo explica.
 - **Servidor:** a action que salva a planilha recusa a gravação de qualquer campo fora dessas regras, porque o cliente não é confiável.
+
+**Implementação e verificação (01/10/2026):**
+- Chave efetiva do catálogo para orçado: `planilha:orcado`. As permissões de orçado e realizado são independentes; ter uma não concede a outra.
+- `updateNodePropertiesAction` exige `projeto:ver` e `planilha:ver`; o serviço exige o contexto de autorização e verifica cada campo após ler o responsável da linha sob `FOR UPDATE`. Uma tentativa de trocar responsável junto com o realizado não ganha acesso. Nó de outro projeto/tenant é recusado.
+- Gravação, incremento de versão e `PLANILHA_EDITAR` ocorrem na mesma transação. Alterações da árvore inteira/importação/exclusão exigem as permissões de edição correspondentes para não contornar a restrição por campo.
+- Página e exportação exigem leitura de projeto e planilha. A interface libera realizado próprio apenas pelo ID persistido, usa borda azul para campos editáveis e cinza para bloqueados. Falha de gravação preserva o valor digitado.
+- Validação da PR em checkout isolado de `main`: suíte completa com 160 arquivos e 1.604 testes passou; typecheck, lint completo e build Next.js com `--webpack` passaram. O build padrão com Turbopack fica para o CI, pois o checkout temporário compartilha dependências por symlink externo. Alterações locais incompletas de documentos e autorização geral não fazem parte desta PR. A fase 5 permanece em andamento.
+- Versão `1.8.0` → `1.9.0` (MINOR): a consulta remota de `main` em 01/10 confirmou que `1.8.0` já está na base. O incremento único desta continuação reflete a funcionalidade nova de realizado por responsável; a versão deve ser conferida novamente antes da PR/merge.
 
 ---
 

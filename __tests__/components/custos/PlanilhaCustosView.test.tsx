@@ -1,5 +1,6 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest'
-import { render, screen, fireEvent, act } from '@testing-library/react'
+import { render, screen, fireEvent, act, within } from '@testing-library/react'
+import { updateNodePropertiesAction } from '@/app/actions/wbs'
 import PlanilhaCustosView from '@/components/custos/PlanilhaCustosView'
 import { ToastProvider } from '@/components/ui/Toast'
 import type { PlanilhaDeCustos, Elaborador } from '@/lib/planilhaCustos'
@@ -11,7 +12,10 @@ vi.mock('@/app/actions/projetos', () => ({
   addMemberAction: vi.fn(),
 }))
 
-beforeEach(() => vi.clearAllMocks())
+beforeEach(() => {
+  vi.clearAllMocks()
+  vi.mocked(updateNodePropertiesAction).mockResolvedValue({ ok: true, serverVersion: 2 })
+})
 
 const elaboradores: Elaborador[] = [
   { userId: 'u1', name: 'Maria', remuneracao: 4000, horasDiarias: 8 },
@@ -56,6 +60,7 @@ const props = {
   inicioProjeto: '01/01/2026',
   fimProjeto: '01/03/2026',
   canEdit: true,
+  canEditAllActual: true,
   planilha,
   elaboradores,
   usuariosDisponiveis: [],
@@ -254,5 +259,50 @@ describe('PlanilhaCustosView — situação ao vivo', () => {
     // Limpando a realização → volta para Pendente
     fireEvent.change(realizacaoInput, { target: { value: '' } })
     expect(screen.getByText('Pendente')).toBeInTheDocument()
+  })
+})
+
+describe('PlanilhaCustosView — permissões do realizado', () => {
+  function renderizarPermissoes(overrides: Partial<React.ComponentProps<typeof PlanilhaCustosView>>) {
+    return render(<ToastProvider><PlanilhaCustosView {...props} currentUserId="u1" canEdit={false} canEditAllActual={false} {...overrides} /></ToastProvider>)
+  }
+  it('membro edita somente o realizado da própria linha, com orçado bloqueado', () => {
+    renderizarPermissoes({ canEditOwnActual: true })
+    const linha = within(screen.getByText('A1 Atividade 1').closest('tr')!)
+    expect(linha.getByDisplayValue('0:00')).toBeInTheDocument()
+    expect(linha.queryByDisplayValue('1:30')).not.toBeInTheDocument()
+    expect(linha.queryByRole('combobox')).not.toBeInTheDocument()
+    expect(linha.getByText('1:30')).toHaveClass('bg-gray-100')
+    expect(linha.getByDisplayValue('0:00')).toHaveClass('border-blue-200')
+  })
+  it('realizado próprio não libera linha de outro usuário', () => {
+    renderizarPermissoes({ canEditOwnActual: true, currentUserId: 'u2' })
+    const linha = within(screen.getByText('A1 Atividade 1').closest('tr')!)
+    expect(linha.queryByRole('textbox')).not.toBeInTheDocument()
+  })
+  it('permissão de realizado de todos libera outra linha sem liberar orçamento', () => {
+    renderizarPermissoes({ canEditAllActual: true, currentUserId: 'u2' })
+    const linha = within(screen.getByText('A1 Atividade 1').closest('tr')!)
+    expect(linha.getByDisplayValue('0:00')).toBeInTheDocument()
+    expect(linha.queryByDisplayValue('1:30')).not.toBeInTheDocument()
+  })
+  it('permissão de orçado isolada mantém realizado bloqueado', () => {
+    renderizarPermissoes({ canEdit: true })
+    const linha = within(screen.getByText('A1 Atividade 1').closest('tr')!)
+    expect(linha.getByDisplayValue('1:30')).toBeInTheDocument()
+    expect(linha.queryByDisplayValue('0:00')).not.toBeInTheDocument()
+  })
+  it('falha ao salvar mantém o valor digitado e exibe o erro', async () => {
+    vi.useFakeTimers()
+    try {
+      vi.mocked(updateNodePropertiesAction).mockResolvedValue({ ok: false, error: 'Sem permissão para editar' })
+      renderizarPermissoes({ canEditOwnActual: true })
+      const horas = within(screen.getByText('A1 Atividade 1').closest('tr')!).getByDisplayValue('0:00')
+      fireEvent.change(horas, { target: { value: '2:30' } })
+      await act(async () => { await vi.advanceTimersByTimeAsync(1100) })
+      expect(horas).toHaveValue('2:30')
+      expect(screen.getByText('Sem permissão para editar')).toBeInTheDocument()
+      expect(updateNodePropertiesAction).toHaveBeenCalledWith('p1', 'a1', { tempoRealMinutos: 150 })
+    } finally { vi.useRealTimers() }
   })
 })

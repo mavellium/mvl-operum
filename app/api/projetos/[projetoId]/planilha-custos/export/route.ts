@@ -5,6 +5,7 @@ import { getTree } from '@/services/wbsService'
 import { computarPlanilhaCustos, type Elaborador } from '@/lib/planilhaCustos'
 import { gerarPlanilhaXlsx } from '@/lib/exports/planilhaCustosXlsx'
 import prisma from '@/lib/prisma'
+import { exigirPermissao, SemPermissaoError } from '@/services/authz'
 
 export const dynamic = 'force-dynamic'
 
@@ -20,7 +21,10 @@ export async function GET(
   const { projetoId } = await params
 
   try {
-    const { tenantId } = await verifySession()
+    const sessao = await verifySession()
+    const { tenantId } = sessao
+    await exigirPermissao(sessao, projetoId, 'projeto:ver')
+    await exigirPermissao(sessao, projetoId, 'planilha:ver')
     const project = await findById(projetoId)
     if (!project) return NextResponse.json({ error: 'Projeto não encontrado' }, { status: 404 })
 
@@ -58,6 +62,7 @@ export async function GET(
       },
     })
   } catch (err) {
+    if (err instanceof SemPermissaoError) return NextResponse.json({ error: err.message }, { status: 403 })
     console.error('[planilha-custos export GET]', err)
     return NextResponse.json({ error: 'Erro interno' }, { status: 500 })
   }
