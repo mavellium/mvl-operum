@@ -1,3 +1,4 @@
+import { isTransactionConflict } from '../common/transaction-conflict'
 import { BadRequestException, ConflictException, Injectable, NotFoundException } from '@nestjs/common'
 import { prisma } from '../prisma'
 import type { Prisma } from '../../lib/generated/prisma'
@@ -229,7 +230,7 @@ export class CardService {
           return tx.card.findUniqueOrThrow({ where: { id } })
         }, { isolationLevel: 'Serializable' })
       } catch (error) {
-        if (error && typeof error === 'object' && 'code' in error && error.code === 'P2034') {
+        if (isTransactionConflict(error)) {
           if (attempt < 2) continue
           throw new ConflictException('O quadro foi alterado durante a movimentação. Tente novamente')
         }

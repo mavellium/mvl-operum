@@ -11,6 +11,7 @@ funcionalidade depois disso é uma versão MINOR.
 
 ## [1.12.3] — 2026-10-04
 - **Kanban (SDD 9.3):** movimentação de card, histórico e ordenação de origem/destino passam a compartilhar uma transação. Falhas revertem todas as etapas; movimentos concorrentes reavaliam o estado antes do retry.
+- **Concorrência:** reconhecimento de conflitos estruturados do adapter PostgreSQL tanto na movimentação quanto na exclusão de sprint, mantendo retries limitados. Suítes PostgreSQL executam isoladas entre arquivos; concorrência dentro dos testes permanece ativa.
 - **Ordenação:** posições normalizadas no retorno, desempate estável, inserção ao final quando posição omitida e limpeza dos vínculos de sprint ao retornar ao backlog. Validação de instituição, autoria e coerência entre projeto, sprint e coluna preservada no servidor.
 - **Validação:** check PostgreSQL cobre falhas em cada etapa, movimentações concorrentes e preservação de comentários/tempos.
 

@@ -1,3 +1,4 @@
+import { isTransactionConflict } from '../common/transaction-conflict'
 import { BadRequestException, ConflictException, Injectable, NotFoundException } from '@nestjs/common'
 import { prisma } from '../prisma'
 import { assertColumn, assertProject, PUBLIC_USER_SELECT, sprintInTenant } from '../common/tenant-scope'
@@ -118,7 +119,7 @@ export class SprintService {
           await tx.sprint.update({ where: { id }, data: { deletedAt: new Date() } })
         }, { isolationLevel: 'Serializable' })
       } catch (error) {
-        if (error && typeof error === 'object' && 'code' in error && error.code === 'P2034') {
+        if (isTransactionConflict(error)) {
           if (attempt < 2) continue
           throw new ConflictException('O backlog foi alterado durante a exclusão. Tente novamente')
         }

@@ -48,12 +48,15 @@ jobs:
         run: pnpm exec prisma migrate deploy
       - name: Validate sprint service build
         run: pnpm --dir sprint-service build
-      - name: Test sprint and timer integrity, rollback and tenant isolation
+      # Shared tables and failure-injection triggers require isolation between suites.
+      # Concurrent requests inside each test remain enabled.
+      - name: Test sprint, timer and card integrity, rollback and tenant isolation
         run: >-
-          pnpm exec vitest run
+          pnpm exec vitest run --no-file-parallelism
           __tests__/integration/sprintDeletion.postgres.test.ts
           __tests__/integration/timerIntegrity.postgres.test.ts
           __tests__/integration/cardMovement.postgres.test.ts
           sprint-service/src/sprint/sprint.service.spec.ts
           sprint-service/src/card/card.service.spec.ts
+          sprint-service/src/common/transaction-conflict.spec.ts
           sprint-service/src/time-entry/time-entry.service.spec.ts
