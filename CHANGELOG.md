@@ -9,6 +9,9 @@ funcionalidade depois disso é uma versão MINOR.
 
 ## [Não lançado]
 
+## [1.11.1] — 2026-10-04
+- **Docker:** inclui o `CHANGELOG.md` no contexto de build para a página `/sobre`, corrigindo a falha de prerenderização na imagem de produção. PRs passam a construir a imagem do app e verificar o histórico no output standalone antes do merge.
+
 ## [1.11.0] — 2026-10-04
 - **Sobre:** a página `/sobre` destaca as novidades da versão atual e permite consultar as atualizações das versões anteriores, com datas e seções expansíveis. O histórico acompanha automaticamente o changelog do projeto.
 
