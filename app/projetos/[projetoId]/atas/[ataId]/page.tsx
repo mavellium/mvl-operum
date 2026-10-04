@@ -63,7 +63,7 @@ export default async function EditarAtaPage({
           Ata {String(ata.numero).padStart(2, '0')} — {ata.nomeProjeto}
         </h1>
         <p className="text-sm text-gray-500 mb-6">Edite os campos abaixo e salve as alterações.</p>
-        <AtaFormClient
+        <AtaFormClient key={ata.updatedAt?.toISOString()}
           projetoId={projetoId}
           ataId={ata.id}
           mode="edit"

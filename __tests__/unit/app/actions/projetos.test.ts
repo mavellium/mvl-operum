@@ -132,6 +132,13 @@ describe('Projeto Actions', () => {
       expect(result).toHaveProperty('projeto')
     })
 
+    it('orienta textos do Termo para o fluxo versionado sem chamar o update genérico', async () => {
+      vi.mocked(verifySession).mockResolvedValue(mockSession)
+      const result = await updateProjetoAction({}, 'p1', { name: 'Nome', objetivos: 'Novo objetivo' })
+      expect(result).toHaveProperty('error', 'Altere o Termo de Abertura em Documentação, criando uma versão para aprovação')
+      expect(projectsApi.update).not.toHaveBeenCalled()
+    })
+
     it('should return error on update failure', async () => {
       vi.mocked(verifySession).mockResolvedValue(mockSession)
       vi.mocked(projectsApi.update).mockRejectedValue(new Error('Not found'))

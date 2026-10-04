@@ -1,4 +1,5 @@
 import prisma from '@/lib/prisma'
+import type { Prisma } from '@/lib/generated/prisma'
 
 export async function registrarAcao(params: {
   tenantId: string
@@ -7,8 +8,8 @@ export async function registrarAcao(params: {
   entity: string
   entityId?: string
   details?: Record<string, unknown>
-}) {
-  return prisma.auditLog.create({
+}, tx?: Prisma.TransactionClient) {
+  return (tx ?? prisma).auditLog.create({
     data: {
       tenantId: params.tenantId,
       userId: params.userId,

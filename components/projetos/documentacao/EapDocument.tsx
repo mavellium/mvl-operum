@@ -58,7 +58,7 @@ function defaultSiblingTitle(level: number): string {
 
 export default function EapDocument() {
   const permissions = useProjectPermissions()
-  const canEdit = permissions.has('documentos:editar') && permissions.has('documentos:aprovar')
+  const canEdit = permissions.has('documentos:editar')
   const { projetoId } = useParams<{ projetoId: string }>()
   const router = useRouter()
   const { toast } = useToast()
@@ -255,7 +255,9 @@ export default function EapDocument() {
       }
       const data = await r.json()
       setDoc(data.document)
-      toast('EAP salva com sucesso!')
+      window.dispatchEvent(new CustomEvent('operum:document-version', { detail: { projetoId } }))
+      toast(data.status === 'PENDING' ? 'Versão da EAP enviada para aprovação. O documento vigente foi preservado.' : 'EAP aprovada e publicada.')
+      if (data.status === 'APPROVED') window.dispatchEvent(new CustomEvent('operum:document-published', { detail: { projetoId, type: 'EAP' } }))
     } catch (e) {
       toast(e instanceof Error ? e.message : 'Erro de rede ao salvar', 'error')
     } finally {
@@ -264,7 +266,7 @@ export default function EapDocument() {
   }
 
   async function handleReset() {
-    if (!canEdit || !permissions.has('documentos:excluir')) return
+    if (!canEdit || !permissions.has('documentos:excluir') || !permissions.has('documentos:aprovar')) return
     if (!projetoId) return
     setSaving(true)
     try {

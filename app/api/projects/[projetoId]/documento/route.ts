@@ -1,7 +1,8 @@
 import { NextResponse } from 'next/server'
 import { verifySession } from '@/lib/dal'
 import prisma from '@/lib/prisma'
-import { canProjectPermission } from '@/services/projectAccess'
+import { canProjectPermission as can } from '@/services/projectAccess'
+import { documentoVigente } from '@/services/documentRevisionService'
 import type { ProjetoHeader, Stakeholder } from '@/components/projetos/StakeholderDocument'
 
 function buildAddress(e: {
@@ -34,9 +35,12 @@ export async function GET(
 ) {
   const { projetoId } = await params
 
+  const { tenantId, role, userId } = await verifySession()
   try {
-    const { tenantId, role, userId } = await verifySession()
-    if (!(await canProjectPermission({ tenantId, role, userId }, projetoId, 'documentos:ver'))) return NextResponse.json({ error: 'Sem permissão' }, { status: 403 })
+    const canAccess = await can({ tenantId, role, userId }, projetoId, 'documentos:ver')
+    if (!canAccess) {
+      return NextResponse.json({ error: 'Não autorizado' }, { status: 403 })
+    }
 
     const [project, userProjects, projectStakeholders, gerenteEntries] = await Promise.all([
       prisma.project.findFirst({
@@ -138,7 +142,8 @@ export async function GET(
       observacoes: ps.stakeholder.notes ?? '',
     }))
 
-    return NextResponse.json({ header, stakeholders: [...membros, ...externos] })
+    const vigente = await documentoVigente({ tenantId, role, userId }, projetoId, 'STAKEHOLDER')
+    return NextResponse.json(vigente?.payload ?? { header, stakeholders: [...membros, ...externos] })
   } catch (err) {
     console.error('[documento/route]', err)
     return NextResponse.json({ error: 'Erro interno' }, { status: 500 })

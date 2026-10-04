@@ -21,6 +21,7 @@ Os primeiros registros foram reconstruídos da seção “Decisões de Arquitetu
 | ADR-011 | Patch temporário de profundidade em braces | Implementada — revisão ao sair correção upstream |
 | ADR-012 | Validar URLs de avatar também no navegador e comparar CodeQL com a mesma configuração | Implementada |
 | ADR-013 | Verificar patch na imagem antes de filtrar detecção Trivy de braces | Implementada — revisão até 2026-11-03 |
+| ADR-014 | Snapshots documentais com publicação e auditoria atômicas | Implementada nesta entrega |
 
 ## ADR-001 — PostgreSQL compartilhado entre serviços
 
@@ -212,3 +213,15 @@ Ao substituir uma decisão, manter o texto histórico, alterar seu status e liga
 - **Consequências:** build de gateway acrescentado nas PRs e verificação antes do scan em deploy; o filtro exige manutenção se o patch/hash/caminho mudar e expira automaticamente. Novo CVE, outra cópia ou falta do patch continua bloqueando. A limpeza `Remove Trivy Envs file` é etapa normal da action e permanece ativa.
 - **Condição de revisão:** até 2026-11-03 ou assim que sair versão upstream corrigida. Atualizar dependência, remover patch/exceções e repetir testes/scan. Qualquer mudança no hash exige rever a cópia e o filtro conjuntamente.
 - **Referências:** ADR-011, `.trivyignore-gateway.yaml`, `api-gateway/scripts/verify-braces-patch.cjs`, `scripts/security/verify-trivy-braces-filter.cjs`, `.github/workflows/gateway-image-security.yml`, workflows de staging/produção, [filtros Trivy](https://trivy.dev/latest/docs/configuration/filtering/) e [advisory](https://github.com/advisories/GHSA-vfj7-8cjw-p6xm).
+
+## ADR-014 — Snapshots documentais com publicação e auditoria atômicas
+
+- **Data do registro:** 2026-10-04.
+- **Status:** implementada nesta entrega; sem deploy ou validação em produção nesta tarefa.
+- **Contexto:** 5.1 libera edição documental por catálogo, mas o conteúdo existente exigia aprovação para gravação direta. As versões antigas guardavam metadados sem o conteúdo proposto, portanto não era possível aprovar uma alteração preservando o vigente. O rascunho arquivado de 5.2 precisava ser conciliado com as permissões e custos já integrados.
+- **Escolha:** reutilizar `DocumentVersion` com payload validado, tipo/recurso e sequência; manter rascunhos privados em `DocumentDraft`. Submissão de editor fica PENDING, submissão de aprovador pode publicar imediatamente, aprovação/rejeição exige a permissão própria. Bloquear o projeto ativo do tenant na transação e gravar publicação/status junto da auditoria. Preservar registros legados e não permitir aprovar registros sem snapshot. Excluir ata cancela propostas; versões aprovadas não são excluídas.
+- **Justificativa:** separar a proposta do conteúdo em uso, manter a autoria real e evitar dupla revisão, publicação sem log ou contorno por recurso de outro projeto. Atualizar também Project/EapDocument/Ata na aprovação mantém os leitores existentes coerentes. A lista de Partes Interessadas e as macrofases documentais são snapshots do documento, sem concessão implícita para modificar pessoas ou custos.
+- **Alternativas consideradas nesta implementação:** continuar sobrescrevendo o vigente antes da aprovação (perde isolamento da proposta); uma tabela separada por tipo (duplica revisão/auditoria); usar apenas metadados no histórico (não preserva o conteúdo proposto); excluir/recriar documentos ao revisar (perde histórico e referências).
+- **Consequências:** migration de payload/tipos/rascunhos/ordenação; logs e histórico autorizados por documento, com nomes dos autores. É necessário aplicar a migration antes do app no deploy autorizado. A API genérica continua compatível nos projetos legados; o uso de snapshots aprovados ativa a proteção contra sobrescrita do Termo e requer editar por versões. O cadastro de projeto passa a orientar para Documentação. Não há migração automática de metadados antigos para conteúdo inventado, nem alteração da WBS por uma versão de Termo/EAP documental. PostgreSQL real no CI verifica transações e concorrência.
+- **Condições de revisão:** extração do domínio para microsserviço, necessidade de comparar versões com diff por linha, paginação adicional do histórico (limite atual de 200 registros por consulta) ou política de retenção/eliminação de documentos.
+- **Referências:** SDD 5.2/5.3; ADR-008, ADR-009 e ADR-010; `services/documentRevisionService.ts`, `lib/validation/documentRevisionSchemas.ts`, `app/api/projects/[projetoId]/revisions/route.ts`, `components/projetos/documentacao/HistoricoDocumento.tsx`, migration `20261004000000_document_revisions`, `.github/workflows/document-revisions.yml`, testes de integração PostgreSQL.

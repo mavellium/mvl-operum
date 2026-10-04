@@ -308,7 +308,8 @@ Não existe database-per-service: **todos os 5 microsserviços apontam para o me
 |--------|---------|
 | `ProjectDraft` | Rascunho de projeto antes da criação |
 | `ProjetoDepartamento`, `ProjetoFuncao` | Cadastros de departamento/função **por projeto** (distintos de `Department`/`Role` globais do project-service) |
-| `DocumentVersion` (+ enums `DocumentVersionStatus`, `DocumentType`) | Versionamento de documentos (charter, documento do projeto) |
+| `DocumentVersion` (+ enums `DocumentVersionStatus`, `DocumentType`) | Snapshots de Termo, Partes Interessadas, EAP e Atas; status, recurso, sequência, autor e aprovação |
+| `DocumentDraft` | Rascunho privado por projeto, autor, tipo e recurso; referências a tenant/projeto/usuário |
 | `Ata`, `AtaPresente`, `AtaAcao`, `AtaAnexo` | Atas de reunião: presentes (com assinatura), ações, anexos |
 | `WbsNode` (+ enum `WbsLayoutOrientation`) | Nós do canvas interativo de EAP/WBS |
 | `EapTemplate`, `EapDocument` | Templates e documentos gerados de EAP |
@@ -570,7 +571,7 @@ Cadastro e vínculo de stakeholders (internos/externos) ao projeto, com reordena
 Departamentos e papéis/funções do projeto (RBAC por projeto).
 
 ### `/projetos/:id/documentacao`
-Documentação colaborativa: termo de abertura (charter) e documento do projeto, com versionamento (`DocumentVersion`).
+Documentação colaborativa de Termo, Partes Interessadas, EAP e Atas com snapshots em `DocumentVersion`, propostas pendentes e aba Registro por documento. A lista geral de Atas inclui propostas novas no histórico mesmo antes de existir uma ata publicada.
 
 ### `/projetos/:id/wbs`
 Canvas interativo de EAP/WBS: árvore de nós com layout dinâmico, pan/scroll, cálculo de código hierárquico, rollup de custos/prazos, export SVG/MSPDI.
@@ -849,11 +850,21 @@ Listagens de projetos/sprints e busca de cards recebem `x-authorized-projects`, 
 
 `AUTHORIZATION_SERVICE_URL` é configuração do gateway: Compose usa `http://app:3000`, desenvolvimento local usa `http://localhost:3000`. Isso adiciona dependência síncrona do gateway no app para operações de domínio. Serviços privados continuam protegidos pela chave interna e rede Docker; chamadas entre serviços não passam por concessões de um usuário externo.
 
-**Limite documental:** APIs/pages de leitura exigem `documentos:ver`; criação de metadados de versões exige `documentos:editar`, e aprovação/rejeição exige `documentos:aprovar`. O conteúdo publicado de charter/EAP/ata exige edição e aprovação até o SDD 5.2 introduzir snapshots pendentes. Exclusão exige `documentos:excluir`; reset da EAP também exige edição/aprovação. O fluxo unificado de revisões pendentes e auditoria documental segue pendente, sem migration nesta entrega. A fase 5 ainda não está encerrada. Ver ADR-008, ADR-010 e [SDD](specs/SDD-backlog-operum-2026-09.md).
+### Revisões documentais (SDD 5.2, 04/10/2026)
+
+`services/documentRevisionService.ts` centraliza rascunhos, submissão, publicação, revisão e exclusão. As rotas existentes de versões do Termo/Partes Interessadas são adaptadores desse fluxo; `/api/projects/:projetoId/revisions` atende tipos `CHARTER`, `STAKEHOLDER`, `EAP` e `ATA`, histórico/Registro, rascunho privado, submissão, revisão e exclusão de versões não aprovadas. Todas exigem leitura do projeto e a permissão documental da operação. O corpo não decide autoria, status ou aprovador: esses valores vêm da sessão/resolvedor. Os padrões de membro concedem leitura/edição; o papel de gerente concede aprovação, respeitando os ajustes de 5.1.
+
+Com `documentos:editar`, salvar cria um snapshot `PENDING`. Quem também tem `documentos:aprovar` publica sua própria submissão imediatamente. Aprovar uma pendente publica o snapshot; rejeitar preserva o vigente. Submissão/publicação/revisão/exclusão são serializadas com `FOR UPDATE` na linha do projeto ativo do tenant. A gravação de conteúdo/status e `registrarAcao` usam a mesma transação; falha da auditoria desfaz a operação. Vigência é a aprovação mais recente, com `sequence` como desempate estável. Conteúdo de versões não é editado após submissão; versões aprovadas são preservadas. A exclusão de uma ata cancela suas propostas pendentes sob o mesmo bloqueio.
+
+Termo aprovado também atualiza seus campos em `Project`, evitando leitura divergente pela API/MCP. Macrofases e principais envolvidos do Termo são conteúdo do snapshot documental e não alteram a WBS/planilha. Partes Interessadas congela cabeçalho/lista documental e não altera o cadastro global da equipe. EAP aprovada atualiza `EapDocument` com nós validados e códigos derivados pelo servidor. Atas novas só são materializadas/recebem número ao aprovar; alterações também preservam a ata publicada até aprovação. Participantes com IDs devem continuar ativos no projeto/tenant.
+
+`DocumentDraft` tem chave `(projectId, userId, documentType, resourceId)` e FKs com cascata. A UI do Termo recupera exclusivamente o rascunho do próprio autor; leitores recebem apenas o conteúdo vigente. Dados legados continuam como fallback até a primeira versão aprovada com payload; registros antigos sem snapshot permanecem no histórico, mas não são aprováveis. O cadastro de projeto orienta edições documentais para o Termo. A API genérica mantém a autorização anterior para projetos legados; após existir um snapshot aprovado, recusa sobrescritas de campos do Termo para preservar o fluxo versionado.
+
+Migration: `20261004000000_document_revisions` adiciona tipos EAP/ATA, `payload`, `resourceId`, sequência/indexação e rascunhos. O check `Document Revisions` aplica migrations num PostgreSQL 17 isolado e testa o serviço/resolvedor reais, inclusive rollback e concorrência; não executa migrations em produção. Ver ADR-014 e [SDD](specs/SDD-backlog-operum-2026-09.md).
 
 ### Edição da planilha por campo e responsável (01/10/2026)
 
-O item 5.3 está implementado localmente. Página e exportação conferem `projeto:ver` e `planilha:ver`. A interface recebe separadamente `planilha:orcado`, `planilha:realizado-proprio` e `planilha:realizado-todos`; o realizado próprio depende de `WbsNode.properties.elaboradoPorUserId`, sem comparação por nome.
+O item 5.3 foi integrado na PR #37 e seus testes de campo/responsável foram reconferidos com 5.2. Página e exportação conferem `projeto:ver` e `planilha:ver`. A interface recebe separadamente `planilha:orcado`, `planilha:realizado-proprio` e `planilha:realizado-todos`; o realizado próprio depende de `WbsNode.properties.elaboradoPorUserId`, sem comparação por nome.
 
 A Server Action resolve as permissões e passa o contexto obrigatório a `services/wbsService.updateNodeProperties`. Na transação, o serviço bloqueia o nó pelo ID/projeto/tenant com `FOR UPDATE`, lê as propriedades persistidas e chama `validarCamposCustos`. Campos de realizado exigem permissão de todos ou de próprio com ID correspondente; campos de orçamento/responsável exigem `planilha:orcado`; outros metadados exigem `projeto:editar`. A edição e a auditoria `PLANILHA_EDITAR` são atômicas. Importação, substituição da árvore e exclusão exigem permissões de edição de projeto, orçado e realizado de todos. Não há nova tabela ou serviço para este item. Ver [ADR-009](decisions.md#adr-009--validar-custos-pelo-responsável-persistido-na-transação).
 

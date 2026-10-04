@@ -27,17 +27,18 @@ model Tenant {
   createdAt DateTime     @default(now())
   updatedAt DateTime     @updatedAt
 
-  users         User[]
-  tags          Tag[]
-  projects      Project[]
-  departments   Department[]
-  roles         Role[]
-  auditLogs     AuditLog[]
-  stakeholders  Stakeholder[]
-  projectDrafts ProjectDraft[]
-  wbsNodes      WbsNode[]
-  eapTemplates  EapTemplate[]
-  eapDocuments  EapDocument[]
+  users                   User[]
+  tags                    Tag[]
+  projects                Project[]
+  departments             Department[]
+  roles                   Role[]
+  auditLogs               AuditLog[]
+  stakeholders            Stakeholder[]
+  projectDrafts           ProjectDraft[]
+  wbsNodes                WbsNode[]
+  eapTemplates            EapTemplate[]
+  eapDocuments            EapDocument[]
+  documentRevisionsDrafts DocumentDraft[]
 }
 
 // ── Projects ──────────────────────────────────────────────
@@ -90,10 +91,11 @@ model Project {
   permissoesUsuarios UserPermission[]
   macroFases         ProjectMacroFase[]
 
-  stakeholders     ProjectStakeholder[]
-  documentVersions DocumentVersion[]
-  drafts           ProjectDraft[]
-  wbsNodes         WbsNode[]
+  stakeholders            ProjectStakeholder[]
+  documentRevisionsDrafts DocumentDraft[]
+  documentVersions        DocumentVersion[]
+  drafts                  ProjectDraft[]
+  wbsNodes                WbsNode[]
 
   projetoDepartamentos ProjetoDepartamento[]
   projetoFuncoes       ProjetoFuncao[]
@@ -348,6 +350,7 @@ model User {
   dashboardMetrics DashboardMetric[]
   sprintFeedbacks  SprintFeedback[]
 
+  documentRevisionsDrafts  DocumentDraft[]
   documentVersionsAuthored DocumentVersion[] @relation("DocumentVersionAuthor")
   documentVersionsApproved DocumentVersion[] @relation("DocumentVersionApprover")
 
@@ -655,9 +658,14 @@ enum DocumentVersionStatus {
 enum DocumentType {
   STAKEHOLDER
   CHARTER
+  EAP
+  ATA
 }
 
 model DocumentVersion {
+  sequence      Int                   @unique @default(autoincrement())
+  payload       Json?
+  resourceId    String                @default("")
   id            String                @id @default(cuid())
   projectId     String
   project       Project               @relation(fields: [projectId], references: [id], onDelete: Cascade)
@@ -675,6 +683,8 @@ model DocumentVersion {
   documentType  DocumentType          @default(STAKEHOLDER)
   createdAt     DateTime              @default(now())
   updatedAt     DateTime              @updatedAt
+
+  @@index([projectId, documentType, resourceId, status, approvedAt], map: "DocumentVersion_current_idx")
 }
 
 // ── Atas de Reunião ───────────────────────────────────────
@@ -836,4 +846,22 @@ model EapDocument {
   template EapTemplate @relation(fields: [templateId], references: [id])
 
   @@index([tenantId])
+}
+
+// Rascunho privado por autor. Versões submetidas são snapshots imutáveis.
+model DocumentDraft {
+  id           String       @id @default(cuid())
+  projectId    String
+  tenantId     String
+  userId       String
+  documentType DocumentType
+  resourceId   String       @default("")
+  payload      Json
+  updatedAt    DateTime     @updatedAt
+  project      Project      @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  tenant       Tenant       @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  user         User         @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([projectId, userId, documentType, resourceId])
+  @@index([tenantId, projectId])
 }

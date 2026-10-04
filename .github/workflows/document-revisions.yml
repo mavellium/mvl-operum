@@ -1,0 +1,59 @@
+name: Document Revisions
+
+on:
+  pull_request:
+    branches: [main, develop]
+
+permissions:
+  contents: read
+
+concurrency:
+  group: document-revisions-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  postgres:
+    name: Document revisions (PostgreSQL)
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    services:
+      postgres:
+        image: postgres:17
+        env:
+          POSTGRES_USER: operum_test
+          POSTGRES_PASSWORD: test_only_local_ci
+          POSTGRES_DB: operum_document_test
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U operum_test -d operum_document_test"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 10
+    env:
+      DATABASE_URL: postgresql://operum_test:test_only_local_ci@localhost:5432/operum_document_test
+      OPERUM_DOCUMENT_TEST_DATABASE_URL: postgresql://operum_test:test_only_local_ci@localhost:5432/operum_document_test
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v3
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile --ignore-scripts
+      - name: Prepare Prisma migration engine
+        run: pnpm rebuild @prisma/engines
+      - run: pnpm exec prisma generate
+      - name: Apply migrations to isolated database
+        run: pnpm exec prisma migrate deploy
+      - name: Test approval, audit rollback, tenant isolation and concurrent review
+        run: pnpm exec vitest run __tests__/integration/documentRevision.postgres.test.ts
+      - name: Validate costs permissions and document contracts
+        run: >-
+          pnpm exec vitest run
+          __tests__/unit/documentRevisionSchemas.test.ts
+          __tests__/api/documento-versions.test.ts
+          __tests__/api/document-revisions.test.ts
+          __tests__/unit/services/wbsCustosPermissions.test.ts
+          __tests__/unit/app/actions/wbsCustos.test.ts
+          __tests__/components/custos/PlanilhaCustosView.test.tsx

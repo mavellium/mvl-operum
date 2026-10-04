@@ -117,6 +117,9 @@ export default function ProjectCharter({ membros = [] }: { membros?: MembroEquip
   const [data, setData] = useState<CharterData | null>(null)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
+  const [draftReady, setDraftReady] = useState(false)
+  const [draftError, setDraftError] = useState('')
+  const [draftAttempt, setDraftAttempt] = useState(0)
 
   // Editable text fields (mirrors DB, auto-saved)
   const [fields, setFields] = useState({
@@ -131,11 +134,13 @@ export default function ProjectCharter({ membros = [] }: { membros?: MembroEquip
   })
   const debouncedFields = useDebounce(fields, 1200)
   const savedFields = useRef(fields)
+  const draftSave = useRef<Promise<void> | null>(null)
   const firstLoad = useRef(true)
 
   // MacroFases (local state, synced with server)
   const [fases, setFases] = useState<MacroFase[]>([])
-  const [faseSaving, setFaseSaving] = useState<Record<string, boolean>>({})
+  const savedFases = useRef<MacroFase[]>([])
+  const [faseSaving] = useState<Record<string, boolean>>({})
   const [newestFaseId, setNewestFaseId] = useState<string | undefined>(undefined)
 
   // Versioning
@@ -156,7 +161,7 @@ export default function ProjectCharter({ membros = [] }: { membros?: MembroEquip
   // Membros da equipe (responsável/aprovador devem ser membros) + criados na sessão (pendência)
   const { todos: todosMembros, registrarCriado } = useMembrosEquipe(membros)
   const todosMembrosRef = useRef(todosMembros)
-  todosMembrosRef.current = todosMembros
+  useEffect(() => { todosMembrosRef.current = todosMembros }, [todosMembros])
 
   // ── Load charter data ──────────────────────────────────────────────────────
 
@@ -167,6 +172,7 @@ export default function ProjectCharter({ membros = [] }: { membros?: MembroEquip
       .then((d: CharterData) => {
         setData(d)
         setFases(d.macroFases)
+        savedFases.current = d.macroFases
         const p = d.project
         const init = {
           justificativa: p.justificativa ?? '',
@@ -176,7 +182,7 @@ export default function ProjectCharter({ membros = [] }: { membros?: MembroEquip
           premissas: p.premissas ?? '',
           restricoes: p.restricoes ?? '',
           limitesAutoridade: p.limitesAutoridade ?? '',
-          principaisEnvolvidos: '',
+          principaisEnvolvidos: (p as CharterProject & { principaisEnvolvidos?: string }).principaisEnvolvidos ?? '',
         }
         setFields(init)
         savedFields.current = init
@@ -186,22 +192,38 @@ export default function ProjectCharter({ membros = [] }: { membros?: MembroEquip
       .finally(() => setLoading(false))
   }, [projetoId])
 
+  useEffect(() => {
+    if (loading || !canEdit || !projetoId) return
+    let cancelled = false
+    fetchWithSession(`/api/projects/${projetoId}/revisions?type=CHARTER&draft=1`)
+      .then(async response => {
+        if (!response.ok) throw new Error('Não foi possível carregar o rascunho')
+        const draft = await response.json()
+        if (!cancelled && draft?.payload) {
+          const { macroFases: _fases, ...draftFields } = draft.payload
+          setFields(prev => ({ ...prev, ...draftFields }))
+          if (draft.payload.macroFases) setFases(draft.payload.macroFases)
+          toast('Seu rascunho privado foi restaurado. Salve uma versão para enviá-lo à aprovação.')
+        }
+        if (!cancelled) setDraftReady(true)
+      }).catch(() => { if (!cancelled) setDraftError('Não foi possível recuperar seu rascunho. Tente novamente antes de editar.') })
+    return () => { cancelled = true }
+  }, [loading, canEdit, projetoId, toast, draftAttempt])
+
   // ── Auto-save text fields ──────────────────────────────────────────────────
 
   useEffect(() => {
-    if (firstLoad.current || !canEdit || !canPublish) return
-    const { principaisEnvolvidos: _, ...serverFields } = debouncedFields
-    const { principaisEnvolvidos: __, ...savedServer } = savedFields.current
-    if (JSON.stringify(serverFields) === JSON.stringify(savedServer)) return
+    if (firstLoad.current || !canEdit || !draftReady || debouncedFields !== fields || savingVersion || commitModalOpen) return
+    if (JSON.stringify(debouncedFields) === JSON.stringify(savedFields.current) && JSON.stringify(fases) === JSON.stringify(savedFases.current)) return
 
-    fetchWithSession(`/api/projects/${projetoId}/charter`, {
+    draftSave.current = (draftSave.current ?? Promise.resolve()).then(() => fetchWithSession(`/api/projects/${projetoId}/charter`, {
       method: 'PATCH',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(serverFields),
-    })
-      .then(r => { if (r.ok) { savedFields.current = debouncedFields } })
-      .catch(() => {/* silent — user can retry via save version */})
-  }, [debouncedFields, projetoId, canEdit, canPublish])
+      body: JSON.stringify({ ...debouncedFields, macroFases: fases }),
+    }))
+      .then(r => { if (!r.ok) throw new Error('Falha ao salvar'); savedFields.current = debouncedFields; savedFases.current = fases })
+      .catch(() => toast('Não foi possível salvar o rascunho. Seu texto continua na tela; tente Salvar versão.', 'error'))
+  }, [debouncedFields, fields, projetoId, canEdit, fases, toast, savingVersion, commitModalOpen, draftReady])
 
   // ── Load versions ──────────────────────────────────────────────────────────
 
@@ -217,7 +239,7 @@ export default function ProjectCharter({ membros = [] }: { membros?: MembroEquip
       setVersions(list)
       setIsManager(r.headers.get('x-is-manager') === 'true')
       if (!initializedMeta.current && search === '') {
-        const approved = list.find(v => v.status === 'APPROVED')
+        const approved = list.filter(v => v.status === 'APPROVED').sort((a, b) => new Date(b.approvedAt ?? b.createdAt).getTime() - new Date(a.approvedAt ?? a.createdAt).getTime())[0]
         if (approved) {
           initializedMeta.current = true
           const atuais = todosMembrosRef.current
@@ -243,41 +265,17 @@ export default function ProjectCharter({ membros = [] }: { membros?: MembroEquip
 
   // ── Macro fases ────────────────────────────────────────────────────────────
 
-  async function handleAddFase() {
-    if (!(permissions.has('projeto:editar'))) return
-    if (!projetoId) return
-    const r = await fetchWithSession(`/api/projects/${projetoId}/macro-fases`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ fase: '', dataLimite: null, custo: null }),
-    })
-    if (r.ok) {
-      const created: MacroFase = await r.json()
-      setFases(prev => [...prev, created])
-      setNewestFaseId(created.id)
-    }
+  function handleAddFase() {
+    if (!canEdit) return
+    const id = crypto.randomUUID()
+    setFases(prev => [...prev, { id, fase: '', dataLimite: '', custo: '' }])
+    setNewestFaseId(id)
   }
-
   function handleFaseChange(id: string, field: keyof Omit<MacroFase, 'id'>, value: string) {
-    if (!(permissions.has('projeto:editar'))) return
-    setFases(prev => prev.map(f => f.id === id ? { ...f, [field]: value } : f))
-    clearTimeout((handleFaseChange as { _t?: ReturnType<typeof setTimeout> })._t)
-    ;(handleFaseChange as { _t?: ReturnType<typeof setTimeout> })._t = setTimeout(async () => {
-      setFaseSaving(s => ({ ...s, [id]: true }))
-await fetchWithSession(`/api/projects/${projetoId}/macro-fases/${id}`, {
-        method: 'PATCH',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ [field]: value }),
-      }).catch(() => {})
-      setFaseSaving(s => ({ ...s, [id]: false }))
-    }, 800)
+    if (canEdit) setFases(prev => prev.map(f => f.id === id ? { ...f, [field]: value } : f))
   }
-
-  async function handleRemoveFase(id: string) {
-    if (!(permissions.has('projeto:editar'))) return
-    if (!projetoId) return
-    setFases(prev => prev.filter(f => f.id !== id))
-    await fetchWithSession(`/api/projects/${projetoId}/macro-fases/${id}`, { method: 'DELETE' }).catch(() => {})
+  function handleRemoveFase(id: string) {
+    if (canEdit) setFases(prev => prev.filter(f => f.id !== id))
   }
 
   // ── Print ──────────────────────────────────────────────────────────────────
@@ -304,7 +302,7 @@ await fetchWithSession(`/api/projects/${projetoId}/macro-fases/${id}`, {
   }
 
   function openCommitModal() {
-    if (!(canEdit)) return
+    if (!canEdit || !draftReady) return
     const problema = validarResponsaveis()
     if (problema) {
       toast(problema, 'error')
@@ -331,7 +329,7 @@ await fetchWithSession(`/api/projects/${projetoId}/macro-fases/${id}`, {
   }
 
   async function handleConfirmCommit() {
-    if (!(canEdit)) return
+    if (!canEdit || !draftReady) return
     if (!projetoId || !commitTitle.trim()) return
     const problema = validarResponsaveis()
     if (problema) {
@@ -340,11 +338,13 @@ await fetchWithSession(`/api/projects/${projetoId}/macro-fases/${id}`, {
       return
     }
     setSavingVersion(true)
+    await draftSave.current
     try {
       const r = await fetchWithSession(`/api/projects/${projetoId}/charter/versions`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
+          payload: { ...fields, macroFases: fases },
           commitTitle: commitTitle.trim(),
           versao: versionMeta.versao,
           elaboradoPor: versionMeta.elaboradoPor,
@@ -355,7 +355,12 @@ await fetchWithSession(`/api/projects/${projetoId}/macro-fases/${id}`, {
       if (r.ok) {
         setCommitModalOpen(false)
         await loadVersions()
-        toast('Versão salva com sucesso!')
+        window.dispatchEvent(new CustomEvent('operum:document-version', { detail: { projetoId } }))
+        savedFields.current = fields
+        savedFases.current = fases
+        const saved = await r.json()
+        toast(saved.status === 'PENDING' ? 'Versão enviada para aprovação. O documento vigente foi preservado.' : 'Versão aprovada e publicada.')
+        if (saved.status === 'APPROVED') window.dispatchEvent(new CustomEvent('operum:document-published', { detail: { projetoId } }))
       } else {
         const e = await r.json()
         toast(e.error ?? 'Erro ao salvar versão', 'error')
@@ -384,6 +389,7 @@ await fetchWithSession(`/api/projects/${projetoId}/macro-fases/${id}`, {
       )
       if (r.ok) {
         await loadVersions(debouncedSearch)
+        if (action === 'approve') window.dispatchEvent(new CustomEvent('operum:document-published', { detail: { projetoId } }))
         toast(action === 'approve' ? 'Versão aprovada!' : 'Versão rejeitada.', action === 'approve' ? 'success' : 'warning')
       } else {
         const e = await r.json()
@@ -470,6 +476,15 @@ await fetchWithSession(`/api/projects/${projetoId}/macro-fases/${id}`, {
         </div>
       </div>
 
+      {draftError && (
+        <div role="alert" className="w-[210mm] rounded-xl border border-red-200 bg-red-50 p-3 text-sm text-red-700">
+          {draftError}
+          <button type="button" className="ml-3 font-medium underline" onClick={() => { setDraftError(''); setDraftAttempt(value => value + 1) }}>
+            Tentar novamente
+          </button>
+        </div>
+      )}
+
       {/* ── Action bar ────────────────────────────────────────────────────── */}
       <div className="w-[210mm] flex justify-end gap-2">
         {autoSaving && <span className="self-center text-xs text-slate-400 mr-2">Salvando…</span>}
@@ -487,6 +502,7 @@ await fetchWithSession(`/api/projects/${projetoId}/macro-fases/${id}`, {
         </button>
         <button
           onClick={openCommitModal}
+          disabled={!canEdit || !draftReady}
           className="flex items-center gap-2 px-4 py-2 bg-emerald-600 text-white text-sm font-medium rounded-xl hover:bg-emerald-700 transition-colors shadow-sm"
         >
           <Save className="w-4 h-4" />
@@ -530,7 +546,7 @@ await fetchWithSession(`/api/projects/${projetoId}/macro-fases/${id}`, {
       {/* ── Editable form (screen only) ───────────────────────────────────── */}
       <div className="w-[210mm] flex flex-col gap-4 print:hidden">
 
-        <fieldset disabled={!canEdit || !canPublish} className="min-w-0">
+        <fieldset disabled={!canEdit || !draftReady} className="min-w-0">
         <FormSection title="1. Justificativa do Projeto">
           <textarea rows={5} className={textareaClass} value={fields.justificativa}
             onChange={e => setFields(f => ({ ...f, justificativa: e.target.value }))}
@@ -622,7 +638,7 @@ await fetchWithSession(`/api/projects/${projetoId}/macro-fases/${id}`, {
             <button onClick={() => setCommitModalOpen(false)} className="px-4 py-2 text-sm text-slate-600 hover:bg-slate-100 rounded-lg transition-colors">Cancelar</button>
             <button
               onClick={handleConfirmCommit}
-              disabled={!commitTitle.trim() || savingVersion}
+              disabled={!draftReady || !commitTitle.trim() || savingVersion}
               className="flex items-center gap-1.5 px-4 py-2 bg-emerald-600 text-white text-sm font-medium rounded-lg hover:bg-emerald-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
             >
               <Save className="w-3.5 h-3.5" />

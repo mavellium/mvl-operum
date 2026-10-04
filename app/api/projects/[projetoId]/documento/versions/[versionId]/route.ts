@@ -1,48 +1,23 @@
-import { NextResponse } from 'next/server'
 import { verifySession } from '@/lib/dal'
-import prisma from '@/lib/prisma'
-import { canProjectPermission } from '@/services/projectAccess'
+import { revisarDocumento } from '@/services/documentRevisionService'
+import { documentRevisionErrorResponse } from '@/lib/documentRevisionHttp'
+import { z } from 'zod'
+import { revalidatePath } from 'next/cache'
 
 export async function PATCH(
-  request: Request,
+  req: Request,
   { params }: { params: Promise<{ projetoId: string; versionId: string }> },
 ) {
-  const { projetoId, versionId } = await params
-
+  const session = await verifySession()
   try {
-    const { tenantId, role, userId } = await verifySession()
-    const isManager = await canProjectPermission({ tenantId, role, userId }, projetoId, 'documentos:aprovar')
-    if (!isManager) {
-      return NextResponse.json({ error: 'Apenas Gerentes de Projeto podem aprovar alterações' }, { status: 403 })
-    }
-
-    const body = await request.json()
-    const { action } = body as { action?: string }
-
-    if (action !== 'approve' && action !== 'reject') {
-      return NextResponse.json({ error: 'action deve ser "approve" ou "reject"' }, { status: 400 })
-    }
-
-    const existing = await prisma.documentVersion.findFirst({
-      where: { id: versionId, projectId: projetoId },
-    })
-    if (!existing) {
-      return NextResponse.json({ error: 'Versão não encontrada' }, { status: 404 })
-    }
-
-    const updated = await prisma.documentVersion.update({
-      where: { id: versionId },
-      data: {
-        status: action === 'approve' ? 'APPROVED' : 'REJECTED',
-        approvedAt: action === 'approve' ? new Date() : null,
-        approvedById: action === 'approve' ? userId : null,
-      },
-      include: { author: { select: { name: true } } },
-    })
-
-    return NextResponse.json(updated)
-  } catch (err) {
-    console.error('[documento/versions PATCH]', err)
-    return NextResponse.json({ error: 'Erro interno' }, { status: 500 })
+    const { projetoId, versionId } = await params
+    const { action } = z
+      .object({ action: z.enum(['approve', 'reject']) })
+      .parse(await req.json())
+    const result = await revisarDocumento(session, projetoId, versionId, action)
+    revalidatePath(`/projetos/${projetoId}`, 'layout')
+    return Response.json(result)
+  } catch (error) {
+    return documentRevisionErrorResponse(error)
   }
 }
