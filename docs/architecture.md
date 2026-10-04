@@ -35,6 +35,10 @@ A aplicação é um **Next.js 16 App Router** que atua como frontend + BFF, na f
 | CSV | papaparse 5.5.3 |
 | Testes | Vitest 4.1.2, Testing Library, MSW, JSDOM |
 
+### Histórico de versões na interface
+
+A página `/sobre` usa um Server Component para ler o `CHANGELOG.md` local, destacar a versão de `package.json` injetada por `NEXT_PUBLIC_APP_VERSION` e listar apenas versões anteriores. Não há consulta externa ou banco para esse histórico. O conteúdo é renderizado como texto/elementos React, sem HTML do Markdown. O arquivo é incluído no output standalone por `outputFileTracingIncludes` para `/sobre`, permitindo a mesma leitura em Docker. As próximas entregas atualizam o histórico pelo changelog existente, sem uma segunda lista de versões.
+
 ### Microsserviços
 
 Todos em NestJS 11 + Prisma 7, exceto o API Gateway (Express). Cada serviço tem seu próprio `prisma/schema.prisma`, mas **todos apontam para o mesmo banco PostgreSQL** (`schema=public`, exceto o file-service — ver [Banco de Dados](#banco-de-dados--estratégia-multi-schema)).

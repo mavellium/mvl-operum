@@ -9,6 +9,9 @@ funcionalidade depois disso é uma versão MINOR.
 
 ## [Não lançado]
 
+## [1.11.0] — 2026-10-04
+- **Sobre:** a página `/sobre` destaca as novidades da versão atual e permite consultar as atualizações das versões anteriores, com datas e seções expansíveis. O histórico acompanha automaticamente o changelog do projeto.
+
 ## [1.10.1] — 2026-10-04
 - **Segurança/CI:** imagem final do gateway verifica o patch de `braces` antes do Trivy. Exceção de CVE-2026-93687 limitada ao caminho/hash da cópia corrigida, com expiração em 03/11/2026; outras cópias e alertas high/critical continuam bloqueando o scan.
 - **Prevenção:** PRs para main/develop constroem localmente e analisam a imagem final do gateway, sem publicação ou deploy. Staging/produção usam a mesma verificação antes do scan.
