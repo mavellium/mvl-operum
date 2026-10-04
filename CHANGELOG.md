@@ -9,6 +9,11 @@ funcionalidade depois disso é uma versão MINOR.
 
 ## [Não lançado]
 
+## [1.12.3] — 2026-10-04
+- **Kanban (SDD 9.3):** movimentação de card, histórico e ordenação de origem/destino passam a compartilhar uma transação. Falhas revertem todas as etapas; movimentos concorrentes reavaliam o estado antes do retry.
+- **Ordenação:** posições normalizadas no retorno, desempate estável, inserção ao final quando posição omitida e limpeza dos vínculos de sprint ao retornar ao backlog. Validação de instituição, autoria e coerência entre projeto, sprint e coluna preservada no servidor.
+- **Validação:** check PostgreSQL cobre falhas em cada etapa, movimentações concorrentes e preservação de comentários/tempos.
+
 ## [1.12.2] — 2026-10-04
 - **Timer (SDD 9.2):** um único timer ativo por usuário, protegido por índice parcial no banco. Inícios concorrentes retornam conflito previsível; repetir ou concorrer a parada preserva exatamente o intervalo já encerrado, sem duplicar horas.
 - **Migration:** pré-verificação de duplicados ativos com aborto seguro, sem alterar automaticamente tempos históricos. Procedimento de diagnóstico e revisão documentado para o operador.

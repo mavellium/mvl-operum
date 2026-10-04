@@ -251,3 +251,16 @@ Ao substituir uma decisão, manter o texto histórico, alterar seu status e liga
 - **Consequências:** migration deve preceder a nova imagem do serviço no deploy autorizado. Dados duplicados exigem diagnóstico, plano e reparo autorizado antes de migrate deploy; nenhum histórico é corrigido nesta entrega. Criação convencional do índice bloqueia escritas durante a janela. Timer já ativo passa a devolver 409, aceito pelos clientes atuais; MCP mantém sua opção stop_running e idempotência existente por tarefa. A parada condicional não muda os contratos de tempo manual.
 - **Condições de revisão:** modelo de múltiplos timers simultâneos, mudança de propriedade de usuário ou necessidade de criação concorrente do índice em banco de maior volume. Consolidar módulo local legado no SDD 9.7.
 - **Referências:** SDD 9.2; migration `20261004010000_unique_running_timer`; `sprint-service/src/time-entry/time-entry.service.ts`; `__tests__/integration/timerIntegrity.postgres.test.ts`; `.github/workflows/sprint-integrity.yml`; `docs/operations/timer-integrity.md`.
+
+
+## ADR-017 — Movimentação, histórico e ordenação num único commit transacional
+
+- **Data do registro:** 2026-10-04.
+- **Status:** implementada nesta entrega, aguardando revisão; sem operação em produção.
+- **Contexto:** histórico antecedia update do card e a renumeração usava transações separadas. Falha parcial podia registrar movimento inexistente ou deixar posições inconsistentes; cálculos concorrentes usavam snapshots antigos.
+- **Escolha:** CardService.update utiliza um único cliente transacional Serializable para ler/validar, atualizar, renumerar origem/destino, registrar histórico e ler retorno normalizado. P2034 refaz tudo até duas vezes; demais erros abortam sem retry. Desempates usam criação e ID; posição omitida ao mudar grupo insere ao final e posição explícita é limitada ao tamanho real.
+- **Justificativa:** associar o histórico apenas a alterações confirmadas e dar à concorrência uma ordem serial verificável, preservando escopo de instituição e coerência de projeto/sprint/coluna. Releitura em retry evita repetir origem histórica de um estado que já mudou.
+- **Alternativas consideradas nesta entrega:** transações só na renumeração (mantêm falha parcial); mutex em memória (não coordena instâncias); aplicar posições calculadas pelo cliente sem revalidar (estado pode ter mudado); registrar histórico fora da transação (pode não corresponder à alteração).
+- **Consequências:** mais leituras/updates na transação; conflito esgotado exige retry. A ordem relativa entre pedidos simultâneos não é predefinida, mas os grupos persistidos têm ordem estável e posições contínuas. Retorno ao backlog normaliza position; cards sem coluna usam grupo próprio da sprint. Nenhum schema novo. Criação/exclusão de cards/colunas e configuração da sprint não foram unificadas nesta entrega; histórico de reordenação dentro de um grupo não é criado, mantendo o contrato anterior.
+- **Condições de revisão:** volumes que excedam o timeout da transação, coordenação das demais mutações do quadro ou necessidade de histórico detalhado de reordenação/projeto sem coluna.
+- **Referências:** SDD 9.3; ADR-015; `sprint-service/src/card/card.service.ts`, `__tests__/integration/cardMovement.postgres.test.ts`, `.github/workflows/sprint-integrity.yml`.

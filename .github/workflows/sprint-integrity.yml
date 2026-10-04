@@ -53,6 +53,7 @@ jobs:
           pnpm exec vitest run
           __tests__/integration/sprintDeletion.postgres.test.ts
           __tests__/integration/timerIntegrity.postgres.test.ts
+          __tests__/integration/cardMovement.postgres.test.ts
           sprint-service/src/sprint/sprint.service.spec.ts
           sprint-service/src/card/card.service.spec.ts
           sprint-service/src/time-entry/time-entry.service.spec.ts

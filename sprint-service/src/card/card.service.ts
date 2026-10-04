@@ -1,5 +1,7 @@
-import { BadRequestException, Injectable, NotFoundException } from '@nestjs/common'
+import { BadRequestException, ConflictException, Injectable, NotFoundException } from '@nestjs/common'
 import { prisma } from '../prisma'
+import type { Prisma } from '../../lib/generated/prisma'
+import { sprintInTenant } from '../common/tenant-scope'
 import {
   assertCard,
   assertColumn,
@@ -17,10 +19,10 @@ export const CreateCardSchema = z.object({
   description: z.string().optional(),
   color: z.string().optional(),
   position: z.number().int().optional(),
-  sprintId: z.string().optional(),
-  sprintColumnId: z.string().optional(),
+  sprintId: z.string().min(1).optional(),
+  sprintColumnId: z.string().min(1).optional(),
   sprintPosition: z.number().int().optional(),
-  projectId: z.string().optional(),
+  projectId: z.string().min(1).optional(),
   priority: z.string().optional(),
   startDate: z.string().datetime().optional(),
   endDate: z.string().datetime().optional(),
@@ -36,10 +38,10 @@ export const UpdateCardSchema = z.object({
   description: z.string().optional(),
   color: z.string().optional(),
   position: z.number().int().optional(),
-  sprintId: z.string().nullable().optional(),
-  sprintColumnId: z.string().nullable().optional(),
+  sprintId: z.string().min(1).nullable().optional(),
+  sprintColumnId: z.string().min(1).nullable().optional(),
   sprintPosition: z.number().int().nullable().optional(),
-  projectId: z.string().optional(),
+  projectId: z.string().min(1).optional(),
   priority: z.string().optional(),
   // null remove a data (ex.: tirar o prazo do card pela interface).
   startDate: z.string().datetime().nullable().optional(),
@@ -177,87 +179,84 @@ export class CardService {
   }
 
   async update(tenantId: string, id: string, dto: UpdateCardDto) {
-    const { reason, userId, ...cardData } = dto
-    const current = await this.findOne(tenantId, id)
+    for (let attempt = 0; ; attempt++) {
+      try {
+        return await prisma.$transaction(async tx => {
+          const { reason, userId, ...data } = dto
+          const current = await tx.card.findFirst({ where: { id, deletedAt: null, ...cardInTenant(tenantId) } })
+          if (!current) throw new NotFoundException('Card não encontrado')
+          const placementChanged = data.projectId !== undefined || data.sprintId !== undefined || data.sprintColumnId !== undefined || data.sprintPosition !== undefined || data.position !== undefined
+          if (!placementChanged) return tx.card.update({ where: { id }, data: { ...data, startDate: toDateUpdate(data.startDate), endDate: toDateUpdate(data.endDate) } })
 
-    const touchesPlacement =
-      cardData.projectId !== undefined || cardData.sprintId !== undefined || cardData.sprintColumnId !== undefined
-    if (touchesPlacement) {
-      await this.assertPlacement(tenantId, {
-        projectId: cardData.projectId !== undefined ? cardData.projectId : current.projectId,
-        sprintId: cardData.sprintId !== undefined ? cardData.sprintId : current.sprintId,
-        sprintColumnId: cardData.sprintColumnId !== undefined ? cardData.sprintColumnId : current.sprintColumnId,
-      })
-    }
+          const sourceSprint = current.sprintId ? await tx.sprint.findFirst({ where: { id: current.sprintId, deletedAt: null, ...sprintInTenant(tenantId) } }) : null
+          if (current.sprintId && !sourceSprint) throw new NotFoundException('Sprint não encontrada')
+          const sourceProjectId = current.projectId ?? sourceSprint?.projectId
+          if (!sourceProjectId || (current.projectId && sourceSprint && current.projectId !== sourceSprint.projectId)) {
+            throw new ConflictException('Vínculo do card com o projeto é inconsistente')
+          }
+          const sprintId = data.sprintId !== undefined ? data.sprintId : current.sprintId
+          const targetSprint = sprintId === current.sprintId ? sourceSprint : sprintId ? await tx.sprint.findFirst({ where: { id: sprintId, deletedAt: null, ...sprintInTenant(tenantId) } }) : null
+          if (sprintId && !targetSprint) throw new NotFoundException('Sprint não encontrada')
+          const projectId = data.projectId ?? targetSprint?.projectId ?? sourceProjectId
+          if (targetSprint && targetSprint.projectId !== projectId) throw new BadRequestException('Projeto e sprint devem pertencer ao mesmo projeto')
+          if (!await tx.project.findFirst({ where: { id: projectId, tenantId }, select: { id: true } })) throw new NotFoundException('Projeto não encontrado')
+          const sprintColumnId = !sprintId ? null : data.sprintColumnId !== undefined ? data.sprintColumnId : sprintId !== current.sprintId ? null : current.sprintColumnId
+          if (!sprintId && data.sprintColumnId) throw new BadRequestException('sprintColumnId exige sprintId')
+          const targetColumn = sprintColumnId ? await tx.sprintColumn.findFirst({ where: { id: sprintColumnId, sprintId, deletedAt: null, sprint: sprintInTenant(tenantId) } }) : null
+          if (sprintColumnId && !targetColumn) throw new NotFoundException('Coluna não encontrada')
+          if (current.sprintColumnId && !current.sprintId) throw new ConflictException('Vínculo do card com a coluna é inconsistente')
+          const sourceColumn = current.sprintColumnId ? await tx.sprintColumn.findFirst({ where: { id: current.sprintColumnId, sprintId: current.sprintId, sprint: sprintInTenant(tenantId) } }) : null
+          if (current.sprintColumnId && !sourceColumn) throw new ConflictException('Vínculo do card com a coluna é inconsistente')
+          const source = this.bucket(sourceProjectId, current.sprintId, current.sprintColumnId)
+          const target = this.bucket(projectId, sprintId, sprintColumnId)
+          const moved = source.key !== target.key
+          if (moved && userId && !await tx.user.findFirst({ where: { id: userId, tenantId }, select: { id: true } })) throw new NotFoundException('Usuário não encontrado')
 
-    // Card criado dentro de uma sprint pode não ter projectId; ao voltar para o
-    // backlog herda o projeto da sprint, senão sairia do escopo de qualquer tenant.
-    if (cardData.sprintId === null && !current.projectId && current.sprintId && cardData.projectId === undefined) {
-      const sprint = await prisma.sprint.findUnique({ where: { id: current.sprintId }, select: { projectId: true } })
-      if (sprint?.projectId) cardData.projectId = sprint.projectId
-    }
-
-    if (cardData.sprintColumnId !== undefined) {
-      const currentColumnId = (current as { sprintColumnId?: string | null }).sprintColumnId
-      if (cardData.sprintColumnId !== currentColumnId) {
-        const [fromCol, toCol] = await Promise.all([
-          currentColumnId ? prisma.sprintColumn.findUnique({ where: { id: currentColumnId } }) : null,
-          cardData.sprintColumnId ? prisma.sprintColumn.findUnique({ where: { id: cardData.sprintColumnId } }) : null,
-        ])
-        await prisma.cardMovement.create({
-          data: {
-            cardId: id,
-            userId: userId ?? null,
-            fromColumnId: currentColumnId ?? null,
-            fromColumnTitle: fromCol?.title ?? null,
-            toColumnId: cardData.sprintColumnId ?? null,
-            toColumnTitle: toCol?.title ?? null,
+          await tx.card.update({ where: { id }, data: {
+            ...data, projectId, sprintId, sprintColumnId,
+            sprintPosition: sprintColumnId ? data.sprintPosition ?? current.sprintPosition : null,
+            startDate: toDateUpdate(data.startDate), endDate: toDateUpdate(data.endDate),
+          } })
+          const requested = target.field === 'sprintPosition' ? data.sprintPosition : data.position
+          await this.renumber(tx, target.where, target.field, projectId, { id, index: requested ?? (moved ? undefined : current[target.field] ?? undefined) })
+          if (moved) await this.renumber(tx, source.where, source.field, sourceProjectId)
+          if (moved) await tx.cardMovement.create({ data: {
+            cardId: id, userId: userId ?? null,
+            fromColumnId: current.sprintColumnId, fromColumnTitle: sourceColumn?.title ?? sourceSprint?.name ?? 'Backlog',
+            toColumnId: sprintColumnId, toColumnTitle: targetColumn?.title ?? targetSprint?.name ?? 'Backlog',
             reason: reason ?? null,
-          },
-        })
+          } })
+          return tx.card.findUniqueOrThrow({ where: { id } })
+        }, { isolationLevel: 'Serializable' })
+      } catch (error) {
+        if (error && typeof error === 'object' && 'code' in error && error.code === 'P2034') {
+          if (attempt < 2) continue
+          throw new ConflictException('O quadro foi alterado durante a movimentação. Tente novamente')
+        }
+        throw error
       }
     }
-
-    const updated = await prisma.card.update({
-      where: { id },
-      data: {
-        ...cardData,
-        startDate: toDateUpdate(cardData.startDate),
-        endDate: toDateUpdate(cardData.endDate),
-      },
-    })
-
-    // Gravar só a posição do card movido deixava posições repetidas na coluna
-    // (ex.: mover o 3º card para o topo deixava dois cards na posição 0) e a
-    // ordem mudava ao recarregar. Renumera destino e, se mudou, a origem.
-    if (typeof cardData.sprintPosition === 'number') {
-      const previousColumnId = (current as { sprintColumnId?: string | null }).sprintColumnId ?? null
-      const targetColumnId = cardData.sprintColumnId !== undefined ? cardData.sprintColumnId : previousColumnId
-      if (targetColumnId) await this.renumberColumn(targetColumnId, { id, index: cardData.sprintPosition })
-      if (previousColumnId && previousColumnId !== targetColumnId) await this.renumberColumn(previousColumnId)
-    }
-
-    return updated
   }
 
-  /** Regrava sprintPosition 0..n-1 na coluna, com o card `moved` (se houver) no índice pedido. */
-  private async renumberColumn(columnId: string, moved?: { id: string; index: number }) {
-    const others = await prisma.card.findMany({
-      where: { sprintColumnId: columnId, deletedAt: null, ...(moved ? { id: { not: moved.id } } : {}) },
-      orderBy: [{ sprintPosition: 'asc' }, { createdAt: 'asc' }],
-      select: { id: true, sprintPosition: true },
+  private bucket(projectId: string, sprintId: string | null, columnId: string | null): { key: string; where: Prisma.CardWhereInput; field: 'position' | 'sprintPosition' } {
+    if (sprintId && columnId) return { key: `column:${columnId}`, where: { sprintId, sprintColumnId: columnId }, field: 'sprintPosition' }
+    if (sprintId) return { key: `sprint:${sprintId}`, where: { sprintId, sprintColumnId: null }, field: 'position' }
+    return { key: `backlog:${projectId}`, where: { projectId, sprintId: null }, field: 'position' }
+  }
+
+  /** All reads/writes use the caller transaction; ties always resolve by creation and ID. */
+  private async renumber(tx: Prisma.TransactionClient, where: Prisma.CardWhereInput, field: 'position' | 'sprintPosition', projectId: string, moved?: { id: string; index?: number }) {
+    const cards = await tx.card.findMany({
+      where: { ...where, deletedAt: null, ...(moved ? { id: { not: moved.id } } : {}) },
+      orderBy: [{ [field]: 'asc' }, { createdAt: 'asc' }, { id: 'asc' }],
+      select: { id: true, position: true, sprintPosition: true, projectId: true },
     })
-    const ordered = others.map(c => ({ id: c.id, sprintPosition: c.sprintPosition }))
-    if (moved) {
-      const index = Math.max(0, Math.min(moved.index, ordered.length))
-      // O update principal já gravou moved.index; só regrava se o índice foi ajustado.
-      ordered.splice(index, 0, { id: moved.id, sprintPosition: moved.index })
+    if (cards.some(card => card.projectId && card.projectId !== projectId)) throw new ConflictException('Há cards com vínculo de projeto inconsistente no quadro')
+    const ordered: { id: string; position: number | null | undefined }[] = cards.map(card => ({ id: card.id, position: card[field] }))
+    if (moved) ordered.splice(Math.max(0, Math.min(moved.index ?? ordered.length, ordered.length)), 0, { id: moved.id, position: undefined })
+    for (const [position, card] of ordered.entries()) {
+      if (card.position !== position) await tx.card.update({ where: { id: card.id }, data: { [field]: position } })
     }
-    const updates = ordered
-      .map((c, position) => ({ ...c, position }))
-      .filter(c => c.sprintPosition !== c.position)
-      .map(c => prisma.card.update({ where: { id: c.id }, data: { sprintPosition: c.position } }))
-    if (updates.length > 0) await prisma.$transaction(updates)
   }
 
   async listMovements(tenantId: string, cardId: string) {
