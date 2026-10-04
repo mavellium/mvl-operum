@@ -117,6 +117,9 @@ export default function ProjectCharter({ membros = [] }: { membros?: MembroEquip
   const [data, setData] = useState<CharterData | null>(null)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
+  const [draftReady, setDraftReady] = useState(false)
+  const [draftError, setDraftError] = useState('')
+  const [draftAttempt, setDraftAttempt] = useState(0)
 
   // Editable text fields (mirrors DB, auto-saved)
   const [fields, setFields] = useState({
@@ -202,14 +205,15 @@ export default function ProjectCharter({ membros = [] }: { membros?: MembroEquip
           if (draft.payload.macroFases) setFases(draft.payload.macroFases)
           toast('Seu rascunho privado foi restaurado. Salve uma versão para enviá-lo à aprovação.')
         }
-      }).catch(() => { if (!cancelled) toast('Não foi possível recuperar seu rascunho.', 'error') })
+        if (!cancelled) setDraftReady(true)
+      }).catch(() => { if (!cancelled) setDraftError('Não foi possível recuperar seu rascunho. Tente novamente antes de editar.') })
     return () => { cancelled = true }
-  }, [loading, canEdit, projetoId, toast])
+  }, [loading, canEdit, projetoId, toast, draftAttempt])
 
   // ── Auto-save text fields ──────────────────────────────────────────────────
 
   useEffect(() => {
-    if (firstLoad.current || !canEdit || savingVersion || commitModalOpen) return
+    if (firstLoad.current || !canEdit || !draftReady || debouncedFields !== fields || savingVersion || commitModalOpen) return
     if (JSON.stringify(debouncedFields) === JSON.stringify(savedFields.current) && JSON.stringify(fases) === JSON.stringify(savedFases.current)) return
 
     draftSave.current = (draftSave.current ?? Promise.resolve()).then(() => fetchWithSession(`/api/projects/${projetoId}/charter`, {
@@ -219,7 +223,7 @@ export default function ProjectCharter({ membros = [] }: { membros?: MembroEquip
     }))
       .then(r => { if (!r.ok) throw new Error('Falha ao salvar'); savedFields.current = debouncedFields; savedFases.current = fases })
       .catch(() => toast('Não foi possível salvar o rascunho. Seu texto continua na tela; tente Salvar versão.', 'error'))
-  }, [debouncedFields, projetoId, canEdit, fases, toast, savingVersion, commitModalOpen])
+  }, [debouncedFields, fields, projetoId, canEdit, fases, toast, savingVersion, commitModalOpen, draftReady])
 
   // ── Load versions ──────────────────────────────────────────────────────────
 
@@ -298,7 +302,7 @@ export default function ProjectCharter({ membros = [] }: { membros?: MembroEquip
   }
 
   function openCommitModal() {
-    if (!(canEdit)) return
+    if (!canEdit || !draftReady) return
     const problema = validarResponsaveis()
     if (problema) {
       toast(problema, 'error')
@@ -325,7 +329,7 @@ export default function ProjectCharter({ membros = [] }: { membros?: MembroEquip
   }
 
   async function handleConfirmCommit() {
-    if (!(canEdit)) return
+    if (!canEdit || !draftReady) return
     if (!projetoId || !commitTitle.trim()) return
     const problema = validarResponsaveis()
     if (problema) {
@@ -472,6 +476,15 @@ export default function ProjectCharter({ membros = [] }: { membros?: MembroEquip
         </div>
       </div>
 
+      {draftError && (
+        <div role="alert" className="w-[210mm] rounded-xl border border-red-200 bg-red-50 p-3 text-sm text-red-700">
+          {draftError}
+          <button type="button" className="ml-3 font-medium underline" onClick={() => { setDraftError(''); setDraftAttempt(value => value + 1) }}>
+            Tentar novamente
+          </button>
+        </div>
+      )}
+
       {/* ── Action bar ────────────────────────────────────────────────────── */}
       <div className="w-[210mm] flex justify-end gap-2">
         {autoSaving && <span className="self-center text-xs text-slate-400 mr-2">Salvando…</span>}
@@ -489,6 +502,7 @@ export default function ProjectCharter({ membros = [] }: { membros?: MembroEquip
         </button>
         <button
           onClick={openCommitModal}
+          disabled={!canEdit || !draftReady}
           className="flex items-center gap-2 px-4 py-2 bg-emerald-600 text-white text-sm font-medium rounded-xl hover:bg-emerald-700 transition-colors shadow-sm"
         >
           <Save className="w-4 h-4" />
@@ -532,7 +546,7 @@ export default function ProjectCharter({ membros = [] }: { membros?: MembroEquip
       {/* ── Editable form (screen only) ───────────────────────────────────── */}
       <div className="w-[210mm] flex flex-col gap-4 print:hidden">
 
-        <fieldset disabled={!canEdit} className="min-w-0">
+        <fieldset disabled={!canEdit || !draftReady} className="min-w-0">
         <FormSection title="1. Justificativa do Projeto">
           <textarea rows={5} className={textareaClass} value={fields.justificativa}
             onChange={e => setFields(f => ({ ...f, justificativa: e.target.value }))}
@@ -624,7 +638,7 @@ export default function ProjectCharter({ membros = [] }: { membros?: MembroEquip
             <button onClick={() => setCommitModalOpen(false)} className="px-4 py-2 text-sm text-slate-600 hover:bg-slate-100 rounded-lg transition-colors">Cancelar</button>
             <button
               onClick={handleConfirmCommit}
-              disabled={!commitTitle.trim() || savingVersion}
+              disabled={!draftReady || !commitTitle.trim() || savingVersion}
               className="flex items-center gap-1.5 px-4 py-2 bg-emerald-600 text-white text-sm font-medium rounded-lg hover:bg-emerald-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
             >
               <Save className="w-3.5 h-3.5" />
