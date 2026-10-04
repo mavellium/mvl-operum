@@ -9,6 +9,12 @@ funcionalidade depois disso é uma versão MINOR.
 
 ## [Não lançado]
 
+## [1.13.0] — 2026-10-04
+- **Tarefas (SDD 9.6):** novo endpoint paginado com filtros no sprint-service; MCP lista tarefas sem varrer todas as sprints do projeto, incluindo cards cujo projeto vem da sprint.
+- **Paginação:** cursor por criação e ID, com limite inicial de travessia e vínculo ao tenant/filtros; tags e responsáveis somente da página, anexos buscados exclusivamente dos IDs retornados.
+- **Quadro:** UI e MCP pedem resumo dos tempos encerrados e timers ativos, reduzindo o payload. Histórico completo continua disponível nas rotas de detalhe e no modo anterior do quadro.
+- **Banco e validação:** índices parciais para backlog/sprint; testes PostgreSQL e HTTP reais, travessia concorrente, isolamento e medições de consultas, bytes e latência.
+
 ## [1.12.5] — 2026-10-04
 - **Dashboards (SDD 9.5):** rotas global e por sprint restauradas, com KPIs, ranking, cards atrasados, colunas e feedbacks agregados no sprint-service.
 - **Contratos e acesso:** respostas validadas pelo serviço e pelo cliente; consultas limitadas ao tenant e aos projetos com leitura de quadro e custos. Dados vazios retornam zeros/listas vazias, sem ocultar erros de contrato ou permissão.

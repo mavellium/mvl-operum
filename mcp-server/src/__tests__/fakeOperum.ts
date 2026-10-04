@@ -11,7 +11,7 @@ type Row = Record<string, unknown> & { id: string }
 
 const STATIC_SEGMENTS = new Set([
   'auth', 'me', 'my-tenants', 'all-users', 'projects', 'user', 'members', 'macro-fases', 'stakeholders',
-  'tags', 'sprints', 'columns', 'cards', 'backlog', 'responsibles', 'comments', 'movements', 'audit',
+  'tags', 'sprints', 'columns', 'cards', 'page', 'backlog', 'responsibles', 'comments', 'movements', 'audit',
   'files', 'upload', 'link', 'by-cards', 'url',
   'time-entries', 'running', 'start', 'stop', 'manual',
 ])
@@ -55,7 +55,7 @@ export class FakeOperum {
   attachmentBytes = new Map<string, Buffer>()
   timeEntries: Row[] = []
   audit: Row[] = []
-  calls: { tenantId: string; method: string; path: string; body?: unknown }[] = []
+  calls: { tenantId: string; method: string; path: string; body?: unknown; query?: Record<string, string> }[] = []
   /** Permite simular falhas: retorna um erro para interromper a chamada. */
   failWhen: ((method: string, path: string, body: unknown) => GatewayError | null) | null = null
 
@@ -75,7 +75,7 @@ export class FakeOperum {
       const [pathname, qs] = path.split('?')
       const query: Record<string, string> = Object.fromEntries(new URLSearchParams(qs ?? ''))
       for (const [k, v] of Object.entries(params ?? {})) if (v !== undefined) query[k] = String(v)
-      this.calls.push({ tenantId: user.tenantId, method, path: pathname, body })
+      this.calls.push({ tenantId: user.tenantId, method, path: pathname, body, query })
       const injected = this.failWhen?.(method, pathname, body)
       if (injected) throw injected
       return structuredClone(this.handle(user, method, pathname, query, (body ?? {}) as Record<string, unknown>))
@@ -272,6 +272,31 @@ export class FakeOperum {
         this.sprint(t, seg[1])
         return this.cards.filter(c => c.sprintId === seg[1] && !c.deletedAt).map(c => this.hydrateCard(c))
 
+      case 'GET /cards/page': {
+        const sprint = q.sprintId ? this.sprint(t, q.sprintId) : null
+        const projectId = q.projectId ?? sprint?.projectId
+        this.project(t, String(projectId))
+        if (sprint && sprint.projectId !== projectId) throw httpError(404)
+        let cards = this.cards.filter(c => !c.deletedAt && (c.sprintId
+          ? this.sprints.some(s => s.id === c.sprintId && s.projectId === projectId && !s.deletedAt)
+          : c.projectId === projectId))
+        if (q.sprintId) cards = cards.filter(c => c.sprintId === q.sprintId)
+        if (q.backlog === 'true') cards = cards.filter(c => !c.sprintId)
+        if (q.columnId) cards = cards.filter(c => c.sprintColumnId === q.columnId)
+        if (q.priority) cards = cards.filter(c => c.priority === q.priority)
+        if (q.responsibleId) cards = cards.filter(c => this.cardResponsibles.some(r => r.cardId === c.id && r.userId === q.responsibleId))
+        if (q.dueBefore) cards = cards.filter(c => c.endDate && String(c.endDate) <= q.dueBefore)
+        if (q.dueAfter) cards = cards.filter(c => c.endDate && String(c.endDate) >= q.dueAfter)
+        if (q.q) cards = cards.filter(c => `${c.title}\n${c.description ?? ''}`.toLowerCase().includes(q.q.toLowerCase()))
+        cards.sort((a, b) => String(a.createdAt).localeCompare(String(b.createdAt)) || a.id.localeCompare(b.id))
+        const total = cards.length
+        const offset = q.cursor ? cards.findIndex(c => c.id === Buffer.from(q.cursor, 'base64url').toString()) + 1 : 0
+        const limit = Number(q.limit ?? 50)
+        const page = cards.slice(offset, offset + limit)
+        return { items: page.map(c => ({ ...this.hydrateCard(c),
+          sprint: this.sprints.find(s => s.id === c.sprintId), sprintColumn: this.columns.find(col => col.id === c.sprintColumnId),
+        })), total, next_cursor: offset + page.length < total ? Buffer.from(page[page.length - 1].id).toString('base64url') : null }
+      }
       case 'GET /cards/backlog':
         this.project(t, q.projectId)
         return this.cards.filter(c => c.projectId === q.projectId && !c.sprintId && !c.deletedAt).map(c => this.hydrateCard(c))

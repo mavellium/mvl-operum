@@ -128,9 +128,9 @@ export class SprintService {
     }
   }
 
-  async listColumns(tenantId: string, sprintId: string) {
+  async listColumns(tenantId: string, sprintId: string, timeMode: 'full' | 'summary' = 'full') {
     await this.findOne(tenantId, sprintId)
-    return prisma.sprintColumn.findMany({
+    const columns = await prisma.sprintColumn.findMany({
       where: { sprintId, deletedAt: null },
       orderBy: { position: 'asc' },
       include: {
@@ -140,11 +140,20 @@ export class SprintService {
           include: {
             tags: { include: { tag: true } },
             responsibles: { include: { user: { select: PUBLIC_USER_SELECT } } },
-            timeEntries: { where: { deletedAt: null } },
+            timeEntries: timeMode === 'summary'
+              ? { where: { deletedAt: null, isRunning: true, user: { tenantId, deletedAt: null } }, select: { id: true, userId: true, startedAt: true, isRunning: true, duration: true } }
+              : { where: { deletedAt: null } },
           },
         },
       },
     })
+    if (timeMode === 'full') return columns
+    const ids = columns.flatMap(column => column.cards.map(card => card.id))
+    const totals = ids.length ? await prisma.timeEntry.groupBy({
+      by: ['cardId'], where: { cardId: { in: ids }, deletedAt: null, isRunning: false, user: { tenantId, deletedAt: null } }, _sum: { duration: true },
+    }) : []
+    const byCard = new Map(totals.map(row => [row.cardId, row._sum.duration ?? 0]))
+    return columns.map(column => ({ ...column, cards: column.cards.map(card => ({ ...card, totalDurationSeconds: byCard.get(card.id) ?? 0 })) }))
   }
 
   async createColumn(tenantId: string, sprintId: string, dto: CreateColumnDto) {

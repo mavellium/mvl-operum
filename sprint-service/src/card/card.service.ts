@@ -14,6 +14,7 @@ import {
   PUBLIC_USER_SELECT,
 } from '../common/tenant-scope'
 import { z } from 'zod'
+import { TaskPageQuerySchema, taskPageScope, readTaskCursor, writeTaskCursor, taskPageBoundary } from './task-page'
 
 export const CreateCardSchema = z.object({
   title: z.string().min(1),
@@ -62,6 +63,57 @@ export type UpdateCardDto = z.infer<typeof UpdateCardSchema>
 
 @Injectable()
 export class CardService {
+  async listPage(tenantId: string, raw: unknown) {
+    const parsed = TaskPageQuerySchema.safeParse(raw)
+    if (!parsed.success) throw new BadRequestException(parsed.error.issues[0].message)
+    const q = parsed.data
+    const scope = taskPageScope(tenantId, q)
+    const cursor = readTaskCursor(q.cursor, scope)
+    return prisma.$transaction(async tx => {
+      let projectId = q.projectId
+      if (q.sprintId) {
+        const sprint = await tx.sprint.findFirst({ where: { id: q.sprintId, deletedAt: null, project: { tenantId, deletedAt: null } }, select: { projectId: true } })
+        if (!sprint || (projectId && projectId !== sprint.projectId)) throw new NotFoundException('Sprint não encontrada neste projeto')
+        projectId = sprint.projectId
+      }
+      const project = await tx.project.findFirst({ where: { id: projectId, tenantId, deletedAt: null }, select: { id: true } })
+      if (!project) throw new NotFoundException('Projeto não encontrado')
+      const AND: Prisma.CardWhereInput[] = [{ deletedAt: null }, {
+        OR: [
+          { sprintId: null, projectId },
+          { sprint: { projectId, deletedAt: null }, OR: [{ projectId: null }, { projectId }] },
+        ],
+      }, {
+        OR: [{ sprintColumnId: null }, { sprintColumn: { deletedAt: null, sprint: { projectId, deletedAt: null, ...(q.sprintId ? { id: q.sprintId } : {}) } } }],
+      }]
+      if (q.sprintId) AND.push({ sprintId: q.sprintId })
+      if (q.backlog === 'true') AND.push({ sprintId: null })
+      if (q.columnId) AND.push({ sprintColumnId: q.columnId })
+      if (q.priority) AND.push({ priority: q.priority })
+      if (q.responsibleId) AND.push({ responsibles: { some: { userId: q.responsibleId, user: { tenantId, deletedAt: null } } } })
+      if (q.dueBefore || q.dueAfter) AND.push({ endDate: { ...(q.dueBefore ? { lte: new Date(q.dueBefore) } : {}), ...(q.dueAfter ? { gte: new Date(q.dueAfter) } : {}) } })
+      if (q.q) AND.push({ OR: [{ title: { contains: q.q, mode: 'insensitive' } }, { description: { contains: q.q, mode: 'insensitive' } }] })
+      const upperRow = cursor ? null : await tx.card.findFirst({ where: { AND }, orderBy: [{ createdAt: 'desc' }, { id: 'desc' }], select: { createdAt: true, id: true } })
+      const upper = cursor?.upper ?? (upperRow ? { at: upperRow.createdAt.toISOString(), id: upperRow.id } : null)
+      if (!upper) return { items: [], total: 0, next_cursor: null }
+      AND.push(taskPageBoundary(upper, 'upper'))
+      const total = await tx.card.count({ where: { AND } })
+      if (cursor) AND.push(taskPageBoundary(cursor.after, 'after'))
+      const rows = await tx.card.findMany({
+        where: { AND }, orderBy: [{ createdAt: 'asc' }, { id: 'asc' }], take: q.limit + 1,
+        select: {
+          id: true, title: true, priority: true, projectId: true, sprintId: true, sprintColumnId: true, startDate: true, endDate: true, createdAt: true,
+          ...(q.fields === 'full' ? { description: true, color: true, position: true, sprintPosition: true, updatedAt: true } : {}),
+          sprint: { select: { id: true, name: true } }, sprintColumn: { select: { id: true, title: true } },
+          tags: { where: { tag: { tenantId } }, select: { tag: { select: { id: true, name: true, color: true } } } },
+          responsibles: { where: { user: { tenantId, deletedAt: null } }, select: { user: { select: PUBLIC_USER_SELECT } } },
+        },
+      })
+      const items = rows.slice(0, q.limit)
+      return { items, total, next_cursor: rows.length > q.limit ? writeTaskCursor(scope, upper, items[items.length - 1]) : null }
+    }, { isolationLevel: 'RepeatableRead' })
+  }
+
   async listBacklog(tenantId: string, projectId: string) {
     await assertProject(tenantId, projectId)
     return prisma.card.findMany({

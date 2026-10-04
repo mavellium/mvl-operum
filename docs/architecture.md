@@ -459,6 +459,7 @@ Admin cria usuário com forcePasswordChange=true
 | GET | `/sprints/:sprintId/metrics` · POST idem | Métricas de sprint |
 | GET/POST | `/sprints/:sprintId/feedback` | SprintFeedback |
 | GET | `/cards/backlog`, `/cards/search`, `/cards/:id` | Consultas de card |
+| GET | `/cards/page` | Página com filtros de projeto/sprint/backlog/coluna/responsável/prioridade/prazo/texto; cursor e limite na origem |
 | GET | `/sprints/:sprintId/cards` | Cards de um sprint |
 | POST/PATCH/DELETE | `/cards`, `/cards/:id` | CRUD de card |
 | GET | `/cards/:id/movements` | Histórico de movimentação (CardMovement) |
@@ -510,6 +511,10 @@ Servidor MCP remoto e sem estado. Cada chamada usa o PAT do usuário contra o ap
 - **SSRF:** o download por `url` é protegido (`mcp-server/src/download.ts`).
 - **Tempo:** as tools de timer (`operum_start_timer`, `operum_stop_timer`, `operum_log_time`) usam as rotas de time entries do sprint-service.
 - **Leitura:** o `operum_get_task` devolve os anexos com `download_url` (arquivo) ou `url` (link) e o tempo da tarefa.
+- **Paginação de tarefas (SDD 9.6):** `operum_list_tasks` delega filtros e cursor ao `GET /cards/page` do sprint-service, sem listar sprints/backlog/cards separadamente. Resposta `{items,total,next_cursor}`; limite 50, máximo 200. Ordenação por `createdAt,id`, limite superior da primeira página e cursor vinculado ao tenant/filtros. Cada página usa RepeatableRead; não é um snapshot entre requisições. Novos cards com chave posterior ao limite inicial são excluídos da travessia; mudanças de filtros, exclusões e permissões podem alterar o conjunto e o total. Cards sem projectId direto são incluídos pelo projeto da sprint ativa; vínculos de projeto incoerentes e responsáveis/tags de outro tenant são excluídos. Somente relações dos `limit+1` candidatos são carregadas; anexos são buscados dos IDs da página retornada.
+- **Tempos no quadro:** `GET /sprints/:id/columns?timeEntries=summary` devolve `totalDurationSeconds` dos tempos encerrados e `timeEntries` apenas ativos, com agregação SQL por card. UI e ferramentas MCP de sprint usam esse modo; o serializer MCP preserva o total e timers ativos. Sem parâmetro (ou `full`), o contrato anterior de histórico completo permanece. Histórico detalhado continua nas rotas de card/time entries. Não há paginação dos cards do quadro nesta entrega.
+- **Índices:** migration raiz `20261004030000_task_page_indexes` adiciona índices parciais `(projectId,createdAt,id)` para backlog ativo e `(sprintId,createdAt,id)` para cards ativos. Geridos via SQL, pois a condição parcial não é representada pelos schemas Prisma. `count` exato continua examinando o conjunto elegível no banco; a melhoria limita materialização/payload, sem prometer leitura física constante.
+- **Medições e concorrência:** procedimento reproduzível e limites em [`docs/operations/task-pagination.md`](operations/task-pagination.md). Novo check Task Pagination executa fixture grande; Dashboard Contracts exercita a rota através de autenticação e autorização reais do gateway.
 
 Todos os 5 serviços expõem `GET /health` (usado pelos healthchecks do Docker Compose).
 

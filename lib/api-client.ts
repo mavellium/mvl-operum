@@ -294,7 +294,7 @@ export const sprintsApi = {
   delete: (id: string) =>
     request(`/sprints/${id}`, { method: 'DELETE' }),
 
-  listColumns: (sprintId: string) => request<unknown[]>(`/sprints/${sprintId}/columns`),
+  listColumns: (sprintId: string) => request<unknown[]>(`/sprints/${sprintId}/columns?timeEntries=summary`),
 
   createColumn: (sprintId: string, data: Record<string, unknown>) =>
     request<{ id: string; title: string; position: number }>(`/sprints/${sprintId}/columns`, { method: 'POST', body: JSON.stringify(data) }),

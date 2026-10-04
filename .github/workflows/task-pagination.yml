@@ -1,0 +1,60 @@
+name: Task Pagination
+
+on:
+  pull_request:
+    branches: [main, develop]
+
+permissions:
+  contents: read
+
+concurrency:
+  group: task-pagination-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  postgres:
+    name: Task pagination (PostgreSQL)
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    services:
+      postgres:
+        image: postgres:17
+        env:
+          POSTGRES_USER: operum_test
+          POSTGRES_PASSWORD: test_only_local_ci
+          POSTGRES_DB: operum_task_page_test
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U operum_test -d operum_task_page_test"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 10
+    env:
+      DATABASE_URL: postgresql://operum_test:test_only_local_ci@localhost:5432/operum_task_page_test
+      OPERUM_TASK_PAGE_TEST_DATABASE_URL: postgresql://operum_test:test_only_local_ci@localhost:5432/operum_task_page_test
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v3
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile --ignore-scripts
+      - name: Prepare Prisma migration engine
+        run: pnpm rebuild @prisma/engines
+      - run: pnpm exec prisma generate
+      - name: Apply migrations to isolated database
+        run: pnpm exec prisma migrate deploy
+      - run: pnpm --dir sprint-service exec prisma generate
+      - run: pnpm --dir sprint-service build
+      - run: pnpm --dir mcp-server build
+      - name: Test bounded reads, traversal, isolation, board payload and MCP delegation
+        run: >-
+          pnpm exec vitest run --no-file-parallelism
+          __tests__/integration/taskPagination.postgres.test.ts
+          mcp-server/src/__tests__/server.test.ts
+          mcp-server/src/__tests__/attachments.test.ts
+          mcp-server/src/__tests__/migration.test.ts
+          mcp-server/src/__tests__/utils.test.ts
+          __tests__/unit/services/apiAuthorization.test.ts

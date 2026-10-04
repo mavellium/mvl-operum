@@ -5,6 +5,16 @@ import { throttledGateway } from '../migration/throttle'
 import { mapLimit } from '../concurrency'
 import { toIso } from '../dates'
 import type { Gateway } from '../gateway'
+import { serializeTask } from '../serializers'
+
+describe('tempos resumidos do quadro', () => {
+  it('preserva total agregado e timer ativo sem precisar do histórico encerrado', () => {
+    const entry = { id: 'active', userId: 'u1', isRunning: true, startedAt: '2026-10-04T12:00:00Z', duration: 0 }
+    const task = serializeTask({ id: 'c1', totalDurationSeconds: 50000, timeEntries: [entry] })
+    expect(task?.time).toEqual({ total_seconds: 50000, running: [{ entry_id: 'active', user_id: 'u1', started_at: entry.startedAt }] })
+    expect(serializeTask({ id: 'c1', timeEntries: [{ duration: 10, isRunning: false }, entry] })?.time?.total_seconds).toBe(10)
+  })
+})
 
 describe('paginate', () => {
   const items = Array.from({ length: 5 }, (_, i) => i)

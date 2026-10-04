@@ -88,13 +88,28 @@ describe('leitura', () => {
     expect(sprints.find(s => s.name === 'Sprint 1')!.columns.map(c => c.title)).toEqual(['Backlog da sprint', 'Fazendo', 'Feito'])
   })
 
-  it('list_tasks sem sprint varre backlog + todas as sprints (inclui cards sem projectId)', async () => {
+  it('list_tasks delega página na origem, incluindo cards sem projectId', async () => {
+    h.op.calls.length = 0
     const res = await h.call('operum_list_tasks', { project_id: seed.project.id })
     const titles = (res.items as { title: string }[]).map(t => t.title).sort()
     expect(titles).toEqual(['Dashboard', 'Ideia: modo escuro', 'Login', 'Relatório de horas'])
     const login = (res.items as Record<string, unknown>[]).find(t => t.title === 'Login')!
     expect(login).toMatchObject({ sprint_name: 'Sprint 1', column_title: 'Feito', tags: ['bug'], priority: 'alta' })
     expect(login).not.toHaveProperty('description')
+    expect(h.op.calls.filter(call => call.path === '/cards/page')).toHaveLength(1)
+    expect(h.op.calls.some(call => call.path === '/sprints' || call.path === '/cards/backlog' || /\/sprints\/[^/]+\/cards/.test(call.path))).toBe(false)
+  })
+
+  it('list_tasks encaminha filtros e cursor sem fazer varredura local', async () => {
+    const first = await h.call('operum_list_tasks', { project_id: seed.project.id, limit: 2 })
+    const second = await h.call('operum_list_tasks', { project_id: seed.project.id, limit: 2, cursor: first.next_cursor })
+    expect(first.items).toHaveLength(2)
+    expect(second.items).toHaveLength(2)
+    expect(second.next_cursor).toBeNull()
+    const requests = h.op.calls.filter(call => call.path === '/cards/page')
+    expect(requests.at(-1)?.query).toMatchObject({ limit: '2', cursor: first.next_cursor })
+    const ids = [...first.items as { id: string }[], ...second.items as { id: string }[]].map(card => card.id)
+    expect(new Set(ids).size).toBe(4)
   })
 
   it('list_tasks filtra por responsável, prioridade, prazo, backlog e texto', async () => {

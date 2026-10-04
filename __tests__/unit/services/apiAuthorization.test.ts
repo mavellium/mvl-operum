@@ -36,6 +36,14 @@ beforeEach(() => {
 })
 
 describe('escopo de leitura', () => {
+  it('autoriza página apenas com projeto/sprint e leitura do quadro', async () => {
+    await expect(authorizeApi(session, 'GET', '/cards/page?projectId=project-A&sprintId=sprint-A')).resolves.toEqual({ allowed: true })
+    await expect(authorizeApi(session, 'GET', '/cards/page')).rejects.toThrow()
+    await expect(authorizeApi(session, 'GET', '/cards/page?projectId=outside')).rejects.toThrow()
+    await expect(authorizeApi(session, 'GET', '/cards/page?projectId=project-B&sprintId=sprint-A')).rejects.toThrow()
+    granted.delete('quadro:ver')
+    await expect(authorizeApi(session, 'GET', '/cards/page?sprintId=sprint-A')).rejects.toThrow()
+  })
   it.each(['/projects','/projects/user/user-B','/sprints','/cards/search?q=abc'])('retorna IDs autorizados para %s', async path => {
     expect(await authorizeApi(session, 'GET', path)).toEqual({ allowed: true, projectIds: ['project-A'] })
   })
