@@ -1,0 +1,2 @@
+# Patches arquivados preservam inclusive o espaço de prefixo das linhas de contexto.
+docs/drafts/**/*.patch -whitespace
