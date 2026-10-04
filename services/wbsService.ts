@@ -629,109 +629,62 @@ export async function resetTree(
  * - Retorna mapa { fase (título normalizado) -> nodeId } para uso posterior.
  */
 export async function syncMacrofasesComEap(
-  projectId: string,
-  tenantId: string,
-  macrofases: Array<{ fase: string; dataLimite?: string; custo?: string }>,
-  userId?: string,
+  projectId: string, tenantId: string,
+  macrofases: Array<{ fase: string; dataLimite?: string; custo?: string }>, userId?: string,
 ): Promise<Map<string, string>> {
-  // Normaliza título para match (trim + lower)
-  const norm = (s: string) => s.trim().toLowerCase()
+  return prisma.$transaction(tx => syncMacrofasesComEapInTransaction(tx, projectId, tenantId, macrofases, userId), { isolationLevel: 'Serializable' })
+}
 
-  // 1) Garante raiz (ou obtém existente)
-  let root = await prisma.wbsNode.findFirst({
-    where: { projectId, tenantId, parentId: null },
-    select: { id: true, version: true },
-  })
-
-  if (!root) {
-    // Cria raiz com nome do projeto
-    const projeto = await prisma.project.findUnique({ where: { id: projectId }, select: { name: true } })
-    const rootTitle = projeto?.name ?? 'Projeto'
-    const res = await resetTree({ projectId, tenantId, rootTitle }, userId ?? '')
-    root = { id: res.nodeId, version: res.serverVersion }
-  }
-
-  const rootId = root.id
-
-  // 2) Carrega nós top-level atuais (filhos diretos da raiz)
-  const topLevelRows = await prisma.wbsNode.findMany({
-    where: { projectId, tenantId, parentId: rootId },
-    select: { id: true, title: true, properties: true, order: true },
-  })
-  const topLevelByNorm = new Map<string, { id: string; title: string; properties: Record<string, unknown> }>()
-  for (const n of topLevelRows) {
-    topLevelByNorm.set(norm(n.title), { id: n.id, title: n.title, properties: (n.properties as Record<string, unknown>) ?? {} })
-  }
-
+/** The reconciliation marker and all EAP writes must use the same transaction. */
+export async function syncMacrofasesComEapInTransaction(
+  tx: Tx, projectId: string, tenantId: string,
+  macrofases: Array<{ fase: string; dataLimite?: string; custo?: string }>, userId?: string,
+): Promise<Map<string, string>> {
+  const project = await tx.project.findFirst({ where: { id: projectId, tenantId, deletedAt: null }, select: { name: true } })
+  if (!project) throw new WbsNotFoundError('Projeto não encontrado')
+  const norm = (title: string) => title.trim().toLowerCase()
+  const phases = macrofases.filter(f => f.fase.trim())
+  if (phases.some(f => f.fase.trim().length > 500) || new Set(phases.map(f => norm(f.fase))).size !== phases.length) throw new WbsValidationError('Lote de macrofases inválido')
+  let root = await tx.wbsNode.findFirst({ where: { projectId, tenantId, parentId: null }, select: { id: true } })
   const result = new Map<string, string>()
-
-  // 3) Para cada macrofase do form, upsert nó top-level
-  for (let i = 0; i < macrofases.length; i++) {
-    const { fase, dataLimite, custo } = macrofases[i]
-    const titulo = fase.trim()
-    if (!titulo) continue
-
-    const key = norm(titulo)
-    const existing = topLevelByNorm.get(key)
-
-    // properties a mesclar (mescla shallow — preserva outras chaves da EAP)
-    const newProps: Record<string, unknown> = {}
-    if (dataLimite) newProps.dataLimite = dataLimite
-    if (custo) {
-      const parsed = parseFloat(custo.replace(/\./g, '').replace(',', '.'))
-      if (!isNaN(parsed)) newProps.custo = parsed
+  if (!root && phases.length === 0) return result
+  let changed = false
+  if (!root) {
+    root = await tx.wbsNode.create({ data: { projectId, tenantId, parentId: null, order: 0, code: '1', title: project.name.slice(0, 500), style: toJson(DEFAULT_STYLE), properties: {}, layout: 'LADO_A_LADO' }, select: { id: true } })
+    changed = true
+  }
+  const existing = await tx.wbsNode.findMany({ where: { projectId, tenantId, parentId: root.id }, orderBy: { order: 'asc' } })
+  const byName = new Map(existing.map(node => [norm(node.title), node]))
+  if (byName.size !== existing.length) throw new WbsValidationError('A EAP tem macrofases com nomes repetidos; revise antes de sincronizar')
+  let nextOrder = existing.reduce((max, node) => Math.max(max, node.order + 1), 0)
+  const newCount = phases.filter(f => !byName.has(norm(f.fase))).length
+  if (await tx.wbsNode.count({ where: { projectId, tenantId } }) + newCount > WBS_LIMITS.MAX_NODES) throw new WbsValidationError('Limite de nós da EAP excedido')
+  for (const phase of phases) {
+    const title = phase.fase.trim()
+    const key = norm(title)
+    const node = byName.get(key)
+    const properties = { ...((node?.properties as Record<string, unknown>) ?? {}) }
+    if (phase.dataLimite !== undefined) { if (phase.dataLimite) properties.dataLimite = phase.dataLimite; else delete properties.dataLimite }
+    if (phase.custo !== undefined) {
+      if (phase.custo) {
+        const value = Number(phase.custo.includes(',') ? phase.custo.replace(/\./g, '').replace(',', '.') : phase.custo)
+        if (!Number.isFinite(value) || value < 0) throw new WbsValidationError('Custo inválido')
+        properties.custo = value
+      } else delete properties.custo
     }
-
-    if (existing) {
-      // Atualiza título se mudou + mescla properties
-      const needsTitleUpdate = existing.title !== titulo
-      const needsPropsUpdate = Object.keys(newProps).length > 0 &&
-        JSON.stringify(existing.properties ?? {}) !== JSON.stringify({ ...(existing.properties ?? {}), ...newProps })
-
-      if (needsTitleUpdate || needsPropsUpdate) {
-        await prisma.$transaction(async tx => {
-          if (needsTitleUpdate) {
-            await tx.wbsNode.update({ where: { id: existing.id }, data: { title: titulo } })
-          }
-          if (needsPropsUpdate) {
-            await tx.wbsNode.update({
-              where: { id: existing.id },
-              data: { properties: toJson({ ...(existing.properties ?? {}), ...newProps }) },
-            })
-          }
-          await syncCodes(tx, projectId, tenantId)
-          await bumpVersion(tx, projectId, tenantId)
-        })
+    if (node) {
+      if (node.title !== title || JSON.stringify(node.properties) !== JSON.stringify(properties)) {
+        await tx.wbsNode.update({ where: { id: node.id }, data: { title, properties: toJson(properties) } })
+        changed = true
       }
-      result.set(key, existing.id)
+      result.set(key, node.id)
     } else {
-      // Cria novo nó top-level
-      const childCount = await prisma.wbsNode.count({ where: { parentId: rootId, projectId, tenantId } })
-      const newNode = await prisma.wbsNode.create({
-        data: {
-          tenantId, projectId, parentId: rootId,
-          order: childCount,
-          code: '', // recalcCodes vai preencher
-          title: titulo,
-          layout: 'LADO_A_LADO',
-          collapsed: false,
-          style: toJson(DEFAULT_STYLE),
-          properties: toJson(newProps),
-        },
-      })
-      await prisma.$transaction(async tx => {
-        await syncCodes(tx, projectId, tenantId)
-        await bumpVersion(tx, projectId, tenantId)
-      })
-      if (userId) {
-        await registrarAcao({
-          tenantId, userId, action: 'CREATE', entity: 'WbsNode',
-          entityId: newNode.id, details: { parentId: rootId, source: 'macroFaseSync' },
-        })
-      }
-      result.set(key, newNode.id)
+      const created = await tx.wbsNode.create({ data: { projectId, tenantId, parentId: root.id, order: nextOrder++, code: '', title, style: toJson(DEFAULT_STYLE), properties: toJson(properties), layout: 'LADO_A_LADO' } })
+      if (userId) await registrarAcao({ tenantId, userId, action: 'CREATE', entity: 'WbsNode', entityId: created.id, details: { parentId: root.id, source: 'macroFaseSync' } }, tx)
+      result.set(key, created.id)
+      changed = true
     }
   }
-
+  if (changed) { await syncCodes(tx, projectId, tenantId); await bumpVersion(tx, projectId, tenantId) }
   return result
 }

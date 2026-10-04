@@ -1,9 +1,27 @@
-import { Injectable, NotFoundException, ConflictException } from '@nestjs/common'
+import { Injectable, NotFoundException, ConflictException, BadRequestException } from '@nestjs/common'
 import { prisma } from '../prisma'
 import { assertUserInTenant } from '../common/tenant-scope'
 import { z } from 'zod'
+import type { Prisma } from '../../lib/generated/prisma'
+import { isTransactionConflict } from '../common/transaction-conflict'
+
+export const MacroFasesSchema = z.array(z.object({
+  fase: z.string().trim().max(500),
+  dataLimite: z.string().max(10).optional().refine(value => !value || (/^\d{4}-\d{2}-\d{2}$/.test(value) && !Number.isNaN(Date.parse(value)) && new Date(value).toISOString().slice(0, 10) === value), 'Data limite inválida'),
+  custo: z.string().max(50).optional().refine(value => !value || /^(?:\d+(?:[.,]\d+)?|\d{1,3}(?:\.\d{3})+(?:,\d+)?)$/.test(value), 'Custo inválido'),
+}).strict()).max(500).superRefine((fases, ctx) => {
+  const titles = new Set<string>()
+  for (const [index, item] of fases.entries()) {
+    if (!item.fase && (item.dataLimite || item.custo)) ctx.addIssue({ code: 'custom', path: [index, 'fase'], message: 'Informe o nome da macrofase' })
+    if (!item.fase) continue
+    const title = item.fase.toLowerCase()
+    if (titles.has(title)) ctx.addIssue({ code: 'custom', path: [index, 'fase'], message: 'Macrofases duplicadas' })
+    titles.add(title)
+  }
+}).transform(fases => fases.filter(f => f.fase))
 
 export const CreateProjectSchema = z.object({
+  macroFases: MacroFasesSchema.optional(),
   tenantId: z.string(),
   name: z.string().min(1),
   description: z.string().optional(),
@@ -63,7 +81,7 @@ export class ProjectService {
       where: { id, tenantId, deletedAt: null },
       include: {
         members: true,
-        macroFases: true,
+        macroFases: { orderBy: [{ position: 'asc' }, { createdAt: 'asc' }, { id: 'asc' }] },
         stakeholders: { include: { stakeholder: true } },
       },
     })
@@ -77,25 +95,32 @@ export class ProjectService {
     })
     if (existing) throw new ConflictException('Projeto com esse nome já existe')
 
-    return prisma.project.create({
-      data: {
-        ...dto,
+    const { macroFases, ...fields } = dto
+    const validated = macroFases === undefined ? undefined : this.validateMacroFases(macroFases)
+    return this.transaction(async tx => {
+      const project = await tx.project.create({ data: {
+        ...fields,
         startDate: dto.startDate ? new Date(dto.startDate) : undefined,
         endDate: dto.endDate ? new Date(dto.endDate) : undefined,
         departamentos: dto.departamentos ?? [],
-      },
+      } })
+      if (validated !== undefined) await this.replaceMacroFases(tx, project.id, validated)
+      return tx.project.findUniqueOrThrow({ where: { id: project.id } })
     })
   }
 
   async update(id: string, tenantId: string, dto: UpdateProjectDto) {
-    await this.findOne(id, tenantId)
-    return prisma.project.update({
-      where: { id },
-      data: {
-        ...dto,
+    const { macroFases, ...fields } = dto
+    const validated = macroFases === undefined ? undefined : this.validateMacroFases(macroFases)
+    return this.transaction(async tx => {
+      if (!await tx.project.findFirst({ where: { id, tenantId, deletedAt: null }, select: { id: true } })) throw new NotFoundException('Projeto não encontrado')
+      await tx.project.update({ where: { id }, data: {
+        ...fields,
         startDate: dto.startDate ? new Date(dto.startDate) : undefined,
         endDate: dto.endDate ? new Date(dto.endDate) : undefined,
-      },
+      } })
+      if (validated !== undefined) await this.replaceMacroFases(tx, id, validated)
+      return tx.project.findUniqueOrThrow({ where: { id } })
     })
   }
 
@@ -151,14 +176,41 @@ export class ProjectService {
 
   async listMacroFases(projectId: string, tenantId: string) {
     await this.findOne(projectId, tenantId)
-    return prisma.projectMacroFase.findMany({ where: { projectId }, orderBy: { createdAt: 'asc' } })
+    return prisma.projectMacroFase.findMany({ where: { projectId }, orderBy: [{ position: 'asc' }, { createdAt: 'asc' }, { id: 'asc' }] })
   }
 
-  async upsertMacroFase(projectId: string, tenantId: string, fases: { fase: string; dataLimite?: string; custo?: string }[]) {
-    await this.findOne(projectId, tenantId)
-    await prisma.projectMacroFase.deleteMany({ where: { projectId } })
-    return prisma.projectMacroFase.createMany({
-      data: fases.map(f => ({ projectId, ...f })),
+  async upsertMacroFase(projectId: string, tenantId: string, fases: unknown) {
+    const validated = this.validateMacroFases(fases)
+    return this.transaction(async tx => {
+      if (!await tx.project.findFirst({ where: { id: projectId, tenantId, deletedAt: null }, select: { id: true } })) throw new NotFoundException('Projeto não encontrado')
+      return this.replaceMacroFases(tx, projectId, validated)
     })
+  }
+
+  private validateMacroFases(fases: unknown) {
+    const parsed = MacroFasesSchema.safeParse(fases)
+    if (!parsed.success) throw new BadRequestException(parsed.error.issues[0].message)
+    return parsed.data
+  }
+
+  private async replaceMacroFases(tx: Prisma.TransactionClient, projectId: string, fases: z.infer<typeof MacroFasesSchema>) {
+    const previous = await tx.projectMacroFase.findMany({ where: { projectId }, orderBy: [{ position: 'asc' }, { createdAt: 'asc' }, { id: 'asc' }] })
+    const project = await tx.project.findUniqueOrThrow({ where: { id: projectId } })
+    const normalize = (f: { fase: string; dataLimite?: string | null; custo?: string | null }) => ({ fase: f.fase, dataLimite: f.dataLimite ?? '', custo: f.custo ?? '' })
+    if (project.macroFasesRevision > 0 && JSON.stringify(previous.map(normalize)) === JSON.stringify(fases.map(normalize))) return { count: previous.length }
+    await tx.projectMacroFase.deleteMany({ where: { projectId } })
+    const result = await tx.projectMacroFase.createMany({ data: fases.map((f, position) => ({ projectId, position, ...f })) })
+    await tx.project.update({ where: { id: projectId }, data: { macroFasesRevision: { increment: 1 }, macroFasesSyncError: null } })
+    return result
+  }
+
+  private async transaction<T>(operation: (tx: Prisma.TransactionClient) => Promise<T>): Promise<T> {
+    for (let attempt = 0; ; attempt++) {
+      try { return await prisma.$transaction(operation, { isolationLevel: 'Serializable' }) }
+      catch (error) {
+        if (!isTransactionConflict(error)) throw error
+        if (attempt >= 2) throw new ConflictException('As macrofases foram alteradas durante a operação. Tente novamente')
+      }
+    }
   }
 }

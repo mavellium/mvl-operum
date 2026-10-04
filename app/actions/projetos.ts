@@ -5,9 +5,10 @@ import { revalidatePath } from 'next/cache'
 import { projectsApi } from '@/lib/api-client'
 import prisma from '@/lib/prisma'
 import { setProjectManagerRole, removeProjectRole } from '@/services/projectRoleService'
-import { getTree, syncMacrofasesComEap } from '@/services/wbsService'
+import { getTree } from '@/services/wbsService'
 import { validateAvatarUrl } from '@/lib/validation/avatarUrl'
 import { requireProjectPermission } from '@/services/projectAccess'
+import { reconcileMacroFases } from '@/services/macroFaseSyncService'
 import { parseHoras } from '@/lib/validation/horas'
 
 /**
@@ -91,6 +92,7 @@ export async function createProjetoAction(
     const projeto = await projectsApi.create({
       ...rest,
       tenantId,
+      macroFases,
       ano,
       startDate: toISO(startDate),
       endDate: toISO(endDate),
@@ -106,13 +108,7 @@ export async function createProjetoAction(
       revalidatePath('/')
     }
 
-    if (macroFases && macroFases.length > 0) {
-      await projectsApi.upsertMacroFases(projeto.id as string, macroFases)
-      // Sincroniza macrofases do form com a árvore WBS/EAP (top-level nodes) —
-      // torna a EAP e a Planilha de Custos coerentes com o Cronograma do form.
-      const { userId } = await verifySession()
-      await syncMacrofasesComEap(projeto.id as string, tenantId, macroFases, userId)
-    }
+    const macroFasesSync = macroFases !== undefined ? await reconcileMacroFases(projeto.id as string, tenantId, session.userId) : undefined
 
     if (rest.departamentos && rest.departamentos.length > 0) {
       await syncProjetoDepartamentos(projeto.id as string, tenantId, rest.departamentos)
@@ -121,7 +117,7 @@ export async function createProjetoAction(
     revalidatePath('/projetos')
     revalidatePath(`/projetos/${projeto.id}/wbs`)
     revalidatePath(`/projetos/${projeto.id}/planilha-custos`)
-    return { projeto }
+    return { projeto, macroFasesSync }
   } catch (err) {
     return { error: err instanceof Error ? (err.message || 'Erro ao criar projeto') : 'Erro ao criar projeto' }
   }
@@ -154,6 +150,8 @@ export async function getProjetoAction(id: string) {
       select: { userId: true },
     })
 
+    const macroFasesSyncPending = (projeto.macroFasesRevision ?? 0) > (projeto.macroFasesSyncedRevision ?? 0)
+
     // Fonte única de macrofases = árvore WBS top-level (EAP/Planilha).
     // Fallback: ProjectMacroFase (projetos legados sem árvore).
     let macroFasesFromTree: Array<{ fase: string; dataLimite: string; custo: string }> | null = null
@@ -176,7 +174,8 @@ export async function getProjetoAction(id: string) {
     return {
       projeto: {
         ...projeto,
-        macroFases: macroFasesFromTree ?? projeto.macroFases ?? [],
+        macroFases: macroFasesSyncPending ? projeto.macroFases ?? [] : macroFasesFromTree ?? projeto.macroFases ?? [],
+        macroFasesSyncPending,
       },
       departamentosAssociados: associados.map(a => a.department),
       gerenteId: gerente?.userId ?? '',
@@ -202,7 +201,7 @@ export async function updateProjetoAction(
       if ((data.initialMemberId || '') !== (current?.userId || '')) throw new Error('Só o administrador atribui o papel de gerente')
       delete data.initialMemberId
     }
-    if (data.macroFases) {
+    if (data.macroFases !== undefined) {
       await requireProjectPermission(session, id, 'planilha:orcado')
       await requireProjectPermission(session, id, 'planilha:realizado-todos')
     }
@@ -217,17 +216,13 @@ export async function updateProjetoAction(
     const toISO = (d: unknown) => (typeof d === 'string' && d) ? new Date(d).toISOString() : undefined
     const projeto = await projectsApi.update(id, {
       ...rest,
+      ...(macroFases !== undefined && { macroFases }),
       ...(ano !== undefined && { ano }),
       ...(startDate !== undefined && { startDate: toISO(startDate) }),
       ...(endDate !== undefined && { endDate: toISO(endDate) }),
     })
 
-    if (macroFases) {
-      await projectsApi.upsertMacroFases(id, macroFases)
-      // Sincroniza macrofases do form com a árvore WBS/EAP (bidirecional)
-      const { userId } = await verifySession()
-      await syncMacrofasesComEap(id, tenantId, macroFases, userId)
-    }
+    const macroFasesSync = macroFases !== undefined ? await reconcileMacroFases(id, tenantId, session.userId) : undefined
 
     const departamentos = rest.departamentos as string[] | undefined
     if (departamentos) {
@@ -258,7 +253,7 @@ export async function updateProjetoAction(
     revalidatePath(`/projetos/${id}`)
     revalidatePath(`/projetos/${id}/wbs`)
     revalidatePath(`/projetos/${id}/planilha-custos`)
-    return { projeto }
+    return { projeto, macroFasesSync }
   } catch (err) {
     return { error: err instanceof Error ? (err.message || 'Erro ao atualizar projeto') : 'Erro ao atualizar projeto' }
   }
@@ -523,5 +518,21 @@ export async function getUserProjetosAction(userId: string) {
     return await projectsApi.getUserProjects(userId)
   } catch {
     return []
+  }
+}
+
+export async function retryMacroFasesSyncAction(projectId: string) {
+  try {
+    const session = await verifySession()
+    await requireProjectPermission(session, projectId, 'projeto:editar')
+    await requireProjectPermission(session, projectId, 'planilha:orcado')
+    await requireProjectPermission(session, projectId, 'planilha:realizado-todos')
+    const result = await reconcileMacroFases(projectId, session.tenantId, session.userId)
+    revalidatePath(`/projetos/${projectId}`)
+    revalidatePath(`/projetos/${projectId}/wbs`)
+    revalidatePath(`/projetos/${projectId}/planilha-custos`)
+    return result
+  } catch (error) {
+    return { error: error instanceof Error ? error.message : 'Erro ao sincronizar macrofases' }
   }
 }

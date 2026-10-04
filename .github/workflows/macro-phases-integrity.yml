@@ -1,0 +1,58 @@
+name: Macro Phases Integrity
+
+on:
+  pull_request:
+    branches: [main, develop]
+
+permissions:
+  contents: read
+
+concurrency:
+  group: macro-phases-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  postgres:
+    name: Macro phases integrity (PostgreSQL)
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    services:
+      postgres:
+        image: postgres:17
+        env:
+          POSTGRES_USER: operum_test
+          POSTGRES_PASSWORD: test_only_local_ci
+          POSTGRES_DB: operum_macro_test
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U operum_test -d operum_macro_test"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 10
+    env:
+      DATABASE_URL: postgresql://operum_test:test_only_local_ci@localhost:5432/operum_macro_test
+      OPERUM_MACRO_TEST_DATABASE_URL: postgresql://operum_test:test_only_local_ci@localhost:5432/operum_macro_test
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v3
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile --ignore-scripts
+      - name: Prepare Prisma migration engine
+        run: pnpm rebuild @prisma/engines
+      - run: pnpm exec prisma generate
+      - name: Apply migrations to isolated database
+        run: pnpm exec prisma migrate deploy
+      - run: pnpm --dir project-service exec prisma generate
+      - run: pnpm --dir project-service build
+      - name: Test replacement rollback, reconciliation and permissions
+        run: >-
+          pnpm exec vitest run --no-file-parallelism
+          __tests__/integration/macroFases.postgres.test.ts
+          __tests__/unit/app/actions/projetos.test.ts
+          __tests__/unit/services/apiAuthorization.test.ts
+      - name: Validate project service retry contracts
+        run: pnpm --dir project-service test

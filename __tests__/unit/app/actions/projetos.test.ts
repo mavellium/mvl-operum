@@ -3,6 +3,8 @@ import { describe, it, expect, vi, beforeEach } from 'vitest'
 
 vi.mock('@/services/projectAccess', () => ({ requireProjectPermission: vi.fn().mockResolvedValue(undefined) }))
 
+vi.mock('@/services/macroFaseSyncService', () => ({ reconcileMacroFases: vi.fn().mockResolvedValue({ pending: false }) }))
+
 vi.mock('@/lib/dal', () => ({
   verifySession: vi.fn(),
 }))
@@ -45,7 +47,10 @@ import {
   updateProjetoAction,
   deleteProjetoAction,
   updateProjetoMemberAction,
+  retryMacroFasesSyncAction,
 } from '@/app/actions/projetos'
+import { reconcileMacroFases } from '@/services/macroFaseSyncService'
+import { requireProjectPermission } from '@/services/projectAccess'
 import { ERRO_HORAS } from '@/lib/validation/horas'
 
 const mockSession = { isAuth: true, userId: 'u1', tenantId: 't1', role: 'admin' }
@@ -180,5 +185,37 @@ describe('updateProjetoMemberAction — horas por dia (SDD 4.5)', () => {
     const res = await updateProjetoMemberAction('u2', 'p1', { horasDiarias: horas })
     expect(res).toEqual({ error: ERRO_HORAS })
     expect(prisma.user.update).not.toHaveBeenCalled()
+  })
+})
+
+describe('macrofases — persistência e recuperação', () => {
+  beforeEach(() => {
+    vi.mocked(verifySession).mockResolvedValue(mockSession as never)
+    vi.mocked(requireProjectPermission).mockResolvedValue(undefined)
+    vi.mocked(reconcileMacroFases).mockResolvedValue({ pending: false })
+    vi.mocked(projectsApi.update).mockResolvedValue({ id: 'p1', name: 'Projeto' })
+  })
+  it('envia projeto e lote juntos; falha da EAP retorna aviso de pendência', async () => {
+    vi.mocked(reconcileMacroFases).mockResolvedValue({ pending: true, warning: 'Pendente' })
+    const result = await updateProjetoAction(undefined, 'p1', { name: 'Projeto', macroFases: [{ fase: 'Fase', dataLimite: '', custo: '' }] })
+    expect(projectsApi.update).toHaveBeenCalledWith('p1', expect.objectContaining({ name: 'Projeto', macroFases: [{ fase: 'Fase', dataLimite: '', custo: '' }] }))
+    expect(projectsApi.upsertMacroFases).not.toHaveBeenCalled()
+    expect(result).toMatchObject({ projeto: { id: 'p1' }, macroFasesSync: { pending: true } })
+  })
+  it('recarregamento mostra lote pendente, sem ocultá-lo com EAP antiga', async () => {
+    vi.mocked(projectsApi.get).mockResolvedValue({ id: 'p1', name: 'Projeto', macroFasesRevision: 2, macroFasesSyncedRevision: 1, macroFases: [{ fase: 'Nova' }] })
+    expect(await getProjetoAction('p1')).toMatchObject({ projeto: { macroFasesSyncPending: true, macroFases: [{ fase: 'Nova' }] } })
+  })
+  it('retry valida permissões e usa só o contexto da sessão', async () => {
+    expect(await retryMacroFasesSyncAction('p1')).toEqual({ pending: false })
+    expect(requireProjectPermission).toHaveBeenCalledWith(mockSession, 'p1', 'projeto:editar')
+    expect(requireProjectPermission).toHaveBeenCalledWith(mockSession, 'p1', 'planilha:orcado')
+    expect(requireProjectPermission).toHaveBeenCalledWith(mockSession, 'p1', 'planilha:realizado-todos')
+    expect(reconcileMacroFases).toHaveBeenCalledWith('p1', 't1', 'u1')
+  })
+  it('nega retry sem permissão, sem tocar EAP', async () => {
+    vi.mocked(requireProjectPermission).mockRejectedValueOnce(new Error('Sem permissão'))
+    expect(await retryMacroFasesSyncAction('p1')).toEqual({ error: 'Sem permissão' })
+    expect(reconcileMacroFases).not.toHaveBeenCalled()
   })
 })
