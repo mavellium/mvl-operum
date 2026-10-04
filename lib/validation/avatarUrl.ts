@@ -30,7 +30,9 @@ export function safeAvatarUrl(raw?: string | null): string | undefined {
   try {
     const parsed = new URL(value, 'https://avatar.invalid')
     if (parsed.protocol !== 'https:' && parsed.protocol !== 'http:') return undefined
-    return value.startsWith('/') ? `${parsed.pathname}${parsed.search}${parsed.hash}` : parsed.href
+    const href = value.startsWith('/') ? `${parsed.pathname}${parsed.search}${parsed.hash}` : parsed.href
+    // Codifica metacaracteres no contexto URL, preservando query e escapes existentes do storage.
+    return href.replace(/[<>"']/g, encodeURIComponent)
   } catch {
     return undefined
   }
