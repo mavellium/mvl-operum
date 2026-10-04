@@ -1,0 +1,26 @@
+name: Domain Boundaries
+on:
+  pull_request:
+    branches: [main, develop]
+permissions:
+  contents: read
+concurrency:
+  group: domain-boundaries-${{ github.ref }}
+  cancel-in-progress: true
+jobs:
+  boundaries:
+    name: Domain boundaries and active project service
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v3
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile --ignore-scripts
+      - run: node scripts/check-domain-boundaries.mjs
+      - run: pnpm --dir project-service exec prisma generate
+      - run: pnpm --dir project-service test
+      - run: pnpm --dir project-service build
