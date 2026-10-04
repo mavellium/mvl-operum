@@ -1,0 +1,15 @@
+{
+  "hooks": {
+    "PostToolUse": [
+      {
+        "matcher": "Edit|Write",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "jq -r '.tool_input.file_path // .tool_response.filePath // \"\"' | { read -r f; echo \"$f\" | grep -qE '(Dockerfile|docker-compose|\\.prisma|proxy\\.ts|notification-service/src|middleware\\.ts|traefik|observability|lib/session|lib/dal|app/actions/auth)' && echo '{\"systemMessage\": \"LEMBRETE: Esta alteração pode impactar a arquitetura. Verifique se docs/architecture.md precisa ser atualizado.\"}' || true; } 2>/dev/null || true"
+          }
+        ]
+      }
+    ]
+  }
+}
