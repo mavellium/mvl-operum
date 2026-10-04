@@ -19,6 +19,7 @@ Os primeiros registros foram reconstruídos da seção “Decisões de Arquitetu
 | ADR-009 | Custos pelo responsável persistido na transação | Implementada |
 | ADR-010 | Permissões de domínio resolvidas no app para o gateway | Implementada |
 | ADR-011 | Patch temporário de profundidade em braces | Implementada — revisão ao sair correção upstream |
+| ADR-012 | Validar URLs de avatar também no navegador e comparar CodeQL com a mesma configuração | Implementada |
 
 ## ADR-001 — PostgreSQL compartilhado entre serviços
 
@@ -186,3 +187,15 @@ Ao substituir uma decisão, manter o texto histórico, alterar seu status e liga
 - **Consequências:** globs extremamente aninhados passam a lançar `SyntaxError`; há manutenção temporária de patch em duas instalações. Quatro alertas moderados permanecem fora do limiar high do CI. A exceção não se estende a outros advisories.
 - **Condição de revisão:** verificar correção upstream em atualizações de dependências; quando disponível, atualizar, remover patches/exceção e repetir testes/audit/instalação congelada. Novos advisories sobre AST/globs exigem reavaliação.
 - **Referências:** [advisory](https://github.com/advisories/GHSA-vfj7-8cjw-p6xm), [pnpm patch](https://pnpm.io/cli/patch), [audit](https://pnpm.io/cli/audit), `patches/braces@3.0.3.patch`, `api-gateway/patches/braces@3.0.3.patch`, `__tests__/unit/security/bracesPatch.test.ts`, Dockerfiles e lockfiles.
+
+## ADR-012 — Validar URLs de avatar no navegador e manter comparabilidade do CodeQL
+
+- **Data do registro:** 2026-10-03.
+- **Status:** implementada nesta revisão da PR; sem validação em produção.
+- **Contexto:** CodeQL identificou fluxo de texto do formulário até `src` de avatar (alerta #3, `js/xss-through-dom`); dados históricos e estado de formulário chegam ao componente sem passar necessariamente pela validação de persistência. A PR era analisada por `codeql.yml:analyze`, mas a main tinha baseline em `deploy-production.yml:security-scan`, gerando aviso de configuração ausente.
+- **Escolha:** validar URL de exibição e navegação por allowlist http(s)/caminho local, rejeitar HTML/esquemas executáveis/controles e normalizar com URL. Compartilhar a função entre imagem e menu Visualizar; abertura usa `noopener,noreferrer`. Rodar o job de segurança de produção também nas PRs para main, com guards explícitos impedindo testes de deploy, build/push e deploy nesse evento.
+- **Justificativa:** defender o ponto de uso independentemente da origem e obter comparação CodeQL com a configuração realmente presente na base, preservando o histórico de análises.
+- **Alternativas consideradas:** confiar apenas na persistência (não cobre estado local/histórico); descartar o alerta (não corrige o ponto de uso); apagar a análise da main (perde baseline); disparar o workflow de produção em PR sem guards (risco de publicação/deploy indevido).
+- **Consequências:** URLs fora da allowlist passam a usar iniciais e não são abertas; URLs assinadas http(s) e caminhos locais seguem aceitos. Existe análise CodeQL adicional em PR para manter compatibilidade com a baseline existente. Versão permanece 1.10.0, pois esta correção integra a mesma entrega.
+- **Condição de revisão:** consolidar workflows CodeQL preservando uma baseline comparável; reavaliar allowlist se houver necessidade explícita de outro esquema de imagem.
+- **Referências:** `lib/validation/avatarUrl.ts`, `components/user/UserAvatar.tsx`, `components/profile/AvatarUpload.tsx`, `__tests__/components/user/UserAvatar.test.tsx`, `.github/workflows/deploy-production.yml`, PR #39 e alerta CodeQL #3.

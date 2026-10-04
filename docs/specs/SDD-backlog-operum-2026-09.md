@@ -612,7 +612,7 @@ Pedido: as permissões vêm da função (definida pelo admin no cadastro de fun�
 
 **Complemento de 03/10:** gateway reavalia cada operação com `services/apiAuthorization.ts`, obtém papel de usuário ativo no banco, resolve projeto persistido dos recursos e falha fechado. Listagens e busca não incluem projetos negados. Conteúdo documental publicado requer edição/aprovação até o fluxo de snapshots do 5.2; a criação de metadados pendentes existente não foi ampliada nesta entrega. Sem migration de revisão documental.
 
-**Validação dos consumidores (03/10):** 164 arquivos e 1.665 testes passaram; lint, typecheck, build do app e builds de gateway/project-service/sprint-service passaram. Instalações congeladas da raiz e do gateway passaram. Audit no limiar `high` passa com patch local e exceção específica para GHSA-vfj7-8cjw-p6xm (ADR-011); quatro alertas moderados permanecem na raiz. Arquitetura e decisões revisadas nesta entrega. Não inclui teste/deploy em produção.
+**Validação dos consumidores (03/10):** 164 arquivos e 1.679 testes passaram; lint, typecheck, build do app e builds de gateway/project-service/sprint-service passaram. Instalações congeladas da raiz e do gateway passaram. Audit no limiar `high` passa com patch local e exceção específica para GHSA-vfj7-8cjw-p6xm (ADR-011); quatro alertas moderados permanecem na raiz. Arquitetura e decisões revisadas nesta entrega. Não inclui teste/deploy em produção.
 
 **Validação da configuração anterior (30/09):** `pnpm test:run` passou (157 arquivos, 1.571 testes); `pnpm lint`, `pnpm typecheck` e `pnpm build` passaram. Isso valida a configuração implementada, sem declarar concluída a adoção de permissões nos consumidores ou a validação em produção.
 

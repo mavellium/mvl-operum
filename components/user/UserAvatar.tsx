@@ -1,6 +1,7 @@
 'use client'
 
 import { useState } from 'react'
+import { safeAvatarUrl } from '@/lib/validation/avatarUrl'
 
 interface UserAvatarProps {
   name?: string
@@ -30,6 +31,7 @@ function getInitials(name?: string): string {
 
 export default function UserAvatar({ name, size = 'md', avatarUrl }: UserAvatarProps) {
   const [imgError, setImgError] = useState(false)
+  const imageUrl = safeAvatarUrl(avatarUrl)
 
   // Definição de escalas mais abrangente
   const sizeMap = {
@@ -43,12 +45,12 @@ export default function UserAvatar({ name, size = 'md', avatarUrl }: UserAvatarP
   const sizeClass = sizeMap[size] || sizeMap.md
 
   // UI: Renderiza imagem se existir e não houver erro de carregamento
-  if (avatarUrl && !imgError) {
+  if (imageUrl && !imgError) {
     return (
       <div className={`${sizeClass} rounded-full overflow-hidden shrink-0 border border-slate-200/50 shadow-sm`}>
         {/* eslint-disable-next-line @next/next/no-img-element */}
         <img
-          src={avatarUrl}
+          src={imageUrl}
           alt={name ?? 'Avatar'}
           title={name}
           onError={() => setImgError(true)}

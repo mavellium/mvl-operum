@@ -671,7 +671,7 @@ Schemas em `lib/validation/`:
 | Rate limiting | `api-gateway`: 200 req/s por IP (`express-rate-limit`) |
 | CORS | `api-gateway`: allow-list via `ALLOWED_ORIGINS` (⚠️ não documentado em `.env.example` — gap de configuração conhecido) |
 | Fail-open conhecido | Se o Redis estiver indisponível em produção, a checagem de liveness de sessão no gateway **deixa passar** a requisição em vez de bloquear — trade-off deliberado de disponibilidade sobre segurança estrita |
-| CI/CD | TruffleHog (secrets), CodeQL (SAST), Trivy (scan de todas as 7 imagens), OWASP ZAP (DAST) em `deploy-staging.yml`/`deploy-production.yml`. `dependency-audit.yml` verifica instalações congeladas, patch efetivo e audit high da raiz/gateway nas PRs para main/develop. O pnpm dos workflows vem de `packageManager` da raiz. |
+| CI/CD | TruffleHog (secrets), CodeQL (SAST), Trivy (scan de todas as 7 imagens), OWASP ZAP (DAST) em `deploy-staging.yml`/`deploy-production.yml`. `dependency-audit.yml` verifica instalações congeladas, patch efetivo e audit high da raiz/gateway nas PRs para main/develop. O pnpm dos workflows vem de `packageManager` da raiz. O job `deploy-production.yml:security-scan` também roda nas PRs para main, garantindo a mesma configuração CodeQL da base; testes de deploy, build/push e deploy ficam bloqueados nesse evento. |
 
 ---
 
@@ -856,3 +856,7 @@ A Server Action resolve as permissões e passa o contexto obrigatório a `servic
 ### Patch temporário de segurança em globs
 
 `braces@3.0.3`, dependência transitiva do lint e do gateway, recebe patch de profundidade em `parse`, `compile`, `expand` e `stringify`. Strings e ASTs com aninhamento excessivo são rejeitadas com `SyntaxError`, antes de esgotar a pilha. A raiz e a instalação isolada do gateway registram o mesmo patch e seu hash no lockfile; os Dockerfiles copiam `patches/` antes da instalação congelada. O audit ignora apenas GHSA-vfj7-8cjw-p6xm porque o registro npm continua identificando a versão original, sem reconhecer o patch local. Testes verificam o código efetivamente carregado pelo lint e pelo proxy, casos maliciosos e globs comuns. Esta mitigação precisa ser substituída por versão oficial corrigida assim que publicada; ver ADR-011.
+
+### URLs de avatar/logo no navegador
+
+`safeAvatarUrl` aceita somente URL http(s) absoluta ou caminho iniciado por uma única barra, rejeitando HTML, caracteres de controle, esquemas executáveis e barras invertidas. `UserAvatar` aplica a validação antes de renderizar `src`; valor inválido usa iniciais. `AvatarUpload` usa a mesma validação para a opção Visualizar e abre a imagem com `noopener,noreferrer`. Isso complementa a validação antes da persistência e protege dados históricos e estado do formulário; ver ADR-012.

@@ -3,6 +3,7 @@
 import { useRef, useState, useEffect } from 'react'
 import UserAvatar from '@/components/user/UserAvatar'
 import { uploadAvatarAction } from '@/app/actions/profile'
+import { safeAvatarUrl } from '@/lib/validation/avatarUrl'
 
 interface AvatarUploadProps {
   name: string
@@ -19,6 +20,7 @@ export default function AvatarUpload({ name, avatarUrl: initialAvatarUrl, onChan
   const [uploading, setUploading] = useState(false)
   const [showMenu, setShowMenu] = useState(false)
   const [error, setError] = useState<string | null>(null)
+  const previewUrl = safeAvatarUrl(avatarUrl)
 
   // Sincroniza quando o pai atualiza a prop após prefill assíncrono
   // (ex: modo edição onde a URL só chega depois de uma Server Action)
@@ -86,7 +88,7 @@ export default function AvatarUpload({ name, avatarUrl: initialAvatarUrl, onChan
             <button
               type="button"
               onClick={() => {
-                if (avatarUrl) window.open(avatarUrl, '_blank')
+                if (previewUrl) window.open(previewUrl, '_blank', 'noopener,noreferrer')
                 setShowMenu(false)
               }}
               className="w-full flex items-center gap-3 px-4 py-2 text-sm text-slate-600 hover:bg-slate-50 transition-colors"
