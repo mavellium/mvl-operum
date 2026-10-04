@@ -16,7 +16,7 @@ export default async function NovaAtaPage({ params }: { params: Promise<{ projet
   const { projetoId } = await params
   const { userId, role, tenantId } = await verifySession()
 
-  if (!(await canProjectPermission({ tenantId, role, userId }, projetoId, 'documentos:editar')) || !(await canProjectPermission({ tenantId, role, userId }, projetoId, 'documentos:aprovar'))) notFound()
+  if (!(await canProjectPermission({ tenantId, role, userId }, projetoId, 'documentos:editar'))) notFound()
   const project = await findById(projetoId)
   if (!project) notFound()
 

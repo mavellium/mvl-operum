@@ -1,74 +1,89 @@
 'use server'
-
+import { randomUUID } from 'node:crypto'
 import { revalidatePath } from 'next/cache'
 import { verifySession } from '@/lib/dal'
 import prisma from '@/lib/prisma'
-import { requireProjectPermission } from '@/services/projectAccess'
-import { criarAta, atualizarAta, removerAta } from '@/services/ataService'
-import { registrarAcao } from '@/services/auditoriaService'
-import type { CriarAtaInput, AtualizarAtaInput } from '@/lib/validation/ataSchemas'
+import { requireProjectPermission as exigirPermissao } from '@/services/projectAccess'
+import {
+  excluirAta,
+  submeterDocumento,
+} from '@/services/documentRevisionService'
+import {
+  CriarAtaSchema,
+  AtualizarAtaSchema,
+  type CriarAtaInput,
+  type AtualizarAtaInput,
+} from '@/lib/validation/ataSchemas'
 
 export async function criarAtaAction(input: CriarAtaInput) {
   try {
-    const session = await verifySession()
-    await requireProjectPermission(session, input.projetoId, 'documentos:editar')
-    await requireProjectPermission(session, input.projetoId, 'documentos:aprovar')
-    const ata = await criarAta(session.tenantId, input)
-    await registrarAcao({
-      tenantId: session.tenantId,
-      userId: session.userId,
-      action: 'criar_ata',
-      entity: 'Ata',
-      entityId: ata.id,
-      details: { projetoId: input.projetoId, numero: ata.numero },
-    })
-    revalidatePath(`/projetos/${input.projetoId}/atas`)
-    return { success: true, id: ata.id, numero: ata.numero }
-  } catch (err) {
-    return { error: err instanceof Error ? err.message : 'Erro ao criar ata' }
-  }
-}
-
-export async function atualizarAtaAction(ataId: string, projetoId: string, input: AtualizarAtaInput) {
-  try {
-    const session = await verifySession()
-    await requireProjectPermission(session, projetoId, 'documentos:editar')
-    await requireProjectPermission(session, projetoId, 'documentos:aprovar')
-    if (!(await prisma.ata.findFirst({ where: { id: ataId, projetoId, tenantId: session.tenantId }, select: { id: true } }))) throw new Error('Ata não encontrada neste projeto')
-    const ata = await atualizarAta(session.tenantId, ataId, input)
-    await registrarAcao({
-      tenantId: session.tenantId,
-      userId: session.userId,
-      action: 'atualizar_ata',
-      entity: 'Ata',
-      entityId: ataId,
-      details: { projetoId, numero: ata.numero },
-    })
+    const s = await verifySession()
+    const { projetoId, ...payload } = CriarAtaSchema.parse(input)
+    const id = randomUUID()
+    const version = await submeterDocumento(
+      s,
+      projetoId,
+      'ATA',
+      payload,
+      {
+        commitTitle: 'Nova ata de reunião',
+        versao: '1',
+        elaboradoPor: payload.elaboradoPor,
+        aprovadoPor: payload.aprovadoPor ?? '',
+        dataAprovacao: '',
+      },
+      id,
+    )
     revalidatePath(`/projetos/${projetoId}/atas`)
-    revalidatePath(`/atas/${ataId}`)
-    return { success: true }
-  } catch (err) {
-    return { error: err instanceof Error ? err.message : 'Erro ao atualizar ata' }
+    revalidatePath(`/projetos/${projetoId}/documentacao`)
+    return { success: true, id, status: version.status }
+  } catch (e) {
+    return { error: e instanceof Error ? e.message : 'Erro ao criar ata' }
   }
 }
-
+export async function atualizarAtaAction(
+  ataId: string,
+  projetoId: string,
+  input: AtualizarAtaInput,
+) {
+  try {
+    const s = await verifySession()
+    await exigirPermissao(s, projetoId, 'documentos:editar')
+    const ata = await prisma.ata.findFirst({
+      where: { id: ataId, projetoId, tenantId: s.tenantId, deletedAt: null },
+    })
+    if (!ata) throw new Error('Ata não encontrada')
+    const payload = AtualizarAtaSchema.parse(input)
+    const version = await submeterDocumento(
+      s,
+      projetoId,
+      'ATA',
+      payload,
+      {
+        commitTitle: `Alteração da ata ${ata.numero}`,
+        versao: new Date().toISOString(),
+        elaboradoPor: payload.elaboradoPor,
+        aprovadoPor: payload.aprovadoPor ?? '',
+        dataAprovacao: '',
+      },
+      ataId,
+    )
+    revalidatePath(`/projetos/${projetoId}/atas`)
+    revalidatePath(`/projetos/${projetoId}/documentacao`)
+    return { success: true, status: version.status }
+  } catch (e) {
+    return { error: e instanceof Error ? e.message : 'Erro ao atualizar ata' }
+  }
+}
 export async function removerAtaAction(ataId: string, projetoId: string) {
   try {
-    const session = await verifySession()
-    await requireProjectPermission(session, projetoId, 'documentos:excluir')
-    if (!(await prisma.ata.findFirst({ where: { id: ataId, projetoId, tenantId: session.tenantId }, select: { id: true } }))) throw new Error('Ata não encontrada neste projeto')
-    await removerAta(session.tenantId, ataId)
-    await registrarAcao({
-      tenantId: session.tenantId,
-      userId: session.userId,
-      action: 'remover_ata',
-      entity: 'Ata',
-      entityId: ataId,
-      details: { projetoId },
-    })
+    const s = await verifySession()
+    await exigirPermissao(s, projetoId, 'documentos:excluir')
+    await excluirAta(s, projetoId, ataId)
     revalidatePath(`/projetos/${projetoId}/atas`)
+    revalidatePath(`/projetos/${projetoId}/documentacao`)
     return { success: true }
-  } catch (err) {
-    return { error: err instanceof Error ? err.message : 'Erro ao remover ata' }
+  } catch (e) {
+    return { error: e instanceof Error ? e.message : 'Erro ao remover ata' }
   }
 }

@@ -152,7 +152,7 @@ export default function DocumentoStakeholders({ membros = [] }: { membros?: Memb
 
         // Inicializa campos com o payload da versão APPROVED mais recente (somente uma vez)
         if (!initializedFromDB.current && search === '') {
-          const approved = list.find(v => v.status === 'APPROVED')
+          const approved = list.filter(v => v.status === 'APPROVED').sort((a, b) => new Date(b.approvedAt ?? b.createdAt).getTime() - new Date(a.approvedAt ?? a.createdAt).getTime())[0]
           if (approved) {
             initializedFromDB.current = true
             const atuais = todosMembrosRef.current
@@ -250,6 +250,7 @@ export default function DocumentoStakeholders({ membros = [] }: { membros?: Memb
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
+          payload: { ...data, header: { ...data?.header, elaboradoPor: editable.elaboradoPor, aprovadoPor: editable.aprovadoPor, versao: editable.versao, dataAprovacao: editable.dataAprovacaoRaw } },
           commitTitle: commitTitle.trim(),
           versao: editable.versao,
           elaboradoPor: editable.elaboradoPor,
@@ -260,7 +261,10 @@ export default function DocumentoStakeholders({ membros = [] }: { membros?: Memb
       if (r.ok) {
         setCommitModalOpen(false)
         await loadVersions()
-        toast('Versão salva com sucesso!')
+        window.dispatchEvent(new CustomEvent('operum:document-version', { detail: { projetoId } }))
+        const saved = await r.json()
+        toast(saved.status === 'PENDING' ? 'Versão enviada para aprovação. O documento vigente foi preservado.' : 'Versão aprovada e publicada.')
+        if (saved.status === 'APPROVED') window.dispatchEvent(new CustomEvent('operum:document-published', { detail: { projetoId } }))
       } else {
         const e = await r.json()
         toast(e.error ?? 'Erro ao salvar versão', 'error')
@@ -288,6 +292,7 @@ export default function DocumentoStakeholders({ membros = [] }: { membros?: Memb
       )
       if (r.ok) {
         await loadVersions(debouncedSearch)
+        if (action === 'approve') window.dispatchEvent(new CustomEvent('operum:document-published', { detail: { projetoId } }))
         toast(action === 'approve' ? 'Versão aprovada!' : 'Versão rejeitada.', action === 'approve' ? 'success' : 'warning')
       } else {
         const e = await r.json()
@@ -415,6 +420,33 @@ export default function DocumentoStakeholders({ membros = [] }: { membros?: Memb
           </button>
         </div>
       </div>
+
+      {canEdit && data && !loading && !error && (
+        <details className="w-full max-w-4xl rounded-xl border border-gray-200 bg-white p-5">
+          <summary className="cursor-pointer font-semibold">Editar partes interessadas desta versão</summary>
+          <p className="my-3 text-sm text-gray-600">Estas alterações pertencem ao documento. O cadastro da equipe permanece independente. Salve uma versão para enviar à aprovação.</p>
+          <div className="space-y-4">
+            {data.stakeholders.map((person, index) => (
+              <fieldset key={index} className="grid grid-cols-1 gap-3 rounded-lg border p-3 sm:grid-cols-2">
+                <legend className="px-1 text-sm font-semibold">Parte interessada {index + 1}</legend>
+                {([
+                  ['nome', 'Nome'], ['empresaEquipe', 'Empresa / equipe'], ['cargoCompetencia', 'Cargo / competência'],
+                  ['email', 'E-mail'], ['telefoneFax', 'Telefone'], ['endereco', 'Endereço'], ['observacoes', 'Observações'],
+                ] as const).map(([field, label]) => (
+                  <label key={field} className="text-sm">{label}
+                    <input className={inputClass} value={person[field] ?? ''} onChange={event => {
+                      const value = event.target.value
+                      setData(prev => prev ? { ...prev, stakeholders: prev.stakeholders.map((row, i) => i === index ? { ...row, [field]: value } : row) } : prev)
+                    }} />
+                  </label>
+                ))}
+                <button type="button" className="text-left text-sm text-red-700" onClick={() => setData(prev => prev ? { ...prev, stakeholders: prev.stakeholders.filter((_, i) => i !== index) } : prev)}>Remover desta versão</button>
+              </fieldset>
+            ))}
+            <button type="button" className="rounded border border-blue-300 px-3 py-2 text-sm text-blue-700" onClick={() => setData(prev => prev ? { ...prev, stakeholders: [...prev.stakeholders, { ref: String(prev.stakeholders.length + 1).padStart(2, '0'), nome: '', empresaEquipe: '', cargoCompetencia: '', email: '', telefoneFax: '', endereco: '', observacoes: '' }] } : prev)}>Adicionar parte interessada ao documento</button>
+          </div>
+        </details>
+      )}
 
       {/* States */}
       {loading && (

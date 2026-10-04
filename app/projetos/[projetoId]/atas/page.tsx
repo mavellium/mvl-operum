@@ -4,6 +4,7 @@ import { verifySession } from '@/lib/dal'
 import { findById } from '@/services/projectAccess'
 import { canProjectPermission } from '@/services/projectAccess'
 import { listarAtasPorProjeto } from '@/services/ataService'
+import HistoricoDocumento from '@/components/projetos/documentacao/HistoricoDocumento'
 import { removerAtaAction } from '@/app/actions/atas'
 import type { Metadata } from 'next'
 
@@ -37,7 +38,7 @@ export default async function AtasPage({ params }: { params: Promise<{ projetoId
     loadError = 'Não foi possível carregar as atas agora. Tente novamente em instantes.'
   }
 
-  const canEdit = (await canProjectPermission({ tenantId, role, userId }, projetoId, 'documentos:editar')) && (await canProjectPermission({ tenantId, role, userId }, projetoId, 'documentos:aprovar'))
+  const canEdit = (await canProjectPermission({ tenantId, role, userId }, projetoId, 'documentos:editar'))
   const gerente = await canProjectPermission({ tenantId, role, userId }, projetoId, 'documentos:excluir')
 
   return (
@@ -65,6 +66,7 @@ export default async function AtasPage({ params }: { params: Promise<{ projetoId
           </div>
         )}
 
+        <HistoricoDocumento projetoId={projetoId} type="ATA" />
         {!loadError && ataList.length === 0 ? (
           <div className="bg-white rounded-xl border border-gray-200 p-10 text-center">
             <p className="text-gray-500">Nenhuma ata registrada ainda.</p>

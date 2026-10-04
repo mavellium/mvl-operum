@@ -196,6 +196,7 @@ export async function updateProjetoAction(
     const session = await verifySession()
     const { tenantId } = session
     await requireProjectPermission(session, id, 'projeto:editar')
+    if (['justificativa', 'objetivos', 'metodologia', 'descricaoProduto', 'premissas', 'restricoes', 'limitesAutoridade'].some(key => key in data)) throw new Error('Altere o Termo de Abertura em Documentação, criando uma versão para aprovação')
     if (data.initialMemberId !== undefined && session.role !== 'admin') {
       const current = await prisma.userProjectRole.findFirst({ where: { projectId: id, deletedAt: null, role: { is: { nameKey: 'gerente', scope: 'PROJETO' } } }, select: { userId: true } })
       if ((data.initialMemberId || '') !== (current?.userId || '')) throw new Error('Só o administrador atribui o papel de gerente')

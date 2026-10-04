@@ -20,6 +20,8 @@ vi.mock('next/link', async () => {
   }
 })
 
+vi.mock('@/components/projetos/documentacao/HistoricoDocumento', () => ({ default: () => null }))
+
 vi.mock('@/lib/dal', () => ({
   verifySession: vi.fn(),
 }))

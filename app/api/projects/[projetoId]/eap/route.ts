@@ -1,19 +1,27 @@
 import { NextResponse } from 'next/server'
 import { verifySession } from '@/lib/dal'
 import prisma from '@/lib/prisma'
-import { canProjectPermission } from '@/services/projectAccess'
+import { exigirPermissao, SemPermissaoError } from '@/services/authz'
+import { documentoVigente, submeterDocumento } from '@/services/documentRevisionService'
 import {
   getOrCreateDocument,
-  saveDocument,
-  resetDocument,
+  ensureTemplate,
   formatInstitucionalInfo,
   EapValidationError,
   EapNotFoundError,
 } from '@/services/eapService'
 import { SaveEapDocumentSchema, validateEapDepth } from '@/lib/validation/eapSchemas'
 import type { EapNode } from '@/types/eap'
+import { structureFromTemplate } from '@/lib/eapTemplate'
+import { ZodError } from 'zod'
 
 type RouteCtx = { params: Promise<{ projetoId: string }> }
+
+/** Garante que o usuário é membro ativo (ou admin/gerente) do projeto. */
+async function requireProjectAccess(userId: string, role: string, tenantId: string, projetoId: string, permission: 'documentos:ver' | 'documentos:editar' | 'documentos:excluir' = 'documentos:ver') {
+  await exigirPermissao({ userId, role, tenantId }, projetoId, 'projeto:ver')
+  await exigirPermissao({ userId, role, tenantId }, projetoId, permission)
+}
 
 async function loadProject(tenantId: string, projetoId: string) {
   return prisma.project.findFirst({
@@ -27,9 +35,10 @@ async function loadProject(tenantId: string, projetoId: string) {
  * EapNotFoundError virava 500 "Erro interno" e a causa só aparecia no log.
  */
 function errorResponse(err: unknown, where: string, projetoId: string) {
-  if (err instanceof EapNotFoundError) {
+  if (err instanceof EapNotFoundError || err instanceof SemPermissaoError) {
     return NextResponse.json({ error: err.message }, { status: 403 })
   }
+  if (err instanceof ZodError) return NextResponse.json({ error: err.issues[0]?.message ?? 'Dados inválidos' }, { status: 400 })
   if (err instanceof EapValidationError) {
     return NextResponse.json({ error: err.message }, { status: 422 })
   }
@@ -49,16 +58,18 @@ function errorResponse(err: unknown, where: string, projetoId: string) {
 export async function GET(_: Request, { params }: RouteCtx) {
   const { projetoId } = await params
 
+  const { tenantId, role, userId } = await verifySession()
   try {
-    const { tenantId, role, userId } = await verifySession()
-    if (!(await canProjectPermission({ tenantId, role, userId }, projetoId, 'documentos:ver'))) return NextResponse.json({ error: 'Sem permissão' }, { status: 403 })
+    await requireProjectAccess(userId, role, tenantId, projetoId)
 
     const project = await loadProject(tenantId, projetoId)
     if (!project) {
       return NextResponse.json({ error: 'Projeto não encontrado' }, { status: 404 })
     }
 
-    const document = await getOrCreateDocument(projetoId, tenantId, project.name)
+    const base = await getOrCreateDocument(projetoId, tenantId, project.name)
+    const vigente = await documentoVigente({ tenantId, role, userId }, projetoId, 'EAP')
+    const document = vigente?.payload ? { ...base, ...(vigente.payload as object) } : base
     return NextResponse.json({
       document,
       instituicao: formatInstitucionalInfo(project),
@@ -72,9 +83,9 @@ export async function GET(_: Request, { params }: RouteCtx) {
 export async function PUT(request: Request, { params }: RouteCtx) {
   const { projetoId } = await params
 
+  const { tenantId, role, userId } = await verifySession()
   try {
-    const { tenantId, role, userId } = await verifySession()
-    if (!((await canProjectPermission({ tenantId, role, userId }, projetoId, 'documentos:editar')) && (await canProjectPermission({ tenantId, role, userId }, projetoId, 'documentos:aprovar')))) return NextResponse.json({ error: 'Sem permissão' }, { status: 403 })
+    await requireProjectAccess(userId, role, tenantId, projetoId, 'documentos:editar')
 
     const project = await loadProject(tenantId, projetoId)
     if (!project) {
@@ -96,18 +107,10 @@ export async function PUT(request: Request, { params }: RouteCtx) {
       )
     }
 
-    const document = await saveDocument(projetoId, tenantId, {
-      projectName: parsed.data.projectName,
-      projectManager: parsed.data.projectManager,
-      preparedBy: parsed.data.preparedBy,
-      version: parsed.data.version,
-      approvedBy: parsed.data.approvedBy,
-      signature: parsed.data.signature,
-      approvalDate: parsed.data.approvalDate ?? null,
-      nodes,
-    })
+    const version = await submeterDocumento({ tenantId, role, userId }, projetoId, 'EAP', parsed.data, { commitTitle: 'Atualização da EAP', versao: parsed.data.version, elaboradoPor: parsed.data.preparedBy, aprovadoPor: parsed.data.approvedBy, dataAprovacao: parsed.data.approvalDate ?? '' })
+    const base = await getOrCreateDocument(projetoId, tenantId, project.name)
+    return NextResponse.json({ document: { ...base, ...(version.payload as object) }, status: version.status, versionId: version.id })
 
-    return NextResponse.json({ document })
   } catch (err) {
     return errorResponse(err, 'PUT', projetoId)
   }
@@ -117,16 +120,21 @@ export async function PUT(request: Request, { params }: RouteCtx) {
 export async function POST(_: Request, { params }: RouteCtx) {
   const { projetoId } = await params
 
+  const { tenantId, role, userId } = await verifySession()
   try {
-    const { tenantId, role, userId } = await verifySession()
-    if (!((await canProjectPermission({ tenantId, role, userId }, projetoId, 'documentos:editar')) && (await canProjectPermission({ tenantId, role, userId }, projetoId, 'documentos:aprovar')) && (await canProjectPermission({ tenantId, role, userId }, projetoId, 'documentos:excluir')))) return NextResponse.json({ error: 'Sem permissão' }, { status: 403 })
+    await requireProjectAccess(userId, role, tenantId, projetoId, 'documentos:excluir')
+    await exigirPermissao({ userId, role, tenantId }, projetoId, 'documentos:aprovar')
 
     const project = await loadProject(tenantId, projetoId)
     if (!project) {
       return NextResponse.json({ error: 'Projeto não encontrado' }, { status: 404 })
     }
 
-    const document = await resetDocument(projetoId, tenantId, project.name)
+    await exigirPermissao({ userId, role, tenantId }, projetoId, 'documentos:editar')
+    const template = await ensureTemplate(tenantId)
+    const base = await getOrCreateDocument(projetoId, tenantId, project.name)
+    const document = { ...base, projectName: project.name, version: '1.0', projectManager: '', preparedBy: '', approvedBy: '', signature: '', approvalDate: null, nodes: structureFromTemplate(template.structure as unknown as EapNode[]) }
+    await submeterDocumento({ tenantId, role, userId }, projetoId, 'EAP', document, { commitTitle: 'Restaurar modelo da EAP', versao: document.version, elaboradoPor: document.preparedBy, aprovadoPor: document.approvedBy, dataAprovacao: document.approvalDate ?? '' })
     return NextResponse.json({ document })
   } catch (err) {
     return errorResponse(err, 'POST', projetoId)

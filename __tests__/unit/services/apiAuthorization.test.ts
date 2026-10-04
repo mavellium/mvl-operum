@@ -11,6 +11,7 @@ vi.mock('@/services/authz', () => ({
 vi.mock('@/lib/prisma', () => ({ default: {
   sprint: { findFirst: vi.fn() }, card: { findFirst: vi.fn() },
   sprintColumn: { findUnique: vi.fn() }, timeEntry: { findFirst: vi.fn() },
+  documentVersion: { findFirst: vi.fn().mockResolvedValue(null) },
   projectStakeholder: { findMany: vi.fn() }, $queryRaw: vi.fn(),
 } }))
 const session = { userId: 'user-A', tenantId: 'tenant-A', role: 'member' }
@@ -19,6 +20,7 @@ let granted: Set<string>
 
 beforeEach(() => {
   vi.clearAllMocks()
+  vi.mocked(prisma.documentVersion.findFirst).mockResolvedValue(null)
   vi.mocked(can).mockResolvedValue(true)
   granted = new Set(['projeto:ver','quadro:ver','quadro:cards','quadro:mover'])
   require.mockImplementation(async (_s, project, permission) => {
@@ -100,6 +102,11 @@ describe('escritas e destinos persistidos', () => {
     await expect(authorizeApi(session, 'PATCH', '/projects/project-A', { objetivos: 'texto' })).rejects.toThrow()
     granted.add('documentos:aprovar')
     await expect(authorizeApi(session, 'PATCH', '/projects/project-A', { objetivos: 'texto' })).resolves.toEqual({ allowed: true })
+  })
+  it('update genérico não sobrescreve um Termo já publicado por snapshot', async () => {
+    granted.add('projeto:editar'); granted.add('documentos:editar'); granted.add('documentos:aprovar')
+    vi.mocked(prisma.documentVersion.findFirst).mockResolvedValue({ id: 'approved' } as never)
+    await expect(authorizeApi(session, 'PATCH', '/projects/project-A', { objetivos: 'Sobrescrever' })).rejects.toThrow(/fluxo documental/)
   })
   it('alterar papéis/cargos permanece exclusivo do administrador', async () => {
     granted.add('projeto:equipe')

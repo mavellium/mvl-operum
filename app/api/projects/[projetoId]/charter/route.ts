@@ -1,7 +1,9 @@
 import { NextResponse } from 'next/server'
 import { verifySession } from '@/lib/dal'
 import prisma from '@/lib/prisma'
-import { canProjectPermission } from '@/services/projectAccess'
+import { canProjectPermission as can } from '@/services/projectAccess'
+import { documentoVigente, salvarRascunho } from '@/services/documentRevisionService'
+import { documentRevisionErrorResponse } from '@/lib/documentRevisionHttp'
 import { getTree } from '@/services/wbsService'
 
 export async function GET(
@@ -10,10 +12,10 @@ export async function GET(
 ) {
   const { projetoId } = await params
 
+  const { tenantId, role, userId } = await verifySession()
   try {
-    const { tenantId, role, userId } = await verifySession()
-    if (!(await canProjectPermission({ tenantId, role, userId }, projetoId, 'documentos:ver'))) return NextResponse.json({ error: 'Sem permissão' }, { status: 403 })
-
+    const sessao = { tenantId, role, userId }
+    if (!await can(sessao, projetoId, 'documentos:ver')) return NextResponse.json({ error: 'Sem permissão' }, { status: 403 })
     const project = await prisma.project.findFirst({
       where: { id: projetoId, tenantId, deletedAt: null },
       select: {
@@ -87,6 +89,9 @@ export async function GET(
       .filter(up => up.user !== null)
       .map(up => ({ name: up.user.name }))
 
+    const vigente = await documentoVigente(sessao, projetoId, 'CHARTER')
+    const snapshot = vigente?.payload as Record<string, unknown> | null
+    if (snapshot) { Object.assign(project, snapshot); if (Array.isArray(snapshot.macroFases)) macroFases = snapshot.macroFases as typeof macroFases }
     return NextResponse.json({
       project,
       macroFases,
@@ -100,36 +105,11 @@ export async function GET(
   }
 }
 
-export async function PATCH(
-  request: Request,
-  { params }: { params: Promise<{ projetoId: string }> },
-) {
-  const { projetoId } = await params
-
+export async function PATCH(request: Request, { params }: { params: Promise<{ projetoId: string }> }) {
+  const session = await verifySession()
   try {
-    const { tenantId, role, userId } = await verifySession()
-    const isManager = await canProjectPermission({ tenantId, role, userId }, projetoId, 'documentos:aprovar')
-    if (!isManager || !(await canProjectPermission({ tenantId, role, userId }, projetoId, 'documentos:editar'))) return NextResponse.json({ error: 'Sem permissão' }, { status: 403 })
-
-    const project = await prisma.project.findFirst({
-      where: { id: projetoId, tenantId, deletedAt: null },
-      select: { id: true },
-    })
-    if (!project) return NextResponse.json({ error: 'Projeto não encontrado' }, { status: 404 })
-
-    const body = await request.json()
-    const allowed = ['justificativa', 'objetivos', 'metodologia', 'descricaoProduto', 'premissas', 'restricoes', 'limitesAutoridade'] as const
-    const data: Partial<Record<typeof allowed[number], string>> = {}
-    for (const key of allowed) {
-      if (key in body && typeof body[key] === 'string') {
-        data[key] = body[key]
-      }
-    }
-
-    const updated = await prisma.project.update({ where: { id: projetoId }, data })
-    return NextResponse.json(updated)
-  } catch (err) {
-    console.error('[charter PATCH]', err)
-    return NextResponse.json({ error: 'Erro interno' }, { status: 500 })
-  }
+    const { projetoId } = await params
+    const draft = await salvarRascunho(session, projetoId, 'CHARTER', await request.json())
+    return NextResponse.json({ saved: true, draftId: draft.id })
+  } catch (error) { return documentRevisionErrorResponse(error) }
 }

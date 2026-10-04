@@ -128,11 +128,11 @@ function DateInputBR({
 
 function ProjetoFormContent({ canAssignRoles }: { canAssignRoles: boolean }) {
   const permissions = useProjectPermissions()
-  const canEditPublished = permissions.has('documentos:editar') && permissions.has('documentos:aprovar')
   const canEditCosts = permissions.has('planilha:orcado') && permissions.has('planilha:realizado-todos')
   const router = useRouter()
   const searchParams = useSearchParams()
   const editId = searchParams.get('edit')
+  const canEditPublished = !editId && permissions.has('documentos:editar') && permissions.has('documentos:aprovar')
   const { toast } = useToast()
 
   const [isPending, startTransition] = useTransition()
@@ -462,7 +462,7 @@ function ProjetoFormContent({ canAssignRoles }: { canAssignRoles: boolean }) {
             <div className="bg-white p-8 md:p-10 rounded-[24px] border border-slate-200/60 shadow-sm">
               <div className="mb-8">
                 <h2 className="text-xl font-bold text-slate-900">Diretrizes e Escopo</h2>
-                <p className="text-sm text-slate-500 mt-1.5 font-medium">Detalhe as justificativas, metodologia e limites para aprovação deste projeto.</p>
+                <p className="text-sm text-slate-500 mt-1.5 font-medium">{editId ? 'Para propor alterações nestes textos, abra Documentação → Termo de Abertura e salve uma versão para aprovação.' : 'Detalhe as justificativas, metodologia e limites para aprovação deste projeto.'}</p>
               </div>
 
               <div className="space-y-6">

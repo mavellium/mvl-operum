@@ -9,6 +9,13 @@ funcionalidade depois disso é uma versão MINOR.
 
 ## [Não lançado]
 
+## [1.12.0] — 2026-10-04
+- **Documentos (SDD 5.2):** membros com permissão de edição propõem versões do Termo de Abertura, Partes Interessadas, EAP e Atas. O conteúdo aprovado permanece vigente até a aprovação da proposta; rejeições preservam a versão anterior.
+- **Histórico e Registro:** versões pendentes destacadas, conteúdo preservado para revisão, autoria e logs de rascunho, submissão, aprovação, rejeição e exclusão. Rascunhos do Termo são privados por autor; versões aprovadas permanecem no histórico.
+- **Segurança documental:** publicação e auditoria na mesma transação, revisão concorrente serializada por projeto, validação de árvores e participantes, isolamento por instituição/projeto e cancelamento de propostas ao excluir uma ata. Documentos legados continuam acessíveis; registros antigos sem conteúdo não podem ser aprovados como novas versões.
+- **Custos (SDD 5.3):** comportamento por campo/responsável já entregue na 1.9.0 reconferido nesta entrega; realizado próprio continua restrito ao responsável persistido, independente da permissão de orçado.
+- **Validação:** novo check de PR aplica migrations e testa aprovação, rollback e concorrência em PostgreSQL isolado. Sem deploy ou validação em produção nesta entrega.
+
 ## [1.11.0] — 2026-10-04
 - **Sobre:** a página `/sobre` destaca as novidades da versão atual e permite consultar as atualizações das versões anteriores, com datas e seções expansíveis. O histórico acompanha automaticamente o changelog do projeto.
 
