@@ -9,6 +9,10 @@ funcionalidade depois disso é uma versão MINOR.
 
 ## [Não lançado]
 
+
+## [1.11.1] — 2026-10-04
+- **Docker:** inclui o `CHANGELOG.md` no contexto de build para a página `/sobre`, corrigindo a falha de prerenderização na imagem de produção. PRs passam a construir a imagem do app e verificar o histórico no output standalone antes do merge
+
 ## [1.12.0] — 2026-10-04
 - **Documentos (SDD 5.2):** membros com permissão de edição propõem versões do Termo de Abertura, Partes Interessadas, EAP e Atas. O conteúdo aprovado permanece vigente até a aprovação da proposta; rejeições preservam a versão anterior.
 - **Histórico e Registro:** versões pendentes destacadas, conteúdo preservado para revisão, autoria e logs de rascunho, submissão, aprovação, rejeição e exclusão. Rascunhos do Termo são privados por autor; versões aprovadas permanecem no histórico.

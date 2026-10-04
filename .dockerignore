@@ -33,6 +33,8 @@ Dockerfile
 # Docs / IDE
 README.md
 *.md
+# /sobre reads the release history during build and at runtime.
+!CHANGELOG.md
 .vscode
 .idea
 

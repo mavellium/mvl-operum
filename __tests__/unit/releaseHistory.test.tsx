@@ -9,7 +9,7 @@ describe('novidades na página Sobre', () => {
     const current = screen.getByRole('article')
     expect(within(current).getByRole('heading', { name: `Versão ${version}` })).toBeInTheDocument()
     expect(within(current).getByText('Versão atual')).toBeInTheDocument()
-    expect(current.querySelector('li')).not.toBeNull()
+    expect(within(current).getByText(/contexto de build/)).toBeInTheDocument()
     const history = container.querySelectorAll('details')
     expect(history.length).toBeGreaterThan(0)
     expect(history[0].querySelector('summary')).toHaveTextContent('Versão 1.11.0')

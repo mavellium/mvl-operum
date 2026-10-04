@@ -37,7 +37,7 @@ A aplicação é um **Next.js 16 App Router** que atua como frontend + BFF, na f
 
 ### Histórico de versões na interface
 
-A página `/sobre` usa um Server Component para ler o `CHANGELOG.md` local, destacar a versão de `package.json` injetada por `NEXT_PUBLIC_APP_VERSION` e listar apenas versões anteriores. Não há consulta externa ou banco para esse histórico. O conteúdo é renderizado como texto/elementos React, sem HTML do Markdown. O arquivo é incluído no output standalone por `outputFileTracingIncludes` para `/sobre`, permitindo a mesma leitura em Docker. As próximas entregas atualizam o histórico pelo changelog existente, sem uma segunda lista de versões.
+A página `/sobre` usa um Server Component para ler o `CHANGELOG.md` local, destacar a versão de `package.json` injetada por `NEXT_PUBLIC_APP_VERSION` e listar apenas versões anteriores. Não há consulta externa ou banco para esse histórico. O conteúdo é renderizado como texto/elementos React, sem HTML do Markdown. O arquivo é incluído no output standalone por `outputFileTracingIncludes` para `/sobre`, permitindo a mesma leitura em Docker. O `.dockerignore` mantém uma exceção explícita para `CHANGELOG.md`, necessário também durante a prerenderização. O check `App Image Build` de PR constrói a imagem final sem publicar e verifica o changelog/versionamento no standalone. As próximas entregas atualizam o histórico pelo changelog existente, sem uma segunda lista de versões.
 
 ### Microsserviços
 
