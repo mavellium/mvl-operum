@@ -210,6 +210,9 @@ jobs:
           severity: CRITICAL,HIGH
           trivyignores: .trivyignore
 
+      - name: Verify braces patch inside gateway image
+        run: docker run --rm --network none -i ghcr.io/${{ steps.meta.outputs.owner }}/api-gateway:${{ github.sha }} node < api-gateway/scripts/verify-braces-patch.cjs
+
       - name: Scan api-gateway image (Trivy)
         uses: aquasecurity/trivy-action@v0.35.0
         with:
@@ -217,7 +220,7 @@ jobs:
           format: table
           exit-code: '1'
           severity: CRITICAL,HIGH
-          trivyignores: .trivyignore
+          trivyignores: .trivyignore-gateway.yaml
 
       - name: Scan file-service image (Trivy)
         uses: aquasecurity/trivy-action@v0.35.0

@@ -9,6 +9,10 @@ funcionalidade depois disso é uma versão MINOR.
 
 ## [Não lançado]
 
+## [1.10.1] — 2026-10-04
+- **Segurança/CI:** imagem final do gateway verifica o patch de `braces` antes do Trivy. Exceção de CVE-2026-93687 limitada ao caminho/hash da cópia corrigida, com expiração em 03/11/2026; outras cópias e alertas high/critical continuam bloqueando o scan.
+- **Prevenção:** PRs para main/develop constroem localmente e analisam a imagem final do gateway, sem publicação ou deploy. Staging/produção usam a mesma verificação antes do scan.
+
 ## [1.10.0] — 2026-10-03
 - **Permissões (SDD 5.1):** operações de projeto, equipe, sprints, cards, movimentos, comentários, timers, anexos e cadastros passam a aplicar o catálogo configurado por função e usuário. Leituras/listagens/busca ficam limitadas aos projetos autorizados; interface recebe o mesmo conjunto de permissões do servidor.
 - **API/MCP:** gateway consulta autorização no app por endpoint com chave interna, obtém o papel do usuário ativo no banco e falha fechado em indisponibilidade. Headers de escopo enviados pelo cliente são descartados. Atribuir cargos/gerente e alterar catálogos globais continua exclusivo do administrador.
