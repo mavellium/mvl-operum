@@ -671,7 +671,7 @@ Schemas em `lib/validation/`:
 | Rate limiting | `api-gateway`: 200 req/s por IP (`express-rate-limit`) |
 | CORS | `api-gateway`: allow-list via `ALLOWED_ORIGINS` (⚠️ não documentado em `.env.example` — gap de configuração conhecido) |
 | Fail-open conhecido | Se o Redis estiver indisponível em produção, a checagem de liveness de sessão no gateway **deixa passar** a requisição em vez de bloquear — trade-off deliberado de disponibilidade sobre segurança estrita |
-| CI/CD | TruffleHog (secrets), CodeQL (SAST), Trivy (scan de todas as 7 imagens), OWASP ZAP (DAST) em `deploy-staging.yml`/`deploy-production.yml` |
+| CI/CD | TruffleHog (secrets), CodeQL (SAST), Trivy (scan de todas as 7 imagens), OWASP ZAP (DAST) em `deploy-staging.yml`/`deploy-production.yml`. `dependency-audit.yml` verifica instalações congeladas, patch efetivo e audit high da raiz/gateway nas PRs para main/develop. O pnpm dos workflows vem de `packageManager` da raiz. |
 
 ---
 

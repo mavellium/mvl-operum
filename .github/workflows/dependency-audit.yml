@@ -1,0 +1,45 @@
+name: Dependency Audit
+
+on:
+  pull_request:
+    branches: [main, develop]
+
+permissions:
+  contents: read
+
+concurrency:
+  group: dependency-audit-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  audit:
+    name: Dependency Audit
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+
+      # packageManager da raiz é a fonte única da versão, inclusive nos deploys.
+      - uses: pnpm/action-setup@v3
+
+      - name: Install workspace dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Install isolated gateway dependencies
+        working-directory: api-gateway
+        run: pnpm install --frozen-lockfile --ignore-scripts
+
+      # A exceção de audit só é aceitável com o patch efetivamente instalado.
+      - name: Verify braces security patch in both consumers
+        run: pnpm exec vitest run __tests__/unit/security/bracesPatch.test.ts
+
+      - name: Audit workspace dependencies
+        run: pnpm audit --audit-level=high
+
+      - name: Audit isolated gateway dependencies
+        working-directory: api-gateway
+        run: pnpm audit --audit-level=high
