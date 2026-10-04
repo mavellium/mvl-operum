@@ -842,7 +842,7 @@ Conferência ao vivo em 30/09/2026: 79 cards no projeto, sem outra página de re
 
 ### 9.1 Preservar vínculo com projeto e atomicidade ao excluir uma sprint
 
-**Card:** `cmuo1gdyc002901ndubbhff73`. **Prioridade:** alta. **Status:** pendente.
+**Card:** `cmuo1gdyc002901ndubbhff73`. **Prioridade:** alta. **Status:** integrado na PR #45.
 
 **Implementação (04/10/2026):** transferência ordenada ao final do backlog e soft delete na mesma transação Serializable, com até três tentativas para conflitos P2034. Cards ativos sem projectId herdam o projeto da sprint; vínculo existente de outro projeto aborta tudo. Comentários/tempos e cards já excluídos não são alterados. Sete testes em PostgreSQL real cobrem acesso pelo backlog/id, rollback de falha após transferência, dois projetos/tenants, exclusões concorrentes e repetição. Check de PR aplica migrations no banco dedicado e compila o sprint-service. Não houve reparo de dados históricos nem execução em produção.
 
@@ -860,7 +860,9 @@ Conferência ao vivo em 30/09/2026: 79 cards no projeto, sem outra página de re
 
 ### 9.2 Garantir timer único sob concorrência e parada idempotente
 
-**Card:** `cmuo1gmkx002b01ndq67spd28`. **Prioridade:** alta. **Status:** pendente.
+**Card:** `cmuo1gmkx002b01ndq67spd28`. **Prioridade:** alta. **Status:** implementado nesta entrega; aguardando revisão.
+
+**Implementação (04/10/2026):** índice parcial do banco permite um único timer ativo não excluído por usuário. Migration com pré-verificação sob lock aborta em duplicados históricos sem alterar registros; diagnóstico/revisão em `docs/operations/timer-integrity.md`. Start concorrente retorna 409 para colisão do índice; stop condicional conserva endedAt, duration e updatedAt do vencedor nos retries/concorrentes, mantendo registros manuais e isolamento de proprietário/tenant. Check Sprint Integrity ampliado com testes reais e build do pacote. Sem execução/reparo em produção nesta tarefa.
 
 **Avaliação A2 · Arquitetura e código**
 
