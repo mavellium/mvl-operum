@@ -212,7 +212,7 @@ mvl-operum/
 │   ├── generated/prisma/         # Cliente Prisma gerado (monolito, não editar)
 │   ├── validation/                # Schemas Zod (inclui ataSchemas, eapSchemas, wbsSchemas)
 │   ├── api-client.ts             # Cliente HTTP server-only → API Gateway (padrão atual)
-│   ├── authClient.ts, projectClient.ts, sprintClient.ts  # ver nota de código morto abaixo
+│   ├── authClient.ts  # identidade; domínio usa api-client.ts via gateway
 │   ├── wbsCode.ts, wbsRollup.ts, wbsExportSvg.ts, wbsExportMspdi.ts, eapCode.ts, eapTemplate.ts
 │   ├── dal.ts                    # verifySession()
 │   ├── kanbanReducer.ts, reorderUtils.ts, defaultData.ts, prisma.ts, session.ts
@@ -233,7 +233,7 @@ mvl-operum/
 
 ### Código morto conhecido
 
-`lib/projectClient.ts` e `lib/sprintClient.ts` implementam um cliente que fala **diretamente** com `project-service`/`sprint-service`, pulando o gateway. Nenhum outro arquivo os importa (`grep` não encontrou referências fora de si mesmos) — é resíduo de uma abordagem anterior, substituída por `lib/api-client.ts` → gateway. Candidatos a remoção.
+`lib/projectClient.ts` e `lib/sprintClient.ts` foram retirados na SDD 9.7 após inventário sem consumidores. O caminho de transporte de projetos/sprints é `lib/api-client.ts` → gateway. O check `scripts/check-domain-boundaries.mjs` impede reintroduzir esses clientes diretos; mapa de propriedade e exceções locais em [domain-boundaries.md](domain-boundaries.md).
 
 ---
 
@@ -627,7 +627,7 @@ Continua sendo a camada de negócio para tudo que **não** foi extraído para mi
 | `fileUploadService` | Upload/delete no MinIO (uso remanescente no monolito) |
 | `csvImportService` | Parse e importação de CSV |
 | `roleService` / `permissionService` | CRUD de roles/permissões RBAC |
-| `departmentService` / `departamentoService` | CRUD de departamentos (en/legado) |
+| Departamentos | CRUD canônico no project-service; duplicatas locais retiradas na SDD 9.7 |
 | `projetoCadastroService` | `ProjetoDepartamento`/`ProjetoFuncao` — cadastros por projeto |
 | `wbsService` | Canvas de EAP/WBS: CRUD de nós, `WbsConflictError` (concorrência otimista) |
 | `eapService` | Templates e documentos EAP gerados |
@@ -813,7 +813,7 @@ Extração do restante do domínio de negócio principal:
 4. **`lib/api-client.ts`** — cliente HTTP unificado no monolito, substituindo o padrão anterior de múltiplos feature-flags por serviço (`AUTH_SERVICE_URL` direto etc.) para a maior parte das actions.
 5. **CI/CD** — pipelines agora buildam, escaneiam (Trivy) e publicam 7 imagens: `app`, `api-gateway`, `auth-service`, `project-service`, `sprint-service`, `notification-service`, `file-service`.
 
-**Lacunas conhecidas desta fase:** `auth-service`, `project-service` e `notification-service` não têm profile de migração automatizado no Compose (só `sprint-service` e `file-service` têm); `lib/projectClient.ts`/`lib/sprintClient.ts` (bypass direto do gateway) ficaram como código morto; a tabela `Attachment` ainda existe duplicada no schema do `sprint-service`.
+**Lacunas conhecidas desta fase:** `auth-service`, `project-service` e `notification-service` não têm profile de migração automatizado no Compose (só `sprint-service` e `file-service` têm); clientes diretos legados de projetos/sprints foram retirados na SDD 9.7 após inventário; a tabela `Attachment` ainda existe duplicada no schema do `sprint-service`.
 
 ### Fase 4 — Funcionalidades novas construídas direto no monolito (em andamento / não extraídas)
 
