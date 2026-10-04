@@ -559,7 +559,7 @@ Branch `feat/backlog-fase-4`. Cada item foi um commit, com o card movido para "E
 - Núcleo implementado em `12d427e0`: catálogo, migration de `UserPermission` e `Role.permissoesDefinidasEm`, resolvedor puro e `services/authz.ts`. `Permission` e `RolePermission` já são consultadas pelo resolvedor.
 - Serviço e actions implementados em `ef7f1bbb`: configuração restrita ao admin, validação e auditoria.
 - Nesta continuação: matriz no cadastro de funções, ajustes globais em Usuários e por projeto em Stakeholders, restauração de padrão e tratamento de falhas. A consulta de ajustes recusa projeto de outro tenant.
-- **Pendente para concluir 5.1:** adoção gradual de `can`/`exigirPermissao` nas actions, rotas e controles existentes de projeto/quadro/cadastros. As telas de configuração não significam que todos os consumidores já aplicam o catálogo.
+- **Consumidores de 5.1 implementados em 03/10:** autorização nas actions/rotas/páginas de projeto/quadro/cadastros, escopo de listagens e busca, controles visuais e proteção equivalente no gateway para API/MCP. Cargos/gerente e catálogo global são administrativos. Validação local detalhada na PR; sem validação em produção.
 - **5.2 continua em desenvolvimento.** Há alterações locais de revisão documental ainda não validadas; o fluxo unificado não está concluído.
 - **5.3 implementado localmente em 01/10:** validação por campo/responsável persistido, bloqueio transacional da linha, auditoria atômica, controles na interface e permissão de leitura na exportação. Sem validação em produção.
 - Esta fase permanece em andamento; não foi declarada pronta para merge/deploy.
@@ -594,8 +594,8 @@ Pedido: as permissões vêm da função (definida pelo admin no cadastro de fun�
 3. Aplicam-se os GRANT e DENY globais.
 4. Por último, os do projeto. Um DENY no projeto vence um GRANT global.
 
-**Aplicação:**
-- `services/authz.ts` com `can(session, projectId, 'documentos:aprovar')`, usado nas actions e rotas, substituindo aos poucos os `isProjectManager`;
+**Aplicação (implementada em 03/10/2026):**
+- `services/authz.ts` com `can(session, projectId, 'documentos:aprovar')`, usado nas actions, rotas e páginas, substituindo os guardas por gerente nas operações de projeto/quadro/cadastros/documentos;
 - a interface usa o mesmo resultado para esconder ou desabilitar botões.
 
 **Telas:**
@@ -610,7 +610,11 @@ Pedido: as permissões vêm da função (definida pelo admin no cadastro de fun�
 
 **Aceite da configuração:** admin salva/restaura a matriz; gerente/membro não escreve; conceder/negar/herdar respeita o escopo; falha mantém o estado confirmado; projeto/usuário de outra instituição é recusado. Testes em `__tests__/unit/components/permissoes/editores.test.tsx`, `__tests__/unit/services/permissoesService.test.ts` e `__tests__/unit/app/actions/permissoes.test.ts`.
 
-**Validação desta continuação (30/09):** `pnpm test:run` passou (157 arquivos, 1.571 testes); `pnpm lint`, `pnpm typecheck` e `pnpm build` passaram. Isso valida a configuração implementada, sem declarar concluída a adoção de permissões nos consumidores ou a validação em produção.
+**Complemento de 03/10:** gateway reavalia cada operação com `services/apiAuthorization.ts`, obtém papel de usuário ativo no banco, resolve projeto persistido dos recursos e falha fechado. Listagens e busca não incluem projetos negados. Conteúdo documental publicado requer edição/aprovação até o fluxo de snapshots do 5.2; a criação de metadados pendentes existente não foi ampliada nesta entrega. Sem migration de revisão documental.
+
+**Validação dos consumidores (03/10):** 164 arquivos e 1.665 testes passaram; lint, typecheck, build do app e builds de gateway/project-service/sprint-service passaram. Instalações congeladas da raiz e do gateway passaram. Audit no limiar `high` passa com patch local e exceção específica para GHSA-vfj7-8cjw-p6xm (ADR-011); quatro alertas moderados permanecem na raiz. Arquitetura e decisões revisadas nesta entrega. Não inclui teste/deploy em produção.
+
+**Validação da configuração anterior (30/09):** `pnpm test:run` passou (157 arquivos, 1.571 testes); `pnpm lint`, `pnpm typecheck` e `pnpm build` passaram. Isso valida a configuração implementada, sem declarar concluída a adoção de permissões nos consumidores ou a validação em produção.
 
 ### 5.2 Usuário comum nos documentos (versão pendente e logs)
 **Pedido:**

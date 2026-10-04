@@ -1,5 +1,6 @@
 import {
   Controller,
+  Headers,
   Get,
   Post,
   Patch,
@@ -19,8 +20,8 @@ export class SprintController {
   constructor(private readonly sprintService: SprintService) {}
 
   @Get()
-  list(@TenantId() tenantId: string, @Query('projectId') projectId?: string) {
-    return this.sprintService.list(tenantId, projectId)
+  list(@TenantId() tenantId: string, @Query('projectId') projectId?: string, @Headers('x-authorized-projects') authorized?: string) {
+    return this.sprintService.list(tenantId, projectId, authorized?.split(','))
   }
 
   @Get(':id')

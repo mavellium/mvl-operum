@@ -1,6 +1,8 @@
 // @vitest-environment node
 import { describe, it, expect, vi, beforeEach } from 'vitest'
 
+vi.mock('@/services/projectAccess', () => ({ requireProjectPermission: vi.fn().mockResolvedValue(undefined) }))
+
 vi.mock('@/lib/dal', () => ({
   verifySession: vi.fn(),
 }))
@@ -29,6 +31,7 @@ vi.mock('@/lib/prisma', () => ({
     userProjectRole: { findFirst: vi.fn().mockResolvedValue(null) },
     wbsNode: { findMany: vi.fn().mockResolvedValue([]) },
     user: { update: vi.fn() },
+    userProject: { findFirst: vi.fn().mockResolvedValue({ role: '' }) },
   },
 }))
 

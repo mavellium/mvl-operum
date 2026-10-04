@@ -1,6 +1,7 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest'
 import { render, screen, act } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
+import { ProjectPermissionsProvider } from '@/components/permissoes/ProjectPermissions'
 import CardModal from '@/components/card/CardModal'
 
 vi.mock('@/app/actions/tags', () => ({
@@ -358,5 +359,25 @@ describe('CardModal — campo de renomear anexo legível (SDD 4.8)', () => {
     expect(campo.className).toMatch(/\btext-slate-900\b/)
     expect(campo.className).toMatch(/\bbg-white\b/)
     expect(campo.className).toMatch(/\bfocus:ring-2\b/)
+  })
+})
+
+
+describe('permissões do card no projeto', () => {
+  it('leitor abre o conteúdo, mas não edita nem salva', async () => {
+    await act(async () => {
+      render(<ProjectPermissionsProvider permissions={['projeto:ver', 'quadro:ver']}><CardModal {...defaultProps} /></ProjectPermissionsProvider>)
+    })
+    expect(screen.getByRole('heading', { name: 'Test Card' })).toBeInTheDocument()
+    expect(screen.queryByRole('button', { name: 'Salvar alterações' })).not.toBeInTheDocument()
+    expect(screen.queryByPlaceholderText('Título da tarefa...')).not.toBeInTheDocument()
+    expect(defaultProps.onSubmit).not.toHaveBeenCalled()
+  })
+  it('edição concedida reabilita o formulário', async () => {
+    await act(async () => {
+      render(<ProjectPermissionsProvider permissions={['projeto:ver', 'quadro:ver', 'quadro:cards']}><CardModal {...defaultProps} /></ProjectPermissionsProvider>)
+    })
+    expect(screen.getByPlaceholderText('Título da tarefa...')).toBeInTheDocument()
+    expect(screen.getByRole('button', { name: 'Salvar alterações' })).toBeInTheDocument()
   })
 })

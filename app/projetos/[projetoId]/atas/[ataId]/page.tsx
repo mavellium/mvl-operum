@@ -1,3 +1,4 @@
+import { canProjectPermission } from '@/services/projectAccess'
 import Link from 'next/link'
 import { notFound } from 'next/navigation'
 import { verifySession } from '@/lib/dal'
@@ -19,11 +20,7 @@ export default async function EditarAtaPage({
   const { projetoId, ataId } = await params
   const { userId, role, tenantId } = await verifySession()
 
-  const isMember =
-    role === 'admin' || (await prisma.userProject.findUnique({
-      where: { userId_projectId: { userId, projectId: projetoId } },
-    }))?.active
-  if (!isMember) notFound()
+  if (!(await canProjectPermission({ tenantId, role, userId }, projetoId, 'documentos:ver'))) notFound()
 
   const ata = await buscarAta(tenantId, ataId)
   if (!ata || ata.projetoId !== projetoId) notFound()

@@ -1,5 +1,7 @@
 'use client'
 
+import { useProjectPermissions } from '@/components/permissoes/ProjectPermissions'
+
 import { useState, useEffect, useRef } from 'react'
 import { useSearchParams } from 'next/navigation'
 import { useToast } from '@/components/ui/Toast'
@@ -135,6 +137,7 @@ function toSprintAttachment(att: Record<string, unknown>): NonNullable<SprintCar
 
 export default function SprintBoard({ sprint, columns: initialColumns, backlogCards: initialBacklogCards, users, tags, currentUser, initialCardId, projectId }: SprintBoardProps) {
   const { toast } = useToast()
+  const permissions = useProjectPermissions()
   const [columns, setColumns] = useState(initialColumns)
   const [newColTitle, setNewColTitle] = useState('')
   const [addingCol, setAddingCol] = useState(false)
@@ -243,6 +246,8 @@ export default function SprintBoard({ sprint, columns: initialColumns, backlogCa
   }
 
   async function handleAddBacklogCardModal(data: NewCardData) {
+    if (!permissions.has('quadro:cards')) return
+
     if (!projectId) return
     const result = await createBacklogCardAction(projectId, {
       title: data.title,
@@ -289,6 +294,7 @@ export default function SprintBoard({ sprint, columns: initialColumns, backlogCa
     if (destination.droppableId === source.droppableId && destination.index === source.index) return
 
     if (type === 'COLUMN') {
+      if (!permissions.has('quadro:sprints')) return
       const newOrder = [...columns]
       const [moved] = newOrder.splice(source.index, 1)
       newOrder.splice(destination.index, 0, moved)
@@ -296,6 +302,8 @@ export default function SprintBoard({ sprint, columns: initialColumns, backlogCa
       await reorderSprintColumnsAction(sprint.id, newOrder.map(c => c.id))
       return
     }
+
+    if (!permissions.has('quadro:mover')) return
 
     // Backlog → coluna da sprint
     if (source.droppableId === 'BACKLOG' && destination.droppableId !== 'BACKLOG') {
@@ -420,6 +428,8 @@ export default function SprintBoard({ sprint, columns: initialColumns, backlogCa
   }
 
   async function handleAddColumn() {
+    if (!permissions.has('quadro:sprints')) return
+
     if (!newColTitle.trim()) return
     const result = await addSprintColumnAction(sprint.id, newColTitle.trim())
     if ('column' in result && result.column) {
@@ -430,11 +440,15 @@ export default function SprintBoard({ sprint, columns: initialColumns, backlogCa
   }
 
   async function handleRenameColumn(columnId: string, title: string) {
+    if (!permissions.has('quadro:sprints')) return
+
     setColumns(cols => cols.map(c => c.id === columnId ? { ...c, title } : c))
     await renameSprintColumnAction(sprint.id, columnId, title)
   }
 
   async function handleDeleteColumn(columnId: string) {
+    if (!permissions.has('quadro:sprints')) return
+
     setColumns(cols => cols.filter(c => c.id !== columnId))
     await deleteSprintColumnAction(sprint.id, columnId)
   }
@@ -445,6 +459,8 @@ export default function SprintBoard({ sprint, columns: initialColumns, backlogCa
   }
 
   async function handleAddCard(columnId: string, data: NewCardData) {
+    if (!permissions.has('quadro:cards')) return
+
     const result = await createCardInSprintAction({
       sprintId: sprint.id,
       sprintColumnId: columnId,
@@ -491,6 +507,8 @@ export default function SprintBoard({ sprint, columns: initialColumns, backlogCa
     cardId: string,
     data: { title: string; description: string; color: CardColor; priority?: string },
   ) {
+    if (!permissions.has('quadro:cards')) return
+
     setColumns(cols => cols.map(col => ({
       ...col,
       cards: col.cards.map(c => c.id === cardId ? { ...c, ...data } : c),
@@ -507,16 +525,22 @@ export default function SprintBoard({ sprint, columns: initialColumns, backlogCa
     cardId: string,
     data: { title: string; description: string; color: CardColor; priority?: string },
   ) {
+    if (!permissions.has('quadro:cards')) return
+
     setBacklogCards(prev => prev.map(c => c.id === cardId ? { ...c, ...data } : c))
     await updateCardInSprintAction(sprint.id, cardId, data)
   }
 
   async function handleDeleteBacklogCard(cardId: string) {
+    if (!permissions.has('quadro:excluir')) return
+
     setBacklogCards(prev => prev.filter(c => c.id !== cardId))
     await deleteCardInSprintAction(sprint.id, cardId)
   }
 
   async function handleDeleteCard(cardId: string) {
+    if (!permissions.has('quadro:excluir')) return
+
     setColumns(cols => cols.map(col => ({
       ...col,
       cards: col.cards.filter(c => c.id !== cardId),
@@ -604,6 +628,7 @@ export default function SprintBoard({ sprint, columns: initialColumns, backlogCa
                 {/* Footer — igual ao das outras colunas */}
                 <div className="p-2 border-t border-black/5 bg-gray-100 rounded-b-2xl shrink-0">
                   <button
+                    disabled={!permissions.has('quadro:cards')}
                     onClick={() => setAddingBacklogCard(true)}
                     className="w-full flex items-center gap-1.5 px-3 py-2 text-sm font-medium text-gray-500 hover:text-blue-600 hover:bg-white rounded-xl transition-all active:scale-[0.98]"
                   >
@@ -673,6 +698,7 @@ export default function SprintBoard({ sprint, columns: initialColumns, backlogCa
                         </div>
                       ) : (
                         <button
+                          disabled={!permissions.has('quadro:sprints')}
                           onClick={() => setAddingCol(true)}
                           className="w-full flex items-center justify-center gap-2 px-6 py-4 bg-white/10 hover:bg-white/20 backdrop-blur-md border border-white/10 rounded-2xl text-sm text-white font-semibold transition-all hover:scale-[1.02] active:scale-[0.98] group"
                         >

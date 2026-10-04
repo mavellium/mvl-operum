@@ -1,0 +1,133 @@
+// @vitest-environment node
+import { beforeEach, describe, expect, it, vi } from 'vitest'
+import { authorizeApi, ApiAccessDenied } from '@/services/apiAuthorization'
+import { exigirPermissao, can, projetosAutorizados } from '@/services/authz'
+import prisma from '@/lib/prisma'
+
+vi.mock('@/services/authz', () => ({
+  exigirPermissao: vi.fn(), can: vi.fn().mockResolvedValue(true), projetosAutorizados: vi.fn(),
+  SemPermissaoError: class extends Error {},
+}))
+vi.mock('@/lib/prisma', () => ({ default: {
+  sprint: { findFirst: vi.fn() }, card: { findFirst: vi.fn() },
+  sprintColumn: { findUnique: vi.fn() }, timeEntry: { findFirst: vi.fn() },
+  projectStakeholder: { findMany: vi.fn() }, $queryRaw: vi.fn(),
+} }))
+const session = { userId: 'user-A', tenantId: 'tenant-A', role: 'member' }
+const require = vi.mocked(exigirPermissao)
+let granted: Set<string>
+
+beforeEach(() => {
+  vi.clearAllMocks()
+  vi.mocked(can).mockResolvedValue(true)
+  granted = new Set(['projeto:ver','quadro:ver','quadro:cards','quadro:mover'])
+  require.mockImplementation(async (_s, project, permission) => {
+    if (project === 'outside' || !granted.has(permission)) throw new ApiAccessDenied()
+  })
+  vi.mocked(projetosAutorizados).mockResolvedValue(['project-A'])
+  vi.mocked(prisma.card.findFirst).mockResolvedValue({ projectId: 'project-A', sprint: null } as never)
+  vi.mocked(prisma.sprint.findFirst).mockResolvedValue({ projectId: 'project-A' } as never)
+  vi.mocked(prisma.sprintColumn.findUnique).mockResolvedValue({ sprintId: 'sprint-A' } as never)
+  vi.mocked(prisma.projectStakeholder.findMany).mockResolvedValue([{ projectId: 'project-A' }] as never)
+  vi.mocked(prisma.timeEntry.findFirst).mockResolvedValue({ cardId: 'card-A', userId: 'user-A' } as never)
+  vi.mocked(prisma.$queryRaw).mockResolvedValue([{ cardId: 'card-A' }])
+})
+
+describe('escopo de leitura', () => {
+  it.each(['/projects','/projects/user/user-B','/sprints','/cards/search?q=abc'])('retorna IDs autorizados para %s', async path => {
+    expect(await authorizeApi(session, 'GET', path)).toEqual({ allowed: true, projectIds: ['project-A'] })
+  })
+  it('oculta documentos no GET genérico quando documentos:ver foi negado', async () => {
+    vi.mocked(can).mockResolvedValue(false)
+    expect(await authorizeApi(session, 'GET', '/projects/project-A')).toEqual({ allowed: true, redactDocuments: true })
+  })
+  it('preserva IDs com letras maiúsculas', async () => {
+    await authorizeApi(session, 'GET', '/projects/Project-A')
+    expect(require).toHaveBeenCalledWith(session, 'Project-A', 'projeto:ver')
+  })
+  it('busca card no tenant e na sprint/projeto ativos', async () => {
+    await authorizeApi(session, 'GET', '/cards/card-A')
+    expect(prisma.card.findFirst).toHaveBeenCalledWith(expect.objectContaining({ where: expect.objectContaining({ deletedAt: null, OR: expect.arrayContaining([expect.objectContaining({ sprintId: null, project: { tenantId: 'tenant-A', deletedAt: null } })]) }) }))
+  })
+  it('recusa card inexistente antes de autorizar', async () => {
+    vi.mocked(prisma.card.findFirst).mockResolvedValue(null)
+    await expect(authorizeApi(session, 'GET', '/cards/card-A')).rejects.toThrow()
+  })
+  it('recusa projeto de fora inclusive para admin', async () => {
+    await expect(authorizeApi({ ...session, role: 'admin' }, 'GET', '/projects/outside')).rejects.toThrow()
+  })
+  it('nega leitura do quadro quando projeto:ver foi revogado', async () => {
+    granted.delete('projeto:ver')
+    await expect(authorizeApi(session, 'GET', '/cards/card-A')).rejects.toThrow()
+  })
+  it.each(['/projects/Project%2fother', '/projects/%zz','/unknown'])('nega caminho não suportado %s', async path => {
+    await expect(authorizeApi(session, 'GET', path)).rejects.toThrow()
+  })
+})
+
+describe('escritas e destinos persistidos', () => {
+  it('mover não exige editar card; reason/sprintPosition são campos de movimento', async () => {
+    granted.delete('quadro:cards')
+    await expect(authorizeApi(session, 'PATCH', '/cards/card-A', { sprintColumnId: 'column-A', sprintPosition: 3, reason: 'entrega', userId: 'user-A' })).resolves.toEqual({ allowed: true })
+  })
+  it('mover e editar exige ambas as permissões', async () => {
+    granted.delete('quadro:cards')
+    await expect(authorizeApi(session, 'PATCH', '/cards/card-A', { sprintColumnId: 'column-A', title: 'alterado' })).rejects.toThrow()
+  })
+  it('trocar sprint exige permissão também no destino', async () => {
+    vi.mocked(prisma.sprint.findFirst).mockResolvedValue({ projectId: 'outside' } as never)
+    await expect(authorizeApi(session, 'PATCH', '/cards/card-A', { sprintId: 'sprint-B' })).rejects.toThrow()
+  })
+  it('coluna de outro projeto não passa como destino', async () => {
+    vi.mocked(prisma.sprint.findFirst).mockResolvedValue({ projectId: 'outside' } as never)
+    await expect(authorizeApi(session, 'PATCH', '/cards/card-A', { sprintColumnId: 'column-B' })).rejects.toThrow()
+  })
+  it.each([
+    ['DELETE','/cards/card-A',{},'quadro:excluir'],
+    ['POST','/sprints',{ projectId: 'project-A' },'quadro:sprints'],
+    ['POST','/cards/card-A/comments',{ content: 'texto' },'quadro:cards'],
+    ['POST','/cards/card-A/time-entries/start',{},'quadro:cards'],
+    ['PATCH','/files/file-A/cover',{},'quadro:cards'],
+    ['POST','/projects/project-A/members',{ userId: 'user-B' },'projeto:equipe'],
+  ] as const)('%s %s usa %s', async (method, path, body, permission) => {
+    granted.delete(permission)
+    await expect(authorizeApi(session, method, path, body)).rejects.toThrow()
+    granted.add(permission)
+    await expect(authorizeApi(session, method, path, body)).resolves.toEqual({ allowed: true })
+  })
+  it('metadados de charter não contornam aprovação pelo update genérico', async () => {
+    granted.add('projeto:editar'); granted.add('documentos:editar')
+    await expect(authorizeApi(session, 'PATCH', '/projects/project-A', { objetivos: 'texto' })).rejects.toThrow()
+    granted.add('documentos:aprovar')
+    await expect(authorizeApi(session, 'PATCH', '/projects/project-A', { objetivos: 'texto' })).resolves.toEqual({ allowed: true })
+  })
+  it('alterar papéis/cargos permanece exclusivo do administrador', async () => {
+    granted.add('projeto:equipe')
+    await expect(authorizeApi(session, 'POST', '/projects/project-A/members', { userId: 'user-A', role: 'Gerente' })).rejects.toThrow()
+    await expect(authorizeApi(session, 'POST', '/projects/project-A/roles', { roleId: 'role-A' })).rejects.toThrow()
+  })
+  it.each(['/roles','/permissions','/departments'])('cadastro global %s não aceita membros', async path => {
+    await expect(authorizeApi(session, 'POST', path, {})).rejects.toThrow()
+  })
+  it('editar stakeholder compartilhado verifica todos os projetos afetados', async () => {
+    granted.add('projeto:equipe')
+    vi.mocked(prisma.projectStakeholder.findMany).mockResolvedValue([{ projectId: 'project-A' }, { projectId: 'outside' }] as never)
+    await expect(authorizeApi(session, 'PATCH', '/stakeholders/stakeholder-A?projectId=project-A', { name: 'novo' })).rejects.toThrow()
+  })
+  it('recusa contexto não vinculado ao stakeholder', async () => {
+    granted.add('projeto:equipe')
+    await expect(authorizeApi(session, 'PATCH', '/stakeholders/stakeholder-A?projectId=project-B')).rejects.toThrow()
+  })
+  it('permite parar o próprio timer após revogar edição', async () => {
+    granted.delete('quadro:cards')
+    await expect(authorizeApi(session, 'POST', '/time-entries/entry-A/stop')).resolves.toEqual({ allowed: true })
+  })
+  it('não permite parar timer de outra pessoa sem autorização', async () => {
+    vi.mocked(prisma.timeEntry.findFirst).mockResolvedValue({ cardId: 'card-A', userId: 'other' } as never)
+    await expect(authorizeApi(session, 'POST', '/time-entries/entry-A/stop')).rejects.toThrow()
+  })
+  it('não permite lote com card invisível', async () => {
+    vi.mocked(prisma.card.findFirst).mockResolvedValueOnce({ projectId: 'outside', sprint: null } as never)
+    await expect(authorizeApi(session, 'POST', '/cards/in-tenant', { ids: ['card-B'] })).rejects.toThrow()
+  })
+})

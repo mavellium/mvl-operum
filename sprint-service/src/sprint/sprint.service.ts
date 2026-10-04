@@ -31,9 +31,9 @@ export const DEFAULT_SPRINT_COLUMNS = ['A Fazer', 'Em andamento', 'Em teste', 'C
 
 @Injectable()
 export class SprintService {
-  async list(tenantId: string, projectId?: string) {
+  async list(tenantId: string, projectId?: string, authorized?: string[]) {
     return prisma.sprint.findMany({
-      where: { deletedAt: null, ...sprintInTenant(tenantId), ...(projectId ? { projectId } : {}) },
+      where: { deletedAt: null, ...sprintInTenant(tenantId), ...(projectId ? { projectId } : {}), ...(authorized ? { AND: [{ projectId: { in: authorized } }] } : {}) },
       include: { sprintColumns: { orderBy: { position: 'asc' } } },
       orderBy: { createdAt: 'desc' },
     })

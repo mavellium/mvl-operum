@@ -1,7 +1,7 @@
 import { NextResponse } from 'next/server'
 import { verifySession } from '@/lib/dal'
 import prisma from '@/lib/prisma'
-import { isProjectManager } from '@/services/projectRoleService'
+import { canProjectPermission } from '@/services/projectAccess'
 import type { ProjetoHeader, Stakeholder } from '@/components/projetos/StakeholderDocument'
 
 function buildAddress(e: {
@@ -36,10 +36,7 @@ export async function GET(
 
   try {
     const { tenantId, role, userId } = await verifySession()
-    const canAccess = role === 'admin' || (await isProjectManager(userId, projetoId))
-    if (!canAccess) {
-      return NextResponse.json({ error: 'Não autorizado' }, { status: 403 })
-    }
+    if (!(await canProjectPermission({ tenantId, role, userId }, projetoId, 'documentos:ver'))) return NextResponse.json({ error: 'Sem permissão' }, { status: 403 })
 
     const [project, userProjects, projectStakeholders, gerenteEntries] = await Promise.all([
       prisma.project.findFirst({

@@ -1,5 +1,7 @@
 'use client'
 
+import { useProjectPermissions } from '@/components/permissoes/ProjectPermissions'
+
 import { Draggable, Droppable } from '@hello-pangea/dnd'
 import { Column as ColumnType, Card as CardType, CardColor } from '@/types/kanban'
 import ColumnHeader from './ColumnHeader'
@@ -36,6 +38,7 @@ export default function Column({
   users, boardTags, onCardClick, onTimerStarted, dragDisabled = false,
 }: ColumnProps) {
 
+  const permissions = useProjectPermissions()
   const concluida = !isBacklog && isColunaConcluida(column.title)
 
   const columnBg = isBacklog
@@ -45,7 +48,7 @@ export default function Column({
       : 'bg-gray-100/90 backdrop-blur-sm border-black/5'
 
   return (
-    <Draggable draggableId={column.id} index={index} isDragDisabled={isBacklog}>
+    <Draggable draggableId={column.id} index={index} isDragDisabled={isBacklog || !permissions.has('quadro:sprints')}>
       {(provided, snapshot) => (
         <div
           ref={provided.innerRef}
@@ -68,8 +71,8 @@ export default function Column({
               <ColumnHeader
                 title={column.title}
                 cardCount={cards.length}
-                onRename={onRenameColumn ? (title) => onRenameColumn(column.id, title) : undefined}
-                onDelete={onDeleteColumn ? () => onDeleteColumn(column.id) : undefined}
+                onRename={permissions.has('quadro:sprints') && onRenameColumn ? (title) => onRenameColumn(column.id, title) : undefined}
+                onDelete={permissions.has('quadro:sprints') && onDeleteColumn ? () => onDeleteColumn(column.id) : undefined}
               />
             )}
           </div>
@@ -120,6 +123,7 @@ export default function Column({
           {/* RODAPÉ: Adicionar Card */}
           <div className="p-2 border-t border-black/5 bg-gray-100 rounded-b-2xl shrink-0">
             <button
+              disabled={!permissions.has('quadro:cards')}
               onClick={() => onAddCard(column.id)} // Repassa o evento pro pai
               className="w-full flex items-center gap-1.5 px-3 py-2 text-sm font-medium text-gray-500 hover:text-blue-600 hover:bg-white rounded-xl transition-all active:scale-[0.98]"
             >

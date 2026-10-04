@@ -44,3 +44,10 @@ minimumReleaseAgeExclude:
   - '@next/swc-win32-arm64-msvc@16.3.6'
   - '@next/swc-win32-x64-msvc@16.3.6'
   - next@16.3.6
+patchedDependencies:
+  braces@3.0.3: patches/braces@3.0.3.patch
+# Exceção somente para o código mitigado pelo patch acima (ADR-011).
+# Remover patch e exceção quando houver correção publicada; testes validam o limite.
+auditConfig:
+  ignoreGhsas:
+    - GHSA-vfj7-8cjw-p6xm

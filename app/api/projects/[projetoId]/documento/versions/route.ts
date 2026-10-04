@@ -1,7 +1,7 @@
 import { NextResponse } from 'next/server'
 import { verifySession } from '@/lib/dal'
 import prisma from '@/lib/prisma'
-import { isProjectManager } from '@/services/projectRoleService'
+import { canProjectPermission } from '@/services/projectAccess'
 
 export async function GET(
   request: Request,
@@ -11,10 +11,8 @@ export async function GET(
 
   try {
     const { tenantId, role, userId } = await verifySession()
-    const canAccess = role === 'admin' || (await isProjectManager(userId, projetoId))
-    if (!canAccess) {
-      return NextResponse.json({ error: 'Não autorizado' }, { status: 403 })
-    }
+    const canAccess = await canProjectPermission({ tenantId, role, userId }, projetoId, 'documentos:aprovar')
+    if (!(await canProjectPermission({ tenantId, role, userId }, projetoId, 'documentos:ver'))) return NextResponse.json({ error: 'Sem permissão' }, { status: 403 })
 
     const project = await prisma.project.findFirst({
       where: { id: projetoId, tenantId, deletedAt: null },
@@ -62,10 +60,8 @@ export async function POST(
 
   try {
     const { tenantId, role, userId } = await verifySession()
-    const isManager = role === 'admin' || (await isProjectManager(userId, projetoId))
-    if (!isManager && !(await canMemberCreate(userId, projetoId, tenantId))) {
-      return NextResponse.json({ error: 'Não autorizado' }, { status: 403 })
-    }
+    const isManager = await canProjectPermission({ tenantId, role, userId }, projetoId, 'documentos:aprovar')
+    if (!(await canProjectPermission({ tenantId, role, userId }, projetoId, 'documentos:editar'))) return NextResponse.json({ error: 'Sem permissão' }, { status: 403 })
 
     const project = await prisma.project.findFirst({
       where: { id: projetoId, tenantId, deletedAt: null },
@@ -107,18 +103,4 @@ export async function POST(
     console.error('[documento/versions POST]', err)
     return NextResponse.json({ error: 'Erro interno' }, { status: 500 })
   }
-}
-
-// Membros do projeto podem criar commits (apenas gerentes auto-aprovam)
-async function canMemberCreate(userId: string, projectId: string, tenantId: string): Promise<boolean> {
-  const member = await prisma.project.findFirst({
-    where: {
-      id: projectId,
-      tenantId,
-      deletedAt: null,
-      members: { some: { userId, active: true } },
-    },
-    select: { id: true },
-  })
-  return member !== null
 }

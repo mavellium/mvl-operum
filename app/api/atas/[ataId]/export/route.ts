@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server'
 import { verifySession } from '@/lib/dal'
+import { canProjectPermission } from '@/services/projectAccess'
 import { buscarAta } from '@/services/ataService'
 import { gerarAtaDocx, type AtaExportData } from '@/lib/exports/ataDocx'
 
@@ -17,6 +18,8 @@ export async function GET(
     if (!ata) {
       return NextResponse.json({ error: 'Ata não encontrada' }, { status: 404 })
     }
+
+    if (!(await canProjectPermission(session, ata.projetoId, 'documentos:ver'))) return NextResponse.json({ error: 'Sem permissão' }, { status: 403 })
 
     const data: AtaExportData = {
       numero: ata.numero,

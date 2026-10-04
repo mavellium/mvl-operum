@@ -36,6 +36,7 @@ export class CardController {
   @Get('cards/search')
   search(
     @TenantId() tenantId: string,
+    @Headers('x-authorized-projects') authorized?: string,
     @Query('q') q?: string,
     @Query('sprintId') sprintId?: string,
     @Query('projectId') projectId?: string,
@@ -47,7 +48,7 @@ export class CardController {
     // (busca "cards de <pessoa>"); senão a consulta traria o tenant inteiro.
     const porPessoa = !!responsibleUserId && !!inProjectId
     if (!porPessoa && text.length < 2) throw new BadRequestException('q é obrigatório (mínimo 2 caracteres)')
-    return this.cardService.search(tenantId, text, { sprintId, projectId, inProjectId, responsibleUserId })
+    return this.cardService.search(tenantId, text, { sprintId, projectId, inProjectId, responsibleUserId, authorized: authorized?.split(',') })
   }
 
   // Antes das rotas com :id. Só devolve ids do próprio tenant, então pode

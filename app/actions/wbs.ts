@@ -53,6 +53,7 @@ const wbsPath = (projetoId: string) => `/projetos/${projetoId}/wbs`
 export async function getWbsTreeAction(projetoId: string): Promise<Result<GetTreeResult>> {
   try {
     const sessao = await verifySession()
+    await exigirPermissao(sessao, projetoId, 'projeto:ver')
     const { tenantId } = sessao
     await exigirPermissao(sessao, projetoId, 'planilha:ver')
     const tree = await getTree(projetoId, tenantId)

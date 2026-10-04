@@ -1,5 +1,7 @@
 'use client'
 
+import { useProjectPermissions } from '@/components/permissoes/ProjectPermissions'
+
 import { useRef, useState, useEffect, useCallback } from 'react'
 import { useParams } from 'next/navigation'
 import { useReactToPrint } from 'react-to-print'
@@ -82,6 +84,8 @@ function useDebounce<T>(value: T, delay: number): T {
 }
 
 export default function DocumentoStakeholders({ membros = [] }: { membros?: MembroEquipeOption[] }) {
+  const permissions = useProjectPermissions()
+  const canEdit = permissions.has('documentos:editar')
   const { projetoId } = useParams<{ projetoId: string }>()
   const documentRef = useRef<HTMLDivElement>(null)
   const { toast } = useToast()
@@ -221,6 +225,7 @@ export default function DocumentoStakeholders({ membros = [] }: { membros?: Memb
   }
 
   function openCommitModal() {
+    if (!canEdit) return
     const problema = validarResponsaveis()
     if (problema) {
       toast(problema, 'error')
@@ -231,6 +236,7 @@ export default function DocumentoStakeholders({ membros = [] }: { membros?: Memb
   }
 
   async function handleConfirmCommit() {
+    if (!canEdit) return
     if (!projetoId || !commitTitle.trim()) return
     const problema = validarResponsaveis()
     if (problema) {
@@ -297,6 +303,7 @@ export default function DocumentoStakeholders({ membros = [] }: { membros?: Memb
   // ── Helpers de renderização ─────────────────────────────────────────────────
 
   function update(field: keyof EditableFields, value: string) {
+    if (!canEdit) return
     setEditable(prev => ({ ...prev, [field]: value }))
   }
 
@@ -513,7 +520,7 @@ export default function DocumentoStakeholders({ membros = [] }: { membros?: Memb
                   </div>
 
                   {/* Botões de aprovação — somente para gerentes e versões pendentes */}
-                  {isManager && v.status === 'PENDING' && (
+                  {permissions.has('documentos:aprovar') && isManager && v.status === 'PENDING' && (
                     <div className="flex gap-2 mt-2">
                       <button
                         onClick={() => handleVersionAction(v.id, 'approve')}

@@ -3,9 +3,9 @@
 import { useState, useEffect, useRef } from 'react'
 
 interface BoardActionMenuProps {
-  onImportCsv: () => void
+  onImportCsv?: () => void
   onCreateSprint: () => void // Importante: Se não for usar por enquanto, pode manter, mas lembre-se de implementar a lógica depois ou remover se não for necessário
-  onManageTags: () => void   // O mesmo vale para tags
+  onManageTags?: () => void   // O mesmo vale para tags
   onChangeLayout?: () => void;
 }
 
@@ -40,12 +40,12 @@ export default function BoardActionMenu({ onImportCsv, onChangeLayout }: BoardAc
 
       {open && (
         <div className="absolute right-0 mt-1 w-48 bg-white rounded-xl shadow-lg border border-gray-100 py-1 z-50">
-          <button
+          {onImportCsv && <button
             className="w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 transition-colors"
             onClick={() => { setOpen(false); onImportCsv() }}
           >
             Importar CSV
-          </button>
+          </button>}
         
           {onChangeLayout && (
             <button 

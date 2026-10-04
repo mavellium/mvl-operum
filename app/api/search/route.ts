@@ -1,6 +1,7 @@
 import { verifyRouteSession } from '@/lib/routeAuth'
 import { cardsApi } from '@/lib/api-client'
 import prisma from '@/lib/prisma'
+import { projetosAutorizados, can } from '@/services/authz'
 import { grupoDoCard, ordenarPorGrupo, tempoTotal, type SearchGroup } from '@/lib/searchGroups'
 
 interface CardSearchHit {
@@ -39,12 +40,13 @@ function toCardResult(c: CardSearchHit, group: SearchGroup, projectId?: string) 
   }
 }
 
-function searchProjects(tenantId: string, q: string, take: number) {
+function searchProjects(tenantId: string, q: string, take: number, projectIds: string[]) {
   return prisma.project.findMany({
     where: {
       tenantId,
       deletedAt: null,
       status: 'ACTIVE',
+      id: { in: projectIds },
       OR: [
         { name: { contains: q, mode: 'insensitive' } },
         { description: { contains: q, mode: 'insensitive' } },
@@ -79,10 +81,10 @@ function searchMembers(tenantId: string, projectId: string, q: string, take: num
  * Busca unificada dentro de um projeto: cards da sprint atual → outras sprints →
  * backlog → cards das pessoas encontradas → projetos → pessoas.
  */
-async function unifiedProjectSearch(tenantId: string, projectId: string, q: string, currentSprintId: string | null) {
+async function unifiedProjectSearch(tenantId: string, projectId: string, q: string, currentSprintId: string | null, projectIds: string[]) {
   const [cards, projects, members] = await Promise.all([
     (cardsApi.search(q, { inProjectId: projectId }) as unknown as Promise<CardSearchHit[]>).catch(() => []),
-    searchProjects(tenantId, q, 5).catch(() => []),
+    searchProjects(tenantId, q, 5, projectIds).catch(() => []),
     searchMembers(tenantId, projectId, q, 5).catch(() => []),
   ])
 
@@ -139,12 +141,15 @@ export async function GET(request: Request) {
   const tenantId = session.tenantId as string
 
   try {
+    const authz = { userId: session.userId as string, tenantId, role: session.role as string }
+    const projectIds = await projetosAutorizados(authz)
+    if ((context === 'project_items' || context === 'project_members') && contextId && !(await can(authz, contextId, 'projeto:ver'))) return Response.json({ error: 'Sem permissão' }, { status: 403 })
     if (context === 'project_items' && contextId) {
-      return Response.json({ results: await unifiedProjectSearch(tenantId, contextId, q, currentSprintId) })
+      return Response.json({ results: await unifiedProjectSearch(tenantId, contextId, q, currentSprintId, projectIds) })
     }
 
     if (context === 'global_projects') {
-      const projects = await searchProjects(tenantId, q, 20)
+      const projects = await searchProjects(tenantId, q, 20, projectIds)
       return Response.json({
         results: projects.map(p => ({ id: p.id, title: p.name, description: p.description, type: 'project' })),
       })

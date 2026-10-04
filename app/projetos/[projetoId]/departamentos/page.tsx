@@ -1,7 +1,7 @@
 import { notFound } from 'next/navigation'
 import { verifySession } from '@/lib/dal'
-import { findById } from '@/services/projectService'
-import { isProjectManager } from '@/services/projectRoleService'
+import { findById } from '@/services/projectAccess'
+import { canProjectPermission } from '@/services/projectAccess'
 import { listarDepartamentosAssociados } from '@/services/projetoCadastroService'
 import prisma from '@/lib/prisma'
 import ProjetoDepartamentosClient from '@/components/projetos/ProjetoDepartamentosClient'
@@ -15,7 +15,7 @@ export default async function ProjetoDepartamentosPage({ params }: { params: Pro
   const { projetoId } = await params
   const { tenantId, role, userId } = await verifySession()
 
-  if (role !== 'admin' && !await isProjectManager(userId, projetoId)) {
+  if (!(await canProjectPermission({ tenantId, role, userId }, projetoId, 'cadastros:gerenciar'))) {
     notFound()
   }
 

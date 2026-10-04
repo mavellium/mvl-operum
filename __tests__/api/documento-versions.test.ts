@@ -5,8 +5,8 @@ vi.mock('@/lib/dal', () => ({
   verifySession: vi.fn(),
 }))
 
-vi.mock('@/services/projectRoleService', () => ({
-  isProjectManager: vi.fn(),
+vi.mock('@/services/projectAccess', () => ({
+  canProjectPermission: vi.fn(),
 }))
 
 vi.mock('@/lib/prisma', () => ({
@@ -22,13 +22,13 @@ vi.mock('@/lib/prisma', () => ({
 }))
 
 import { verifySession } from '@/lib/dal'
-import { isProjectManager } from '@/services/projectRoleService'
+import { canProjectPermission } from '@/services/projectAccess'
 import prisma from '@/lib/prisma'
 import { GET, POST } from '@/app/api/projects/[projetoId]/documento/versions/route'
 import { PATCH } from '@/app/api/projects/[projetoId]/documento/versions/[versionId]/route'
 
 const mockVerifySession = verifySession as ReturnType<typeof vi.fn>
-const mockIsProjectManager = isProjectManager as ReturnType<typeof vi.fn>
+const mockCan = canProjectPermission as ReturnType<typeof vi.fn>
 const mockPrisma = prisma as {
   project: { findFirst: ReturnType<typeof vi.fn> }
   documentVersion: {
@@ -93,8 +93,9 @@ const MOCK_VERSION_PENDING = {
 
 beforeEach(() => {
   vi.clearAllMocks()
+    vi.mocked(canProjectPermission).mockResolvedValue(true)
   mockVerifySession.mockResolvedValue({ tenantId: 't1', role: 'member', userId: 'u1' })
-  mockIsProjectManager.mockResolvedValue(false)
+  mockCan.mockImplementation(async (session, _id, permission) => session.userId !== 'u99' && (permission !== 'documentos:aprovar' || session.role === 'admin'))
   mockPrisma.project.findFirst.mockResolvedValue(MOCK_PROJECT)
   mockPrisma.documentVersion.findMany.mockResolvedValue([MOCK_VERSION_PENDING])
   mockPrisma.documentVersion.create.mockResolvedValue(MOCK_VERSION_PENDING)
@@ -113,7 +114,7 @@ beforeEach(() => {
 
 describe('POST /api/projects/[projetoId]/documento/versions', () => {
   it('Teste 1: membro cria commit → status deve ser PENDING', async () => {
-    mockIsProjectManager.mockResolvedValue(false)
+    mockCan.mockImplementation(async (session, _id, permission) => session.userId !== 'u99' && (permission !== 'documentos:aprovar' || session.role === 'admin'))
     mockPrisma.documentVersion.create.mockResolvedValue({
       ...MOCK_VERSION_PENDING,
       status: 'PENDING',
@@ -140,7 +141,7 @@ describe('POST /api/projects/[projetoId]/documento/versions', () => {
 
   it('Teste 2 (auto-approve): gerente cria commit → status deve ser APPROVED imediatamente', async () => {
     mockVerifySession.mockResolvedValue({ tenantId: 't1', role: 'member', userId: 'g1' })
-    mockIsProjectManager.mockResolvedValue(true)
+    mockCan.mockResolvedValue(true)
     mockPrisma.documentVersion.create.mockResolvedValue({
       ...MOCK_VERSION_PENDING,
       status: 'APPROVED',
@@ -180,9 +181,9 @@ describe('POST /api/projects/[projetoId]/documento/versions', () => {
 
   it('retorna 403 quando usuário não tem acesso', async () => {
     mockVerifySession.mockResolvedValue({ tenantId: 't1', role: 'member', userId: 'u99' })
-    mockIsProjectManager.mockResolvedValue(false)
+    mockCan.mockImplementation(async (session, _id, permission) => session.userId !== 'u99' && (permission !== 'documentos:aprovar' || session.role === 'admin'))
     // canMemberCreate é chamado primeiro; retorna null → usuário não é membro → 403
-    mockPrisma.project.findFirst.mockResolvedValueOnce(null)
+    mockCan.mockResolvedValue(false)
 
     const res = await POST(
       makePostRequest('p1', VALID_COMMIT_BODY) as never,
@@ -240,7 +241,7 @@ describe('GET /api/projects/[projetoId]/documento/versions', () => {
 
   it('retorna 403 quando usuário não tem acesso', async () => {
     mockVerifySession.mockResolvedValue({ tenantId: 't1', role: 'member', userId: 'u99' })
-    mockIsProjectManager.mockResolvedValue(false)
+    mockCan.mockImplementation(async (session, _id, permission) => session.userId !== 'u99' && (permission !== 'documentos:aprovar' || session.role === 'admin'))
 
     const res = await GET(
       makeGetRequest('p1') as never,
@@ -257,7 +258,7 @@ describe('GET /api/projects/[projetoId]/documento/versions', () => {
 
 describe('PATCH /api/projects/[projetoId]/documento/versions/[versionId]', () => {
   it('Teste 4: membro tenta aprovar → 403 Forbidden', async () => {
-    mockIsProjectManager.mockResolvedValue(false)
+    mockCan.mockImplementation(async (session, _id, permission) => session.userId !== 'u99' && (permission !== 'documentos:aprovar' || session.role === 'admin'))
 
     const res = await PATCH(
       makePatchRequest('p1', 'v1', 'approve') as never,
@@ -270,7 +271,7 @@ describe('PATCH /api/projects/[projetoId]/documento/versions/[versionId]', () =>
 
   it('gerente aprova → status muda para APPROVED', async () => {
     mockVerifySession.mockResolvedValue({ tenantId: 't1', role: 'member', userId: 'g1' })
-    mockIsProjectManager.mockResolvedValue(true)
+    mockCan.mockResolvedValue(true)
 
     const res = await PATCH(
       makePatchRequest('p1', 'v1', 'approve') as never,
@@ -293,7 +294,7 @@ describe('PATCH /api/projects/[projetoId]/documento/versions/[versionId]', () =>
 
   it('gerente rejeita → status muda para REJECTED', async () => {
     mockVerifySession.mockResolvedValue({ tenantId: 't1', role: 'member', userId: 'g1' })
-    mockIsProjectManager.mockResolvedValue(true)
+    mockCan.mockResolvedValue(true)
     mockPrisma.documentVersion.update.mockResolvedValueOnce({
       ...MOCK_VERSION_PENDING,
       status: 'REJECTED',
@@ -312,7 +313,7 @@ describe('PATCH /api/projects/[projetoId]/documento/versions/[versionId]', () =>
   })
 
   it('retorna 404 quando versão não encontrada', async () => {
-    mockIsProjectManager.mockResolvedValue(true)
+    mockCan.mockResolvedValue(true)
     mockPrisma.documentVersion.findFirst.mockResolvedValue(null)
 
     const res = await PATCH(
@@ -324,7 +325,7 @@ describe('PATCH /api/projects/[projetoId]/documento/versions/[versionId]', () =>
   })
 
   it('retorna 400 para action inválida', async () => {
-    mockIsProjectManager.mockResolvedValue(true)
+    mockCan.mockResolvedValue(true)
 
     const res = await PATCH(
       makePatchRequest('p1', 'v1', 'invalid_action') as never,

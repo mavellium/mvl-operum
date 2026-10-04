@@ -4,6 +4,7 @@ import { useEffect, useState } from 'react'
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
 import { PanelLeftOpen } from 'lucide-react'
+import { useProjectPermissions } from '@/components/permissoes/ProjectPermissions'
 import Tooltip from '@/components/ui/Tooltip'
 import SidebarLayout from '@/components/layout/SidebarLayout'
 
@@ -63,6 +64,7 @@ const CustosIcon = () => (
 )
 
 export default function ProjectSidebar({ projetoId, canManageMembers }: Props) {
+  const permissions = useProjectPermissions()
   const pathname = usePathname()
   const [collapsed, setCollapsed] = useState(false)
   const [animated, setAnimated] = useState(false)
@@ -95,14 +97,21 @@ export default function ProjectSidebar({ projetoId, canManageMembers }: Props) {
     { href: `/projetos/${projetoId}/wbs`, label: 'EAP / WBS', Icon: WbsIcon },
     { href: `/projetos/${projetoId}/documentacao`, label: 'Documentação', Icon: DocumentosIcon },
     { href: `/projetos/${projetoId}/planilha-custos`, label: 'Planilha de Custos', Icon: CustosIcon },
-    ...(canManageMembers
+    ...((canManageMembers || permissions.has('cadastros:gerenciar'))
       ? [
           { href: `/projetos/${projetoId}/stakeholders`, label: 'Stakeholders', Icon: StakeholdersIcon },
           { href: `/projetos/${projetoId}/funcoes`, label: 'Funções', Icon: CargosIcon },
           { href: `/projetos/${projetoId}/departamentos`, label: 'Departamentos', Icon: DepartamentosIcon }
         ]
       : []),
-  ]
+  ].filter(item => {
+    if (item.label === 'Sprints' || item.label === 'Dashboard') return permissions.has('quadro:ver')
+    if (item.label === 'Documentação') return permissions.has('documentos:ver')
+    if (item.label === 'Planilha de Custos') return permissions.has('planilha:ver')
+    if (item.label === 'Stakeholders') return canManageMembers
+    if (item.label === 'Funções' || item.label === 'Departamentos') return permissions.has('cadastros:gerenciar')
+    return true
+  })
 
   // Contexto da busca conforme a sub-rota do projeto.
   const parts = pathname.split('/')

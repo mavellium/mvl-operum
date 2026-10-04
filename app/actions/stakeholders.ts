@@ -27,7 +27,7 @@ interface StakeholderInput {
 export async function createStakeholderAction(data: StakeholderInput, projectId?: string) {
   try {
     await verifySession()
-    const stakeholder = await stakeholdersApi.create(data as unknown as Record<string, unknown>)
+    const stakeholder = await stakeholdersApi.create(data as unknown as Record<string, unknown>, projectId)
     if (projectId) {
       await stakeholdersApi.linkProject((stakeholder as { id: string }).id, projectId)
       revalidatePath(`/projetos/${projectId}/stakeholders`)
@@ -41,7 +41,7 @@ export async function createStakeholderAction(data: StakeholderInput, projectId?
 export async function updateStakeholderAction(stakeholderId: string, data: StakeholderInput, projectId: string) {
   try {
     await verifySession()
-    const stakeholder = await stakeholdersApi.update(stakeholderId, data as unknown as Record<string, unknown>)
+    const stakeholder = await stakeholdersApi.update(stakeholderId, data as unknown as Record<string, unknown>, projectId)
     revalidatePath(`/projetos/${projectId}/stakeholders`)
     return { success: true, stakeholder }
   } catch (err) {
@@ -98,11 +98,12 @@ const SIGNATURE_MAX_BYTES = 2 * 1024 * 1024
 
 export async function uploadMemberSignatureAction(formData: FormData, userId: string) {
   try {
-    const { role, userId: callerId } = await verifySession()
+    const { role, userId: callerId, tenantId } = await verifySession()
     if (role !== 'admin' && callerId !== userId) {
       return { error: 'Não autorizado' }
     }
 
+    if (!(await prisma.user.findFirst({ where: { id: userId, tenantId, deletedAt: null }, select: { id: true } }))) return { error: 'Usuário não encontrado' }
     const file = formData.get('file') as File
     if (!file || file.size === 0) return { error: 'Arquivo inválido' }
     if (!SIGNATURE_ALLOWED_TYPES.includes(file.type)) return { error: 'Apenas PNG e JPEG são aceitos' }
@@ -121,7 +122,7 @@ export async function uploadMemberSignatureAction(formData: FormData, userId: st
     )
 
     const signatureUrl = publicUrl(key)
-    await prisma.user.update({ where: { id: userId }, data: { signatureUrl } })
+    await prisma.user.update({ where: { id: userId, tenantId }, data: { signatureUrl } })
     return { signatureUrl }
   } catch (err) {
     console.error('[uploadMemberSignatureAction]', err)

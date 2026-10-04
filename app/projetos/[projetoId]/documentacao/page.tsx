@@ -2,8 +2,8 @@ import { notFound } from 'next/navigation'
 import DocumentacaoLayout from '@/components/projetos/documentacao/DocumentacaoLayout'
 import type { Metadata } from 'next'
 import { verifySession } from '@/lib/dal'
-import { findById } from '@/services/projectService'
-import { isProjectManager } from '@/services/projectRoleService'
+import { findById } from '@/services/projectAccess'
+import { canProjectPermission } from '@/services/projectAccess'
 import { listarAtasPorProjeto } from '@/services/ataService'
 import prisma from '@/lib/prisma'
 
@@ -13,18 +13,12 @@ export const metadata: Metadata = { title: 'Documentação' }
 
 export default async function DocumentacaoPage({ params }: { params: Promise<{ projetoId: string }> }) {
   const { projetoId } = await params
-  const { userId, role } = await verifySession()
+  const { userId, role, tenantId } = await verifySession()
 
   const project = await findById(projetoId)
   if (!project) notFound()
 
-  const isMember = role === 'admin' || (await isProjectManager(userId, projetoId))
-  if (!isMember) {
-    const entry = await prisma.userProject.findUnique({
-      where: { userId_projectId: { userId, projectId: projetoId } },
-    })
-    if (!entry?.active) notFound()
-  }
+  if (!(await canProjectPermission({ tenantId, role, userId }, projetoId, 'documentos:ver'))) notFound()
 
   let atas: Awaited<ReturnType<typeof listarAtasPorProjeto>> = []
   try {
@@ -32,7 +26,7 @@ export default async function DocumentacaoPage({ params }: { params: Promise<{ p
   } catch (err) {
     console.error('[DocumentacaoPage] falha ao listar atas:', err)
   }
-  const gerente = (await isProjectManager(userId, projetoId)) || role === 'admin'
+  const gerente = await canProjectPermission({ tenantId, role, userId }, projetoId, 'documentos:excluir')
 
   // Membros da equipe (responsáveis/aprovadores dos documentos devem ser membros).
   // `pendente` indica cadastro iniciado de forma simples e ainda não concluído (1º acesso).

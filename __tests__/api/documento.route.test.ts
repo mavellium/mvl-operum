@@ -5,8 +5,8 @@ vi.mock('@/lib/dal', () => ({
   verifySession: vi.fn(),
 }))
 
-vi.mock('@/services/projectRoleService', () => ({
-  isProjectManager: vi.fn(),
+vi.mock('@/services/projectAccess', () => ({
+  canProjectPermission: vi.fn(),
 }))
 
 vi.mock('@/lib/prisma', () => ({
@@ -20,12 +20,12 @@ vi.mock('@/lib/prisma', () => ({
 }))
 
 import { verifySession } from '@/lib/dal'
-import { isProjectManager } from '@/services/projectRoleService'
+import { canProjectPermission } from '@/services/projectAccess'
 import prisma from '@/lib/prisma'
 import { GET } from '@/app/api/projects/[projetoId]/documento/route'
 
 const mockVerifySession = verifySession as ReturnType<typeof vi.fn>
-const mockIsProjectManager = isProjectManager as ReturnType<typeof vi.fn>
+const mockCan = canProjectPermission as ReturnType<typeof vi.fn>
 const mockPrisma = prisma as {
   project: { findFirst: ReturnType<typeof vi.fn> }
   userProject: { findMany: ReturnType<typeof vi.fn> }
@@ -113,8 +113,9 @@ const MOCK_PROJECT_STAKEHOLDERS = [
 
 beforeEach(() => {
   vi.clearAllMocks()
+    vi.mocked(canProjectPermission).mockResolvedValue(true)
   mockVerifySession.mockResolvedValue({ tenantId: 't1', role: 'admin', userId: 'u1' })
-  mockIsProjectManager.mockResolvedValue(true)
+  mockCan.mockResolvedValue(true)
   mockPrisma.project.findFirst.mockResolvedValue(MOCK_PROJECT)
   mockPrisma.userProject.findMany.mockResolvedValue(MOCK_USER_PROJECTS)
   mockPrisma.projectStakeholder.findMany.mockResolvedValue(MOCK_PROJECT_STAKEHOLDERS)
@@ -148,7 +149,7 @@ describe('GET /api/projects/[projetoId]/documento', () => {
 
   it('retorna 403 quando usuário não tem acesso ao projeto', async () => {
     mockVerifySession.mockResolvedValue({ tenantId: 't1', role: 'member', userId: 'u2' })
-    mockIsProjectManager.mockResolvedValue(false)
+    mockCan.mockResolvedValue(false)
 
     const res = await GET(makeRequest('p1') as never, { params: Promise.resolve({ projetoId: 'p1' }) })
     expect(res.status).toBe(403)

@@ -1,5 +1,7 @@
 'use client'
 
+import { useProjectPermissions } from '@/components/permissoes/ProjectPermissions'
+
 import PermissoesUsuario from '@/components/permissoes/PermissoesUsuario'
 
 import { useState, useTransition, useEffect, useRef } from 'react'
@@ -424,7 +426,9 @@ export default function ProjetoStakeholdersClient({
   departamentosExistentes = [],
   userRole,
 }: Props) {
+  const permissions = useProjectPermissions()
   const isAdmin = userRole === 'admin'
+  const canManage = permissions.has('projeto:equipe')
   const { toast } = useToast()
 
   // Data state
@@ -468,7 +472,7 @@ export default function ProjetoStakeholdersClient({
 
   // ── Layout
   const showCol3 = selected !== null || isCreating
-  const col2Active = addMode !== null && isAdmin
+  const col2Active = addMode !== null && canManage
   const col1Width = col2Active || showCol3 ? 'lg:w-1/3' : 'w-full'
   const col3Width = col2Active ? 'lg:w-1/3' : 'lg:flex-1'
 
@@ -613,7 +617,7 @@ export default function ProjetoStakeholdersClient({
   }
 
   function handleOpenAddMode(mode: 'interno' | 'externo') {
-    if (!isAdmin) return
+    if (!canManage) return
     setAddMode(mode)
     setShowAddMenu(false)
     setSearchDir('')
@@ -649,7 +653,7 @@ export default function ProjetoStakeholdersClient({
   // ── Quick-create a partir das buscas (cria o stakeholder se não existir)
   // Col 1 — "Stakeholders do Projeto": cria externo + vincula ao projeto.
   function handleQuickCreateProjeto() {
-    if (!isAdmin) return
+    if (!canManage) return
     const name = searchProjeto.trim()
     if (!name) return
     // Se já existe no diretório disponível, apenas vincula (evita duplicata).
@@ -737,7 +741,7 @@ export default function ProjetoStakeholdersClient({
 
   // ── Bind external stakeholder
   function handleBindExterno(s: StakeholderExterno) {
-    if (!isAdmin) return
+    if (!canManage) return
     const unified: StakeholderUnificado = {
       id: s.id,
       tipo: 'externo',
@@ -780,7 +784,7 @@ export default function ProjetoStakeholdersClient({
 
   // ── Unbind external stakeholder
   function handleUnbindExterno(s: StakeholderUnificado) {
-    if (!isAdmin || !s.stakeholderId) return
+    if (!canManage || !s.stakeholderId) return
     const externo: StakeholderExterno = {
       id: s.stakeholderId,
       tenantId: s.tenantId!,
@@ -817,7 +821,7 @@ export default function ProjetoStakeholdersClient({
 
   // ── Add internal member
   function handleAddInterno(u: UsuarioDisponivel) {
-    if (!isAdmin) return
+    if (!canManage) return
     const unified: StakeholderUnificado = {
       id: u.id,
       tipo: 'interno',
@@ -859,7 +863,7 @@ export default function ProjetoStakeholdersClient({
 
   // ── Remove internal member
   function handleRemoveInterno(s: StakeholderUnificado) {
-    if (!isAdmin || !s.userId) return
+    if (!canManage || !s.userId) return
     const usuario: UsuarioDisponivel = {
       id: s.userId,
       name: s.name,
@@ -889,19 +893,19 @@ export default function ProjetoStakeholdersClient({
 
   // ── Drag and Drop
   function handleDragStart(index: number) {
-    if (!isAdmin) return
+    if (!canManage) return
     setDraggedIndex(index)
   }
 
   function handleDragOver(e: React.DragEvent, index: number) {
     e.preventDefault()
-    if (!isAdmin || draggedIndex === null || draggedIndex === index) return
+    if (!canManage || draggedIndex === null || draggedIndex === index) return
     setDragOverIndex(index)
   }
 
   function handleDrop(e: React.DragEvent, dropIndex: number) {
     e.preventDefault()
-    if (!isAdmin || draggedIndex === null || draggedIndex === dropIndex) {
+    if (!canManage || draggedIndex === null || draggedIndex === dropIndex) {
       setDraggedIndex(null)
       setDragOverIndex(null)
       return
@@ -1006,13 +1010,13 @@ export default function ProjetoStakeholdersClient({
       const dadosProjeto = {
         remuneracao: parseBRLFloat(formState.remuneracao) ?? undefined,
         horasDiarias: parseHoras(formState.horasDiarias).valor ?? undefined,
-        cargos: formState.cargos,
+        cargos: isAdmin ? formState.cargos : undefined,
         departamento: formState.departamento,
-        isGerente: formState.isGerente,
+        isGerente: isAdmin ? formState.isGerente : undefined,
       }
       const temDadosProjeto =
         dadosProjeto.remuneracao !== undefined || dadosProjeto.horasDiarias !== undefined ||
-        dadosProjeto.cargos.length > 0 || dadosProjeto.departamento.length > 0 || dadosProjeto.isGerente
+        (dadosProjeto.cargos?.length ?? 0) > 0 || dadosProjeto.departamento.length > 0 || dadosProjeto.isGerente
       let dadosGravados = true
       if (temDadosProjeto) {
         setLoadingId('form')
@@ -1117,7 +1121,7 @@ export default function ProjetoStakeholdersClient({
 
     // Update external stakeholder
     if (selected.tipo === 'externo') {
-      if (!isAdmin) return
+      if (!canManage) return
       if (!formState.name.trim()) { setFormError('O nome é obrigatório.'); return }
 
       const updated: StakeholderUnificado = {
@@ -1181,9 +1185,9 @@ export default function ProjetoStakeholdersClient({
         notes: formState.notes || undefined,
         remuneracao: isAdmin ? (parseBRLFloat(formState.remuneracao) ?? undefined) : undefined,
         horasDiarias: isAdmin ? (parseHoras(formState.horasDiarias).valor ?? undefined) : undefined,
-        cargos: formState.cargos,
+        cargos: isAdmin ? formState.cargos : undefined,
         departamento: formState.departamento,
-        isGerente: formState.isGerente,
+        isGerente: isAdmin ? formState.isGerente : undefined,
       })
       setLoadingId(null)
 
@@ -1205,9 +1209,9 @@ export default function ProjetoStakeholdersClient({
                 cidade: formState.address.cidade || null,
                 estado: formState.address.estado || null,
                 notes: formState.notes || null,
-                cargos: formState.cargos,
+                cargos: isAdmin ? formState.cargos : undefined,
                 departamento: formState.departamento,
-                isGerente: formState.isGerente,
+                isGerente: isAdmin ? formState.isGerente : undefined,
                 remuneracao: isAdmin ? (parseBRLFloat(formState.remuneracao) ?? x.remuneracao) : x.remuneracao,
                 horasDiarias: isAdmin ? (parseHoras(formState.horasDiarias).valor ?? x.horasDiarias) : x.horasDiarias,
               }
@@ -1250,7 +1254,7 @@ export default function ProjetoStakeholdersClient({
               {projeto.length} pessoa{projeto.length !== 1 ? 's' : ''}
             </p>
           </div>
-          {isAdmin && (
+          {canManage && (
             <div className="relative" ref={addMenuRef}>
               <button
                 onClick={() => setShowAddMenu(v => !v)}
@@ -1319,7 +1323,7 @@ export default function ProjetoStakeholdersClient({
             {filteredProjeto.map((s, index) => (
               <li
                 key={s.id}
-                draggable={isAdmin}
+                draggable={canManage}
                 onDragStart={() => handleDragStart(index)}
                 onDragOver={(e) => handleDragOver(e, index)}
                 onDrop={(e) => handleDrop(e, index)}
@@ -1328,7 +1332,7 @@ export default function ProjetoStakeholdersClient({
                   draggedIndex === index ? ' opacity-50 border-dashed border-blue-400' : ''
                 }${
                   dragOverIndex === index && draggedIndex !== index ? ' border-blue-400 border-t-4' : ' border-slate-200 hover:border-slate-300'
-                }${isAdmin ? ' cursor-move' : ''}`}
+                }${canManage ? ' cursor-move' : ''}`}
               >
                 {isAdmin && (
                   <div className="text-slate-300 hover:text-slate-500 transition-colors" title="Arrastar para reordenar">
@@ -1387,7 +1391,7 @@ export default function ProjetoStakeholdersClient({
                   >
                     <Pencil className="w-4 h-4" />
                   </button>
-                  {isAdmin && (
+                  {canManage && (
                     <button
                       onClick={() => handleUnlink(s)}
                       disabled={loadingId === s.id}
@@ -1993,7 +1997,7 @@ export default function ProjetoStakeholdersClient({
               >
                 Cancelar
               </button>
-              {isAdmin && (
+              {canManage && (
                 <button
                   type="button"
                   onClick={handleSave}

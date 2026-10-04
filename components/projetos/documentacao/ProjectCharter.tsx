@@ -1,5 +1,7 @@
 'use client'
 
+import { useProjectPermissions } from '@/components/permissoes/ProjectPermissions'
+
 import { useRef, useState, useEffect, useCallback } from 'react'
 import { useParams } from 'next/navigation'
 import { useReactToPrint } from 'react-to-print'
@@ -104,6 +106,9 @@ const sectionTitle = 'text-sm font-bold text-slate-700 uppercase tracking-wider 
 // ── Component ─────────────────────────────────────────────────────────────────
 
 export default function ProjectCharter({ membros = [] }: { membros?: MembroEquipeOption[] }) {
+  const permissions = useProjectPermissions()
+  const canPublish = permissions.has('documentos:aprovar')
+  const canEdit = permissions.has('documentos:editar')
   const { projetoId } = useParams<{ projetoId: string }>()
   const printRef = useRef<HTMLDivElement>(null)
   const { toast } = useToast()
@@ -184,7 +189,7 @@ export default function ProjectCharter({ membros = [] }: { membros?: MembroEquip
   // ── Auto-save text fields ──────────────────────────────────────────────────
 
   useEffect(() => {
-    if (firstLoad.current) return
+    if (firstLoad.current || !canEdit || !canPublish) return
     const { principaisEnvolvidos: _, ...serverFields } = debouncedFields
     const { principaisEnvolvidos: __, ...savedServer } = savedFields.current
     if (JSON.stringify(serverFields) === JSON.stringify(savedServer)) return
@@ -196,7 +201,7 @@ export default function ProjectCharter({ membros = [] }: { membros?: MembroEquip
     })
       .then(r => { if (r.ok) { savedFields.current = debouncedFields } })
       .catch(() => {/* silent — user can retry via save version */})
-  }, [debouncedFields, projetoId])
+  }, [debouncedFields, projetoId, canEdit, canPublish])
 
   // ── Load versions ──────────────────────────────────────────────────────────
 
@@ -239,6 +244,7 @@ export default function ProjectCharter({ membros = [] }: { membros?: MembroEquip
   // ── Macro fases ────────────────────────────────────────────────────────────
 
   async function handleAddFase() {
+    if (!(permissions.has('projeto:editar'))) return
     if (!projetoId) return
     const r = await fetchWithSession(`/api/projects/${projetoId}/macro-fases`, {
       method: 'POST',
@@ -253,6 +259,7 @@ export default function ProjectCharter({ membros = [] }: { membros?: MembroEquip
   }
 
   function handleFaseChange(id: string, field: keyof Omit<MacroFase, 'id'>, value: string) {
+    if (!(permissions.has('projeto:editar'))) return
     setFases(prev => prev.map(f => f.id === id ? { ...f, [field]: value } : f))
     clearTimeout((handleFaseChange as { _t?: ReturnType<typeof setTimeout> })._t)
     ;(handleFaseChange as { _t?: ReturnType<typeof setTimeout> })._t = setTimeout(async () => {
@@ -267,6 +274,7 @@ await fetchWithSession(`/api/projects/${projetoId}/macro-fases/${id}`, {
   }
 
   async function handleRemoveFase(id: string) {
+    if (!(permissions.has('projeto:editar'))) return
     if (!projetoId) return
     setFases(prev => prev.filter(f => f.id !== id))
     await fetchWithSession(`/api/projects/${projetoId}/macro-fases/${id}`, { method: 'DELETE' }).catch(() => {})
@@ -296,6 +304,7 @@ await fetchWithSession(`/api/projects/${projetoId}/macro-fases/${id}`, {
   }
 
   function openCommitModal() {
+    if (!(canEdit)) return
     const problema = validarResponsaveis()
     if (problema) {
       toast(problema, 'error')
@@ -322,6 +331,7 @@ await fetchWithSession(`/api/projects/${projetoId}/macro-fases/${id}`, {
   }
 
   async function handleConfirmCommit() {
+    if (!(canEdit)) return
     if (!projetoId || !commitTitle.trim()) return
     const problema = validarResponsaveis()
     if (problema) {
@@ -360,6 +370,7 @@ await fetchWithSession(`/api/projects/${projetoId}/macro-fases/${id}`, {
   // ── Version approve/reject ─────────────────────────────────────────────────
 
   async function handleVersionAction(versionId: string, action: 'approve' | 'reject') {
+    if (!(canPublish)) return
     if (!projetoId) return
     setActingVersionId(versionId)
     try {
@@ -519,6 +530,7 @@ await fetchWithSession(`/api/projects/${projetoId}/macro-fases/${id}`, {
       {/* ── Editable form (screen only) ───────────────────────────────────── */}
       <div className="w-[210mm] flex flex-col gap-4 print:hidden">
 
+        <fieldset disabled={!canEdit || !canPublish} className="min-w-0">
         <FormSection title="1. Justificativa do Projeto">
           <textarea rows={5} className={textareaClass} value={fields.justificativa}
             onChange={e => setFields(f => ({ ...f, justificativa: e.target.value }))}
@@ -582,6 +594,7 @@ await fetchWithSession(`/api/projects/${projetoId}/macro-fases/${id}`, {
             onChange={e => setFields(f => ({ ...f, limitesAutoridade: e.target.value }))}
             placeholder="Descreva os limites de autoridade do gerente…" />
         </FormSection>
+        </fieldset>
       </div>
 
       {/* ── Commit modal ──────────────────────────────────────────────────── */}

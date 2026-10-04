@@ -4,9 +4,10 @@ import { verifySession } from '@/lib/dal'
 import { revalidatePath } from 'next/cache'
 import { projectsApi } from '@/lib/api-client'
 import prisma from '@/lib/prisma'
-import { isProjectManager, setProjectManagerRole, removeProjectRole } from '@/services/projectRoleService'
+import { setProjectManagerRole, removeProjectRole } from '@/services/projectRoleService'
 import { getTree, syncMacrofasesComEap } from '@/services/wbsService'
 import { validateAvatarUrl } from '@/lib/validation/avatarUrl'
+import { requireProjectPermission } from '@/services/projectAccess'
 import { parseHoras } from '@/lib/validation/horas'
 
 /**
@@ -80,7 +81,9 @@ export async function createProjetoAction(
   },
 ) {
   try {
-    const { tenantId } = await verifySession()
+    const session = await verifySession()
+    const { tenantId } = session
+    if (session.role !== 'admin') throw new Error('Só o administrador cria projetos')
     const { initialMemberId, ano: anoStr, macroFases, startDate, endDate, ...rest } = input
     const ano = anoStr ? Number(anoStr) : undefined
     const toISO = (d?: string) => d ? new Date(d).toISOString() : undefined
@@ -189,7 +192,25 @@ export async function updateProjetoAction(
   data: Record<string, unknown> & { ano?: string | number; macroFases?: Array<{ fase: string; dataLimite: string; custo: string }> },
 ) {
   try {
-    const { tenantId } = await verifySession()
+    data = { ...data }
+    const session = await verifySession()
+    const { tenantId } = session
+    await requireProjectPermission(session, id, 'projeto:editar')
+    if (data.initialMemberId !== undefined && session.role !== 'admin') {
+      const current = await prisma.userProjectRole.findFirst({ where: { projectId: id, deletedAt: null, role: { is: { nameKey: 'gerente', scope: 'PROJETO' } } }, select: { userId: true } })
+      if ((data.initialMemberId || '') !== (current?.userId || '')) throw new Error('Só o administrador atribui o papel de gerente')
+      delete data.initialMemberId
+    }
+    if (data.macroFases) {
+      await requireProjectPermission(session, id, 'planilha:orcado')
+      await requireProjectPermission(session, id, 'planilha:realizado-todos')
+    }
+    if (Array.isArray(data.departamentos)) await requireProjectPermission(session, id, 'cadastros:gerenciar')
+    if (session.role !== 'admin' && Array.isArray(data.departamentos)) {
+      for (const name of data.departamentos) {
+        if (typeof name !== 'string' || !(await prisma.department.findFirst({ where: { tenantId, name: { equals: name.trim(), mode: 'insensitive' }, deletedAt: null }, select: { id: true } }))) throw new Error('Só o administrador cria departamentos')
+      }
+    }
     const { ano: anoRaw, macroFases, startDate, endDate, initialMemberId, ...rest } = data
     const ano = anoRaw !== undefined && anoRaw !== '' ? Number(anoRaw) : undefined
     const toISO = (d: unknown) => (typeof d === 'string' && d) ? new Date(d).toISOString() : undefined
@@ -349,10 +370,18 @@ export async function updateProjetoMemberAction(
   },
 ) {
   try {
+    data = { ...data }
     const { role, tenantId, userId: sessionUserId } = await verifySession()
     const isAdmin = role === 'admin'
-    const canManage = isAdmin || await isProjectManager(sessionUserId, projetoId)
-    if (!canManage) throw new Error('Acesso não autorizado')
+    await requireProjectPermission({ role, tenantId, userId: sessionUserId }, projetoId, 'projeto:equipe')
+    const member = await prisma.userProject.findFirst({ where: { projectId: projetoId, userId, user: { tenantId, deletedAt: null } }, select: { role: true } })
+    if (!member) throw new Error('Membro não encontrado neste projeto')
+    if (!isAdmin) {
+      if (data.cargos !== undefined && data.cargos.join(', ') !== (member.role ?? '')) throw new Error('Só o administrador atribui cargos')
+      if (data.isGerente !== undefined && data.isGerente !== Boolean(await prisma.userProjectRole.findFirst({ where: { userId, projectId: projetoId, deletedAt: null, role: { is: { nameKey: 'gerente', scope: 'PROJETO' } } } }))) throw new Error('Só o administrador atribui o papel de gerente')
+      delete data.cargos
+      delete data.isGerente
+    }
 
     const { isGerente: makeGerente, cargos, departamento, remuneracao: rawRemuneracao, horasDiarias: rawHorasDiarias, hourlyRate: rawHourlyRate, name, email, ...profileData } = data
 
@@ -386,6 +415,11 @@ export async function updateProjetoMemberAction(
     // Alguns formulários (ex.: edição de membro em ProjetoMembrosClient) enviam
     // hourlyRate direto em vez de remuneracao+horasDiarias — respeita esse valor quando presente.
     const hourlyRate = directHourlyRate !== undefined ? directHourlyRate : derivedHourlyRate
+
+    if (!isAdmin && departamento?.length) {
+      const existing = await prisma.department.findFirst({ where: { tenantId, name: { equals: departamento[0].trim(), mode: 'insensitive' }, deletedAt: null }, select: { id: true } })
+      if (!existing) throw new Error('Só o administrador cria departamentos')
+    }
 
     // 1. Update User profile via Prisma (name/email only for admin)
     const userUpdateData: Record<string, unknown> = { ...profileData }

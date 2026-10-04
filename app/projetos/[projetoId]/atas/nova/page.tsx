@@ -1,7 +1,8 @@
+import { canProjectPermission } from '@/services/projectAccess'
 import Link from 'next/link'
 import { notFound } from 'next/navigation'
 import { verifySession } from '@/lib/dal'
-import { findById } from '@/services/projectService'
+import { findById } from '@/services/projectAccess'
 import prisma from '@/lib/prisma'
 import AtaFormClient from '@/components/atas/AtaFormClient'
 import type { MemberOption } from '@/components/atas/MemberSelect'
@@ -13,16 +14,13 @@ export const metadata: Metadata = { title: 'Nova Ata' }
 
 export default async function NovaAtaPage({ params }: { params: Promise<{ projetoId: string }> }) {
   const { projetoId } = await params
-  const { userId, role } = await verifySession()
+  const { userId, role, tenantId } = await verifySession()
 
+  if (!(await canProjectPermission({ tenantId, role, userId }, projetoId, 'documentos:editar')) || !(await canProjectPermission({ tenantId, role, userId }, projetoId, 'documentos:aprovar'))) notFound()
   const project = await findById(projetoId)
   if (!project) notFound()
 
-  const isMember =
-    role === 'admin' || (await prisma.userProject.findUnique({
-      where: { userId_projectId: { userId, projectId: projetoId } },
-    }))?.active
-  if (!isMember) notFound()
+  if (!(await canProjectPermission({ tenantId, role, userId }, projetoId, 'documentos:ver'))) notFound()
 
   const members: MemberOption[] = (
     await prisma.userProject.findMany({

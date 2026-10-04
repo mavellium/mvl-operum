@@ -1,5 +1,7 @@
 'use client'
 
+import { useProjectPermissions } from '@/components/permissoes/ProjectPermissions'
+
 import { useState, useEffect, useRef, useCallback, startTransition } from 'react'
 import { Card, CardColor, Attachment } from '@/types/kanban'
 import { assignTagToCardAction, removeTagFromCardAction } from '@/app/actions/tags'
@@ -141,11 +143,13 @@ function AttachmentIcon({ fileType }: { fileType: string }) {
 }
 
 export default function CardModal({
-  isOpen, onClose, onSubmit, initialCard, readOnly = false, users, boardTags,
+  isOpen, onClose, onSubmit, initialCard, readOnly: requestedReadOnly = false, users, boardTags,
   attachments = [], onAttachmentUpload, onAttachmentRename, onAttachmentDelete, onAttachmentSetCover,
   comments = [], onAddComment, onEditComment, onDeleteComment, currentUser, onResponsiblesChange, onTimerStarted, onPatch,
 }: CardModalProps) {
 
+  const permissions = useProjectPermissions()
+  const readOnly = requestedReadOnly || !permissions.has('quadro:cards')
   const [title, setTitle]                   = useState('')
   const [color, setColor]                   = useState<CardColor>(DEFAULT_COLOR)
   const [priority, setPriority]             = useState('media')

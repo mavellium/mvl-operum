@@ -123,3 +123,16 @@ export class SemPermissaoError extends Error {
 export async function exigirPermissao(sessao: SessaoAuthz, projectId: string, permissao: Permissao): Promise<void> {
   if (!(await can(sessao, projectId, permissao))) throw new SemPermissaoError(permissao)
 }
+
+/** Escopo de consultas agregadas. Um conjunto vazio deve produzir zero resultados. */
+export async function projetosAutorizados(sessao: SessaoAuthz, permissao: Permissao = 'projeto:ver'): Promise<string[]> {
+  const projects = await prisma.project.findMany({
+    where: { tenantId: sessao.tenantId, deletedAt: null, ...(sessao.role === 'admin' ? {} : { members: { some: { userId: sessao.userId, active: true } } }) },
+    select: { id: true },
+  })
+  const flags = await Promise.all(projects.map(async p => {
+    const permissions = await permissoesNoProjeto(sessao.userId, sessao.tenantId, sessao.role, p.id)
+    return permissions.has('projeto:ver') && permissions.has(permissao)
+  }))
+  return projects.filter((_, i) => flags[i]).map(p => p.id)
+}

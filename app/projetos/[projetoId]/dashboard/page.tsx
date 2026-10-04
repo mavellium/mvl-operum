@@ -1,5 +1,7 @@
+import { verifySession } from '@/lib/dal'
+import { canProjectPermission } from '@/services/projectAccess'
 import { notFound } from 'next/navigation'
-import { findById } from '@/services/projectService'
+import { findById } from '@/services/projectAccess'
 import { findAllByProjeto } from '@/services/sprintService'
 import { getSprintMetrics } from '@/services/dashboardService'
 import prisma from '@/lib/prisma'
@@ -112,6 +114,7 @@ async function getProjetoDashboardData(projetoId: string) {
 
 export default async function ProjetoDashboardPage({ params }: { params: Promise<{ projetoId: string }> }) {
   const { projetoId } = await params
+  if (!(await canProjectPermission(await verifySession(), projetoId, 'quadro:ver'))) notFound()
   const data = await getProjetoDashboardData(projetoId)
 
   if (!data) notFound()

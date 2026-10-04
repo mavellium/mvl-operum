@@ -74,6 +74,7 @@ services:
       - REDIS_HOST=redis
       - REDIS_PORT=6379
       - REDIS_PASSWORD=${REDIS_PASSWORD}
+      - AUTHORIZATION_SERVICE_URL=http://app:3000
       - AUTH_SERVICE_URL=http://auth-service:4001
       - PROJECT_SERVICE_URL=http://project-service:4002
       - SPRINT_SERVICE_URL=http://sprint-service:4003

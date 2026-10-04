@@ -24,8 +24,9 @@ vi.mock('@/lib/dal', () => ({
   verifySession: vi.fn(),
 }))
 
-vi.mock('@/services/projectService', () => ({
+vi.mock('@/services/projectAccess', () => ({
   findById: vi.fn(),
+  canProjectPermission: vi.fn().mockResolvedValue(true),
 }))
 
 vi.mock('@/services/projectRoleService', () => ({
@@ -46,7 +47,7 @@ vi.mock('@/app/actions/atas', () => ({
 
 import AtasPage from '@/app/projetos/[projetoId]/atas/page'
 import { verifySession } from '@/lib/dal'
-import { findById } from '@/services/projectService'
+import { findById } from '@/services/projectAccess'
 import { isProjectManager } from '@/services/projectRoleService'
 import { listarAtasPorProjeto } from '@/services/ataService'
 

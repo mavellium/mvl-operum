@@ -16,6 +16,9 @@ Os primeiros registros foram reconstruídos da seção “Decisões de Arquitetu
 | ADR-006 | Remoção de `/files/avatar` e `/files/logo` do file-service | Aceita |
 | ADR-007 | URL assinada do storage gerada com o endpoint público | Aceita |
 | ADR-008 | Permissões por função e ajustes por usuário | Aceita — implementação parcial |
+| ADR-009 | Custos pelo responsável persistido na transação | Implementada |
+| ADR-010 | Permissões de domínio resolvidas no app para o gateway | Implementada |
+| ADR-011 | Patch temporário de profundidade em braces | Implementada — revisão ao sair correção upstream |
 
 ## ADR-001 — PostgreSQL compartilhado entre serviços
 
@@ -143,7 +146,7 @@ Ao substituir uma decisão, manter o texto histórico, alterar seu status e liga
 - **Escolha:** matriz global por função, função-base de membro e ajustes GRANT/DENY por usuário, globais ou no projeto. Somar os cargos `UserProject.role` normalizados e o papel de `UserProjectRole`; aplicar ajustes globais e depois os do projeto. Só admin configura; admin mantém acesso total, não membros ativos não ganham acesso por ajuste. Tech Lead/PO começam com a base do membro.
 - **Justificativa:** representar os cargos visíveis em Stakeholders e permitir exceções individuais sem criar uma função para cada pessoa, conforme o pedido registrado. A marca `permissoesDefinidasEm` distingue ausência de configuração de uma matriz vazia deliberada.
 - **Alternativas consideradas no SDD:** usar somente `UserProjectRole` como fonte das funções; oferecer padrões privilegiados para Tech Lead e PO. O histórico registra a escolha dos cargos e ausência desses privilégios; não documenta uma avaliação adicional das alternativas.
-- **Consequências:** exige migration, auditoria, isolamento de tenant e aplicação consistente nos consumidores. Configurar uma permissão não basta para proteger uma operação que ainda usa o teste antigo. UI de configuração, núcleo, services e actions estão implementados; migração dos consumidores, documentos com aprovação e planilha por responsável continuam pendentes.
+- **Consequências:** exige migration, auditoria, isolamento de tenant e aplicação consistente nos consumidores. Configurar uma permissão não basta para proteger uma operação que ainda usa o teste antigo. UI de configuração, núcleo, services e actions estão implementados. Atualização de estado em 03/10/2026: adoção nos consumidores registrada na ADR-010; planilha por responsável registrada na ADR-009; fluxo documental pendente (5.2) permanece em desenvolvimento.
 - **Condição de revisão:** conclusão da fase 5 e extensão do contrato de autorização às APIs/MCP; mudança da fonte de cargos ou das regras de associação a projetos.
 - **Referências:** [catálogo e resolvedor](../lib/permissoes.ts), [autorização](../services/authz.ts), [serviço](../services/permissoesService.ts), [actions](../app/actions/permissoes.ts), [SDD 5.1](specs/SDD-backlog-operum-2026-09.md#51-modelo-de-permissões-funções--ajuste-por-usuário); commits `12d427e0` e `ef7f1bbb`.
 
@@ -158,3 +161,28 @@ Ao substituir uma decisão, manter o texto histórico, alterar seu status e liga
 - **Consequências:** a edição aguarda outras gravações na mesma linha; falha de permissão ou auditoria aborta a transação. Permissão de orçamento não implica realizado, nem o inverso. Substituição da árvore e importação exigem edição de ambos para não contornar o controle por campo.
 - **Condição de revisão:** revisar a serialização se a planilha migrar de JSON de `WbsNode` para um modelo próprio ou se houver gravações em outro serviço.
 - **Referências:** `lib/permissoesCustos.ts`, `services/wbsService.ts` (`updateNodeProperties`), `app/actions/wbs.ts`, `app/api/projetos/[projetoId]/planilha-custos/export/route.ts`, `__tests__/unit/services/wbsCustosPermissions.test.ts`, SDD 5.3 e ADR-008.
+
+
+## ADR-010 — Resolver permissões de domínio no app para o gateway
+
+- **Data do registro:** 03/10/2026.
+- **Status:** implementada nesta entrega do SDD 5.1; sem validação em produção.
+- **Contexto:** matriz e ajustes de usuário estão persistidos no schema do app, mas API/MCP usam gateway e microsserviços. Guardas por admin/gerente não refletiam concessões/negações configuradas e duplicar o resolvedor permitiria divergências.
+- **Escolha:** gateway consulta o app por endpoint com chave interna; o app obtém identidade ativa e papel no banco e aplica o resolvedor existente. Headers confiáveis transportam escopo de listagens e ocultação documental; cada operação é reavaliada, com 403 para negação e 503 para indisponibilidade. App usa o mesmo resolvedor em páginas, actions e controles de UI.
+- **Justificativa:** manter uma fonte de decisão para UI, actions e API/MCP sem espalhar o modelo de permissões por todos os serviços. Cargos/papel de gerente afetam concessões e só podem ser atribuídos pelo administrador; gestão de equipe não deve permitir autoelevação.
+- **Alternativas consideradas nesta implementação:** somente controles visuais (permite chamadas diretas); duplicar resolução em cada serviço (aumenta divergência de contratos); cachear concessões no gateway (atrasa revogações e requer invalidação distribuída).
+- **Consequências:** operações de domínio dependem da disponibilidade do app e acrescentam uma consulta interna; timeout é de 10 segundos e falha fechado. Multipart é preservado; JSON precisa ser reposto no proxy. Escopo vazio deve continuar sendo filtro explícito. Catálogos globais são administrados pelo admin; associações de projeto usam `cadastros:gerenciar`. Edição de stakeholder compartilhado exige gestão de equipe em todos os projetos ativos afetados. A ponte documental protege conteúdo publicado com edição/aprovação, até a implementação de snapshots pendentes em 5.2.
+- **Condições de revisão:** extração do resolvedor para serviço próprio, custo das consultas em instituições grandes, mudanças nas APIs ou conclusão do fluxo documental 5.2. Sessões/Redis e demais correções de infraestrutura da fase 11 continuam fora desta entrega.
+- **Referências:** `services/apiAuthorization.ts`, `services/authz.ts`, `services/projectAccess.ts`, `app/api/internal/authorize/route.ts`, `api-gateway/src/middleware/authorization.ts`, `components/permissoes/ProjectPermissions.tsx`, testes `apiAuthorization.test.ts` e `authorization.test.ts`; SDD 5.1, ADR-008 e ADR-009.
+
+## ADR-011 — Mitigar profundidade de braces enquanto não há correção publicada
+
+- **Data do registro:** 2026-10-03.
+- **Status:** implementada nesta PR; sem validação em produção.
+- **Contexto:** GHSA-vfj7-8cjw-p6xm afeta `braces <=3.0.3`, transitivo do lint e do proxy. Na consulta ao registro e ao advisory em 03/10/2026, não havia versão corrigida. O audit bloqueia o CI mesmo após corrigir Next.js.
+- **Escolha:** aplicar patch pnpm em parse e percursos recursivos de compile/expand/stringify, limitando a profundidade a 128, incluindo AST fornecida diretamente. Registrar somente esse GHSA na exceção do audit enquanto o patch estiver ativo. Espelhar o patch no gateway isolado e copiá-lo nos estágios Docker antes da instalação congelada.
+- **Justificativa:** rejeitar entradas excessivamente aninhadas antes de esgotar a pilha, mantendo globs usuais e uma mudança de dependência rastreável por hash. O audit consulta a versão publicada e não inspeciona correções locais. Testes carregam os consumidores reais para impedir que a exceção mascare ausência do patch.
+- **Alternativas consideradas:** atualizar braces (não existe versão corrigida); atualizar o proxy (a versão atual continua usando micromatch/braces); ignorar sem mitigação ou todos os alertas sem correção (não protege o código e amplia a exceção).
+- **Consequências:** globs extremamente aninhados passam a lançar `SyntaxError`; há manutenção temporária de patch em duas instalações. Quatro alertas moderados permanecem fora do limiar high do CI. A exceção não se estende a outros advisories.
+- **Condição de revisão:** verificar correção upstream em atualizações de dependências; quando disponível, atualizar, remover patches/exceção e repetir testes/audit/instalação congelada. Novos advisories sobre AST/globs exigem reavaliação.
+- **Referências:** [advisory](https://github.com/advisories/GHSA-vfj7-8cjw-p6xm), [pnpm patch](https://pnpm.io/cli/patch), [audit](https://pnpm.io/cli/audit), `patches/braces@3.0.3.patch`, `api-gateway/patches/braces@3.0.3.patch`, `__tests__/unit/security/bracesPatch.test.ts`, Dockerfiles e lockfiles.

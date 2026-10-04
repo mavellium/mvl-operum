@@ -6,6 +6,7 @@ interface ExpandableTextareaProps {
   onChange: (e: React.ChangeEvent<HTMLTextAreaElement>) => void;
   placeholder?: string;
   className?: string;
+  readOnly?: boolean;
 }
 
 const ExpandableTextarea: React.FC<ExpandableTextareaProps> = ({
@@ -13,7 +14,8 @@ const ExpandableTextarea: React.FC<ExpandableTextareaProps> = ({
   value,
   onChange,
   placeholder,
-  className
+  className,
+  readOnly = false
 }) => {
   const textareaRef = useRef<HTMLTextAreaElement>(null);
   const [isCollapsed, setIsCollapsed] = useState<boolean>(false);
@@ -114,6 +116,7 @@ const ExpandableTextarea: React.FC<ExpandableTextareaProps> = ({
   return (
     <div className="relative group">
       <textarea
+        readOnly={readOnly}
         ref={textareaRef}
         name={name}
         value={value}
