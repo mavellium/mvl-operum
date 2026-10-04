@@ -1,0 +1,58 @@
+name: Dashboard Contracts
+
+on:
+  pull_request:
+    branches: [main, develop]
+
+permissions:
+  contents: read
+
+concurrency:
+  group: dashboard-contracts-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  postgres:
+    name: Dashboard contracts (HTTP + PostgreSQL)
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    services:
+      postgres:
+        image: postgres:17
+        env:
+          POSTGRES_USER: operum_test
+          POSTGRES_PASSWORD: test_only_local_ci
+          POSTGRES_DB: operum_dashboard_test
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U operum_test -d operum_dashboard_test"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 10
+    env:
+      DATABASE_URL: postgresql://operum_test:test_only_local_ci@localhost:5432/operum_dashboard_test
+      OPERUM_DASHBOARD_TEST_DATABASE_URL: postgresql://operum_test:test_only_local_ci@localhost:5432/operum_dashboard_test
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v3
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile --ignore-scripts
+      - name: Prepare Prisma migration engine
+        run: pnpm rebuild @prisma/engines
+      - run: pnpm exec prisma generate
+      - name: Apply migrations to isolated database
+        run: pnpm exec prisma migrate deploy
+      - run: pnpm --dir sprint-service exec prisma generate
+      - run: pnpm --dir sprint-service build
+      - run: pnpm --dir api-gateway build
+      - name: Test BFF, gateway, authorization, real controller and contracts
+        run: >-
+          pnpm exec vitest run --no-file-parallelism
+          __tests__/integration/dashboardRoutes.postgres.test.ts
+          __tests__/unit/dashboardContracts.test.ts
+          __tests__/unit/services/apiAuthorization.test.ts
+          __tests__/components/dashboard/EmptyDashboards.test.tsx

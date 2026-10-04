@@ -1,10 +1,20 @@
-import { Controller, Get, Post, Param, Body, Headers, BadRequestException } from '@nestjs/common'
+import { Controller, Inject, Get, Post, Param, Body, Headers, BadRequestException } from '@nestjs/common'
 import { TenantId } from '../common/tenant-scope'
 import { DashboardService } from './dashboard.service'
 
 @Controller()
 export class DashboardController {
-  constructor(private readonly dashboardService: DashboardService) {}
+  constructor(@Inject(DashboardService) private readonly dashboardService: DashboardService) {}
+
+  @Get('dashboard/global')
+  global(@TenantId() tenantId: string, @Headers('x-authorized-projects') authorized?: string) {
+    return this.dashboardService.getGlobalDashboard(tenantId, authorized?.split(',') ?? [])
+  }
+
+  @Get('sprints/:sprintId/dashboard')
+  dashboard(@TenantId() tenantId: string, @Param('sprintId') sprintId: string) {
+    return this.dashboardService.getSprintDashboard(tenantId, sprintId)
+  }
 
   @Get('sprints/:sprintId/metrics')
   getMetrics(@TenantId() tenantId: string, @Param('sprintId') sprintId: string) {

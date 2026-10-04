@@ -1,3 +1,4 @@
+import { GlobalDashboardSchema, SprintDashboardSchema } from '@/sprint-service/src/dashboard/dashboard-contract'
 import 'server-only'
 import { cookies } from 'next/headers'
 import { redirect } from 'next/navigation' // ← Adicionado o import de redirecionamento
@@ -311,9 +312,9 @@ export const sprintsApi = {
 
   getMetrics: (sprintId: string) => request<unknown[]>(`/sprints/${sprintId}/metrics`),
 
-  getSprintDashboard: (sprintId: string) => request<Record<string, unknown>>(`/sprints/${sprintId}/dashboard`),
+  getSprintDashboard: (sprintId: string) => request<unknown>(`/sprints/${encodeURIComponent(sprintId)}/dashboard`).then(data => { const parsed = SprintDashboardSchema.safeParse(data); if (!parsed.success) throw new Error('Resposta inválida do serviço de dashboard'); return parsed.data }),
 
-  getGlobalMetrics: () => request<Record<string, unknown>>('/dashboard/global'),
+  getGlobalMetrics: () => request<unknown>('/dashboard/global').then(data => { const parsed = GlobalDashboardSchema.safeParse(data); if (!parsed.success) throw new Error('Resposta inválida do serviço de dashboard'); return parsed.data }),
 
   getFeedbacks: (sprintId: string) => request<unknown[]>(`/sprints/${sprintId}/feedback`),
 

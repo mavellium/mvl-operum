@@ -9,6 +9,11 @@ funcionalidade depois disso é uma versão MINOR.
 
 ## [Não lançado]
 
+## [1.12.5] — 2026-10-04
+- **Dashboards (SDD 9.5):** rotas global e por sprint restauradas, com KPIs, ranking, cards atrasados, colunas e feedbacks agregados no sprint-service.
+- **Contratos e acesso:** respostas validadas pelo serviço e pelo cliente; consultas limitadas ao tenant e aos projetos com leitura de quadro e custos. Dados vazios retornam zeros/listas vazias, sem ocultar erros de contrato ou permissão.
+- **Validação integrada:** testes reais de action → gateway → controller → PostgreSQL, incluindo dados, isolamento, revogação de permissão e cabeçalhos de escopo forjados.
+
 ## [1.12.4] — 2026-10-04
 - **Macrofases (SDD 9.4):** validação do lote antes da escrita e substituição atômica junto dos dados do projeto, preservando o lote anterior quando há falha.
 - **EAP:** pendência de sincronização persistente e retry da última revisão salva. Sincronização, códigos, versão e auditoria compartilham uma transação; tentativas repetidas não duplicam fases e preservam atividades existentes.

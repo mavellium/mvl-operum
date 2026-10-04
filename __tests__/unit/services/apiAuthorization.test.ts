@@ -148,3 +148,16 @@ describe('projeto e macrofases no mesmo PATCH', () => {
     expect(await authorizeApi(session, 'PATCH', '/projects/project-A', { macroFases: [] })).toEqual({ allowed: true })
   })
 })
+
+describe('dashboards — escopo de quadros e custos', () => {
+  it('global cruza conjuntos de leitura sem ampliar escopo', async () => {
+    vi.mocked(projetosAutorizados).mockImplementation(async (_session, permission) => permission === 'quadro:ver' ? ['visible', 'board-only'] : ['visible', 'cost-only'])
+    expect(await authorizeApi(session, 'GET', '/dashboard/global')).toEqual({ allowed: true, projectIds: ['visible'] })
+    await expect(authorizeApi(session, 'POST', '/dashboard/global')).rejects.toThrow()
+  })
+  it('sprint exige leitura de custos além do quadro', async () => {
+    await expect(authorizeApi(session, 'GET', '/sprints/s1/dashboard')).rejects.toThrow()
+    granted.add('planilha:ver')
+    expect(await authorizeApi(session, 'GET', '/sprints/s1/dashboard')).toEqual({ allowed: true })
+  })
+})

@@ -25,6 +25,11 @@ model User {
   tenantId String
   name     String
   email    String
+  cargo String?
+  avatarUrl String?
+  hourlyRate Float @default(0)
+  deletedAt DateTime?
+  memberships UserProject[]
 
   sprints          Sprint[]
   timeEntries      TimeEntry[]
@@ -42,6 +47,8 @@ model Project {
   id       String @id @default(cuid())
   tenantId String
   name     String
+  deletedAt DateTime?
+  members UserProject[]
 
   sprints Sprint[]
   cards   Card[]
@@ -253,4 +260,14 @@ model AuditLog {
   entityId  String?
   details   Json?
   timestamp DateTime @default(now())
+}
+
+model UserProject {
+  id String @id @default(cuid())
+  userId String
+  projectId String
+  active Boolean @default(true)
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+  project Project @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  @@unique([userId, projectId])
 }
