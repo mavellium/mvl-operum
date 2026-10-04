@@ -4,9 +4,11 @@ import { BadRequestException, NotFoundException } from '@nestjs/common'
 
 vi.mock('../prisma', () => ({
   prisma: {
-    card: { findFirst: vi.fn(), findMany: vi.fn(), create: vi.fn(), update: vi.fn() },
-    sprint: { findUnique: vi.fn() },
-    sprintColumn: { findUnique: vi.fn() },
+    card: { findFirst: vi.fn(), findMany: vi.fn(), create: vi.fn(), update: vi.fn(), findUniqueOrThrow: vi.fn() },
+    sprint: { findUnique: vi.fn(), findFirst: vi.fn() },
+    project: { findFirst: vi.fn() },
+    user: { findFirst: vi.fn() },
+    sprintColumn: { findUnique: vi.fn(), findFirst: vi.fn() },
     cardMovement: { create: vi.fn(), findMany: vi.fn() },
     cardTag: { upsert: vi.fn(), delete: vi.fn() },
     cardResponsible: { upsert: vi.fn(), delete: vi.fn() },
@@ -30,11 +32,13 @@ vi.mock('../common/tenant-scope', async (importOriginal) => {
 
 import { prisma } from '../prisma'
 import * as scope from '../common/tenant-scope'
-import { CardService, CardsInTenantSchema } from './card.service'
+import { CardService, CardsInTenantSchema, UpdateCardSchema } from './card.service'
 
 const db = prisma as unknown as {
   $transaction: ReturnType<typeof vi.fn>
   card: Record<string, ReturnType<typeof vi.fn>>
+  project: Record<string, ReturnType<typeof vi.fn>>
+  user: Record<string, ReturnType<typeof vi.fn>>
   sprint: Record<string, ReturnType<typeof vi.fn>>
   sprintColumn: Record<string, ReturnType<typeof vi.fn>>
   cardResponsible: Record<string, ReturnType<typeof vi.fn>>
@@ -49,7 +53,14 @@ const notFound = () => Promise.reject(new NotFoundException())
 let service: CardService
 
 beforeEach(() => {
-  vi.clearAllMocks()
+  vi.resetAllMocks()
+  db.$transaction.mockImplementation(async callback => callback(prisma))
+  db.project.findFirst.mockResolvedValue({ id: 'p1' })
+  db.user.findFirst.mockResolvedValue({ id: 'u1' })
+  db.sprint.findFirst.mockResolvedValue({ id: 's1', projectId: 'p1', name: 'Sprint' })
+  db.sprintColumn.findFirst.mockResolvedValue({ id: 'col', title: 'Coluna' })
+  db.card.findMany.mockResolvedValue([])
+  db.card.findUniqueOrThrow.mockResolvedValue({})
   for (const fn of ['assertProject', 'assertSprint', 'assertColumn', 'assertCard', 'assertTag', 'assertUserInTenant']) {
     assert[fn].mockResolvedValue(undefined)
   }
@@ -133,7 +144,7 @@ describe('CardService — escrita escopada por tenant', () => {
 
   it('update impede mover o card para sprint de outro tenant', async () => {
     db.card.findFirst.mockResolvedValue({ id: 'c1', projectId: 'p1', sprintId: null, sprintColumnId: null })
-    assert.assertSprint.mockImplementation(notFound)
+    db.sprint.findFirst.mockResolvedValue(null)
     await expect(service.update('t1', 'c1', { sprintId: 's-outra' })).rejects.toThrow(NotFoundException)
     expect(db.card.update).not.toHaveBeenCalled()
   })
@@ -142,7 +153,7 @@ describe('CardService — escrita escopada por tenant', () => {
     db.card.findFirst.mockResolvedValue({ id: 'c1', projectId: 'p1', sprintId: 's1', sprintColumnId: 'c-a' })
     db.card.update.mockResolvedValue({})
     await service.update('t1', 'c1', { sprintColumnId: 'c-b' })
-    expect(assert.assertColumn).toHaveBeenCalledWith('t1', 's1', 'c-b')
+    expect(db.sprintColumn.findFirst.mock.calls[0][0].where).toMatchObject({ id: 'c-b', sprintId: 's1', sprint: { project: { tenantId: 't1' } } })
   })
 
   it('ao voltar ao backlog, card sem projectId herda o projeto da sprint', async () => {
@@ -171,13 +182,12 @@ describe('CardService — escrita escopada por tenant', () => {
       { id: 'A', sprintPosition: 0 },
       { id: 'B', sprintPosition: 1 },
     ])
-    db.$transaction.mockResolvedValue([])
 
     await service.update('t1', 'C', { sprintColumnId: 'col', sprintPosition: 0 })
 
     const renumber = db.card.update.mock.calls.slice(1).map(([a]) => [a.where.id, a.data.sprintPosition])
     // C já foi gravado na posição 0 pelo update principal; A e B descem uma posição.
-    expect(renumber).toEqual([['A', 1], ['B', 2]])
+    expect(renumber).toEqual([['C', 0], ['A', 1], ['B', 2]])
     expect(db.card.findMany.mock.calls[0][0].where).toMatchObject({ sprintColumnId: 'col', id: { not: 'C' } })
   })
 
@@ -186,7 +196,6 @@ describe('CardService — escrita escopada por tenant', () => {
     db.sprintColumn.findUnique.mockResolvedValue({ title: 'col' })
     db.card.update.mockResolvedValue({})
     db.card.findMany.mockResolvedValueOnce([]).mockResolvedValueOnce([{ id: 'Y', sprintPosition: 1 }])
-    db.$transaction.mockResolvedValue([])
 
     await service.update('t1', 'X', { sprintColumnId: 'destino', sprintPosition: 0 })
 
@@ -246,4 +255,32 @@ describe('idsInTenant (conferência do file-service)', () => {
     expect(CardsInTenantSchema.safeParse({ ids: Array.from({ length: 501 }, (_, i) => `c${i}`) }).success).toBe(false)
     expect(CardsInTenantSchema.safeParse({ ids: ['c1', 'c2'] }).success).toBe(true)
   })
+})
+
+
+describe('CardService — retry transacional', () => {
+  it('repete toda a operação em P2034', async () => {
+    db.$transaction.mockRejectedValueOnce({ code: 'P2034' }).mockResolvedValueOnce({ id: 'c1', sprintPosition: 0 })
+    expect(await service.update('t1', 'c1', { sprintPosition: 0 })).toMatchObject({ sprintPosition: 0 })
+    expect(db.$transaction).toHaveBeenCalledTimes(2)
+    expect(db.$transaction.mock.calls.every(call => call[1].isolationLevel === 'Serializable')).toBe(true)
+  })
+  it('conflito esgotado retorna 409 com retry acionável', async () => {
+    db.$transaction.mockRejectedValue({ code: 'P2034' })
+    await expect(service.update('t1', 'c1', { sprintPosition: 0 })).rejects.toMatchObject({ status: 409, message: expect.stringContaining('Tente novamente') })
+    expect(db.$transaction).toHaveBeenCalledTimes(3)
+  })
+  it('não repete falha de escrita/validação', async () => {
+    const error = new Error('write failed')
+    db.$transaction.mockRejectedValue(error)
+    await expect(service.update('t1', 'c1', { sprintPosition: 0 })).rejects.toBe(error)
+    expect(db.$transaction).toHaveBeenCalledTimes(1)
+  })
+})
+
+
+it('ids vazios de posicionamento são recusados antes de chegar ao banco', () => {
+  for (const field of ['projectId', 'sprintId', 'sprintColumnId']) {
+    expect(UpdateCardSchema.safeParse({ [field]: '' }).success).toBe(false)
+  }
 })

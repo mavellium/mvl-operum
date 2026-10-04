@@ -860,7 +860,7 @@ Conferência ao vivo em 30/09/2026: 79 cards no projeto, sem outra página de re
 
 ### 9.2 Garantir timer único sob concorrência e parada idempotente
 
-**Card:** `cmuo1gmkx002b01ndq67spd28`. **Prioridade:** alta. **Status:** implementado nesta entrega; aguardando revisão.
+**Card:** `cmuo1gmkx002b01ndq67spd28`. **Prioridade:** alta. **Status:** integrado na PR #46.
 
 **Implementação (04/10/2026):** índice parcial do banco permite um único timer ativo não excluído por usuário. Migration com pré-verificação sob lock aborta em duplicados históricos sem alterar registros; diagnóstico/revisão em `docs/operations/timer-integrity.md`. Start concorrente retorna 409 para colisão do índice; stop condicional conserva endedAt, duration e updatedAt do vencedor nos retries/concorrentes, mantendo registros manuais e isolamento de proprietário/tenant. Check Sprint Integrity ampliado com testes reais e build do pacote. Sem execução/reparo em produção nesta tarefa.
 
@@ -878,7 +878,9 @@ Conferência ao vivo em 30/09/2026: 79 cards no projeto, sem outra página de re
 
 ### 9.3 Tornar movimentação de card, histórico e ordenação uma operação atômica
 
-**Card:** `cmuo1gmoo002d01ndf42zbz7f`. **Prioridade:** alta. **Status:** pendente.
+**Card:** `cmuo1gmoo002d01ndf42zbz7f`. **Prioridade:** alta. **Status:** implementado nesta entrega; aguardando revisão.
+
+**Implementação (04/10/2026):** leitura escopada, validação de vínculos/ator, movimentação, renumeração de origem/destino e histórico no mesmo cliente transacional Serializable. Conflitos P2034 refazem a operação inteira até duas vezes antes de 409. Retorno traz posições persistidas, com desempate estável; movimento sem posição vai ao final, retorno ao backlog limpa coluna/posição de sprint e herda projeto quando necessário. PostgreSQL real cobre falhas no card, destino, origem e histórico, duas movimentações concorrentes e cadeia de movimentos do mesmo card. Sem migration ou operação em produção.
 
 **Avaliação A3 · Arquitetura e código**
 
