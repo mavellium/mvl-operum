@@ -57,3 +57,4 @@ jobs:
           __tests__/unit/services/wbsCustosPermissions.test.ts
           __tests__/unit/app/actions/wbsCustos.test.ts
           __tests__/components/custos/PlanilhaCustosView.test.tsx
+          __tests__/components/projetos/documentacao/HistoricoDocumento.test.tsx
