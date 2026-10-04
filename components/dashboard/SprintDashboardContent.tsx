@@ -17,10 +17,7 @@ export default async function SprintDashboardContent({ sprintId }: { sprintId: s
 
   return (
     <SprintDashboard
-      sprint={{
-        ...result.sprint,
-        status: result.sprint.status as string,
-      }}
+      sprint={result.sprint}
       metrics={result.metrics}
       userMetrics={result.userMetrics}
       cardsByColumn={result.cardsByColumn}

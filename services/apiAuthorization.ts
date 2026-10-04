@@ -33,7 +33,12 @@ export async function authorizeApi(s: SessaoAuthz, method: string, path: string,
     return c?.sprint?.projectId ?? c?.projectId ?? deny()
   }
   const list = async (permission: Permissao): Promise<ApiAccess> => ({ allowed: true, projectIds: await projetosAutorizados(s, permission) })
-  if (root === 'projects') {
+  if (root === 'dashboard') {
+    if (!read || target !== 'global' || child) deny()
+    const boards = await projetosAutorizados(s, 'quadro:ver')
+    const costs = new Set(await projetosAutorizados(s, 'planilha:ver'))
+    return { allowed: true, projectIds: boards.filter(project => costs.has(project)) }
+  } else if (root === 'projects') {
     if (read && (!target || target === 'user')) return list('projeto:ver')
     if (!target) { if (method !== 'POST' || s.role !== 'admin') deny(); return { allowed: true } }
     if (child === 'roles' && !read && s.role !== 'admin') deny()
@@ -58,6 +63,7 @@ export async function authorizeApi(s: SessaoAuthz, method: string, path: string,
     if (read && !target) return list('quadro:ver')
     const project = target ? await sprintProject(target) : body.projectId
     await require(project, read ? 'quadro:ver' : child === 'metrics' || child === 'feedback' ? 'quadro:cards' : 'quadro:sprints')
+    if (child === 'dashboard') { if (!read) deny(); await require(project, 'planilha:ver') }
     if (body.projectId) await require(body.projectId, 'quadro:sprints')
   } else if (root === 'cards') {
     if (read && target === 'search') return list('quadro:ver')

@@ -835,8 +835,8 @@ Conferência ao vivo em 30/09/2026: 79 cards no projeto, sem outra página de re
 | 9.1 | Preservar vínculo com projeto e atomicidade ao excluir uma sprint (`cmuo1gdyc002901ndubbhff73`) | alta | Implementado nesta entrega; aguardando revisão |
 | 9.2 | Garantir timer único sob concorrência e parada idempotente (`cmuo1gmkx002b01ndq67spd28`) | alta | Pendente |
 | 9.3 | Tornar movimentação de card, histórico e ordenação uma operação atômica (`cmuo1gmoo002d01ndf42zbz7f`) | alta | Integrado na PR #47 |
-| 9.4 | Substituir macrofases sem janela de perda de dados (`cmuo1gmrs002f01ndhl51fd03`) | alta | Implementado nesta entrega; aguardando revisão |
-| 9.5 | Restaurar contratos dos dashboards global e por sprint, com teste integrado de rota (`cmuo1gmu4002h01ndvuxtgkht`) | alta | Pendente |
+| 9.4 | Substituir macrofases sem janela de perda de dados (`cmuo1gmrs002f01ndhl51fd03`) | alta | Integrado na PR #48 |
+| 9.5 | Restaurar contratos dos dashboards global e por sprint, com teste integrado de rota (`cmuo1gmu4002h01ndvuxtgkht`) | alta | Implementado nesta entrega; aguardando revisão |
 | 9.6 | Paginar tarefas no serviço de origem e reduzir varreduras MCP (`cmuo1gmvx002j01ndsdfhjthj`) | media | Pendente |
 | 9.7 | Consolidar serviços legados e definir fronteiras de domínio verificáveis (`cmuo1gn0b002l01nd62w0nvb1`) | media | Pendente |
 
@@ -896,7 +896,7 @@ Conferência ao vivo em 30/09/2026: 79 cards no projeto, sem outra página de re
 
 ### 9.4 Substituir macrofases sem janela de perda de dados
 
-**Card:** `cmuo1gmrs002f01ndhl51fd03`. **Prioridade:** alta. **Status:** implementado nesta entrega; aguardando revisão.
+**Card:** `cmuo1gmrs002f01ndhl51fd03`. **Prioridade:** alta. **Status:** integrado na PR #48.
 
 **Avaliação A4 · Arquitetura e código**
 
@@ -914,7 +914,7 @@ Conferência ao vivo em 30/09/2026: 79 cards no projeto, sem outra página de re
 
 ### 9.5 Restaurar contratos dos dashboards global e por sprint, com teste integrado de rota
 
-**Card:** `cmuo1gmu4002h01ndvuxtgkht`. **Prioridade:** alta. **Status:** pendente.
+**Card:** `cmuo1gmu4002h01ndvuxtgkht`. **Prioridade:** alta. **Status:** implementado nesta entrega; aguardando revisão.
 
 **Avaliação A5 · Arquitetura e código**
 
@@ -927,6 +927,8 @@ Conferência ao vivo em 30/09/2026: 79 cards no projeto, sem outra página de re
 - Escopo: implementar agregação e roteamento ou alinhar BFF à API canônica; definir schemas de resposta compartilhados/validados, sem casts mascarando contratos inexistentes.
 - Aceite: fixtures com tempos/cards/feedbacks resultam em KPIs corretos nas duas telas; caso vazio renderiza zeros/listas vazias; teste percorre BFF→gateway→controller real e valida formato e status; preservação do escopo de projeto/tenant testada pelo responsável de segurança.
 - SDD: não duplica item 3.1 sobre cargo no ranking nem 2.4 sobre navegação; pré-requisito para as telas funcionarem.
+
+**Implementação 04/10/2026:** endpoints agregados e roteamento restaurados; schemas Zod canônicos validados no serviço e cliente, sem casts. Snapshot de dados e escopo por tenant/projeto/leitura de quadro e custos. Teste real BFF→gateway→controller→PostgreSQL verifica KPIs, feedbacks, vazios e recusas de acesso; telas vazias também testadas. Documentação em architecture.md e ADR-019. Sem migration ou operação em produção.
 
 ### 9.6 Paginar tarefas no serviço de origem e reduzir varreduras MCP
 

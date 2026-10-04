@@ -1,6 +1,6 @@
 import type { Request, Response, NextFunction } from 'express'
 
-const protectedRoots = new Set(['projects','sprints','cards','time-entries','files','stakeholders','roles','permissions','departments','tags','audit'])
+const protectedRoots = new Set(['dashboard','projects','sprints','cards','time-entries','files','stakeholders','roles','permissions','departments','tags','audit'])
 
 export function authorizationMiddleware() {
   return async (req: Request, res: Response, next: NextFunction) => {
