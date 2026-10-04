@@ -9,6 +9,11 @@ funcionalidade depois disso é uma versão MINOR.
 
 ## [Não lançado]
 
+## [1.12.4] — 2026-10-04
+- **Macrofases (SDD 9.4):** validação do lote antes da escrita e substituição atômica junto dos dados do projeto, preservando o lote anterior quando há falha.
+- **EAP:** pendência de sincronização persistente e retry da última revisão salva. Sincronização, códigos, versão e auditoria compartilham uma transação; tentativas repetidas não duplicam fases e preservam atividades existentes.
+- **Recuperação:** formulário mostra macrofases pendentes e permite tentar sincronizar novamente com as permissões de projeto e custos verificadas no servidor.
+
 ## [1.12.3] — 2026-10-04
 - **Kanban (SDD 9.3):** movimentação de card, histórico e ordenação de origem/destino passam a compartilhar uma transação. Falhas revertem todas as etapas; movimentos concorrentes reavaliam o estado antes do retry.
 - **Concorrência:** reconhecimento de conflitos estruturados do adapter PostgreSQL tanto na movimentação quanto na exclusão de sprint, mantendo retries limitados. Suítes PostgreSQL executam isoladas entre arquivos; concorrência dentro dos testes permanece ativa.

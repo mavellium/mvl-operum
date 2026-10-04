@@ -834,8 +834,8 @@ Conferência ao vivo em 30/09/2026: 79 cards no projeto, sem outra página de re
 |---|---|---|---|
 | 9.1 | Preservar vínculo com projeto e atomicidade ao excluir uma sprint (`cmuo1gdyc002901ndubbhff73`) | alta | Implementado nesta entrega; aguardando revisão |
 | 9.2 | Garantir timer único sob concorrência e parada idempotente (`cmuo1gmkx002b01ndq67spd28`) | alta | Pendente |
-| 9.3 | Tornar movimentação de card, histórico e ordenação uma operação atômica (`cmuo1gmoo002d01ndf42zbz7f`) | alta | Pendente |
-| 9.4 | Substituir macrofases sem janela de perda de dados (`cmuo1gmrs002f01ndhl51fd03`) | alta | Pendente |
+| 9.3 | Tornar movimentação de card, histórico e ordenação uma operação atômica (`cmuo1gmoo002d01ndf42zbz7f`) | alta | Integrado na PR #47 |
+| 9.4 | Substituir macrofases sem janela de perda de dados (`cmuo1gmrs002f01ndhl51fd03`) | alta | Implementado nesta entrega; aguardando revisão |
 | 9.5 | Restaurar contratos dos dashboards global e por sprint, com teste integrado de rota (`cmuo1gmu4002h01ndvuxtgkht`) | alta | Pendente |
 | 9.6 | Paginar tarefas no serviço de origem e reduzir varreduras MCP (`cmuo1gmvx002j01ndsdfhjthj`) | media | Pendente |
 | 9.7 | Consolidar serviços legados e definir fronteiras de domínio verificáveis (`cmuo1gn0b002l01nd62w0nvb1`) | media | Pendente |
@@ -878,7 +878,7 @@ Conferência ao vivo em 30/09/2026: 79 cards no projeto, sem outra página de re
 
 ### 9.3 Tornar movimentação de card, histórico e ordenação uma operação atômica
 
-**Card:** `cmuo1gmoo002d01ndf42zbz7f`. **Prioridade:** alta. **Status:** implementado nesta entrega; aguardando revisão.
+**Card:** `cmuo1gmoo002d01ndf42zbz7f`. **Prioridade:** alta. **Status:** integrado na PR #47.
 
 **Implementação (04/10/2026):** leitura escopada, validação de vínculos/ator, movimentação, renumeração de origem/destino e histórico no mesmo cliente transacional Serializable. Conflitos P2034 refazem a operação inteira até duas vezes antes de 409. Retorno traz posições persistidas, com desempate estável; movimento sem posição vai ao final, retorno ao backlog limpa coluna/posição de sprint e herda projeto quando necessário. PostgreSQL real cobre falhas no card, destino, origem e histórico, duas movimentações concorrentes e cadeia de movimentos do mesmo card. Sem migration ou operação em produção.
 
@@ -896,7 +896,7 @@ Conferência ao vivo em 30/09/2026: 79 cards no projeto, sem outra página de re
 
 ### 9.4 Substituir macrofases sem janela de perda de dados
 
-**Card:** `cmuo1gmrs002f01ndhl51fd03`. **Prioridade:** alta. **Status:** pendente.
+**Card:** `cmuo1gmrs002f01ndhl51fd03`. **Prioridade:** alta. **Status:** implementado nesta entrega; aguardando revisão.
 
 **Avaliação A4 · Arquitetura e código**
 
@@ -909,6 +909,8 @@ Conferência ao vivo em 30/09/2026: 79 cards no projeto, sem outra página de re
 - Escopo mínimo: validar lote antes de mutar e transacionar substituição no project-service. Complemento: definir fonte canônica e mecanismo de reconciliação/retry idempotente para sincronização EAP; não propor transação de banco mantida aberta através de HTTP.
 - Aceite: erro de inserção preserva macrofases anteriores; lote válido substitui tudo uma vez; interrupção na sincronização aparece como pendência rastreável e retry converge sem duplicar fases; documentar responsabilidade de cada armazenamento.
 - SDD: relacionado a EAP/documentos, mas não duplica layouts nem versionamento das fases 6/7.
+
+**Implementação 04/10/2026:** substituição e revisão no project-service são atômicas, inclusive junto dos campos do projeto. Pendência entre revisão desejada/aplicada sobrevive à interrupção HTTP; app reconcilia o lote mais recente e confirma junto da EAP/auditoria. Formulário mostra a pendência e permite retry autorizado, sem duplicar nós ou apagar atividades. Migration aditiva e check PostgreSQL 17; responsabilidades/limites em architecture.md e ADR-018. Sem worker automático ou operação em produção.
 
 ### 9.5 Restaurar contratos dos dashboards global e por sprint, com teste integrado de rota
 

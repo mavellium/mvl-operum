@@ -138,3 +138,13 @@ describe('escritas e destinos persistidos', () => {
     await expect(authorizeApi(session, 'POST', '/cards/in-tenant', { ids: ['card-B'] })).rejects.toThrow()
   })
 })
+
+describe('projeto e macrofases no mesmo PATCH', () => {
+  it('requer as permissões de custo, inclusive para lote vazio', async () => {
+    granted.add('projeto:editar')
+    await expect(authorizeApi(session, 'PATCH', '/projects/project-A', { macroFases: [] })).rejects.toThrow()
+    granted.add('planilha:orcado')
+    granted.add('planilha:realizado-todos')
+    expect(await authorizeApi(session, 'PATCH', '/projects/project-A', { macroFases: [] })).toEqual({ allowed: true })
+  })
+})

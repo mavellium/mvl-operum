@@ -4,7 +4,7 @@ import { useProjectPermissions } from '@/components/permissoes/ProjectPermission
 
 import { useState, useTransition, useEffect, Suspense } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
-import { createProjetoAction, updateProjetoAction, getProjetoAction } from '@/app/actions/projetos'
+import { createProjetoAction, updateProjetoAction, getProjetoAction, retryMacroFasesSyncAction } from '@/app/actions/projetos'
 import { listUsersAction } from '@/app/actions/admin'
 import { getDepartmentsAction } from '@/app/actions/departments'
 import { useToast } from '@/components/ui/Toast'
@@ -143,6 +143,8 @@ function ProjetoFormContent({ canAssignRoles }: { canAssignRoles: boolean }) {
   const [usuarios, setUsuarios] = useState<Usuario[]>([])
   const [departamentosExistentes, setDepartamentosExistentes] = useState<string[]>([])
   const [error, setError] = useState('')
+  const [syncPending, setSyncPending] = useState(false)
+  const [syncProjectId, setSyncProjectId] = useState<string | null>(editId)
 
   const currentYear = new Date().getFullYear()
   const years = Array.from({ length: 26 }, (_, i) => currentYear - 20 + i)
@@ -179,6 +181,7 @@ function ProjetoFormContent({ canAssignRoles }: { canAssignRoles: boolean }) {
         return
       }
       const p = result.projeto
+      setSyncPending(p.macroFasesSyncPending)
       const associados = (result as { departamentosAssociados?: { id: string; name: string }[] }).departamentosAssociados
       const gerenteId = (result as { gerenteId?: string }).gerenteId ?? ''
       const publishedForm = {
@@ -267,6 +270,9 @@ function ProjetoFormContent({ canAssignRoles }: { canAssignRoles: boolean }) {
         if (editId) toast(result.error || 'Erro ao salvar projeto', 'error')
         return
       }
+      setSyncProjectId(result.projeto.id as string)
+      setSyncPending(result.macroFasesSync?.pending ?? false)
+      if (result.macroFasesSync?.pending) return
       if (editId) {
         toast('Projeto atualizado com sucesso!', 'success')
       } else {
@@ -345,6 +351,18 @@ function ProjetoFormContent({ canAssignRoles }: { canAssignRoles: boolean }) {
             })}
           </div>
         </div>
+
+        {syncPending && (
+          <div role="status" className="mb-8 p-4 bg-amber-50 border border-amber-200 rounded-2xl text-sm text-amber-900">
+            <p>Projeto salvo. A sincronização das macrofases com a EAP está pendente.</p>
+            {canEditCosts && syncProjectId && <button type="button" disabled={isPending} className="mt-2 font-bold underline" onClick={() => startTransition(async () => {
+              const result = await retryMacroFasesSyncAction(syncProjectId)
+              if ('error' in result) { setError(result.error); return }
+              setSyncPending(result.pending)
+              if (!result.pending) { toast('Macrofases sincronizadas!', 'success'); if (!editId) router.push(`/projetos/${syncProjectId}`) }
+            })}>Tentar sincronizar novamente</button>}
+          </div>
+        )}
 
         {error && (
           <div className="mb-8 p-4 bg-red-50/80 border border-red-200 rounded-2xl text-sm text-red-600 font-semibold flex items-center gap-3 animate-in fade-in slide-in-from-top-2">

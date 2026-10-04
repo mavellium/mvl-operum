@@ -50,7 +50,7 @@ export async function authorizeApi(s: SessaoAuthz, method: string, path: string,
       if (snapshot) throw new ApiAccessDenied('Este Termo usa versões: altere pelo fluxo documental')
     }
     if (read && !child) return { allowed: true, redactDocuments: !(await can(s, id(target), 'documentos:ver')) }
-    if (!read && child === 'macro-fases') {
+    if (!read && (child === 'macro-fases' || (!child && 'macroFases' in body))) {
       await require(target, 'planilha:orcado')
       await require(target, 'planilha:realizado-todos')
     }

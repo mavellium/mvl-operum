@@ -80,6 +80,11 @@ model Project {
   ano                Int?
   departamentos      String[]
 
+  /// Durable desired macrofase batch and last EAP revision applied by the app.
+  macroFasesRevision       Int @default(0)
+  macroFasesSyncedRevision Int @default(0)
+  macroFasesSyncError      String?
+
   status    ProjectStatus @default(ACTIVE)
   deletedAt DateTime?
   createdAt DateTime      @default(now())
@@ -97,6 +102,7 @@ model ProjectMacroFase {
   id         String   @id @default(cuid())
   projectId  String
   project    Project  @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  position   Int @default(0)
   fase       String
   dataLimite String?
   custo      String?

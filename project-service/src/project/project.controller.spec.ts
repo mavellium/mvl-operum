@@ -14,12 +14,12 @@ describe('ProjectController.getUserProjects', () => {
 
   it('permite quando o :userId da URL é o mesmo do x-user-id (consultando os próprios projetos)', () => {
     controller.getUserProjects('user-1', 'user-1', 'member', 'tenant-a')
-    expect(service.getUserActiveProjects).toHaveBeenCalledWith('user-1', 'tenant-a')
+    expect(service.getUserActiveProjects).toHaveBeenCalledWith('user-1', 'tenant-a', undefined)
   })
 
   it('permite quando o chamador é admin, mesmo consultando outro usuário', () => {
     controller.getUserProjects('user-2', 'admin-1', 'admin', 'tenant-a')
-    expect(service.getUserActiveProjects).toHaveBeenCalledWith('user-2', 'tenant-a')
+    expect(service.getUserActiveProjects).toHaveBeenCalledWith('user-2', 'tenant-a', undefined)
   })
 
   it('bloqueia (403) quando um usuário não-admin tenta consultar outro usuário', () => {

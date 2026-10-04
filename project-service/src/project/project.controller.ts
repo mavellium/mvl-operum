@@ -116,8 +116,8 @@ export class ProjectController {
   upsertMacroFases(
     @Param('id') projectId: string,
     @Headers('x-tenant-id') tenantId: string,
-    @Body() body: { fases: { fase: string; dataLimite?: string; custo?: string }[] },
+    @Body() body: unknown,
   ) {
-    return this.projectService.upsertMacroFase(projectId, tenantId, body.fases ?? [])
+    return this.projectService.upsertMacroFase(projectId, tenantId, body && typeof body === 'object' && 'fases' in body ? body.fases : undefined)
   }
 }
