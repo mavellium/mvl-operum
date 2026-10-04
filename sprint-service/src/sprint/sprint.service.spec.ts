@@ -4,6 +4,7 @@ import { BadRequestException, NotFoundException } from '@nestjs/common'
 
 vi.mock('../prisma', () => ({
   prisma: {
+    $transaction: vi.fn(),
     sprint: { findFirst: vi.fn(), findMany: vi.fn(), create: vi.fn(), update: vi.fn() },
     sprintColumn: { createMany: vi.fn(), findMany: vi.fn(), create: vi.fn(), update: vi.fn() },
     card: { updateMany: vi.fn() },
@@ -27,6 +28,7 @@ let service: SprintService
 
 beforeEach(() => {
   vi.clearAllMocks()
+  vi.mocked(prisma.$transaction).mockImplementation(async (callback: unknown) => (callback as (tx: typeof prisma) => Promise<void>)(prisma))
   assert.assertProject.mockResolvedValue(undefined)
   assert.assertColumn.mockResolvedValue(undefined)
   service = new SprintService()
@@ -75,5 +77,30 @@ describe('SprintService — escopo por tenant', () => {
     await expect(service.updateColumn('t1', 's1', 'c-outra', { title: 'x' })).rejects.toThrow(NotFoundException)
     await expect(service.deleteColumn('t1', 's1', 'c-outra')).rejects.toThrow(NotFoundException)
     expect(db.sprintColumn.update).not.toHaveBeenCalled()
+  })
+})
+
+describe('SprintService — conflitos da exclusão', () => {
+  it('repete somente a transação inteira quando PostgreSQL informa P2034', async () => {
+    const transaction = vi.mocked(prisma.$transaction)
+    transaction.mockRejectedValueOnce({ code: 'P2034' }).mockResolvedValueOnce(undefined)
+    await service.remove('t1', 's1')
+    expect(transaction).toHaveBeenCalledTimes(2)
+    expect(transaction.mock.calls.every(call => call[1]?.isolationLevel === 'Serializable')).toBe(true)
+  })
+
+  it('limita tentativas e devolve conflito acionável', async () => {
+    const transaction = vi.mocked(prisma.$transaction)
+    transaction.mockRejectedValue({ code: 'P2034' })
+    await expect(service.remove('t1', 's1')).rejects.toThrow('Tente novamente')
+    expect(transaction).toHaveBeenCalledTimes(3)
+  })
+
+  it('não repete falha de escrita ou validação', async () => {
+    const failure = new Error('write failed')
+    const transaction = vi.mocked(prisma.$transaction)
+    transaction.mockRejectedValue(failure)
+    await expect(service.remove('t1', 's1')).rejects.toBe(failure)
+    expect(transaction).toHaveBeenCalledTimes(1)
   })
 })

@@ -1,0 +1,56 @@
+name: Sprint Integrity
+
+on:
+  pull_request:
+    branches: [main, develop]
+
+permissions:
+  contents: read
+
+concurrency:
+  group: sprint-integrity-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  postgres:
+    name: Sprint integrity (PostgreSQL)
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    services:
+      postgres:
+        image: postgres:17
+        env:
+          POSTGRES_USER: operum_test
+          POSTGRES_PASSWORD: test_only_local_ci
+          POSTGRES_DB: operum_sprint_test
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U operum_test -d operum_sprint_test"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 10
+    env:
+      DATABASE_URL: postgresql://operum_test:test_only_local_ci@localhost:5432/operum_sprint_test
+      OPERUM_SPRINT_TEST_DATABASE_URL: postgresql://operum_test:test_only_local_ci@localhost:5432/operum_sprint_test
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v3
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile --ignore-scripts
+      - run: pnpm rebuild @prisma/engines
+      - run: pnpm exec prisma generate
+      - run: pnpm --dir sprint-service exec prisma generate
+      - name: Apply migrations to isolated database
+        run: pnpm exec prisma migrate deploy
+      - name: Validate sprint service build
+        run: pnpm --dir sprint-service build
+      - name: Test sprint deletion, rollback, concurrency and tenant isolation
+        run: >-
+          pnpm exec vitest run
+          __tests__/integration/sprintDeletion.postgres.test.ts
+          sprint-service/src/sprint/sprint.service.spec.ts
+          sprint-service/src/card/card.service.spec.ts
