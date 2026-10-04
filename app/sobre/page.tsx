@@ -1,5 +1,6 @@
 import { DESENVOLVEDORES, EQUIPE_INFO } from '@/lib/equipe'
 import type { Metadata } from 'next'
+import { ReleaseHistory } from './release-history'
 
 export const metadata: Metadata = { title: 'Sobre' }
 
@@ -27,6 +28,8 @@ export default function SobrePage() {
             integrando fluxos de trabalho, documentação e controle de custos em um único ambiente.
           </p>
         </div>
+
+        {process.env.NEXT_PUBLIC_APP_VERSION && <ReleaseHistory version={process.env.NEXT_PUBLIC_APP_VERSION} />}
 
         <div className="mb-8">
           <h2 className="text-xl font-bold text-gray-900">Equipe de Desenvolvimento</h2>

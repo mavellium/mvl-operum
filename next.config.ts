@@ -39,6 +39,7 @@ const nextConfig: NextConfig = {
   // Enables standalone output for Docker — copies only necessary files.
   // Required for the production Dockerfile to work correctly.
   output: "standalone",
+  outputFileTracingIncludes: { "/sobre": ["./CHANGELOG.md"] },
 
   // Allow images from MinIO (replace domain with your actual MinIO domain)
   images: {
