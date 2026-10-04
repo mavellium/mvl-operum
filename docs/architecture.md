@@ -875,3 +875,10 @@ A Server Action resolve as permissões e passa o contexto obrigatório a `servic
 ### URLs de avatar/logo no navegador
 
 `safeAvatarUrl` aceita somente URL http(s) absoluta ou caminho iniciado por uma única barra, rejeitando HTML, caracteres de controle, esquemas executáveis e barras invertidas. A URL de saída codifica metacaracteres sem alterar parâmetros ou escapes existentes das URLs assinadas. `UserAvatar` aplica a validação antes de renderizar `src`; valor inválido usa iniciais. `AvatarUpload` usa a mesma validação para a opção Visualizar e abre a imagem com `noopener,noreferrer`. Isso complementa a validação antes da persistência e protege dados históricos e estado do formulário; ver ADR-012.
+
+
+### Integridade da exclusão de sprint (SDD 9.1)
+
+O sprint-service mantém a responsabilidade pela transferência ao backlog. `SprintService.remove` lê sprint/cards do tenant, verifica a coerência com o projeto, atribui posições ao final do backlog e só então marca a sprint excluída, dentro da mesma transação PostgreSQL Serializable. A ordem transferida segue coluna, posição na coluna, posição geral, criação e ID como desempate. Um card ativo sem projeto direto herda o projeto da sprint; vínculo divergente aborta com 409. Nenhuma referência de comentário ou tempo é removida. Cards já excluídos não são transferidos. Conflitos de serialização P2034 são repetidos no máximo duas vezes; esgotamento devolve 409 para retry pelo cliente. Repetição de uma exclusão concluída devolve 404 sem reordenar o backlog.
+
+O check `Sprint Integrity` usa PostgreSQL 17 dedicado e testa o serviço real com rollback injetado e concorrência, além de compilar o pacote. Esta garantia cobre a operação de exclusão; criação/movimentação de cards e outras mutações ainda têm as pendências de atomicidade do SDD 9.3. Não há migration nem reparo histórico automático. Diagnósticos históricos devem ser somente leitura: cards sem `projectId` e sem `sprintId` não oferecem evidência suficiente para inferir o projeto; links divergentes precisam ser revisados pelo operador antes de qualquer correção autorizada.

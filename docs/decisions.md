@@ -225,3 +225,16 @@ Ao substituir uma decisão, manter o texto histórico, alterar seu status e liga
 - **Consequências:** migration de payload/tipos/rascunhos/ordenação; logs e histórico autorizados por documento, com nomes dos autores. É necessário aplicar a migration antes do app no deploy autorizado. A API genérica continua compatível nos projetos legados; o uso de snapshots aprovados ativa a proteção contra sobrescrita do Termo e requer editar por versões. O cadastro de projeto passa a orientar para Documentação. Não há migração automática de metadados antigos para conteúdo inventado, nem alteração da WBS por uma versão de Termo/EAP documental. PostgreSQL real no CI verifica transações e concorrência.
 - **Condições de revisão:** extração do domínio para microsserviço, necessidade de comparar versões com diff por linha, paginação adicional do histórico (limite atual de 200 registros por consulta) ou política de retenção/eliminação de documentos.
 - **Referências:** SDD 5.2/5.3; ADR-008, ADR-009 e ADR-010; `services/documentRevisionService.ts`, `lib/validation/documentRevisionSchemas.ts`, `app/api/projects/[projetoId]/revisions/route.ts`, `components/projetos/documentacao/HistoricoDocumento.tsx`, migration `20261004000000_document_revisions`, `.github/workflows/document-revisions.yml`, testes de integração PostgreSQL.
+
+
+## ADR-015 — Transferência ao backlog e exclusão de sprint na mesma transação
+
+- **Data do registro:** 2026-10-04.
+- **Status:** implementada nesta entrega, aguardando revisão; sem operação em produção.
+- **Contexto:** cards criados somente com sprintId podiam perder o vínculo ao projeto na exclusão. Transferência e soft delete separados permitiam persistência parcial; exclusões de duas sprints podiam disputar o final do mesmo backlog.
+- **Escolha:** sprint-service executa leitura, validação, transferência ordenada e soft delete em transação Serializable. Cards ativos herdam o projeto da sprint quando ausente; vínculo divergente é recusado antes da escrita. P2034 repete a transação inteira no máximo duas vezes e retorna conflito se esgotado.
+- **Justificativa:** preservar escopo de projeto, referências e estado anterior em qualquer falha, usando a proteção do banco também na leitura do final do backlog. A revisão de vínculos divergentes evita normalizar silenciosamente dados cuja origem é ambígua.
+- **Alternativas consideradas nesta entrega:** manter updateMany sem projeto/transação (perda de acesso e persistência parcial); transferir tudo com a posição padrão (ordem ambígua); escolher automaticamente um projeto para vínculo divergente (pode contrariar origem/permissões); mutex em memória (não coordena múltiplas instâncias).
+- **Consequências:** operação usa mais updates dentro de uma única transação; conflito esgotado exige retry do cliente. Não repara órfãos históricos nem modifica comentários, tempos ou cards excluídos. A atomicidade de outras mutações permanece no SDD 9.3.
+- **Condições de revisão:** sprints cujo volume exceda o timeout padrão da transação; coordenação do backlog com todas as mutações no SDD 9.3; evidência do operador para recuperação de dados antigos.
+- **Referências:** SDD 9.1; `sprint-service/src/sprint/sprint.service.ts`, `__tests__/integration/sprintDeletion.postgres.test.ts`, `.github/workflows/sprint-integrity.yml`.

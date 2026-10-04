@@ -1,4 +1,4 @@
-import { BadRequestException, Injectable, NotFoundException } from '@nestjs/common'
+import { BadRequestException, ConflictException, Injectable, NotFoundException } from '@nestjs/common'
 import { prisma } from '../prisma'
 import { assertColumn, assertProject, PUBLIC_USER_SELECT, sprintInTenant } from '../common/tenant-scope'
 import { z } from 'zod'
@@ -85,13 +85,46 @@ export class SprintService {
   }
 
   async remove(tenantId: string, id: string) {
-    await this.findOne(tenantId, id)
-    // Devolver todos os cards ao backlog ao deletar a sprint
-    await prisma.card.updateMany({
-      where: { sprintId: id, deletedAt: null },
-      data: { sprintId: null, sprintColumnId: null, sprintPosition: null },
-    })
-    await prisma.sprint.update({ where: { id }, data: { deletedAt: new Date() } })
+    // SERIALIZABLE protects the backlog tail and the sprint/card snapshot.
+    // Retry only serialization conflicts; validation and write failures roll back.
+    for (let attempt = 0; ; attempt++) {
+      try {
+        return await prisma.$transaction(async tx => {
+          const sprint = await tx.sprint.findFirst({
+            where: { id, deletedAt: null, ...sprintInTenant(tenantId) },
+            select: { projectId: true },
+          })
+          if (!sprint) throw new NotFoundException('Sprint não encontrada')
+          if (!sprint.projectId) throw new ConflictException('Sprint sem projeto: corrija o vínculo antes de excluir')
+          const cards = await tx.card.findMany({
+            where: { sprintId: id, deletedAt: null },
+            select: { id: true, projectId: true },
+            orderBy: [{ sprintColumn: { position: 'asc' } }, { sprintPosition: 'asc' }, { position: 'asc' }, { createdAt: 'asc' }, { id: 'asc' }],
+          })
+          if (cards.some(card => card.projectId && card.projectId !== sprint.projectId)) {
+            throw new ConflictException('Há cards vinculados a outro projeto: corrija os vínculos antes de excluir a sprint')
+          }
+          const tail = await tx.card.aggregate({
+            where: { projectId: sprint.projectId, sprintId: null, deletedAt: null },
+            _max: { position: true },
+          })
+          let position = (tail._max.position ?? -1) + 1
+          for (const card of cards) {
+            await tx.card.update({
+              where: { id: card.id },
+              data: { projectId: sprint.projectId, sprintId: null, sprintColumnId: null, sprintPosition: null, position: position++ },
+            })
+          }
+          await tx.sprint.update({ where: { id }, data: { deletedAt: new Date() } })
+        }, { isolationLevel: 'Serializable' })
+      } catch (error) {
+        if (error && typeof error === 'object' && 'code' in error && error.code === 'P2034') {
+          if (attempt < 2) continue
+          throw new ConflictException('O backlog foi alterado durante a exclusão. Tente novamente')
+        }
+        throw error
+      }
+    }
   }
 
   async listColumns(tenantId: string, sprintId: string) {
