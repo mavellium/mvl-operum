@@ -46,7 +46,7 @@ export function registerSprintTools(server: McpServer, registry: TenantRegistry)
       const sprint = await ctx.gw.get<Record<string, unknown>>(`/sprints/${sprint_id}`)
       if (include_tasks === false) return { sprint: serializeSprint(sprint, { includeColumns: true }) }
       const columns = await ctx.gw.get<(Record<string, unknown> & { cards?: Record<string, unknown>[] })[]>(
-        `/sprints/${sprint_id}/columns`,
+        `/sprints/${sprint_id}/columns`, { timeEntries: 'summary' },
       )
       return {
         sprint: serializeSprint(sprint),
@@ -84,7 +84,7 @@ export function registerSprintTools(server: McpServer, registry: TenantRegistry)
         endDate: toIso(args.end_date, 'end_date'),
         createdBy: ctx.userId,
       })
-      const columns = await ctx.gw.get<Record<string, unknown>[]>(`/sprints/${sprint.id}/columns`)
+      const columns = await ctx.gw.get<Record<string, unknown>[]>(`/sprints/${sprint.id}/columns`, { timeEntries: 'summary' })
       await audit(ctx, 'operum_create_sprint', 'CREATE', 'sprint', String(sprint.id), { projectId: args.project_id })
       return { sprint: { ...serializeSprint(sprint), columns: columns.map(serializeColumn) } }
     },
@@ -156,7 +156,7 @@ export function registerSprintTools(server: McpServer, registry: TenantRegistry)
     async ({ sprint_id, title, position }, ctx) => {
       let pos = position
       if (pos === undefined) {
-        const cols = await ctx.gw.get<Record<string, unknown>[]>(`/sprints/${sprint_id}/columns`)
+        const cols = await ctx.gw.get<Record<string, unknown>[]>(`/sprints/${sprint_id}/columns`, { timeEntries: 'summary' })
         pos = cols.reduce((max, c) => Math.max(max, Number(c.position ?? -1)), -1) + 1
       }
       const column = await ctx.gw.post<Record<string, unknown>>(`/sprints/${sprint_id}/columns`, { title, position: pos })

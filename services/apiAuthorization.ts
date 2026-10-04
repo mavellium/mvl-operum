@@ -66,6 +66,19 @@ export async function authorizeApi(s: SessaoAuthz, method: string, path: string,
     if (child === 'dashboard') { if (!read) deny(); await require(project, 'planilha:ver') }
     if (body.projectId) await require(body.projectId, 'quadro:sprints')
   } else if (root === 'cards') {
+    if (read && target === 'page') {
+      if (child) deny()
+      const project = url.searchParams.get('projectId')
+      const sprint = url.searchParams.get('sprintId')
+      if (!project && !sprint) deny()
+      if (project) await require(project, 'quadro:ver')
+      if (sprint) {
+        const owner = await sprintProject(sprint)
+        if (project && project !== owner) deny()
+        await require(owner, 'quadro:ver')
+      }
+      return { allowed: true }
+    }
     if (read && target === 'search') return list('quadro:ver')
     if (read && target === 'backlog') { await require(url.searchParams.get('projectId'), 'quadro:ver'); return { allowed: true } }
     if (target === 'in-tenant' && method === 'POST') {

@@ -169,9 +169,9 @@ export function serializeTimeEntry(e: Raw) {
 }
 
 /** Tempo da tarefa a partir das timeEntries que o sprint-service inclui no card. */
-function serializeTaskTime(entries: Raw[]) {
+function serializeTaskTime(entries: Raw[], total?: number | null) {
   return {
-    total_seconds: entries.filter(e => !e?.isRunning).reduce((sum, e) => sum + (num(e?.duration) ?? 0), 0),
+    total_seconds: total ?? entries.filter(e => !e?.isRunning).reduce((sum, e) => sum + (num(e?.duration) ?? 0), 0),
     running: entries
       .filter(e => e?.isRunning)
       .map(e => ({ entry_id: str(e?.id), user_id: str(e?.userId), started_at: str(e?.startedAt) })),
@@ -227,7 +227,7 @@ export function serializeTask(c: Raw, include: { comments?: boolean } = {}) {
     tags: arr(c.tags).map(ct => serializeTag(obj(ct?.tag) ?? ct)),
     responsibles: arr(c.responsibles).map(r => serializeUser(obj(r?.user) ?? { id: r?.userId })),
     attachments: arr(c.attachments).map(serializeAttachment),
-    ...(Array.isArray(c.timeEntries) ? { time: serializeTaskTime(c.timeEntries as Raw[]) } : {}),
+    ...(Array.isArray(c.timeEntries) ? { time: serializeTaskTime(c.timeEntries as Raw[], num(c.totalDurationSeconds)) } : {}),
     ...(include.comments ? { comments: arr(c.comments).map(serializeComment) } : {}),
   }
 }

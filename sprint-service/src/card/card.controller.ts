@@ -11,6 +11,7 @@ import {
   HttpCode,
   HttpStatus,
   BadRequestException,
+  Inject,
 } from '@nestjs/common'
 import { TenantId } from '../common/tenant-scope'
 import { CardService, CardsInTenantSchema, CreateCardSchema, UpdateCardSchema } from './card.service'
@@ -18,7 +19,12 @@ import { CardService, CardsInTenantSchema, CreateCardSchema, UpdateCardSchema } 
 
 @Controller()
 export class CardController {
-  constructor(private readonly cardService: CardService) {}
+  constructor(@Inject(CardService) private readonly cardService: CardService) {}
+
+  @Get('cards/page')
+  listPage(@TenantId() tenantId: string, @Query() query: Record<string, unknown>) {
+    return this.cardService.listPage(tenantId, query)
+  }
 
   @Get('sprints/:sprintId/cards')
   listBySprint(@TenantId() tenantId: string, @Param('sprintId') sprintId: string) {

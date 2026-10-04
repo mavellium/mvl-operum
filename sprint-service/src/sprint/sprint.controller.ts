@@ -50,8 +50,9 @@ export class SprintController {
   }
 
   @Get(':id/columns')
-  listColumns(@TenantId() tenantId: string, @Param('id') sprintId: string) {
-    return this.sprintService.listColumns(tenantId, sprintId)
+  listColumns(@TenantId() tenantId: string, @Param('id') sprintId: string, @Query('timeEntries') timeMode?: string) {
+    if (timeMode && timeMode !== 'summary' && timeMode !== 'full') throw new BadRequestException('timeEntries deve ser summary ou full')
+    return this.sprintService.listColumns(tenantId, sprintId, timeMode === 'summary' ? 'summary' : 'full')
   }
 
   @Post(':id/columns')

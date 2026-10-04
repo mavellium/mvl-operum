@@ -63,6 +63,8 @@ npx @modelcontextprotocol/inspector
 
 Toda tool aceita `tenant_id` (omitido = tenant do token padrão) e responde JSON. Listas usam `cursor` + `limit`.
 
+`operum_list_tasks` delega filtros/paginação ao sprint-service: padrão 50, máximo 200, resposta `{items,total,next_cursor}`. Use `next_cursor` com os mesmos filtros e `fields`; o limite pode mudar. Ordem por criação e ID, com limite superior da primeira página. Novas tarefas posteriores ao início entram numa nova listagem; edições que alteram filtros, exclusões ou revogação de acesso podem alterar o conjunto/total entre chamadas. Não há snapshot entre páginas. Os antigos cursores de offset dessa ferramenta não são reutilizáveis: reinicie sem cursor. Anexos são buscados somente da página em `fields="full"`. Detalhes em `docs/operations/task-pagination.md`.
+
 | Grupo | Tools |
 |---|---|
 | Identidade | `operum_whoami`, `operum_list_tenants`, `operum_list_users` |

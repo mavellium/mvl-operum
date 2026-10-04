@@ -2,7 +2,7 @@ import { z } from 'zod'
 import type { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js'
 import type { TenantContext, TenantRegistry } from '../tenants.js'
 import { audit, confirmShape, defineTool, requireConfirm } from '../tool.js'
-import { paginate, paginationShape } from '../pagination.js'
+import { paginate, paginationShape, type Page } from '../pagination.js'
 import { serializeMovement, serializeAudit, serializeTask, serializeTag, serializeComment, serializeAttachment, type SerializedTask } from '../serializers.js'
 import { dateInput, toIso } from '../dates.js'
 import { UserError } from '../errors.js'
@@ -18,49 +18,6 @@ const MAX_BULK = 100
 
 export type RawCard = Record<string, unknown>
 type RawSprint = Record<string, unknown> & { sprintColumns?: Record<string, unknown>[] }
-
-/** Nomes de sprint/coluna para enriquecer tarefas vindas de endpoints que não os incluem. */
-interface Labels {
-  sprints: Map<string, string>
-  columns: Map<string, string>
-}
-
-function labelsFrom(sprints: RawSprint[]): Labels {
-  const labels: Labels = { sprints: new Map(), columns: new Map() }
-  for (const s of sprints) {
-    labels.sprints.set(String(s.id), String(s.name))
-    for (const c of s.sprintColumns ?? []) labels.columns.set(String(c.id), String(c.title))
-  }
-  return labels
-}
-
-/**
- * Coleta as tarefas pedidas. Sem sprint_id/backlog, varre o projeto inteiro
- * (backlog + todas as sprints) — cards criados dentro de sprints podem não ter
- * projectId, então buscar só por projectId perderia tarefas.
- */
-async function collectTasks(
-  ctx: TenantContext,
-  scope: { project_id?: string; sprint_id?: string; backlog?: boolean },
-): Promise<{ cards: RawCard[]; labels: Labels }> {
-  if (scope.sprint_id) {
-    const [sprint, cards] = await Promise.all([
-      ctx.gw.get<RawSprint>(`/sprints/${scope.sprint_id}`),
-      ctx.gw.get<RawCard[]>(`/sprints/${scope.sprint_id}/cards`),
-    ])
-    return { cards, labels: labelsFrom([sprint]) }
-  }
-  if (!scope.project_id) throw new UserError('Informe project_id ou sprint_id.')
-
-  const sprints = await ctx.gw.get<RawSprint[]>('/sprints', { projectId: scope.project_id })
-  const labels = labelsFrom(sprints)
-  const backlog = await ctx.gw.get<RawCard[]>('/cards/backlog', { projectId: scope.project_id })
-  if (scope.backlog) return { cards: backlog, labels }
-
-  const perSprint = await mapLimit(sprints, READ_CONCURRENCY, s => ctx.gw.get<RawCard[]>(`/sprints/${s.id}/cards`))
-  return { cards: [...backlog, ...perSprint.flat()], labels }
-}
-
 /**
  * Anexos de arquivo ganham a URL assinada do file-service (1 h), para o agente
  * conseguir abrir o arquivo. Links já trazem a própria URL. Best-effort: se a
@@ -78,11 +35,11 @@ async function withDownloadUrls(ctx: TenantContext, taskId: string, attachments:
   })
 }
 
-function withLabels(task: SerializedTask, labels: Labels) {
+function withLabels(task: SerializedTask) {
   return {
     ...task,
-    sprint_name: task.sprint_id ? (labels.sprints.get(task.sprint_id) ?? null) : null,
-    column_title: task.column_id ? (labels.columns.get(task.column_id) ?? null) : null,
+    sprint_name: task.sprint?.name ?? null,
+    column_title: task.column?.title ?? null,
   }
 }
 
@@ -104,7 +61,7 @@ function summarize(t: ReturnType<typeof withLabels>) {
 }
 
 async function firstColumnId(ctx: TenantContext, sprintId: string): Promise<string> {
-  const cols = await ctx.gw.get<Record<string, unknown>[]>(`/sprints/${sprintId}/columns`)
+  const cols = await ctx.gw.get<Record<string, unknown>[]>(`/sprints/${sprintId}/columns`, { timeEntries: 'summary' })
   const first = [...cols].sort((a, b) => Number(a.position) - Number(b.position))[0]
   if (!first) throw new UserError('A sprint não tem colunas — crie uma com operum_create_column.')
   return String(first.id)
@@ -178,7 +135,7 @@ export function registerTaskTools(server: McpServer, registry: TenantRegistry) {
     {
       title: 'Listar tarefas',
       description:
-        'Tarefas (cards) de um projeto ou sprint, com filtros. Sem sprint_id nem backlog, lista o projeto inteiro (backlog + todas as sprints). fields="summary" (padrão) traz os campos principais; "full" traz tudo, inclusive descrição e anexos.',
+        'Tarefas (cards) de um projeto ou sprint, com filtros. Sem sprint_id nem backlog, lista o projeto inteiro (backlog + todas as sprints). Ordenação estável por criação e ID; use next_cursor com os mesmos filtros. Novos cards posteriores ao início ficam para uma nova listagem. fields="summary" (padrão) traz os campos principais; "full" traz tudo, inclusive descrição e anexos.',
       inputSchema: {
         project_id: z.string().optional(),
         sprint_id: z.string().optional(),
@@ -196,22 +153,15 @@ export function registerTaskTools(server: McpServer, registry: TenantRegistry) {
       annotations: { readOnlyHint: true },
     },
     async (args, ctx) => {
-      const { cards, labels } = await collectTasks(ctx, args)
-      const before = toIso(args.due_before, 'due_before')
-      const after = toIso(args.due_after, 'due_after')
-      const needle = args.q?.toLowerCase()
-
-      let tasks = cards.map(c => withLabels(serializeTask(c)!, labels))
-      tasks = tasks.filter(t => {
-        if (args.column_id && t.column_id !== args.column_id) return false
-        if (args.priority && t.priority !== args.priority) return false
-        if (args.responsible_id && !t.responsibles.some(r => r?.id === args.responsible_id)) return false
-        if (before && !(t.end_date && t.end_date <= before)) return false
-        if (after && !(t.end_date && t.end_date >= after)) return false
-        if (needle && !`${t.title ?? ''}\n${t.description ?? ''}`.toLowerCase().includes(needle)) return false
-        return true
+      if (!args.project_id && !args.sprint_id) throw new UserError('Informe project_id ou sprint_id.')
+      const raw = await ctx.gw.get<Page<RawCard>>('/cards/page', {
+        projectId: args.project_id, sprintId: args.sprint_id,
+        backlog: args.backlog === undefined ? undefined : String(args.backlog),
+        columnId: args.column_id, responsibleId: args.responsible_id, priority: args.priority,
+        dueBefore: toIso(args.due_before, 'due_before'), dueAfter: toIso(args.due_after, 'due_after'),
+        q: args.q, fields: args.fields ?? 'summary', cursor: args.cursor, limit: args.limit,
       })
-      const page = paginate(tasks, args.cursor, args.limit)
+      const page = { ...raw, items: raw.items.map(card => withLabels(serializeTask(card)!)) }
       if (args.fields !== 'full') return { ...page, items: page.items.map(summarize) }
 
       // Anexos só da página, pelo file-service; se ele falhar, a lista sai sem anexos e avisa.

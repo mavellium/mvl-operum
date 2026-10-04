@@ -49,7 +49,7 @@ function stopped(entry: RawEntry) {
 async function moveToInProgress(ctx: TenantContext, card: RawCard): Promise<{ id: string; title: string } | null> {
   const sprintId = card.sprintId ? String(card.sprintId) : null
   if (!sprintId) return null
-  const columns = await ctx.gw.get<RawColumn[]>(`/sprints/${sprintId}/columns`)
+  const columns = await ctx.gw.get<RawColumn[]>(`/sprints/${sprintId}/columns`, { timeEntries: 'summary' })
   const target = columns.find(c => String(c.title).trim().toLowerCase() === 'em andamento')
   if (!target) return null
   const current = columns.find(c => c.id === card.sprintColumnId)

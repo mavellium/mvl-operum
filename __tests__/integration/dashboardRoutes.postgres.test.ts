@@ -8,6 +8,7 @@ import type { INestApplication } from '../../sprint-service/node_modules/@nestjs
 import prisma from '@/lib/prisma'
 import { cookies } from 'next/headers'
 import { DashboardModule } from '../../sprint-service/src/dashboard/dashboard.module'
+import { CardModule } from '../../sprint-service/src/card/card.module'
 import { InternalAuthGuard } from '../../sprint-service/src/guards/internal-auth.guard'
 import { createGatewayApp } from '../../api-gateway/src/app'
 import { POST as authorize } from '@/app/api/internal/authorize/route'
@@ -45,7 +46,7 @@ describe.skipIf(!testUrl)('BFF → gateway real → controller real → PostgreS
     if (url.pathname !== '/operum_dashboard_test' || !['localhost', '127.0.0.1'].includes(url.hostname) || process.env.DATABASE_URL !== testUrl) throw new Error('Use exclusivamente o banco local operum_dashboard_test com as duas variáveis iguais')
     vi.stubEnv('INTERNAL_API_KEY', key)
     vi.stubEnv('SESSION_SECRET', secret)
-    nest = await NestFactory.create(DashboardModule, { logger: false })
+    nest = await NestFactory.create({ module: DashboardModule, imports: [CardModule] }, { logger: false })
     nest.useGlobalGuards(new InternalAuthGuard(nest.get(Reflector)))
     await nest.listen(0, '127.0.0.1')
     vi.stubEnv('SPRINT_SERVICE_URL', await nest.getUrl())
@@ -102,6 +103,34 @@ describe.skipIf(!testUrl)('BFF → gateway real → controller real → PostgreS
   afterAll(async () => {
     await Promise.all([nest?.close(), ...[gateway, authServer].filter(Boolean).map(server => new Promise<void>(resolve => server.close(() => resolve()))), prisma.$disconnect(), sprintDb.$disconnect()])
     vi.unstubAllEnvs()
+  })
+
+  it('página de tarefas passa pelo gateway/controller/banco reais com escopo de projeto e limit', async () => {
+    const first = await get(`/cards/page?projectId=${projectId}&limit=2`, { 'x-authorized-projects': foreignProjectId })
+    expect(first.status).toBe(200)
+    const page = await first.json()
+    expect(page.total).toBe(3)
+    expect(page.items).toHaveLength(2)
+    expect(page.items.every((card: { title: string }) => !/Privado|inconsistente|tenant|Excluído/.test(card.title))).toBe(true)
+    const next = await get(`/cards/page?projectId=${projectId}&limit=2&cursor=${encodeURIComponent(page.next_cursor)}`)
+    expect(next.status).toBe(200)
+    const last = await next.json()
+    expect(last.items).toHaveLength(1)
+    expect(last.next_cursor).toBeNull()
+    expect(new Set([...page.items, ...last.items].map(card => card.id)).size).toBe(3)
+    expect((await get(`/cards/page?sprintId=${sprintId}&limit=1`)).status).toBe(200)
+    expect((await get(`/cards/page?projectId=${projectId}&limit=201`)).status).toBe(400)
+  })
+
+  it('página recusa credencial ausente, sprint/projeto privados, cursor de outros filtros e revogação', async () => {
+    expect((await fetch(`${base}/cards/page?projectId=${projectId}`)).status).toBe(401)
+    expect((await get(`/cards/page?sprintId=${hiddenSprintId}`)).status).toBe(403)
+    expect((await get(`/cards/page?projectId=${foreignProjectId}`)).status).toBe(403)
+    expect((await get(`/cards/page?projectId=${projectId}&sprintId=${foreignSprintId}`)).status).toBe(403)
+    const first = await (await get(`/cards/page?projectId=${projectId}&limit=1`)).json()
+    expect((await get(`/cards/page?projectId=${projectId}&q=diferente&cursor=${encodeURIComponent(first.next_cursor)}`)).status).toBe(400)
+    await prisma.userProject.deleteMany({ where: { projectId, userId } })
+    expect((await get(`/cards/page?projectId=${projectId}`)).status).toBe(403)
   })
 
   it('global usa contrato completo e soma só registros autorizados', async () => {

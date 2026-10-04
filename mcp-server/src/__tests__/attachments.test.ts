@@ -206,6 +206,19 @@ describe('leitura dos anexos (vêm do file-service)', () => {
     expect((summary.items as Record<string, unknown>[])[0]).not.toHaveProperty('attachments')
   })
 
+  it('list_tasks full busca anexos exclusivamente dos IDs da página', async () => {
+    const project_id = h.op.projects[0].id
+    await h.call('operum_create_task', { project_id, title: 'Outro card' })
+    h.op.calls.length = 0
+    const page = await h.call('operum_list_tasks', { project_id, fields: 'full', limit: 1 })
+    const ids = (page.items as { id: string }[]).map(card => card.id)
+    expect(ids).toHaveLength(1)
+    const files = h.op.calls.filter(call => call.path === '/files/by-cards')
+    expect(files).toHaveLength(1)
+    expect(files[0].query?.cardIds).toBe(ids.join(','))
+    expect(h.op.calls.some(call => call.path === '/cards/backlog')).toBe(false)
+  })
+
   it('se o file-service falhar, get_task responde sem anexos e avisa', async () => {
     h.op.failWhen = (_m, path) => (path === '/files/by-cards' ? Object.assign(new Error('boom'), { status: 500 }) : null)
     const res = await h.call('operum_get_task', { task_id: taskId })

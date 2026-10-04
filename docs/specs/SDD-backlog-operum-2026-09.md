@@ -832,12 +832,12 @@ Conferência ao vivo em 30/09/2026: 79 cards no projeto, sem outra página de re
 
 | Item | Card no Operum | Prioridade | Status |
 |---|---|---|---|
-| 9.1 | Preservar vínculo com projeto e atomicidade ao excluir uma sprint (`cmuo1gdyc002901ndubbhff73`) | alta | Implementado nesta entrega; aguardando revisão |
-| 9.2 | Garantir timer único sob concorrência e parada idempotente (`cmuo1gmkx002b01ndq67spd28`) | alta | Pendente |
+| 9.1 | Preservar vínculo com projeto e atomicidade ao excluir uma sprint (`cmuo1gdyc002901ndubbhff73`) | alta | Integrado na PR #45 |
+| 9.2 | Garantir timer único sob concorrência e parada idempotente (`cmuo1gmkx002b01ndq67spd28`) | alta | Integrado na PR #46 |
 | 9.3 | Tornar movimentação de card, histórico e ordenação uma operação atômica (`cmuo1gmoo002d01ndf42zbz7f`) | alta | Integrado na PR #47 |
 | 9.4 | Substituir macrofases sem janela de perda de dados (`cmuo1gmrs002f01ndhl51fd03`) | alta | Integrado na PR #48 |
-| 9.5 | Restaurar contratos dos dashboards global e por sprint, com teste integrado de rota (`cmuo1gmu4002h01ndvuxtgkht`) | alta | Implementado nesta entrega; aguardando revisão |
-| 9.6 | Paginar tarefas no serviço de origem e reduzir varreduras MCP (`cmuo1gmvx002j01ndsdfhjthj`) | media | Pendente |
+| 9.5 | Restaurar contratos dos dashboards global e por sprint, com teste integrado de rota (`cmuo1gmu4002h01ndvuxtgkht`) | alta | Integrado na PR #49 |
+| 9.6 | Paginar tarefas no serviço de origem e reduzir varreduras MCP (`cmuo1gmvx002j01ndsdfhjthj`) | media | Implementada nesta entrega; aguardando revisão |
 | 9.7 | Consolidar serviços legados e definir fronteiras de domínio verificáveis (`cmuo1gn0b002l01nd62w0nvb1`) | media | Pendente |
 
 ### 9.1 Preservar vínculo com projeto e atomicidade ao excluir uma sprint
@@ -914,7 +914,7 @@ Conferência ao vivo em 30/09/2026: 79 cards no projeto, sem outra página de re
 
 ### 9.5 Restaurar contratos dos dashboards global e por sprint, com teste integrado de rota
 
-**Card:** `cmuo1gmu4002h01ndvuxtgkht`. **Prioridade:** alta. **Status:** implementado nesta entrega; aguardando revisão.
+**Card:** `cmuo1gmu4002h01ndvuxtgkht`. **Prioridade:** alta. **Status:** integrado na PR #49.
 
 **Avaliação A5 · Arquitetura e código**
 
@@ -932,7 +932,9 @@ Conferência ao vivo em 30/09/2026: 79 cards no projeto, sem outra página de re
 
 ### 9.6 Paginar tarefas no serviço de origem e reduzir varreduras MCP
 
-**Card:** `cmuo1gmvx002j01ndsdfhjthj`. **Prioridade:** media. **Status:** pendente.
+**Card:** `cmuo1gmvx002j01ndsdfhjthj`. **Prioridade:** media. **Status:** implementada nesta entrega; aguardando revisão.
+
+Entrega: `GET /cards/page`, filtros/cursor na origem, MCP sem varredura e resumo opcional de tempos no quadro. Semântica de concorrência e medição reproduzível em `docs/operations/task-pagination.md`.
 
 **Avaliação A6 · Arquitetura e código**
 
