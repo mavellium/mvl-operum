@@ -238,3 +238,16 @@ Ao substituir uma decisão, manter o texto histórico, alterar seu status e liga
 - **Consequências:** operação usa mais updates dentro de uma única transação; conflito esgotado exige retry do cliente. Não repara órfãos históricos nem modifica comentários, tempos ou cards excluídos. A atomicidade de outras mutações permanece no SDD 9.3.
 - **Condições de revisão:** sprints cujo volume exceda o timeout padrão da transação; coordenação do backlog com todas as mutações no SDD 9.3; evidência do operador para recuperação de dados antigos.
 - **Referências:** SDD 9.1; `sprint-service/src/sprint/sprint.service.ts`, `__tests__/integration/sprintDeletion.postgres.test.ts`, `.github/workflows/sprint-integrity.yml`.
+
+
+## ADR-016 — Índice parcial de timer ativo e parada condicional idempotente
+
+- **Data do registro:** 2026-10-04.
+- **Status:** implementada nesta entrega, aguardando revisão; sem execução em produção.
+- **Contexto:** a leitura seguida de insert permitia dois timers ativos do mesmo usuário. Repetir stop substituía o fim e a duração já encerrados. Duplicados históricos podem existir, mas não houve inspeção de produção e o banco não determina o período real de trabalho.
+- **Escolha:** índice único parcial em TimeEntry por userId para registros ativos não excluídos; pré-verificação e criação sob lock na migration do app. Duplicados abortam com rollback, exigindo revisão específica do operador. Start traduz colisão do índice em 409. Stop faz compare-and-set por estado ativo, proprietário e tenant e retorna os valores persistidos nos retries.
+- **Justificativa:** proteger a regra entre múltiplas instâncias e clientes, preservar períodos/histórico sem inferir dados de trabalho e evitar atualização repetida de horas já contabilizadas. O adapter PostgreSQL pode reportar nome do índice; a tradução de erro reconhece essa evidência sem mascarar outras violações.
+- **Alternativas consideradas nesta entrega:** apenas consulta prévia ou mutex em memória (não garantem concorrência entre instâncias); índice único incondicional (impede histórico/manual); recalcular stop em cada retry (muda horas); encerrar duplicados automaticamente (não há evidência de qual intervalo representa trabalho real); manter transação aberta entre chamadas HTTP (não é necessária).
+- **Consequências:** migration deve preceder a nova imagem do serviço no deploy autorizado. Dados duplicados exigem diagnóstico, plano e reparo autorizado antes de migrate deploy; nenhum histórico é corrigido nesta entrega. Criação convencional do índice bloqueia escritas durante a janela. Timer já ativo passa a devolver 409, aceito pelos clientes atuais; MCP mantém sua opção stop_running e idempotência existente por tarefa. A parada condicional não muda os contratos de tempo manual.
+- **Condições de revisão:** modelo de múltiplos timers simultâneos, mudança de propriedade de usuário ou necessidade de criação concorrente do índice em banco de maior volume. Consolidar módulo local legado no SDD 9.7.
+- **Referências:** SDD 9.2; migration `20261004010000_unique_running_timer`; `sprint-service/src/time-entry/time-entry.service.ts`; `__tests__/integration/timerIntegrity.postgres.test.ts`; `.github/workflows/sprint-integrity.yml`; `docs/operations/timer-integrity.md`.

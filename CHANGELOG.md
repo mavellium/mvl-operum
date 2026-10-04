@@ -9,6 +9,11 @@ funcionalidade depois disso é uma versão MINOR.
 
 ## [Não lançado]
 
+## [1.12.2] — 2026-10-04
+- **Timer (SDD 9.2):** um único timer ativo por usuário, protegido por índice parcial no banco. Inícios concorrentes retornam conflito previsível; repetir ou concorrer a parada preserva exatamente o intervalo já encerrado, sem duplicar horas.
+- **Migration:** pré-verificação de duplicados ativos com aborto seguro, sem alterar automaticamente tempos históricos. Procedimento de diagnóstico e revisão documentado para o operador.
+- **Validação:** check de integridade ampliado com PostgreSQL real para concorrência de start/stop, rollback, índice fora do serviço e isolamento entre usuários/instituições.
+
 ## [1.12.1] — 2026-10-04
 - **Integridade (SDD 9.1):** exclusão de sprint transfere os cards ativos ao backlog do mesmo projeto e exclui logicamente a sprint em uma única transação. Cards criados apenas com sprint preservam acesso, comentários e tempos; vínculos de outro projeto impedem a exclusão. Transferência ordenada ao final do backlog e retries limitados para conflitos concorrentes.
 - **Validação:** novo check com PostgreSQL real verifica transferência, rollback após falha, isolamento e exclusões concorrentes.

@@ -188,6 +188,8 @@ model Comment {
 
 // ── Time Entries ──────────────────────────────────────────
 
+// Partial uniqueness for active timers lives in migration 20261004010000_unique_running_timer.
+// userId is unique only when isRunning=true and deletedAt IS NULL (manual/stopped entries remain unrestricted).
 model TimeEntry {
   id          String    @id @default(cuid())
   userId      String
