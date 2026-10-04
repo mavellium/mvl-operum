@@ -1,0 +1,338 @@
+[
+  {
+    "id": "cmulkmlbr000d01nxbit9kocg",
+    "title": "Definir o que o usuário tem acessos",
+    "description": "",
+    "status": "Backlog"
+  },
+  {
+    "id": "cmulkn0if000e01nxquxmrokg",
+    "title": "Usuários comuns tem acesso a todos os documentos",
+    "description": "",
+    "status": "Backlog"
+  },
+  {
+    "id": "cmulkoxit000f01nx0dr1229k",
+    "title": "Usuário comum pode editar e gerar uma nova versão, que será aprovada previamente pelo gerente do projeto",
+    "description": "Pode fazer tudo na documentação e deve ser registrado nos logs",
+    "status": "Backlog"
+  },
+  {
+    "id": "cmuk8amy3000001jwu4r6i0ai",
+    "title": "A EAP só pode ser organizada na forma normal e na vertical",
+    "description": "Segue em anexo o exemplo da vertical, a horizontal já está funcionando",
+    "status": "Backlog"
+  },
+  {
+    "id": "cmuk8anq5000201jwual5lyqs",
+    "title": "Adicionar plano de custo",
+    "description": "",
+    "status": "Backlog"
+  },
+  {
+    "id": "cmuk8etuj001401jwbqvrgd00",
+    "title": "MCP: permitir copiar/importar para dentro de um projeto existente",
+    "description": "Hoje, `copy_project` e `import_project` sempre criam um projeto novo, e o nome precisa ser único no tenant. Para mesclar dados em um projeto que já existe, foi preciso criar as tarefas uma a uma, em 19 chamadas.\n\nProposta:\n- Adicionar `target_project_id` ao `copy_project` e ao `import_project`\n- Casar sprints e colunas pelo nome\n- Pular tarefas com título igual ou muito parecido, e listar as puladas no relatório",
+    "status": "Backlog"
+  },
+  {
+    "id": "cmuk8z35t001e01jwgixj7ssy",
+    "title": "EAP: modos de visualização \"WBS Chart View Details\" e \"WBS Hours and Cost View\"",
+    "description": "Incluir na EAP os modos de visualização mostrados no vídeo:\n- WBS Chart View Details\n- WBS Hours and Cost View\n\nVídeo: https://youtu.be/YL4v4YgHMW4?is=ZYpRPrhVmwJubjPD (modos de visualização a partir de 1:59)\n\n_Origem: Ajustes e melhorias Operum — 26/09/26 (Prof. Fábio), item 5_",
+    "status": "Backlog"
+  },
+  {
+    "id": "cmuk8z5xf001g01jwag73u1uu",
+    "title": "Adicionar visualização de Gráfico de Gantt do projeto",
+    "description": "Adicionar ao sistema a visualização do projeto em Gráfico de Gantt (Gantt Chart View).\n\nVídeo de referência: https://youtu.be/YL4v4YgHMW4?is=ZYpRPrhVmwJubjPD (a partir de 2:56). O Prof. Fábio recomenda assistir o vídeo completo.\n\n_Origem: Ajustes e melhorias Operum — 26/09/26 (Prof. Fábio), item 6_",
+    "status": "Backlog"
+  },
+  {
+    "id": "cmuk8zg1o001o01jwvh6ssr3x",
+    "title": "Documentos: corrigir Atas conforme o modelo",
+    "description": "Corrigir o documento de Atas, seguindo o mais próximo possível do modelo enviado pelo Prof. Fábio.\n\nO documento de ajustes traz, junto deste item, um texto de exemplo com as etapas do projeto (1ª a 11ª etapa: montagem da equipe, telas no Figma, login, Home, cadastro de escolas, web scraping + API QEdu, dashboards, pesquisas, documentação, publicação na AWS da Fulltime, entrega). Usar como referência de conteúdo esperado.\n\n_Origem: Ajustes e melhorias Operum — 26/09/26 (Prof. Fábio), item 7.4_",
+    "status": "Backlog"
+  },
+  {
+    "id": "cmuk8zaa6001k01jw7s7fbnc0",
+    "title": "Documentos: corrigir Termo de Abertura conforme o modelo",
+    "description": "Corrigir o documento Termo de Abertura, o mais próximo possível do modelo do Prof. Fábio (anexo \"05 Aula GP - Termo de abertura - Exemplo\").\n\n**Estrutura do modelo, na ordem:**\n1. Logo do projeto\n2. Título: \"Termo de Abertura de Projeto – project charter\"\n3. Cabeçalho: instituição/curso/termo/semestre, nome do projeto, elaborado por (nome – função), versão, aprovado por (nome – função), assinatura, data de aprovação\n4. **Justificativa do projeto**\n5. **Objetivo(s) do projeto**\n6. **Descrição do produto do projeto** (lista)\n7. **Premissas (hipóteses) e restrições**, em duas colunas lado a lado\n8. **Macro fases, prazos e custo**: tabela Macro fase | Data limite | Custo, numerada (1.1, 1.2…), com linha de **Custo total**\n9. **Principais envolvidos**: Instituição de ensino, Professor, Integrantes do grupo (nome – função), Patrocinador, Fornecedores\n10. **Designação de gerente**: gerente do projeto e **limites de autoridade**\n11. Rodapé \"© 02_Project Charter\" e numeração de página\n\nOs campos já existem no charter do projeto no Operum (justificativa, objetivos, descricao_produto, premissas, restricoes, limites_autoridade, macro_fases). O ajuste é de layout e ordem.\n\n_Origem: Ajustes e melhorias Operum — 26/09/26 (Prof. Fábio), item 7.2_",
+    "status": "Backlog"
+  },
+  {
+    "id": "cmulks6zp000g01nx8ghyq541",
+    "title": "Usuário Comum em Planilha de Custos, pode editar o valor realizado que estiver com ele no Elaborado por",
+    "description": "Colocar uma diferenciação dos que podem ser editados e dos que não podem, pela cor",
+    "status": "Backlog"
+  },
+  {
+    "id": "cmulhtc8n000701nxxz8h3mmi",
+    "title": "Termo de Abertura: Formulário para digitar e botão para gerar o documento",
+    "description": "O Cliente não quer visualizar na mesma tela a edição e o documento pronto\nEle quer também que salve o histórico de alterações no documento",
+    "status": "Backlog"
+  },
+  {
+    "id": "cmuk8z8d7001i01jw9682ytt9",
+    "title": "Documentos: Formulário de Partes Interessadas em paisagem, igual ao modelo",
+    "description": "Gerar o Formulário de Partes Interessadas em formato **paisagem**, o mais próximo possível do modelo do Prof. Fábio (anexo \"06 Aula GP - Formulario de Stakeholder - Exemplo\").\n\n**Estrutura do modelo:**\n1. Logo do projeto no topo\n2. Título: \"Formulário de Stakeholders\"\n3. Cabeçalho em tabela de 2 colunas:\n   - Instituição / curso / termo / semestre (ex.: \"Fatec Garça – ADS Noturno – 6º termo – 1º Semestre\")\n   - Nome do projeto\n   - Gerente do projeto (nome – função)\n   - Elaborado por (nome – função)\n   - Aprovado por (nome – função) | Assinatura\n   - Versão | Data de aprovação\n4. Tabela de stakeholders com 8 colunas: **Ref | Nome | Empresa/Equipe | Cargo/Competência | e-mail | Telefone/Celular | Endereço | Observação**\n5. Rodapé: \"© 03_Form Stakeholders\"\n\n_Origem: Ajustes e melhorias Operum — 26/09/26 (Prof. Fábio), item 7.1_",
+    "status": "Backlog"
+  },
+  {
+    "id": "cmulkz13u000h01nxutpm5k37",
+    "title": "O acesso as permissões do usuário é feita em Funções e no próprio usuário",
+    "description": "Em funções:\nO usuário é um gerente de projeto -> Acesso total\nTechlead tem algumas permissões de edição\nPO -> tem algumas permissões\n\nQuem determina essas permissões será o admin quando cadastrar uma função\n\nUsuário:\nAlguns usuários podem ter permissões a mais ou a menos que a função que ele está cadastrado, então em todos os usuários eu posso editar manualmente as permissões deles\n\n---\n\nEssas regras de funções é global, a do usuário pode ser tanto global quanto por projeto",
+    "status": "Backlog"
+  },
+  {
+    "id": "cmulmq7ln000i01nxgetvaocn",
+    "title": "Ao baixar uma planilha de custos, o subtotal tem que ser alinhado a direita",
+    "description": "",
+    "status": "Backlog"
+  },
+  {
+    "id": "cmulkiow3000b01nxcepl65z8",
+    "title": "Validação de horas em horas por dia, no cadastro do stackholder",
+    "description": "",
+    "status": "Backlog"
+  },
+  {
+    "id": "cmulkk50u000c01nxx4ef4zf9",
+    "title": "Redefinir senha > Adicionar um olho para visualizar senhas",
+    "description": "",
+    "status": "Backlog"
+  },
+  {
+    "id": "cmul8z588003101jwcvv98dxj",
+    "title": "Integração com o Zoom: transformar pedidos da call em cards com aprovação",
+    "description": "**Objetivo:** depois de cada call no Zoom, o Operum traz automaticamente a lista de tarefas que saíram da reunião. O usuário escolhe quais viram cards e em qual projeto, e elas são criadas de uma vez. Hoje isso é feito à mão.\n\n**Exemplo de uso (Vinícius):** o cliente pede \"faz a alteração A, B e C\" na call. Depois da call, o Operum mostra os itens A, B e C. O usuário responde algo como \"manda A e C para o projeto Fechai\" e os cards são criados.\n\n**Fluxo:**\n1. **Conexão com o Zoom** (OAuth, por usuário, nas configurações do Operum).\n2. **Captura:** o webhook do Zoom avisa quando o resumo ou a transcrição da reunião fica pronto. O Operum busca:\n   - o resumo do Zoom AI Companion, se a conta tiver;\n   - senão, a transcrição da gravação em nuvem.\n3. **Extração por IA:** a partir do resumo ou da transcrição, gerar uma **lista de itens de ação**, cada um com:\n   - título;\n   - descrição com o contexto da call (quem pediu e o trecho relevante);\n   - projeto sugerido (pelo nome do cliente ou dos participantes);\n   - responsável sugerido;\n   - prioridade e prazo, se foram mencionados.\n4. **Tela de revisão (\"Caixa de entrada da reunião\"):**\n   - lista com checkbox em cada item;\n   - edição rápida de título, projeto, responsável e prazo;\n   - botões \"Criar selecionados\" e \"Descartar\".\n\n   Nada vira card sem aprovação.\n5. **Aviso:** notificação quando a lista da reunião estiver pronta (no Operum e por e-mail ou WhatsApp).\n6. **Rastreabilidade:** cada card criado guarda o link da reunião e o trecho de origem.\n\n**Casos para tratar:**\n- Reunião sem gravação ou transcrição (AI Companion desligado): avisar o usuário de que não há o que processar.\n- Itens duplicados de cards que já existem: sugerir vincular em vez de criar outro.\n- Reuniões com vários clientes ou projetos: permitir escolher o projeto item a item.\n\n**Relacionado:** a mesma captura da call vai alimentar o resumo de reuniões de vendas no CRM Twenty (card separado no tenant Mavellium). Vale reaproveitar a conexão com o Zoom e a extração.\n\n**Critério de aceite:** fazer uma call de teste com 3 pedidos explícitos. Em alguns minutos após o fim, os 3 itens aparecem na tela de revisão, e ao aprovar 2 deles, 2 cards são criados no projeto escolhido, com o link da reunião.",
+    "status": "Backlog"
+  },
+  {
+    "id": "cmungoum9000c01ndcsrnazwt",
+    "title": "Anexos: melhorar contraste do campo de editar o nome",
+    "description": "Ao editar o nome de um anexo, o texto fica cinza-claro e se mistura com o fundo, difícil de ler.\n\n**Ajustar:**\n- Texto do input na cor principal de texto do tema (não a cor de placeholder/secundária)\n- Contraste mínimo de 4.5:1 (WCAG AA) nos temas claro e escuro\n- Borda/foco visível no campo em edição",
+    "status": "Backlog"
+  },
+  {
+    "id": "cmunc1cwi001p01s2saodrzgs",
+    "title": "Stakeholders: permitir horas fracionadas em \"horas por dia\" ao editar membro",
+    "description": "## Problema\nEm **Stakeholders**, ao editar um membro, o campo **horas por dia** só aceita valores inteiros (ex.: `8`). Não é possível informar `8,5` (8h30).\n\n## Esperado\n- Aceitar horas quebradas no campo (ex.: `8,5` / `8.5`, idealmente também `8:30`).\n- Persistir o valor decimal no backend (ajustar tipo do campo se for inteiro).\n- Cálculos de capacidade/alocação que usam esse campo devem considerar o valor fracionado.\n\n## Critérios de aceite\n- [ ] Input aceita decimais (step 0.5 ou livre) sem erro de validação\n- [ ] Valor salvo e exibido corretamente após recarregar\n- [ ] Cálculos dependentes refletem o valor fracionado",
+    "status": "Backlog"
+  },
+  {
+    "id": "cmunhin8f001801ndqc89ymsl",
+    "title": "MCP: enviar arquivos grandes/privados como anexo (URL de upload de uso único)",
+    "description": "Ao anexar os modelos do Prof. Fábio (Termo de abertura em PDF, Formulário de Stakeholder em .doc, Ajustes em .docx), os arquivos estavam no Google Drive, privados. `upload_attachment` por `url` exige URL pública, e por base64 o arquivo inteiro passa pela conversa, o que é inviável acima de ~20 KB. Por isso foram anexados como **link do Drive**, e só abre para quem tem acesso à pasta.\n\n**Proposta:**\n- `operum_create_upload_url(task_id, file_name, mime_type)` → devolve uma URL pré-assinada de uso único (PUT) para o agente enviar o arquivo com `curl`, sem passar pela conversa\n- Endpoint público na assinatura (ver card do bug `minio:9000`)",
+    "status": "Backlog"
+  },
+  {
+    "id": "cmubyzrhm001201mle34ry03o",
+    "title": "Em EAP, adicionar o jeito de visualizar que está no vídeo mandado pelo sor Fábio",
+    "description": "",
+    "status": "A Fazer"
+  },
+  {
+    "id": "cmunb6kzt000v01s2hxn0tmni",
+    "title": "MCP: URL de upload de uso único para anexar arquivo que está no computador",
+    "description": "**Problema:** o `operum_upload_attachment` recebe o arquivo em `content_base64` ou por `url` pública. Em base64, o modelo precisa escrever o arquivo inteiro dentro da chamada da tool. Funciona para arquivo pequeno, mas não para uma imagem local de centenas de KB (ex.: a imagem da EAP que estava no .docx). Arquivo que está só no computador não tem URL pública.\n\n**Proposta:** tool `operum_create_upload_link(task_id, file_name?)`.\n- Confere a tarefa no tenant e devolve `upload_url`, `expires_at` e o comando pronto: `curl -F \"file=@<caminho>\" \"<upload_url>\"`.\n- O Claude Code roda o `curl` no terminal, e o arquivo vai direto para o mcp-server, sem passar pelo modelo.\n- O mcp-server ganha a rota pública `POST /uploads/:token`, que repassa ao `/files/upload` do gateway com o token do usuário. Mesmos tipos e mesmo limite de 50 MB.\n\n**Segurança:**\n- Token cifrado (AES-256-GCM) com o PAT, a tarefa, o tenant e a validade: 10 minutos.\n- Uso único: nonce guardado em memória até expirar.\n- Só serve para enviar um arquivo àquela tarefa.\n\n**Configuração nova em produção:** `MCP_UPLOAD_SECRET` (32 bytes aleatórios) e `MCP_PUBLIC_URL` no `.env` da VPS.\n\n**Critério de aceite:** o Claude anexa ao card da EAP uma imagem local de pelo menos 500 KB com um `curl`. O mesmo link não funciona uma segunda vez nem depois de 10 minutos.\n\nDetalhes no SDD (`docs/specs/SDD-backlog-operum-2026-09.md`, item 8.3).",
+    "status": "A Fazer"
+  },
+  {
+    "id": "cmuk8asvz000c01jwkcwlneh0",
+    "title": "Integrar Operum com MCP Claude",
+    "description": "",
+    "status": "Em andamento"
+  },
+  {
+    "id": "cmulkhcf3000a01nx1du9oock",
+    "title": "Ao cadastrar um novo Stackholder, já trazer com a tela correta para não ter que editar novamente",
+    "description": "",
+    "status": "Em andamento"
+  },
+  {
+    "id": "cmubyyqv9001101ml09y4xy1g",
+    "title": "Adicionar documento novo: Estrutura Analítica do Projeto (EAP)",
+    "description": "",
+    "status": "Em andamento"
+  },
+  {
+    "id": "cmuk8bmmd000q01jwkgug9bed",
+    "title": "Após adicionar Responsável a uma tarefa, e abrir novamente, a foto de perfil desse responsável some",
+    "description": "",
+    "status": "Em teste"
+  },
+  {
+    "id": "cmuk8b4st000i01jwba6fjypw",
+    "title": "Corrigir adicionar anexo",
+    "description": "",
+    "status": "Em teste"
+  },
+  {
+    "id": "cmuk8bwru000s01jw5fqsvcx5",
+    "title": "Usar 100% da tela em sprints",
+    "description": "",
+    "status": "Em teste"
+  },
+  {
+    "id": "cmuk8bfhj000m01jwagari01p",
+    "title": "Em EAP, o ícone de expansão deve estar na parte inferior central e deixar somente o ícone de +",
+    "description": "",
+    "status": "Em teste"
+  },
+  {
+    "id": "cmuk8c0ya000u01jwgg1ji2z9",
+    "title": "Ao mover um card para cima dentro de uma coluna, a tela dá scroll para a direita e não respeita a posição que eu coloquei o card",
+    "description": "",
+    "status": "Em teste"
+  },
+  {
+    "id": "cmuk8c5g6000w01jwp1pjp163",
+    "title": "Ao criar card em backlog, responsáveis fica Carregando... infinito",
+    "description": "",
+    "status": "Em teste"
+  },
+  {
+    "id": "cmuk8zcy0001m01jw4t78tnu2",
+    "title": "Documentos: Estrutura Analítica do Projeto dá erro interno",
+    "description": "Ao gerar o documento Estrutura Analítica do Projeto (EAP), o sistema retorna erro interno. Corrigir.\n\nRelacionado ao card \"Adicionar documento novo: Estrutura Analítica do Projeto (EAP)\" (Sprint 1, Em andamento).\n\n_Origem: Ajustes e melhorias Operum — 26/09/26 (Prof. Fábio), item 7.3_",
+    "status": "Em teste"
+  },
+  {
+    "id": "cmulhvn0i000801nxp5enr7h9",
+    "title": "Ao pesquisar por um card, aparece mas quando eu clico ele não abre o card que eu cliquei",
+    "description": "",
+    "status": "Em teste"
+  },
+  {
+    "id": "cmuk8ep8a001201jwp7rlqwg7",
+    "title": "MCP: list_tasks e export_project falhando com \"Operum indisponível\"",
+    "description": "Em 27/09, `operum_list_tasks` e `operum_export_project` retornaram \"Operum indisponível no momento, tente novamente\" repetidamente, nos dois tenants, por cerca de 30 minutos. Enquanto isso, `list_projects` e `get_project` funcionavam normalmente.\n\n- Investigar a causa no log do servidor\n- Retornar a mensagem real do erro, não uma mensagem genérica",
+    "status": "Em teste"
+  },
+  {
+    "id": "cmuk8ao4x000401jw338lutzk",
+    "title": "Em Stackholders, na barra de pesquisa, quero poder adicionar um stackholder de uma forma mais fácil",
+    "description": "Ao digitar na barra de pesquisa deve trazer stackholder globais e as opções já existentes de criar stackholders",
+    "status": "Em teste"
+  },
+  {
+    "id": "cmuk8z0gb001c01jwmy04mm93",
+    "title": "Menu: trocar o nome \"Tenants\" por um termo melhor",
+    "description": "Encontrar um nome mais claro para \"Tenants\" no menu do sistema (sugestões: Instituições, Organizações, Espaços de trabalho).\n\n_Origem: Ajustes e melhorias Operum — 26/09/26 (Prof. Fábio), item 4_",
+    "status": "Em teste"
+  },
+  {
+    "id": "cmuk8bizq000o01jw0mgh9x02",
+    "title": "Adicionar controle de seção, ao quebrar a url o usuário deverá refazer o login",
+    "description": "",
+    "status": "Em teste"
+  },
+  {
+    "id": "cmuk8yyex001a01jwe9zn9hux",
+    "title": "Ranking dos Membros: função dos stakeholders não aparece",
+    "description": "No ranking dos membros só aparece a função do Prof. Fábio (educador). A função dos demais stakeholders da equipe não é exibida.\n\n_Origem: Ajustes e melhorias Operum — 26/09/26 (Prof. Fábio), item 3_",
+    "status": "Em teste"
+  },
+  {
+    "id": "cmuk8ytzd001601jwew33zhr9",
+    "title": "Stakeholders: cadastro de funções deve ser global",
+    "description": "Após cadastrar os stakeholders e editar o cadastro para incluir os demais dados, o cadastro de funções não lista nada.\n\nAs funções precisam ser globais (valer para todos os projetos), sem ter que associar o cadastro a cada projeto novo.\n\n_Origem: Ajustes e melhorias Operum — 26/09/26 (Prof. Fábio), item 1_",
+    "status": "Em teste"
+  },
+  {
+    "id": "cmuk8aovu000801jws5we0m0w",
+    "title": "Visualização do minicard está horrível, muito díficil de identificar uma demanda",
+    "description": "Eu tenho que colocar o mouse dentro para ver a prioridade",
+    "status": "Em teste"
+  },
+  {
+    "id": "cmuk8b94e000k01jwpnwg6yd6",
+    "title": "Corrigir card enquanto estão fechados no kambam",
+    "description": "Tem que ter:\n- Título\n- Descrição\n- Prioridade\n- Responsáveis\n- Play/Stop (Timer)\n",
+    "status": "Em teste"
+  },
+  {
+    "id": "cmuk8b1gc000g01jwdwafv7nk",
+    "title": "Corrigir a barra de pesquisa do menu lateral",
+    "description": "Quero poder encontrar tarefas dentro dessa sprint primeiramente, depois dentro de outras sprints, e projetos, e pessoas (todos os cards que aquela pessoa seja um dos responsáveis)",
+    "status": "Em teste"
+  },
+  {
+    "id": "cmuk8ap9y000a01jwy310l0v3",
+    "title": "Quando estou dentro de uma sprint, ao pesquisar somente aparecem cards da sprint atual. Quero poder encontrar todos os cards de todas as sprints, mas tem que ser sinalizado de qual sprint é, status dela, responsável, prioridade, tempo",
+    "description": "",
+    "status": "Em teste"
+  },
+  {
+    "id": "cmuk8awxp000e01jwgpoaull7",
+    "title": "Ao adicionar um responsável a um card, eu preciso recarregar a página para poder mostrar que ele está vinculado, quero que não seja mais necessário essa ação de recarregar",
+    "description": "",
+    "status": "Em teste"
+  },
+  {
+    "id": "cmungorlj000a01nda3ra8kce",
+    "title": "Anexos: arquivo não abre, URL aponta para \"minio:9000\" (host interno)",
+    "description": "Ao clicar em um anexo de arquivo (ex.: `eap-menu-organizar.jpg` no card \"Em EAP, adicionar o jeito de visualizar...\") nada acontece. Depois de vários cliques no ícone, o navegador abre:\n\n`http://minio:9000/mvloperum-prod/uploads/cmubyzrhm001201mle34ry03o/5c0b3057-....jpg?X-Amz-...`\n\ne dá **Server Not Found**. O link pré-assinado é gerado com o endpoint **interno** do MinIO (nome do container Docker), que não existe fora do servidor.\n\n**Corrigir:**\n- Gerar a URL pré-assinada com o endpoint **público** do storage. O avatar do projeto já usa `https://storage-prod.operum.adm.br/mvloperum-prod/...`. Opção: um client S3 separado só para assinar, com `endpoint` público e `forcePathStyle`.\n- A assinatura precisa ser feita com o host público. Trocar o host na string depois de assinar invalida a URL.\n- Primeiro clique no anexo precisa abrir o arquivo. Hoje exige vários cliques.\n- Imagem: abrir em preview/lightbox no próprio card.\n\n**Critério de pronto:** clicar uma vez em `eap-menu-organizar.jpg` e ver a imagem, pelo Firefox, fora da rede do servidor.\n\nRelacionado: o `get_task` do MCP devolve anexos de arquivo sem `url`.",
+    "status": "Em teste"
+  },
+  {
+    "id": "cmucrl2lt000801o5wgke8v18",
+    "title": "Em Sprint: o Menu lateral está vindo o do admin",
+    "description": "",
+    "status": "Em teste"
+  },
+  {
+    "id": "cmuk8cfsj000y01jwm9jg3cja",
+    "title": "Ao clicar em iniciar tempo, a tarefa vai automaticamente para 'Em andamento' na sprint que em que ela foi clicada",
+    "description": "",
+    "status": "Em teste"
+  },
+  {
+    "id": "cmuk8yw80001801jwhjohi7eu",
+    "title": "Cadastro de Funções: \"Gerente de Projetos\" em duplicidade",
+    "description": "A função Gerente de Projetos aparece duplicada no cadastro de funções. Remover a duplicata e impedir nomes repetidos.\n\n_Origem: Ajustes e melhorias Operum — 26/09/26 (Prof. Fábio), item 2_",
+    "status": "Em teste"
+  },
+  {
+    "id": "cmuk8aoib000601jw7boyydcc",
+    "title": "Ao Escrever na descrição já salvar automaticamente, não pode perder o que foi escrito",
+    "description": "",
+    "status": "Em teste"
+  },
+  {
+    "id": "cmukeyk8j002001jwxlzrw40f",
+    "title": "Exibir e editar data de entrega (prazo) do card na interface",
+    "description": "**Problema:** quem usa o Operum não consegue ver nem definir a data de entrega (prazo) de um card pela interface. O Vinícius abriu Projetos → Sprint e o campo não aparece dentro do card.\n\n**Evidência:** a API já suporta o campo. Os campos `start_date` e `end_date` são aceitos em `create_task`/`update_task` e ficam gravados. Exemplo: o card \"🔴 Relatório Mensal de ROI no Fechai — ENTREGA 30/09 (P-79)\", no projeto Fechai do tenant Mavellium, foi criado via MCP com prazo em 30/09/2026 às 23h59, mas o usuário não vê esse prazo na tela. O problema é só de front-end.\n\n**O que fazer:**\n1. **Card aberto (detalhe):** mostrar e permitir editar os campos **Data de início** e **Data de entrega (prazo)**, com seletor de data e hora.\n2. **Card no quadro (sprint e backlog):** exibir o prazo em um selo compacto, por exemplo \"📅 30/09\".\n3. **Cores do prazo:**\n   - normal quando está no prazo;\n   - amarelo quando vence em até 2 dias;\n   - vermelho quando está atrasado e o card não foi concluído.\n4. **Criação rápida de card:** permitir já informar o prazo.\n5. **Filtros e ordenação:** \"vence esta semana\", \"atrasados\" e ordenar por prazo. A API já tem `due_before`/`due_after` em `list_tasks`.\n\n**Critério de aceite:** o usuário define, altera e remove o prazo de um card pela interface. O valor é o mesmo lido e gravado pela API, e o prazo aparece no card fechado e no aberto.\n\n**Origem:** pedido do Vinícius em 27/09/2026, ao cobrar o Márcio pela entrega do relatório do Fechai.",
+    "status": "Em teste"
+  },
+  {
+    "id": "cmunb6kpi000t01s2at5tr1ab",
+    "title": "Segurança: file-service não confere a instituição (tenant) dos anexos",
+    "description": "**Problema:** o api-gateway expõe `/files/*` a qualquer login (JWT) ou token (PAT). O file-service não confere se o card, o anexo ou o projeto pertencem à instituição de quem chama. Quem tiver o id de um card ou de um anexo de outra instituição consegue:\n- anexar arquivo ou link ao card dela;\n- listar, renomear, marcar como capa ou excluir os anexos dela;\n- trocar o logo de um projeto ou stakeholder dela (`POST /files/logo`, a chave no MinIO é previsível).\n\nNo app, `getAttachmentUrlAction`, `deleteAttachmentAction` e a renomeação conferem o card, mas não conferem se o anexo é desse card.\n\nAs tools novas do MCP (PR #27) já se protegem sozinhas. O furo continua para quem chama o gateway direto.\n\n**O que fazer:**\n1. **Card e anexo:** o file-service passa a exigir `x-tenant-id` e confere o tenant do card no sprint-service (`GET /cards/:id` com o tenant). Nas rotas por anexo, carrega o anexo, pega o `cardId` e confere. O `by-cards` só devolve anexos de cards do tenant.\n2. **Logo:** confere o projeto ou stakeholder no project-service.\n3. **Anexo pertence ao card:** as rotas por anexo recebem o `cardId` e recusam se o anexo não for desse card. O app passa a enviar o `cardId`.\n4. **Testes:** o file-service hoje não tem nenhum teste. Montar a infraestrutura de teste e cobrir o acesso de outro tenant em cada rota.\n\n**Critério de aceite:** com o login ou o token de uma instituição, toda rota `/files/*` responde 404 para card, anexo ou projeto de outra instituição, e o app continua anexando, listando, renomeando, marcando capa e excluindo normalmente.\n\nDetalhes no SDD (`docs/specs/SDD-backlog-operum-2026-09.md`, item 4.1).",
+    "status": "Em teste"
+  },
+  {
+    "id": "cmule2ku0004t01jwbf9qfbth",
+    "title": "Zerar os erros de TypeScript (tsc) já existentes",
+    "description": "`npx tsc -p tsconfig.check.json --noEmit` acusa 11 erros no app que já existiam antes da Fase 1. O build passa, mas os tipos escondem bugs (ex.: `a.card.sprint` pode ser null em /arquivos).\n\n**Arquivos com erro:**\n- `app/actions/projetos.ts`, `app/api/projects/[projetoId]/charter/route.ts` (macro-fases, `dataLimite`)\n- `app/arquivos/page.tsx` (sprint null)\n- `app/projetos/[projetoId]/sprints/[sprintId]/page.tsx`, `app/sprints/[sprintId]/page.tsx` (BacklogCard × SprintCard)\n- `components/auth/LoginForm.tsx`\n- `lib/custosCalc.ts`\n- `prisma/seed.ts`\n- `services/wbsService.ts`\n\nAlém disso, `tsconfig.check.json` volta a incluir os microsserviços NestJS, que acusam erros de decorator só por usarem o tsconfig errado.\n\n**O que fazer:**\n1. Corrigir os 11 erros sem `as any`.\n2. Excluir os microsserviços do `tsconfig.check.json`.\n3. Rodar o tsc no CI.\n\nDetalhes no SDD (`docs/specs/SDD-backlog-operum-2026-09.md`, item 2.7).",
+    "status": "Em teste"
+  },
+  {
+    "id": "cmunb6l4h000x01s2dy6tcrjt",
+    "title": "MCP: iniciar e parar o timer das tarefas",
+    "description": "**Problema:** a regra combinada em 29/09 é que, ao começar uma tarefa, o Claude move o card para \"Em andamento\" e inicia o timer, e ao abrir a PR para o timer. O MCP não tem nenhuma tool de tempo, então o timer não tem como correr. O sprint-service já tem as rotas: `POST /cards/:id/time-entries/start`, `POST /time-entries/:id/stop` e `POST /cards/:id/time-entries/manual`.\n\n**Entregar:**\n- `operum_start_timer(task_id, description?, stop_running?)`:\n  - inicia o timer do dono do token;\n  - como o app, move o card para \"Em andamento\" só se ele estiver numa coluna anterior;\n  - com `stop_running: true`, para antes o timer que estiver rodando em outra tarefa, porque só pode haver um por usuário.\n- `operum_stop_timer(task_id?)`: para o timer que está rodando e devolve a duração.\n- `operum_log_time(task_id, started_at, ended_at, description?)`: lança tempo manual.\n- `operum_get_task` passa a mostrar o tempo total e se há timer rodando.\n\n**Critério de aceite:** ao iniciar uma tarefa, o Claude chama `operum_start_timer`, o card vai para \"Em andamento\" com o timer correndo na tela, e ao abrir a PR o `operum_stop_timer` grava a duração no card.\n\nDetalhes no SDD (`docs/specs/SDD-backlog-operum-2026-09.md`, item 8.4).",
+    "status": "Em teste"
+  },
+  {
+    "id": "cmuk95b90001s01jwqcyb5y6v",
+    "title": "MCP: anexar imagens e links de vídeo em cards",
+    "description": "O MCP lê os anexos das tarefas, mas não consegue criar novos. Em 27/09, ao criar os cards do documento \"Ajustes e melhorias 26/09/26\", a imagem da EAP que estava no .docx não pôde ser anexada. Os links de vídeo foram parar só no texto da descrição.\n\nEm 28/09 a função foi dada como pronta, mas não apareceu para o Claude, mesmo depois de atualizar a lista de ferramentas.\n\n**Entregar:**\n- `operum_upload_attachment(task_id, file_name, mime_type, content_base64 | url)`, para imagens, PDFs e documentos\n- `operum_add_link(task_id, url, title?)`, para links de vídeo (YouTube etc.) aparecerem como anexo com preview\n- `operum_delete_attachment(attachment_id)`\n- Mensagem de erro clara para limite de tamanho e tipo não suportado\n\n**Critério de pronto:**\n- As tools aparecem na lista do MCP depois de reiniciar o servidor\n- O Claude anexa a imagem da EAP e os 2 vídeos do Prof. Fábio nos cards correspondentes (EAP e Gantt)",
+    "status": "Concluído"
+  },
+  {
+    "id": "cmuk8cjjf001001jw63atgrzg",
+    "title": "Título da Página deve ser o nome do projeto que o usuário estiver",
+    "description": "",
+    "status": "Concluído"
+  }
+]

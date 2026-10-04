@@ -1,0 +1,191 @@
+{
+  "tenant_id": "cmsrlbsqr0000bont7tli39o5",
+  "project_id": "cmthjgifu000b01s7025kwjio",
+  "date": "2026-09-30",
+  "cards": [
+    {
+      "key": "A1",
+      "id": "cmuo1gdyc002901ndubbhff73",
+      "title": "Preservar vínculo com projeto e atomicidade ao excluir uma sprint",
+      "priority": "alta",
+      "category": "Arquitetura e código",
+      "verified": true
+    },
+    {
+      "key": "A2",
+      "id": "cmuo1gmkx002b01ndq67spd28",
+      "title": "Garantir timer único sob concorrência e parada idempotente",
+      "priority": "alta",
+      "category": "Arquitetura e código",
+      "verified": true
+    },
+    {
+      "key": "A3",
+      "id": "cmuo1gmoo002d01ndf42zbz7f",
+      "title": "Tornar movimentação de card, histórico e ordenação uma operação atômica",
+      "priority": "alta",
+      "category": "Arquitetura e código",
+      "verified": true
+    },
+    {
+      "key": "A4",
+      "id": "cmuo1gmrs002f01ndhl51fd03",
+      "title": "Substituir macrofases sem janela de perda de dados",
+      "priority": "alta",
+      "category": "Arquitetura e código",
+      "verified": true
+    },
+    {
+      "key": "A5",
+      "id": "cmuo1gmu4002h01ndvuxtgkht",
+      "title": "Restaurar contratos dos dashboards global e por sprint, com teste integrado de rota",
+      "priority": "alta",
+      "category": "Arquitetura e código",
+      "verified": true
+    },
+    {
+      "key": "A6",
+      "id": "cmuo1gmvx002j01ndsdfhjthj",
+      "title": "Paginar tarefas no serviço de origem e reduzir varreduras MCP",
+      "priority": "media",
+      "category": "Arquitetura e código",
+      "verified": true
+    },
+    {
+      "key": "A7",
+      "id": "cmuo1gn0b002l01nd62w0nvb1",
+      "title": "Consolidar serviços legados e definir fronteiras de domínio verificáveis",
+      "priority": "media",
+      "category": "Arquitetura e código",
+      "verified": true
+    },
+    {
+      "key": "UX01",
+      "id": "cmuo1h9rx002p01ndby9xzsgq",
+      "title": "Reverter alterações otimistas do Kanban quando a API falhar",
+      "priority": "alta",
+      "category": "Interface e experiência",
+      "verified": true
+    },
+    {
+      "key": "UX02",
+      "id": "cmuo1hanh002r01nd1uepu4jr",
+      "title": "Preservar o formulário do card até a criação/edição ser confirmada",
+      "priority": "alta",
+      "category": "Interface e experiência",
+      "verified": true
+    },
+    {
+      "key": "UX03",
+      "id": "cmuo1hbit002t01ndbwlhgrnp",
+      "title": "Manter timer sincronizado quando pausar/iniciar falhar",
+      "priority": "alta",
+      "category": "Interface e experiência",
+      "verified": true
+    },
+    {
+      "key": "UX04",
+      "id": "cmuo1hcdi002v01ndlcro8f8u",
+      "title": "Confirmar autosave do Termo antes de salvar versão ou sair",
+      "priority": "alta",
+      "category": "Interface e experiência",
+      "verified": true
+    },
+    {
+      "key": "UX05",
+      "id": "cmuo1hdar002x01nd1isa1gx2",
+      "title": "Permitir abrir cards pelo teclado independentemente do arraste",
+      "priority": "media",
+      "category": "Interface e experiência",
+      "verified": true
+    },
+    {
+      "key": "UX06",
+      "id": "cmuo1he4u002z01ndi88juuae",
+      "title": "Retirar sidebar recolhida da ordem de foco",
+      "priority": "media",
+      "category": "Interface e experiência",
+      "verified": true
+    },
+    {
+      "key": "UX07",
+      "id": "cmuo1heyw003101ndy6pb87pm",
+      "title": "Unificar gestão de foco de Drawer e Modal",
+      "priority": "media",
+      "category": "Interface e experiência",
+      "verified": true
+    },
+    {
+      "key": "UX08",
+      "id": "cmuo1hfvo003301nddf04r2fs",
+      "title": "Adaptar navegação lateral para celular com menu sobreposto",
+      "priority": "media",
+      "category": "Interface e experiência",
+      "verified": true
+    },
+    {
+      "key": "OPS01-02",
+      "id": "cmuo1hh27003501ndsy2521z5",
+      "title": "Garantir revogação de sessões no gateway com Redis saudável ou indisponível",
+      "priority": "alta",
+      "category": "Segurança e operação",
+      "verified": true
+    },
+    {
+      "key": "OPS03",
+      "id": "cmuo1hi2p003701ndlu2bq8ws",
+      "title": "Isolar filas e sessões do Redis sujeito a eviction",
+      "priority": "alta",
+      "category": "Segurança e operação",
+      "verified": true
+    },
+    {
+      "key": "OPS04",
+      "id": "cmuo1hj0u003901nd2z599pt2",
+      "title": "Implantar imagens imutáveis do SHA aprovado e promover tags somente após validação",
+      "priority": "alta",
+      "category": "Segurança e operação",
+      "verified": true
+    },
+    {
+      "key": "OPS05",
+      "id": "cmuo1hjxo003b01ndi9qq30u5",
+      "title": "Rodar checks dos serviços e smoke das imagens de produção antes do merge/deploy",
+      "priority": "alta",
+      "category": "Segurança e operação",
+      "verified": true
+    },
+    {
+      "key": "OPS06",
+      "id": "cmuo1hkrs003e01ndh7uaymeh",
+      "title": "Registrar e ensaiar rollback por release sem retag manual",
+      "priority": "alta",
+      "category": "Segurança e operação",
+      "verified": true
+    },
+    {
+      "key": "OPS07",
+      "id": "cmuo1hlmw003g01ndu19fu0cs",
+      "title": "Versionar backup de PostgreSQL/MinIO e comprovar restauração",
+      "priority": "alta",
+      "category": "Segurança e operação",
+      "verified": true
+    },
+    {
+      "key": "OPS08",
+      "id": "cmuo1hmh3003i01ndo06yaob0",
+      "title": "Separar liveness e readiness com verificação das dependências essenciais",
+      "priority": "media",
+      "category": "Segurança e operação",
+      "verified": true
+    },
+    {
+      "key": "OPS09",
+      "id": "cmuo1hnaz003k01ndec1y9yqh",
+      "title": "Tornar a observabilidade implantável e conectar métricas, logs e alertas",
+      "priority": "media",
+      "category": "Segurança e operação",
+      "verified": true
+    }
+  ]
+}

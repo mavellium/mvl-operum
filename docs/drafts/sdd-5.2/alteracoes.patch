@@ -1,0 +1,1079 @@
+diff --git a/app/actions/atas.ts b/app/actions/atas.ts
+index e5e0bef3..91bc0f97 100644
+--- a/app/actions/atas.ts
++++ b/app/actions/atas.ts
+@@ -1,85 +1,38 @@
+ 'use server'
+-
++import { randomUUID } from 'node:crypto'
+ import { revalidatePath } from 'next/cache'
+ import { verifySession } from '@/lib/dal'
+ import prisma from '@/lib/prisma'
+-import { isProjectManager } from '@/services/projectRoleService'
+-import { criarAta, atualizarAta, removerAta } from '@/services/ataService'
+-import { registrarAcao } from '@/services/auditoriaService'
+-import type { CriarAtaInput, AtualizarAtaInput } from '@/lib/validation/ataSchemas'
+-
+-async function isProjectMember(userId: string, projectId: string): Promise<boolean> {
+-  const entry = await prisma.userProject.findUnique({
+-    where: { userId_projectId: { userId, projectId } },
+-  })
+-  return entry !== null && entry.active
+-}
+-
+-async function authorizeMember(tenantId: string, role: string, userId: string, projectId: string) {
+-  if (role !== 'admin' && !(await isProjectMember(userId, projectId))) {
+-    throw new Error('Não autorizado: você não faz parte deste projeto')
+-  }
+-}
++import { exigirPermissao } from '@/services/authz'
++import { submeterDocumento } from '@/services/documentRevisionService'
++import { CriarAtaSchema, AtualizarAtaSchema, type CriarAtaInput, type AtualizarAtaInput } from '@/lib/validation/ataSchemas'
+ 
+ export async function criarAtaAction(input: CriarAtaInput) {
+-  try {
+-    const session = await verifySession()
+-    await authorizeMember(session.tenantId, session.role, session.userId, input.projetoId)
+-    const ata = await criarAta(session.tenantId, input)
+-    await registrarAcao({
+-      tenantId: session.tenantId,
+-      userId: session.userId,
+-      action: 'criar_ata',
+-      entity: 'Ata',
+-      entityId: ata.id,
+-      details: { projetoId: input.projetoId, numero: ata.numero },
+-    })
+-    revalidatePath(`/projetos/${input.projetoId}/atas`)
+-    return { success: true, id: ata.id, numero: ata.numero }
+-  } catch (err) {
+-    return { error: err instanceof Error ? err.message : 'Erro ao criar ata' }
+-  }
++ try { const s = await verifySession(); const { projetoId, ...payload } = CriarAtaSchema.parse(input)
++  const id = randomUUID()
++  const version = await submeterDocumento(s, projetoId, 'ATA', payload, { commitTitle: 'Nova ata de reunião', versao: '1', elaboradoPor: payload.elaboradoPor, aprovadoPor: payload.aprovadoPor ?? '', dataAprovacao: '' }, id)
++  revalidatePath(`/projetos/${projetoId}/atas`); revalidatePath(`/projetos/${projetoId}/documentacao`)
++  return { success: true, id, status: version.status }
++ } catch(e) { return { error: e instanceof Error ? e.message : 'Erro ao criar ata' } }
+ }
+-
+ export async function atualizarAtaAction(ataId: string, projetoId: string, input: AtualizarAtaInput) {
+-  try {
+-    const session = await verifySession()
+-    await authorizeMember(session.tenantId, session.role, session.userId, projetoId)
+-    const ata = await atualizarAta(session.tenantId, ataId, input)
+-    await registrarAcao({
+-      tenantId: session.tenantId,
+-      userId: session.userId,
+-      action: 'atualizar_ata',
+-      entity: 'Ata',
+-      entityId: ataId,
+-      details: { projetoId, numero: ata.numero },
+-    })
+-    revalidatePath(`/projetos/${projetoId}/atas`)
+-    revalidatePath(`/atas/${ataId}`)
+-    return { success: true }
+-  } catch (err) {
+-    return { error: err instanceof Error ? err.message : 'Erro ao atualizar ata' }
+-  }
++ try { const s = await verifySession(); await exigirPermissao(s, projetoId, 'documentos:editar')
++  const ata = await prisma.ata.findFirst({ where: { id: ataId, projetoId, tenantId: s.tenantId, deletedAt: null } })
++  if (!ata) throw new Error('Ata não encontrada')
++  const payload = AtualizarAtaSchema.parse(input)
++  const version = await submeterDocumento(s, projetoId, 'ATA', payload, { commitTitle: `Alteração da ata ${ata.numero}`, versao: new Date().toISOString(), elaboradoPor: payload.elaboradoPor, aprovadoPor: payload.aprovadoPor ?? '', dataAprovacao: '' }, ataId)
++  revalidatePath(`/projetos/${projetoId}/atas`); revalidatePath(`/projetos/${projetoId}/documentacao`)
++  return { success: true, status: version.status }
++ } catch(e) { return { error: e instanceof Error ? e.message : 'Erro ao atualizar ata' } }
+ }
+-
+ export async function removerAtaAction(ataId: string, projetoId: string) {
+-  try {
+-    const session = await verifySession()
+-    const isAdmin = session.role === 'admin'
+-    const isManager = await isProjectManager(session.userId, projetoId)
+-    if (!isAdmin && !isManager) throw new Error('Não autorizado: só o gerente ou admin remove atas')
+-    await removerAta(session.tenantId, ataId)
+-    await registrarAcao({
+-      tenantId: session.tenantId,
+-      userId: session.userId,
+-      action: 'remover_ata',
+-      entity: 'Ata',
+-      entityId: ataId,
+-      details: { projetoId },
+-    })
+-    revalidatePath(`/projetos/${projetoId}/atas`)
+-    return { success: true }
+-  } catch (err) {
+-    return { error: err instanceof Error ? err.message : 'Erro ao remover ata' }
+-  }
++ try { const s = await verifySession(); await exigirPermissao(s, projetoId, 'documentos:excluir')
++  await prisma.$transaction(async tx => {
++    const changed = await tx.ata.updateMany({ where: { id: ataId, projetoId, tenantId: s.tenantId, deletedAt: null }, data: { deletedAt: new Date() } })
++    if (!changed.count) throw new Error('Ata não encontrada')
++    await tx.auditLog.create({ data: { tenantId: s.tenantId, userId: s.userId, action: 'DOCUMENTO_EXCLUIR', entity: 'Document', entityId: projetoId, details: { documentType: 'ATA', resourceId: ataId } } })
++  })
++  revalidatePath(`/projetos/${projetoId}/atas`); revalidatePath(`/projetos/${projetoId}/documentacao`)
++  return { success: true }
++ } catch(e) { return { error: e instanceof Error ? e.message : 'Erro ao remover ata' } }
+ }
+diff --git a/app/api/projects/[projetoId]/charter/route.ts b/app/api/projects/[projetoId]/charter/route.ts
+index 4c5199f0..40010c19 100644
+--- a/app/api/projects/[projetoId]/charter/route.ts
++++ b/app/api/projects/[projetoId]/charter/route.ts
+@@ -1,7 +1,8 @@
+ import { NextResponse } from 'next/server'
+ import { verifySession } from '@/lib/dal'
+ import prisma from '@/lib/prisma'
+-import { isProjectManager } from '@/services/projectRoleService'
++import { can } from '@/services/authz'
++import { documentoVigente, salvarRascunho } from '@/services/documentRevisionService'
+ import { getTree } from '@/services/wbsService'
+ 
+ export async function GET(
+@@ -12,15 +13,8 @@ export async function GET(
+ 
+   try {
+     const { tenantId, role, userId } = await verifySession()
+-    const isManager = role === 'admin' || (await isProjectManager(userId, projetoId))
+-    if (!isManager) {
+-      const member = await prisma.project.findFirst({
+-        where: { id: projetoId, tenantId, deletedAt: null, members: { some: { userId, active: true } } },
+-        select: { id: true },
+-      })
+-      if (!member) return NextResponse.json({ error: 'Não autorizado' }, { status: 403 })
+-    }
+-
++    const sessao = { tenantId, role, userId }
++    if (!await can(sessao, projetoId, 'documentos:ver')) return NextResponse.json({ error: 'Sem permissão' }, { status: 403 })
+     const project = await prisma.project.findFirst({
+       where: { id: projetoId, tenantId, deletedAt: null },
+       select: {
+@@ -94,6 +88,9 @@ export async function GET(
+       .filter(up => up.user !== null)
+       .map(up => ({ name: up.user.name }))
+ 
++    const vigente = await documentoVigente(sessao, projetoId, 'CHARTER')
++    const snapshot = vigente?.payload as Record<string, unknown> | null
++    if (snapshot) { Object.assign(project, snapshot); if (Array.isArray(snapshot.macroFases)) macroFases = snapshot.macroFases as typeof macroFases }
+     return NextResponse.json({
+       project,
+       macroFases,
+@@ -107,42 +104,11 @@ export async function GET(
+   }
+ }
+ 
+-export async function PATCH(
+-  request: Request,
+-  { params }: { params: Promise<{ projetoId: string }> },
+-) {
+-  const { projetoId } = await params
+-
+-  try {
+-    const { tenantId, role, userId } = await verifySession()
+-    const isManager = role === 'admin' || (await isProjectManager(userId, projetoId))
+-    if (!isManager) {
+-      const member = await prisma.project.findFirst({
+-        where: { id: projetoId, tenantId, deletedAt: null, members: { some: { userId, active: true } } },
+-        select: { id: true },
+-      })
+-      if (!member) return NextResponse.json({ error: 'Não autorizado' }, { status: 403 })
+-    }
+-
+-    const project = await prisma.project.findFirst({
+-      where: { id: projetoId, tenantId, deletedAt: null },
+-      select: { id: true },
+-    })
+-    if (!project) return NextResponse.json({ error: 'Projeto não encontrado' }, { status: 404 })
+-
+-    const body = await request.json()
+-    const allowed = ['justificativa', 'objetivos', 'metodologia', 'descricaoProduto', 'premissas', 'restricoes', 'limitesAutoridade'] as const
+-    const data: Partial<Record<typeof allowed[number], string>> = {}
+-    for (const key of allowed) {
+-      if (key in body && typeof body[key] === 'string') {
+-        data[key] = body[key]
+-      }
+-    }
+-
+-    const updated = await prisma.project.update({ where: { id: projetoId }, data })
+-    return NextResponse.json(updated)
+-  } catch (err) {
+-    console.error('[charter PATCH]', err)
+-    return NextResponse.json({ error: 'Erro interno' }, { status: 500 })
+-  }
++export async function PATCH(request: Request, { params }: { params: Promise<{ projetoId: string }> }) {
++ const { projetoId } = await params
++ try { const s = await verifySession()
++  if (!await can(s, projetoId, 'documentos:editar')) return NextResponse.json({ error: 'Sem permissão' }, { status: 403 })
++  const draft = await salvarRascunho(s, projetoId, 'CHARTER', await request.json())
++  return NextResponse.json({ saved: true, draftId: draft.id })
++ } catch { return NextResponse.json({ error: 'Não foi possível salvar o rascunho' }, { status: 400 }) }
+ }
+diff --git a/app/api/projects/[projetoId]/charter/versions/route.ts b/app/api/projects/[projetoId]/charter/versions/route.ts
+index fa9d04ca..44ae0a5e 100644
+--- a/app/api/projects/[projetoId]/charter/versions/route.ts
++++ b/app/api/projects/[projetoId]/charter/versions/route.ts
+@@ -1,114 +1,21 @@
+-import { NextResponse } from 'next/server'
+ import { verifySession } from '@/lib/dal'
+ import prisma from '@/lib/prisma'
+-import { isProjectManager } from '@/services/projectRoleService'
+-
+-export async function GET(
+-  request: Request,
+-  { params }: { params: Promise<{ projetoId: string }> },
+-) {
+-  const { projetoId } = await params
+-
+-  try {
+-    const { tenantId, role, userId } = await verifySession()
+-    const isManager = role === 'admin' || (await isProjectManager(userId, projetoId))
+-    if (!isManager) {
+-      const member = await prisma.project.findFirst({
+-        where: { id: projetoId, tenantId, deletedAt: null, members: { some: { userId, active: true } } },
+-        select: { id: true },
+-      })
+-      if (!member) return NextResponse.json({ error: 'Não autorizado' }, { status: 403 })
+-    }
+-
+-    const project = await prisma.project.findFirst({
+-      where: { id: projetoId, tenantId, deletedAt: null },
+-      select: { id: true },
+-    })
+-    if (!project) return NextResponse.json({ error: 'Projeto não encontrado' }, { status: 404 })
+-
+-    const { searchParams } = new URL(request.url)
+-    const search = searchParams.get('search')?.trim() ?? ''
+-
+-    const versions = await prisma.documentVersion.findMany({
+-      where: {
+-        projectId: projetoId,
+-        documentType: 'CHARTER',
+-        ...(search
+-          ? {
+-              OR: [
+-                { commitTitle: { contains: search, mode: 'insensitive' } },
+-                { author: { is: { name: { contains: search, mode: 'insensitive' } } } },
+-              ],
+-            }
+-          : {}),
+-      },
+-      include: { author: { select: { name: true } } },
+-      orderBy: { createdAt: 'desc' },
+-    })
+-
+-    const res = NextResponse.json(versions)
+-    res.headers.set('x-is-manager', String(isManager))
+-    return res
+-  } catch (err) {
+-    console.error('[charter/versions GET]', err)
+-    return NextResponse.json({ error: 'Erro interno' }, { status: 500 })
+-  }
++import { can, exigirPermissao, SemPermissaoError } from '@/services/authz'
++import { submeterDocumento, metaDocumento } from '@/services/documentRevisionService'
++import { z } from 'zod'
++type Ctx = { params: Promise<{ projetoId: string }> }
++function error(e: unknown) { return Response.json({ error: e instanceof z.ZodError ? e.issues[0].message : e instanceof Error ? e.message : 'Erro ao processar versão' }, { status: e instanceof SemPermissaoError ? 403 : 400 }) }
++export async function GET(req: Request, { params }: Ctx) {
++ try {
++  const s = await verifySession(); const { projetoId } = await params
++  await exigirPermissao(s, projetoId, 'documentos:ver')
++  const search = new URL(req.url).searchParams.get('search')?.trim()
++  const versions = await prisma.documentVersion.findMany({ where: { projectId: projetoId, documentType: 'CHARTER', ...(search ? { commitTitle: { contains: search, mode: 'insensitive' } } : {}) }, include: { author: { select: { name: true } } }, orderBy: { createdAt: 'desc' } })
++  return Response.json(versions, { headers: { 'x-is-manager': String(await can(s, projetoId, 'documentos:aprovar')) } })
++ } catch(e) { return error(e) }
+ }
+-
+-export async function POST(
+-  request: Request,
+-  { params }: { params: Promise<{ projetoId: string }> },
+-) {
+-  const { projetoId } = await params
+-
+-  try {
+-    const { tenantId, role, userId } = await verifySession()
+-    const isManager = role === 'admin' || (await isProjectManager(userId, projetoId))
+-    if (!isManager) {
+-      const member = await prisma.project.findFirst({
+-        where: { id: projetoId, tenantId, deletedAt: null, members: { some: { userId, active: true } } },
+-        select: { id: true },
+-      })
+-      if (!member) return NextResponse.json({ error: 'Não autorizado' }, { status: 403 })
+-    }
+-
+-    const project = await prisma.project.findFirst({
+-      where: { id: projetoId, tenantId, deletedAt: null },
+-      select: { id: true },
+-    })
+-    if (!project) return NextResponse.json({ error: 'Projeto não encontrado' }, { status: 404 })
+-
+-    const body = await request.json()
+-    const { commitTitle, versao, elaboradoPor, aprovadoPor, dataAprovacao } = body
+-
+-    if (!commitTitle || !versao || !elaboradoPor || !aprovadoPor || !dataAprovacao) {
+-      return NextResponse.json(
+-        { error: 'Campos obrigatórios: commitTitle, versao, elaboradoPor, aprovadoPor, dataAprovacao' },
+-        { status: 400 },
+-      )
+-    }
+-
+-    const now = new Date()
+-    const version = await prisma.documentVersion.create({
+-      data: {
+-        projectId: projetoId,
+-        documentType: 'CHARTER',
+-        commitTitle,
+-        versao,
+-        elaboradoPor,
+-        aprovadoPor,
+-        dataAprovacao,
+-        authorId: userId,
+-        status: isManager ? 'APPROVED' : 'PENDING',
+-        approvedAt: isManager ? now : null,
+-        approvedById: isManager ? userId : null,
+-      },
+-      include: { author: { select: { name: true } } },
+-    })
+-
+-    return NextResponse.json(version, { status: 201 })
+-  } catch (err) {
+-    console.error('[charter/versions POST]', err)
+-    return NextResponse.json({ error: 'Erro interno' }, { status: 500 })
+-  }
++export async function POST(req: Request, { params }: Ctx) {
++ try { const s = await verifySession(); const { projetoId } = await params; const body = await req.json()
++  return Response.json(await submeterDocumento(s, projetoId, 'CHARTER', body.payload, metaDocumento.parse(body)), { status: 201 })
++ } catch(e) { return error(e) }
+ }
+diff --git a/app/api/projects/[projetoId]/documento/route.ts b/app/api/projects/[projetoId]/documento/route.ts
+index 63e300f0..d80e0324 100644
+--- a/app/api/projects/[projetoId]/documento/route.ts
++++ b/app/api/projects/[projetoId]/documento/route.ts
+@@ -1,7 +1,8 @@
+ import { NextResponse } from 'next/server'
+ import { verifySession } from '@/lib/dal'
+ import prisma from '@/lib/prisma'
+-import { isProjectManager } from '@/services/projectRoleService'
++import { can } from '@/services/authz'
++import { documentoVigente } from '@/services/documentRevisionService'
+ import type { ProjetoHeader, Stakeholder } from '@/components/projetos/StakeholderDocument'
+ 
+ function buildAddress(e: {
+@@ -36,7 +37,7 @@ export async function GET(
+ 
+   try {
+     const { tenantId, role, userId } = await verifySession()
+-    const canAccess = role === 'admin' || (await isProjectManager(userId, projetoId))
++    const canAccess = await can({ tenantId, role, userId }, projetoId, 'documentos:ver')
+     if (!canAccess) {
+       return NextResponse.json({ error: 'Não autorizado' }, { status: 403 })
+     }
+@@ -141,7 +142,8 @@ export async function GET(
+       observacoes: ps.stakeholder.notes ?? '',
+     }))
+ 
+-    return NextResponse.json({ header, stakeholders: [...membros, ...externos] })
++    const vigente = await documentoVigente({ tenantId, role, userId }, projetoId, 'STAKEHOLDER')
++    return NextResponse.json(vigente?.payload ?? { header, stakeholders: [...membros, ...externos] })
+   } catch (err) {
+     console.error('[documento/route]', err)
+     return NextResponse.json({ error: 'Erro interno' }, { status: 500 })
+diff --git a/app/api/projects/[projetoId]/documento/versions/[versionId]/route.ts b/app/api/projects/[projetoId]/documento/versions/[versionId]/route.ts
+index 44f790d1..35d4658c 100644
+--- a/app/api/projects/[projetoId]/documento/versions/[versionId]/route.ts
++++ b/app/api/projects/[projetoId]/documento/versions/[versionId]/route.ts
+@@ -1,48 +1,10 @@
+-import { NextResponse } from 'next/server'
+ import { verifySession } from '@/lib/dal'
+-import prisma from '@/lib/prisma'
+-import { isProjectManager } from '@/services/projectRoleService'
+-
+-export async function PATCH(
+-  request: Request,
+-  { params }: { params: Promise<{ projetoId: string; versionId: string }> },
+-) {
+-  const { projetoId, versionId } = await params
+-
+-  try {
+-    const { role, userId } = await verifySession()
+-    const isManager = role === 'admin' || (await isProjectManager(userId, projetoId))
+-    if (!isManager) {
+-      return NextResponse.json({ error: 'Apenas Gerentes de Projeto podem aprovar alterações' }, { status: 403 })
+-    }
+-
+-    const body = await request.json()
+-    const { action } = body as { action?: string }
+-
+-    if (action !== 'approve' && action !== 'reject') {
+-      return NextResponse.json({ error: 'action deve ser "approve" ou "reject"' }, { status: 400 })
+-    }
+-
+-    const existing = await prisma.documentVersion.findFirst({
+-      where: { id: versionId, projectId: projetoId },
+-    })
+-    if (!existing) {
+-      return NextResponse.json({ error: 'Versão não encontrada' }, { status: 404 })
+-    }
+-
+-    const updated = await prisma.documentVersion.update({
+-      where: { id: versionId },
+-      data: {
+-        status: action === 'approve' ? 'APPROVED' : 'REJECTED',
+-        approvedAt: action === 'approve' ? new Date() : null,
+-        approvedById: action === 'approve' ? userId : null,
+-      },
+-      include: { author: { select: { name: true } } },
+-    })
+-
+-    return NextResponse.json(updated)
+-  } catch (err) {
+-    console.error('[documento/versions PATCH]', err)
+-    return NextResponse.json({ error: 'Erro interno' }, { status: 500 })
+-  }
++import { revisarDocumento } from '@/services/documentRevisionService'
++import { SemPermissaoError } from '@/services/authz'
++import { z } from 'zod'
++export async function PATCH(req: Request, { params }: { params: Promise<{ projetoId: string; versionId: string }> }) {
++ try { const s = await verifySession(); const { projetoId, versionId } = await params
++  const { action } = z.object({ action: z.enum(['approve','reject']) }).parse(await req.json())
++  return Response.json(await revisarDocumento(s, projetoId, versionId, action))
++ } catch(e) { return Response.json({ error: e instanceof Error ? e.message : 'Erro ao revisar' }, { status: e instanceof SemPermissaoError ? 403 : 400 }) }
+ }
+diff --git a/app/api/projects/[projetoId]/documento/versions/route.ts b/app/api/projects/[projetoId]/documento/versions/route.ts
+index 82c32b60..bd3d1711 100644
+--- a/app/api/projects/[projetoId]/documento/versions/route.ts
++++ b/app/api/projects/[projetoId]/documento/versions/route.ts
+@@ -1,124 +1,21 @@
+-import { NextResponse } from 'next/server'
+ import { verifySession } from '@/lib/dal'
+ import prisma from '@/lib/prisma'
+-import { isProjectManager } from '@/services/projectRoleService'
+-
+-export async function GET(
+-  request: Request,
+-  { params }: { params: Promise<{ projetoId: string }> },
+-) {
+-  const { projetoId } = await params
+-
+-  try {
+-    const { tenantId, role, userId } = await verifySession()
+-    const canAccess = role === 'admin' || (await isProjectManager(userId, projetoId))
+-    if (!canAccess) {
+-      return NextResponse.json({ error: 'Não autorizado' }, { status: 403 })
+-    }
+-
+-    const project = await prisma.project.findFirst({
+-      where: { id: projetoId, tenantId, deletedAt: null },
+-      select: { id: true },
+-    })
+-    if (!project) {
+-      return NextResponse.json({ error: 'Projeto não encontrado' }, { status: 404 })
+-    }
+-
+-    const { searchParams } = new URL(request.url)
+-    const search = searchParams.get('search')?.trim() ?? ''
+-
+-    const versions = await prisma.documentVersion.findMany({
+-      where: {
+-        projectId: projetoId,
+-        ...(search
+-          ? {
+-              OR: [
+-                { commitTitle: { contains: search, mode: 'insensitive' } },
+-                { author: { is: { name: { contains: search, mode: 'insensitive' } } } },
+-              ],
+-            }
+-          : {}),
+-      },
+-      include: {
+-        author: { select: { name: true } },
+-      },
+-      orderBy: { createdAt: 'desc' },
+-    })
+-
+-    const res = NextResponse.json(versions)
+-    res.headers.set('x-is-manager', String(canAccess))
+-    return res
+-  } catch (err) {
+-    console.error('[documento/versions GET]', err)
+-    return NextResponse.json({ error: 'Erro interno' }, { status: 500 })
+-  }
++import { can, exigirPermissao, SemPermissaoError } from '@/services/authz'
++import { submeterDocumento, metaDocumento } from '@/services/documentRevisionService'
++import { z } from 'zod'
++type Ctx = { params: Promise<{ projetoId: string }> }
++function error(e: unknown) { return Response.json({ error: e instanceof z.ZodError ? e.issues[0].message : e instanceof Error ? e.message : 'Erro ao processar versão' }, { status: e instanceof SemPermissaoError ? 403 : 400 }) }
++export async function GET(req: Request, { params }: Ctx) {
++ try {
++  const s = await verifySession(); const { projetoId } = await params
++  await exigirPermissao(s, projetoId, 'documentos:ver')
++  const search = new URL(req.url).searchParams.get('search')?.trim()
++  const versions = await prisma.documentVersion.findMany({ where: { projectId: projetoId, documentType: 'STAKEHOLDER', ...(search ? { commitTitle: { contains: search, mode: 'insensitive' } } : {}) }, include: { author: { select: { name: true } } }, orderBy: { createdAt: 'desc' } })
++  return Response.json(versions, { headers: { 'x-is-manager': String(await can(s, projetoId, 'documentos:aprovar')) } })
++ } catch(e) { return error(e) }
+ }
+-
+-export async function POST(
+-  request: Request,
+-  { params }: { params: Promise<{ projetoId: string }> },
+-) {
+-  const { projetoId } = await params
+-
+-  try {
+-    const { tenantId, role, userId } = await verifySession()
+-    const isManager = role === 'admin' || (await isProjectManager(userId, projetoId))
+-    if (!isManager && !(await canMemberCreate(userId, projetoId, tenantId))) {
+-      return NextResponse.json({ error: 'Não autorizado' }, { status: 403 })
+-    }
+-
+-    const project = await prisma.project.findFirst({
+-      where: { id: projetoId, tenantId, deletedAt: null },
+-      select: { id: true },
+-    })
+-    if (!project) {
+-      return NextResponse.json({ error: 'Projeto não encontrado' }, { status: 404 })
+-    }
+-
+-    const body = await request.json()
+-    const { commitTitle, versao, elaboradoPor, aprovadoPor, dataAprovacao } = body
+-
+-    if (!commitTitle || !versao || !elaboradoPor || !aprovadoPor || !dataAprovacao) {
+-      return NextResponse.json(
+-        { error: 'Campos obrigatórios: commitTitle, versao, elaboradoPor, aprovadoPor, dataAprovacao' },
+-        { status: 400 },
+-      )
+-    }
+-
+-    const now = new Date()
+-    const version = await prisma.documentVersion.create({
+-      data: {
+-        projectId: projetoId,
+-        commitTitle,
+-        versao,
+-        elaboradoPor,
+-        aprovadoPor,
+-        dataAprovacao,
+-        authorId: userId,
+-        status: isManager ? 'APPROVED' : 'PENDING',
+-        approvedAt: isManager ? now : null,
+-        approvedById: isManager ? userId : null,
+-      },
+-      include: { author: { select: { name: true } } },
+-    })
+-
+-    return NextResponse.json(version, { status: 201 })
+-  } catch (err) {
+-    console.error('[documento/versions POST]', err)
+-    return NextResponse.json({ error: 'Erro interno' }, { status: 500 })
+-  }
+-}
+-
+-// Membros do projeto podem criar commits (apenas gerentes auto-aprovam)
+-async function canMemberCreate(userId: string, projectId: string, tenantId: string): Promise<boolean> {
+-  const member = await prisma.project.findFirst({
+-    where: {
+-      id: projectId,
+-      tenantId,
+-      deletedAt: null,
+-      members: { some: { userId, active: true } },
+-    },
+-    select: { id: true },
+-  })
+-  return member !== null
++export async function POST(req: Request, { params }: Ctx) {
++ try { const s = await verifySession(); const { projetoId } = await params; const body = await req.json()
++  return Response.json(await submeterDocumento(s, projetoId, 'STAKEHOLDER', body.payload, metaDocumento.parse(body)), { status: 201 })
++ } catch(e) { return error(e) }
+ }
+diff --git a/app/api/projects/[projetoId]/eap/route.ts b/app/api/projects/[projetoId]/eap/route.ts
+index 7a1e4088..22d8cc7e 100644
+--- a/app/api/projects/[projetoId]/eap/route.ts
++++ b/app/api/projects/[projetoId]/eap/route.ts
+@@ -1,10 +1,10 @@
+ import { NextResponse } from 'next/server'
+ import { verifySession } from '@/lib/dal'
+ import prisma from '@/lib/prisma'
+-import { isProjectManager } from '@/services/projectRoleService'
++import { exigirPermissao, SemPermissaoError } from '@/services/authz'
++import { documentoVigente, submeterDocumento } from '@/services/documentRevisionService'
+ import {
+   getOrCreateDocument,
+-  saveDocument,
+   resetDocument,
+   formatInstitucionalInfo,
+   EapValidationError,
+@@ -16,15 +16,8 @@ import type { EapNode } from '@/types/eap'
+ type RouteCtx = { params: Promise<{ projetoId: string }> }
+ 
+ /** Garante que o usuário é membro ativo (ou admin/gerente) do projeto. */
+-async function requireProjectAccess(userId: string, role: string, tenantId: string, projetoId: string): Promise<void> {
+-  if (role === 'admin') return
+-  const manager = await isProjectManager(userId, projetoId)
+-  if (manager) return
+-  const member = await prisma.project.findFirst({
+-    where: { id: projetoId, tenantId, deletedAt: null, members: { some: { userId, active: true } } },
+-    select: { id: true },
+-  })
+-  if (!member) throw new EapNotFoundError('Não autorizado')
++async function requireProjectAccess(userId: string, role: string, tenantId: string, projetoId: string, permission: 'documentos:ver' | 'documentos:editar' | 'documentos:excluir' = 'documentos:ver') {
++  await exigirPermissao({ userId, role, tenantId }, projetoId, permission)
+ }
+ 
+ async function loadProject(tenantId: string, projetoId: string) {
+@@ -39,7 +32,7 @@ async function loadProject(tenantId: string, projetoId: string) {
+  * EapNotFoundError virava 500 "Erro interno" e a causa só aparecia no log.
+  */
+ function errorResponse(err: unknown, where: string, projetoId: string) {
+-  if (err instanceof EapNotFoundError) {
++  if (err instanceof EapNotFoundError || err instanceof SemPermissaoError) {
+     return NextResponse.json({ error: err.message }, { status: 403 })
+   }
+   if (err instanceof EapValidationError) {
+@@ -70,7 +63,9 @@ export async function GET(_: Request, { params }: RouteCtx) {
+       return NextResponse.json({ error: 'Projeto não encontrado' }, { status: 404 })
+     }
+ 
+-    const document = await getOrCreateDocument(projetoId, tenantId, project.name)
++    const base = await getOrCreateDocument(projetoId, tenantId, project.name)
++    const vigente = await documentoVigente({ tenantId, role, userId }, projetoId, 'EAP')
++    const document = vigente?.payload ? { ...base, ...(vigente.payload as object) } : base
+     return NextResponse.json({
+       document,
+       instituicao: formatInstitucionalInfo(project),
+@@ -86,7 +81,7 @@ export async function PUT(request: Request, { params }: RouteCtx) {
+ 
+   try {
+     const { tenantId, role, userId } = await verifySession()
+-    await requireProjectAccess(userId, role, tenantId, projetoId)
++    await requireProjectAccess(userId, role, tenantId, projetoId, 'documentos:editar')
+ 
+     const project = await loadProject(tenantId, projetoId)
+     if (!project) {
+@@ -108,18 +103,10 @@ export async function PUT(request: Request, { params }: RouteCtx) {
+       )
+     }
+ 
+-    const document = await saveDocument(projetoId, tenantId, {
+-      projectName: parsed.data.projectName,
+-      projectManager: parsed.data.projectManager,
+-      preparedBy: parsed.data.preparedBy,
+-      version: parsed.data.version,
+-      approvedBy: parsed.data.approvedBy,
+-      signature: parsed.data.signature,
+-      approvalDate: parsed.data.approvalDate ?? null,
+-      nodes,
+-    })
++    const version = await submeterDocumento({ tenantId, role, userId }, projetoId, 'EAP', parsed.data, { commitTitle: 'Atualização da EAP', versao: parsed.data.version, elaboradoPor: parsed.data.preparedBy, aprovadoPor: parsed.data.approvedBy, dataAprovacao: parsed.data.approvalDate ?? '' })
++    const base = await getOrCreateDocument(projetoId, tenantId, project.name)
++    return NextResponse.json({ document: { ...base, ...parsed.data }, status: version.status, versionId: version.id })
+ 
+-    return NextResponse.json({ document })
+   } catch (err) {
+     return errorResponse(err, 'PUT', projetoId)
+   }
+@@ -131,7 +118,8 @@ export async function POST(_: Request, { params }: RouteCtx) {
+ 
+   try {
+     const { tenantId, role, userId } = await verifySession()
+-    await requireProjectAccess(userId, role, tenantId, projetoId)
++    await requireProjectAccess(userId, role, tenantId, projetoId, 'documentos:excluir')
++    await exigirPermissao({ userId, role, tenantId }, projetoId, 'documentos:aprovar')
+ 
+     const project = await loadProject(tenantId, projetoId)
+     if (!project) {
+@@ -139,6 +127,7 @@ export async function POST(_: Request, { params }: RouteCtx) {
+     }
+ 
+     const document = await resetDocument(projetoId, tenantId, project.name)
++    await submeterDocumento({ tenantId, role, userId }, projetoId, 'EAP', document, { commitTitle: 'Restaurar modelo da EAP', versao: document.version, elaboradoPor: document.preparedBy, aprovadoPor: document.approvedBy, dataAprovacao: document.approvalDate ?? '' })
+     return NextResponse.json({ document })
+   } catch (err) {
+     return errorResponse(err, 'POST', projetoId)
+diff --git a/components/atas/AtaFormClient.tsx b/components/atas/AtaFormClient.tsx
+index 278c6435..8a0dc77d 100644
+--- a/components/atas/AtaFormClient.tsx
++++ b/components/atas/AtaFormClient.tsx
+@@ -2,6 +2,7 @@
+ 
+ import { useState } from 'react'
+ import { useRouter } from 'next/navigation'
++import HistoricoDocumento from '@/components/projetos/documentacao/HistoricoDocumento'
+ import { criarAtaAction, atualizarAtaAction } from '@/app/actions/atas'
+ import MemberSelect, { type MemberOption } from '@/components/atas/MemberSelect'
+ import DateInput from '@/components/ui/DateInput'
+@@ -143,12 +144,14 @@ export default function AtaFormClient({ projetoId, ataId, mode, members, initial
+       setSaving(false)
+       return
+     }
+-    router.push(`/projetos/${projetoId}/atas`)
++    router.push(`/projetos/${projetoId}/documentacao?doc=atas`)
+     router.refresh()
+   }
+ 
+   return (
+     <form onSubmit={handleSubmit} className="space-y-6">
++      <p className="rounded bg-blue-50 p-3 text-sm text-blue-800">Salvar envia uma nova versão. Sem permissão de aprovação, ela fica pendente e preserva a ata vigente.</p>
++      {ataId && <HistoricoDocumento projetoId={projetoId} type="ATA" resourceId={ataId} />}
+       {error && (
+         <div className="rounded-lg bg-red-50 border border-red-200 px-4 py-3 text-sm text-red-700">
+           {error}
+diff --git a/components/projetos/DocumentoStakeholders.tsx b/components/projetos/DocumentoStakeholders.tsx
+index 3729bac3..6f55688e 100644
+--- a/components/projetos/DocumentoStakeholders.tsx
++++ b/components/projetos/DocumentoStakeholders.tsx
+@@ -244,6 +244,7 @@ export default function DocumentoStakeholders({ membros = [] }: { membros?: Memb
+         method: 'POST',
+         headers: { 'Content-Type': 'application/json' },
+         body: JSON.stringify({
++          payload: { ...data, header: { ...data?.header, elaboradoPor: editable.elaboradoPor, aprovadoPor: editable.aprovadoPor, versao: editable.versao, dataAprovacao: editable.dataAprovacaoRaw } },
+           commitTitle: commitTitle.trim(),
+           versao: editable.versao,
+           elaboradoPor: editable.elaboradoPor,
+diff --git a/components/projetos/documentacao/DocumentacaoLayout.tsx b/components/projetos/documentacao/DocumentacaoLayout.tsx
+index 84be9eea..204996ad 100644
+--- a/components/projetos/documentacao/DocumentacaoLayout.tsx
++++ b/components/projetos/documentacao/DocumentacaoLayout.tsx
+@@ -2,6 +2,7 @@
+ 
+ import { useSearchParams, useRouter, usePathname } from 'next/navigation'
+ import DocumentoStakeholders from '@/components/projetos/DocumentoStakeholders'
++import HistoricoDocumento from './HistoricoDocumento'
+ import DocumentSidebar from './DocumentSidebar'
+ import ProjectCharterWrapper from './ProjectCharterWrapper'
+ import DocumentoAtas, { type AtaListItem } from './DocumentoAtas'
+@@ -43,6 +44,7 @@ export default function DocumentacaoLayout({ projetoId, atas, gerente, membros =
+     <div data-testid="doc-layout" className="flex flex-1 h-full overflow-hidden">
+       <DocumentSidebar activeDoc={activeDoc} onSelect={handleSelect} />
+       <div data-testid="doc-content" className="flex-1 min-w-0 overflow-y-auto">
++        <HistoricoDocumento key={activeDoc} projetoId={projetoId} type={{ atas: 'ATA', charter: 'CHARTER', eap: 'EAP', stakeholder: 'STAKEHOLDER' }[activeDoc]} />
+         {activeDoc === 'atas' ? (
+           <DocumentoAtas projetoId={projetoId} atas={atas} gerente={gerente} />
+         ) : activeDoc === 'charter' ? (
+diff --git a/components/projetos/documentacao/ProjectCharter.tsx b/components/projetos/documentacao/ProjectCharter.tsx
+index d6e007c6..d43fb4b0 100644
+--- a/components/projetos/documentacao/ProjectCharter.tsx
++++ b/components/projetos/documentacao/ProjectCharter.tsx
+@@ -130,7 +130,7 @@ export default function ProjectCharter({ membros = [] }: { membros?: MembroEquip
+ 
+   // MacroFases (local state, synced with server)
+   const [fases, setFases] = useState<MacroFase[]>([])
+-  const [faseSaving, setFaseSaving] = useState<Record<string, boolean>>({})
++  const [faseSaving] = useState<Record<string, boolean>>({})
+   const [newestFaseId, setNewestFaseId] = useState<string | undefined>(undefined)
+ 
+   // Versioning
+@@ -192,11 +192,11 @@ export default function ProjectCharter({ membros = [] }: { membros?: MembroEquip
+     fetchWithSession(`/api/projects/${projetoId}/charter`, {
+       method: 'PATCH',
+       headers: { 'Content-Type': 'application/json' },
+-      body: JSON.stringify(serverFields),
++      body: JSON.stringify({ ...serverFields, principaisEnvolvidos: debouncedFields.principaisEnvolvidos, macroFases: fases }),
+     })
+       .then(r => { if (r.ok) { savedFields.current = debouncedFields } })
+-      .catch(() => {/* silent — user can retry via save version */})
+-  }, [debouncedFields, projetoId])
++      .catch(() => toast('Falha ao salvar rascunho. Use Salvar versão para reenviar o conteúdo atual.', 'error'))
++  }, [debouncedFields, projetoId, fases])
+ 
+   // ── Load versions ──────────────────────────────────────────────────────────
+ 
+@@ -238,39 +238,15 @@ export default function ProjectCharter({ membros = [] }: { membros?: MembroEquip
+ 
+   // ── Macro fases ────────────────────────────────────────────────────────────
+ 
+-  async function handleAddFase() {
+-    if (!projetoId) return
+-    const r = await fetchWithSession(`/api/projects/${projetoId}/macro-fases`, {
+-      method: 'POST',
+-      headers: { 'Content-Type': 'application/json' },
+-      body: JSON.stringify({ fase: '', dataLimite: null, custo: null }),
+-    })
+-    if (r.ok) {
+-      const created: MacroFase = await r.json()
+-      setFases(prev => [...prev, created])
+-      setNewestFaseId(created.id)
+-    }
++  function handleAddFase() {
++    const id = crypto.randomUUID()
++    setFases(prev => [...prev, { id, fase: '', dataLimite: '', custo: '' }])
++    setNewestFaseId(id)
+   }
+-
+   function handleFaseChange(id: string, field: keyof Omit<MacroFase, 'id'>, value: string) {
+     setFases(prev => prev.map(f => f.id === id ? { ...f, [field]: value } : f))
+-    clearTimeout((handleFaseChange as { _t?: ReturnType<typeof setTimeout> })._t)
+-    ;(handleFaseChange as { _t?: ReturnType<typeof setTimeout> })._t = setTimeout(async () => {
+-      setFaseSaving(s => ({ ...s, [id]: true }))
+-await fetchWithSession(`/api/projects/${projetoId}/macro-fases/${id}`, {
+-        method: 'PATCH',
+-        headers: { 'Content-Type': 'application/json' },
+-        body: JSON.stringify({ [field]: value }),
+-      }).catch(() => {})
+-      setFaseSaving(s => ({ ...s, [id]: false }))
+-    }, 800)
+-  }
+-
+-  async function handleRemoveFase(id: string) {
+-    if (!projetoId) return
+-    setFases(prev => prev.filter(f => f.id !== id))
+-    await fetchWithSession(`/api/projects/${projetoId}/macro-fases/${id}`, { method: 'DELETE' }).catch(() => {})
+   }
++  function handleRemoveFase(id: string) { setFases(prev => prev.filter(f => f.id !== id)) }
+ 
+   // ── Print ──────────────────────────────────────────────────────────────────
+ 
+@@ -335,6 +311,7 @@ await fetchWithSession(`/api/projects/${projetoId}/macro-fases/${id}`, {
+         method: 'POST',
+         headers: { 'Content-Type': 'application/json' },
+         body: JSON.stringify({
++          payload: { ...fields, macroFases: fases },
+           commitTitle: commitTitle.trim(),
+           versao: versionMeta.versao,
+           elaboradoPor: versionMeta.elaboradoPor,
+diff --git a/prisma/schema.prisma b/prisma/schema.prisma
+index 9c56b927..42dd4160 100644
+--- a/prisma/schema.prisma
++++ b/prisma/schema.prisma
+@@ -655,9 +655,13 @@ enum DocumentVersionStatus {
+ enum DocumentType {
+   STAKEHOLDER
+   CHARTER
++  EAP
++  ATA
+ }
+ 
+ model DocumentVersion {
++  payload       Json?
++  resourceId    String @default("")
+   id            String                @id @default(cuid())
+   projectId     String
+   project       Project               @relation(fields: [projectId], references: [id], onDelete: Cascade)
+@@ -837,3 +841,18 @@ model EapDocument {
+ 
+   @@index([tenantId])
+ }
++
++
++// Rascunho privado por autor. Versões submetidas são snapshots imutáveis.
++model DocumentDraft {
++  id           String @id @default(cuid())
++  projectId    String
++  tenantId     String
++  userId       String
++  documentType DocumentType
++  resourceId   String @default("")
++  payload      Json
++  updatedAt    DateTime @updatedAt
++  @@unique([projectId, userId, documentType, resourceId])
++  @@index([tenantId, projectId])
++}
+diff --git a/app/api/projects/[projetoId]/revisions/route.ts b/app/api/projects/[projetoId]/revisions/route.ts
+new file mode 100644
+index 00000000..f93fb537
+--- /dev/null
++++ b/app/api/projects/[projetoId]/revisions/route.ts
+@@ -0,0 +1,36 @@
++import { verifySession } from '@/lib/dal'
++import prisma from '@/lib/prisma'
++import { can, exigirPermissao, SemPermissaoError } from '@/services/authz'
++import { tipoDocumento, metaDocumento, submeterDocumento, revisarDocumento, salvarRascunho, rascunhoDocumento } from '@/services/documentRevisionService'
++import { z } from 'zod'
++import { revalidatePath } from 'next/cache'
++
++type Ctx = { params: Promise<{ projetoId: string }> }
++function error(e: unknown) { return Response.json({ error: e instanceof z.ZodError ? e.issues[0].message : e instanceof Error ? e.message : 'Erro ao processar documento' }, { status: e instanceof SemPermissaoError ? 403 : 400 }) }
++export async function GET(req: Request, { params }: Ctx) {
++  try {
++    const s = await verifySession(); const { projetoId } = await params
++    await exigirPermissao(s, projetoId, 'documentos:ver')
++    const q = new URL(req.url).searchParams
++    const documentType = tipoDocumento.parse(q.get('type'))
++    const resourceId = q.get('resourceId') ?? ''
++    if (q.get('draft') === '1') return Response.json(await rascunhoDocumento(s, projetoId, documentType, resourceId))
++    if (q.get('tab') === 'registro') return Response.json(await prisma.auditLog.findMany({ where: { tenantId: s.tenantId, entity: 'Document', entityId: projetoId, AND: [{ details: { path: ['documentType'], equals: documentType } }, ...(documentType === 'ATA' && !resourceId ? [] : [{ details: { path: ['resourceId'], equals: resourceId } }])] }, orderBy: { timestamp: 'desc' }, take: 200 }))
++    const versions = await prisma.documentVersion.findMany({ where: { projectId: projetoId, documentType, ...(documentType === 'ATA' && !resourceId ? {} : { resourceId }) }, include: { author: { select: { name: true } } }, orderBy: [{ createdAt: 'desc' }, { id: 'desc' }], take: 200 })
++    return Response.json({ versions, canApprove: await can(s, projetoId, 'documentos:aprovar') })
++  } catch(e) { return error(e) }
++}
++const input = z.object({ type: tipoDocumento, resourceId: z.string().max(64).default(''), payload: z.unknown(), meta: metaDocumento.optional(), draft: z.boolean().optional() })
++export async function POST(req: Request, { params }: Ctx) {
++  try { const s = await verifySession(); const { projetoId } = await params; const d = input.parse(await req.json())
++    return Response.json(d.draft ? await salvarRascunho(s, projetoId, d.type, d.payload, d.resourceId) : await submeterDocumento(s, projetoId, d.type, d.payload, metaDocumento.parse(d.meta), d.resourceId), { status: 201 })
++  } catch(e) { return error(e) }
++}
++export async function PATCH(req: Request, { params }: Ctx) {
++  try { const s = await verifySession(); const { projetoId } = await params
++    const d = z.object({ versionId: z.string().min(1), action: z.enum(['approve','reject']) }).parse(await req.json())
++    const result = await revisarDocumento(s, projetoId, d.versionId, d.action)
++    revalidatePath(`/projetos/${projetoId}`, 'layout')
++    return Response.json(result)
++  } catch(e) { return error(e) }
++}
+diff --git a/components/projetos/documentacao/HistoricoDocumento.tsx b/components/projetos/documentacao/HistoricoDocumento.tsx
+new file mode 100644
+index 00000000..4baed8a0
+--- /dev/null
++++ b/components/projetos/documentacao/HistoricoDocumento.tsx
+@@ -0,0 +1,48 @@
++'use client'
++import { useState } from 'react'
++import { useRouter } from 'next/navigation'
++import { fetchWithSession } from '@/lib/clientFetch'
++
++type Version = { id: string; commitTitle: string; status: string; createdAt: string; author?: { name: string } | null; payload: unknown; resourceId: string }
++type Log = { id: string; action: string; timestamp: string; userId: string | null; details: unknown }
++const labels: Record<string,string> = { CHARTER:'Termo de Abertura', STAKEHOLDER:'Partes interessadas', EAP:'EAP', ATA:'Atas', PENDING:'Pendente de aprovação', APPROVED:'Aprovada', REJECTED:'Rejeitada', macroFases:'Macro fases', elaboradoPor:'Elaborado por', aprovadoPor:'Aprovado por', dataAprovacao:'Data de aprovação', descricaoProduto:'Descrição do produto', limitesAutoridade:'Limites de autoridade', assuntosTratados:'Assuntos tratados', decisoesTomadas:'Decisões tomadas', payload:'Conteúdo' }
++function Conteudo({ value }: { value: unknown }) {
++ if (value === null || value === undefined) return <span>—</span>
++ if (Array.isArray(value)) return <ol className="space-y-2 border-l pl-3">{value.map((v,i) => <li key={i}><Conteudo value={v} /></li>)}</ol>
++ if (typeof value === 'object') return <dl className="space-y-2">{Object.entries(value).map(([k,v]) => <div key={k}><dt className="font-medium">{labels[k] ?? k.replace(/([A-Z])/g,' $1')}</dt><dd className="whitespace-pre-wrap pl-3 text-gray-700"><Conteudo value={v} /></dd></div>)}</dl>
++ return <span>{String(value)}</span>
++}
++export default function HistoricoDocumento({ projetoId, type, resourceId = '' }: { projetoId: string; type: string; resourceId?: string }) {
++ const router = useRouter()
++ const [versions, setVersions] = useState<Version[]>([])
++ const [logs, setLogs] = useState<Log[]>([])
++ const [tab, setTab] = useState<'historico'|'registro'>('historico')
++ const [canApprove, setCanApprove] = useState(false)
++ const [busy, setBusy] = useState(false)
++ const [error, setError] = useState('')
++ async function load(next = tab) {
++  setTab(next); setBusy(true); setError('')
++  try { const r = await fetchWithSession(`/api/projects/${projetoId}/revisions?type=${type}&resourceId=${encodeURIComponent(resourceId)}&tab=${next}`)
++   const data = await r.json(); if (!r.ok) throw new Error(data.error)
++   if (next === 'registro') setLogs(data); else { setVersions(data.versions); setCanApprove(data.canApprove) }
++  } catch(e) { setError(e instanceof Error ? e.message : 'Erro ao carregar histórico') } finally { setBusy(false) }
++ }
++ async function review(versionId: string, action: 'approve'|'reject') {
++  setBusy(true); setError('')
++  try { const r = await fetchWithSession(`/api/projects/${projetoId}/revisions`, { method: 'PATCH', headers: { 'Content-Type':'application/json' }, body: JSON.stringify({ versionId, action }) })
++   if (!r.ok) throw new Error((await r.json()).error)
++   await load(); router.refresh()
++  } catch(e) { setError(e instanceof Error ? e.message : 'Erro ao revisar') } finally { setBusy(false) }
++ }
++ return <details className="m-4 rounded-xl border border-gray-200 bg-white p-4" onToggle={e => { if (e.currentTarget.open) void load() }}>
++  <summary className="cursor-pointer font-semibold">Histórico e registro — {labels[type] ?? type}</summary>
++  <p className="my-3 text-sm text-gray-600">Versões pendentes não alteram o documento vigente. Abra o conteúdo para conferir a proposta antes de aprovar.</p>
++  <div className="flex gap-2"><button type="button" disabled={busy} onClick={() => load('historico')} aria-pressed={tab === 'historico'} className="rounded border px-3 py-2">Histórico</button><button type="button" disabled={busy} onClick={() => load('registro')} aria-pressed={tab === 'registro'} className="rounded border px-3 py-2">Registro</button></div>
++  {busy && <p role="status">Carregando…</p>}{error && <p role="alert" className="text-red-700">{error}</p>}
++  {tab === 'historico' ? <div className="space-y-3 py-3">{versions.length === 0 && <p>Nenhuma versão registrada.</p>}{versions.map(v => <article key={v.id} className={`rounded border p-3 ${v.status === 'PENDING' ? 'border-amber-300 bg-amber-50' : 'border-gray-200'}`}>
++   <strong>{v.commitTitle}</strong><p className="text-sm">{labels[v.status]} · {v.author?.name ?? 'Autor não disponível'} · {new Date(v.createdAt).toLocaleString('pt-BR')}</p>
++   <details className="my-2 text-sm"><summary className="cursor-pointer text-blue-700">Ver conteúdo desta versão</summary><Conteudo value={v.payload} /></details>
++   {canApprove && v.status === 'PENDING' && <div className="flex gap-3"><button disabled={busy} onClick={() => review(v.id,'approve')} className="rounded bg-blue-600 px-3 py-1 text-white">Aprovar</button><button disabled={busy} onClick={() => review(v.id,'reject')} className="rounded border px-3 py-1">Rejeitar</button></div>}
++  </article>)}</div> : <ul className="space-y-2 py-3">{logs.length === 0 && <li>Nenhum registro.</li>}{logs.map(l => <li key={l.id} className="rounded border p-2 text-sm"><strong>{l.action}</strong> · {new Date(l.timestamp).toLocaleString('pt-BR')} · {l.userId}<details><summary>Detalhes</summary><Conteudo value={l.details} /></details></li>)}</ul>}
++ </details>
++}
+diff --git a/prisma/migrations/20261001000000_document_revisions/migration.sql b/prisma/migrations/20261001000000_document_revisions/migration.sql
+new file mode 100644
+index 00000000..f67c750f
+--- /dev/null
++++ b/prisma/migrations/20261001000000_document_revisions/migration.sql
+@@ -0,0 +1,13 @@
++ALTER TYPE "DocumentType" ADD VALUE IF NOT EXISTS 'EAP';
++ALTER TYPE "DocumentType" ADD VALUE IF NOT EXISTS 'ATA';
++ALTER TABLE "DocumentVersion" ADD COLUMN "payload" JSONB, ADD COLUMN "resourceId" TEXT NOT NULL DEFAULT '';
++CREATE INDEX "DocumentVersion_current_idx" ON "DocumentVersion" ("projectId", "documentType", "resourceId", "status", "approvedAt");
++CREATE TABLE "DocumentDraft" (
++  "id" TEXT PRIMARY KEY, "projectId" TEXT NOT NULL REFERENCES "Project"("id") ON DELETE CASCADE,
++  "tenantId" TEXT NOT NULL REFERENCES "Tenant"("id") ON DELETE CASCADE,
++  "userId" TEXT NOT NULL REFERENCES "User"("id") ON DELETE CASCADE,
++  "documentType" "DocumentType" NOT NULL, "resourceId" TEXT NOT NULL DEFAULT '',
++  "payload" JSONB NOT NULL, "updatedAt" TIMESTAMP(3) NOT NULL
++);
++CREATE UNIQUE INDEX "DocumentDraft_projectId_userId_documentType_resourceId_key" ON "DocumentDraft" ("projectId", "userId", "documentType", "resourceId");
++CREATE INDEX "DocumentDraft_tenantId_projectId_idx" ON "DocumentDraft" ("tenantId", "projectId");
+diff --git a/services/documentRevisionService.ts b/services/documentRevisionService.ts
+new file mode 100644
+index 00000000..cd478afb
+--- /dev/null
++++ b/services/documentRevisionService.ts
+@@ -0,0 +1,91 @@
++import 'server-only'
++import { z } from 'zod'
++import prisma from '@/lib/prisma'
++import { Prisma, type DocumentType } from '@/lib/generated/prisma'
++import { can, exigirPermissao, type SessaoAuthz } from './authz'
++import { SaveEapDocumentSchema, validateEapDepth } from '@/lib/validation/eapSchemas'
++import { AtualizarAtaSchema } from '@/lib/validation/ataSchemas'
++
++export const tipoDocumento = z.enum(['CHARTER','STAKEHOLDER','EAP','ATA'])
++const texto = z.string().max(50000).nullable().optional()
++const charter = z.object({ justificativa: texto, objetivos: texto, metodologia: texto, descricaoProduto: texto, premissas: texto, restricoes: texto, limitesAutoridade: texto, principaisEnvolvidos: texto, macroFases: z.array(z.object({ id: z.string().optional(), fase: z.string().max(500), dataLimite: texto, custo: texto })).max(500).optional() }).strict()
++const stakeholder = z.object({ header: z.record(z.string(), z.string().nullable()), stakeholders: z.array(z.object({ ref: z.string(), nome: z.string().max(300), empresaEquipe: z.string().max(500), cargoCompetencia: z.string().max(500), email: z.string().max(300), telefoneFax: z.string().max(200), endereco: z.string().max(1000), observacoes: z.string().max(10000) })).max(1000) }).strict()
++export function validarDocumento(type: DocumentType, payload: unknown) {
++  const parsed = type === 'CHARTER' ? charter.parse(payload) : type === 'STAKEHOLDER' ? stakeholder.parse(payload) : type === 'ATA' ? AtualizarAtaSchema.parse(payload) : SaveEapDocumentSchema.parse(payload)
++  if (type === 'EAP' && !validateEapDepth((parsed as z.infer<typeof SaveEapDocumentSchema>).nodes)) throw new Error('Profundidade máxima excedida')
++  return JSON.parse(JSON.stringify(parsed)) as Prisma.InputJsonValue
++}
++async function acesso(s: SessaoAuthz, projectId: string, permission: 'documentos:ver' | 'documentos:editar' | 'documentos:aprovar' | 'documentos:excluir') {
++  await exigirPermissao(s, projectId, 'projeto:ver')
++  await exigirPermissao(s, projectId, permission)
++}
++const whereDraft = (s: SessaoAuthz, projectId: string, documentType: DocumentType, resourceId: string) => ({ projectId_userId_documentType_resourceId: { projectId, userId: s.userId, documentType, resourceId } })
++
++export async function documentoVigente(s: SessaoAuthz, projectId: string, documentType: DocumentType, resourceId = '') {
++  await acesso(s, projectId, 'documentos:ver')
++  return prisma.documentVersion.findFirst({ where: { projectId, documentType, resourceId, status: 'APPROVED', payload: { not: Prisma.DbNull } }, orderBy: [{ approvedAt: 'desc' }, { id: 'desc' }] })
++}
++export async function rascunhoDocumento(s: SessaoAuthz, projectId: string, documentType: DocumentType, resourceId = '') {
++  await acesso(s, projectId, 'documentos:editar')
++  return prisma.documentDraft.findUnique({ where: whereDraft(s, projectId, documentType, resourceId) })
++}
++export async function salvarRascunho(s: SessaoAuthz, projectId: string, documentType: DocumentType, payload: unknown, resourceId = '') {
++  await acesso(s, projectId, 'documentos:editar')
++  const content = validarDocumento(documentType, payload)
++  return prisma.$transaction(async tx => {
++    const draft = await tx.documentDraft.upsert({ where: whereDraft(s, projectId, documentType, resourceId), create: { tenantId: s.tenantId, projectId, userId: s.userId, documentType, resourceId, payload: content }, update: { payload: content } })
++    await tx.auditLog.create({ data: { tenantId: s.tenantId, userId: s.userId, action: 'DOCUMENTO_RASCUNHO', entity: 'Document', entityId: projectId, details: { documentType, resourceId, draftId: draft.id } } })
++    return draft
++  })
++}
++export const metaDocumento = z.object({ commitTitle: z.string().trim().min(1).max(300), versao: z.string().trim().min(1).max(50), elaboradoPor: z.string().max(300).default(''), aprovadoPor: z.string().max(300).default(''), dataAprovacao: z.string().max(50).default('') })
++async function aplicarAta(tx: Prisma.TransactionClient, s: SessaoAuthz, projectId: string, resourceId: string, payload: unknown) {
++  const d = AtualizarAtaSchema.parse(payload)
++  const project = await tx.project.findFirst({ where: { id: projectId, tenantId: s.tenantId, deletedAt: null }, select: { name: true } })
++  if (!project) throw new Error('Projeto não encontrado')
++  const existing = await tx.ata.findUnique({ where: { id: resourceId } })
++  if (existing && (existing.projetoId !== projectId || existing.tenantId !== s.tenantId || existing.deletedAt)) throw new Error('Ata não encontrada')
++  const ids = [...new Set([d.elaboradoPorUserId, d.aprovadoPorUserId, ...d.presentes.map(p => p.userId), ...d.acoes.map(a => a.responsavelUserId)].filter((v): v is string => !!v))]
++  if (ids.length) {
++    const members = await tx.userProject.count({ where: { projectId, active: true, userId: { in: ids }, user: { tenantId: s.tenantId, deletedAt: null, isActive: true } } })
++    if (members !== ids.length) throw new Error('Responsáveis devem ser membros ativos do projeto')
++  }
++  const { presentes, acoes, anexos, ...rest } = d
++  const data = { ...rest, data: new Date(d.data), presentes: { create: presentes.map(p => ({ ...p, userId: p.userId || null })) }, acoes: { create: acoes.map(a => ({ ...a, prazo: a.prazo ? new Date(a.prazo) : null, responsavelUserId: a.responsavelUserId || null })) }, anexos: { create: anexos } }
++  if (existing) {
++    await tx.ataPresente.deleteMany({ where: { ataId: resourceId } }); await tx.ataAcao.deleteMany({ where: { ataId: resourceId } }); await tx.ataAnexo.deleteMany({ where: { ataId: resourceId } })
++    await tx.ata.update({ where: { id: resourceId }, data })
++  } else {
++    const last = await tx.ata.findFirst({ where: { projetoId: projectId }, orderBy: { numero: 'desc' }, select: { numero: true } })
++    await tx.ata.create({ data: { ...data, id: resourceId, projetoId: projectId, tenantId: s.tenantId, nomeProjeto: project.name, numero: (last?.numero ?? 0) + 1 } })
++  }
++}
++
++export async function submeterDocumento(s: SessaoAuthz, projectId: string, documentType: DocumentType, payload: unknown, meta: z.infer<typeof metaDocumento>, resourceId = '') {
++  await acesso(s, projectId, 'documentos:editar')
++  if (documentType === 'ATA' && !resourceId) throw new Error('Identificação da ata obrigatória')
++  const content = validarDocumento(documentType, payload)
++  const metadata = metaDocumento.parse(meta)
++  const approve = await can(s, projectId, 'documentos:aprovar')
++  return prisma.$transaction(async tx => {
++    // Serializa aprovação/submissão e define uma ordem inequívoca de vigência.
++    await tx.$queryRaw`SELECT id FROM "Project" WHERE id = ${projectId} AND "tenantId" = ${s.tenantId} FOR UPDATE`
++    if (documentType === 'ATA' && approve) await aplicarAta(tx, s, projectId, resourceId, content)
++    const version = await tx.documentVersion.create({ data: { ...metadata, projectId, documentType, resourceId, payload: content, authorId: s.userId, status: approve ? 'APPROVED' : 'PENDING', approvedAt: approve ? new Date() : null, approvedById: approve ? s.userId : null }, include: { author: { select: { name: true } } } })
++    await tx.auditLog.create({ data: { tenantId: s.tenantId, userId: s.userId, action: 'DOCUMENTO_VERSAO', entity: 'Document', entityId: projectId, details: { documentType, resourceId, versionId: version.id, status: version.status, commitTitle: metadata.commitTitle } } })
++    return version
++  })
++}
++export async function revisarDocumento(s: SessaoAuthz, projectId: string, versionId: string, action: 'approve' | 'reject') {
++  await acesso(s, projectId, 'documentos:aprovar')
++  return prisma.$transaction(async tx => {
++    await tx.$queryRaw`SELECT id FROM "Project" WHERE id = ${projectId} AND "tenantId" = ${s.tenantId} FOR UPDATE`
++    const current = await tx.documentVersion.findFirst({ where: { id: versionId, projectId, status: 'PENDING' } })
++    if (!current) throw new Error('Versão não encontrada ou já revisada')
++    if (!current.payload) throw new Error('Versão legada sem conteúdo: crie uma nova versão antes de aprovar')
++    if (current.documentType === 'ATA' && action === 'approve') await aplicarAta(tx, s, projectId, current.resourceId, current.payload)
++    const version = await tx.documentVersion.update({ where: { id: versionId }, data: { status: action === 'approve' ? 'APPROVED' : 'REJECTED', approvedAt: action === 'approve' ? new Date() : null, approvedById: s.userId }, include: { author: { select: { name: true } } } })
++    await tx.auditLog.create({ data: { tenantId: s.tenantId, userId: s.userId, action: action === 'approve' ? 'DOCUMENTO_APROVAR' : 'DOCUMENTO_REJEITAR', entity: 'Document', entityId: projectId, details: { documentType: current.documentType, resourceId: current.resourceId, versionId } } })
++    return version
++  })
++}
