@@ -1,7 +1,8 @@
+import { canProjectPermission } from '@/services/projectAccess'
 import { notFound } from 'next/navigation'
 import { verifySession } from '@/lib/dal'
-import { findById } from '@/services/projectService'
-import { isProjectManager, getProjectRoleForMember } from '@/services/projectRoleService'
+import { findById } from '@/services/projectAccess'
+import { getProjectRoleForMember } from '@/services/projectRoleService'
 import { listarDepartamentosAssociados } from '@/services/projetoCadastroService'
 import { nomesUnicosDeFuncoes } from '@/lib/funcoesDedupe'
 import prisma from '@/lib/prisma'
@@ -20,7 +21,7 @@ export default async function ProjetoStakeholdersPage({ params }: { params: Prom
   const { projetoId } = await params
   const { tenantId, role, userId } = await verifySession()
 
-  const isManager = role === 'admin' || await isProjectManager(userId, projetoId)
+  const isManager = await canProjectPermission({ tenantId, role, userId }, projetoId, 'projeto:equipe')
   if (!isManager) notFound()
 
   const userRole: 'admin' | 'gerente' = role === 'admin' ? 'admin' : 'gerente'

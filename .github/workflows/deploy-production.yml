@@ -3,6 +3,8 @@ name: Deploy to Production
 on:
   push:
     branches: [main]
+  pull_request:
+    branches: [main]
   workflow_dispatch:
     inputs:
       confirm:
@@ -42,7 +44,7 @@ jobs:
         uses: trufflesecurity/trufflehog@main
         with:
           path: ./
-          base: ${{ (github.event.before != '' && github.event.before != '0000000000000000000000000000000000000000') && github.event.before || 'HEAD~1' }}
+          base: ${{ github.event.pull_request.base.sha || ((github.event.before != '' && github.event.before != '0000000000000000000000000000000000000000') && github.event.before) || 'HEAD~1' }}
           head: HEAD
           extra_args: --exclude-paths=.trufflehogignore
 
@@ -57,13 +59,12 @@ jobs:
   # ── Tests, lint, dependency audit ────────────────────────────────────────────
   test:
     name: Test
+    if: github.event_name != 'pull_request'
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
 
       - uses: pnpm/action-setup@v3
-        with:
-          version: 11.5.0
 
       - uses: actions/setup-node@v4
         with:
@@ -92,7 +93,7 @@ jobs:
     name: Build & Push
     # Garante que se for workflow_dispatch, o job confirm PRECISA passar antes do build rodar
     needs: [confirm, security-scan, test]
-    if: always() && (needs.confirm.result == 'success' || needs.confirm.result == 'skipped') && needs.security-scan.result == 'success' && needs.test.result == 'success'
+    if: github.event_name != 'pull_request' && always() && (needs.confirm.result == 'success' || needs.confirm.result == 'skipped') && needs.security-scan.result == 'success' && needs.test.result == 'success'
     runs-on: ubuntu-latest
     permissions:
       contents: read
@@ -289,7 +290,7 @@ jobs:
     # O `success()` implícito exige sucesso em toda a cadeia de `needs`, inclusive
     # no job `confirm`, que fica `skipped` em push — e o deploy era pulado sempre.
     # O build já garante confirm/security-scan/test; basta exigir o build.
-    if: always() && needs.build.result == 'success'
+    if: github.event_name != 'pull_request' && always() && needs.build.result == 'success'
     runs-on: ubuntu-latest
     environment: production
     # Nunca dois deploys ao mesmo tempo; um novo espera o anterior terminar.

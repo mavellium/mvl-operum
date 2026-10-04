@@ -1,10 +1,9 @@
 import Link from 'next/link'
 import { notFound } from 'next/navigation'
 import { verifySession } from '@/lib/dal'
-import { findById } from '@/services/projectService'
-import { isProjectManager } from '@/services/projectRoleService'
+import { findById } from '@/services/projectAccess'
+import { canProjectPermission } from '@/services/projectAccess'
 import { listarAtasPorProjeto } from '@/services/ataService'
-import prisma from '@/lib/prisma'
 import { removerAtaAction } from '@/app/actions/atas'
 import type { Metadata } from 'next'
 
@@ -20,19 +19,12 @@ const fmtDate = (d: Date | null | undefined): string => {
 
 export default async function AtasPage({ params }: { params: Promise<{ projetoId: string }> }) {
   const { projetoId } = await params
-  const { userId, role } = await verifySession()
+  const { userId, role, tenantId } = await verifySession()
 
   const project = await findById(projetoId)
   if (!project) notFound()
 
-  const isMember = role === 'admin' || (await isProjectManager(userId, projetoId))
-  if (!isMember) {
-    const entry = await prisma.userProject.findUnique({
-      where: { userId_projectId: { userId, projectId: projetoId } },
-    })
-    if (!entry?.active) notFound()
-  }
-
+  if (!(await canProjectPermission({ tenantId, role, userId }, projetoId, 'documentos:ver'))) notFound()
   // Memória: no ambiente do cliente a listagem já quebrou com 500 por dado
   // específico (migration de Ata não aplicada, ata incompleta, relação ausente).
   // Em vez de 500, mostramos um estado informativo e seguimos com o restante da página.
@@ -45,7 +37,8 @@ export default async function AtasPage({ params }: { params: Promise<{ projetoId
     loadError = 'Não foi possível carregar as atas agora. Tente novamente em instantes.'
   }
 
-  const gerente = (await isProjectManager(userId, projetoId)) || role === 'admin'
+  const canEdit = (await canProjectPermission({ tenantId, role, userId }, projetoId, 'documentos:editar')) && (await canProjectPermission({ tenantId, role, userId }, projetoId, 'documentos:aprovar'))
+  const gerente = await canProjectPermission({ tenantId, role, userId }, projetoId, 'documentos:excluir')
 
   return (
     <div className="min-h-screen bg-gray-50">
@@ -55,12 +48,12 @@ export default async function AtasPage({ params }: { params: Promise<{ projetoId
             <h1 className="text-xl font-bold text-gray-900">Atas de Reunião</h1>
             <p className="text-sm text-gray-500 mt-1">Registro e exportação das atas do projeto {project.name}.</p>
           </div>
-          <Link
+          {canEdit && <Link
             href={`/projetos/${projetoId}/atas/nova`}
             className="inline-flex items-center justify-center px-4 py-2 text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 rounded-lg transition-colors"
           >
             + Nova Ata
-          </Link>
+          </Link>}
         </div>
 
         {loadError && (

@@ -1,3 +1,4 @@
+import { canProjectPermission } from '@/services/projectAccess'
 // @vitest-environment node
 import { describe, it, expect, vi, beforeEach } from 'vitest'
 
@@ -5,8 +6,8 @@ vi.mock('@/lib/dal', () => ({
   verifySession: vi.fn(),
 }))
 
-vi.mock('@/services/projectRoleService', () => ({
-  isProjectManager: vi.fn(),
+vi.mock('@/services/projectAccess', () => ({
+  canProjectPermission: vi.fn(),
 }))
 
 vi.mock('@/lib/prisma', () => ({
@@ -42,6 +43,7 @@ const ctx = { params: Promise.resolve({ projetoId: 'p1' }) }
 describe('GET /api/projects/:id/eap — tratamento de erro', () => {
   beforeEach(() => {
     vi.clearAllMocks()
+    vi.mocked(canProjectPermission).mockResolvedValue(true)
     vi.spyOn(console, 'error').mockImplementation(() => {})
     mockVerifySession.mockResolvedValue({ tenantId: 't1', role: 'admin', userId: 'u1' })
     mockFindFirst.mockResolvedValue({ id: 'p1', name: 'Projeto', departamentos: [], semestre: null, ano: null })

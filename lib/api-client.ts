@@ -255,11 +255,11 @@ export const stakeholdersApi = {
 
   get: (id: string) => request<Record<string, unknown>>(`/stakeholders/${id}`),
 
-  create: (data: Record<string, unknown>) =>
-    request('/stakeholders', { method: 'POST', body: JSON.stringify(data) }),
+  create: (data: Record<string, unknown>, projectId?: string) =>
+    request(`/stakeholders${projectId ? `?projectId=${encodeURIComponent(projectId)}` : ''}`, { method: 'POST', body: JSON.stringify(data) }),
 
-  update: (id: string, data: Record<string, unknown>) =>
-    request(`/stakeholders/${id}`, { method: 'PATCH', body: JSON.stringify(data) }),
+  update: (id: string, data: Record<string, unknown>, projectId?: string) =>
+    request(`/stakeholders/${id}${projectId ? `?projectId=${encodeURIComponent(projectId)}` : ''}`, { method: 'PATCH', body: JSON.stringify(data) }),
 
   delete: (id: string) =>
     request(`/stakeholders/${id}`, { method: 'DELETE' }),

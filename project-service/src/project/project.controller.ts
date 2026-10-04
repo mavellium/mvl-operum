@@ -22,10 +22,11 @@ export class ProjectController {
   @Get()
   list(
     @Headers('x-tenant-id') tenantId: string,
+    @Headers('x-authorized-projects') authorized?: string,
     @Query('page') page?: string,
     @Query('limit') limit?: string,
   ) {
-    return this.projectService.list(tenantId, Number(page ?? 1), Number(limit ?? 20))
+    return this.projectService.list(tenantId, Number(page ?? 1), Number(limit ?? 20), authorized?.split(','))
   }
 
   @Get('user/:userId')
@@ -34,6 +35,7 @@ export class ProjectController {
     @Headers('x-user-id') requesterId: string,
     @Headers('x-user-role') requesterRole: string,
     @Headers('x-tenant-id') tenantId: string,
+    @Headers('x-authorized-projects') authorized?: string,
   ) {
     // O gateway injeta x-user-id/x-user-role a partir do token já verificado —
     // sem esta checagem, qualquer chamador autenticado no tenant poderia listar
@@ -41,12 +43,13 @@ export class ProjectController {
     if (userId !== requesterId && requesterRole !== 'admin') {
       throw new ForbiddenException('Você só pode consultar os próprios projetos')
     }
-    return this.projectService.getUserActiveProjects(userId, tenantId)
+    return this.projectService.getUserActiveProjects(userId, tenantId, authorized?.split(','))
   }
 
   @Get(':id')
-  findOne(@Param('id') id: string, @Headers('x-tenant-id') tenantId: string) {
-    return this.projectService.findOne(id, tenantId)
+  async findOne(@Param('id') id: string, @Headers('x-tenant-id') tenantId: string, @Headers('x-redact-project-documents') redact?: string) {
+    const project = await this.projectService.findOne(id, tenantId)
+    return redact === 'true' ? this.projectService.withoutDocuments(project) : project
   }
 
   @Post()

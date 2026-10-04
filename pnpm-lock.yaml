@@ -26,6 +26,9 @@ overrides:
   valibot: '>=1.4.2'
   uuid: '>=11.1.1'
 
+patchedDependencies:
+  braces@3.0.3: 09522a43f9ee4b8d0664494aa5202a8e7e2e26e31aec3caf6e52cc9f882b2637
+
 importers:
 
   .:
@@ -8485,7 +8488,7 @@ snapshots:
     dependencies:
       balanced-match: 4.0.4
 
-  braces@3.0.3:
+  braces@3.0.3(patch_hash=09522a43f9ee4b8d0664494aa5202a8e7e2e26e31aec3caf6e52cc9f882b2637):
     dependencies:
       fill-range: 7.1.1
 
@@ -10306,7 +10309,7 @@ snapshots:
 
   micromatch@4.0.8:
     dependencies:
-      braces: 3.0.3
+      braces: 3.0.3(patch_hash=09522a43f9ee4b8d0664494aa5202a8e7e2e26e31aec3caf6e52cc9f882b2637)
       picomatch: 2.3.2
 
   mime-db@1.52.0: {}

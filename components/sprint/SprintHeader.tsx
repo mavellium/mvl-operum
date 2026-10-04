@@ -1,5 +1,7 @@
 'use client'
 
+import { useProjectPermissions } from '@/components/permissoes/ProjectPermissions'
+
 import { useState, useRef, useEffect } from 'react'
 import { sprintDashboardPath } from '@/lib/sprintPath'
 import { FILTROS_PADRAO, filtrosAtivos, type CardFilters, type FiltroPrazo } from '@/lib/cardFilters'
@@ -78,6 +80,8 @@ function formatDate(d: Date | string | null) {
 }
 
 export default function SprintHeader({ sprint, tags = [], onChangeBackground, projectId, filters, onFiltersChange, currentUser }: SprintHeaderProps) {
+  const permissions = useProjectPermissions()
+  const canManage = permissions.has('quadro:sprints')
   const router = useRouter()
 
   const [saving, setSaving] = useState(false)
@@ -169,7 +173,7 @@ export default function SprintHeader({ sprint, tags = [], onChangeBackground, pr
                   </div>
                 </div>
               ) : (
-                <div className="flex items-center gap-2 min-w-0 group cursor-pointer" onClick={() => setEditingName(true)}>
+                <div className="flex items-center gap-2 min-w-0 group cursor-pointer" onClick={() => { if (canManage) setEditingName(true) }}>
                   <h1 className="text-lg sm:text-xl font-bold text-gray-900 truncate group-hover:text-blue-600 transition-colors">
                     {sprintName}
                   </h1>
@@ -291,6 +295,7 @@ export default function SprintHeader({ sprint, tags = [], onChangeBackground, pr
             </Link>
 
             <button
+              disabled={!canManage}
               onClick={() => setEditSprintOpen(true)}
               className="p-1.5 text-gray-400 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition-colors focus:outline-none"
               title="Configurações da Sprint"
@@ -302,9 +307,9 @@ export default function SprintHeader({ sprint, tags = [], onChangeBackground, pr
 
             {/* AÇÃO DO LAYOUT PASSADA VIA PROP PARA O MENU */}
             <BoardActionMenu
-              onImportCsv={() => setCsvOpen(true)}
+              onImportCsv={permissions.has('quadro:cards') ? () => setCsvOpen(true) : undefined}
               onCreateSprint={() => {}}
-              onManageTags={() => setTagOpen(true)}
+              onManageTags={permissions.has('quadro:cards') ? () => setTagOpen(true) : undefined}
               onChangeLayout={() => setLayoutOpen(true)} // <--- AQUI
             />
           </div>

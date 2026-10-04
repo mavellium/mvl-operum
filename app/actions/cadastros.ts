@@ -2,7 +2,8 @@
 
 import { revalidatePath } from 'next/cache'
 import { verifySession } from '@/lib/dal'
-import { isProjectManager } from '@/services/projectRoleService'
+import { requireProjectPermission } from '@/services/projectAccess'
+import prisma from '@/lib/prisma'
 import {
   associarDepartamento,
   desassociarDepartamento,
@@ -12,14 +13,14 @@ import {
 import { registrarAcao } from '@/services/auditoriaService'
 
 async function authorize(tenantId: string, userId: string, role: string, projetoId: string) {
-  const allowed = role === 'admin' || (await isProjectManager(userId, projetoId))
-  if (!allowed) throw new Error('Não autorizado')
+  await requireProjectPermission({ tenantId, userId, role }, projetoId, 'cadastros:gerenciar')
 }
 
 export async function associarDepartamentoAction(projetoId: string, departmentId: string) {
   try {
     const session = await verifySession()
     await authorize(session.tenantId, session.userId, session.role, projetoId)
+    if (!(await prisma.department.findFirst({ where: { id: departmentId, tenantId: session.tenantId, deletedAt: null }, select: { id: true } }))) throw new Error('Cadastro não encontrado')
     await associarDepartamento(projetoId, departmentId)
     await registrarAcao({
       tenantId: session.tenantId,
@@ -40,6 +41,7 @@ export async function desassociarDepartamentoAction(projetoId: string, departmen
   try {
     const session = await verifySession()
     await authorize(session.tenantId, session.userId, session.role, projetoId)
+    if (!(await prisma.department.findFirst({ where: { id: departmentId, tenantId: session.tenantId, deletedAt: null }, select: { id: true } }))) throw new Error('Cadastro não encontrado')
     await desassociarDepartamento(projetoId, departmentId)
     await registrarAcao({
       tenantId: session.tenantId,
@@ -60,6 +62,7 @@ export async function associarFuncaoAction(projetoId: string, funcaoId: string) 
   try {
     const session = await verifySession()
     await authorize(session.tenantId, session.userId, session.role, projetoId)
+    if (!(await prisma.role.findFirst({ where: { id: funcaoId, tenantId: session.tenantId, deletedAt: null }, select: { id: true } }))) throw new Error('Cadastro não encontrado')
     await associarFuncao(projetoId, funcaoId)
     await registrarAcao({
       tenantId: session.tenantId,
@@ -80,6 +83,7 @@ export async function desassociarFuncaoAction(projetoId: string, funcaoId: strin
   try {
     const session = await verifySession()
     await authorize(session.tenantId, session.userId, session.role, projetoId)
+    if (!(await prisma.role.findFirst({ where: { id: funcaoId, tenantId: session.tenantId, deletedAt: null }, select: { id: true } }))) throw new Error('Cadastro não encontrado')
     await desassociarFuncao(projetoId, funcaoId)
     await registrarAcao({
       tenantId: session.tenantId,

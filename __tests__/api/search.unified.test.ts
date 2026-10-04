@@ -1,3 +1,4 @@
+vi.mock('@/services/authz', () => ({ projetosAutorizados: vi.fn().mockResolvedValue(['p1']), can: vi.fn().mockResolvedValue(true) }))
 // @vitest-environment node
 import { describe, it, expect, vi, beforeEach } from 'vitest'
 

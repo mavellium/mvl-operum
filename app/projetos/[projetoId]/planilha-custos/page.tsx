@@ -1,6 +1,6 @@
 import { notFound } from 'next/navigation'
 import { verifySession } from '@/lib/dal'
-import { findById } from '@/services/projectService'
+import { findById } from '@/services/projectAccess'
 import { permissoesNoProjeto } from '@/services/authz'
 import { getTree } from '@/services/wbsService'
 import { computarPlanilhaCustos, fmtDataBR, type Elaborador } from '@/lib/planilhaCustos'

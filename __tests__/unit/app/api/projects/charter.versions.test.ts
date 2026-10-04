@@ -12,13 +12,13 @@ vi.mock('@/lib/prisma', () => ({
   },
 }))
 
-vi.mock('@/services/projectRoleService', () => ({
-  isProjectManager: vi.fn(),
+vi.mock('@/services/projectAccess', () => ({
+  canProjectPermission: vi.fn(),
 }))
 
 import { verifySession } from '@/lib/dal'
 import prisma from '@/lib/prisma'
-import { isProjectManager } from '@/services/projectRoleService'
+import { canProjectPermission } from '@/services/projectAccess'
 import { GET, POST } from '@/app/api/projects/[projetoId]/charter/versions/route'
 
 const PROJETO_ID = 'proj-1'
@@ -34,8 +34,8 @@ const params = Promise.resolve({ projetoId: PROJETO_ID })
 
 beforeEach(() => {
   vi.clearAllMocks()
+    vi.mocked(canProjectPermission).mockResolvedValue(true)
   vi.mocked(verifySession).mockResolvedValue({ userId: USER_ID, tenantId: TENANT_ID, role: 'admin' })
-  vi.mocked(isProjectManager).mockResolvedValue(false)
   vi.mocked(prisma.project.findFirst).mockResolvedValue({ id: PROJETO_ID } as never)
 })
 
@@ -58,7 +58,7 @@ describe('GET /charter/versions', () => {
 
   it('retorna 403 para usuário sem acesso', async () => {
     vi.mocked(verifySession).mockResolvedValue({ userId: USER_ID, tenantId: TENANT_ID, role: 'member' })
-    vi.mocked(prisma.project.findFirst).mockResolvedValue(null as never)
+    vi.mocked(canProjectPermission).mockResolvedValue(false)
 
     const res = await GET(makeRequest(), { params })
     expect(res.status).toBe(403)

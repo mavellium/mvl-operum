@@ -1,5 +1,7 @@
 'use client'
 
+import { useProjectPermissions } from '@/components/permissoes/ProjectPermissions'
+
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { criarAtaAction, atualizarAtaAction } from '@/app/actions/atas'
@@ -43,6 +45,8 @@ const inputCls =
   'w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500'
 
 export default function AtaFormClient({ projetoId, ataId, mode, members, initial }: Props) {
+  const permissions = useProjectPermissions()
+  const canEdit = permissions.has('documentos:editar') && permissions.has('documentos:aprovar')
   const router = useRouter()
 
   const [local, setLocal] = useState(initial?.local ?? '')
@@ -93,6 +97,7 @@ export default function AtaFormClient({ projetoId, ataId, mode, members, initial
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault()
+    if (!canEdit) return
     setError(null)
     setSaving(true)
 
@@ -148,7 +153,8 @@ export default function AtaFormClient({ projetoId, ataId, mode, members, initial
   }
 
   return (
-    <form onSubmit={handleSubmit} className="space-y-6">
+    <form onSubmit={handleSubmit}>
+    <fieldset disabled={!canEdit} className="space-y-6 min-w-0">
       {error && (
         <div className="rounded-lg bg-red-50 border border-red-200 px-4 py-3 text-sm text-red-700">
           {error}
@@ -341,6 +347,7 @@ export default function AtaFormClient({ projetoId, ataId, mode, members, initial
           Cancelar
         </button>
       </div>
+    </fieldset>
     </form>
   )
 }

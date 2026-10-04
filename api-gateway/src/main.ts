@@ -1,7 +1,8 @@
 import 'dotenv/config'
 import express from 'express'
-import { createProxyMiddleware } from 'http-proxy-middleware'
+import { createProxyMiddleware, fixRequestBody } from 'http-proxy-middleware'
 import rateLimit from 'express-rate-limit'
+import { authorizationMiddleware } from './middleware/authorization'
 import { authMiddleware } from './middleware/auth'
 
 const app = express()
@@ -71,6 +72,9 @@ app.use((req, res, next) => {
   next()
 })
 
+app.use(express.json({ limit: '2mb' }))
+app.use(authorizationMiddleware())
+
 const INTERNAL_API_KEY = process.env.INTERNAL_API_KEY ?? ''
 
 const AUTH_SERVICE_URL = process.env.AUTH_SERVICE_URL ?? 'http://auth-service:4001'
@@ -80,7 +84,7 @@ const NOTIFICATION_SERVICE_URL = process.env.NOTIFICATION_SERVICE_URL ?? 'http:/
 const FILE_SERVICE_URL = process.env.FILE_SERVICE_URL ?? 'http://file-service:4005'
 
 function makeProxy(targetUrl: string, prefix: string) {
-  return createProxyMiddleware({ target: targetUrl, changeOrigin: true, pathRewrite: { '^/': `${prefix}/` }, on: { proxyReq: (proxyReq) => proxyReq.setHeader('X-Internal-Api-Key', INTERNAL_API_KEY) } })
+  return createProxyMiddleware({ target: targetUrl, changeOrigin: true, pathRewrite: { '^/': `${prefix}/` }, on: { proxyReq: (proxyReq, req) => { proxyReq.setHeader('X-Internal-Api-Key', INTERNAL_API_KEY); fixRequestBody(proxyReq, req) } } })
 }
 
 const proxyRoutes = [

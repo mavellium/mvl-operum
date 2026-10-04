@@ -1,4 +1,5 @@
 import { verifySession } from '@/lib/dal'
+import { canProjectPermission } from '@/services/projectAccess'
 import { projectsApi } from '@/lib/api-client'
 import { STATUS_CONFIG } from '@/lib/statusConfig'
 import EmptyState from '@/components/ui/EmptyState'
@@ -51,13 +52,14 @@ function formatDateShort(date?: Date | string | null) {
 }
 
 export default async function ProjetosPage({ searchParams }: { searchParams: Promise<{ page?: string }> }) {
-  await verifySession()
+  const session = await verifySession()
 
   const params = await searchParams
   const currentPage = Number(params?.page) || 1
   const limit = 9 // Grid 3x3 perfeito
 
   const { items: projetos, total } = await projectsApi.list(currentPage, limit)
+  const editable = new Set((await Promise.all(projetos.map(async p => (await canProjectPermission(session, p.id, 'projeto:editar')) ? p.id : null))).filter(Boolean))
   const totalPages = Math.ceil(total / limit)
 
   return (
@@ -74,13 +76,13 @@ export default async function ProjetosPage({ searchParams }: { searchParams: Pro
               {total} {total === 1 ? 'projeto cadastrado' : 'projetos cadastrados'}
             </p>
           </div>
-          <Link
+          {session.role === 'admin' && <Link
             href="/projetos/novo"
             className="flex items-center gap-2 px-5 py-2.5 bg-blue-600 text-white text-sm font-bold rounded-xl hover:bg-blue-700 hover:shadow-lg hover:shadow-blue-600/20 active:scale-95 transition-all shadow-sm cursor-pointer"
           >
             <IconPlus />
             Novo Projeto
-          </Link>
+          </Link>}
         </div>
 
         {projetos.length === 0 ? (
@@ -88,7 +90,7 @@ export default async function ProjetosPage({ searchParams }: { searchParams: Pro
             <EmptyState
               heading="Nenhum projeto encontrado"
               subtext="Você ainda não possui projetos ativos ou na página atual."
-              action={{ label: 'Criar o primeiro projeto', href: '/projetos/novo' }}
+              action={session.role === 'admin' ? { label: 'Criar o primeiro projeto', href: '/projetos/novo' } : undefined}
               size="md"
             />
           </div>
@@ -130,16 +132,16 @@ export default async function ProjetosPage({ searchParams }: { searchParams: Pro
 
                         {/* BOTÕES DE AÇÃO (Flutuantes no canto direito) */}
                         <div className="opacity-0 group-hover:opacity-100 transition-all duration-200 flex items-center bg-white/90 backdrop-blur-sm border border-slate-200/80 shadow-sm rounded-xl p-1 -mt-2 -mr-2">
-                          <Link 
+                          {editable.has(projeto.id) && <Link
                             href={`/projetos/novo?edit=${projeto.id}`} 
                             title="Editar Projeto"
                             className="p-1.5 text-slate-400 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition-colors"
                           >
                             <IconEdit />
-                          </Link>
+                          </Link>}
                           {/* O botão Delete é Client Component, então precisa estar acima do z-10 do Link */}
                           <div className="relative z-20">
-                            <DeleteProjectButton id={projeto.id} name={projeto.name} />
+                            {editable.has(projeto.id) && <DeleteProjectButton id={projeto.id} name={projeto.name} />}
                           </div>
                         </div>
                       </div>

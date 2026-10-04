@@ -86,9 +86,10 @@ export class CardService {
   async search(
     tenantId: string,
     q: string,
-    opts?: { sprintId?: string; projectId?: string; inProjectId?: string; responsibleUserId?: string },
+    opts?: { authorized?: string[]; sprintId?: string; projectId?: string; inProjectId?: string; responsibleUserId?: string },
   ) {
     const AND: object[] = [cardInTenant(tenantId)]
+    if (opts?.authorized) AND.push({ OR: [{ sprint: { projectId: { in: opts.authorized } } }, { sprintId: null, projectId: { in: opts.authorized } }] })
     // Card do projeto no backlog (projectId) OU numa sprint do projeto (card
     // criado dentro da sprint pode não ter projectId próprio).
     if (opts?.inProjectId) {

@@ -9,6 +9,15 @@ funcionalidade depois disso é uma versão MINOR.
 
 ## [Não lançado]
 
+## [1.10.0] — 2026-10-03
+- **Permissões (SDD 5.1):** operações de projeto, equipe, sprints, cards, movimentos, comentários, timers, anexos e cadastros passam a aplicar o catálogo configurado por função e usuário. Leituras/listagens/busca ficam limitadas aos projetos autorizados; interface recebe o mesmo conjunto de permissões do servidor.
+- **API/MCP:** gateway consulta autorização no app por endpoint com chave interna, obtém o papel do usuário ativo no banco e falha fechado em indisponibilidade. Headers de escopo enviados pelo cliente são descartados. Atribuir cargos/gerente e alterar catálogos globais continua exclusivo do administrador.
+- **Documentos:** leitura e operações existentes aplicam as permissões documentais; GET genérico de projeto omite textos de charter sem `documentos:ver`. Alterar conteúdo publicado exige edição e aprovação enquanto o fluxo de revisões pendentes do item 5.2 não for entregue.
+- **Segurança (dependências):** patch local de `braces@3.0.3` limita profundidade de parsing e percursos da AST para mitigar GHSA-vfj7-8cjw-p6xm, ainda sem correção publicada. Exceção específica no audit acompanha o patch, testes e instalação Docker; deve ser removida quando houver correção upstream.
+- **CI:** auditoria de dependências agora executa nas PRs para main/develop, verificando instalação congelada e patch efetivo no workspace/gateway. Deploys usam a versão pnpm declarada no `packageManager`, sem pin divergente.
+- **Segurança (avatar/logo):** URLs exibidas e abertas no navegador são validadas como http(s) ou caminho local; HTML, esquemas executáveis e caminhos ambíguos usam fallback. CodeQL da configuração de produção também roda nas PRs, com build/deploy explicitamente bloqueados nesse evento.
+- **Limites:** 5.2 segue pendente, sem novas migrations de revisão documental; esta entrega não inclui validação em produção ou deploy.
+
 ## [1.9.1] — 2026-10-01
 - **Segurança (dependências):** Next.js 16.3.5 → 16.3.6 corrige GHSA-vcvr-r3jv-pc5j (execução remota de código no `ImageResponse` de `next/og`), que bloqueava o `pnpm audit --audit-level=high`. Lockfile e exceções de idade mínima da atualização de segurança acompanham a versão corrigida.
 

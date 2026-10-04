@@ -1,17 +1,7 @@
 import { NextResponse } from 'next/server'
 import { verifySession } from '@/lib/dal'
 import prisma from '@/lib/prisma'
-import { isProjectManager } from '@/services/projectRoleService'
-
-async function canAccess(userId: string, projetoId: string, tenantId: string, role: string) {
-  if (role === 'admin') return true
-  if (await isProjectManager(userId, projetoId)) return true
-  const member = await prisma.project.findFirst({
-    where: { id: projetoId, tenantId, deletedAt: null, members: { some: { userId, active: true } } },
-    select: { id: true },
-  })
-  return member !== null
-}
+import { canProjectPermission } from '@/services/projectAccess'
 
 export async function PATCH(
   request: Request,
@@ -21,7 +11,7 @@ export async function PATCH(
 
   try {
     const { tenantId, role, userId } = await verifySession()
-    if (!(await canAccess(userId, projetoId, tenantId, role))) {
+    if (!(await canProjectPermission({ userId, tenantId, role }, projetoId, 'projeto:editar'))) {
       return NextResponse.json({ error: 'Não autorizado' }, { status: 403 })
     }
 
@@ -54,7 +44,7 @@ export async function DELETE(
 
   try {
     const { tenantId, role, userId } = await verifySession()
-    if (!(await canAccess(userId, projetoId, tenantId, role))) {
+    if (!(await canProjectPermission({ userId, tenantId, role }, projetoId, 'projeto:editar'))) {
       return NextResponse.json({ error: 'Não autorizado' }, { status: 403 })
     }
 

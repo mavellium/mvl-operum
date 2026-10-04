@@ -1,8 +1,9 @@
 import { notFound } from 'next/navigation'
 import type { Metadata } from 'next'
 import { verifySession } from '@/lib/dal'
-import { findById } from '@/services/projectService'
-import { isProjectManager } from '@/services/projectRoleService'
+import { findById } from '@/services/projectAccess'
+import { permissoesNoProjeto } from '@/services/authz'
+import { ProjectPermissionsProvider } from '@/components/permissoes/ProjectPermissions'
 import ProjectSidebar from '@/components/layout/ProjectSidebar'
 
 export async function generateMetadata({
@@ -29,14 +30,16 @@ export default async function ProjetoLayout({
   params: Promise<{ projetoId: string }>
 }) {
   const { projetoId } = await params
-  const { role, userId } = await verifySession()
+  const { role, userId, tenantId } = await verifySession()
   const projeto = await findById(projetoId)
 
   if (!projeto) notFound()
 
-  const canManageMembers = role === 'admin' || await isProjectManager(userId, projetoId)
+  const permissions = await permissoesNoProjeto(userId, tenantId, role, projetoId)
+  const canManageMembers = permissions.has('projeto:equipe')
 
   return (
+    <ProjectPermissionsProvider permissions={[...permissions]}>
     <div className="flex flex-1 overflow-hidden">
       <ProjectSidebar
         projetoId={projetoId}
@@ -46,5 +49,6 @@ export default async function ProjetoLayout({
         {children}
       </main>
     </div>
+    </ProjectPermissionsProvider>
   )
 }

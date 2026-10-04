@@ -21,3 +21,19 @@ export function validateAvatarUrl(url?: string | null): string | undefined {
 
   return trimmed
 }
+
+/** URL para exibição/navegação: aceita http(s) e caminhos locais, nunca HTML ou esquemas executáveis. */
+export function safeAvatarUrl(raw?: string | null): string | undefined {
+  if (!raw) return undefined
+  const value = raw.trim()
+  if (!/^(?:https?:\/\/[^\s<>"'`\\]+|\/(?![\/\\])[^\s<>"'`\\]*)$/i.test(value)) return undefined
+  try {
+    const parsed = new URL(value, 'https://avatar.invalid')
+    if (parsed.protocol !== 'https:' && parsed.protocol !== 'http:') return undefined
+    const href = value.startsWith('/') ? `${parsed.pathname}${parsed.search}${parsed.hash}` : parsed.href
+    // Codifica metacaracteres no contexto URL, preservando query e escapes existentes do storage.
+    return href.replace(/[<>"']/g, encodeURIComponent)
+  } catch {
+    return undefined
+  }
+}

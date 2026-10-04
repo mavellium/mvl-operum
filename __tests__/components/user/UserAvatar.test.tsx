@@ -1,6 +1,10 @@
-import { describe, it, expect } from 'vitest'
-import { render, screen } from '@testing-library/react'
+import { describe, it, expect, vi } from 'vitest'
+import { render, screen, fireEvent } from '@testing-library/react'
 import UserAvatar from '@/components/user/UserAvatar'
+import AvatarUpload from '@/components/profile/AvatarUpload'
+import { safeAvatarUrl } from '@/lib/validation/avatarUrl'
+
+vi.mock('@/app/actions/profile', () => ({ uploadAvatarAction: vi.fn() }))
 
 describe('UserAvatar', () => {
   it('renders initials from two-word name', () => {
@@ -22,5 +26,43 @@ describe('UserAvatar', () => {
     render(<UserAvatar name="João Silva" />)
     const el = screen.getByTitle('João Silva')
     expect(el).toBeInTheDocument()
+  })
+
+  it.each([
+    'javascript:alert(1)', 'data:text/html,<script>alert(1)</script>',
+    'data:image/svg+xml,<svg onload=alert(1)>', '<img src=x onerror=alert(1)>',
+    'https://example.com/<script>', 'java\nscript:alert(1)',
+    '//example.com/avatar.png', '/\\example.com/avatar.png', 'file:///tmp/avatar.png',
+  ])('usa iniciais para URL insegura: %s', (avatarUrl) => {
+    render(<UserAvatar name="João Silva" avatarUrl={avatarUrl} />)
+    expect(screen.getByText('JS')).toBeInTheDocument()
+    expect(document.querySelector('img')).toBeNull()
+    expect(safeAvatarUrl(avatarUrl)).toBeUndefined()
+  })
+
+  it.each([
+    'https://storage.example.com/avatar.png?signature=abc&expires=123',
+    'http://localhost:9000/avatars/avatar.png', '/api/avatars/avatar.png',
+  ])('preserva imagem e query de URL permitida: %s', (avatarUrl) => {
+    render(<UserAvatar name="João Silva" avatarUrl={avatarUrl} />)
+    expect(screen.getByRole('img')).toHaveAttribute('src', avatarUrl)
+  })
+
+  it('bloqueia também navegação para URL insegura no menu Visualizar', () => {
+    const open = vi.spyOn(window, 'open').mockReturnValue(null)
+    render(<AvatarUpload name="João Silva" avatarUrl="javascript:alert(1)" />)
+    fireEvent.click(screen.getByRole('button'))
+    fireEvent.click(screen.getByRole('button', { name: 'Visualizar' }))
+    expect(open).not.toHaveBeenCalled()
+    open.mockRestore()
+  })
+
+  it('abre imagem válida sem acesso à janela de origem', () => {
+    const open = vi.spyOn(window, 'open').mockReturnValue(null)
+    render(<AvatarUpload name="João Silva" avatarUrl="https://storage.example.com/avatar.png" />)
+    fireEvent.click(screen.getByRole('button'))
+    fireEvent.click(screen.getByRole('button', { name: 'Visualizar' }))
+    expect(open).toHaveBeenCalledWith('https://storage.example.com/avatar.png', '_blank', 'noopener,noreferrer')
+    open.mockRestore()
   })
 })

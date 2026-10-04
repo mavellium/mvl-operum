@@ -1,5 +1,7 @@
 'use client'
 
+import { useProjectPermissions } from '@/components/permissoes/ProjectPermissions'
+
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { useParams, useRouter } from 'next/navigation'
 import { useReactToPrint } from 'react-to-print'
@@ -55,6 +57,8 @@ function defaultSiblingTitle(level: number): string {
 }
 
 export default function EapDocument() {
+  const permissions = useProjectPermissions()
+  const canEdit = permissions.has('documentos:editar') && permissions.has('documentos:aprovar')
   const { projetoId } = useParams<{ projetoId: string }>()
   const router = useRouter()
   const { toast } = useToast()
@@ -126,12 +130,14 @@ export default function EapDocument() {
   // ── Histórico ─────────────────────────────────────────────────────────────
 
   function commit(nodes: EapNode[]) {
+    if (!canEdit) return
     setPast(prev => [...prev.slice(-99), { metadata, nodes }])
     setFuture([])
     setNodes(nodes)
   }
 
   function undo() {
+    if (!canEdit) return
     setPast(prev => {
       if (prev.length === 0) return prev
       const snapshot = prev[prev.length - 1]
@@ -144,6 +150,7 @@ export default function EapDocument() {
   }
 
   function redo() {
+    if (!canEdit) return
     setFuture(prev => {
       if (prev.length === 0) return prev
       const snapshot = prev[prev.length - 1]
@@ -209,6 +216,7 @@ export default function EapDocument() {
   // ── Abrir/atualizar o painel de edição do bloco ───────────────────────────
 
   function openBlock(id: string) {
+    if (!canEdit) return
     setSelectedId(id)
     const node = findNode(nodes, id)
     setEditingTitle(node?.title ?? '')
@@ -232,6 +240,7 @@ export default function EapDocument() {
   // ── Salvar (PUT) ──────────────────────────────────────────────────────────
 
   async function handleSave() {
+    if (!canEdit) return
     if (!projetoId || !doc) return
     setSaving(true)
     try {
@@ -255,6 +264,7 @@ export default function EapDocument() {
   }
 
   async function handleReset() {
+    if (!canEdit || !permissions.has('documentos:excluir')) return
     if (!projetoId) return
     setSaving(true)
     try {
@@ -307,6 +317,7 @@ export default function EapDocument() {
   }
 
   function updateMetadata(field: keyof EapDocumentMetadata, value: string | null) {
+    if (!canEdit) return
     setMetadata(prev => ({ ...prev, [field]: value }))
   }
 
@@ -326,7 +337,7 @@ export default function EapDocument() {
         <button
           aria-label="Desfazer"
           title="Desfazer (Ctrl+Z)"
-          disabled={past.length === 0}
+          disabled={!canEdit || past.length === 0}
           onClick={undo}
           className={`${toolButton} text-slate-600 hover:bg-white hover:shadow transition-all`}
         >
@@ -335,7 +346,7 @@ export default function EapDocument() {
         <button
           aria-label="Refazer"
           title="Refazer (Ctrl+Shift+Z)"
-          disabled={future.length === 0}
+          disabled={!canEdit || future.length === 0}
           onClick={redo}
           className={`${toolButton} text-slate-600 hover:bg-white hover:shadow transition-all`}
         >
@@ -390,15 +401,14 @@ export default function EapDocument() {
           <Eye className="w-4 h-4" /> {viewing ? 'Editar' : 'Visualizar'}
         </button>
         <button
-          onClick={handleSave}
-          disabled={saving}
+          disabled={!canEdit || (saving)} onClick={handleSave}
           className={`${toolButton} bg-emerald-600 text-white hover:bg-emerald-700 transition-colors shadow-sm`}
         >
           <Save className="w-4 h-4" /> {saving ? 'Salvando…' : 'Salvar'}
         </button>
         <button
           onClick={() => setConfirmReset(true)}
-          disabled={saving}
+          disabled={saving || !canEdit || !permissions.has('documentos:excluir')}
           className={`${toolButton} text-amber-700 bg-white border border-amber-200 hover:bg-amber-50 transition-colors`}
           title="Recriar o documento a partir do modelo EAP (matriz original)"
         >

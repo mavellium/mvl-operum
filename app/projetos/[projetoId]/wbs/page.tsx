@@ -1,7 +1,7 @@
 import { notFound } from 'next/navigation'
 import { verifySession } from '@/lib/dal'
-import { findById } from '@/services/projectService'
-import { isProjectManager } from '@/services/projectRoleService'
+import { findById } from '@/services/projectAccess'
+import { canProjectPermission } from '@/services/projectAccess'
 import { getTree, resetTree } from '@/services/wbsService'
 import WbsCanvas from '@/components/wbs/WbsCanvas'
 import type { Metadata } from 'next'
@@ -21,7 +21,7 @@ export default async function WbsPage({
   const projeto = await findById(projetoId)
   if (!projeto) notFound()
 
-  const canEdit = role === 'admin' || await isProjectManager(userId, projetoId)
+  const canEdit = (await canProjectPermission({ tenantId, role, userId }, projetoId, 'projeto:editar')) && (await canProjectPermission({ tenantId, role, userId }, projetoId, 'planilha:orcado')) && (await canProjectPermission({ tenantId, role, userId }, projetoId, 'planilha:realizado-todos'))
   let initialTree = await getTree(projetoId, tenantId)
 
   // Auto-initialize on first access

@@ -1,5 +1,7 @@
 'use client'
 
+import { useProjectPermissions } from '@/components/permissoes/ProjectPermissions'
+
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 import { useState } from 'react'
@@ -52,6 +54,8 @@ const fmtDate = (d: string | null | undefined): string => {
 }
 
 export default function DocumentoAtas({ projetoId, atas, gerente }: Props) {
+  const permissions = useProjectPermissions()
+  const canEdit = permissions.has('documentos:editar') && permissions.has('documentos:aprovar')
   return (
     <div className="p-6">
       <div className="mb-5 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
@@ -60,7 +64,8 @@ export default function DocumentoAtas({ projetoId, atas, gerente }: Props) {
           <p className="text-sm text-gray-500 mt-0.5">Registro e exportação das atas do projeto.</p>
         </div>
         <Link
-          href={`/projetos/${projetoId}/atas/nova`}
+          aria-disabled={!canEdit}
+            href={canEdit ? `/projetos/${projetoId}/atas/nova` : "#"}
           className="inline-flex items-center justify-center px-4 py-2 text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 rounded-lg transition-colors"
         >
           + Nova Ata

@@ -3,28 +3,16 @@
 import { revalidatePath } from 'next/cache'
 import { verifySession } from '@/lib/dal'
 import prisma from '@/lib/prisma'
-import { isProjectManager } from '@/services/projectRoleService'
+import { requireProjectPermission } from '@/services/projectAccess'
 import { criarAta, atualizarAta, removerAta } from '@/services/ataService'
 import { registrarAcao } from '@/services/auditoriaService'
 import type { CriarAtaInput, AtualizarAtaInput } from '@/lib/validation/ataSchemas'
 
-async function isProjectMember(userId: string, projectId: string): Promise<boolean> {
-  const entry = await prisma.userProject.findUnique({
-    where: { userId_projectId: { userId, projectId } },
-  })
-  return entry !== null && entry.active
-}
-
-async function authorizeMember(tenantId: string, role: string, userId: string, projectId: string) {
-  if (role !== 'admin' && !(await isProjectMember(userId, projectId))) {
-    throw new Error('Não autorizado: você não faz parte deste projeto')
-  }
-}
-
 export async function criarAtaAction(input: CriarAtaInput) {
   try {
     const session = await verifySession()
-    await authorizeMember(session.tenantId, session.role, session.userId, input.projetoId)
+    await requireProjectPermission(session, input.projetoId, 'documentos:editar')
+    await requireProjectPermission(session, input.projetoId, 'documentos:aprovar')
     const ata = await criarAta(session.tenantId, input)
     await registrarAcao({
       tenantId: session.tenantId,
@@ -44,7 +32,9 @@ export async function criarAtaAction(input: CriarAtaInput) {
 export async function atualizarAtaAction(ataId: string, projetoId: string, input: AtualizarAtaInput) {
   try {
     const session = await verifySession()
-    await authorizeMember(session.tenantId, session.role, session.userId, projetoId)
+    await requireProjectPermission(session, projetoId, 'documentos:editar')
+    await requireProjectPermission(session, projetoId, 'documentos:aprovar')
+    if (!(await prisma.ata.findFirst({ where: { id: ataId, projetoId, tenantId: session.tenantId }, select: { id: true } }))) throw new Error('Ata não encontrada neste projeto')
     const ata = await atualizarAta(session.tenantId, ataId, input)
     await registrarAcao({
       tenantId: session.tenantId,
@@ -65,9 +55,8 @@ export async function atualizarAtaAction(ataId: string, projetoId: string, input
 export async function removerAtaAction(ataId: string, projetoId: string) {
   try {
     const session = await verifySession()
-    const isAdmin = session.role === 'admin'
-    const isManager = await isProjectManager(session.userId, projetoId)
-    if (!isAdmin && !isManager) throw new Error('Não autorizado: só o gerente ou admin remove atas')
+    await requireProjectPermission(session, projetoId, 'documentos:excluir')
+    if (!(await prisma.ata.findFirst({ where: { id: ataId, projetoId, tenantId: session.tenantId }, select: { id: true } }))) throw new Error('Ata não encontrada neste projeto')
     await removerAta(session.tenantId, ataId)
     await registrarAcao({
       tenantId: session.tenantId,

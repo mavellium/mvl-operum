@@ -1,5 +1,7 @@
 'use client'
 
+import { useProjectPermissions } from '@/components/permissoes/ProjectPermissions'
+
 import { useState, useEffect, useRef } from 'react'
 import { Draggable } from '@hello-pangea/dnd'
 import { Card as CardType, CardColor } from '@/types/kanban'
@@ -66,6 +68,7 @@ function formatCardTimer(seconds: number): string {
 }
 
 export default function Card({ card, index, columnId, onDelete, onClick, onTimerStarted, concluido = false, dragDisabled = false }: CardProps) {
+  const permissions = useProjectPermissions()
   const [confirmOpen, setConfirmOpen] = useState(false)
   const [isTimerRunning, setIsTimerRunning] = useState(false)
   const [elapsedSeconds, setElapsedSeconds] = useState(0)
@@ -130,6 +133,7 @@ export default function Card({ card, index, columnId, onDelete, onClick, onTimer
 
   const handleTimerClick = async (e: React.MouseEvent) => {
     e.stopPropagation()
+    if (!isTimerRunning && !permissions.has('quadro:cards')) return
     if (isTimerRunning) {
       const entryId = activeEntryIdRef.current
       if (!entryId) return
@@ -156,7 +160,7 @@ export default function Card({ card, index, columnId, onDelete, onClick, onTimer
 
   return (
     <>
-      <Draggable draggableId={card.id} index={index} isDragDisabled={dragDisabled}>
+      <Draggable draggableId={card.id} index={index} isDragDisabled={dragDisabled || !permissions.has('quadro:mover')}>
         {(provided, snapshot) => (
           <div
             ref={provided.innerRef}
@@ -207,7 +211,8 @@ export default function Card({ card, index, columnId, onDelete, onClick, onTimer
                 </p>
                 <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 focus-within:opacity-100 transition-opacity shrink-0 -mt-1 -mr-1">
                   <button
-                    onClick={e => { e.stopPropagation(); setConfirmOpen(true) }}
+                    disabled={!permissions.has('quadro:excluir')}
+                    onClick={e => { e.stopPropagation(); if (permissions.has('quadro:excluir')) setConfirmOpen(true) }}
                     className="p-1.5 rounded-md text-gray-400 hover:text-red-600 hover:bg-red-50 transition-colors"
                     aria-label="Excluir card"
                   >
@@ -275,6 +280,7 @@ export default function Card({ card, index, columnId, onDelete, onClick, onTimer
                   {/* Timer */}
                   <div
                     className={`flex items-center gap-1.5 px-2 py-1 -ml-2 rounded-md transition-colors ${isTimerRunning ? 'bg-green-50' : 'hover:bg-gray-100'}`}
+                    aria-disabled={!isTimerRunning && !permissions.has('quadro:cards')}
                     onClick={handleTimerClick}
                     title={isTimerRunning ? 'Pausar tempo' : 'Iniciar tempo'}
                   >

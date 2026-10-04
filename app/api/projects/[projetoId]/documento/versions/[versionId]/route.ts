@@ -1,7 +1,7 @@
 import { NextResponse } from 'next/server'
 import { verifySession } from '@/lib/dal'
 import prisma from '@/lib/prisma'
-import { isProjectManager } from '@/services/projectRoleService'
+import { canProjectPermission } from '@/services/projectAccess'
 
 export async function PATCH(
   request: Request,
@@ -10,8 +10,8 @@ export async function PATCH(
   const { projetoId, versionId } = await params
 
   try {
-    const { role, userId } = await verifySession()
-    const isManager = role === 'admin' || (await isProjectManager(userId, projetoId))
+    const { tenantId, role, userId } = await verifySession()
+    const isManager = await canProjectPermission({ tenantId, role, userId }, projetoId, 'documentos:aprovar')
     if (!isManager) {
       return NextResponse.json({ error: 'Apenas Gerentes de Projeto podem aprovar alterações' }, { status: 403 })
     }

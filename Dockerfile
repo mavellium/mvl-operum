@@ -25,6 +25,7 @@ FROM base AS deps
 WORKDIR /app
 # Both files are required explicitly — no glob that silently skips the lockfile.
 COPY package.json pnpm-lock.yaml pnpm-workspace.yaml pnpm.yaml ./
+COPY patches ./patches
 # --frozen-lockfile: fails loudly if lockfile is missing or out of sync.
 # --ignore-scripts: skips postinstall (prisma generate) — we run it explicitly in builder.
 RUN pnpm install --frozen-lockfile --ignore-scripts

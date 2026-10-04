@@ -33,11 +33,17 @@ export type UpdateProjectDto = z.infer<typeof UpdateProjectSchema>
 
 @Injectable()
 export class ProjectService {
-  async list(tenantId: string, page = 1, limit = 20) {
+  withoutDocuments<T extends object>(project: T) {
+    const result = { ...project } as T & Record<string, unknown>
+    for (const key of ['justificativa','objetivos','metodologia','descricaoProduto','premissas','restricoes','limitesAutoridade']) delete result[key]
+    return result
+  }
+
+  async list(tenantId: string, page = 1, limit = 20, authorized?: string[]) {
     const skip = (page - 1) * limit
     const [items, total] = await Promise.all([
       prisma.project.findMany({
-        where: { tenantId, deletedAt: null },
+        where: { tenantId, deletedAt: null, ...(authorized ? { id: { in: authorized } } : {}) },
         skip,
         take: limit,
         orderBy: { createdAt: 'desc' },
@@ -47,9 +53,9 @@ export class ProjectService {
           },
         },
       }),
-      prisma.project.count({ where: { tenantId, deletedAt: null } }),
+      prisma.project.count({ where: { tenantId, deletedAt: null, ...(authorized ? { id: { in: authorized } } : {}) } }),
     ])
-    return { items, total, page, limit }
+    return { items: items.map(p => this.withoutDocuments(p)), total, page, limit }
   }
 
   async findOne(id: string, tenantId: string) {
@@ -136,9 +142,9 @@ export class ProjectService {
     })
   }
 
-  async getUserActiveProjects(userId: string, tenantId: string) {
+  async getUserActiveProjects(userId: string, tenantId: string, authorized?: string[]) {
     return prisma.userProject.findMany({
-      where: { userId, active: true, project: { tenantId, deletedAt: null } },
+      where: { userId, active: true, ...(authorized ? { projectId: { in: authorized } } : {}), project: { tenantId, deletedAt: null } },
       include: { project: { select: { id: true, name: true, status: true } } },
     })
   }

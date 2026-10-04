@@ -1,5 +1,7 @@
 'use client'
 
+import { useProjectPermissions } from '@/components/permissoes/ProjectPermissions'
+
 import { Suspense, useState, useTransition, useEffect } from 'react'
 import { useRouter, useSearchParams, useParams } from 'next/navigation'
 import { createSprintAction } from '@/app/actions/sprints'
@@ -22,6 +24,8 @@ export default function NovaSprintPage() {
 }
 
 function NovaSprintForm() {
+  const permissions = useProjectPermissions()
+  const canCreate = permissions.has('quadro:sprints')
   const router = useRouter()
   const searchParams = useSearchParams()
   const { projetoId: projetoIdFromPath } = useParams<{ projetoId?: string }>()
@@ -47,6 +51,7 @@ function NovaSprintForm() {
 
   function handleSubmit(e: React.FormEvent) {
     e.preventDefault()
+    if (!canCreate) return
     setError('')
     const name = form.name.trim()
     if (!name) {
@@ -127,7 +132,7 @@ function NovaSprintForm() {
               </Link>
               <button
                 type="submit"
-                disabled={isPending}
+                disabled={isPending || !canCreate}
                 className="flex-1 px-4 py-2.5 bg-blue-600 text-white text-sm font-medium rounded-xl hover:bg-blue-700 disabled:opacity-50"
               >
                 {isPending ? 'Criando…' : 'Criar Sprint'}

@@ -1,7 +1,7 @@
 import { NextResponse } from 'next/server'
 import { verifySession } from '@/lib/dal'
 import prisma from '@/lib/prisma'
-import { isProjectManager } from '@/services/projectRoleService'
+import { canProjectPermission } from '@/services/projectAccess'
 import {
   getOrCreateDocument,
   saveDocument,
@@ -14,18 +14,6 @@ import { SaveEapDocumentSchema, validateEapDepth } from '@/lib/validation/eapSch
 import type { EapNode } from '@/types/eap'
 
 type RouteCtx = { params: Promise<{ projetoId: string }> }
-
-/** Garante que o usuário é membro ativo (ou admin/gerente) do projeto. */
-async function requireProjectAccess(userId: string, role: string, tenantId: string, projetoId: string): Promise<void> {
-  if (role === 'admin') return
-  const manager = await isProjectManager(userId, projetoId)
-  if (manager) return
-  const member = await prisma.project.findFirst({
-    where: { id: projetoId, tenantId, deletedAt: null, members: { some: { userId, active: true } } },
-    select: { id: true },
-  })
-  if (!member) throw new EapNotFoundError('Não autorizado')
-}
 
 async function loadProject(tenantId: string, projetoId: string) {
   return prisma.project.findFirst({
@@ -63,7 +51,7 @@ export async function GET(_: Request, { params }: RouteCtx) {
 
   try {
     const { tenantId, role, userId } = await verifySession()
-    await requireProjectAccess(userId, role, tenantId, projetoId)
+    if (!(await canProjectPermission({ tenantId, role, userId }, projetoId, 'documentos:ver'))) return NextResponse.json({ error: 'Sem permissão' }, { status: 403 })
 
     const project = await loadProject(tenantId, projetoId)
     if (!project) {
@@ -86,7 +74,7 @@ export async function PUT(request: Request, { params }: RouteCtx) {
 
   try {
     const { tenantId, role, userId } = await verifySession()
-    await requireProjectAccess(userId, role, tenantId, projetoId)
+    if (!((await canProjectPermission({ tenantId, role, userId }, projetoId, 'documentos:editar')) && (await canProjectPermission({ tenantId, role, userId }, projetoId, 'documentos:aprovar')))) return NextResponse.json({ error: 'Sem permissão' }, { status: 403 })
 
     const project = await loadProject(tenantId, projetoId)
     if (!project) {
@@ -131,7 +119,7 @@ export async function POST(_: Request, { params }: RouteCtx) {
 
   try {
     const { tenantId, role, userId } = await verifySession()
-    await requireProjectAccess(userId, role, tenantId, projetoId)
+    if (!((await canProjectPermission({ tenantId, role, userId }, projetoId, 'documentos:editar')) && (await canProjectPermission({ tenantId, role, userId }, projetoId, 'documentos:aprovar')) && (await canProjectPermission({ tenantId, role, userId }, projetoId, 'documentos:excluir')))) return NextResponse.json({ error: 'Sem permissão' }, { status: 403 })
 
     const project = await loadProject(tenantId, projetoId)
     if (!project) {
