@@ -1,6 +1,9 @@
 // @vitest-environment node
 import { describe, it, expect, vi, beforeEach } from 'vitest'
 
+vi.mock('@/services/documentRevisionService', () => ({ submeterDocumento: vi.fn() }))
+
+vi.mock('next/cache', () => ({ revalidatePath: vi.fn() }))
 vi.mock('@/lib/dal', () => ({
   verifySession: vi.fn(),
 }))
@@ -14,11 +17,14 @@ vi.mock('@/lib/prisma', () => ({
 
 vi.mock('@/services/projectAccess', () => ({
   canProjectPermission: vi.fn(),
+  requireProjectPermission: vi.fn(),
 }))
 
 import { verifySession } from '@/lib/dal'
 import prisma from '@/lib/prisma'
-import { canProjectPermission } from '@/services/projectAccess'
+import { submeterDocumento } from '@/services/documentRevisionService'
+import { SemPermissaoError } from '@/services/authz'
+import { requireProjectPermission, canProjectPermission } from '@/services/projectAccess'
 import { GET, POST } from '@/app/api/projects/[projetoId]/charter/versions/route'
 
 const PROJETO_ID = 'proj-1'
@@ -33,7 +39,8 @@ function makeRequest(body?: object, search?: string): Request {
 const params = Promise.resolve({ projetoId: PROJETO_ID })
 
 beforeEach(() => {
-  vi.clearAllMocks()
+  vi.resetAllMocks()
+  vi.mocked(requireProjectPermission).mockImplementation(async () => { if (!(await canProjectPermission({ tenantId: TENANT_ID, userId: USER_ID, role: 'member' }, PROJETO_ID, 'documentos:ver'))) throw new SemPermissaoError('documentos:ver') })
     vi.mocked(canProjectPermission).mockResolvedValue(true)
   vi.mocked(verifySession).mockResolvedValue({ userId: USER_ID, tenantId: TENANT_ID, role: 'admin' })
   vi.mocked(prisma.project.findFirst).mockResolvedValue({ id: PROJETO_ID } as never)
@@ -68,18 +75,14 @@ describe('GET /charter/versions', () => {
 describe('POST /charter/versions', () => {
   it('cria versão com documentType CHARTER e auto-aprova para admin', async () => {
     const created = { id: 'v2', documentType: 'CHARTER', status: 'APPROVED' }
-    vi.mocked(prisma.documentVersion.create).mockResolvedValue(created as never)
+    vi.mocked(submeterDocumento).mockResolvedValue(created as never)
 
-    const body = { commitTitle: 'Primeiro commit', versao: '1.0', elaboradoPor: 'Admin', aprovadoPor: 'Admin', dataAprovacao: '06/05/2026' }
+    const body = { payload: { justificativa: 'Nova justificativa' }, commitTitle: 'Primeiro commit', versao: '1.0', elaboradoPor: 'Admin', aprovadoPor: 'Admin', dataAprovacao: '06/05/2026' }
     const res = await POST(makeRequest(body), { params })
     const data = await res.json()
 
     expect(res.status).toBe(201)
-    expect(prisma.documentVersion.create).toHaveBeenCalledWith(
-      expect.objectContaining({
-        data: expect.objectContaining({ documentType: 'CHARTER', status: 'APPROVED' }),
-      }),
-    )
+    expect(submeterDocumento).toHaveBeenCalledWith(expect.objectContaining({ userId: USER_ID }), PROJETO_ID, 'CHARTER', body.payload, expect.objectContaining({ commitTitle: 'Primeiro commit' }))
     expect(data.documentType).toBe('CHARTER')
   })
 

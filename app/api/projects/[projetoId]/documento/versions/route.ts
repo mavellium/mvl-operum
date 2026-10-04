@@ -1,106 +1,76 @@
-import { NextResponse } from 'next/server'
 import { verifySession } from '@/lib/dal'
 import prisma from '@/lib/prisma'
-import { canProjectPermission } from '@/services/projectAccess'
+import {
+  canProjectPermission,
+  requireProjectPermission,
+} from '@/services/projectAccess'
+import { submeterDocumento } from '@/services/documentRevisionService'
+import { metaDocumento } from '@/lib/validation/documentRevisionSchemas'
+import { documentRevisionErrorResponse } from '@/lib/documentRevisionHttp'
+import { revalidatePath } from 'next/cache'
 
-export async function GET(
-  request: Request,
-  { params }: { params: Promise<{ projetoId: string }> },
-) {
-  const { projetoId } = await params
-
+type Ctx = { params: Promise<{ projetoId: string }> }
+export async function GET(req: Request, { params }: Ctx) {
+  const session = await verifySession()
   try {
-    const { tenantId, role, userId } = await verifySession()
-    const canAccess = await canProjectPermission({ tenantId, role, userId }, projetoId, 'documentos:aprovar')
-    if (!(await canProjectPermission({ tenantId, role, userId }, projetoId, 'documentos:ver'))) return NextResponse.json({ error: 'Sem permissão' }, { status: 403 })
-
-    const project = await prisma.project.findFirst({
-      where: { id: projetoId, tenantId, deletedAt: null },
-      select: { id: true },
-    })
-    if (!project) {
-      return NextResponse.json({ error: 'Projeto não encontrado' }, { status: 404 })
-    }
-
-    const { searchParams } = new URL(request.url)
-    const search = searchParams.get('search')?.trim() ?? ''
-
+    const { projetoId } = await params
+    await requireProjectPermission(session, projetoId, 'documentos:ver')
+    const search = new URL(req.url).searchParams.get('search')?.trim()
     const versions = await prisma.documentVersion.findMany({
       where: {
         projectId: projetoId,
+        documentType: 'STAKEHOLDER',
+        resourceId: '',
         ...(search
           ? {
               OR: [
-                { commitTitle: { contains: search, mode: 'insensitive' } },
-                { author: { is: { name: { contains: search, mode: 'insensitive' } } } },
+                {
+                  commitTitle: {
+                    contains: search,
+                    mode: 'insensitive' as const,
+                  },
+                },
+                {
+                  author: {
+                    is: {
+                      name: { contains: search, mode: 'insensitive' as const },
+                    },
+                  },
+                },
               ],
             }
           : {}),
       },
-      include: {
-        author: { select: { name: true } },
-      },
-      orderBy: { createdAt: 'desc' },
+      include: { author: { select: { name: true } } },
+      orderBy: [{ createdAt: 'desc' }, { sequence: 'desc' }],
+      take: 200,
     })
-
-    const res = NextResponse.json(versions)
-    res.headers.set('x-is-manager', String(canAccess))
-    return res
-  } catch (err) {
-    console.error('[documento/versions GET]', err)
-    return NextResponse.json({ error: 'Erro interno' }, { status: 500 })
+    return Response.json(versions, {
+      headers: {
+        'x-is-manager': String(
+          await canProjectPermission(session, projetoId, 'documentos:aprovar'),
+        ),
+      },
+    })
+  } catch (error) {
+    return documentRevisionErrorResponse(error)
   }
 }
-
-export async function POST(
-  request: Request,
-  { params }: { params: Promise<{ projetoId: string }> },
-) {
-  const { projetoId } = await params
-
+export async function POST(req: Request, { params }: Ctx) {
+  const session = await verifySession()
   try {
-    const { tenantId, role, userId } = await verifySession()
-    const isManager = await canProjectPermission({ tenantId, role, userId }, projetoId, 'documentos:aprovar')
-    if (!(await canProjectPermission({ tenantId, role, userId }, projetoId, 'documentos:editar'))) return NextResponse.json({ error: 'Sem permissão' }, { status: 403 })
-
-    const project = await prisma.project.findFirst({
-      where: { id: projetoId, tenantId, deletedAt: null },
-      select: { id: true },
-    })
-    if (!project) {
-      return NextResponse.json({ error: 'Projeto não encontrado' }, { status: 404 })
-    }
-
-    const body = await request.json()
-    const { commitTitle, versao, elaboradoPor, aprovadoPor, dataAprovacao } = body
-
-    if (!commitTitle || !versao || !elaboradoPor || !aprovadoPor || !dataAprovacao) {
-      return NextResponse.json(
-        { error: 'Campos obrigatórios: commitTitle, versao, elaboradoPor, aprovadoPor, dataAprovacao' },
-        { status: 400 },
-      )
-    }
-
-    const now = new Date()
-    const version = await prisma.documentVersion.create({
-      data: {
-        projectId: projetoId,
-        commitTitle,
-        versao,
-        elaboradoPor,
-        aprovadoPor,
-        dataAprovacao,
-        authorId: userId,
-        status: isManager ? 'APPROVED' : 'PENDING',
-        approvedAt: isManager ? now : null,
-        approvedById: isManager ? userId : null,
-      },
-      include: { author: { select: { name: true } } },
-    })
-
-    return NextResponse.json(version, { status: 201 })
-  } catch (err) {
-    console.error('[documento/versions POST]', err)
-    return NextResponse.json({ error: 'Erro interno' }, { status: 500 })
+    const { projetoId } = await params
+    const body = await req.json()
+    const result = await submeterDocumento(
+      session,
+      projetoId,
+      'STAKEHOLDER',
+      body.payload,
+      metaDocumento.parse(body),
+    )
+    revalidatePath(`/projetos/${projetoId}`, 'layout')
+    return Response.json(result, { status: 201 })
+  } catch (error) {
+    return documentRevisionErrorResponse(error)
   }
 }

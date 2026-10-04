@@ -2,6 +2,7 @@
 
 import { useProjectPermissions } from '@/components/permissoes/ProjectPermissions'
 
+import HistoricoDocumento from '@/components/projetos/documentacao/HistoricoDocumento'
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { criarAtaAction, atualizarAtaAction } from '@/app/actions/atas'
@@ -46,7 +47,7 @@ const inputCls =
 
 export default function AtaFormClient({ projetoId, ataId, mode, members, initial }: Props) {
   const permissions = useProjectPermissions()
-  const canEdit = permissions.has('documentos:editar') && permissions.has('documentos:aprovar')
+  const canEdit = permissions.has('documentos:editar')
   const router = useRouter()
 
   const [local, setLocal] = useState(initial?.local ?? '')
@@ -148,12 +149,14 @@ export default function AtaFormClient({ projetoId, ataId, mode, members, initial
       setSaving(false)
       return
     }
-    router.push(`/projetos/${projetoId}/atas`)
+    router.push(`/projetos/${projetoId}/documentacao?doc=atas`)
     router.refresh()
   }
 
   return (
     <form onSubmit={handleSubmit}>
+      <p className="mb-4 rounded bg-blue-50 p-3 text-sm text-blue-800">Salvar envia uma nova versão para aprovação. A ata vigente permanece disponível até a aprovação.</p>
+      {ataId && <HistoricoDocumento projetoId={projetoId} type="ATA" resourceId={ataId} />}
     <fieldset disabled={!canEdit} className="space-y-6 min-w-0">
       {error && (
         <div className="rounded-lg bg-red-50 border border-red-200 px-4 py-3 text-sm text-red-700">
@@ -341,7 +344,7 @@ export default function AtaFormClient({ projetoId, ataId, mode, members, initial
         </button>
         <button
           type="button"
-          onClick={() => router.push(`/projetos/${projetoId}/atas`)}
+          onClick={() => router.push(`/projetos/${projetoId}/documentacao?doc=atas`)}
           className="px-5 py-2.5 text-sm font-medium text-gray-600 bg-white border border-gray-300 hover:bg-gray-50 rounded-lg"
         >
           Cancelar

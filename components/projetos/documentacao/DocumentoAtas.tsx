@@ -55,7 +55,7 @@ const fmtDate = (d: string | null | undefined): string => {
 
 export default function DocumentoAtas({ projetoId, atas, gerente }: Props) {
   const permissions = useProjectPermissions()
-  const canEdit = permissions.has('documentos:editar') && permissions.has('documentos:aprovar')
+  const canEdit = permissions.has('documentos:editar')
   return (
     <div className="p-6">
       <div className="mb-5 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">

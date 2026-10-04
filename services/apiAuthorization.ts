@@ -1,6 +1,7 @@
 import 'server-only'
 import prisma from '@/lib/prisma'
 import { exigirPermissao, can, projetosAutorizados, SemPermissaoError, type SessaoAuthz } from './authz'
+import { Prisma } from '@/lib/generated/prisma'
 import type { Permissao } from '@/lib/permissoes'
 
 export interface ApiAccess { allowed: boolean; projectIds?: string[]; redactDocuments?: boolean }
@@ -45,6 +46,8 @@ export async function authorizeApi(s: SessaoAuthz, method: string, path: string,
     if (!read && charterFields.some(k => k in body)) {
       await require(target, 'documentos:editar')
       await require(target, 'documentos:aprovar')
+      const snapshot = await prisma.documentVersion.findFirst({ where: { projectId: id(target), documentType: 'CHARTER', resourceId: '', status: 'APPROVED', payload: { not: Prisma.DbNull } }, select: { id: true } })
+      if (snapshot) throw new ApiAccessDenied('Este Termo usa versões: altere pelo fluxo documental')
     }
     if (read && !child) return { allowed: true, redactDocuments: !(await can(s, id(target), 'documentos:ver')) }
     if (!read && child === 'macro-fases') {

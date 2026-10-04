@@ -560,9 +560,9 @@ Branch `feat/backlog-fase-4`. Cada item foi um commit, com o card movido para "E
 - Serviço e actions implementados em `ef7f1bbb`: configuração restrita ao admin, validação e auditoria.
 - Nesta continuação: matriz no cadastro de funções, ajustes globais em Usuários e por projeto em Stakeholders, restauração de padrão e tratamento de falhas. A consulta de ajustes recusa projeto de outro tenant.
 - **Consumidores de 5.1 implementados em 03/10:** autorização nas actions/rotas/páginas de projeto/quadro/cadastros, escopo de listagens e busca, controles visuais e proteção equivalente no gateway para API/MCP. Cargos/gerente e catálogo global são administrativos. Validação local detalhada na PR; sem validação em produção.
-- **5.2 continua em desenvolvimento.** Há alterações locais de revisão documental ainda não validadas; o fluxo unificado não está concluído.
+- **5.2 implementado nesta entrega (04/10):** snapshots para Termo, Partes Interessadas, EAP e Atas; propostas pendentes, aprovação/rejeição, rascunho privado do Termo e Histórico/Registro. Permissões de 5.1 preservadas; publicação/log atômicos e revisão concorrente validados em PostgreSQL isolado. Sem deploy ou validação em produção.
 - **5.3 implementado localmente em 01/10:** validação por campo/responsável persistido, bloqueio transacional da linha, auditoria atômica, controles na interface e permissão de leitura na exportação. Sem validação em produção.
-- Esta fase permanece em andamento; não foi declarada pronta para merge/deploy.
+- 5.1 e 5.3 já integrados; 5.2 concluído nesta implementação e encaminhado para revisão em PR. A integração/deploy desta entrega depende do fluxo autorizado de revisão; não há validação em produção nesta tarefa.
 
 ### 5.1 Modelo de permissões (funções + ajuste por usuário)
 Pedido: as permissões vêm da função (definida pelo admin no cadastro de funções, vale para todos os projetos) e podem ser ajustadas por usuário, para mais ou para menos, de forma global ou só num projeto.
@@ -628,6 +628,13 @@ Pedido: as permissões vêm da função (definida pelo admin no cadastro de fun�
 - Cada ação (editar, salvar versão, aprovar, rejeitar, excluir) grava no `AuditLog` via `registrarAcao`, com o documento, a versão e o usuário.
 - O histórico de cada documento ganha uma aba **Registro**, que lê esses logs. Hoje nenhuma tela lê o `AuditLog` (ver `docs/mcp/gaps.md`).
 
+**Implementação e verificação (04/10/2026):**
+- Serviço unificado valida payload completo, identidade da sessão, projeto/tenant e permissão da operação. Membro salva PENDING; só aprovador publica/revisa. Status, conteúdo e auditoria compartilham transação; projeto é bloqueado para evitar dupla revisão e colisão de numeração de atas.
+- Registro por documento inclui rascunho, versão, aprovação/rejeição e exclusão. Histórico preserva conteúdo e autoria; propostas antigas sem snapshot não são aprováveis. Atas novas pendentes ficam acessíveis no histórico geral até a publicação.
+- Migration preserva metadados legados, adiciona EAP/ATA, conteúdo, recurso, sequência e rascunhos com FKs. Testada em banco vazio e estrutura anterior com versão existente. Nenhuma migration foi executada em produção.
+- PostgreSQL isolado validou publicação, rejeição, rollback de auditoria, revisão concorrente, isolamento de tenant/vínculo, rascunho privado, Partes Interessadas, EAP e Atas. Check dedicado repete esses testes na PR.
+- Custos de 5.3 mantêm a implementação da PR #37, com regressões reconferidas; esta entrega não reimplementa custos nem altera o contrato de permissões por campo.
+
 ### 5.3 Planilha de Custos: realizado das próprias linhas
 **Pedido:** o usuário comum edita o valor **realizado** das linhas em que ele é o "Elaborado por", e a cor diferencia o que ele pode e o que não pode editar.
 
@@ -638,7 +645,7 @@ Pedido: as permissões vêm da função (definida pelo admin no cadastro de fun�
 - **Cor:** células editáveis com fundo branco e borda azul-clara; as bloqueadas com fundo cinza e cadeado no hover. Uma legenda no topo explica.
 - **Servidor:** a action que salva a planilha recusa a gravação de qualquer campo fora dessas regras, porque o cliente não é confiável.
 
-**Implementação e verificação (01/10/2026):**
+**Implementação e verificação (01/10/2026; reconferida em 04/10):**
 - Chave efetiva do catálogo para orçado: `planilha:orcado`. As permissões de orçado e realizado são independentes; ter uma não concede a outra.
 - `updateNodePropertiesAction` exige `projeto:ver` e `planilha:ver`; o serviço exige o contexto de autorização e verifica cada campo após ler o responsável da linha sob `FOR UPDATE`. Uma tentativa de trocar responsável junto com o realizado não ganha acesso. Nó de outro projeto/tenant é recusado.
 - Gravação, incremento de versão e `PLANILHA_EDITAR` ocorrem na mesma transação. Alterações da árvore inteira/importação/exclusão exigem as permissões de edição correspondentes para não contornar a restrição por campo.
