@@ -20,6 +20,7 @@ Os primeiros registros foram reconstruídos da seção “Decisões de Arquitetu
 | ADR-010 | Permissões de domínio resolvidas no app para o gateway | Implementada |
 | ADR-011 | Patch temporário de profundidade em braces | Implementada — revisão ao sair correção upstream |
 | ADR-012 | Validar URLs de avatar também no navegador e comparar CodeQL com a mesma configuração | Implementada |
+| ADR-013 | Verificar patch na imagem antes de filtrar detecção Trivy de braces | Implementada — revisão até 2026-11-03 |
 
 ## ADR-001 — PostgreSQL compartilhado entre serviços
 
@@ -199,3 +200,15 @@ Ao substituir uma decisão, manter o texto histórico, alterar seu status e liga
 - **Consequências:** URLs fora da allowlist passam a usar iniciais e não são abertas; URLs assinadas http(s) e caminhos locais seguem aceitos. Existe análise CodeQL adicional em PR para manter compatibilidade com a baseline existente. Versão permanece 1.10.0, pois esta correção integra a mesma entrega.
 - **Condição de revisão:** consolidar workflows CodeQL preservando uma baseline comparável; reavaliar allowlist se houver necessidade explícita de outro esquema de imagem.
 - **Referências:** `lib/validation/avatarUrl.ts`, `components/user/UserAvatar.tsx`, `components/profile/AvatarUpload.tsx`, `__tests__/components/user/UserAvatar.test.tsx`, `.github/workflows/deploy-production.yml`, PR #39 e alerta CodeQL #3.
+
+## ADR-013 — Verificar o patch na imagem antes da exceção Trivy de braces
+
+- **Data do registro:** 2026-10-04.
+- **Status:** implementada nesta PR; sem merge/deploy nesta tarefa.
+- **Contexto:** o run de produção `37170296982` apontou CVE-2026-93687 no gateway, no caminho de `braces@3.0.3` que já contém o hash do patch da ADR-011. Trivy consulta metadados publicados e não interpreta o patch; a exceção do pnpm audit não se aplica ao scan de imagens. Advisory/registro consultados nesta data continuam sem versão corrigida.
+- **Escolha:** conferir dentro da imagem final o hash/código efetivamente carregado pelo proxy, parsing profundo, AST direta e globs usuais. Só depois usar um filtro YAML limitado a CVE-2026-93687 e ao caminho exato da cópia corrigida, com expiração em 2026-11-03. Compartilhar script e filtro entre PRs, staging e produção. Nas PRs, executar controles negativos com Trivy real para provar que o filtro não cobre a cópia sem patch nem outro hash. PR constrói apenas imagem local, sem publicação/deploy. Preservar a exceção picomatch já existente no gateway e manter `.trivyignore` nos demais serviços.
+- **Justificativa:** reconhecer a mitigação aplicada sem ocultar cópias não corrigidas ou depender somente de uma marca no nome da pasta. Detectar a falha do scan da imagem antes do merge, não apenas no deploy.
+- **Alternativas consideradas:** ignorar o CVE globalmente (oculta cópias não corrigidas); remover Trivy/usar exit-code zero (perde bloqueio de outros alertas); mudar artificialmente a versão do pacote (falseia os metadados); atualizar braces (não há correção publicada).
+- **Consequências:** build de gateway acrescentado nas PRs e verificação antes do scan em deploy; o filtro exige manutenção se o patch/hash/caminho mudar e expira automaticamente. Novo CVE, outra cópia ou falta do patch continua bloqueando. A limpeza `Remove Trivy Envs file` é etapa normal da action e permanece ativa.
+- **Condição de revisão:** até 2026-11-03 ou assim que sair versão upstream corrigida. Atualizar dependência, remover patch/exceções e repetir testes/scan. Qualquer mudança no hash exige rever a cópia e o filtro conjuntamente.
+- **Referências:** ADR-011, `.trivyignore-gateway.yaml`, `api-gateway/scripts/verify-braces-patch.cjs`, `scripts/security/verify-trivy-braces-filter.cjs`, `.github/workflows/gateway-image-security.yml`, workflows de staging/produção, [filtros Trivy](https://trivy.dev/latest/docs/configuration/filtering/) e [advisory](https://github.com/advisories/GHSA-vfj7-8cjw-p6xm).

@@ -1,0 +1,42 @@
+name: Gateway Image Security
+
+on:
+  pull_request:
+    branches: [main, develop]
+
+permissions:
+  contents: read
+
+concurrency:
+  group: gateway-image-security-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  scan:
+    name: Gateway Image Security
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+
+      # Imagem local apenas; sem login no registry, push ou deploy.
+      - name: Build final gateway image
+        run: docker build -f api-gateway/Dockerfile -t operum-gateway-security:${{ github.sha }} api-gateway
+
+      - name: Verify braces patch inside final image
+        run: docker run --rm --network none -i operum-gateway-security:${{ github.sha }} node < api-gateway/scripts/verify-braces-patch.cjs
+
+      - name: Scan final gateway image (Trivy)
+        uses: aquasecurity/trivy-action@v0.35.0
+        with:
+          image-ref: operum-gateway-security:${{ github.sha }}
+          format: table
+          exit-code: '1'
+          severity: CRITICAL,HIGH
+          trivyignores: .trivyignore-gateway.yaml
+          cache-dir: ${{ github.workspace }}/.cache/trivy
+
+      - name: Verify Trivy exception scope with negative controls
+        env:
+          TRIVY_CACHE_DIR: ${{ github.workspace }}/.cache/trivy
+        run: node scripts/security/verify-trivy-braces-filter.cjs
