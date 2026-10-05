@@ -671,6 +671,8 @@ enum DocumentType {
 }
 
 model DocumentVersion {
+  changes           Json?
+  previousVersionId String?
   sequence      Int                   @unique @default(autoincrement())
   payload       Json?
   resourceId    String                @default("")
@@ -698,6 +700,7 @@ model DocumentVersion {
 // ── Atas de Reunião ───────────────────────────────────────
 
 model Ata {
+  instituicao        String?
   id                 String    @id @default(cuid())
   tenantId           String
   projetoId          String

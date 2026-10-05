@@ -1,3 +1,4 @@
+import { charterChanges } from '@/lib/charterChanges'
 import { DocumentRevisionError } from '@/lib/documentRevisionError'
 import 'server-only'
 import { z } from 'zod'
@@ -190,6 +191,8 @@ async function aplicarDocumento(
     return aplicarAta(tx, s, projectId, resourceId, content)
   if (documentType === 'CHARTER') {
     const {
+      categoria: _categoria,
+      documentContext: _documentContext,
       macroFases: _macroFases,
       principaisEnvolvidos: _principais,
       ...data
@@ -377,6 +380,9 @@ export async function submeterDocumento(
         resourceId,
         content,
       )
+    const previous = documentType === 'CHARTER' ? await tx.documentVersion.findFirst({
+      where: { projectId, documentType, resourceId }, orderBy: { sequence: 'desc' }, select: { id: true, payload: true },
+    }) : null
     const version = await tx.documentVersion.create({
       data: {
         ...metadata,
@@ -384,6 +390,7 @@ export async function submeterDocumento(
         documentType,
         resourceId,
         payload: content,
+        ...(documentType === 'CHARTER' ? { previousVersionId: previous?.id ?? null, changes: JSON.parse(JSON.stringify(charterChanges(previous?.payload, content))) as Prisma.InputJsonValue } : {}),
         authorId: s.userId,
         status: approve ? 'APPROVED' : 'PENDING',
         approvedAt: approve ? new Date() : null,

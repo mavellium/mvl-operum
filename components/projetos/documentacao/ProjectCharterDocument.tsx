@@ -3,10 +3,12 @@
 import { forwardRef } from 'react'
 import type { MacroFase } from './MacroFaseTable'
 import { formatDateBR } from '@/lib/date'
+import { parseDocumentCost } from '@/lib/documentCost'
 
 // ── Types ──────────────────────────────────────────────────────────────────────
 
 export interface CharterDocumentProps {
+  categoria?: string
   nomeProjeto: string
   logoUrl?: string | null
   gerenteProjeto: string
@@ -31,9 +33,7 @@ export interface CharterDocumentProps {
 // ── Helpers ────────────────────────────────────────────────────────────────────
 
 function parseCusto(value: string | null | undefined): number {
-  if (!value) return 0
-  const n = parseFloat(value.replace(/[^0-9,.]/g, '').replace(',', '.'))
-  return isNaN(n) ? 0 : n
+  return parseDocumentCost(value)
 }
 
 function formatCusto(value: string | null | undefined): string {
@@ -81,7 +81,7 @@ const emptyText: React.CSSProperties = {
 const ProjectCharterDocument = forwardRef<HTMLDivElement, CharterDocumentProps>(
   function ProjectCharterDocument(props, ref) {
     const {
-      nomeProjeto, logoUrl, gerenteProjeto, gerenteSignatureUrl, startDate,
+      nomeProjeto, logoUrl, gerenteProjeto, gerenteSignatureUrl,
       elaboradoPor, aprovadoPor, versao, dataAprovacao,
       justificativa, objetivos, metodologia, descricaoProduto,
       premissas, restricoes, limitesAutoridade,
@@ -99,7 +99,7 @@ const ProjectCharterDocument = forwardRef<HTMLDivElement, CharterDocumentProps>(
         style={{
           width: '210mm',
           minHeight: '297mm',
-          padding: '15mm 20mm 20mm',
+          padding: '12mm 15mm 15mm',
           fontFamily: 'Arial, Helvetica, sans-serif',
           fontSize: '9pt',
           lineHeight: 1.35,
@@ -107,81 +107,15 @@ const ProjectCharterDocument = forwardRef<HTMLDivElement, CharterDocumentProps>(
           color: '#0f172a',
         }}
       >
-        {/* ── Header table ──────────────────────────────────────────────────── */}
-        <table style={{ width: '100%', borderCollapse: 'collapse', marginBottom: 14 }}>
-          <tbody>
-            <tr>
-              {/* Logo cell spanning 4 rows */}
-              <td
-                rowSpan={4}
-                style={{ ...cell, width: 72, textAlign: 'center', verticalAlign: 'middle', padding: 6 }}
-              >
-                {logoUrl
-                  // eslint-disable-next-line @next/next/no-img-element
-                  ? <img src={logoUrl} alt="Logo" style={{ maxHeight: 56, maxWidth: 64, objectFit: 'contain' }} />
-                  : <div style={{ width: 56, height: 56, background: '#e2e8f0', borderRadius: 3 }} />
-                }
-              </td>
-              {/* Title */}
-              <td
-                colSpan={3}
-                style={{
-                  ...cell,
-                  textAlign: 'center',
-                  fontWeight: 'bold',
-                  fontSize: '11pt',
-                  background: '#f1f5f9',
-                  letterSpacing: 0.5,
-                }}
-              >
-                TERMO DE ABERTURA DE PROJETO
-              </td>
-            </tr>
-            <tr>
-              <td style={{ ...cell, width: '35%' }}>
-                <span style={{ fontWeight: 'bold', fontSize: '8pt', color: '#475569' }}>Nome do Projeto</span>
-                <br />{nomeProjeto}
-              </td>
-              <td style={{ ...cell, width: '35%' }}>
-                <span style={{ fontWeight: 'bold', fontSize: '8pt', color: '#475569' }}>Gerente do Projeto</span>
-                <br />{gerenteProjeto || '–'}
-              </td>
-              <td style={{ ...cell, width: '30%' }}>
-                <span style={{ fontWeight: 'bold', fontSize: '8pt', color: '#475569' }}>Elaborado por</span>
-                <br />{elaboradoPor || '–'}
-              </td>
-            </tr>
-            <tr>
-              <td style={cell}>
-                <span style={{ fontWeight: 'bold', fontSize: '8pt', color: '#475569' }}>Aprovado por</span>
-                <br />{aprovadoPor || '–'}
-              </td>
-              <td style={cell}>
-                <span style={{ fontWeight: 'bold', fontSize: '8pt', color: '#475569' }}>Data de Aprovação</span>
-                <br />{dataAprovacao || '–'}
-              </td>
-              <td style={cell}>
-                <span style={{ fontWeight: 'bold', fontSize: '8pt', color: '#475569' }}>Versão</span>
-                <br />{versao}
-              </td>
-            </tr>
-            <tr>
-              <td colSpan={2} style={cell}>
-                <span style={{ fontWeight: 'bold', fontSize: '8pt', color: '#475569' }}>Assinatura do Gerente</span>
-                <br />
-                {gerenteSignatureUrl
-                  // eslint-disable-next-line @next/next/no-img-element
-                  ? <img src={gerenteSignatureUrl} alt="Assinatura" style={{ maxHeight: 36, maxWidth: 160, marginTop: 3, objectFit: 'contain' }} />
-                  : <span style={{ color: '#94a3b8', fontStyle: 'italic' }}>—</span>
-                }
-              </td>
-              <td style={cell}>
-                <span style={{ fontWeight: 'bold', fontSize: '8pt', color: '#475569' }}>Data de Emissão</span>
-                <br />{formatDateBR(startDate)}
-              </td>
-            </tr>
-          </tbody>
-        </table>
+        {logoUrl && <img src={logoUrl} alt="Logo" style={{ maxWidth: 100, maxHeight: 75, objectFit: 'contain' }} />}
+        <h1 style={{ textAlign: 'center', fontSize: '13pt', marginBottom: 12 }}>Termo de Abertura de Projeto - project charter</h1>
+        <table style={{ width: '100%', borderCollapse: 'collapse' }}><tbody>
+          <tr><td colSpan={2} style={{ ...cell, background: '#ddd' }}>{props.categoria || 'Instituição / curso / termo / semestre'}</td></tr>
+          <tr><td colSpan={2} style={cell}>Nome do projeto: {nomeProjeto}</td></tr>
+          <tr><td style={cell}>Elaborado por: {elaboradoPor || '—'}</td><td style={cell}>Versão: {versao}</td></tr>
+          <tr><td colSpan={2} style={cell}>Aprovado por: {aprovadoPor || '—'}</td></tr>
+          <tr><td style={cell}>Assinatura: {gerenteSignatureUrl && <img src={gerenteSignatureUrl} alt="Assinatura" style={{ maxWidth: 160, maxHeight: 36, objectFit: 'contain' }} />}</td><td style={cell}>Data de aprovação: {dataAprovacao || '—'}</td></tr>
+        </tbody></table>
 
         {/* ── 1. Justificativa ──────────────────────────────────────────────── */}
         <p style={sectionTitleStyle}>1. Justificativa do Projeto</p>
@@ -190,10 +124,6 @@ const ProjectCharterDocument = forwardRef<HTMLDivElement, CharterDocumentProps>(
         {/* ── 2. Objetivos ──────────────────────────────────────────────────── */}
         <p style={sectionTitleStyle}>2. Objetivo(s) do Projeto</p>
         <p style={objetivos ? bodyText : emptyText}>{objetivos || 'Não informado.'}</p>
-
-        {/* ── 3. Metodologia ────────────────────────────────────────────────── */}
-        <p style={sectionTitleStyle}>3. Metodologia do Projeto</p>
-        <p style={metodologia ? bodyText : emptyText}>{metodologia || 'Não informado.'}</p>
 
         {/* ── 4. Descrição do Produto ───────────────────────────────────────── */}
         <p style={sectionTitleStyle}>4. Descrição do Produto do Projeto</p>
@@ -243,9 +173,9 @@ const ProjectCharterDocument = forwardRef<HTMLDivElement, CharterDocumentProps>(
                   </td>
                 </tr>
               )
-              : fases.map(f => (
+              : fases.map((f, i) => (
                 <tr key={f.id}>
-                  <td style={cell}>{f.fase || '–'}</td>
+                  <td style={cell}>1.{i + 1} {f.fase || '–'}</td>
                   <td style={cell}>{formatDateBR(f.dataLimite)}</td>
                   <td style={{ ...cell, textAlign: 'right' }}>{formatCusto(f.custo)}</td>
                 </tr>
@@ -292,8 +222,10 @@ const ProjectCharterDocument = forwardRef<HTMLDivElement, CharterDocumentProps>(
         </table>
 
         {/* ── 8. Limites de Autoridade ──────────────────────────────────────── */}
-        <p style={sectionTitleStyle}>8. Limites de Autoridade do Gerente</p>
+        <p style={sectionTitleStyle}>Designação de gerente</p><p style={bodyText}>Gerente do projeto: {gerenteProjeto || '—'}</p><p style={sectionTitleStyle}>Limites de Autoridade do Gerente</p>
         <p style={limitesAutoridade ? bodyText : emptyText}>{limitesAutoridade || 'Não informado.'}</p>
+        {metodologia && <><p style={sectionTitleStyle}>Metodologia do projeto</p><p style={bodyText}>{metodologia}</p></>}
+        <p style={{ fontSize: '8pt', marginTop: 20 }}>© 02_Project Charter</p>
       </div>
     )
   },

@@ -7,6 +7,17 @@ As versões até 1.6.0 foram reconstruídas retroativamente a partir do históri
 1.0.0 marca a entrada em produção na arquitetura de microsserviços, e cada marco de
 funcionalidade depois disso é uma versão MINOR.
 
+## [1.15.0] - 2026-10-05
+
+### Adicionado
+- Exportação Word de Partes Interessadas e Termo de Abertura; prévia imprimível da Ata.
+- Termo com formulário separado, geração explícita e abertura de snapshots históricos, com diferenças por campo, autor e data.
+
+### Corrigido
+- Partes Interessadas em A4 paisagem e documentos alinhados à estrutura dos modelos do Prof. Fábio.
+- Campo institucional nas Atas e Termo; custo brasileiro com milhares e centavos preservados.
+- Cabeçalho e equipe registrados no snapshot do Termo, sem substituir versões antigas por dados atuais.
+
 ## [1.14.0] - 2026-10-04
 
 ### Adicionado

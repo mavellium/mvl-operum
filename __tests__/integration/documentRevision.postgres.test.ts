@@ -64,6 +64,21 @@ describe.skipIf(!testUrl)('revisões documentais — PostgreSQL real', () => {
     expect((await prisma.project.findUniqueOrThrow({ where: { id: projectId } })).justificativa).toBe('Texto preservado')
   })
 
+  it('snapshot e diff persistem com autor, referência anterior e cabeçalho, sem mudar na aprovação', async () => {
+    const first = await submeterDocumento(manager, projectId, 'CHARTER', { categoria: 'Faculdade', objetivos: 'Antes', documentContext: { nomeProjeto: 'Nome original', gerenteProjeto: 'Gerente', membros: [{ name: 'Autor' }] } }, meta)
+    const pending = await submeterDocumento(member, projectId, 'CHARTER', { objetivos: 'Depois' }, meta)
+    expect(pending.previousVersionId).toBe(first.id)
+    expect(pending.changes).toContainEqual({ field: 'objetivos', before: 'Antes', after: 'Depois' })
+    expect(pending.authorId).toBe(member.userId)
+    expect(pending.createdAt).toBeInstanceOf(Date)
+    await prisma.project.update({ where: { id: projectId }, data: { name: 'Nome atual' } })
+    await revisarDocumento(manager, projectId, pending.id, 'approve')
+    const saved = await prisma.documentVersion.findUniqueOrThrow({ where: { id: pending.id } })
+    expect(saved.payload).toEqual(pending.payload)
+    expect(saved.changes).toEqual(pending.changes)
+    expect(saved.payload).toMatchObject({ categoria: 'Faculdade', documentContext: { nomeProjeto: 'Nome original' } })
+  })
+
   it('Termo captura macrofases da WBS e sua aprovação não altera a planilha', async () => {
     const root = await prisma.wbsNode.create({ data: { projectId, tenantId: member.tenantId, parentId: null, order: 0, code: '1', title: 'Raiz', style: {}, properties: {} } })
     const phase = await prisma.wbsNode.create({ data: { projectId, tenantId: member.tenantId, parentId: root.id, order: 0, code: '1.1', title: 'Fase vigente', style: {}, properties: { custo: '150', elaboradoPorUserId: member.userId } } })

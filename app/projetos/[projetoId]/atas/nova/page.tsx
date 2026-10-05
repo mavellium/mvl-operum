@@ -49,7 +49,7 @@ export default async function NovaAtaPage({ params }: { params: Promise<{ projet
         </Link>
         <h1 className="text-xl font-bold text-gray-900 mt-3 mb-1">Nova Ata de Reunião</h1>
         <p className="text-sm text-gray-500 mb-6">Projeto: {project.name}</p>
-        <AtaFormClient projetoId={projetoId} mode="create" members={members} />
+        <AtaFormClient projetoId={projetoId} mode="create" nomeProjeto={project.name} members={members} />
       </main>
     </div>
   )
