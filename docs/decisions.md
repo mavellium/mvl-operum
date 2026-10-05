@@ -422,3 +422,15 @@ Ao substituir uma decisão, manter o texto histórico, alterar seu status e liga
 - **Consequências:** registros falhos permanecem no disco; retenção pode ser definida posteriormente. Compatibilidade de schema continua obrigatória para rollback, sem reversão de migrations/dados. Retry realiza novamente os gates de configuração, pull, revisão das imagens, migration e readiness.
 - **Condições de revisão:** caso seja implementada retenção, preservar registros referenciados pelo deploy ativo e seu rollback.
 - **Referências:** `scripts/deploy/remote-deploy.sh`, `scripts/deploy/rollback.sh`, `scripts/validation/release-simulation.mjs`, PR #54 e execução 37305929972.
+
+## ADR-031 — Substituição de assets sem remover diretórios legados
+
+- **Data:** 2026-10-05
+- **Status:** aceita nesta implementação.
+- **Contexto:** após a PR #58, a execução 37314658106 falhou ao remover observability/prometheus.yml por permissão. O log confirma a falha; propriedade e modos reais da VPS não foram inspecionados.
+- **Escolha:** preparar cópia com propriedade do usuário de deploy e escrita somente para o proprietário; renomear o diretório antigo no mesmo pai e instalar a cópia. Guardar caminho da pasta arquivada no registro da tentativa. Recriar os cinco consumidores de bind mounts, com readiness, no deploy/rollback.
+- **Justificativa:** renomeação no mesmo pai não exige apagar arquivos nem atualizar a entrada pai interna de diretórios sem escrita; evita depender de sudo/chown ou abrir permissões do conteúdo legado. Recriação aplica os novos inodes aos containers existentes.
+- **Alternativas consideradas:** rm recursivo repete o erro; mover para dentro do registro da release também falha com diretório sem escrita; chmod/chown recursivo do legado exigiria propriedade/privilégios e alteraria evidências.
+- **Consequências:** arquivos legados e snapshots são retidos, inclusive configurações privadas; retenção futura deve preservar confidencialidade e referências de rollback. É necessária permissão de escrita no diretório de deploy. Não há remoção de dados ou volumes.
+- **Condições de revisão:** eventual política de retenção ou troca para configuração montada diretamente por release.
+- **Referências:** scripts/deploy/replace-observability.py, remote-deploy.sh, rollback.sh, scripts/validation/release-simulation.mjs, PR #58, execução 37314658106.

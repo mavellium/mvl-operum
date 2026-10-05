@@ -7,6 +7,9 @@ As versões até 1.6.0 foram reconstruídas retroativamente a partir do históri
 1.0.0 marca a entrada em produção na arquitetura de microsserviços, e cada marco de
 funcionalidade depois disso é uma versão MINOR.
 
+## [1.14.2] — 2026-10-05
+- **Deploy:** substituição de arquivos de observabilidade arquiva o diretório anterior sem apagar seu conteúdo, prepara assets pertencentes ao usuário de deploy e recria os consumidores dos bind mounts no deploy e rollback.
+
 ## [1.14.1] — 2026-10-05
 - **Deploy:** tentativas repetidas do mesmo SHA usam registros independentes, sem sobrescrever snapshots anteriores nem bloquear retries após falha. Rollback seleciona a tentativa concluída e mantém compatibilidade com registros legados por SHA.
 

@@ -23,12 +23,12 @@ grep -qx 'ROLLBACK_COMPATIBLE=true' release.env || { echo 'Rollback bloqueado: c
 # Database contents/migrations are preserved. Restore exact previous digests.
 for f in docker-compose.yml docker-compose.production.yml release.env; do cp "$DIR/previous-$f" "$f"; done
 if [ -d "$DIR/previous-observability" ]; then
-  rm -rf observability
-  cp -a "$DIR/previous-observability" observability
+  python3 "$DEPLOY_PATH/replace-observability.py" "$DIR/previous-observability" "$DEPLOY_PATH" "$DIR"
 fi
 COMPOSE=(docker compose --env-file .env --env-file release.env -f docker-compose.yml -f docker-compose.production.yml)
 "${COMPOSE[@]}" config -q
 "${COMPOSE[@]}" up -d --wait --wait-timeout 300
+"${COMPOSE[@]}" up -d --force-recreate --no-deps --wait --wait-timeout 300 prometheus grafana alloy docker-log-proxy alertmanager
 if [ -f "$DIR/previous-release-record" ]; then
   cp "$DIR/previous-release-record" .current-release-record
 else
