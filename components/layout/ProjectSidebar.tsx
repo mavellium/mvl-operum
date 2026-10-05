@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect, useState } from 'react'
+import { useEffect, useState, useId } from 'react'
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
 import { PanelLeftOpen } from 'lucide-react'
@@ -64,6 +64,7 @@ const CustosIcon = () => (
 )
 
 export default function ProjectSidebar({ projetoId, canManageMembers }: Props) {
+  const panelId = useId()
   const permissions = useProjectPermissions()
   const pathname = usePathname()
   const [collapsed, setCollapsed] = useState(false)
@@ -133,6 +134,7 @@ export default function ProjectSidebar({ projetoId, canManageMembers }: Props) {
   return (
     <>
       <SidebarLayout
+        panelId={panelId}
         title={title}
         searchPlaceholder={search.placeholder}
         searchContext={search.context}
@@ -163,9 +165,11 @@ export default function ProjectSidebar({ projetoId, canManageMembers }: Props) {
           <button
             type="button"
             onClick={toggleCollapsed}
-            aria-expanded={false}
             aria-label="Expandir menu lateral"
-            className="fixed top-3.5 left-2 z-30 p-1.5 rounded-lg bg-white border border-gray-200 shadow-sm text-gray-500 hover:text-gray-700 hover:bg-gray-100 transition-colors cursor-pointer"
+            aria-expanded={false}
+            aria-controls={panelId}
+            data-sidebar-expand
+            className="hidden md:inline-flex fixed top-3.5 left-2 z-30 p-1.5 rounded-lg bg-white border border-gray-200 shadow-sm text-gray-500 hover:text-gray-700 hover:bg-gray-100 transition-colors cursor-pointer"
           >
             <PanelLeftOpen className="w-4 h-4" />
           </button>

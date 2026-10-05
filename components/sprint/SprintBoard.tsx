@@ -9,7 +9,8 @@ import { DragDropContext, Droppable, DropResult } from '@hello-pangea/dnd'
 import SprintHeader from './SprintHeader'
 import ColumnComponent from '@/components/board/Column'
 import CardComponent from '@/components/card/Card'
-import CardModal from '@/components/card/CardModal'
+import Modal from '@/components/ui/Modal'
+import CardModal, { type CardSubmitResult } from '@/components/card/CardModal'
 import { Column as ColumnType, Card as CardType, CardColor } from '@/types/kanban'
 import {
   moveCardInSprintAction,
@@ -28,7 +29,7 @@ import {
 } from '@/app/actions/sprintBoard'
 import { createCommentAction, getCommentsAction, updateCommentAction, deleteCommentAction } from '@/app/actions/comentarios'
 import { deleteAttachmentAction, setCoverAction, renameAttachmentAction } from '@/app/actions/attachments'
-import { addResponsibleAction } from '@/app/actions/cardResponsible'
+import { addResponsibleAction, removeResponsibleAction } from '@/app/actions/cardResponsible'
 import { fetchWithSession } from '@/lib/clientFetch'
 import { aplicarFiltros, filtrosAtivos, FILTROS_PADRAO, type CardFilters } from '@/lib/cardFilters'
 import { isColunaConcluida } from '@/lib/cardUtils'
@@ -245,314 +246,178 @@ export default function SprintBoard({ sprint, columns: initialColumns, backlogCa
     }
   }
 
-  async function handleAddBacklogCardModal(data: NewCardData) {
-    if (!permissions.has('quadro:cards')) return
-
-    if (!projectId) return
-    const result = await createBacklogCardAction(projectId, {
-      title: data.title,
-      description: data.description,
-      color: data.color,
-      priority: data.priority,
-      startDate: data.startDate,
-      endDate: data.endDate,
-    })
-    if ('card' in result && result.card) {
-      const c = result.card
-      const responsibles = data.responsibles?.length
-        ? await Promise.all(data.responsibles.map(async userId => {
-            await addResponsibleAction(c.id, userId)
-            const user = users?.find(u => u.id === userId)
-            return { user: { id: userId, name: user?.name ?? '', avatarUrl: user?.avatarUrl ?? null } }
-          }))
-        : []
-      const attachments: SprintCard['attachments'] = []
-      for (const file of data.files ?? []) {
-        const att = await uploadCardAttachment(c.id, file)
-        if (att) attachments.push(toSprintAttachment(att))
+  const pendingActions = useRef(new Set<string>())
+  const [mutationErrors, setMutationErrors] = useState<Record<string, { message: string; retry: () => Promise<unknown> }>>({})
+  async function confirmed(key: string, action: () => Promise<unknown>, apply: () => void): Promise<CardSubmitResult> {
+    if (pendingActions.current.has(key)) return { error: 'Aguarde a operação em andamento.' }
+    pendingActions.current.add(key)
+    try {
+      const result = await action()
+      if (!result || typeof result !== 'object' || ('error' in result && result.error) || !(('success' in result && result.success === true) || ('card' in result && result.card) || ('column' in result && result.column))) {
+        throw new Error(result && typeof result === 'object' && 'error' in result ? String(result.error) : 'Não foi possível confirmar a alteração.')
       }
-      setBacklogCards(prev => [...prev, {
-        id: c.id,
-        title: c.title,
-        description: c.description ?? '',
-        color: c.color,
-        priority: c.priority,
-        tags: [],
-        attachments,
-        timeEntries: [],
-        responsibles,
-        startDate: data.startDate ?? null,
-        endDate: data.endDate ?? null,
-      }])
-    }
-    setAddingBacklogCard(false)
+      apply()
+      setMutationErrors(previous => { const next = { ...previous }; delete next[key]; return next })
+      return { success: true }
+    } catch (error) {
+      const message = error instanceof Error ? error.message : 'Erro de rede. Tente novamente.'
+      setMutationErrors(previous => ({ ...previous, [key]: { message, retry: () => confirmed(key, action, apply) } }))
+      toast(message, 'error')
+      return { error: message }
+    } finally { pendingActions.current.delete(key) }
   }
-
-  async function handleDragEnd(result: DropResult) {
-    const { destination, source, draggableId, type } = result
-    if (!destination) return
-    if (destination.droppableId === source.droppableId && destination.index === source.index) return
-
-    if (type === 'COLUMN') {
-      if (!permissions.has('quadro:sprints')) return
-      const newOrder = [...columns]
-      const [moved] = newOrder.splice(source.index, 1)
-      newOrder.splice(destination.index, 0, moved)
-      setColumns(newOrder)
-      await reorderSprintColumnsAction(sprint.id, newOrder.map(c => c.id))
-      return
-    }
-
-    if (!permissions.has('quadro:mover')) return
-
-    // Backlog → coluna da sprint
-    if (source.droppableId === 'BACKLOG' && destination.droppableId !== 'BACKLOG') {
-      const card = backlogCards[source.index]
-      if (!card) return
-      const newBacklog = [...backlogCards]
-      newBacklog.splice(source.index, 1)
-      setBacklogCards(newBacklog)
-      setColumns(cols => cols.map(col =>
-        col.id === destination.droppableId
-          ? { ...col, cards: [...col.cards.slice(0, destination.index), card, ...col.cards.slice(destination.index)] }
-          : col
-      ))
-      await moveCardToSprintAction(draggableId, sprint.id, destination.droppableId, destination.index)
-      return
-    }
-
-    // Coluna da sprint → Backlog
-    if (source.droppableId !== 'BACKLOG' && destination.droppableId === 'BACKLOG') {
-      const srcCol = columns.find(c => c.id === source.droppableId)
-      if (!srcCol) return
-      const card = srcCol.cards[source.index]
-      setColumns(cols => cols.map(col =>
-        col.id === source.droppableId
-          ? { ...col, cards: col.cards.filter((_, i) => i !== source.index) }
-          : col
-      ))
-      setBacklogCards(prev => [...prev.slice(0, destination.index), card, ...prev.slice(destination.index)])
-      await moveCardToBacklogAction(draggableId)
-      return
-    }
-
-    // Column → Column
-    const srcColMeta = columns.find(c => c.id === source.droppableId)
-    const dstColMeta = columns.find(c => c.id === destination.droppableId)
-    if (!srcColMeta || !dstColMeta) return
-
-    const applyMove = (cols: SprintColumnData[]) => {
-      const newColumns = cols.map(col => ({ ...col, cards: [...col.cards] }))
-      const srcCol = newColumns.find(c => c.id === source.droppableId)
-      const dstCol = newColumns.find(c => c.id === destination.droppableId)
-      if (!srcCol || !dstCol) return newColumns
-      const [movedCard] = srcCol.cards.splice(source.index, 1)
-      dstCol.cards.splice(destination.index, 0, movedCard)
-      return newColumns
-    }
-
-    if (dstColMeta.position < srcColMeta.position) {
-      // Movimento retroativo: aplica otimista AGORA (para o card não "voltar"
-      // à posição original ao fim da animação) e abre o diálogo de motivo.
-      setColumns(cols => applyMove(cols))
-      setPendingMove({
-        cardId: draggableId,
-        srcColumnId: source.droppableId,
-        srcColumnIndex: source.index,
-        dstColumnId: destination.droppableId,
-        dstColumnIndex: destination.index,
-        reason: '',
-      })
-      return
-    }
-
-    setColumns(cols => applyMove(cols))
-    await moveCardInSprintAction(draggableId, destination.droppableId, destination.index)
-  }
-
-  async function confirmPendingMove() {
-    if (!pendingMove || !pendingMove.reason.trim()) return
-    await moveCardInSprintAction(pendingMove.cardId, pendingMove.dstColumnId, pendingMove.dstColumnIndex, pendingMove.reason)
-    setPendingMove(null)
-  }
-
-  function cancelPendingMove() {
-    if (!pendingMove) return
-    setColumns(cols => {
-      const newColumns = cols.map(col => ({ ...col, cards: [...col.cards] }))
-      const srcCol = newColumns.find(c => c.id === pendingMove.srcColumnId)
-      const dstCol = newColumns.find(c => c.id === pendingMove.dstColumnId)
-      if (!srcCol || !dstCol) return newColumns
-      const [moved] = dstCol.cards.splice(pendingMove.dstColumnIndex, 1)
-      if (moved) srcCol.cards.splice(Math.min(pendingMove.srcColumnIndex, srcCol.cards.length), 0, moved)
-      return newColumns
-    })
-    setPendingMove(null)
-  }
-
-  // Correção 6: iniciar tempo move o card para "Em andamento" automaticamente.
-  async function handleCardTimerStarted(cardId: string) {
-    const target = columns.find(col => col.title.trim().toLowerCase() === 'em andamento')
-    if (!target) return
-
-    const inColumn = columns.find(col => col.cards.some(c => c.id === cardId))
-
-    if (inColumn) {
-      if (inColumn.id === target.id) return
-      // Só auto-move para frente — voltar de "Concluído" para "Em andamento"
-      // é retroativo e deve passar pelo diálogo de motivo.
-      if (inColumn.position >= target.position) return
-      const srcIndex = inColumn.cards.findIndex(c => c.id === cardId)
-      const newPosition = target.cards.length
-      setColumns(cols => {
-        const newColumns = cols.map(col => ({ ...col, cards: [...col.cards] }))
-        const src = newColumns.find(c => c.id === inColumn.id)
-        const dst = newColumns.find(c => c.id === target.id)
-        if (!src || !dst) return newColumns
-        const [moved] = src.cards.splice(srcIndex, 1)
-        dst.cards.push(moved)
-        return newColumns
-      })
-      await moveCardInSprintAction(cardId, target.id, newPosition)
-      return
-    }
-
-    const inBacklog = backlogCards.some(c => c.id === cardId)
-    if (!inBacklog) return
-    const card = backlogCards.find(c => c.id === cardId)
-    if (!card) return
-    const newPosition = target.cards.length
-    setBacklogCards(prev => prev.filter(c => c.id !== cardId))
-    setColumns(cols => cols.map(col => col.id === target.id ? { ...col, cards: [...col.cards, card] } : col))
-    await moveCardToSprintAction(cardId, sprint.id, target.id, newPosition)
-  }
-
-  async function handleAddColumn() {
-    if (!permissions.has('quadro:sprints')) return
-
-    if (!newColTitle.trim()) return
-    const result = await addSprintColumnAction(sprint.id, newColTitle.trim())
-    if ('column' in result && result.column) {
-      setColumns(cols => [...cols, { ...result.column, cards: [] }])
-      setNewColTitle('')
-      setAddingCol(false)
-    }
-  }
-
-  async function handleRenameColumn(columnId: string, title: string) {
-    if (!permissions.has('quadro:sprints')) return
-
-    setColumns(cols => cols.map(c => c.id === columnId ? { ...c, title } : c))
-    await renameSprintColumnAction(sprint.id, columnId, title)
-  }
-
-  async function handleDeleteColumn(columnId: string) {
-    if (!permissions.has('quadro:sprints')) return
-
-    setColumns(cols => cols.filter(c => c.id !== columnId))
-    await deleteSprintColumnAction(sprint.id, columnId)
-  }
-
   function patchCardState(cardId: string, updater: (c: SprintCard) => SprintCard) {
     setColumns(cols => cols.map(col => ({ ...col, cards: col.cards.map(c => c.id === cardId ? updater(c) : c) })))
     setBacklogCards(prev => prev.map(c => c.id === cardId ? updater(c) : c))
   }
-
-  async function handleAddCard(columnId: string, data: NewCardData) {
-    if (!permissions.has('quadro:cards')) return
-
-    const result = await createCardInSprintAction({
-      sprintId: sprint.id,
-      sprintColumnId: columnId,
-      title: data.title,
-      description: data.description,
-      color: data.color,
-      priority: data.priority,
-      startDate: data.startDate,
-      endDate: data.endDate,
+  const boardState = useRef({ columns, backlogCards })
+  useEffect(() => { boardState.current = { columns, backlogCards } }, [columns, backlogCards])
+  function applyMove(original: SprintCard, destination: string, index: number) {
+    const card = boardState.current.backlogCards.find(c => c.id === original.id) ?? boardState.current.columns.flatMap(col => col.cards).find(c => c.id === original.id) ?? original
+    setBacklogCards(cards => {
+      const next = cards.filter(c => c.id !== card.id)
+      if (destination === 'BACKLOG') next.splice(Math.min(index, next.length), 0, card)
+      return next
     })
-    if ('card' in result && result.card) {
-      const responsibles = data.responsibles?.length
-        ? await Promise.all(data.responsibles.map(async userId => {
-            await addResponsibleAction(result.card.id, userId)
-            const user = users?.find(u => u.id === userId)
-            return { user: { id: userId, name: user?.name ?? '', avatarUrl: user?.avatarUrl ?? null } }
-          }))
-        : []
-      const attachments: SprintCard['attachments'] = []
+    setColumns(cols => cols.map(col => {
+      const cards = col.cards.filter(c => c.id !== card.id)
+      if (col.id === destination) cards.splice(Math.min(index, cards.length), 0, card)
+      return { ...col, cards }
+    }))
+  }
+  async function move(cardId: string, source: string, destination: string, index: number, reason?: string) {
+    const card = backlogCards.find(c => c.id === cardId) ?? columns.flatMap(c => c.cards).find(c => c.id === cardId)
+    if (!card) return { error: 'Tarefa não encontrada.' }
+    return confirmed(`card:${cardId}`, () => destination === 'BACKLOG' ? moveCardToBacklogAction(cardId)
+      : source === 'BACKLOG' ? moveCardToSprintAction(cardId, sprint.id, destination, index)
+      : moveCardInSprintAction(cardId, destination, index, reason), () => applyMove(card, destination, index))
+  }
+  async function handleDragEnd(result: DropResult) {
+    const { destination, source, draggableId, type } = result
+    if (!destination || (destination.droppableId === source.droppableId && destination.index === source.index)) return
+    if (type === 'COLUMN') {
+      if (!permissions.has('quadro:sprints')) return
+      const order = columns.map(col => col.id)
+      const [moved] = order.splice(source.index, 1)
+      order.splice(destination.index, 0, moved)
+      await confirmed('column-order', () => reorderSprintColumnsAction(sprint.id, order), () => setColumns(cols => [...cols].sort((a,b) => {
+        const ai = order.indexOf(a.id), bi = order.indexOf(b.id)
+        return (ai < 0 ? order.length : ai) - (bi < 0 ? order.length : bi)
+      })))
+      return
+    }
+    if (!permissions.has('quadro:mover')) return
+    const src = columns.find(c => c.id === source.droppableId), dst = columns.find(c => c.id === destination.droppableId)
+    if (src && dst && dst.position < src.position) {
+      setPendingMove({ cardId: draggableId, srcColumnId: source.droppableId, srcColumnIndex: source.index, dstColumnId: destination.droppableId, dstColumnIndex: destination.index, reason: '' })
+      return
+    }
+    await move(draggableId, source.droppableId, destination.droppableId, destination.index)
+  }
+  async function confirmPendingMove() {
+    if (!pendingMove?.reason.trim()) return
+    const result = await move(pendingMove.cardId, pendingMove.srcColumnId, pendingMove.dstColumnId, pendingMove.dstColumnIndex, pendingMove.reason)
+    if ('success' in result) setPendingMove(null)
+  }
+  function cancelPendingMove() { setPendingMove(null) }
+  async function handleCardTimerStarted(cardId: string) {
+    const target = columns.find(col => col.title.trim().toLowerCase() === 'em andamento')
+    const source = columns.find(col => col.cards.some(card => card.id === cardId))
+    if (!target || (source && source.position >= target.position)) return
+    await move(cardId, source?.id ?? 'BACKLOG', target.id, target.cards.length)
+  }
+  async function handleAddColumn() {
+    if (!permissions.has('quadro:sprints') || !newColTitle.trim()) return
+    await confirmed('new-column', async () => {
+      const result = await addSprintColumnAction(sprint.id, newColTitle.trim())
+      if ('column' in result && result.column) {
+        setColumns(cols => [...cols, { ...result.column!, cards: [] }])
+        setNewColTitle(''); setAddingCol(false)
+      }
+      return result
+    }, () => {})
+  }
+  async function handleRenameColumn(columnId: string, title: string) {
+    if (!permissions.has('quadro:sprints')) return
+    await confirmed(`column:${columnId}`, () => renameSprintColumnAction(sprint.id, columnId, title), () => setColumns(cols => cols.map(c => c.id === columnId ? { ...c, title } : c)))
+  }
+  async function handleDeleteColumn(columnId: string) {
+    if (!permissions.has('quadro:sprints')) return
+    await confirmed(`column:${columnId}`, () => deleteSprintColumnAction(sprint.id, columnId), () => setColumns(cols => cols.filter(c => c.id !== columnId)))
+  }
+  // A confirmed creation survives retries of its attachments/responsibles.
+  const creations = useRef(new Map<string, { card: SprintCard; users: Set<string>; files: Set<File> }>())
+  function cardPayload(data: NewCardData) {
+    return { title: data.title, description: data.description, color: data.color, priority: data.priority, startDate: data.startDate, endDate: data.endDate }
+  }
+  async function createCard(destination: string, data: NewCardData): Promise<CardSubmitResult> {
+    if (!permissions.has('quadro:cards')) return { error: 'Sem permissão para criar tarefas.' }
+    try {
+      let creation = creations.current.get(destination)
+      if (!creation) {
+        const result = destination === 'BACKLOG'
+          ? await createBacklogCardAction(projectId!, data)
+          : await createCardInSprintAction({ ...data, sprintId: sprint.id, sprintColumnId: destination })
+        if ('error' in result || !result.card) throw new Error(('error' in result && result.error) || 'Não foi possível criar a tarefa.')
+        const card: SprintCard = { ...result.card, description: result.card.description ?? '', tags: [], attachments: [], timeEntries: [], responsibles: [] }
+        creation = { card, users: new Set(), files: new Set() }
+        creations.current.set(destination, creation)
+        applyMove(card, destination, Number.MAX_SAFE_INTEGER)
+      } else {
+        const result = await updateCardInSprintAction(sprint.id, creation.card.id, cardPayload(data))
+        if ('error' in result) throw new Error(result.error)
+        patchCardState(creation.card.id, c => ({ ...c, title: data.title, description: data.description, color: data.color, priority: data.priority, startDate: data.startDate, endDate: data.endDate }))
+      }
+      for (const userId of creation.users) {
+        if (data.responsibles?.includes(userId)) continue
+        const result = await removeResponsibleAction(creation.card.id, userId)
+        if ('error' in result) throw new Error(result.error)
+        creation.users.delete(userId)
+        patchCardState(creation.card.id, c => ({ ...c, responsibles: c.responsibles?.filter(r => r.user.id !== userId) }))
+      }
+      for (const userId of data.responsibles ?? []) {
+        if (creation.users.has(userId)) continue
+        const result = await addResponsibleAction(creation.card.id, userId)
+        if ('error' in result) throw new Error(result.error)
+        creation.users.add(userId)
+        const user = users?.find(u => u.id === userId)
+        patchCardState(creation.card.id, c => ({ ...c, responsibles: [...(c.responsibles ?? []), { user: { id: userId, name: user?.name ?? '', avatarUrl: user?.avatarUrl ?? null } }] }))
+      }
       for (const file of data.files ?? []) {
-        const att = await uploadCardAttachment(result.card.id, file)
-        if (att) attachments.push(toSprintAttachment(att))
+        if (creation.files.has(file)) continue
+        const attachment = await uploadCardAttachment(creation.card.id, file)
+        if (!attachment) throw new Error('Não foi possível enviar o anexo.')
+        creation.files.add(file)
+        patchCardState(creation.card.id, c => ({ ...c, attachments: [...(c.attachments ?? []), toSprintAttachment(attachment)] }))
       }
-      const newCard: SprintCard = {
-        id: result.card.id,
-        title: result.card.title,
-        description: result.card.description,
-        color: result.card.color,
-        priority: result.card.priority ?? data.priority,
-        tags: [],
-        attachments,
-        timeEntries: [],
-        responsibles,
-        startDate: data.startDate ?? null,
-        endDate: data.endDate ?? null,
-      }
-      setColumns(cols => cols.map(col =>
-        col.id === columnId ? { ...col, cards: [...col.cards, newCard] } : col
-      ))
+      creations.current.delete(destination)
+      return { success: true }
+    } catch (error) {
+      return { error: `${creations.current.has(destination) ? 'Tarefa criada. Tentar novamente continua na mesma tarefa. ' : ''}${error instanceof Error ? error.message : 'Erro de rede.'}` }
     }
   }
-
-  async function handleUpdateCard(
-    cardId: string,
-    data: { title: string; description: string; color: CardColor; priority?: string },
-  ) {
-    if (!permissions.has('quadro:cards')) return
-
-    setColumns(cols => cols.map(col => ({
-      ...col,
-      cards: col.cards.map(c => c.id === cardId ? { ...c, ...data } : c),
-    })))
-    await updateCardInSprintAction(sprint.id, cardId, {
-      title: data.title,
-      description: data.description,
-      color: data.color,
-      priority: data.priority,
-    })
+  function handleAddBacklogCardModal(data: NewCardData) { return createCard('BACKLOG', data) }
+  function handleAddCard(columnId: string, data: NewCardData) { return createCard(columnId, data) }
+  async function handleUpdateCard(cardId: string, data: NewCardData): Promise<CardSubmitResult> {
+    if (!permissions.has('quadro:cards')) return { error: 'Sem permissão para editar tarefas.' }
+    return confirmed(`card:${cardId}`, () => updateCardInSprintAction(sprint.id, cardId, cardPayload(data)), () => patchCardState(cardId, c => ({ ...c, title: data.title, description: data.description, color: data.color, priority: data.priority, startDate: data.startDate, endDate: data.endDate })))
   }
-
-  async function handleUpdateBacklogCard(
-    cardId: string,
-    data: { title: string; description: string; color: CardColor; priority?: string },
-  ) {
-    if (!permissions.has('quadro:cards')) return
-
-    setBacklogCards(prev => prev.map(c => c.id === cardId ? { ...c, ...data } : c))
-    await updateCardInSprintAction(sprint.id, cardId, data)
-  }
-
-  async function handleDeleteBacklogCard(cardId: string) {
-    if (!permissions.has('quadro:excluir')) return
-
-    setBacklogCards(prev => prev.filter(c => c.id !== cardId))
-    await deleteCardInSprintAction(sprint.id, cardId)
-  }
-
+  const handleUpdateBacklogCard = handleUpdateCard
   async function handleDeleteCard(cardId: string) {
     if (!permissions.has('quadro:excluir')) return
-
-    setColumns(cols => cols.map(col => ({
-      ...col,
-      cards: col.cards.filter(c => c.id !== cardId),
-    })))
-    await deleteCardInSprintAction(sprint.id, cardId)
+    await confirmed(`card:${cardId}`, () => deleteCardInSprintAction(sprint.id, cardId), () => {
+      setBacklogCards(cards => cards.filter(c => c.id !== cardId))
+      setColumns(cols => cols.map(col => ({ ...col, cards: col.cards.filter(c => c.id !== cardId) })))
+    })
   }
+  const handleDeleteBacklogCard = handleDeleteCard
 
   return (
     <div 
       className={`h-full w-full flex flex-col overflow-hidden bg-cover bg-center bg-fixed transition-all duration-700 selection:bg-blue-500/30 ${!isImageBg ? boardBg : ''}`}
       style={isImageBg ? { backgroundImage: boardBg } : {}}
     >
+      {Object.entries(mutationErrors).map(([key, failure]) => <div key={key} role="alert" className="bg-red-50 text-red-800 p-3 text-sm">{failure.message} <button type="button" onClick={() => void failure.retry()} className="underline">Tentar novamente</button></div>)}
       <SprintHeader 
         sprint={sprint} 
         currentUser={currentUser} 
@@ -739,9 +604,8 @@ export default function SprintBoard({ sprint, columns: initialColumns, backlogCa
             readOnly={readOnly}
             onClose={fecharCard}
             onSubmit={data => {
-              if (readOnly) return
-              if (isBacklog) handleUpdateBacklogCard(openCardId, data)
-              else handleUpdateCard(openCardId, data)
+              if (readOnly) return Promise.resolve({ error: 'Tarefa somente para leitura.' })
+              return isBacklog ? handleUpdateBacklogCard(openCardId, data) : handleUpdateCard(openCardId, data)
             }}
             initialCard={openCardType}
             users={users}
@@ -827,12 +691,9 @@ export default function SprintBoard({ sprint, columns: initialColumns, backlogCa
 
       <CardModal
         isOpen={!!addingCardToColumn}
-        onClose={() => setAddingCardToColumn(null)}
+        onClose={() => { if (addingCardToColumn) creations.current.delete(addingCardToColumn); setAddingCardToColumn(null) }}
         onSubmit={async (data) => {
-          if (addingCardToColumn) {
-            await handleAddCard(addingCardToColumn, data)
-            setAddingCardToColumn(null)
-          }
+          return addingCardToColumn ? handleAddCard(addingCardToColumn, data) : { error: 'Selecione uma coluna.' }
         }}
         users={users}
         boardTags={tags}
@@ -840,7 +701,7 @@ export default function SprintBoard({ sprint, columns: initialColumns, backlogCa
 
       <CardModal
         isOpen={addingBacklogCard}
-        onClose={() => setAddingBacklogCard(false)}
+        onClose={() => { creations.current.delete('BACKLOG'); setAddingBacklogCard(false) }}
         onSubmit={handleAddBacklogCardModal}
         users={users}
         boardTags={tags}
@@ -848,7 +709,7 @@ export default function SprintBoard({ sprint, columns: initialColumns, backlogCa
 
       {/* Diálogo de motivo para movimentação retroativa */}
       {pendingMove && (
-        <div className="fixed inset-0 z-[200] flex items-center justify-center bg-black/60 backdrop-blur-sm p-4">
+        <Modal isOpen onClose={cancelPendingMove} title="Motivo da movimentação">
           <div className="bg-white rounded-2xl shadow-2xl p-6 w-full max-w-md max-h-[90vh] overflow-y-auto animate-in fade-in zoom-in-95 duration-200">
             <h3 className="text-base font-bold text-gray-900 mb-1">Motivo da movimentação</h3>
             <p className="text-sm text-gray-500 mb-4">
@@ -882,7 +743,7 @@ export default function SprintBoard({ sprint, columns: initialColumns, backlogCa
               </button>
             </div>
           </div>
-        </div>
+        </Modal>
       )}
     </div>
   )

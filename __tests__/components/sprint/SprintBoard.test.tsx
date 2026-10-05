@@ -1,6 +1,8 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest'
-import { render, screen, fireEvent } from '@testing-library/react'
+import { act, render, screen, fireEvent, waitFor, within } from '@testing-library/react'
 import SprintBoard from '@/components/sprint/SprintBoard'
+import { createCardInSprintAction, updateCardInSprintAction, moveCardInSprintAction, renameSprintColumnAction, deleteSprintColumnAction } from '@/app/actions/sprintBoard'
+import { fetchWithSession } from '@/lib/clientFetch'
 import { useSearchParams } from 'next/navigation'
 import { ToastProvider } from '@/components/ui/Toast'
 
@@ -8,10 +10,11 @@ function renderWithProviders(ui: React.ReactElement) {
   return render(<ToastProvider>{ui}</ToastProvider>)
 }
 
+const drag = vi.hoisted(() => ({ end: null as null | ((result: unknown) => Promise<void>) }))
 vi.mock('@hello-pangea/dnd', () => ({
-  DragDropContext: ({ children }: { children: React.ReactNode }) => <>{children}</>,
-  Droppable: ({ children }: { children: (p: object, s: object) => React.ReactNode }) =>
-    <>{children({ innerRef: () => {}, droppableProps: {}, placeholder: null }, { isDraggingOver: false })}</>,
+  DragDropContext: ({ children, onDragEnd }: { children: React.ReactNode; onDragEnd: (result: unknown) => Promise<void> }) => { drag.end = onDragEnd; return <>{children}</> },
+  Droppable: ({ children, droppableId }: { children: (p: object, s: object) => React.ReactNode; droppableId: string }) =>
+    <div data-testid={`drop-${droppableId}`}>{children({ innerRef: () => {}, droppableProps: {}, placeholder: null }, { isDraggingOver: false })}</div>,
   Draggable: ({ children }: { children: (p: object, s: object) => React.ReactNode }) =>
     <>{children({ innerRef: () => {}, draggableProps: { style: {} }, dragHandleProps: {} }, { isDragging: false })}</>,
 }))
@@ -33,6 +36,7 @@ vi.mock('@/app/actions/sprintBoard', () => ({
   getCardMovementsAction: vi.fn().mockResolvedValue({ movements: [] }),
 }))
 
+vi.mock('@/lib/clientFetch', () => ({ fetchWithSession: vi.fn() }))
 vi.mock('@/app/actions/tags', () => ({
   assignTagToCardAction: vi.fn(),
   removeTagFromCardAction: vi.fn(),
@@ -282,5 +286,75 @@ describe('SprintBoard — card da URL (?card=), SDD 4.3', () => {
     naUrl('c1')
     rerender(quadro())
     expect(screen.getByDisplayValue('Task 1')).toBeInTheDocument()
+  })
+})
+
+
+describe('SDD 10.1–10.2 recuperação', () => {
+  const drop = (id = 'c1', source = 'sc1', destination = 'sc2') => ({ draggableId: id, type: 'CARD', source: { droppableId: source, index: 0 }, destination: { droppableId: destination, index: 0 } })
+  it.each(['403', '500', 'network'])('mover com %s mantém posição e permite retry', async error => {
+    const action = vi.mocked(moveCardInSprintAction)
+    if (error === 'network') action.mockRejectedValueOnce(new Error('network'))
+    else action.mockResolvedValueOnce({ error })
+    action.mockResolvedValue({ success: true } as never)
+    renderWithProviders(<SprintBoard sprint={sprint} columns={columns} projectId="proj1" />)
+    await act(async () => { await drag.end!(drop()) })
+    expect(within(screen.getByTestId('drop-sc1')).getByText('Task 1')).toBeInTheDocument()
+    expect(within(screen.getByTestId('drop-sc2')).queryByText('Task 1')).not.toBeInTheDocument()
+    expect(screen.getAllByRole('alert')[0]).toHaveTextContent(error)
+    await act(async () => { fireEvent.click(screen.getByRole('button', { name: 'Tentar novamente' })) })
+    expect(within(screen.getByTestId('drop-sc2')).getByText('Task 1')).toBeInTheDocument()
+  })
+  it('falha tardia de outro card não apaga movimento já confirmado', async () => {
+    let release!: (value: { error: string }) => void
+    vi.mocked(moveCardInSprintAction).mockImplementationOnce(() => new Promise(resolve => { release = resolve })).mockResolvedValue({ success: true } as never)
+    const other = { ...columns[0].cards[0], id: 'c2', title: 'Outra tarefa' }
+    renderWithProviders(<SprintBoard sprint={sprint} columns={[{ ...columns[0], cards: [columns[0].cards[0], other] }, columns[1]]} projectId="proj1" />)
+    let pending!: Promise<void>
+    act(() => { pending = drag.end!(drop()) })
+    await act(async () => { await drag.end!(drop('c2')) })
+    await act(async () => { release({ error: '500' }); await pending })
+    expect(within(screen.getByTestId('drop-sc2')).getByText('Outra tarefa')).toBeInTheDocument()
+    expect(within(screen.getByTestId('drop-sc1')).getByText('Task 1')).toBeInTheDocument()
+  })
+  it.each(['403', '500', 'rede'])('renomear rejeitado com %s preserva nome confirmado', async error => {
+    if (error === 'rede') vi.mocked(renameSprintColumnAction).mockRejectedValue(new Error(error))
+    else vi.mocked(renameSprintColumnAction).mockResolvedValue({ error })
+    renderWithProviders(<SprintBoard sprint={sprint} columns={columns} projectId="proj1" />)
+    fireEvent.click(screen.getByText('A Fazer'))
+    const input = screen.getByDisplayValue('A Fazer')
+    fireEvent.change(input, { target: { value: 'Nome não confirmado' } })
+    fireEvent.keyDown(input, { key: 'Enter' })
+    await waitFor(() => expect(renameSprintColumnAction).toHaveBeenCalled())
+    expect(screen.getByText('A Fazer')).toBeInTheDocument()
+    expect(screen.queryByText('Nome não confirmado')).not.toBeInTheDocument()
+  })
+  it.each(['403', '500', 'rede'])('excluir rejeitado com %s mantém coluna e cards', async error => {
+    if (error === 'rede') vi.mocked(deleteSprintColumnAction).mockRejectedValue(new Error(error))
+    else vi.mocked(deleteSprintColumnAction).mockResolvedValue({ error })
+    renderWithProviders(<SprintBoard sprint={sprint} columns={columns} projectId="proj1" />)
+    fireEvent.click(screen.getByRole('button', { name: 'Excluir coluna A Fazer' }))
+    fireEvent.click(await screen.findByRole('button', { name: 'Excluir' }))
+    await waitFor(() => expect(deleteSprintColumnAction).toHaveBeenCalled())
+    expect(screen.getByText('A Fazer')).toBeInTheDocument()
+    expect(screen.getByText('Task 1')).toBeInTheDocument()
+  })
+  it('retry de anexo parcial usa o card já criado e mantém formulário', async () => {
+    vi.mocked(createCardInSprintAction).mockResolvedValue({ card: { id: 'created', title: 'Nova', description: '', color: '#94a3b8' } } as never)
+    vi.mocked(updateCardInSprintAction).mockResolvedValue({ card: { id: 'created' } } as never)
+    vi.mocked(fetchWithSession).mockResolvedValueOnce(Response.json({ error: '503' }, { status: 503 })).mockResolvedValue(Response.json({ id: 'attachment', fileName: 'spec.txt', fileType: 'text/plain', filePath: 'private', fileSize: 4, createdAt: new Date().toISOString() }))
+    const { container } = renderWithProviders(<SprintBoard sprint={sprint} columns={columns} projectId="proj1" />)
+    fireEvent.click(screen.getAllByRole('button', { name: 'Adicionar card' })[1])
+    fireEvent.change(screen.getByPlaceholderText('Título da tarefa...'), { target: { value: 'Nova' } })
+    const file = new File(['spec'], 'spec.txt', { type: 'text/plain' })
+    fireEvent.change(container.querySelector('input[type=file]')!, { target: { files: [file] } })
+    fireEvent.click(screen.getByRole('button', { name: 'Criar card' }))
+    await screen.findByText(/Tarefa criada. Tentar novamente continua/)
+    expect(screen.getByRole('dialog')).toBeInTheDocument()
+    fireEvent.click(screen.getByRole('button', { name: 'Criar card' }))
+    await waitFor(() => expect(screen.queryByRole('dialog')).not.toBeInTheDocument())
+    expect(createCardInSprintAction).toHaveBeenCalledTimes(1)
+    expect(fetchWithSession).toHaveBeenCalledTimes(2)
+    expect(within(screen.getByTestId('drop-sc1')).getAllByText('Nova')).toHaveLength(1)
   })
 })

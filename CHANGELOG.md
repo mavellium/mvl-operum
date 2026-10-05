@@ -9,6 +9,13 @@ funcionalidade depois disso é uma versão MINOR.
 
 ## [Não lançado]
 
+## [1.13.1] — 2026-10-04
+- **Kanban (SDD 10.1–10.2):** alterações são aplicadas após confirmação, com erro e retry independentes; formulário permanece aberto em falhas, impede envio duplo e retoma anexos/responsáveis do card já criado sem duplicar a tarefa.
+- **Timers (SDD 10.3):** minicard e modal compartilham estado confirmado; falhas e timeout geram reconciliação ou estado desconhecido explícito, sem descartar o timer antes da parada confirmada.
+- **Termo de Abertura (SDD 10.4):** autosave serializado com feedback e flush antes de versionar; saída com pendências é protegida e cópia local na mesma aba permite recuperar alterações não confirmadas por autor/projeto.
+- **Acessibilidade (SDD 10.5–10.7):** abertura de tarefas por botão, sidebar recolhida sem foco, overlays com contenção/restauração de foco, títulos únicos e Escape somente no superior.
+- **Celular (SDD 10.8):** menu lateral sobreposto, conteúdo com largura disponível e navegação documental adaptada; prévia A4 mantém rolagem própria. Validação visual em 360/390/768 px, rotação e largura equivalente a zoom de 200%.
+
 ## [1.13.0] — 2026-10-04
 - **Tarefas (SDD 9.6):** novo endpoint paginado com filtros no sprint-service; MCP lista tarefas sem varrer todas as sprints do projeto, incluindo cards cujo projeto vem da sprint.
 - **Paginação:** cursor por criação e ID, com limite inicial de travessia e vínculo ao tenant/filtros; tags e responsáveis somente da página, anexos buscados exclusivamente dos IDs retornados.

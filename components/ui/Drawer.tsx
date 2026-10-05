@@ -1,7 +1,8 @@
 'use client'
 
-import { useEffect, useRef, useState } from 'react'
+import { useEffect, useRef, useState, useId } from 'react'
 import { createPortal } from 'react-dom'
+import { useOverlay } from '@/hooks/useOverlay'
 import { X } from 'lucide-react'
 
 interface DrawerProps {
@@ -25,28 +26,21 @@ export default function Drawer({
   // eslint-disable-next-line react-hooks/set-state-in-effect
   useEffect(() => { setMounted(true) }, [])
 
-  useEffect(() => {
-    if (!isOpen) return
-    // Guarda o valor anterior: com dois overlays sobrepostos, fechar o de cima
-    // não deve destravar o body do que ainda está aberto.
-    const previousOverflow = document.body.style.overflow
-    document.body.style.overflow = 'hidden'
-    const handleKey = (e: KeyboardEvent) => { if (e.key === 'Escape') onClose() }
-    document.addEventListener('keydown', handleKey)
-    setTimeout(() => firstFocusRef.current?.focus(), 10)
-    return () => {
-      document.removeEventListener('keydown', handleKey)
-      document.body.style.overflow = previousOverflow
-    }
-  }, [isOpen, onClose])
+  const dialogRef = useRef<HTMLDivElement>(null)
+  const titleId = useId()
+  const zIndex = useOverlay(dialogRef, onClose, isOpen && mounted)
 
   if (!mounted || !isOpen) return null
 
   return createPortal(
     <div
+      ref={dialogRef}
+      tabIndex={-1}
+      style={{ zIndex }}
       aria-modal="true"
       role="dialog"
-      aria-label={title}
+      aria-labelledby={title ? titleId : undefined}
+      aria-label={title ? undefined : 'Painel'}
       className="fixed inset-0 z-[100] flex justify-end"
     >
       {/* Overlay */}
@@ -62,7 +56,7 @@ export default function Drawer({
       >
         {/* Header */}
         <div className="flex items-center justify-between px-5 py-4 border-b border-slate-200 shrink-0">
-          {title && <h2 className="text-base font-semibold text-slate-800">{title}</h2>}
+          {title && <h2 id={titleId} className="text-base font-semibold text-slate-800">{title}</h2>}
           <button
             ref={firstFocusRef}
             onClick={onClose}

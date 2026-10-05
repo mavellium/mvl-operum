@@ -3,6 +3,8 @@
 import { useProjectPermissions } from '@/components/permissoes/ProjectPermissions'
 
 import { useRef, useState, useEffect, useCallback } from 'react'
+import { useRecoverableDraft } from '@/hooks/useRecoverableDraft'
+import { useAutosave } from '@/hooks/useAutosave'
 import { useParams } from 'next/navigation'
 import { useReactToPrint } from 'react-to-print'
 import { Save, History, Download } from 'lucide-react'
@@ -132,15 +134,11 @@ export default function ProjectCharter({ membros = [] }: { membros?: MembroEquip
     limitesAutoridade: '',
     principaisEnvolvidos: '',
   })
-  const debouncedFields = useDebounce(fields, 1200)
   const savedFields = useRef(fields)
-  const draftSave = useRef<Promise<void> | null>(null)
-  const firstLoad = useRef(true)
 
   // MacroFases (local state, synced with server)
   const [fases, setFases] = useState<MacroFase[]>([])
   const savedFases = useRef<MacroFase[]>([])
-  const [faseSaving] = useState<Record<string, boolean>>({})
   const [newestFaseId, setNewestFaseId] = useState<string | undefined>(undefined)
 
   // Versioning
@@ -151,7 +149,9 @@ export default function ProjectCharter({ membros = [] }: { membros?: MembroEquip
   const debouncedSearch = useDebounce(historySearch, 300)
   const [commitModalOpen, setCommitModalOpen] = useState(false)
   const [commitTitle, setCommitTitle] = useState('')
+  const [commitError, setCommitError] = useState('')
   const [savingVersion, setSavingVersion] = useState(false)
+  const savingVersionRef = useRef(false)
   const [actingVersionId, setActingVersionId] = useState<string | null>(null)
   const [versionMeta, setVersionMeta] = useState<VersionMeta>({
     elaboradoPor: '', elaboradoPorUserId: null, aprovadoPor: '', aprovadoPorUserId: null, versao: '1.0', dataAprovacaoRaw: '',
@@ -162,6 +162,31 @@ export default function ProjectCharter({ membros = [] }: { membros?: MembroEquip
   const { todos: todosMembros, registrarCriado } = useMembrosEquipe(membros)
   const todosMembrosRef = useRef(todosMembros)
   useEffect(() => { todosMembrosRef.current = todosMembros }, [todosMembros])
+
+  const draftPayload = JSON.stringify({ ...fields, macroFases: fases })
+  const draftAutosave = useAutosave(draftPayload, async payload => {
+    const response = await fetchWithSession(`/api/projects/${projetoId}/charter`, {
+      method: 'PATCH', headers: { 'Content-Type': 'application/json' }, body: payload,
+    })
+    if (!response.ok) throw new Error('Não foi possível salvar o rascunho')
+  }, { delay: 1200, enabled: canEdit && draftReady, guardNavigation: true })
+  const resetDraft = draftAutosave.reset
+  const recovery = useRecoverableDraft(projetoId, draftPayload, draftAutosave.status, canEdit && draftReady)
+  function restoreLocalDraft() {
+    try {
+      const payload = JSON.parse(recovery.backup!)
+      const next = { ...fields }
+      for (const key of Object.keys(next) as (keyof typeof next)[]) {
+        if (typeof payload[key] !== 'string') throw new Error('invalid')
+        next[key] = payload[key]
+      }
+      if (!Array.isArray(payload.macroFases) || !payload.macroFases.every((fase: MacroFase) =>
+        typeof fase.id === 'string' && typeof fase.fase === 'string' && typeof fase.dataLimite === 'string' && typeof fase.custo === 'string')) throw new Error('invalid')
+      setFields(next); setFases(payload.macroFases)
+      recovery.discard()
+      toast('Cópia local restaurada. Aguarde a confirmação do salvamento.')
+    } catch { toast('A cópia local não pôde ser restaurada.', 'error') }
+  }
 
   // ── Load charter data ──────────────────────────────────────────────────────
 
@@ -186,11 +211,11 @@ export default function ProjectCharter({ membros = [] }: { membros?: MembroEquip
         }
         setFields(init)
         savedFields.current = init
-        firstLoad.current = false
+        resetDraft(JSON.stringify({ ...init, macroFases: d.macroFases }))
       })
       .catch(e => setError(typeof e === 'string' ? e : 'Erro ao carregar Termo de Abertura'))
       .finally(() => setLoading(false))
-  }, [projetoId])
+  }, [projetoId, resetDraft])
 
   useEffect(() => {
     if (loading || !canEdit || !projetoId) return
@@ -201,29 +226,16 @@ export default function ProjectCharter({ membros = [] }: { membros?: MembroEquip
         const draft = await response.json()
         if (!cancelled && draft?.payload) {
           const { macroFases: _fases, ...draftFields } = draft.payload
-          setFields(prev => ({ ...prev, ...draftFields }))
+          const next = { ...savedFields.current, ...draftFields }
+          resetDraft(JSON.stringify({ ...next, macroFases: draft.payload.macroFases ?? savedFases.current }))
+          setFields(next)
           if (draft.payload.macroFases) setFases(draft.payload.macroFases)
           toast('Seu rascunho privado foi restaurado. Salve uma versão para enviá-lo à aprovação.')
         }
         if (!cancelled) setDraftReady(true)
       }).catch(() => { if (!cancelled) setDraftError('Não foi possível recuperar seu rascunho. Tente novamente antes de editar.') })
     return () => { cancelled = true }
-  }, [loading, canEdit, projetoId, toast, draftAttempt])
-
-  // ── Auto-save text fields ──────────────────────────────────────────────────
-
-  useEffect(() => {
-    if (firstLoad.current || !canEdit || !draftReady || debouncedFields !== fields || savingVersion || commitModalOpen) return
-    if (JSON.stringify(debouncedFields) === JSON.stringify(savedFields.current) && JSON.stringify(fases) === JSON.stringify(savedFases.current)) return
-
-    draftSave.current = (draftSave.current ?? Promise.resolve()).then(() => fetchWithSession(`/api/projects/${projetoId}/charter`, {
-      method: 'PATCH',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ ...debouncedFields, macroFases: fases }),
-    }))
-      .then(r => { if (!r.ok) throw new Error('Falha ao salvar'); savedFields.current = debouncedFields; savedFases.current = fases })
-      .catch(() => toast('Não foi possível salvar o rascunho. Seu texto continua na tela; tente Salvar versão.', 'error'))
-  }, [debouncedFields, fields, projetoId, canEdit, fases, toast, savingVersion, commitModalOpen, draftReady])
+  }, [loading, canEdit, projetoId, toast, draftAttempt, resetDraft])
 
   // ── Load versions ──────────────────────────────────────────────────────────
 
@@ -308,6 +320,7 @@ export default function ProjectCharter({ membros = [] }: { membros?: MembroEquip
       toast(problema, 'error')
       return
     }
+    setCommitError('')
     setCommitTitle('')
     setCommitModalOpen(true)
   }
@@ -330,16 +343,22 @@ export default function ProjectCharter({ membros = [] }: { membros?: MembroEquip
 
   async function handleConfirmCommit() {
     if (!canEdit || !draftReady) return
-    if (!projetoId || !commitTitle.trim()) return
+    if (!projetoId || !commitTitle.trim() || savingVersionRef.current) return
     const problema = validarResponsaveis()
     if (problema) {
       setCommitModalOpen(false)
       toast(problema, 'error')
       return
     }
+    setCommitError('')
+    savingVersionRef.current = true
     setSavingVersion(true)
-    await draftSave.current
     try {
+      if (!await draftAutosave.flush()) {
+        setCommitError('O rascunho não foi salvo. Tente novamente antes de criar a versão.')
+        toast('O rascunho não foi salvo. Tente novamente antes de criar a versão.', 'error')
+        return
+      }
       const r = await fetchWithSession(`/api/projects/${projetoId}/charter/versions`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -363,11 +382,14 @@ export default function ProjectCharter({ membros = [] }: { membros?: MembroEquip
         if (saved.status === 'APPROVED') window.dispatchEvent(new CustomEvent('operum:document-published', { detail: { projetoId } }))
       } else {
         const e = await r.json()
+        setCommitError(e.error ?? 'Erro ao salvar versão')
         toast(e.error ?? 'Erro ao salvar versão', 'error')
       }
     } catch {
+      setCommitError('Erro de rede ao salvar versão')
       toast('Erro de rede ao salvar versão', 'error')
     } finally {
+      savingVersionRef.current = false
       setSavingVersion(false)
     }
   }
@@ -415,12 +437,12 @@ export default function ProjectCharter({ membros = [] }: { membros?: MembroEquip
   if (error) {
     return (
       <div className="min-h-screen bg-gray-300 flex items-center justify-center p-8">
-        <div className="w-[210mm] rounded-xl bg-red-50 border border-red-200 p-6 text-red-700 text-sm">{error}</div>
+        <div className="w-full max-w-[210mm] rounded-xl bg-red-50 border border-red-200 p-6 text-red-700 text-sm">{error}</div>
       </div>
     )
   }
 
-  const autoSaving = Object.values(faseSaving).some(Boolean)
+  const autoSaving = draftAutosave.status === 'saving'
 
   const pendenciasResponsaveis = [
     versionMeta.elaboradoPorUserId &&
@@ -434,9 +456,13 @@ export default function ProjectCharter({ membros = [] }: { membros?: MembroEquip
   ].filter(Boolean) as string[]
 
   return (
-    <div className="min-h-screen bg-gray-300 flex flex-col items-center py-8 gap-6">
+    <div className="min-h-screen bg-gray-300 flex flex-col items-center py-8 px-3 sm:px-6 gap-6">
+      {recovery.backup && <div role="alert" className="w-full max-w-[210mm] rounded border bg-amber-50 p-3 text-sm">Há uma cópia local de alterações não confirmadas nesta aba.
+        <button type="button" onClick={restoreLocalDraft} className="ml-2 underline">Restaurar cópia local</button>
+        <button type="button" onClick={recovery.discard} className="ml-2 underline">Descartar cópia local</button>
+      </div>}
       {/* ── Version meta ──────────────────────────────────────────────────── */}
-      <div className="w-[210mm] bg-white rounded-xl shadow-md p-5 grid grid-cols-2 gap-4">
+      <div inert={savingVersion} className="w-full max-w-[210mm] bg-white rounded-xl shadow-md p-5 grid grid-cols-1 sm:grid-cols-2 gap-4">
         <div>
           <label className={labelClass} htmlFor="pc-elaborado-por">Elaborado por</label>
           <MembroEquipeSelect
@@ -477,7 +503,7 @@ export default function ProjectCharter({ membros = [] }: { membros?: MembroEquip
       </div>
 
       {draftError && (
-        <div role="alert" className="w-[210mm] rounded-xl border border-red-200 bg-red-50 p-3 text-sm text-red-700">
+        <div role="alert" className="w-full max-w-[210mm] rounded-xl border border-red-200 bg-red-50 p-3 text-sm text-red-700">
           {draftError}
           <button type="button" className="ml-3 font-medium underline" onClick={() => { setDraftError(''); setDraftAttempt(value => value + 1) }}>
             Tentar novamente
@@ -486,8 +512,11 @@ export default function ProjectCharter({ membros = [] }: { membros?: MembroEquip
       )}
 
       {/* ── Action bar ────────────────────────────────────────────────────── */}
-      <div className="w-[210mm] flex justify-end gap-2">
-        {autoSaving && <span className="self-center text-xs text-slate-400 mr-2">Salvando…</span>}
+      <div className="w-full max-w-[210mm] flex flex-wrap justify-end gap-2">
+        <div role="status" className="self-center text-xs mr-2">
+          {autoSaving ? 'Salvando…' : draftAutosave.status === 'pending' ? 'Alterações pendentes' : draftAutosave.status === 'error' ? 'Falha ao salvar o rascunho. Seu texto foi preservado.' : draftReady ? 'Rascunho salvo' : ''}
+          {draftAutosave.status === 'error' && <button type="button" onClick={() => void draftAutosave.flush()} className="ml-2 underline">Tentar salvar novamente</button>}
+        </div>
         <button
           aria-label="Histórico de versões"
           onClick={() => setHistoryOpen(true)}
@@ -502,7 +531,7 @@ export default function ProjectCharter({ membros = [] }: { membros?: MembroEquip
         </button>
         <button
           onClick={openCommitModal}
-          disabled={!canEdit || !draftReady}
+          disabled={!canEdit || !draftReady || savingVersion}
           className="flex items-center gap-2 px-4 py-2 bg-emerald-600 text-white text-sm font-medium rounded-xl hover:bg-emerald-700 transition-colors shadow-sm"
         >
           <Save className="w-4 h-4" />
@@ -518,7 +547,7 @@ export default function ProjectCharter({ membros = [] }: { membros?: MembroEquip
       </div>
 
       {/* ── A4 Document ───────────────────────────────────────────────────── */}
-      <div className="shadow-2xl">
+      <div role="region" aria-label="Prévia A4 do Termo de Abertura" tabIndex={0} className="w-full max-w-[210mm] overflow-x-auto shadow-2xl">
         <ProjectCharterDocument
           ref={printRef}
           nomeProjeto={data?.project.name ?? ''}
@@ -544,9 +573,9 @@ export default function ProjectCharter({ membros = [] }: { membros?: MembroEquip
       </div>
 
       {/* ── Editable form (screen only) ───────────────────────────────────── */}
-      <div className="w-[210mm] flex flex-col gap-4 print:hidden">
+      <div className="w-full max-w-[210mm] flex flex-col gap-4 print:hidden">
 
-        <fieldset disabled={!canEdit || !draftReady} className="min-w-0">
+        <fieldset disabled={!canEdit || !draftReady || savingVersion} className="min-w-0">
         <FormSection title="1. Justificativa do Projeto">
           <textarea rows={5} className={textareaClass} value={fields.justificativa}
             onChange={e => setFields(f => ({ ...f, justificativa: e.target.value }))}
@@ -572,7 +601,7 @@ export default function ProjectCharter({ membros = [] }: { membros?: MembroEquip
         </FormSection>
 
         <FormSection title="5. Premissas e Restrições">
-          <div className="grid grid-cols-2 gap-4">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div>
               <label className={labelClass}>Premissas (Hipóteses)</label>
               <textarea rows={4} className={textareaClass} value={fields.premissas}
@@ -614,8 +643,9 @@ export default function ProjectCharter({ membros = [] }: { membros?: MembroEquip
       </div>
 
       {/* ── Commit modal ──────────────────────────────────────────────────── */}
-      <Modal isOpen={commitModalOpen} onClose={() => setCommitModalOpen(false)} title="Salvar alteração" maxWidth="max-w-sm">
+      <Modal isOpen={commitModalOpen} onClose={() => { if (!savingVersionRef.current) setCommitModalOpen(false) }} title="Salvar alteração" maxWidth="max-w-sm">
         <div className="flex flex-col gap-4 py-2">
+          {commitError && <p role="alert" className="text-sm text-red-700">{commitError}</p>}
           {pendenciasResponsaveis.length > 0 && (
             <div className="bg-amber-50 border border-amber-200 text-amber-800 rounded-lg px-3 py-2 text-xs leading-relaxed">
               <strong>Pendência de cadastro:</strong> {pendenciasResponsaveis.join(' · ')} — membro(s)
@@ -634,8 +664,8 @@ export default function ProjectCharter({ membros = [] }: { membros?: MembroEquip
             />
             <p className="text-xs text-slate-500 mt-1">Descreva brevemente o que foi alterado.</p>
           </div>
-          <div className="flex justify-end gap-2">
-            <button onClick={() => setCommitModalOpen(false)} className="px-4 py-2 text-sm text-slate-600 hover:bg-slate-100 rounded-lg transition-colors">Cancelar</button>
+          <div className="flex flex-wrap justify-end gap-2">
+            <button disabled={savingVersion} onClick={() => setCommitModalOpen(false)} className="px-4 py-2 text-sm text-slate-600 hover:bg-slate-100 rounded-lg transition-colors">Cancelar</button>
             <button
               onClick={handleConfirmCommit}
               disabled={!draftReady || !commitTitle.trim() || savingVersion}

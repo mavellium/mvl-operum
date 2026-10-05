@@ -28,7 +28,7 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
     <div className="flex flex-1 overflow-hidden">
       <IdleLogout />
       <GlobalSidebar />
-      <main className="flex-1 min-w-0 h-full overflow-y-auto">
+      <main className="flex-1 min-w-0 h-full overflow-y-auto pt-14 md:pt-0">
         {children}
       </main>
     </div>

@@ -78,3 +78,14 @@ describe('Card click behavior', () => {
     expect(screen.getByText(/tem certeza/i)).toBeInTheDocument()
   })
 })
+
+it.each([false, true])('abre pelo Enter/Space com arraste desativado=%s', async dragDisabled => {
+  const user = userEvent.setup()
+  render(<Card card={card} index={0} columnId="col-1" onClick={onClick} onUpdate={onUpdate} onDelete={onDelete} dragDisabled={dragDisabled} />)
+  const button = screen.getByRole('button', { name: 'Abrir tarefa My Task' })
+  button.focus()
+  await user.keyboard('{Enter}')
+  await user.keyboard(' ')
+  expect(onClick).toHaveBeenCalledTimes(2)
+  expect(button.className).toContain('focus-visible:ring')
+})

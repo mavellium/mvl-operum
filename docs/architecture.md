@@ -931,3 +931,45 @@ Agregação lê sprints, cards, tempos, membros e feedbacks em snapshot Repeatab
 Schemas Zod canônicos e tipos inferidos estão em `sprint-service/src/dashboard/dashboard-contract.ts`, módulo puro compartilhado com o cliente Next. Resposta usa datas ISO/null e arrays obrigatórios; serviço valida antes de retornar e cliente valida após HTTP. Payload inválido gera erro explícito, sem cast ou preenchimento artificial com zeros. Caso vazio válido renderiza KPIs zero e listas vazias. O schema mínimo do sprint-service passa a espelhar campos já existentes de usuário/projeto e UserProject; não altera o schema físico nem requer migration.
 
 O workflow Dashboard Contracts valida action/cliente, gateway/auth JWT, endpoint interno de autorização/resolvedor, guard/controller reais e banco PostgreSQL 17 isolado. Mocks limitam-se ao transporte de cookie/DAL do Next e à construção de cliente Prisma independente por processo; autenticação/autorização e consultas de domínio são reais. Também cobre schemas e renderização vazia nas duas telas. Não há operação em produção.
+
+### Confirmação e recuperação na interface (SDD 10)
+
+O Kanban aplica alterações locais após confirmar as actions do gateway. Falhas
+ficam associadas ao recurso e oferecem retry; operações independentes não
+restauram snapshots inteiros do quadro. O modal usa resultado assíncrono explícito,
+bloqueia envio duplo e mantém campos/anexos na falha. Criação confirmada é lembrada
+na sessão do formulário: retries continuam no mesmo card e reenviam somente os
+responsáveis/arquivos ainda não confirmados. Fechar encerra essa sessão de retry;
+o card já persistido permanece no quadro.
+
+`useCardTimer` compartilha um store em memória por card entre minicard e modal.
+Leitura/start/stop são serializados por card, com timeout de 15 segundos por etapa.
+Parada só descarta a entrada após confirmação. Falhas reconciliam pelas rotas
+existentes; sem confirmação, a UI mostra estado desconhecido e atualização manual.
+Não é sincronização por push entre abas ou usuários. O sprint-service e o índice
+único continuam sendo a autoridade dos timers.
+
+`useAutosave` serializa gravações, drena o valor mais recente e devolve confirmação
+em `flush`. Reset invalida conclusões de requests do registro anterior. O Termo
+aguarda flush antes de enviar uma versão e não envia POST se o PATCH falhar.
+Pendências geram feedback, retry, proteção de navegação por links e beforeunload.
+Rascunhos persistidos continuam privados no servidor. Uma cópia adicional de
+alterações não confirmadas usa `sessionStorage`, na mesma aba, com chave do usuário
+confirmado por `/api/me` e do projeto (IDs globais). Só é lida após permissão de
+edição e recuperação do rascunho servidor; restauração é explícita. Expira após
+24 horas e é removida no salvamento confirmado/descarte. Não substitui autorização
+ou armazenamento servidor; se o storage estiver indisponível, o feedback e o aviso
+de saída permanecem. Não se promete recuperação ao encerrar definitivamente a aba.
+
+`useOverlay` mantém a pilha de Modal, Drawer, formulário/lightbox de card e menu
+móvel. Só o superior recebe Escape/Tab; regiões externas ficam inert. O lock de
+scroll é compartilhado e o foco retorna ao acionador quando ele ainda existir.
+Títulos usam IDs por instância. Sidebar recolhida é inert/aria-hidden, e a expansão
+retorna foco ao controle previsível. Abaixo de 768 px a navegação abre sobreposta;
+em desktop mantém o layout lateral. Navegação documental empilha abaixo de 1024 px,
+formulário do Termo ajusta largura e a prévia A4 tem região de rolagem própria.
+
+Revisão de consistência da fase: sem alteração dos contratos HTTP, schema,
+permissões ou propriedade de domínios da fase 9. O workflow UI Reliability adiciona
+lint/tipos/suíte raiz em PRs; checks de banco e segurança permanecem. Evidências e
+limites da reprodução visual: [validação SDD 10](validation/sdd-10/README.md).

@@ -76,3 +76,55 @@ describe('useAutosave', () => {
     expect(save).not.toHaveBeenCalled()
   })
 })
+
+it('serializa PATCH lento e confirma o texto mais recente antes de resolver flush', async () => {
+  let release!: () => void
+  const save = vi.fn().mockImplementationOnce(() => new Promise<void>(resolve => { release = resolve })).mockResolvedValue(undefined)
+  const { rerender, result } = setup('', save)
+  rerender({ value: 'primeiro' })
+  let completed = false
+  let flushing!: Promise<boolean>
+  act(() => { flushing = result.current.flush(); void flushing.then(() => { completed = true }) })
+  rerender({ value: 'segundo' })
+  await act(async () => { await vi.advanceTimersByTimeAsync(1000) })
+  expect(save).toHaveBeenCalledTimes(1)
+  expect(completed).toBe(false)
+  await act(async () => { release(); expect(await flushing).toBe(true) })
+  expect(save.mock.calls.map(([value]) => value)).toEqual(['primeiro', 'segundo'])
+  expect(result.current.status).toBe('saved')
+})
+it('resposta antiga não marca o novo registro como salvo depois de reset', async () => {
+  let release!: () => void
+  const save = vi.fn(() => new Promise<void>(resolve => { release = resolve }))
+  const { rerender, result } = setup('', save)
+  rerender({ value: 'registro A' })
+  let flushing!: Promise<boolean>
+  act(() => { flushing = result.current.flush() })
+  act(() => { result.current.reset('registro B') })
+  rerender({ value: 'registro B' })
+  await act(async () => { release(); expect(await flushing).toBe(false) })
+  expect(result.current.status).toBe('idle')
+  expect(save).toHaveBeenCalledTimes(1)
+})
+it('falha mantém pendência e avisa o navegador antes de sair', async () => {
+  const { rerender, result } = setup('', vi.fn().mockRejectedValue(new Error('503')))
+  rerender({ value: 'rascunho' })
+  await act(async () => { expect(await result.current.flush()).toBe(false) })
+  const event = new Event('beforeunload', { cancelable: true })
+  window.dispatchEvent(event)
+  expect(event.defaultPrevented).toBe(true)
+  expect(result.current.status).toBe('error')
+})
+it('novo registro pode salvar enquanto resposta do anterior está pendente', async () => {
+  let release!: () => void
+  const save = vi.fn().mockImplementationOnce(() => new Promise<void>(resolve => { release = resolve })).mockResolvedValue(undefined)
+  const { rerender, result } = setup('', save)
+  rerender({ value: 'A editado' })
+  let old!: Promise<boolean>
+  act(() => { old = result.current.flush() })
+  act(() => { result.current.reset('B') }); rerender({ value: 'B editado' })
+  await act(async () => { expect(await result.current.flush()).toBe(true) })
+  await act(async () => { release(); expect(await old).toBe(false) })
+  expect(result.current.status).toBe('saved')
+  expect(save.mock.calls.map(([value]) => value)).toEqual(['A editado', 'B editado'])
+})

@@ -2,13 +2,13 @@
 
 import { useProjectPermissions } from '@/components/permissoes/ProjectPermissions'
 
-import { useState, useEffect, useRef } from 'react'
+import { useState } from 'react'
 import { Draggable } from '@hello-pangea/dnd'
 import { Card as CardType, CardColor } from '@/types/kanban'
 import ConfirmDialog from '@/components/ui/ConfirmDialog'
 import { TagBadge } from '@/components/tag/TagBadge'
 import UserAvatar from '@/components/user/UserAvatar'
-import { startTimerAction, pauseTimerAction, getCardTimeAction, getActiveTimerAction } from '@/app/actions/time'
+import { useCardTimer } from '@/hooks/useCardTimer'
 import { prazoStatus, formatPrazoCurto, type PrazoStatus } from '@/lib/cardUtils'
 import { useClientNow } from '@/hooks/useClientNow'
 
@@ -70,12 +70,9 @@ function formatCardTimer(seconds: number): string {
 export default function Card({ card, index, columnId, onDelete, onClick, onTimerStarted, concluido = false, dragDisabled = false }: CardProps) {
   const permissions = useProjectPermissions()
   const [confirmOpen, setConfirmOpen] = useState(false)
-  const [isTimerRunning, setIsTimerRunning] = useState(false)
-  const [elapsedSeconds, setElapsedSeconds] = useState(0)
-  const intervalRef = useRef<ReturnType<typeof setInterval> | null>(null)
-  const startedAtRef = useRef<Date | null>(null)
-  const baseSecondsRef = useRef(0)
-  const activeEntryIdRef = useRef<string | null>(null)
+  const timer = useCardTimer(card.id)
+  const isTimerRunning = timer.isRunning
+  const elapsedSeconds = timer.elapsed
 
   const hasDescription = !!card.description?.trim()
   const hasAttachments = card.attachments && card.attachments.length > 0
@@ -91,71 +88,11 @@ export default function Card({ card, index, columnId, onDelete, onClick, onTimer
   const prazo = now ? prazoStatus(card.endDate, now, concluido) : null
   const prioridade = card.priority ? PRIORIDADE_STYLE[card.priority] : undefined
 
-  // Carrega o estado real do timer (mesma fonte de verdade do CardTimer no modal).
-  useEffect(() => {
-    let cancelled = false
-    Promise.all([getCardTimeAction(card.id), getActiveTimerAction(card.id)])
-      .then(([timeResult, activeResult]) => {
-        if (cancelled) return
-        const total = ('seconds' in timeResult ? timeResult.seconds : 0) ?? 0
-        const active = 'entry' in activeResult ? activeResult.entry : null
-        if (active?.isRunning) {
-          const sinceStart = Math.floor((Date.now() - new Date(active.startedAt).getTime()) / 1000)
-          baseSecondsRef.current = total - (active.duration ?? 0)
-          startedAtRef.current = new Date(active.startedAt)
-          activeEntryIdRef.current = active.id
-          setElapsedSeconds(baseSecondsRef.current + sinceStart)
-          setIsTimerRunning(true)
-        } else {
-          baseSecondsRef.current = total
-          activeEntryIdRef.current = null
-          setElapsedSeconds(total)
-          setIsTimerRunning(false)
-        }
-      })
-      .catch(() => {})
-    return () => { cancelled = true }
-  }, [card.id])
-
-  useEffect(() => {
-    if (isTimerRunning) {
-      intervalRef.current = setInterval(() => {
-        const sinceStart = startedAtRef.current
-          ? Math.floor((Date.now() - startedAtRef.current.getTime()) / 1000)
-          : 0
-        setElapsedSeconds(baseSecondsRef.current + sinceStart)
-      }, 1000)
-    } else {
-      if (intervalRef.current) clearInterval(intervalRef.current)
-    }
-    return () => { if (intervalRef.current) clearInterval(intervalRef.current) }
-  }, [isTimerRunning])
-
   const handleTimerClick = async (e: React.MouseEvent) => {
     e.stopPropagation()
-    if (!isTimerRunning && !permissions.has('quadro:cards')) return
-    if (isTimerRunning) {
-      const entryId = activeEntryIdRef.current
-      if (!entryId) return
-      setIsTimerRunning(false)
-      if (intervalRef.current) clearInterval(intervalRef.current)
-      await pauseTimerAction(entryId)
-      activeEntryIdRef.current = null
-      const res = await getCardTimeAction(card.id)
-      if ('seconds' in res && res.seconds != null) {
-        baseSecondsRef.current = res.seconds
-        setElapsedSeconds(res.seconds)
-      }
-    } else {
-      const result = await startTimerAction(card.id)
-      if ('entry' in result && result.entry) {
-        activeEntryIdRef.current = (result.entry as { id: string }).id
-        baseSecondsRef.current = elapsedSeconds
-        startedAtRef.current = new Date()
-        setIsTimerRunning(true)
-        onTimerStarted?.(card.id)
-      }
-    }
+    if ((!isTimerRunning && !permissions.has('quadro:cards')) || timer.loading) return
+    const wasRunning = isTimerRunning
+    if (await timer.toggle() && !wasRunning) onTimerStarted?.(card.id)
   }
 
   return (
@@ -206,9 +143,9 @@ export default function Card({ card, index, columnId, onDelete, onClick, onTimer
 
               {/* Título + botões de ação (prioridade + lixeira) */}
               <div className="flex items-start justify-between gap-2 mb-2">
-                <p className="text-[14px] font-bold text-gray-800 leading-snug flex-1 break-words">
+                <button type="button" onClick={event => { event.stopPropagation(); onClick() }} aria-label={`Abrir tarefa ${card.title}`} className="text-[14px] font-bold text-gray-800 leading-snug flex-1 break-words text-left rounded focus-visible:ring-2 focus-visible:ring-blue-500">
                   {card.title}
-                </p>
+                </button>
                 <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 focus-within:opacity-100 transition-opacity shrink-0 -mt-1 -mr-1">
                   <button
                     disabled={!permissions.has('quadro:excluir')}
@@ -263,6 +200,7 @@ export default function Card({ card, index, columnId, onDelete, onClick, onTimer
 
               <div className="flex-1" />
 
+              {timer.error && <p role="alert" className="text-xs text-red-600">{timer.error} <button type="button" onClick={event => { event.stopPropagation(); void timer.refresh() }} disabled={timer.loading}>Atualizar timer</button></p>}
               {/* Rodapé */}
               <div className="flex items-center justify-between mt-3 pt-3 border-t border-gray-100 gap-2">
 
@@ -278,7 +216,9 @@ export default function Card({ card, index, columnId, onDelete, onClick, onTimer
                   )}
 
                   {/* Timer */}
-                  <div
+                  <button type="button"
+                    disabled={timer.loading || !timer.known || (!isTimerRunning && !permissions.has('quadro:cards'))}
+                    aria-label={isTimerRunning ? 'Pausar timer' : 'Iniciar timer'}
                     className={`flex items-center gap-1.5 px-2 py-1 -ml-2 rounded-md transition-colors ${isTimerRunning ? 'bg-green-50' : 'hover:bg-gray-100'}`}
                     aria-disabled={!isTimerRunning && !permissions.has('quadro:cards')}
                     onClick={handleTimerClick}
@@ -293,8 +233,8 @@ export default function Card({ card, index, columnId, onDelete, onClick, onTimer
                         <svg className="w-3.5 h-3.5 ml-0.5" fill="currentColor" viewBox="0 0 20 20"><path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM9.555 7.168A1 1 0 008 8v4a1 1 0 001.555.832l3-2a1 1 0 000-1.664l-3-2z" clipRule="evenodd" /></svg>
                       </div>
                     )}
-                    <span className={`text-xs font-mono font-bold tracking-tight mt-px ${isTimerRunning ? 'text-green-700' : 'text-gray-600'}`}>{formatCardTimer(elapsedSeconds)}</span>
-                  </div>
+                    <span className={`text-xs font-mono font-bold tracking-tight mt-px ${isTimerRunning ? 'text-green-700' : 'text-gray-600'}`}>{timer.known ? formatCardTimer(elapsedSeconds) : '—'}</span>
+                  </button>
                 </div>
 
                 {/* Direita: tempo planejado/realizado + avatares */}
