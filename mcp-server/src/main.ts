@@ -1,10 +1,16 @@
 import 'dotenv/config'
 import express from 'express'
+import { telemetry, metrics } from './telemetry.js'
 import { StreamableHTTPServerTransport } from '@modelcontextprotocol/sdk/server/streamableHttp.js'
 import { buildServer } from './server.js'
 import { parseTokens, TenantRegistry } from './tenants.js'
 
 const app = express()
+app.use(telemetry)
+app.get('/health/metrics', (req, res) => {
+  if (!process.env.INTERNAL_API_KEY || req.headers.authorization !== `Bearer ${process.env.INTERNAL_API_KEY}`) return res.status(401).end()
+  res.type('text/plain').send(metrics())
+})
 // 15 MB: operum_upload_attachment aceita até 10 MB em content_base64 (≈13,4 MB em base64).
 // O parse vem depois da checagem do token, para requisição sem PAT não fazer o
 // servidor ler um corpo desse tamanho.
@@ -36,6 +42,14 @@ app.post('/mcp', (req, res, next) => {
 app.all('/mcp', (_req, res) => res.status(405).end())
 
 app.get('/health', (_req, res) => res.json({ ok: true }))
+app.get('/health/ready', async (_req, res) => {
+  let ready = false
+  try {
+    ready = (await fetch(`${process.env.API_GATEWAY_INTERNAL_URL ?? 'http://api-gateway:4000'}/health/ready`, { signal: AbortSignal.timeout(3000) })).ok
+  } catch { /* bounded failure */ }
+  res.status(ready ? 200 : 503).json({ status: ready ? 'ready' : 'not ready' })
+})
+
 
 const PORT = Number(process.env.PORT ?? 4006)
 app.listen(PORT, () => { console.log(`mcp-server listening on :${PORT}`) })

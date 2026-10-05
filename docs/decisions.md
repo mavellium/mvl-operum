@@ -350,3 +350,52 @@ Ao substituir uma decisão, manter o texto histórico, alterar seu status e liga
   hooks/useRecoverableDraft.ts; hooks/useOverlay.ts; components/sprint/SprintBoard.tsx;
   components/card/CardModal.tsx; docs/validation/sdd-10/README.md; SDD 10.1–10.8;
   .github/workflows/ui-reliability.yml.
+
+
+## ADR-023 — Sessões verificadas pela autoridade de autenticação
+
+- **Data do registro:** 2026-10-04.
+- **Status:** decisão desta implementação da fase 11.1, registrada antes do código; aguardando revisão.
+- **Contexto:** existência de JTI no Redis não verifica desativação ou tokenVersion; indisponibilidade permitia acesso em produção.
+- **Escolha:** gateway consulta auth-service sem cache de validade JWT em produção. Auth verifica assinatura, JTI, sessão e usuário persistido; falhas de dependência retornam 503, credenciais revogadas 401. Escrita/remoção de sessão deve ser confirmada. Desenvolvimento mantém tolerância explícita apenas para Redis ausente, sem dispensar a verificação do usuário no auth-service.
+- **Justificativa:** uma autoridade aplica revogação consistente sem replicar consultas de identidade no gateway. Não existe fallback de produção que aceite uma credencial sem prova atual.
+- **Alternativas consideradas:** cache de validade (janela de revogação); aceitar assinatura durante queda (não comprova logout); gateway consultar banco diretamente (duplica responsabilidade).
+- **Consequências:** uma consulta adicional ao auth-service por requisição JWT em produção; indisponibilidade impede login, logout confirmado e acesso protegido. Logout malsucedido deve ser repetido após recuperação; não é anunciado como sucesso. Redis usa prazo limitado e reconexão.
+- **Condições de revisão:** volume que exija protocolo de invalidação distribuída, disponibilidade regional ou mudança de persistência de sessões.
+- **Referências:** SDD 11.1; auth-service/src/auth/auth.service.ts; auth-service/src/redis/redis.service.ts; api-gateway/src/middleware/auth.ts.
+
+## ADR-024 — Redis separado para sessão, fila e cache
+
+- **Data do registro:** 2026-10-04.
+- **Status:** implementada nesta entrega; aguardando revisão e operação de migração.
+- **Contexto:** allkeys-lru compartilhado podia eliminar sessão ou job por pressão de cache.
+- **Escolha:** três instâncias sem portas públicas, volumes próprios para sessão/fila, AOF e noeviction; cache independente e descartável.
+- **Justificativa:** políticas de memória distintas não podem ser obtidas com bancos lógicos na mesma instância.
+- **Alternativas consideradas:** prefixos/DB lógico (eviction continua global); Redis único noeviction (cache disputa capacidade com jobs).
+- **Consequências:** memória adicional; esgotamento durável é erro de escrita. Preservar host/volume original da fila e mover sessões para nova instância; usuários devem autenticar novamente na transição. A rotina operacional deve dimensionar capacidade e alertar memória. Cache PAT mantém janela máxima de 60 segundos quando invalidação falha.
+- **Condições de revisão:** volume de filas/sessões, HA ou requisitos de persistência sem perda de um segundo.
+- **Referências:** SDD 11.2; docker-compose*.yml; lib/notificationPublisher.ts; notification-service/src/app.module.ts.
+
+## ADR-025 — Releases por digest, gates por serviço e rollback condicionado
+
+- **Data do registro:** 2026-10-04.
+- **Status:** implementada nesta entrega; aguardando validação/revisão.
+- **Contexto:** tags prod mutáveis podiam misturar builds concorrentes; SHA recebido pelo script não selecionava as imagens.
+- **Escolha:** publicar SHA, validar todos os pacotes/imagens e gerar manifesto de digests; migração e app usam a mesma imagem. Registrar configuração anterior e restaurar somente com compatibilidade de schema declarada, false por padrão. Checks de operação e serviços precedem build de produção.
+- **Justificativa:** referência imutável conserva o conjunto aprovado e possibilita recuperar release sem retag manual; dados não são revertidos automaticamente.
+- **Alternativas consideradas:** serializar apenas deploy (build continua movendo tags); usar SHA com tags mutáveis (registry permite substituição); migration down automática (pode destruir dados).
+- **Consequências:** produção precisa de release.env e Python 3/flock; primeira implantação não tem rollback registrado. Operador define compatibilidade da release após análise de migrations; false bloqueia rollback. Simulação com Docker fixture não prova tempo de rollout na VPS; imagem smoke/restore são ensaiados isoladamente no CI. Não há merge/deploy nesta entrega.
+- **Condições de revisão:** separação dos bancos, migrations incompatíveis, múltiplas VPS ou registry que suporte políticas de imutabilidade.
+- **Referências:** SDD 11.3–11.6; scripts/deploy; scripts/backup; .github/workflows/services-validation.yml; .github/workflows/operations-validation.yml.
+
+## ADR-026 — Prontidão limitada e telemetria operacional privada
+
+- **Data do registro:** 2026-10-04.
+- **Status:** implementada nesta entrega; aguardando validação/revisão.
+- **Contexto:** health constante não impedia deployment sem dependências; endpoints de métricas e provisioning/collector estavam ausentes.
+- **Escolha:** liveness independente e readiness com probes leves limitados; métricas com segredo interno, request ID sem dados sensíveis, Grafana provisionado, Alloy por proxy Docker GET de logs/listagem, regras e webhook operacional configurável.
+- **Justificativa:** distinguir falha de processo de indisponibilidade externa; implantar configuração reproduzível com limites de exposição e cardinalidade.
+- **Alternativas consideradas:** reiniciar por falha de DB (cascata); socket do Docker diretamente no collector (capacidade administrativa); URLs/identidades em métricas (segredos e cardinalidade); configuração manual exclusiva (não reproduzível).
+- **Consequências:** dependência operacional adicional no proxy/collector/exporters; proxy é confiável e tem acesso ao socket. App mede chamadas BFF. Webhook real precisa de configuração e inventário, sem enviar alertas reais nesta PR. Estado real do Grafana não foi consultado.
+- **Condições de revisão:** OpenTelemetry distribuído, maior volume de logs, autenticação distinta para scrape ou novo serviço/dependência.
+- **Referências:** SDD 11.7–11.8; observability/; src/health de cada serviço; lib/operationalTelemetry.ts; docs/architecture.md.

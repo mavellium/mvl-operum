@@ -1,0 +1,70 @@
+# Synthetic dependencies only. No production data, secrets or published ports.
+services:
+  fixture:
+    image: node:22-alpine
+    command: node /fixture.cjs
+    volumes: ["./scripts/validation/observability-fixture.cjs:/fixture.cjs:ro"]
+    networks:
+      internal:
+        aliases: [app, api-gateway, auth-service, project-service, sprint-service, notification-service, file-service, mcp-server]
+  sink:
+    image: node:22-alpine
+    command: [node, -e, 'require("http").createServer((q,s)=>{let b="";q.on("data",x=>b+=x);q.on("end",()=>{console.log("ALERT_RECEIVED "+b);s.end("ok")})}).listen(8080)']
+    networks: [internal]
+  redis:
+    image: redis:7-alpine
+    command: redis-server --requirepass validation-only --maxmemory 512mb
+    networks: [internal]
+  redis-session:
+    image: redis:7-alpine
+    command: redis-server --requirepass validation-only --maxmemory 256mb
+    networks: [internal]
+  redis-cache:
+    image: redis:7-alpine
+    command: redis-server --requirepass validation-only --maxmemory 128mb
+    networks: [internal]
+  prometheus:
+    extends:
+      file: docker-compose.production.yml
+      service: prometheus
+  loki:
+    extends:
+      file: docker-compose.production.yml
+      service: loki
+  grafana:
+    extends:
+      file: docker-compose.production.yml
+      service: grafana
+  alloy:
+    extends:
+      file: docker-compose.production.yml
+      service: alloy
+  docker-log-proxy:
+    extends:
+      file: docker-compose.production.yml
+      service: docker-log-proxy
+  alertmanager:
+    extends:
+      file: docker-compose.production.yml
+      service: alertmanager
+  redis-exporter:
+    extends:
+      file: docker-compose.production.yml
+      service: redis-exporter
+  redis-queue-exporter:
+    extends:
+      file: docker-compose.production.yml
+      service: redis-queue-exporter
+  redis-cache-exporter:
+    extends:
+      file: docker-compose.production.yml
+      service: redis-cache-exporter
+volumes:
+  prometheus-data:
+  loki-data:
+  grafana-data:
+networks:
+  internal:
+  logs-collector:
+    internal: true
+  traefik-public:

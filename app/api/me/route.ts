@@ -1,11 +1,13 @@
 import { NextResponse } from 'next/server'
-import { decrypt } from '@/lib/session'
+import { validatedSession } from '@/lib/validatedSession'
 import { authApi, projectsApi } from '@/lib/api-client'
 
 export async function GET(request: Request) {
   const cookieHeader = request.headers.get('cookie') ?? ''
   const token = cookieHeader.match(/session=([^;]+)/)?.[1]
-  const session = await decrypt(token)
+  let session: Awaited<ReturnType<typeof validatedSession>>
+  try { session = await validatedSession(token) }
+  catch { return NextResponse.json({ error: 'Autenticação indisponível' }, { status: 503 }) }
 
   if (!session?.userId) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })

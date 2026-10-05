@@ -103,7 +103,7 @@ Os estágios finais das imagens instalam apenas dependências de produção (`pn
 1. Rotas públicas (`/auth/login`, `/auth/tenants/*`, `/auth/password/request-reset|validate-code|reset`, `/auth/verify`, `/health`) passam sem token.
 2. Extrai token do header `Authorization: Bearer` ou do cookie `session`.
 3. Verifica JWT: tenta RS256 (`JWT_PUBLIC_KEY`) e cai para HS256 (`SESSION_SECRET`) se falhar.
-4. Se o payload tem `jti` **e** `NODE_ENV=production`, confere liveness da sessão no Redis (`session:{jti}`). Se o Redis estiver fora do ar, a checagem **falha aberta** (deixa passar) — comportamento intencional documentado no código.
+4. Em `NODE_ENV=production`, exige JTI e consulta o auth-service, que comprova sessão Redis e usuário/tenant persistido. Credencial inválida retorna 401; indisponibilidade retorna 503.
 5. Em caso de sucesso, injeta `x-user-id`, `x-tenant-id`, `x-user-role` nos headers — os serviços downstream **confiam nesses headers sem revalidar o JWT**, protegidos apenas pelo segredo compartilhado `X-Internal-Api-Key` (`INTERNAL_API_KEY`), que só o gateway conhece e injeta em todo proxy.
 
 ### Tabela de roteamento do gateway (`proxyRoutes` em `api-gateway/src/main.ts`)
@@ -352,7 +352,7 @@ lib/api-client.ts
   - fetch(`${API_GATEWAY_INTERNAL_URL}${path}`, { Authorization: Bearer <session> })
        ↓
 api-gateway (:4000)
-  - authMiddleware() valida JWT (+ liveness no Redis em prod)
+  - authMiddleware() valida JWT e consulta validade atual no auth-service em produção
   - injeta x-user-id / x-tenant-id / x-user-role
   - proxy + X-Internal-Api-Key
        ↓
@@ -393,7 +393,7 @@ Login:
 
 Cada requisição protegida:
   → app: verifySession() lê/decripta cookie localmente (fallback) OU delega ao gateway
-  → api-gateway: valida JWT (RS256 c/ fallback HS256), checa Redis (fail-open se indisponível em prod)
+  → api-gateway: valida JWT (RS256 c/ fallback HS256), consulta auth-service para comprovar sessão/usuário; indisponibilidade retorna 503
   → Se forcePasswordChange=true → redirect /alterar-senha
 ```
 
@@ -670,7 +670,7 @@ Schemas em `lib/validation/`:
 | Senha | bcrypt rounds 10–12 |
 | Sessão | JWT RS256 httpOnly cookie, `SameSite=strict`, 7 dias, `jti` registrado no Redis (`session:{jti}`) |
 | Algoritmo JWT | RS256 em staging/produção; HS256 fallback em dev local (sem chaves configuradas) |
-| Invalidação de sessão | `tokenVersion` — incrementar invalida todas as sessões; liveness também checada via Redis no gateway (produção) |
+| Invalidação de sessão | `tokenVersion` — incrementar invalida todas as sessões; sessão Redis e estado persistido verificados pelo auth-service (produção) |
 | Bloqueio de conta | `isActive=false` verificado em cada request |
 | Troca de senha forçada | `forcePasswordChange` verificado no login e em `verifySession` |
 | Isolamento de dados | Toda query usa `tenantId` da sessão |
@@ -680,7 +680,7 @@ Schemas em `lib/validation/`:
 | Confiança gateway↔serviços | Serviços internos **não** revalidam o JWT — confiam nos headers `x-user-id`/`x-tenant-id`/`x-user-role` injetados pelo gateway, protegidos pelo segredo compartilhado `X-Internal-Api-Key` (`INTERNAL_API_KEY`). Rede `internal` do Docker Compose impede acesso direto de fora. |
 | Rate limiting | `api-gateway`: 200 req/s por IP (`express-rate-limit`) |
 | CORS | `api-gateway`: allow-list via `ALLOWED_ORIGINS` (⚠️ não documentado em `.env.example` — gap de configuração conhecido) |
-| Fail-open conhecido | Se o Redis estiver indisponível em produção, a checagem de liveness de sessão no gateway **deixa passar** a requisição em vez de bloquear — trade-off deliberado de disponibilidade sobre segurança estrita |
+| Dependência de sessão indisponível | Produção bloqueia com 503; credencial inválida/revogada retorna 401. Gateway consulta auth-service sem cache de validade JWT. |
 | CI/CD | TruffleHog (secrets), CodeQL (SAST), Trivy (scan de todas as 7 imagens), OWASP ZAP (DAST) em `deploy-staging.yml`/`deploy-production.yml`. `dependency-audit.yml` verifica instalações congeladas, patch efetivo e audit high da raiz/gateway nas PRs para main/develop. O pnpm dos workflows vem de `packageManager` da raiz. O job `deploy-production.yml:security-scan` também roda nas PRs para main, garantindo a mesma configuração CodeQL da base; testes de deploy, build/push e deploy ficam bloqueados nesse evento. |
 
 ---
@@ -719,7 +719,7 @@ Migrações anteriores (base multi-tenant, RBAC, auditoria, `DocumentVersion`, `
 | `NOTIFICATION_SERVICE_URL`, `AUTH_SERVICE_URL`, `FILE_SERVICE_URL` | URLs diretas ainda injetadas no `app` (uso legado/parcial fora do gateway) |
 | `INTERNAL_API_KEY` | Segredo compartilhado gateway↔serviços |
 | `DEFAULT_TENANT_ID` | Tenant padrão para auto-registro |
-| `REDIS_HOST` / `REDIS_PORT` / `REDIS_PASSWORD` | Redis (fila + sessão) |
+| `REDIS_HOST` / `REDIS_PORT` / `REDIS_PASSWORD` | Redis de sessões/limites; REDIS_QUEUE_HOST para fila e REDIS_CACHE_HOST para cache |
 | `MINIO_ENDPOINT` / `MINIO_PORT` / `MINIO_USE_SSL` / `MINIO_ACCESS_KEY` / `MINIO_SECRET_KEY` / `MINIO_BUCKET` / `MINIO_PUBLIC_URL` | Object storage |
 | `NODE_ENV`, `PORT` | Ambiente/porta do servidor Next.js |
 
@@ -740,7 +740,7 @@ Migrações anteriores (base multi-tenant, RBAC, auditoria, `DocumentVersion`, `
 |----------|-----|
 | `DATABASE_URL` | Connection string do PostgreSQL (compartilhada) |
 | `INTERNAL_API_KEY` | Valida requisições vindas do gateway |
-| `REDIS_HOST` / `PORT` / `PASSWORD` | Apenas `auth-service` (sessões) e `notification-service` (fila) |
+| `REDIS_HOST` / `PORT` / `PASSWORD` | App/auth-service usam sessões/limites; fila usa REDIS_QUEUE_HOST; gateway/cache usa REDIS_CACHE_HOST |
 | `MINIO_*` | Apenas `file-service` |
 | `JWT_PRIVATE_KEY` / `JWT_PUBLIC_KEY` | Apenas `auth-service` (emissão) |
 | `PORT` | 4001–4005 conforme o serviço |
@@ -835,8 +835,8 @@ O detalhamento e a evolução das decisões ficam em [docs/decisions.md](decisio
 8. **forcePasswordChange sem loop** — a action de `/alterar-senha` lê o cookie diretamente (sem chamar `verifySession`) para evitar redirect loop.
 9. **Drag-and-drop otimista** — `useReducer` com `kanbanReducer` atualiza o estado local imediatamente; a Server Action persiste em background.
 10. **Prisma com adapter `pg`** — Next.js 16 exige o adapter explícito `@prisma/adapter-pg` para compatibilidade com o runtime.
-11. **`tokenVersion` para invalidação** — incrementar esse campo invalida todas as sessões ativas do usuário sem lista negra de tokens; complementado por liveness check via Redis no gateway (com fail-open deliberado).
-12. **Fail-open no gateway sob falha do Redis** — prioriza disponibilidade sobre revogação imediata de sessão quando o Redis está fora do ar, em produção.
+11. **`tokenVersion` para invalidação** — incrementar esse campo invalida todas as sessões ativas do usuário sem lista negra de tokens; complementado por verificação de sessão e usuário persistido no auth-service a cada requisição JWT em produção.
+12. **Falha fechada de autenticação** — gateway e BFF exigem prova atual do auth-service em produção; Redis indisponível retorna 503, sem aceitar apenas a assinatura.
 
 
 ## Permissões configuráveis — fase 5 em andamento (30/09/2026)
@@ -973,3 +973,70 @@ Revisão de consistência da fase: sem alteração dos contratos HTTP, schema,
 permissões ou propriedade de domínios da fase 9. O workflow UI Reliability adiciona
 lint/tipos/suíte raiz em PRs; checks de banco e segurança permanecem. Evidências e
 limites da reprodução visual: [validação SDD 10](validation/sdd-10/README.md).
+
+### Validade de sessão (SDD 11.1)
+
+Em produção, a assinatura JWT no gateway é seguida de `/auth/verify` no
+serviço de autenticação, com timeout de 3 segundos e sem cache de validade.
+Esse serviço exige JTI/sessão, usuário ativo, tenant ativo e tokenVersion atual.
+O papel usado vem do usuário persistido. Ausência/revogação retorna 401;
+indisponibilidade retorna 503. Login e logout exigem confirmação da escrita ou
+remoção da sessão Redis, com operações limitadas a 2 segundos. Após logout
+malsucedido, o cliente deve tentar novamente quando o Redis retornar.
+
+### Redis por responsabilidade (SDD 11.2)
+
+`redis-session` guarda sessões/limites, com AOF e noeviction (256 MiB).
+`redis` preserva o host/volume original do BullMQ, AOF everysec/noeviction (512 MiB).
+`redis-cache` guarda introspecções PAT de até 60 segundos, sem persistência,
+allkeys-lru (128 MiB). Auth invalida esse cache na revogação. Eviction do cache
+não alcança sessões ou jobs; lotação das instâncias duráveis rejeita escritas,
+que devem ser tratadas como falhas, não sucesso. AOF everysec admite perda de
+até um segundo sob falha abrupta. O destino da fila é preservado, evitando perda de jobs pendentes na transição.
+A nova instância de sessões começa vazia: usuários devem fazer login novamente;
+chaves de sessão antigas no Redis original expiram pelo TTL e não autenticam. Configuração não foi aplicada
+à VPS nesta entrega.
+
+### Releases e recuperação (SDD 11.3–11.6)
+
+O build publica imagens por SHA, valida audit/tests/smoke/Trivy de todos os
+pacotes e só então gera `release.env` com oito digests. O deploy usa esse
+manifesto em Compose; `migrate` recebe o mesmo APP_IMAGE do app. Não promove
+`:prod`: runtime depende dos digests aprovados. Manifestos/configuração anteriores
+ficam em `.releases/<SHA>`; flock impede execuções concorrentes. Falha de pull,
+configuração ou migration restaura configuração e aborta. Falha de readiness
+permite retornar aos digests anteriores somente quando ROLLBACK_COMPATIBLE=true
+foi declarado para a release. O padrão é false; expand/contract preserva schema
+e dados, sem migration down automática. O ambiente real não foi alterado.
+
+Checks por pacote executam instalação frozen, testes existentes, build, audit,
+imagem final, smoke com dependências isoladas e Trivy. Notification-service
+não possui testes existentes; build/smoke continuam obrigatórios. Operações têm
+check próprio de pressão Redis, simulação de release e restore sintético.
+Backups propostos são descritos em `docs/operations/backups.md`; o operador não
+soube confirmar a rotina atual e a VPS não foi inspecionada nesta entrega.
+
+### Prontidão e observabilidade (SDD 11.7–11.8)
+
+Liveness (`/health`, app `/api/health`) depende só do processo. Readiness acrescenta
+`/ready`, com SELECT 1 e/ou ping Redis/MinIO/serviços essenciais e prazos de
+1,5–3 segundos. Respostas são genéricas 200/503; Compose aguarda readiness, mas
+Docker não reinicia um processo apenas por health unhealthy. Queda externa não
+provoca restart em cascata. Readiness não comprova a existência de todas as
+migrations; isso continua responsabilidade do deploy/entrypoints.
+
+Métricas privadas (`/health/metrics`, app `/api/metrics`) usam Bearer do segredo
+interno. Prometheus recebe arquivo privado gerado no deploy, sem credencial no
+Git, com scrape de oito processos e três Redis exporters. Contadores HTTP por
+método/classe de status e duração têm cardinalidade limitada; app mede chamadas
+BFF, não toda a navegação/renderização. Request ID validado é encaminhado pelo
+BFF/gateway e registrado nos serviços, sem URL, corpo, cookies ou identidade.
+
+Grafana recebe datasources/dashboard versionados. Alloy envia logs Docker para
+Loki através de proxy GET limitado a listagem/logs do projeto Compose; não
+recebe o socket do Docker; inspect é reduzido a metadados de TTY/driver, sem env/exec. Esse proxy permanece
+um componente confiável com acesso ao socket, numa rede exclusiva do collector.
+Alertmanager recebe webhook configurado pelo operador (ALERT_WEBHOOK_URL), sem
+destino real predefinido. O deploy exige esse destino e sincroniza observability;
+alertas cobrem target ausente, erros HTTP e memória Redis acima de 80%. Ensaio
+usa receptor sintético; não envia notificações externas a pessoas reais.

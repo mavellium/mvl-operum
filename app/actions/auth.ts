@@ -5,7 +5,6 @@ import { LAST_SEEN_COOKIE, destinoInterno } from '@/lib/sessionIdle'
 import { cookies, headers } from 'next/headers'
 import { redirect } from 'next/navigation'
 import Redis from 'ioredis'
-import { encrypt } from '@/lib/session'
 import {
   RequestResetSchema,
   ValidateCodeSchema,
@@ -24,7 +23,6 @@ import { projectsApi, authApi } from '@/lib/api-client'
 import { verifySession, resolveProjectDestination } from '@/lib/dal'
 import { revalidatePath } from 'next/cache'
 
-const SESSION_DURATION_MS = 7 * 24 * 60 * 60 * 1000 // 7 days
 
 let _rateLimitRedis: Redis | null = null
 
@@ -32,7 +30,7 @@ function getRateLimitRedis(): Redis | null {
   if (_rateLimitRedis) return _rateLimitRedis
   try {
     _rateLimitRedis = new Redis({
-      host: process.env.REDIS_HOST ?? 'redis',
+      host: process.env.REDIS_HOST ?? 'redis-session',
       port: Number(process.env.REDIS_PORT ?? 6379),
       password: process.env.REDIS_PASSWORD,
       enableOfflineQueue: false,
@@ -66,9 +64,8 @@ export async function signupAction(prevState: FormState, formData: FormData): Pr
   if (!tenantId) return { message: 'Cadastro indisponível — tenant não configurado' }
 
   try {
-    const user = await authServiceRegister({ name, email, password, tenantId }) as { id: string; role: string; tenantId: string; tokenVersion: number }
-    const expiresAt = new Date(Date.now() + SESSION_DURATION_MS)
-    const token = await encrypt({ userId: user.id, role: user.role, tenantId: user.tenantId, tokenVersion: user.tokenVersion, expiresAt })
+    await authServiceRegister({ name, email, password, tenantId })
+    const { token } = await authServiceLogin(email, password)
     const cookieStore = await cookies()
     cookieStore.set('session', token, SESSION_COOKIE_OPTIONS)
   } catch (err) {

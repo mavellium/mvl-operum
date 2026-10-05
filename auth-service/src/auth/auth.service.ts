@@ -7,6 +7,7 @@ import {
   HttpException,
   HttpStatus,
   Logger,
+  ServiceUnavailableException,
 } from '@nestjs/common'
 import { prisma } from '../prisma'
 import bcrypt from 'bcryptjs'
@@ -205,19 +206,24 @@ export class AuthService {
 
   async verify(token: string) {
     const payload = await this.jwtService.verify(token)
-    if (!payload) throw new UnauthorizedException('Token inválido')
+    if (!payload || !payload.jti || !payload.userId || !payload.tenantId) throw new UnauthorizedException('Token inválido')
 
     if (payload.jti) {
       const session = await this.redis.getSession(payload.jti)
       if (!session) throw new UnauthorizedException('Sessão inválida ou expirada')
     }
 
-    const user = await prisma.user.findUnique({
-      where: { id: payload.userId },
-      select: { id: true, tokenVersion: true, isActive: true, status: true, deletedAt: true },
-    })
+    let user
+    try {
+      user = await prisma.user.findUnique({
+        where: { id: payload.userId },
+        select: { id: true, tenantId: true, role: true, tokenVersion: true, isActive: true, status: true, deletedAt: true, tenant: { select: { status: true } } },
+      })
+    } catch {
+      throw new ServiceUnavailableException('Autenticação indisponível. Tente novamente.')
+    }
 
-    if (!user || user.deletedAt || !user.isActive || user.status !== 'active') {
+    if (!user || user.deletedAt || !user.isActive || user.status !== 'active' || user.tenantId !== payload.tenantId || user.tenant.status !== 'ACTIVE') {
       throw new UnauthorizedException('Usuário inativo ou removido')
     }
 
@@ -225,7 +231,7 @@ export class AuthService {
       throw new UnauthorizedException('Sessão invalidada')
     }
 
-    return { userId: payload.userId, tenantId: payload.tenantId, role: payload.role }
+    return { userId: user.id, tenantId: user.tenantId, role: user.role }
   }
 
   async changePassword(userId: string, dto: ChangePasswordDto) {

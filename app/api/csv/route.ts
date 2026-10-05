@@ -6,7 +6,9 @@ import { CsvRowSchema } from '@/lib/validation/csvSchemas'
 const ALLOWED_CSV_TYPES = ['text/csv', 'text/plain']
 
 export async function POST(request: Request) {
-  const session = await verifyRouteSession(request)
+  let session: Awaited<ReturnType<typeof verifyRouteSession>>
+  try { session = await verifyRouteSession(request) }
+  catch { return Response.json({ error: 'Autenticação indisponível' }, { status: 503 }) }
   if (!session?.userId) {
     return Response.json({ error: 'Não autorizado' }, { status: 401 })
   }

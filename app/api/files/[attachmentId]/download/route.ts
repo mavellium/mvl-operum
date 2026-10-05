@@ -15,7 +15,9 @@ const CUID_RE = /^c[a-z0-9]{20,30}$/
  * e a tela abre o link direto.
  */
 export async function GET(request: Request, { params }: { params: Promise<{ attachmentId: string }> }) {
-  const session = await verifyRouteSession(request)
+  let session: Awaited<ReturnType<typeof verifyRouteSession>>
+  try { session = await verifyRouteSession(request) }
+  catch { return Response.json({ error: 'Autenticação indisponível' }, { status: 503 }) }
   if (!session?.userId) return new Response('Não autorizado', { status: 401 })
 
   const { attachmentId } = await params

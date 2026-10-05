@@ -9,6 +9,13 @@ funcionalidade depois disso é uma versão MINOR.
 
 ## [Não lançado]
 
+## [1.13.2] — 2026-10-04
+- **Sessões (SDD 11.1):** revogação verificada no auth-service por gateway e operações locais do Next; indisponibilidade bloqueia acesso e login/logout exigem confirmação da persistência.
+- **Redis (SDD 11.2):** sessões, fila e cache isolados; fila mantém host/volume original e noeviction, sessões migram para instância própria e exigem novo login na transição.
+- **Deploy (SDD 11.3–11.5):** manifesto de digests aprovado após validação de todos os serviços/imagens, migration e app com a mesma imagem e rollback por release condicionado à compatibilidade de schema.
+- **Recuperação (SDD 11.6):** scripts de backup criptografado fora da VPS, restore em diretório isolado e ensaio com PostgreSQL/MinIO sintéticos; rotina existente da VPS ainda não confirmada.
+- **Operação (SDD 11.7–11.8):** liveness independente, readiness limitada, métricas privadas, logs com request ID, Grafana provisionado, collector restrito e alertas configuráveis; sem deploy nesta entrega.
+
 ## [1.13.1] — 2026-10-04
 - **Kanban (SDD 10.1–10.2):** alterações são aplicadas após confirmação, com erro e retry independentes; formulário permanece aberto em falhas, impede envio duplo e retoma anexos/responsáveis do card já criado sem duplicar a tarefa.
 - **Timers (SDD 10.3):** minicard e modal compartilham estado confirmado; falhas e timeout geram reconciliação ou estado desconhecido explícito, sem descartar o timer antes da parada confirmada.

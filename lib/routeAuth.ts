@@ -1,11 +1,11 @@
-import { decrypt } from '@/lib/session'
+import { validatedSession } from '@/lib/validatedSession'
 import prisma from '@/lib/prisma'
 import type { SessionPayload } from '@/types/auth'
 
 export async function verifyRouteSession(request: Request): Promise<SessionPayload | null> {
   const cookieHeader = request.headers.get('cookie') ?? ''
   const sessionToken = cookieHeader.match(/session=([^;]+)/)?.[1]
-  const session = await decrypt(sessionToken)
+  const session = await validatedSession(sessionToken)
   if (!session?.userId) return null
 
   const dbUser = await prisma.user.findUnique({

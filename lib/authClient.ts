@@ -32,12 +32,12 @@ export async function authServiceLogin(email: string, password: string, subdomai
 }
 
 export async function authServiceLogout(token: string) {
-  await fetch(`${AUTH_URL}/auth/logout`, {
+  const response = await fetch(`${AUTH_URL}/auth/logout`, {
     method: 'POST',
     headers: headers({ Authorization: `Bearer ${token}` }),
-  }).catch(() => {
-    // Fire-and-forget — cookie will be deleted regardless
+    signal: AbortSignal.timeout(5000),
   })
+  if (!response.ok) throw new Error('Não foi possível confirmar o encerramento da sessão. Tente novamente.')
 }
 
 export async function authServiceRegister(data: {
@@ -107,4 +107,22 @@ export async function authServiceAlterarSenha(token: string, password: string) {
     body: JSON.stringify({ password }),
   })
   if (!res.ok) throw new Error('Erro ao alterar senha')
+}
+
+export class AuthUnavailableError extends Error {
+  readonly status = 503
+  constructor() { super('Autenticação indisponível. Tente novamente.'); this.name = 'AuthUnavailableError' }
+}
+export async function authServiceVerify(token: string): Promise<{ userId: string; tenantId: string; role: string } | null> {
+  try {
+    const response = await fetch(`${AUTH_URL}/auth/verify`, {
+      headers: { Authorization: `Bearer ${token}` },
+      cache: 'no-store', signal: AbortSignal.timeout(3000),
+    })
+    if (response.status === 401) return null
+    if (!response.ok) throw new AuthUnavailableError()
+    const data = await response.json() as Record<string, unknown>
+    if (typeof data.userId !== 'string' || typeof data.tenantId !== 'string' || typeof data.role !== 'string') throw new AuthUnavailableError()
+    return { userId: data.userId, tenantId: data.tenantId, role: data.role }
+  } catch { throw new AuthUnavailableError() }
 }

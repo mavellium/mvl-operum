@@ -1,0 +1,19 @@
+groups:
+  - name: operum
+    rules:
+      - alert: OperumTargetDown
+        expr: up == 0
+        for: 2m
+        labels: {severity: critical}
+        annotations:
+          summary: "Operum target unavailable: {{ $labels.instance }}"
+      - alert: OperumHttpErrors
+        expr: sum by (instance) (rate(operum_http_requests_total{status="5xx"}[5m])) > 0.1
+        for: 2m
+        labels: {severity: warning}
+        annotations: {summary: "Operum HTTP errors"}
+      - alert: OperumRedisMemory
+        expr: redis_memory_used_bytes / redis_memory_max_bytes > 0.8
+        for: 2m
+        labels: {severity: warning}
+        annotations: {summary: "Redis memory above 80%"}

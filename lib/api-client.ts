@@ -1,6 +1,7 @@
 import { GlobalDashboardSchema, SprintDashboardSchema } from '@/sprint-service/src/dashboard/dashboard-contract'
 import 'server-only'
-import { cookies } from 'next/headers'
+import { cookies, headers } from 'next/headers'
+import { requestId, observe } from './operationalTelemetry'
 import { redirect } from 'next/navigation' // ← Adicionado o import de redirecionamento
 
 const API_URL = (process.env.API_GATEWAY_INTERNAL_URL ?? process.env.NEXT_PUBLIC_API_URL ?? '').replace(/\/$/, '')
@@ -12,17 +13,24 @@ async function getToken(): Promise<string | undefined> {
 
 async function request<T>(path: string, init: RequestInit = {}): Promise<T> {
   const token = await getToken()
+  let inboundId: string | null = null
+  try { inboundId = (await headers()).get('x-request-id') } catch { /* background callers have no request context */ }
+  const id = requestId(inboundId)
+  const started = performance.now()
 
   const res = await fetch(`${API_URL}${path}`, {
     ...init,
     headers: {
       'Content-Type': 'application/json',
+      'X-Request-ID': id,
       ...(token ? { Authorization: `Bearer ${token}` } : {}),
       ...(init.headers as Record<string, string> | undefined),
     },
     cache: 'no-store',
   })
 
+  observe(init.method ?? 'GET', res.status, (performance.now() - started) / 1000)
+  console.log(JSON.stringify({ event: 'http', requestId: id, method: init.method ?? 'GET', status: res.status }))
   if (res.status === 204) return undefined as T
 
   if (!res.ok) {

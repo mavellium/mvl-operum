@@ -1,4 +1,4 @@
-import { Injectable, Logger, OnModuleDestroy, OnModuleInit } from '@nestjs/common'
+import { Injectable, ServiceUnavailableException, Logger, OnModuleDestroy, OnModuleInit } from '@nestjs/common'
 import Redis from 'ioredis'
 
 const SESSION_TTL = 7 * 24 * 60 * 60 // 7 days in seconds
@@ -7,51 +7,72 @@ const IS_DEV = process.env.NODE_ENV !== 'production'
 @Injectable()
 export class RedisService implements OnModuleInit, OnModuleDestroy {
   private client: Redis
+  private cacheClient: Redis
   private available = true
   private readonly logger = new Logger(RedisService.name)
 
   onModuleInit() {
     this.client = new Redis({
-      host: process.env.REDIS_HOST ?? 'redis',
+      host: process.env.REDIS_HOST ?? 'redis-session',
       port: Number(process.env.REDIS_PORT ?? 6379),
       password: process.env.REDIS_PASSWORD,
       lazyConnect: true,
-      maxRetriesPerRequest: IS_DEV ? 1 : 20,
+      maxRetriesPerRequest: 1,
+      commandTimeout: 2000,
+      connectTimeout: 2000,
       retryStrategy: IS_DEV ? () => null : undefined,
     })
 
+    this.cacheClient = new Redis({
+      host: process.env.REDIS_CACHE_HOST ?? 'redis-cache',
+      port: Number(process.env.REDIS_CACHE_PORT ?? 6379),
+      password: process.env.REDIS_PASSWORD,
+      lazyConnect: true, maxRetriesPerRequest: 1, commandTimeout: 2000,
+    })
+    this.cacheClient.on('error', () => {})
+
     this.client.on('error', () => {
       if (this.available) {
-        this.logger.warn('Redis indisponível — sessões em memória desativadas (modo dev)')
+        this.logger.warn('Redis indisponível — autenticação temporariamente indisponível')
         this.available = false
       }
     })
 
-    this.client.on('connect', () => {
+    this.client.on('ready', () => {
       this.available = true
       this.logger.log('Redis conectado')
     })
   }
 
   async onModuleDestroy() {
-    await this.client.quit().catch(() => undefined)
+    await Promise.all([this.client.quit().catch(() => undefined), this.cacheClient.quit().catch(() => undefined)])
+  }
+
+  private async sessionOperation<T>(operation: () => Promise<T>, devFallback: T): Promise<T> {
+    try {
+      if (!this.available) throw new Error('unavailable')
+      return await operation()
+    } catch {
+      if (IS_DEV) return devFallback
+      throw new ServiceUnavailableException('Autenticação indisponível. Tente novamente.')
+    }
   }
 
   async setSession(jti: string, payload: object): Promise<void> {
-    if (!this.available) return
-    await this.client.set(`session:${jti}`, JSON.stringify(payload), 'EX', SESSION_TTL).catch(() => undefined)
+    await this.sessionOperation(async () => {
+      await this.client.set(`session:${jti}`, JSON.stringify(payload), 'EX', SESSION_TTL)
+    }, undefined)
   }
 
   async getSession(jti: string): Promise<object | null> {
-    if (!this.available) return { dev: true }
-    const raw = await this.client.get(`session:${jti}`).catch(() => null)
-    if (!raw) return null
-    return JSON.parse(raw)
+    return this.sessionOperation(async () => {
+      const raw = await this.client.get(`session:${jti}`)
+      return raw ? JSON.parse(raw) as object : null
+    }, { dev: true })
   }
 
   async deleteSession(jti: string): Promise<void> {
-    if (!this.available) return
-    await this.client.del(`session:${jti}`).catch(() => undefined)
+    await this.sessionOperation(async () => { await this.client.del(`session:${jti}`) }, undefined)
   }
 
   async incr(key: string): Promise<number> {
@@ -83,7 +104,6 @@ export class RedisService implements OnModuleInit, OnModuleDestroy {
    * de esperar o cache expirar (SDD 5.3/5.4).
    */
   async deleteApiTokenCache(tokenHash: string): Promise<void> {
-    if (!this.available) return
-    await this.client.del(`pat:${tokenHash}`).catch(() => undefined)
+    await this.cacheClient.del(`pat:${tokenHash}`).catch(() => undefined)
   }
 }

@@ -7,7 +7,9 @@ const FILE_SERVICE_URL = (process.env.FILE_SERVICE_URL ?? '').replace(/\/$/, '')
 const INTERNAL_API_KEY = process.env.INTERNAL_API_KEY ?? ''
 
 export async function POST(request: Request) {
-  const session = await verifyRouteSession(request)
+  let session: Awaited<ReturnType<typeof verifyRouteSession>>
+  try { session = await verifyRouteSession(request) }
+  catch { return Response.json({ error: 'Autenticação indisponível' }, { status: 503 }) }
   if (!session?.userId) {
     return Response.json({ error: 'Não autorizado' }, { status: 401 })
   }
@@ -70,7 +72,9 @@ export async function POST(request: Request) {
 }
 
 export async function DELETE(request: Request) {
-  const session = await verifyRouteSession(request)
+  let session: Awaited<ReturnType<typeof verifyRouteSession>>
+  try { session = await verifyRouteSession(request) }
+  catch { return Response.json({ error: 'Autenticação indisponível' }, { status: 503 }) }
   if (!session?.userId) {
     return NextResponse.json({ error: 'Não autorizado' }, { status: 401 })
   }

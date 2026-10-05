@@ -1,0 +1,65 @@
+name: Services Validation
+on:
+  pull_request:
+    branches: [main, develop]
+  workflow_call:
+permissions:
+  contents: read
+jobs:
+  services:
+    name: Service checks (${{ matrix.service }})
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    strategy:
+      fail-fast: false
+      matrix:
+        service: [auth-service, api-gateway, project-service, sprint-service, notification-service, file-service, mcp-server]
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v3
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: Frozen install
+        working-directory: ${{ matrix.service }}
+        run: pnpm install --frozen-lockfile --ignore-scripts
+      - name: Generate Prisma when applicable
+        working-directory: ${{ matrix.service }}
+        run: if [ -f prisma/schema.prisma ]; then pnpm exec prisma generate; fi
+      - name: Existing package tests
+        working-directory: ${{ matrix.service }}
+        run: |
+          if [ -n "$(find src -type f \( -name '*.test.ts' -o -name '*.spec.ts' \) -print -quit)" ]; then
+            pnpm test
+          else
+            echo 'Package has no existing tests; build and final-image smoke are mandatory.'
+          fi
+      - name: Build
+        working-directory: ${{ matrix.service }}
+        run: pnpm build
+      - name: Audit
+        working-directory: ${{ matrix.service }}
+        run: pnpm audit --audit-level=high
+      - name: Build final image
+        env:
+          SERVICE: ${{ matrix.service }}
+        run: docker build -t operum-service-check "$SERVICE"
+      - name: Final image smoke with isolated dependencies
+        env:
+          SERVICE: ${{ matrix.service }}
+        run: bash scripts/validation/image-smoke.sh "$SERVICE" operum-service-check
+      - name: Pick scanner policy
+        id: policy
+        env:
+          SERVICE: ${{ matrix.service }}
+        run: |
+          policy=.trivyignore
+          if [ "$SERVICE" = api-gateway ]; then policy=.trivyignore-gateway.yaml; fi
+          echo "ignore=$policy" >> "$GITHUB_OUTPUT"
+      - uses: aquasecurity/trivy-action@v0.35.0
+        with:
+          image-ref: operum-service-check
+          format: table
+          exit-code: '1'
+          severity: CRITICAL,HIGH
+          trivyignores: ${{ steps.policy.outputs.ignore }}

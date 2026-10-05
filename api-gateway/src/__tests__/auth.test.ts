@@ -1,3 +1,4 @@
+// @vitest-environment node
 import { describe, it, expect, vi, beforeEach } from 'vitest'
 import type { Request, Response } from 'express'
 
@@ -280,5 +281,24 @@ describe('authMiddleware — PAT em rota de sessão', () => {
 
     expect(res.status).toHaveBeenCalledWith(403)
     expect(next).not.toHaveBeenCalled()
+  })
+})
+
+describe('SDD 11.1 — JWT produção', () => {
+  beforeEach(() => {
+    vi.stubEnv('NODE_ENV', 'production')
+    vi.stubEnv('SESSION_SECRET', 'test-secret-with-enough-entropy-for-tests')
+  })
+  it.each([401, 503, 500])('não autoriza quando autoridade retorna %i', async status => {
+    const { SignJWT } = await import('jose')
+    const token = await new SignJWT({ userId: 'u', tenantId: 't', role: 'admin', tokenVersion: 1, jti: 'j' })
+      .setProtectedHeader({ alg: 'HS256' }).setExpirationTime('1h')
+      .sign(new TextEncoder().encode(process.env.SESSION_SECRET))
+    vi.stubGlobal('fetch', vi.fn().mockResolvedValue({ ok: false, status }))
+    const next = vi.fn(), res = makeRes()
+    await authMiddleware()(makeReq({ headers: { authorization: `Bearer ${token}` } }), res, next)
+    expect(next).not.toHaveBeenCalled()
+    expect(res.status).toHaveBeenCalledWith(status === 401 ? 401 : 503)
+    vi.unstubAllEnvs()
   })
 })

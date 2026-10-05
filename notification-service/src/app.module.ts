@@ -7,8 +7,8 @@ import { HealthController } from './health/health.controller'
   imports: [
     BullModule.forRoot({
       connection: {
-        host: process.env.REDIS_HOST ?? 'redis',
-        port: Number(process.env.REDIS_PORT ?? 6379),
+        host: process.env.REDIS_QUEUE_HOST ?? 'redis',
+        port: Number(process.env.REDIS_QUEUE_PORT ?? 6379),
         password: process.env.REDIS_PASSWORD,
       },
     }),

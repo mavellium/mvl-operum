@@ -1,4 +1,5 @@
 import express from 'express'
+import { telemetry, metrics } from './telemetry'
 import { createProxyMiddleware, fixRequestBody } from 'http-proxy-middleware'
 import rateLimit from 'express-rate-limit'
 import { authorizationMiddleware } from './middleware/authorization'
@@ -6,6 +7,11 @@ import { authMiddleware } from './middleware/auth'
 
 export function createGatewayApp() {
 const app = express()
+app.use(telemetry)
+app.get('/health/metrics', (req, res) => {
+  if (!process.env.INTERNAL_API_KEY || req.headers.authorization !== `Bearer ${process.env.INTERNAL_API_KEY}`) return res.status(401).end()
+  res.type('text/plain').send(metrics())
+})
 
 app.use(
   rateLimit({
@@ -31,6 +37,18 @@ app.use((req, res, next) => {
 })
 
 app.get('/health', (_req, res) => res.json({ status: 'ok' }))
+app.get('/health/ready', async (_req, res) => {
+  const services = ['AUTH', 'PROJECT', 'SPRINT', 'FILE', 'NOTIFICATION']
+  const ready = await Promise.all(services.map(async name => {
+    const port = { AUTH: 4001, PROJECT: 4002, SPRINT: 4003, NOTIFICATION: 4004, FILE: 4005 }[name]
+    try {
+      const url = process.env[`${name}_SERVICE_URL`] ?? `http://${name.toLowerCase()}-service:${port}`
+      return (await fetch(`${url}/health/ready`, { signal: AbortSignal.timeout(2500) })).ok
+    } catch { return false }
+  }))
+  res.status(ready.every(Boolean) ? 200 : 503).json({ status: ready.every(Boolean) ? 'ready' : 'not ready' })
+})
+
 
 app.use(authMiddleware())
 
