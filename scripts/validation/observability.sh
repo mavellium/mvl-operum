@@ -25,7 +25,7 @@ proxy_probe() {
   "${COMPOSE[@]}" exec -T docker-log-proxy node -e "$1"
 }
 for i in {1..30}; do
-  if proxy_proxy_probe 'fetch("http://localhost:2375/_ping").then(r=>{if(!r.ok)process.exit(1)}).catch(()=>process.exit(1))'; then break; fi
+  if proxy_probe 'fetch("http://localhost:2375/_ping").then(r=>{if(!r.ok)process.exit(1)}).catch(()=>process.exit(1))'; then break; fi
   sleep 1
   [ "$i" -ne 30 ]
 done
