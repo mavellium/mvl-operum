@@ -1,4 +1,5 @@
 import type { WbsNodeClient, WbsRollup } from '@/types/wbs'
+import { custoFolhaPrevisto, custoFolhaRealizado, round2 } from './custosCalc'
 
 /**
  * Calcula rollup de custo e durationDays para cada nó.
@@ -58,5 +59,49 @@ export function computeRollups(
     }
   }
 
+  return result
+}
+
+export interface WbsFinancialSummary {
+  budgetHours: number
+  actualHours: number
+  budgetCost: number | null
+  actualCost: number | null
+}
+
+/** Financial view uses the same leaf calculations/rates as the cost sheet. */
+export function computeFinancialRollups(
+  nodes: Record<string, WbsNodeClient>, rootId: string | null,
+  rates: Record<string, number | null>,
+): Record<string, WbsFinancialSummary> {
+  if (!rootId || !nodes[rootId]) return {}
+  const order: string[] = [], seen = new Set<string>(), stack = [rootId]
+  while (stack.length) {
+    const id = stack.pop()!
+    if (!nodes[id] || seen.has(id)) continue
+    seen.add(id); order.push(id)
+    stack.push(...nodes[id].childrenIds)
+  }
+  const result: Record<string, WbsFinancialSummary> = {}
+  for (const id of order.reverse()) {
+    const n = nodes[id], children = n.childrenIds.filter(c => nodes[c])
+    if (!children.length) {
+      const p = n.properties, rate = rates[p.elaboradoPorUserId ?? '']
+      result[id] = {
+        budgetHours: (p.tempoMinutos ?? 0) / 60,
+        actualHours: (p.tempoRealMinutos ?? 0) / 60,
+        budgetCost: rate == null ? null : custoFolhaPrevisto(p.tempoMinutos ?? 0, rate, p.materiais ?? 0),
+        actualCost: rate == null ? null : custoFolhaRealizado(p.tempoRealMinutos ?? 0, rate, p.materiaisReal ?? 0),
+      }
+    } else {
+      const rows = children.map(c => result[c]).filter(Boolean)
+      result[id] = {
+        budgetHours: rows.reduce((sum, r) => sum + r.budgetHours, 0),
+        actualHours: rows.reduce((sum, r) => sum + r.actualHours, 0),
+        budgetCost: rows.some(r => r.budgetCost === null) ? null : round2(rows.reduce((sum, r) => sum + (r.budgetCost ?? 0), 0)),
+        actualCost: rows.some(r => r.actualCost === null) ? null : round2(rows.reduce((sum, r) => sum + (r.actualCost ?? 0), 0)),
+      }
+    }
+  }
   return result
 }

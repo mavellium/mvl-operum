@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest'
-import { computeRollups } from '@/lib/wbsRollup'
+import { computeRollups, computeFinancialRollups } from '@/lib/wbsRollup'
 import type { WbsNodeClient } from '@/types/wbs'
 
 const S = {
@@ -84,5 +84,21 @@ describe('computeRollups', () => {
     const r = computeRollups(nodes, 'r')
     expect(r.r.cost).toBe(10)
     expect(r.r.isRolledUp).toBe(true)
+  })
+})
+
+
+describe('financial rollups', () => {
+  it('sums hidden descendants using their own elaborator rates and actual materials', () => {
+    const r = node('r', null, ['a', 'b']); r.collapsed = true
+    const a = node('a', 'r', []), b = node('b', 'r', [])
+    a.properties = { elaboradoPorUserId: 'u1', tempoMinutos: 60, tempoRealMinutos: 120, materiais: 10, materiaisReal: 5 }
+    b.properties = { elaboradoPorUserId: 'u2', tempoMinutos: 120, tempoRealMinutos: 30, materiais: 20, materiaisReal: 15 }
+    expect(computeFinancialRollups({ r, a, b }, 'r', { u1: 2, u2: 3 }).r).toEqual({ budgetHours: 3, actualHours: 2.5, budgetCost: 510, actualCost: 350 })
+  })
+  it('does not present incomplete costs as zero when an elaborator rate is missing', () => {
+    const r = node('r', null, ['a']), a = node('a', 'r', [])
+    a.properties = { tempoMinutos: 60, tempoRealMinutos: 120, elaboradoPorUserId: 'missing' }
+    expect(computeFinancialRollups({ r, a }, 'r', {}).r).toEqual({ budgetHours: 1, actualHours: 2, budgetCost: null, actualCost: null })
   })
 })

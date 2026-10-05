@@ -1040,3 +1040,13 @@ Alertmanager recebe webhook configurado pelo operador (ALERT_WEBHOOK_URL), sem
 destino real predefinido. O deploy exige esse destino e sincroniza observability;
 alertas cobrem target ausente, erros HTTP e memória Redis acima de 80%. Ensaio
 usa receptor sintético; não envia notificações externas a pessoas reais.
+
+
+### Visualizações da EAP (fase 6)
+`/projetos/:id/wbs` mantém uma árvore e o autosave ao alternar `view=chart|details|costs|gantt`. Chart Details exibe responsável, duração agregada, datas e custo; Hours and Cost agrega folhas inclusive recolhidas, usando as funções da planilha e o valor por minuto de cada elaborador. A página consulta salários/jornadas e envia apenas as taxas derivadas quando o usuário tem `planilha:ver`; os demais usuários não recebem esses valores. Sem taxa válida, o custo e seus ancestrais são indicados como incompletos.
+
+O layout calcula a caixa de cada subárvore e a posição relativa da raiz antes de posicionar os nós; cartões detalhados têm altura uniforme maior. Layout vertical põe os filhos à direita, com conectores em cotovelo; cada nó mantém sua orientação para árvores mistas.
+
+Gantt é uma projeção somente leitura. `dataPrevista` define o último dia e `durationDays` estima os dias corridos anteriores. Não cria datas nem persiste o estado de expansão/zoom. Nós sem prazo permanecem visíveis sem barra. O estado da árvore continua no provider ao alternar de volta; as exportações existentes permanecem no formato clássico da EAP.
+
+O “hoje” do Gantt usa snapshot estável do servidor para hidratação e calendário local do navegador em seguida, atualizado por assinatura a cada minuto (`useCalendarToday`). As datas planejadas permanecem date-only; a linha de hoje não desloca datas do projeto nem assume que o calendário do usuário é UTC.

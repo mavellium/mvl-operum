@@ -7,6 +7,16 @@ As versões até 1.6.0 foram reconstruídas retroativamente a partir do históri
 1.0.0 marca a entrada em produção na arquitetura de microsserviços, e cada marco de
 funcionalidade depois disso é uma versão MINOR.
 
+## [1.14.0] - 2026-10-04
+
+### Adicionado
+- EAP com modos Chart View Details e Hours and Cost View; custos orçados e reais usam taxas individuais dos elaboradores e respeitam `planilha:ver`.
+- Gantt somente leitura com hierarquia expansível, linha de hoje e zoom dia/semana/mês, disponível por `?view=gantt`.
+
+### Corrigido
+- Geometria vertical e mista da EAP evita sobreposição entre subárvores de larguras diferentes e acomoda cartões detalhados.
+- Acesso somente leitura não inicializa nem permite renomear a EAP.
+
 ## [Não lançado]
 
 ## [1.13.2] — 2026-10-04

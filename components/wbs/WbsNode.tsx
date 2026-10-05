@@ -1,10 +1,17 @@
 'use client'
 
 import React, { type Dispatch, useEffect, useRef } from 'react'
-import type { WbsNodeClient, WbsNodeGeometry } from '@/types/wbs'
+import type { WbsNodeClient, WbsNodeGeometry, WbsViewMode } from '@/types/wbs'
+import type { WbsFinancialSummary } from '@/lib/wbsRollup'
 import type { WbsAction } from '@/lib/wbsReducer'
 
 interface WbsNodeCardProps {
+  viewMode?: WbsViewMode
+  canEdit?: boolean
+  canViewCosts?: boolean
+  owner?: string
+  duration?: number
+  financial?: WbsFinancialSummary
   node: WbsNodeClient
   geom: WbsNodeGeometry
   isSelected: boolean
@@ -16,6 +23,7 @@ interface WbsNodeCardProps {
 }
 
 const WbsNodeCard = React.memo(function WbsNodeCard({
+  viewMode = 'chart', canEdit = true, canViewCosts = false, owner, duration, financial,
   node, geom, isSelected, isEditing, isDragTarget, editingInitialText, onSelect, dispatch,
 }: WbsNodeCardProps) {
   const isParent = node.childrenIds.length > 0
@@ -68,7 +76,7 @@ const WbsNodeCard = React.memo(function WbsNodeCard({
           return
         }
         // Clique num nó já selecionado entra direto em edição; senão, apenas seleciona.
-        if (isSelected && !isEditing) {
+        if (canEdit && isSelected && !isEditing) {
           dispatch({ type: 'SET_EDITING', payload: { nodeId: node.id } })
         } else {
           onSelect(node.id, false)
@@ -80,12 +88,15 @@ const WbsNodeCard = React.memo(function WbsNodeCard({
           dispatch({ type: 'SET_COLLAPSED', payload: { nodeId: node.id, collapsed: false } })
           return
         }
-        dispatch({ type: 'SET_EDITING', payload: { nodeId: node.id } })
+        if (canEdit) dispatch({ type: 'SET_EDITING', payload: { nodeId: node.id } })
       }}
     >
       {/* Collapse toggle — pílula na borda inferior, meio para fora; − expandido / + recolhido */}
       {isParent && (
         <button
+          type="button"
+          aria-expanded={!node.collapsed}
+          onPointerDown={e => e.stopPropagation()}
           style={{
             position: 'absolute', bottom: -10, left: '50%', transform: 'translate(-50%, 0)',
             width: 26, height: 20,
@@ -106,7 +117,7 @@ const WbsNodeCard = React.memo(function WbsNodeCard({
       )}
 
       {/* Code + Title */}
-      <div style={{ position: 'absolute', top: 4, left: 8, right: 8, bottom: 4, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+      <div style={{ position: 'absolute', top: 4, left: 8, right: 8, bottom: viewMode === 'chart' ? 4 : 128, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
         {isEditing ? (
           <div style={{ display: 'flex', alignItems: 'center', gap: 4, width: '100%' }}>
             <span style={{ whiteSpace: 'nowrap', fontWeight: 500, color: node.style.textColor, flexShrink: 0 }}>
@@ -153,8 +164,27 @@ const WbsNodeCard = React.memo(function WbsNodeCard({
           </span>
         )}
       </div>
+      {viewMode !== 'chart' && <div style={{ position: 'absolute', top: 38, left: 8, right: 8, fontSize: 11, lineHeight: 1.7 }}>
+        {viewMode === 'details' ? <>
+          <div>Responsável: {owner ?? 'Não definido'}</div>
+          <div>Duração: {duration ?? 0} dias</div>
+          <div>Prevista: {node.properties.dataPrevista?.slice(0, 10) ?? '—'}</div>
+          <div>Realizada: {node.properties.dataRealizacao?.slice(0, 10) ?? '—'}</div>
+          {canViewCosts && <div>Custo orçado: {formatMoney(financial?.budgetCost)}</div>}
+        </> : <>
+          <div>Horas orçadas: {formatHours(financial?.budgetHours)}</div>
+          <div>Horas reais: {formatHours(financial?.actualHours)}</div>
+          <div>Custo orçado: {formatMoney(financial?.budgetCost)}</div>
+          <div>Custo real: {formatMoney(financial?.actualCost)}</div>
+        </>}
+      </div>}
     </div>
   )
 })
+
+function formatMoney(value: number | null | undefined) {
+  return value == null ? 'Sem valor/hora' : new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(value)
+}
+function formatHours(value = 0) { return new Intl.NumberFormat('pt-BR', { maximumFractionDigits: 2 }).format(value) }
 
 export default WbsNodeCard

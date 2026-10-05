@@ -659,23 +659,23 @@ Pedido: as permissões vêm da função (definida pelo admin no cadastro de fun�
 
 Referências: vídeo wbstool (0:47, menu Organizar) e https://youtu.be/YL4v4YgHMW4 (1:59, modos de visualização; 2:56, Gantt). SPEC anterior: `docs/SPEC-Ajustes-Operum-v1.md` §2 e §3.
 
-### 6.1 Botão de expansão
+### 6.1 Botão de expansão ✅
 Toggle centralizado na borda inferior do nó, meio para fora do card, mostrando "+" quando recolhido e "−" quando expandido. Sem contagem de filhos. Arquivo: `components/wbs/WbsNode.tsx`.
 
-### 6.2 Layout vertical (menu Organizar)
-Hoje só o layout horizontal funciona. Implementar em `lib/wbsLayout.ts`:
+### 6.2 Layout vertical (menu Organizar) ✅
+Implementado em `lib/wbsLayout.ts`:
 - **Vertical:** filhos empilhados à direita do pai, indentados, com conector em cotovelo (layout `ABAIXO_L` da SPEC v1).
 - **Misto:** por nó.
 
 Testes de geometria sem sobreposição.
 
-### 6.3 Modos de visualização
+### 6.3 Modos de visualização ✅
 - **Chart View Details:** o nó mostra código, título, responsável, duração, datas e custo.
 - **Hours and Cost View:** o nó mostra horas e custo, orçado × real, com rollup (`lib/wbsRollup.ts`, `lib/custosCalc.ts`).
 
 Alternância na `WbsMenubar`.
 
-### 6.4 Gráfico de Gantt
+### 6.4 Gráfico de Gantt ✅
 Nova visão em `/projetos/:id/wbs?view=gantt`:
 - barras por nó da EAP com datas;
 - agrupamento pela hierarquia (recolher e expandir);
@@ -685,6 +685,9 @@ Nova visão em `/projetos/:id/wbs?view=gantt`:
 Nós sem data aparecem sem barra. Primeiro só leitura; arrastar barras para editar fica para depois.
 
 ---
+
+### Revisão de consistência da fase 6 (04/10/2026)
+Geometria vertical/mista validada sem sobreposição; expansão conserva o botão existente na borda inferior. As duas novas visões usam a mesma árvore e autosave. Custos obedecem a permissão financeira e as taxas dos elaboradores, inclusive em subárvores recolhidas. Gantt usa prazo e duração em dias corridos, sem alterar datas. Não há mudança em migrations ou contratos de serviço. Arquitetura e ADR-027 atualizadas; evidências em `docs/validation/sdd-6/README.md`.
 
 ## Fase 7 — Documentos
 
@@ -1104,18 +1107,18 @@ A fase 9 está integrada nas PRs #45–#49, #51 e #52; a fase 11 permanece pende
 
 | Item | Card no Operum | Prioridade | Status |
 |---|---|---|---|
-| 11.1 | Garantir revogação de sessões no gateway com Redis saudável ou indisponível (`cmuo1hh27003501ndsy2521z5`) | alta | Pendente |
-| 11.2 | Isolar filas e sessões do Redis sujeito a eviction (`cmuo1hi2p003701ndlu2bq8ws`) | alta | Pendente |
-| 11.3 | Implantar imagens imutáveis do SHA aprovado e promover tags somente após validação (`cmuo1hj0u003901nd2z599pt2`) | alta | Pendente |
-| 11.4 | Rodar checks dos serviços e smoke das imagens de produção antes do merge/deploy (`cmuo1hjxo003b01ndi9qq30u5`) | alta | Pendente |
-| 11.5 | Registrar e ensaiar rollback por release sem retag manual (`cmuo1hkrs003e01ndh7uaymeh`) | alta | Pendente |
-| 11.6 | Versionar backup de PostgreSQL/MinIO e comprovar restauração (`cmuo1hlmw003g01ndu19fu0cs`) | alta | Pendente |
-| 11.7 | Separar liveness e readiness com verificação das dependências essenciais (`cmuo1hmh3003i01ndo06yaob0`) | media | Pendente |
-| 11.8 | Tornar a observabilidade implantável e conectar métricas, logs e alertas (`cmuo1hnaz003k01ndec1y9yqh`) | media | Pendente |
+| 11.1 | Garantir revogação de sessões no gateway com Redis saudável ou indisponível (`cmuo1hh27003501ndsy2521z5`) | alta | Implementado; CI aprovado, revisão pendente |
+| 11.2 | Isolar filas e sessões do Redis sujeito a eviction (`cmuo1hi2p003701ndlu2bq8ws`) | alta | Implementado; CI aprovado, revisão pendente |
+| 11.3 | Implantar imagens imutáveis do SHA aprovado e promover tags somente após validação (`cmuo1hj0u003901nd2z599pt2`) | alta | Implementado; CI aprovado, revisão pendente |
+| 11.4 | Rodar checks dos serviços e smoke das imagens de produção antes do merge/deploy (`cmuo1hjxo003b01ndi9qq30u5`) | alta | Implementado; CI aprovado, revisão pendente |
+| 11.5 | Registrar e ensaiar rollback por release sem retag manual (`cmuo1hkrs003e01ndh7uaymeh`) | alta | Implementado; CI aprovado, revisão pendente |
+| 11.6 | Versionar backup de PostgreSQL/MinIO e comprovar restauração (`cmuo1hlmw003g01ndu19fu0cs`) | alta | Implementado; CI aprovado, revisão pendente |
+| 11.7 | Separar liveness e readiness com verificação das dependências essenciais (`cmuo1hmh3003i01ndo06yaob0`) | media | Implementado; CI aprovado, revisão pendente |
+| 11.8 | Tornar a observabilidade implantável e conectar métricas, logs e alertas (`cmuo1hnaz003k01ndec1y9yqh`) | media | Implementado; CI aprovado, revisão pendente |
 
 ### 11.1 Garantir revogação de sessões no gateway com Redis saudável ou indisponível
 
-**Card:** `cmuo1hh27003501ndsy2521z5`. **Prioridade:** alta. **Status:** implementado nesta entrega; validação de imagens/operação no CI e revisão pendentes.
+**Card:** `cmuo1hh27003501ndsy2521z5`. **Prioridade:** alta. **Status:** implementado nesta entrega; imagens e ensaios operacionais aprovados no CI; revisão e verificação operacional na VPS pendentes.
 
 **Avaliação OPS01-02 · Segurança e operação**
 
@@ -1131,7 +1134,7 @@ Comportamento confirmado, não incidente observado: o gateway deliberadamente ig
 
 ### 11.2 Isolar filas e sessões do Redis sujeito a eviction
 
-**Card:** `cmuo1hi2p003701ndlu2bq8ws`. **Prioridade:** alta. **Status:** implementado nesta entrega; validação de imagens/operação no CI e revisão pendentes.
+**Card:** `cmuo1hi2p003701ndlu2bq8ws`. **Prioridade:** alta. **Status:** implementado nesta entrega; imagens e ensaios operacionais aprovados no CI; revisão e verificação operacional na VPS pendentes.
 
 **Avaliação OPS03 · Segurança e operação**
 
@@ -1141,7 +1144,7 @@ Configuração confirmada; perda efetiva não observada. Redis de produção usa
 
 ### 11.3 Implantar imagens imutáveis do SHA aprovado e promover tags somente após validação
 
-**Card:** `cmuo1hj0u003901nd2z599pt2`. **Prioridade:** alta. **Status:** implementado nesta entrega; validação de imagens/operação no CI e revisão pendentes.
+**Card:** `cmuo1hj0u003901nd2z599pt2`. **Prioridade:** alta. **Status:** implementado nesta entrega; imagens e ensaios operacionais aprovados no CI; revisão e verificação operacional na VPS pendentes.
 
 **Avaliação OPS04 · Segurança e operação**
 
@@ -1151,7 +1154,7 @@ Risco confirmado na configuração. Build publica cada imagem como SHA e prod an
 
 ### 11.4 Rodar checks dos serviços e smoke das imagens de produção antes do merge/deploy
 
-**Card:** `cmuo1hjxo003b01ndi9qq30u5`. **Prioridade:** alta. **Status:** implementado nesta entrega; validação de imagens/operação no CI e revisão pendentes.
+**Card:** `cmuo1hjxo003b01ndi9qq30u5`. **Prioridade:** alta. **Status:** implementado nesta entrega; imagens e ensaios operacionais aprovados no CI; revisão e verificação operacional na VPS pendentes.
 
 **Avaliação OPS05 · Segurança e operação**
 
@@ -1161,7 +1164,7 @@ Lacuna confirmada. Workflow de PR contém CodeQL/secrets; testes/lint/audit est�
 
 ### 11.5 Registrar e ensaiar rollback por release sem retag manual
 
-**Card:** `cmuo1hkrs003e01ndh7uaymeh`. **Prioridade:** alta. **Status:** implementado nesta entrega; validação de imagens/operação no CI e revisão pendentes.
+**Card:** `cmuo1hkrs003e01ndh7uaymeh`. **Prioridade:** alta. **Status:** implementado nesta entrega; imagens e ensaios operacionais aprovados no CI; revisão e verificação operacional na VPS pendentes.
 
 **Avaliação OPS06 · Segurança e operação**
 
@@ -1171,7 +1174,7 @@ Limitação confirmada. Quando up falha, script imprime logs e manda retaggear i
 
 ### 11.6 Versionar backup de PostgreSQL/MinIO e comprovar restauração
 
-**Card:** `cmuo1hlmw003g01ndu19fu0cs`. **Prioridade:** alta. **Status:** implementado nesta entrega; validação de imagens/operação no CI e revisão pendentes.
+**Card:** `cmuo1hlmw003g01ndu19fu0cs`. **Prioridade:** alta. **Status:** implementado nesta entrega; imagens e ensaios operacionais aprovados no CI; revisão e verificação operacional na VPS pendentes.
 
 **Avaliação OPS07 · Segurança e operação**
 
@@ -1181,7 +1184,7 @@ Lacuna do repositório, situação real da VPS desconhecida. Exemplo de backup e
 
 ### 11.7 Separar liveness e readiness com verificação das dependências essenciais
 
-**Card:** `cmuo1hmh3003i01ndo06yaob0`. **Prioridade:** media. **Status:** implementado nesta entrega; validação de imagens/operação no CI e revisão pendentes.
+**Card:** `cmuo1hmh3003i01ndo06yaob0`. **Prioridade:** media. **Status:** implementado nesta entrega; imagens e ensaios operacionais aprovados no CI; revisão e verificação operacional na VPS pendentes.
 
 **Avaliação OPS08 · Segurança e operação**
 
@@ -1191,7 +1194,7 @@ Lacuna confirmada. Health do app, auth e project retorna status ok constante; co
 
 ### 11.8 Tornar a observabilidade implantável e conectar métricas, logs e alertas
 
-**Card:** `cmuo1hnaz003k01ndec1y9yqh`. **Prioridade:** media. **Status:** implementado nesta entrega; validação de imagens/operação no CI e revisão pendentes.
+**Card:** `cmuo1hnaz003k01ndec1y9yqh`. **Prioridade:** media. **Status:** implementado nesta entrega; imagens e ensaios operacionais aprovados no CI; revisão e verificação operacional na VPS pendentes.
 
 **Avaliação OPS09 · Segurança e operação**
 

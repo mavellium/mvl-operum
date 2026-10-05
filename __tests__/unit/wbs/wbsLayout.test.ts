@@ -121,10 +121,10 @@ describe('computeLayout', () => {
       b: node('b', 'r', 1, []),
     })
 
-    it('filhos deslocados GAP_X à direita do pai', () => {
+    it('filhos à direita da borda do pai, com GAP_X de espaço', () => {
       const { geometry } = computeLayout(make(), 'r')
-      expect(geometry.a.x).toBe(geometry.r.x + GAP_X)
-      expect(geometry.b.x).toBe(geometry.r.x + GAP_X)
+      expect(geometry.a.x).toBe(geometry.r.x + NODE_W + GAP_X)
+      expect(geometry.b.x).toBe(geometry.r.x + NODE_W + GAP_X)
     })
 
     it('empilha verticalmente', () => {
@@ -256,4 +256,25 @@ describe('resolveDropPosition', () => {
     expect(resolveDropPosition(g.x + g.width + 40, midY, g)).toBeNull()
     expect(resolveDropPosition(midX, g.y + g.height + 40, g)).toBeNull()
   })
+})
+
+it('mixed layouts keep every subtree inside bounds with wide cards and taller details', () => {
+  const nodes: Record<string, WbsNodeClient> = {}, widths: Record<string, number> = {}
+  const layouts: WbsLayoutOrientation[] = ['LADO_A_LADO','ABAIXO_L','ABAIXO']
+  for (let i=0;i<60;i++) {
+    const id=String(i), parent=i===0?null:String(Math.floor((i-1)/3))
+    nodes[id]=node(id,parent,i,[],layouts[i%3]); widths[id]=120+(i%5)*70
+    if(parent)nodes[parent].childrenIds.push(id)
+  }
+  const { geometry, bounds } = computeLayout(nodes,'0',widths,162)
+  const cards=Object.values(geometry)
+  for(const [i,a] of cards.entries()) {
+    expect(a.x).toBeGreaterThanOrEqual(0)
+    expect(a.x+a.width).toBeLessThanOrEqual(bounds.width)
+    expect(a.y+a.height).toBeLessThanOrEqual(bounds.height)
+    for(const b of cards.slice(i+1)) {
+      const overlap=a.x<b.x+b.width && a.x+a.width>b.x && a.y<b.y+b.height && a.y+a.height>b.y
+      expect(overlap, `${a.id} overlaps ${b.id}`).toBe(false)
+    }
+  }
 })
