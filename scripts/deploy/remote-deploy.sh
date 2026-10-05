@@ -30,27 +30,27 @@ for service in services:
  assert re.fullmatch(r'ghcr\.io/[a-z0-9-]+/'+service.lower().replace('_','-')+r'@sha256:[a-f0-9]{64}',values[service+'_IMAGE'])
 PY
 [ -f .env ]
-RELEASE_DIR="$DEPLOY_PATH/.releases/$SHA"
-[ ! -e "$RELEASE_DIR" ] || { echo 'Release já registrada; não sobrescrever'; exit 1; }
-mkdir -p "$RELEASE_DIR"
+# A failed attempt must never reserve the SHA or overwrite an earlier snapshot.
+mkdir -p "$DEPLOY_PATH/.releases"
+RELEASE_DIR=$(mktemp -d "$DEPLOY_PATH/.releases/$SHA.XXXXXXXX")
+[ ! -f .current-release-record ] || cp -p .current-release-record "$RELEASE_DIR/previous-release-record"
 for f in docker-compose.yml docker-compose.production.yml release.env; do
   [ ! -f "$f" ] || cp -p "$f" "$RELEASE_DIR/previous-$f"
   cp "$INCOMING/$f" "$RELEASE_DIR/$f"
 done
 [ ! -d observability ] || cp -a observability "$RELEASE_DIR/previous-observability"
 cp -a "$INCOMING/observability" "$RELEASE_DIR/observability"
+cp "$INCOMING/replace-observability.py" "$RELEASE_DIR/replace-observability.py"
 restore_config() {
   for f in docker-compose.yml docker-compose.production.yml release.env; do
     [ ! -f "$RELEASE_DIR/previous-$f" ] || cp "$RELEASE_DIR/previous-$f" "$f"
   done
   if [ -d "$RELEASE_DIR/previous-observability" ]; then
-    rm -rf observability
-    cp -a "$RELEASE_DIR/previous-observability" observability
+    python3 "$RELEASE_DIR/replace-observability.py" "$RELEASE_DIR/previous-observability" "$DEPLOY_PATH" "$RELEASE_DIR"
   fi
 }
 for f in docker-compose.yml docker-compose.production.yml release.env; do cp "$RELEASE_DIR/$f" "$f"; done
-rm -rf observability
-cp -a "$RELEASE_DIR/observability" observability
+python3 "$RELEASE_DIR/replace-observability.py" "$RELEASE_DIR/observability" "$DEPLOY_PATH" "$RELEASE_DIR"
 COMPOSE=(docker compose --env-file .env --env-file release.env -f docker-compose.yml -f docker-compose.production.yml)
 if ! "${COMPOSE[@]}" config -q; then restore_config; exit 1; fi
 if ! "${COMPOSE[@]}" config --format json | python3 "$INCOMING/configure-observability.py"; then restore_config; exit 1; fi
@@ -71,17 +71,24 @@ while IFS='=' read -r key image; do
 done < release.env
 # expand/contract only: never undo schema automatically.
 if ! "${COMPOSE[@]}" --profile migration run --rm migrate; then restore_config; exit 1; fi
-if ! "${COMPOSE[@]}" up -d --wait --wait-timeout 300; then
+rollout() {
+  "${COMPOSE[@]}" up -d --wait --wait-timeout 300 &&
+    "${COMPOSE[@]}" up -d --force-recreate --no-deps --wait --wait-timeout 300 prometheus grafana alloy docker-log-proxy alertmanager
+}
+# Directory replacement changes bind-mounted inodes. Recreate their consumers.
+if ! rollout; then
   echo 'Release sem prontidão; rollback requer compatibilidade de schema declarada.'
   if grep -qx 'ROLLBACK_COMPATIBLE=true' release.env && [ -f "$RELEASE_DIR/previous-release.env" ]; then
     restore_config
-    "${COMPOSE[@]}" up -d --wait --wait-timeout 300
+    rollout
     echo "Rollback confirmado; implantação $SHA falhou."
   fi
   exit 1
 fi
+printf '%s\n' "${RELEASE_DIR##*/}" > .current-release-record
 printf '%s\n' "$SHA" > .current-release
 cp "$INCOMING/rollback.sh" scripts-rollback.sh
+cp "$RELEASE_DIR/replace-observability.py" replace-observability.py
 "${COMPOSE[@]}" ps
 rm -rf "$INCOMING"
 echo "Release imutável $SHA pronta."

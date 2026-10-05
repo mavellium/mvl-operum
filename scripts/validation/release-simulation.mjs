@@ -1,4 +1,4 @@
-import { mkdtempSync, writeFileSync, mkdirSync, readFileSync, cpSync, rmSync, existsSync } from 'node:fs'
+import { mkdtempSync, writeFileSync, mkdirSync, readFileSync, cpSync, rmSync, existsSync, readdirSync, chmodSync, statSync } from 'node:fs'
 import { tmpdir } from 'node:os'
 import { join, resolve } from 'node:path'
 import { spawnSync, spawn } from 'node:child_process'
@@ -27,7 +27,7 @@ if [[ "$*" == *"up -d"* && "\${MOCK_FAIL:-}" == up && ! -e "$MOCK_MARKER" ]]; th
       cpSync(join(repo,f),join(dir,f));cpSync(join(repo,f),join(dir,'.deploy-incoming',sha,f))
     }
     cpSync(join(repo,'observability'),join(dir,'.deploy-incoming',sha,'observability'),{recursive:true})
-    for(const f of ['rollback.sh','configure-observability.py'])cpSync(join(repo,'scripts/deploy',f),join(dir,'.deploy-incoming',sha,f))
+    for(const f of ['rollback.sh','configure-observability.py','replace-observability.py'])cpSync(join(repo,'scripts/deploy',f),join(dir,'.deploy-incoming',sha,f))
     writeFileSync(join(dir,'.deploy-incoming',sha,'release.env'),manifest(sha))
     return dir
   }
@@ -43,9 +43,47 @@ if [[ "$*" == *"up -d"* && "\${MOCK_FAIL:-}" == up && ! -e "$MOCK_MARKER" ]]; th
   const healthy=setup('healthy');assert.equal(run(healthy).status,0)
   assert.equal(readFileSync(join(healthy,'.current-release'),'utf8').trim(),sha)
   assert.match(readFileSync(join(healthy,'release.env'),'utf8'),/@sha256:/)
+  const readOnly=setup('read-only-assets')
+  mkdirSync(join(readOnly,'observability'));writeFileSync(join(readOnly,'observability','prometheus.yml'),'old-assets')
+  chmodSync(join(readOnly,'observability','prometheus.yml'),0o400);chmodSync(join(readOnly,'observability'),0o500)
+  const readOnlyRun=run(readOnly)
+  assert.equal(readOnlyRun.status,0,readOnlyRun.stderr)
+  assert.ok(statSync(join(readOnly,'observability')).mode & 0o200)
+  const assetRecord=readFileSync(join(readOnly,'.current-release-record'),'utf8').trim()
+  const displaced=readdirSync(readOnly).find(x=>x.startsWith('.observability-archived.'))
+  assert.equal(readFileSync(join(readOnly,displaced,'prometheus.yml'),'utf8'),'old-assets')
+  // Production retains archives. Cleanup is confined to the fixture.
+  chmodSync(join(readOnly,displaced),0o700)
+  const assetRollback=spawnSync('bash',[join(repo,'scripts/deploy/rollback.sh'),readOnly],{encoding:'utf8',env:{...process.env,PATH:bin+':'+process.env.PATH,MOCK_LOG:join(base,'docker.log')}})
+  assert.equal(assetRollback.status,0)
+  assert.equal(readFileSync(join(readOnly,'observability','prometheus.yml'),'utf8'),'old-assets')
+  assert.match(readFileSync(join(base,'docker.log'),'utf8'),/up -d --force-recreate --no-deps/)
   const failed=setup('failed');assert.equal(run(failed,{MOCK_FAIL:'up'}).status,1)
   assert.equal(readFileSync(join(failed,'release.env'),'utf8'),manifest(previous))
   assert.equal(readFileSync(join(failed,'.current-release'),'utf8').trim(),previous)
+  // Same SHA can retry after a failed rollout; its failed snapshot remains intact.
+  const retrySnapshot = readdirSync(join(failed,'.releases'))[0]
+  const originalManifest=readFileSync(join(failed,'.releases',retrySnapshot,'release.env'),'utf8')
+  assert.equal(run(failed).status,0)
+  const retryRecord=readFileSync(join(failed,'.current-release-record'),'utf8').trim()
+  assert.notEqual(retryRecord,retrySnapshot)
+  assert.equal(readFileSync(join(failed,'.releases',retrySnapshot,'release.env'),'utf8'),originalManifest)
+  // Legacy SHA-only snapshots also remain immutable and do not block retry.
+  const legacy=setup('legacy');mkdirSync(join(legacy,'.releases',sha),{recursive:true})
+  writeFileSync(join(legacy,'.releases',sha,'sentinel'),'legacy-snapshot')
+  assert.equal(run(legacy).status,0)
+  assert.equal(readFileSync(join(legacy,'.releases',sha,'sentinel'),'utf8'),'legacy-snapshot')
+  // Repeating a completed release still checks readiness, without overwriting history.
+  cpSync(join(legacy,'.releases',readFileSync(join(legacy,'.current-release-record'),'utf8').trim()),join(legacy,'.deploy-incoming',sha),{recursive:true})
+  for(const f of ['rollback.sh','configure-observability.py','replace-observability.py'])cpSync(join(repo,'scripts/deploy',f),join(legacy,'.deploy-incoming',sha,f))
+  const completedRecord=readFileSync(join(legacy,'.current-release-record'),'utf8')
+  assert.equal(run(legacy).status,0)
+  const newRecord=readFileSync(join(legacy,'.current-release-record'),'utf8').trim()
+  assert.notEqual(newRecord,completedRecord.trim())
+  assert.equal(readFileSync(join(legacy,'.releases',newRecord,'previous-release-record'),'utf8'),completedRecord)
+  const repeatedRollback=spawnSync('bash',[join(repo,'scripts/deploy/rollback.sh'),legacy],{encoding:'utf8',env:{...process.env,PATH:`${bin}:${process.env.PATH}`,MOCK_LOG:join(base,'docker.log')}})
+  assert.equal(repeatedRollback.status,0)
+  assert.equal(readFileSync(join(legacy,'.current-release-record'),'utf8'),completedRecord)
   const incompatible=setup('incompatible');writeFileSync(join(incompatible,'.deploy-incoming',sha,'release.env'),manifest(sha,false));rmSync(join(base,'failed-up'))
   assert.equal(run(incompatible,{MOCK_FAIL:'up'}).status,1)
   assert.equal(readFileSync(join(incompatible,'release.env'),'utf8'),manifest(sha,false))
@@ -56,5 +94,19 @@ if [[ "$*" == *"up -d"* && "\${MOCK_FAIL:-}" == up && ! -e "$MOCK_MARKER" ]]; th
   const rollback=spawnSync('bash',[join(repo,'scripts/deploy/rollback.sh'),healthy],{encoding:'utf8',env:{...process.env,PATH:`${bin}:${process.env.PATH}`,MOCK_LOG:join(base,'docker.log')}})
   assert.equal(rollback.status,0)
   assert.equal(readFileSync(join(healthy,'.current-release'),'utf8').trim(),previous)
+  assert.equal(existsSync(join(healthy,'.current-release-record')),false)
+  const retryRollback=spawnSync('bash',[join(repo,'scripts/deploy/rollback.sh'),failed],{encoding:'utf8',env:{...process.env,PATH:`${bin}:${process.env.PATH}`,MOCK_LOG:join(base,'docker.log')}})
+  assert.equal(retryRollback.status,0)
+  assert.equal(readFileSync(join(failed,'.current-release'),'utf8').trim(),previous)
   console.log('Release validation, exact digests, failed rollout recovery and schema rollback guard verified (Docker fixture).')
-} finally { rmSync(base,{recursive:true,force:true}) }
+} finally {
+  const unlockFixture = dir => {
+    chmodSync(dir,0o700)
+    for (const name of readdirSync(dir)) {
+      const child=join(dir,name)
+      if (statSync(child).isDirectory()) unlockFixture(child)
+    }
+  }
+  unlockFixture(base)
+  rmSync(base,{recursive:true,force:true})
+}

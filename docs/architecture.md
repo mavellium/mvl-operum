@@ -1003,7 +1003,20 @@ O build publica imagens por SHA, valida audit/tests/smoke/Trivy de todos os
 pacotes e só então gera `release.env` com oito digests. O deploy usa esse
 manifesto em Compose; `migrate` recebe o mesmo APP_IMAGE do app. Não promove
 `:prod`: runtime depende dos digests aprovados. Manifestos/configuração anteriores
-ficam em `.releases/<SHA>`; flock impede execuções concorrentes. Falha de pull,
+ficam em `.releases/<SHA>.<tentativa>`; cada execução recebe um diretório
+exclusivo, inclusive retries do mesmo SHA. Registros legados `.releases/<SHA>`
+são preservados. `.current-release` mantém o SHA e `.current-release-record`
+identifica a tentativa concluída, publicada somente após readiness. Rollback
+consulta esse registro e recupera o ponteiro anterior; na ausência dele, usa o
+formato legado. Tentativas falhas ficam disponíveis para diagnóstico e não
+bloqueiam retries. flock impede execuções concorrentes. A substituição de assets de observabilidade
+prepara uma cópia pertencente ao usuário de deploy; arquiva a pasta anterior
+como `.observability-archived.<tentativa>` no mesmo diretório pai, sem apagar
+arquivos antigos ou alterar suas permissões. O registro da tentativa guarda o
+caminho da pasta arquivada. A nova cópia mantém modos de grupo/outros e ganha escrita
+somente para o proprietário; `private` continua 0700. Prometheus, Grafana,
+Alloy, proxy de logs e Alertmanager são recriados para usar os novos inodes
+dos bind mounts, tanto no deploy quanto no rollback. Falha de pull,
 configuração ou migration restaura configuração e aborta. Falha de readiness
 permite retornar aos digests anteriores somente quando ROLLBACK_COMPATIBLE=true
 foi declarado para a release. O padrão é false; expand/contract preserva schema
