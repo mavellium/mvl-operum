@@ -423,3 +423,16 @@ Ao substituir uma decisão, manter o texto histórico, alterar seu status e liga
 - **Consequências:** versões legadas mostram contexto/diff ausentes; uso de imagens externas depende de CORS; limite de 5 MB e falha explícita por imagem. PDF depende da impressão do navegador. Assinatura visual não constitui assinatura digital.
 - **Condições de revisão:** novos modelos ou necessidade de assinatura digital com verificação; requisito de exportação assíncrona no servidor exigiria armazenamento confiável de imagens.
 - **Referências:** `services/documentRevisionService.ts`, `lib/charterChanges.ts`, `lib/exports/`, `components/projetos/documentacao/ProjectCharter.tsx`, `docs/validation/sdd-7/README.md` e SDD fase 7.
+
+
+## ADR-029 — Upload local com grant cifrado de uso único
+
+- **Data:** 2026-10-05
+- **Status:** implementada; revisão pendente.
+- **Contexto:** SDD 8.3 exige arquivos locais/grandes sem base64 na conversa, mantendo autorização do PAT pelo gateway.
+- **Escolha:** AES-256-GCM, nonce reservado em memória por dez minutos, validação multipart em temporário privado e envio por stream; consumo por tentativa.
+- **Justificativa:** não expõe PAT em claro; revalida permissões atuais; evita upload upstream de multipart inválido e buffers de 50 MB na memória.
+- **Alternativas consideradas:** base64 (limite/custo na conversa); passthrough imediato (poderia persistir primeira parte antes de rejeitar uma segunda); buffers completos (picos de memória); Redis para nonce (adiado enquanto há uma réplica).
+- **Consequências:** link é credencial temporária; erro requer novo link; reinício invalida pendentes. Dois uploads simultâneos limitam disco a cerca de 100 MB; queda abrupta pode deixar temporários até recriar container. Rate limit por peer é conservador atrás do proxy. Importação para existente preserva cadastro e não é atômica entre serviços.
+- **Condições de revisão:** múltiplas réplicas exigem reserva Redis atômica; rate limit por IP real exige proxy explicitamente confiável; importações concorrentes podem exigir lock por projeto.
+- **Referências:** `mcp-server/src/uploadLink.ts`, `uploadRoute.ts`, `migration/importer.ts`, `mcp-server/README.md`, SDD 8.1/8.3.

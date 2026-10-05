@@ -72,7 +72,7 @@ Toda tool aceita `tenant_id` (omitido = tenant do token padrão) e responde JSON
 | Sprints e colunas | `operum_list_sprints`, `operum_get_sprint`, `operum_create_sprint`, `operum_update_sprint`, `operum_delete_sprint`, `operum_create_column`, `operum_update_column`, `operum_delete_column` |
 | Tarefas | `operum_list_tasks`, `operum_get_task`, `operum_create_task`, `operum_update_task`, `operum_move_task`, `operum_delete_task`, `operum_set_task_tags`, `operum_set_task_responsibles`, `operum_bulk_update_tasks` |
 | Etiquetas | `operum_list_tags`, `operum_create_tag` |
-| Anexos | `operum_upload_attachment`, `operum_add_link`, `operum_delete_attachment` (a leitura vem em `operum_get_task` e `operum_list_tasks` com `fields="full"`) |
+| Anexos | `operum_upload_attachment`, `operum_create_upload_link`, `operum_add_link`, `operum_delete_attachment` (a leitura vem em `operum_get_task` e `operum_list_tasks` com `fields="full"`) |
 | Tempo | `operum_start_timer`, `operum_stop_timer`, `operum_log_time` (o total e os timers rodando vêm em `operum_get_task`, no campo `time`) |
 | Comentários | `operum_list_comments`, `operum_create_comment`, `operum_update_comment`, `operum_delete_comment` |
 | Histórico | `operum_get_activity` |
@@ -109,3 +109,20 @@ Segurança das escritas:
 - O relatório final traz contagens planejadas/criadas, `skipped`, `errors` e o mapa de ids. Se a importação falhar no meio, exclua o projeto criado (`target.project_id`) e rode de novo — o conflito de nome impede duplicar sem querer.
 
 Lacunas do modelo de dados em relação ao spec original: ver [`docs/mcp/gaps.md`](../docs/mcp/gaps.md).
+
+
+## Importar para projeto existente (8.1)
+
+`operum_copy_project` e `operum_import_project` aceitam `target_project_id` no tenant de destino. Sem ele, o comportamento de criar projeto permanece. Com ele, cadastro, membros, stakeholders e macrofases do destino são preservados. Nomes de sprints/colunas passam por NFC, trim, espaços simples e minúsculas: existentes são reutilizados sem renomear ou excluir; faltantes são criados. Títulos iguais ou com similaridade Levenshtein normalizada >=0,9 são pulados e listados. Também deduplica tarefas elegíveis do próprio bundle. `dry_run=true` permanece padrão; revisar relatório antes da escrita. Não há transação distribuída nem garantia de deduplicação contra importações simultâneas.
+
+## Upload de arquivo local (8.3)
+
+Configure `MCP_PUBLIC_URL` como origem HTTPS pública (sem caminho) e `MCP_UPLOAD_SECRET` com 32 bytes aleatórios em base64 (`openssl rand -base64 32`). A origem precisa rotear `/uploads/` ao MCP; o fallback `/mcp` de api.operum.adm.br não cobre uploads. A ferramenta `operum_create_upload_link(task_id, file_name?)` devolve `upload_url`, `expires_at` e comando curl. Substitua `<caminho>` pelo arquivo local mantendo as aspas; use `curl --fail-with-body -F 'file=@/caminho/eap.png' '<upload_url>'`.
+
+Cada tentativa autenticada consome o link, mesmo em erro de arquivo/gateway: gere outro para tentar novamente. Expirado/usado/reinício responde 410; token adulterado 400 genérico. O token AES-256-GCM cifra PAT, tarefa, tenant, expiração/nonce e nome opcional por dez minutos. O PAT não aparece em claro em URL/logs. O link é uma credencial temporária: não compartilhar nem publicar. Não salvar comando/link no histórico operacional de chamados.
+
+A rota revalida `/auth/me` e `/cards/:id` com o PAT original; revogação e permissões atuais continuam sob controle do gateway. Multipart aceita apenas um campo `file`, tipos da lista canônica e 50 MB; valida tudo antes de chamar o gateway. Busboy grava em arquivo temporário privado (0600, diretório 0700), e o arquivo é encaminhado em stream e removido em sucesso/erro. Não carrega 50 MB em memória. Há limite de dois uploads ativos, 120 segundos e dez tentativas/minuto por socket peer; X-Forwarded-For não confiável é ignorado, portanto clientes atrás do mesmo proxy compartilham o orçamento. Limite de armazenamento temporário ativo: aproximadamente 100 MB. Queda abrupta pode deixar arquivos no diretório temporário do container até ele ser recriado.
+
+Nonce e limites ficam em memória (uma réplica, como idempotência). Reinício invalida links pendentes; rotação da chave os invalida. Antes de escalar para várias réplicas, implementar reserva atômica no Redis. Criação/upload não registra PAT/link em auditoria nem URLs na telemetria.
+
+Parser: [API oficial do Busboy](https://github.com/mscdex/busboy), limites de arquivos/campos/partes e tratamento de streams.

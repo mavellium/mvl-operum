@@ -119,6 +119,13 @@ export class TenantRegistry {
     this.entries = tokens.map(token => ({ token, tokenHash: hashToken(token), gw: makeGateway(token) }))
   }
 
+  /** Only used to encrypt a task-bound, short-lived upload grant; never serialize this token. */
+  tokenFor(context: TenantContext): string {
+    const entry = this.entries.find(e => e.tokenHash === context.tokenHash)
+    if (!entry) throw new UserError('Token não disponível para este tenant.')
+    return entry.token
+  }
+
   get tokenCount(): number {
     return this.entries.length
   }
