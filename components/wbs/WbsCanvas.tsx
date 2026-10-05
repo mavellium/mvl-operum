@@ -7,6 +7,7 @@ const useIsomorphicLayoutEffect = typeof window !== 'undefined' ? useLayoutEffec
 import { computeLayout, resolveDropPosition, NODE_W, NODE_H } from '@/lib/wbsLayout'
 import { computeFinancialRollups, computeRollups } from '@/lib/wbsRollup'
 import WbsGantt from './WbsGantt'
+import { useCalendarToday } from '@/hooks/useCalendarToday'
 import type { WbsNodeClient, WbsViewMode } from '@/types/wbs'
 import { useToast } from '@/components/ui/Toast'
 import ConfirmDialog from '@/components/ui/ConfirmDialog'
@@ -68,6 +69,7 @@ interface PendingDrag {
 }
 
 function WbsCanvasInner({ projetoId, canEdit, initialView = 'chart', canViewCosts = false, rates = {}, owners = {}, today = new Date().toISOString().slice(0, 10) }: Omit<WbsCanvasProps, 'initialTree' | 'tenantId' | 'userId'>) {
+  const calendarToday = useCalendarToday(today)
   const [viewMode, setViewMode] = useState<WbsViewMode>(initialView === 'costs' && !canViewCosts ? 'chart' : initialView)
   const changeView = (mode: WbsViewMode) => {
     if (mode === 'costs' && !canViewCosts) return
@@ -657,7 +659,7 @@ function WbsCanvasInner({ projetoId, canEdit, initialView = 'chart', canViewCost
         }}
       />
 
-      {viewMode === 'gantt' ? <WbsGantt nodes={state.nodes} rootId={state.rootId} today={today} /> : <div className="relative flex flex-1 overflow-hidden">
+      {viewMode === 'gantt' ? <WbsGantt nodes={state.nodes} rootId={state.rootId} today={calendarToday} /> : <div className="relative flex flex-1 overflow-hidden">
         {/* Canvas */}
         <div
           ref={canvasRef}
