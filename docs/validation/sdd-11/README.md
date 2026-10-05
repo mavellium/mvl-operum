@@ -28,3 +28,11 @@ foi confirmada. Compatibilidade de migrations e destino real de alertas devem se
 configurados antes de uma implantação autorizada.
 
 Resultados do CI serão acrescentados após a execução da PR.
+
+Os registries antigos MinIO negaram acesso e dl.min.io retornou 410 no CI/local.
+Os ensaios constroem apenas um fixture a partir dos commits upstream fixados
+correspondentes a RELEASE.2025-09-07T16-13-09Z (servidor) e
+RELEASE.2025-08-13T08-35-41Z (cliente). Não substituem a imagem de produção.
+Preservar uma cópia recuperável da imagem MinIO existente deve fazer parte do
+inventário operacional, pois uma restauração vazia não pode depender de um
+registry que negue acesso. Fontes: tags oficiais minio/minio e minio/mc.
