@@ -37,7 +37,7 @@ http.createServer(async (req, res) => {
         res.writeHead(result.status, { 'Content-Type': 'application/json' }).end(JSON.stringify({
           Id: data.Id, Name: data.Name, Config: { Tty: data.Config?.Tty },
           HostConfig: { LogConfig: { Type: data.HostConfig?.LogConfig?.Type } },
-          State: { Running: data.State?.Running },
+          State: { Running: data.State?.Running, StartedAt: data.State?.StartedAt, FinishedAt: data.State?.FinishedAt },
         }))
         return
       }

@@ -27,7 +27,17 @@ fora da VPS. RPO/RTO reais permanecem a medir pelo operador. A rotina atual não
 foi confirmada. Compatibilidade de migrations e destino real de alertas devem ser
 configurados antes de uma implantação autorizada.
 
-Resultados do CI serão acrescentados após a execução da PR.
+CI em 05/10/2026, PR #54, implementação `1791e39c`: todos os checks do
+GitHub Actions aprovados (build da aplicação, sete imagens finais, auditoria,
+CodeQL nas duas configurações, integrações PostgreSQL e confiabilidade da UI).
+[Operations Validation 37304899371](https://github.com/mavellium/mvl-operum/actions/runs/37304899371)
+comprovou pressão Redis/eviction/OOM/AOF, recuperação de rollout, restauração
+PostgreSQL/MinIO após remover a cópia original e provisioning limpo com 11 alvos
+UP, request ID no Loki e alerta OperumTargetDown entregue ao receptor sintético.
+
+O check externo de preview Vercel ainda falha; não equivale ao build Docker,
+aprovado. Não houve deploy de produção. Revisão/merge e validação dos destinos
+reais de backup/alertas permanecem pendentes.
 
 Os registries antigos MinIO negaram acesso e dl.min.io retornou 410 no CI/local.
 Os ensaios constroem apenas um fixture a partir dos commits upstream fixados
