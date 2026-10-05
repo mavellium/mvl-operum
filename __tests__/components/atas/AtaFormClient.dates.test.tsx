@@ -2,6 +2,7 @@ import { render, screen, fireEvent, waitFor } from '@testing-library/react'
 import { afterEach, expect, it, vi } from 'vitest'
 import AtaFormClient from '@/components/atas/AtaFormClient'
 import { atualizarAtaAction } from '@/app/actions/atas'
+vi.mock('next/navigation',()=>({useRouter:()=>({push:vi.fn(),refresh:vi.fn()})}))
 vi.mock('@/app/actions/atas',()=>({ atualizarAtaAction:vi.fn(async()=>({success:true})),criarAtaAction:vi.fn() }))
 vi.mock('@/components/permissoes/ProjectPermissions',()=>({ useProjectPermissions:()=>new Set(['documentos:editar']) }))
 vi.mock('@/components/projetos/documentacao/HistoricoDocumento',()=>({ default:()=>null }))
