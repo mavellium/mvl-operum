@@ -1003,7 +1003,13 @@ O build publica imagens por SHA, valida audit/tests/smoke/Trivy de todos os
 pacotes e só então gera `release.env` com oito digests. O deploy usa esse
 manifesto em Compose; `migrate` recebe o mesmo APP_IMAGE do app. Não promove
 `:prod`: runtime depende dos digests aprovados. Manifestos/configuração anteriores
-ficam em `.releases/<SHA>`; flock impede execuções concorrentes. Falha de pull,
+ficam em `.releases/<SHA>.<tentativa>`; cada execução recebe um diretório
+exclusivo, inclusive retries do mesmo SHA. Registros legados `.releases/<SHA>`
+são preservados. `.current-release` mantém o SHA e `.current-release-record`
+identifica a tentativa concluída, publicada somente após readiness. Rollback
+consulta esse registro e recupera o ponteiro anterior; na ausência dele, usa o
+formato legado. Tentativas falhas ficam disponíveis para diagnóstico e não
+bloqueiam retries. flock impede execuções concorrentes. Falha de pull,
 configuração ou migration restaura configuração e aborta. Falha de readiness
 permite retornar aos digests anteriores somente quando ROLLBACK_COMPATIBLE=true
 foi declarado para a release. O padrão é false; expand/contract preserva schema

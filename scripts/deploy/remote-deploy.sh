@@ -30,9 +30,10 @@ for service in services:
  assert re.fullmatch(r'ghcr\.io/[a-z0-9-]+/'+service.lower().replace('_','-')+r'@sha256:[a-f0-9]{64}',values[service+'_IMAGE'])
 PY
 [ -f .env ]
-RELEASE_DIR="$DEPLOY_PATH/.releases/$SHA"
-[ ! -e "$RELEASE_DIR" ] || { echo 'Release já registrada; não sobrescrever'; exit 1; }
-mkdir -p "$RELEASE_DIR"
+# A failed attempt must never reserve the SHA or overwrite an earlier snapshot.
+mkdir -p "$DEPLOY_PATH/.releases"
+RELEASE_DIR=$(mktemp -d "$DEPLOY_PATH/.releases/$SHA.XXXXXXXX")
+[ ! -f .current-release-record ] || cp -p .current-release-record "$RELEASE_DIR/previous-release-record"
 for f in docker-compose.yml docker-compose.production.yml release.env; do
   [ ! -f "$f" ] || cp -p "$f" "$RELEASE_DIR/previous-$f"
   cp "$INCOMING/$f" "$RELEASE_DIR/$f"
@@ -80,6 +81,7 @@ if ! "${COMPOSE[@]}" up -d --wait --wait-timeout 300; then
   fi
   exit 1
 fi
+printf '%s\n' "${RELEASE_DIR##*/}" > .current-release-record
 printf '%s\n' "$SHA" > .current-release
 cp "$INCOMING/rollback.sh" scripts-rollback.sh
 "${COMPOSE[@]}" ps
