@@ -4,7 +4,7 @@ on:
   push:
     branches: [main]
   pull_request:
-    branches: [main]
+    branches: [main, 'fix/sdd-*', 'feat/sdd-*']
   workflow_dispatch:
     inputs:
       confirm:

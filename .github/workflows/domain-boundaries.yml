@@ -1,7 +1,7 @@
 name: Domain Boundaries
 on:
   pull_request:
-    branches: [main, develop]
+    branches: [main, develop, 'fix/sdd-*', 'feat/sdd-*']
 permissions:
   contents: read
 concurrency:

@@ -1,7 +1,7 @@
 name: Services Validation
 on:
   pull_request:
-    branches: [main, develop]
+    branches: [main, develop, 'fix/sdd-*', 'feat/sdd-*']
   workflow_call:
 permissions:
   contents: read
