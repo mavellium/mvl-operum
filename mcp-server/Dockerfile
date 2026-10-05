@@ -1,7 +1,9 @@
 # ── Base: Node 22 Alpine + pnpm via corepack ──────────────────────────────────
 FROM node:22-alpine AS base
-RUN apk update && apk upgrade --no-cache libcrypto3 libssl3 \
- && apk add --no-cache libc6-compat
+RUN for attempt in 1 2 3; do \
+      if apk update && apk upgrade --no-cache libcrypto3 libssl3 && apk add --no-cache libc6-compat; then exit 0; fi; \
+      sleep 2; \
+    done; exit 1
 ENV PNPM_HOME="/pnpm"
 ENV PATH="$PNPM_HOME:$PNPM_HOME/bin:$PATH"
 RUN corepack enable
