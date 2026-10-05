@@ -8,7 +8,7 @@ const call = path => new Promise((resolve, reject) => {
   const request = http.get({ socketPath: '/var/run/docker.sock', path }, response => {
     let body = ''
     response.on('data', chunk => { body += chunk; if (body.length > 4e6) request.destroy(new Error('Too large')) })
-    response.on('end', () => resolve({ status: response.statusCode, body }))
+    response.on('end', () => resolve({ status: response.statusCode, body, apiVersion: response.headers['api-version'] }))
   })
   request.setTimeout(3000, () => request.destroy(new Error('Timeout')))
   request.on('error', reject)
@@ -26,6 +26,7 @@ http.createServer(async (req, res) => {
       res.writeHead(result.status, { 'Content-Type': 'application/json' }).end(result.body)
     } else if (path === '/version' || path === '/_ping') {
       const result = await call(path)
+      if (result.apiVersion) res.setHeader('Api-Version', result.apiVersion)
       res.writeHead(result.status).end(result.body)
     } else {
       const inspect = /^\/containers\/([a-f0-9]{64})\/json$/.exec(path)
@@ -43,7 +44,7 @@ http.createServer(async (req, res) => {
       const match = /^\/containers\/([a-f0-9]{64})\/logs$/.exec(path)
       if (!match || !ids.has(match[1])) { res.writeHead(403).end(); return }
       // Only logs for a container discovered in this project; no inspect/env/exec.
-      const request = http.get({ socketPath: '/var/run/docker.sock', path: url.pathname + url.search }, response => {
+      const request = http.get({ socketPath: '/var/run/docker.sock', path: path + url.search }, response => {
         res.writeHead(response.statusCode, { 'Content-Type': 'application/vnd.docker.raw-stream' })
         response.pipe(res)
       })
