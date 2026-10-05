@@ -39,7 +39,7 @@ echo 'Eleven scrape targets are UP'
 probe 'fetch("http://grafana:3000/api/health").then(r=>{if(!r.ok)process.exit(1)}).catch(()=>process.exit(1))'
 "${COMPOSE[@]}" exec -T fixture node -e 'fetch("http://localhost:3000/test",{headers:{"X-Request-ID":"operum-observability-trace"}})'
 for i in {1..30}; do
-  if probe 'fetch("http://loki:3100/loki/api/v1/query?query="+encodeURIComponent("{job=\"operum\"} |= \"operum-observability-trace\"")).then(r=>r.json()).then(x=>{if(!x.data.result.length)process.exit(1)}).catch(()=>process.exit(1))'; then break; fi
+  if probe 'fetch("http://loki:3100/loki/api/v1/query_range?query="+encodeURIComponent("{job=\"operum\"} |= \"operum-observability-trace\"")).then(r=>r.json()).then(x=>{if(!x.data.result.length)process.exit(1)}).catch(()=>process.exit(1))'; then break; fi
   sleep 2
   [ "$i" -ne 30 ]
 done
