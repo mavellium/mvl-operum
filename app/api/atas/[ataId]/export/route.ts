@@ -22,6 +22,7 @@ export async function GET(
     if (!(await canProjectPermission(session, ata.projetoId, 'documentos:ver'))) return NextResponse.json({ error: 'Sem permissão' }, { status: 403 })
 
     const data: AtaExportData = {
+      instituicao: ata.instituicao,
       numero: ata.numero,
       nomeProjeto: ata.nomeProjeto,
       local: ata.local,

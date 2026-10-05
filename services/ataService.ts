@@ -59,6 +59,7 @@ export async function criarAta(tenantId: string, input: CriarAtaInput) {
           projetoId: d.projetoId,
           numero,
           nomeProjeto: projeto.name,
+          instituicao: d.instituicao ?? undefined,
           local: d.local ?? undefined,
           data: dateOnly(new Date(d.data)),
           elaboradoPor: d.elaboradoPor,
@@ -118,7 +119,8 @@ export async function atualizarAta(tenantId: string, ataId: string, input: Atual
     return tx.ata.update({
       where: { id: ataId },
       data: {
-        local: d.local ?? undefined,
+        instituicao: d.instituicao ?? undefined,
+          local: d.local ?? undefined,
         data: dateOnly(new Date(d.data)),
         elaboradoPor: d.elaboradoPor,
         elaboradoPorUserId: d.elaboradoPorUserId ?? undefined,

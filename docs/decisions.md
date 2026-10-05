@@ -410,3 +410,16 @@ Ao substituir uma decisão, manter o texto histórico, alterar seu status e liga
 - **Alternativas consideradas:** Uma segunda árvore persistida; taxa global do projeto; adicionar datas de início/fim e edição de barras agora. Essas opções duplicam dados ou ampliam o escopo além do Gantt somente leitura.
 - **Consequências:** Não há migrations. Datas estimadas não representam um calendário de dias úteis nem dependências; revisão necessária quando houver edição de barras/calendário. Exportações clássicas continuam existentes.
 - **Referências:** `lib/wbsLayout.ts`, `lib/wbsRollup.ts`, `lib/wbsGantt.ts`, `components/wbs/WbsGantt.tsx`, SDD fase 6.
+
+
+## ADR-028 — Modelos documentais e histórico imutável do Termo
+
+- **Data:** 2026-10-05
+- **Status:** implementada; revisão pendente.
+- **Contexto:** SDD 7.1–7.4 exige os modelos do Prof. Fábio e separação do formulário com histórico por campo. Dados atuais do projeto/equipe não podem alterar documentos anteriores.
+- **Escolha:** guardar contexto de apresentação no payload e diferenças na transação da submissão; gerar Word do Termo/Stakeholders no navegador e manter exportação autenticada de Ata no servidor.
+- **Justificativa:** snapshots reconstituem conteúdo da versão; uso do navegador para imagens evita transformar URLs do documento em acesso de rede do servidor. Modelos variam orientação e tabelas, mas compartilham helpers DOCX.
+- **Alternativas consideradas nesta entrega:** prévia sempre junto ao formulário (não atende separação); reconstituir histórico com dados atuais (altera passado); buscar imagens arbitrárias no servidor (amplia superfície de SSRF).
+- **Consequências:** versões legadas mostram contexto/diff ausentes; uso de imagens externas depende de CORS; limite de 5 MB e falha explícita por imagem. PDF depende da impressão do navegador. Assinatura visual não constitui assinatura digital.
+- **Condições de revisão:** novos modelos ou necessidade de assinatura digital com verificação; requisito de exportação assíncrona no servidor exigiria armazenamento confiável de imagens.
+- **Referências:** `services/documentRevisionService.ts`, `lib/charterChanges.ts`, `lib/exports/`, `components/projetos/documentacao/ProjectCharter.tsx`, `docs/validation/sdd-7/README.md` e SDD fase 7.

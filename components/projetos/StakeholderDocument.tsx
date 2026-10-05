@@ -42,8 +42,8 @@ const StakeholderDocument = forwardRef<HTMLDivElement, Props>(
         ref={ref}
         className="bg-white text-black font-sans"
         style={{
-          width: '210mm',
-          minHeight: '297mm',
+          width: '297mm',
+          minHeight: '210mm',
           padding: '15mm 15mm 20mm',
           fontSize: '9pt',
           lineHeight: '1.3',
@@ -72,7 +72,7 @@ const StakeholderDocument = forwardRef<HTMLDivElement, Props>(
               </div>
             )}
           </div>
-          <div className="flex-1 text-left">
+          <div className="flex-1 text-center">
             <p
               className="font-bold uppercase tracking-wide"
               style={{ fontSize: '11pt' }}
@@ -132,45 +132,14 @@ const StakeholderDocument = forwardRef<HTMLDivElement, Props>(
             </tr>
 
             <tr>
-              <td
-                style={{ border: '1px solid black', padding: '3px 6px', width: '75%' }}
-              >
-                <span className="font-bold">Aprovado por:</span>{' '}
-                {header.aprovadoPor}
-              </td>
-              <td
-                style={{ border: '1px solid black', padding: '3px 6px', width: '25%', whiteSpace: 'nowrap' }}
-              >
-                <span className="font-bold">Versão:</span>{' '}
-                {header.versao}
+              <td style={{ border: '1px solid black', padding: '3px 6px', width: '75%' }}><strong>Aprovado por:</strong> {header.aprovadoPor}</td>
+              <td style={{ border: '1px solid black', padding: '3px 6px', width: '25%' }}><strong>Assinatura:</strong>
+                {header.signatureUrl && <img src={header.signatureUrl} alt="Assinatura" style={{ maxHeight: '12mm', maxWidth: '55mm', objectFit: 'contain' }} />}
               </td>
             </tr>
-
-            {/* Linha 6 — Assinatura + Data de aprovação (Ajustada para ficar rigorosamente em linha) */}
             <tr>
-              <td
-                style={{ border: '1px solid black', padding: '3px 6px', height: '14mm', width: '75%', verticalAlign: 'middle' }}
-              >
-                <div className="flex items-center gap-2 h-full">
-                  <span className="font-bold">Assinatura:</span>
-                  {header.signatureUrl && (
-                    // eslint-disable-next-line @next/next/no-img-element
-                    <img
-                      src={header.signatureUrl}
-                      alt="Assinatura"
-                      style={{ maxHeight: '12mm', maxWidth: '60mm', objectFit: 'contain' }}
-                    />
-                  )}
-                </div>
-              </td>
-              <td
-                style={{ border: '1px solid black', padding: '3px 6px', width: '25%', verticalAlign: 'middle', whiteSpace: 'nowrap' }}
-              >
-                <div className="flex flex-row items-center gap-1">
-                  <span className="font-bold">Data de aprovação:</span>
-                  <span>{header.dataAprovacao}</span>
-                </div>
-              </td>
+              <td style={{ border: '1px solid black', padding: '3px 6px' }}><strong>Versão:</strong> {header.versao}</td>
+              <td style={{ border: '1px solid black', padding: '3px 6px' }}><strong>Data de aprovação:</strong> {header.dataAprovacao}</td>
             </tr>
           </tbody>
         </table>
@@ -185,7 +154,7 @@ const StakeholderDocument = forwardRef<HTMLDivElement, Props>(
         >
           <thead>
             <tr className="bg-gray-200">
-              {['Ref.', 'Nome', 'Empresa/Equipe', 'Cargo/Competência', 'e-mail', 'Telefone/Fax', 'Endereço', 'Observações'].map(
+              {['Ref.', 'Nome', 'Empresa/Equipe', 'Cargo/Competência', 'e-mail', 'Telefone/Celular', 'Endereço', 'Observação'].map(
                 col => (
                   <th
                     key={col}
