@@ -7,7 +7,15 @@ done
 export REDIS_PASSWORD=validation-only GRAFANA_PASSWORD=validation-only BASE_DOMAIN=validation.invalid
 printf '%s' '{"services":{"app":{"environment":{"INTERNAL_API_KEY":"validation-only","ALERT_WEBHOOK_URL":"http://sink:8080"}}}}' | python3 scripts/deploy/configure-observability.py
 COMPOSE=(docker compose -f docker-compose.validation.yml)
-cleanup() { "${COMPOSE[@]}" down -v --remove-orphans >/dev/null; rm -rf observability/private; }
+cleanup() {
+  local result=$?
+  if [ "$result" -ne 0 ]; then
+    "${COMPOSE[@]}" ps
+    "${COMPOSE[@]}" logs --no-color --tail 40 prometheus alloy loki alertmanager redis-exporter redis-queue-exporter redis-cache-exporter
+  fi
+  "${COMPOSE[@]}" down -v --remove-orphans >/dev/null
+  rm -rf observability/private
+}
 trap cleanup EXIT
 "${COMPOSE[@]}" up -d
 probe() {
@@ -20,12 +28,14 @@ for i in {1..30}; do
 done
 probe 'fetch("http://localhost:2375/containers/create",{method:"POST"}).then(r=>{if(r.status!==403)process.exit(1)})'
 probe 'fetch("http://localhost:2375/containers/json").then(r=>r.json()).then(async x=>{if(!x.length)throw Error("No scoped containers");const r=await fetch(`http://localhost:2375/containers/${x[0].Id}/json`);const d=await r.json();if(d.Config?.Env||d.Mounts||d.Path)throw Error("Sensitive inspect data exposed")}).catch(()=>process.exit(1))'
+echo 'Proxy read-only and scoped inspect verified'
 # Validate all 8 synthetic metrics targets + 3 real Redis exporters, empty provisioning.
 for i in {1..45}; do
   if probe 'fetch("http://prometheus:9090/api/v1/query?query=up").then(r=>r.json()).then(x=>{if(x.data.result.length!==11||x.data.result.some(t=>t.value[1]!=="1"))process.exit(1)}).catch(()=>process.exit(1))'; then break; fi
   sleep 2
   [ "$i" -ne 45 ]
 done
+echo 'Eleven scrape targets are UP'
 probe 'fetch("http://grafana:3000/api/health").then(r=>{if(!r.ok)process.exit(1)}).catch(()=>process.exit(1))'
 "${COMPOSE[@]}" exec -T fixture node -e 'fetch("http://localhost:3000/test",{headers:{"X-Request-ID":"operum-observability-trace"}})'
 for i in {1..30}; do
@@ -33,6 +43,7 @@ for i in {1..30}; do
   sleep 2
   [ "$i" -ne 30 ]
 done
+echo 'Request-ID found in Loki'
 "${COMPOSE[@]}" stop fixture
 for i in {1..90}; do
   if "${COMPOSE[@]}" logs --no-color sink | grep -E 'ALERT_RECEIVED.*OperumTargetDown'; then break; fi
