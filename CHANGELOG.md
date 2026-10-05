@@ -7,6 +7,12 @@ As versões até 1.6.0 foram reconstruídas retroativamente a partir do históri
 1.0.0 marca a entrada em produção na arquitetura de microsserviços, e cada marco de
 funcionalidade depois disso é uma versão MINOR.
 
+## [1.16.0] - 2026-10-05
+
+### Adicionado
+- MCP copia/importa para projeto existente com reutilização de sprints/colunas por nome, deduplicação de tarefas e simulação por padrão.
+- Link HTTPS de uso único para upload local multipart até 50 MB, com PAT cifrado, expiração de dez minutos e revalidação de autorização.
+
 ## [1.15.0] - 2026-10-05
 
 ### Adicionado

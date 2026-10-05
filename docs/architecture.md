@@ -1058,4 +1058,11 @@ O Termo alterna entre formulário privado e prévia explícita; alternar não sa
 
 Versões legadas sem contexto/diff mostram a ausência; não recebem cabeçalho atual silenciosamente. A prévia privada não exibe assinatura do gerente como aprovação. Imagens Word são buscadas exclusivamente no navegador, com URL segura, timeout e limite de 5 MB, preservando proporção; falha de imagem interrompe exportação com mensagem. O servidor da exportação de Ata não busca URLs de anexos.
 
+
+### MCP — importação incremental e uploads locais (fase 8)
+
+`target_project_id` opcional em copy/import reaproveita estrutura por nome normalizado no tenant destino e pula títulos similares >=0,9. Preflight consulta backlog e cards de todas as sprints; simulação permanece padrão. O cadastro e equipe do projeto existente não são sobrescritos. Escritas usam o gateway/PAT e não são transação distribuída; importações concorrentes podem competir na deduplicação.
+
+`operum_create_upload_link` verifica a tarefa e cifra grant AES-256-GCM com PAT/tarefa/tenant/nonce/expiração (10 min). `/uploads/:token` reserva o nonce uma única vez, revalida identidade/acesso pelo gateway, recebe um arquivo multipart privado temporário e encaminha-o por stream ao gateway/file-service. O parser é Busboy e o rate limit usa express-rate-limit (produção); 50 MB, tipos canônicos, dois uploads ativos, timeout 120 s e rate limit por socket peer. Resposta/telemetria não expõem PAT ou erro interno. O grant é consumido mesmo quando a tentativa falha, e o arquivo temporário é removido no finally. Reinício invalida links pendentes; nonce em memória exige uma réplica. `MCP_UPLOAD_SECRET`/`MCP_PUBLIC_URL` são configuração operacional; sem elas a tool informa o erro e os demais recursos continuam operando. O fallback público de produção em `api.operum.adm.br` cobre `/mcp` e `/uploads/`; a origem dedicada pode ser configurada quando seu DNS estiver disponível.
+
 O “hoje” do Gantt usa snapshot estável do servidor para hidratação e calendário local do navegador em seguida, atualizado por assinatura a cada minuto (`useCalendarToday`). As datas planejadas permanecem date-only; a linha de hoje não desloca datas do projeto nem assume que o calendário do usuário é UTC.

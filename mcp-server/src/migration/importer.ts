@@ -10,6 +10,7 @@ type Raw = Record<string, unknown>
 export interface ImportOptions {
   /** id ou e-mail de origem → id ou e-mail no destino. Tem prioridade sobre o casamento por e-mail. */
   userMapping?: Record<string, string>
+  targetProjectId?: string
   newName?: string
   includeComments: boolean
   dryRun: boolean
@@ -88,9 +89,10 @@ export async function importProject(
   rawBundle: unknown,
   opts: ImportOptions,
 ): Promise<ImportReport> {
+  if (opts.targetProjectId && !/^[A-Za-z0-9_-]{1,64}$/.test(opts.targetProjectId)) throw new UserError('target_project_id inválido')
   const bundle = validateBundle(rawBundle)
   const progress = opts.progress ?? (() => {})
-  const projectName = (opts.newName ?? bundle.project.name) as string
+  let projectName = (opts.newName ?? bundle.project.name) as string
   const includeComments = opts.includeComments && bundle.source.include_comments !== false
 
   const report: ImportReport = {
@@ -122,13 +124,35 @@ export async function importProject(
     gw.get<Raw[]>('/tags'),
   ])
 
-  if (targetProjects.some(p => p.name === projectName)) {
-    throw new UserError(
-      `Já existe um projeto "${projectName}" no tenant de destino (o nome é único por tenant). ` +
-        'Passe new_name com outro nome ou, se for uma importação anterior com falha, exclua-a antes.',
-    )
+  const existingProject = opts.targetProjectId ? await gw.get<Raw>(`/projects/${opts.targetProjectId}`) : null
+  if (existingProject) {
+    if (existingProject.tenantId !== undefined && existingProject.tenantId !== target.tenantId) throw new UserError('Projeto não encontrado neste tenant.')
+    projectName = String(existingProject.name)
+    report.target.project_id = String(existingProject.id)
+    report.target.project_name = projectName
+  } else if (targetProjects.some(p => p.name === projectName)) {
+    throw new UserError(`Já existe um projeto "${projectName}" no tenant de destino. Passe new_name ou target_project_id.`)
   }
-
+  const existingSprints = existingProject ? await gw.get<Raw[]>('/sprints', { projectId: String(existingProject.id) }) : []
+  const existingTitles: string[] = []
+  const existingColumns = new Map<string, Raw[]>()
+  if (existingProject) {
+    const backlog = await gw.get<Raw[]>('/cards/backlog', { projectId: String(existingProject.id) })
+    existingTitles.push(...backlog.map(t => String(t.title)))
+    for (const sp of existingSprints) {
+      existingColumns.set(String(sp.id), await gw.get<Raw[]>(`/sprints/${sp.id}/columns`))
+      const cards = await gw.get<Raw[]>(`/sprints/${sp.id}/cards`)
+      existingTitles.push(...cards.map(t => String(t.title)))
+    }
+  }
+  const skippedTasks = new Set<string>()
+  if (existingProject) for (const task of bundle.tasks) {
+    const duplicate = existingTitles.find(title => titleSimilarity(title, task.title) >= 0.9)
+    if (duplicate !== undefined) {
+      skippedTasks.add(task.source_id)
+      report.skipped.push({ entity: 'task', source_id: task.source_id, message: `Título igual ou similar (>=0,9): "${duplicate}"` })
+    } else existingTitles.push(task.title)
+  }
   // Mapeamento de pessoas: explícito (id ou e-mail) > e-mail igual (usuários ativos).
   const activeTargetUsers = targetUsers.filter(u => u.isActive !== false)
   const targetByEmail = new Map(activeTargetUsers.map(u => [String(u.email).toLowerCase(), String(u.id)]))
@@ -202,6 +226,22 @@ export async function importProject(
     report.warnings.push('Comentários são criados em nome do dono do token de destino; autor e data originais vão no início do texto.')
   }
 
+  if (existingProject) {
+    report.counts.planned.project = 0
+    const eligible = bundle.tasks.filter(t => !skippedTasks.has(t.source_id))
+    report.counts.planned.tasks = eligible.length
+    report.counts.planned.comments = includeComments ? eligible.reduce((sum,t) => sum+t.comments.filter(c=>c.content.trim()).length,0) : 0
+    report.counts.planned.responsibles = eligible.reduce((sum,t)=>sum+t.responsibles.filter(r=>userMap.has(r.source_user_id)).length,0)
+    report.counts.planned.tag_links = eligible.reduce((sum,t)=>sum+t.source_tag_ids.length,0)
+    report.counts.planned.macro_fases = 0; report.counts.planned.members = 0; report.counts.planned.stakeholders = 0
+    report.counts.planned.sprints = bundle.sprints.filter(sp => !existingSprints.some(e => normalizeName(String(e.name)) === normalizeName(sp.name))).length
+    report.counts.planned.columns = bundle.sprints.reduce((sum, sp) => {
+      const match = existingSprints.find(e => normalizeName(String(e.name)) === normalizeName(sp.name))
+      const columns = match ? existingColumns.get(String(match.id)) ?? [] : []
+      return sum + sp.columns.filter(c => !columns.some(e => normalizeName(String(e.title)) === normalizeName(c.title))).length
+    }, 0)
+    report.warnings.push('Projeto existente: cadastro, membros, macrofases e stakeholders preservados. Somente sprints/colunas faltantes, tarefas e seus vínculos/comentários são importados. Similaridade: Levenshtein normalizada; nomes usam NFC, espaços simples e minúsculas.')
+  }
   if (opts.dryRun) return report
 
   // ── Execução ────────────────────────────────────────────────
@@ -219,7 +259,7 @@ export async function importProject(
   progress(1, 7, 'Criando projeto')
   const note = `Importado de "${bundle.source.tenant_name ?? bundle.source.tenant_id}" / "${bundle.project.name}" em ${new Date().toISOString().slice(0, 10)} via MCP.`
   const p = bundle.project
-  const createdProject = await gw.post<Raw>(
+  const createdProject = existingProject ?? await gw.post<Raw>(
     '/projects',
     compact({
       name: projectName,
@@ -237,15 +277,15 @@ export async function importProject(
   )
   const projectId = String(createdProject.id)
   report.target.project_id = projectId
-  created.project = 1
+  created.project = existingProject ? 0 : 1
 
-  if (p.status && p.status !== 'ACTIVE') {
+  if (!existingProject && p.status && p.status !== 'ACTIVE') {
     await gw.patch(`/projects/${projectId}`, { status: p.status }).catch(err => fail('project_status', bundle.source.project_id, err))
   }
 
   // 2. Macro-fases, membros e stakeholders
   progress(2, 7, 'Macro-fases, membros e stakeholders')
-  if (bundle.macro_fases.length) {
+  if (!existingProject && bundle.macro_fases.length) {
     try {
       await gw.post(`/projects/${projectId}/macro-fases`, {
         fases: bundle.macro_fases.map(f => compact({ fase: f.fase, dataLimite: f.data_limite, custo: f.custo })),
@@ -256,7 +296,7 @@ export async function importProject(
     }
   }
 
-  for (const m of bundle.members) {
+  for (const m of existingProject ? [] : bundle.members) {
     const userId = userMap.get(m.source_user_id)
     if (!userId) {
       report.skipped.push({ entity: 'member', source_id: m.source_user_id, message: `sem correspondente no destino (${m.email ?? 'sem e-mail'})` })
@@ -270,7 +310,7 @@ export async function importProject(
     }
   }
 
-  if (bundle.stakeholders.length) {
+  if (!existingProject && bundle.stakeholders.length) {
     const existing = await gw.get<Raw[]>('/stakeholders').catch(() => [] as Raw[])
     const byName = new Map(existing.map(st => [String(st.name), String(st.id)]))
     for (const st of bundle.stakeholders) {
@@ -312,8 +352,9 @@ export async function importProject(
   progress(4, 7, 'Sprints e colunas')
   for (const sp of bundle.sprints) {
     let sprintId: string
+    const matchedSprint = existingSprints.find(e => normalizeName(String(e.name)) === normalizeName(sp.name))
     try {
-      const createdSprint = await gw.post<Raw>(
+      const createdSprint = matchedSprint ?? await gw.post<Raw>(
         '/sprints',
         compact({
           projectId,
@@ -327,13 +368,13 @@ export async function importProject(
       )
       sprintId = String(createdSprint.id)
       idMap.sprints[sp.source_id] = sprintId
-      created.sprints++
+      if (!matchedSprint) { created.sprints++; if (existingProject) existingSprints.push(createdSprint) }
     } catch (err) {
       fail('sprint', sp.source_id, err)
       continue
     }
 
-    if (sp.qualidade != null || sp.dificuldade != null) {
+    if (!matchedSprint && (sp.qualidade != null || sp.dificuldade != null)) {
       await gw
         .patch(`/sprints/${sprintId}`, compact({ qualidade: sp.qualidade, dificuldade: sp.dificuldade }))
         .catch(err => fail('sprint_evaluation', sp.source_id, err))
@@ -342,20 +383,22 @@ export async function importProject(
     const defaults = (await gw.get<Raw[]>(`/sprints/${sprintId}/columns`)).sort((a, b) => Number(a.position) - Number(b.position))
     for (const [i, col] of sp.columns.entries()) {
       try {
-        const reuse = defaults[i]
+        const reuse = existingProject ? defaults.find(e => normalizeName(String(e.title)) === normalizeName(col.title)) : defaults[i]
         if (reuse) {
-          await gw.patch(`/sprints/${sprintId}/columns/${reuse.id}`, { title: col.title, position: col.position })
+          if (!existingProject) await gw.patch(`/sprints/${sprintId}/columns/${reuse.id}`, { title: col.title, position: col.position })
           idMap.columns[col.source_id] = String(reuse.id)
         } else {
-          const createdCol = await gw.post<Raw>(`/sprints/${sprintId}/columns`, { title: col.title, position: col.position })
+          const position = existingProject ? defaults.reduce((max,c) => Math.max(max, Number(c.position) || 0), -1)+1 : col.position
+          const createdCol = await gw.post<Raw>(`/sprints/${sprintId}/columns`, { title: col.title, position })
           idMap.columns[col.source_id] = String(createdCol.id)
+          if (existingProject) defaults.push(createdCol)
         }
-        created.columns++
+        if (!existingProject || !reuse) created.columns++
       } catch (err) {
         fail('column', col.source_id, err)
       }
     }
-    for (const extra of defaults.slice(sp.columns.length)) {
+    for (const extra of existingProject ? [] : defaults.slice(sp.columns.length)) {
       await gw.delete(`/sprints/${sprintId}/columns/${extra.id}`).catch(err => fail('default_column_cleanup', String(extra.id), err))
     }
   }
@@ -408,7 +451,7 @@ export async function importProject(
   }
 
   let doneTasks = 0
-  await mapLimit(bundle.tasks, WRITE_CONCURRENCY, async task => {
+  await mapLimit(bundle.tasks.filter(task => !skippedTasks.has(task.source_id)), WRITE_CONCURRENCY, async task => {
     const taskId = await createTask(task)
     doneTasks++
     if (doneTasks % 20 === 0) progress(5, 7, `Tarefas (${doneTasks}/${bundle.tasks.length})`)
@@ -452,4 +495,20 @@ export async function importProject(
 
   progress(7, 7, 'Concluído')
   return report
+}
+
+export function normalizeName(value: string): string { return value.normalize('NFC').trim().replace(/\s+/g, ' ').toLocaleLowerCase('pt-BR') }
+export function titleSimilarity(a: string, b: string): number {
+  a = normalizeName(a); b = normalizeName(b)
+  if (a === b) return 1
+  if (!a.length || !b.length) return 0
+  if (Math.abs(a.length-b.length)/Math.max(a.length,b.length) > 0.1) return 0
+  if (a.length > 1000 || b.length > 1000) return 0
+  let previous = Array.from({ length: b.length+1 }, (_,i) => i)
+  for (let i=1;i<=a.length;i++) {
+    const current = [i]
+    for (let j=1;j<=b.length;j++) current[j] = Math.min(current[j-1]+1, previous[j]+1, previous[j-1]+(a[i-1]===b[j-1]?0:1))
+    previous = current
+  }
+  return 1-previous[b.length]/Math.max(a.length,b.length)
 }

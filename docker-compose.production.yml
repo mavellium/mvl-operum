@@ -58,6 +58,9 @@ services:
       resources:
         limits:
           memory: 256M
+    environment:
+      MCP_PUBLIC_URL: ${MCP_PUBLIC_URL:-https://api.operum.adm.br}
+      MCP_UPLOAD_SECRET: ${MCP_UPLOAD_SECRET:-}
     env_file:
       - .env
     networks:
@@ -70,8 +73,8 @@ services:
       - "traefik.http.routers.mcp-prod.service=mcp-server-${COMPOSE_PROJECT_NAME}"
       - "traefik.http.routers.mcp-prod.middlewares=secure-headers@file"
       # TODO: remover este router quando o registro DNS de mcp.operum.adm.br existir.
-      # Fallback temporário: expõe o MCP em api.operum.adm.br/mcp
-      - "traefik.http.routers.mcp-prod-api.rule=Host(`api.operum.adm.br`) && Path(`/mcp`)"
+      # Fallback temporário: expõe MCP e uploads em api.operum.adm.br
+      - "traefik.http.routers.mcp-prod-api.rule=Host(`api.operum.adm.br`) && (Path(`/mcp`) || PathPrefix(`/uploads/`))"
       - "traefik.http.routers.mcp-prod-api.entrypoints=websecure"
       - "traefik.http.routers.mcp-prod-api.tls.certresolver=myresolver"
       - "traefik.http.routers.mcp-prod-api.service=mcp-server-${COMPOSE_PROJECT_NAME}"
