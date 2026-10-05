@@ -388,7 +388,8 @@ export async function importProject(
           if (!existingProject) await gw.patch(`/sprints/${sprintId}/columns/${reuse.id}`, { title: col.title, position: col.position })
           idMap.columns[col.source_id] = String(reuse.id)
         } else {
-          const createdCol = await gw.post<Raw>(`/sprints/${sprintId}/columns`, { title: col.title, position: col.position })
+          const position = existingProject ? defaults.reduce((max,c) => Math.max(max, Number(c.position) || 0), -1)+1 : col.position
+          const createdCol = await gw.post<Raw>(`/sprints/${sprintId}/columns`, { title: col.title, position })
           idMap.columns[col.source_id] = String(createdCol.id)
           if (existingProject) defaults.push(createdCol)
         }
