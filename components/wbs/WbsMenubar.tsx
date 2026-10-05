@@ -16,9 +16,12 @@ import { exportMspdi } from '@/lib/wbsExportMspdi'
 import { exportWbsSvg, exportWbsPng } from '@/lib/wbsExportSvg'
 import { importWbsAction, getWbsTreeAction } from '@/app/actions/wbs'
 import type { WbsAction } from '@/lib/wbsReducer'
-import type { WbsNodeClient } from '@/types/wbs'
+import type { WbsNodeClient, WbsViewMode } from '@/types/wbs'
 
 export interface WbsMenubarProps {
+  viewMode?: WbsViewMode
+  onChangeView?: (mode: WbsViewMode) => void
+  canViewCosts?: boolean
   syncStatus: 'IDLE' | 'DIRTY' | 'SAVING' | 'ERROR' | 'CONFLICT'
   lastSavedAt: number | null
   zoom: number
@@ -252,6 +255,7 @@ function ToolbarCard({ title, items }: { title: string; items: ToolbarItem[] }) 
 // ── Main component ────────────────────────────────────────────────────────────
 
 export default function WbsMenubar({
+  viewMode = 'chart', onChangeView, canViewCosts = false,
   syncStatus, zoom, panX, panY,
   canUndo, canRedo, canEdit,
   nodes, rootId, selectedNodeIds, projetoId,
@@ -416,6 +420,12 @@ export default function WbsMenubar({
           <ToolbarCard key={card.title} title={card.title} items={card.items} />
         ))}
 
+        {onChangeView && <label className="text-xs flex items-center gap-1">Visualização
+          <select aria-label="Visualização da EAP" className="border rounded p-1" value={viewMode} onChange={e => onChangeView(e.target.value as WbsViewMode)}>
+            <option value="chart">EAP</option><option value="details">Chart View Details</option>
+            <option value="costs" disabled={!canViewCosts}>Hours and Cost View</option><option value="gantt">Gantt</option>
+          </select>
+        </label>}
         {/* Sync indicator */}
         <div className="flex items-center pl-1">
           <Tooltip label={sync.label}>

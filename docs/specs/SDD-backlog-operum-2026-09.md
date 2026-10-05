@@ -659,23 +659,23 @@ Pedido: as permissões vêm da função (definida pelo admin no cadastro de fun�
 
 Referências: vídeo wbstool (0:47, menu Organizar) e https://youtu.be/YL4v4YgHMW4 (1:59, modos de visualização; 2:56, Gantt). SPEC anterior: `docs/SPEC-Ajustes-Operum-v1.md` §2 e §3.
 
-### 6.1 Botão de expansão
+### 6.1 Botão de expansão ✅
 Toggle centralizado na borda inferior do nó, meio para fora do card, mostrando "+" quando recolhido e "−" quando expandido. Sem contagem de filhos. Arquivo: `components/wbs/WbsNode.tsx`.
 
-### 6.2 Layout vertical (menu Organizar)
-Hoje só o layout horizontal funciona. Implementar em `lib/wbsLayout.ts`:
+### 6.2 Layout vertical (menu Organizar) ✅
+Implementado em `lib/wbsLayout.ts`:
 - **Vertical:** filhos empilhados à direita do pai, indentados, com conector em cotovelo (layout `ABAIXO_L` da SPEC v1).
 - **Misto:** por nó.
 
 Testes de geometria sem sobreposição.
 
-### 6.3 Modos de visualização
+### 6.3 Modos de visualização ✅
 - **Chart View Details:** o nó mostra código, título, responsável, duração, datas e custo.
 - **Hours and Cost View:** o nó mostra horas e custo, orçado × real, com rollup (`lib/wbsRollup.ts`, `lib/custosCalc.ts`).
 
 Alternância na `WbsMenubar`.
 
-### 6.4 Gráfico de Gantt
+### 6.4 Gráfico de Gantt ✅
 Nova visão em `/projetos/:id/wbs?view=gantt`:
 - barras por nó da EAP com datas;
 - agrupamento pela hierarquia (recolher e expandir);
@@ -685,6 +685,9 @@ Nova visão em `/projetos/:id/wbs?view=gantt`:
 Nós sem data aparecem sem barra. Primeiro só leitura; arrastar barras para editar fica para depois.
 
 ---
+
+### Revisão de consistência da fase 6 (04/10/2026)
+Geometria vertical/mista validada sem sobreposição; expansão conserva o botão existente na borda inferior. As duas novas visões usam a mesma árvore e autosave. Custos obedecem a permissão financeira e as taxas dos elaboradores, inclusive em subárvores recolhidas. Gantt usa prazo e duração em dias corridos, sem alterar datas. Não há mudança em migrations ou contratos de serviço. Arquitetura e ADR-027 atualizadas; evidências em `docs/validation/sdd-6/README.md`.
 
 ## Fase 7 — Documentos
 

@@ -399,3 +399,14 @@ Ao substituir uma decisão, manter o texto histórico, alterar seu status e liga
 - **Consequências:** dependência operacional adicional no proxy/collector/exporters; proxy é confiável e tem acesso ao socket. App mede chamadas BFF. Webhook real precisa de configuração e inventário, sem enviar alertas reais nesta PR. Estado real do Grafana não foi consultado.
 - **Condições de revisão:** OpenTelemetry distribuído, maior volume de logs, autenticação distinta para scrape ou novo serviço/dependência.
 - **Referências:** SDD 11.7–11.8; observability/; src/health de cada serviço; lib/operationalTelemetry.ts; docs/architecture.md.
+
+
+## ADR-027 — Visualizações derivadas da EAP sem nova fonte de dados
+- **Data:** 2026-10-04
+- **Status:** Aceita na implementação; revisão pela PR da fase 6.
+- **Contexto:** A EAP já guarda hierarquia, esforço e prazo; a planilha calcula custos por elaborador. O SDD 6.3–6.4 pede cartões detalhados e Gantt somente leitura.
+- **Escolha:** Reutilizar a árvore em memória e as funções financeiras, limitar taxas à permissão `planilha:ver`, e interpretar o prazo como fim do período estimado em dias corridos. Ausência de taxa produz custo incompleto; ausência de data produz linha sem barra.
+- **Justificativa:** Evita divergência com a planilha, perda de edições na alternância e datas inventadas.
+- **Alternativas consideradas:** Uma segunda árvore persistida; taxa global do projeto; adicionar datas de início/fim e edição de barras agora. Essas opções duplicam dados ou ampliam o escopo além do Gantt somente leitura.
+- **Consequências:** Não há migrations. Datas estimadas não representam um calendário de dias úteis nem dependências; revisão necessária quando houver edição de barras/calendário. Exportações clássicas continuam existentes.
+- **Referências:** `lib/wbsLayout.ts`, `lib/wbsRollup.ts`, `lib/wbsGantt.ts`, `components/wbs/WbsGantt.tsx`, SDD fase 6.

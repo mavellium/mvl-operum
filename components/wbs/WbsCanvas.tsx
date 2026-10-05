@@ -5,7 +5,9 @@ import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } fr
 // useLayoutEffect no cliente (mede antes do paint), useEffect no servidor (no-op em SSR)
 const useIsomorphicLayoutEffect = typeof window !== 'undefined' ? useLayoutEffect : useEffect
 import { computeLayout, resolveDropPosition, NODE_W, NODE_H } from '@/lib/wbsLayout'
-import type { WbsNodeClient } from '@/types/wbs'
+import { computeFinancialRollups, computeRollups } from '@/lib/wbsRollup'
+import WbsGantt from './WbsGantt'
+import type { WbsNodeClient, WbsViewMode } from '@/types/wbs'
 import { useToast } from '@/components/ui/Toast'
 import ConfirmDialog from '@/components/ui/ConfirmDialog'
 import { WbsProvider, useWbs } from './WbsContext'
@@ -42,6 +44,11 @@ export interface WbsCanvasProps {
   userId: string
   canEdit: boolean
   initialTree: GetTreeResult
+  initialView?: WbsViewMode
+  canViewCosts?: boolean
+  rates?: Record<string, number | null>
+  owners?: Record<string, string>
+  today?: string
 }
 
 interface DragState {
@@ -60,7 +67,15 @@ interface PendingDrag {
   startY: number
 }
 
-function WbsCanvasInner({ projetoId, canEdit }: { projetoId: string; canEdit: boolean }) {
+function WbsCanvasInner({ projetoId, canEdit, initialView = 'chart', canViewCosts = false, rates = {}, owners = {}, today = new Date().toISOString().slice(0, 10) }: Omit<WbsCanvasProps, 'initialTree' | 'tenantId' | 'userId'>) {
+  const [viewMode, setViewMode] = useState<WbsViewMode>(initialView === 'costs' && !canViewCosts ? 'chart' : initialView)
+  const changeView = (mode: WbsViewMode) => {
+    if (mode === 'costs' && !canViewCosts) return
+    setViewMode(mode)
+    const url = new URL(window.location.href)
+    url.searchParams.set('view', mode)
+    window.history.replaceState(null, '', url)
+  }
   const { state, dispatch } = useWbs()
   const { toast } = useToast()
 
@@ -101,7 +116,11 @@ function WbsCanvasInner({ projetoId, canEdit }: { projetoId: string; canEdit: bo
 
   const [nodeWidths, setNodeWidths] = useState<Record<string, number>>({})
   useIsomorphicLayoutEffect(() => { setNodeWidths(measureNodeWidths(state.nodes)) }, [state.nodes])
-  const layout = useMemo(() => computeLayout(state.nodes, state.rootId, nodeWidths), [state.nodes, state.rootId, nodeWidths])
+  const nodeHeight = viewMode === 'chart' ? NODE_H : 162
+  const displayWidths = useMemo(() => viewMode === 'chart' ? nodeWidths : Object.fromEntries(Object.entries(nodeWidths).map(([id, width]) => [id, Math.max(width, 250)])), [nodeWidths, viewMode])
+  const layout = useMemo(() => computeLayout(state.nodes, state.rootId, displayWidths, nodeHeight), [state.nodes, state.rootId, displayWidths, nodeHeight])
+  const rollups = useMemo(() => computeRollups(state.nodes, state.rootId), [state.nodes, state.rootId])
+  const finances = useMemo(() => canViewCosts ? computeFinancialRollups(state.nodes, state.rootId, rates) : {}, [state.nodes, state.rootId, rates, canViewCosts])
 
   // ── Seguir o card recém-criado: centraliza a tela nele ────────────────────
   useEffect(() => {
@@ -112,7 +131,7 @@ function WbsCanvasInner({ projetoId, canEdit }: { projetoId: string; canEdit: bo
     if (!rect || !g) return
     const zoom = stateRef.current.viewport.zoom
     const cx = g.x + g.width / 2
-    const cy = g.y + NODE_H / 2
+    const cy = g.y + g.height / 2
     dispatch({
       type: 'SET_VIEWPORT',
       payload: { zoom, panX: rect.width / 2 - cx * zoom, panY: rect.height / 2 - cy * zoom },
@@ -217,6 +236,7 @@ function WbsCanvasInner({ projetoId, canEdit }: { projetoId: string; canEdit: bo
   // ── Keyboard shortcuts ──────────────────────────────────────────────────────
   useEffect(() => {
     const handle = (e: KeyboardEvent) => {
+      if (viewMode === 'gantt' || !canEdit) return
       // Com um modal aberto (ex.: ConfirmDialog), os atalhos do canvas não devem
       // disparar — deixa o navegador/modal tratar Tab, Enter, Delete etc.
       if (e.target instanceof Element && e.target.closest('[role="dialog"]')) return
@@ -307,7 +327,7 @@ function WbsCanvasInner({ projetoId, canEdit }: { projetoId: string; canEdit: bo
     }
     window.addEventListener('keydown', handle)
     return () => window.removeEventListener('keydown', handle)
-  }, [dispatch, showStylePanel]) // eslint-disable-line react-hooks/exhaustive-deps
+  }, [dispatch, showStylePanel, viewMode, canEdit]) // eslint-disable-line react-hooks/exhaustive-deps
 
   // ── Space key tracking (pan cursor) ────────────────────────────────────────
   useEffect(() => {
@@ -353,7 +373,7 @@ function WbsCanvasInner({ projetoId, canEdit }: { projetoId: string; canEdit: bo
     }
     el.addEventListener('wheel', handler, { passive: false })
     return () => el.removeEventListener('wheel', handler)
-  }, [dispatch])
+  }, [dispatch, viewMode])
 
   // ── Fit to screen (zoom p/ caber tudo, card principal sempre centralizado) ─
   const fitToScreen = useCallback(() => {
@@ -566,7 +586,7 @@ function WbsCanvasInner({ projetoId, canEdit }: { projetoId: string; canEdit: bo
       const maxY = Math.max(m.y0, m.y1)
       const hit: string[] = []
       for (const [id, g] of Object.entries(layout.geometry)) {
-        if (g.x <= maxX && g.x + g.width >= minX && g.y <= maxY && g.y + NODE_H >= minY) {
+        if (g.x <= maxX && g.x + g.width >= minX && g.y <= maxY && g.y + g.height >= minY) {
           hit.push(id)
         }
       }
@@ -605,6 +625,9 @@ function WbsCanvasInner({ projetoId, canEdit }: { projetoId: string; canEdit: bo
   return (
     <div className="flex flex-col h-full overflow-hidden">
       <WbsMenubar
+        viewMode={viewMode}
+        onChangeView={changeView}
+        canViewCosts={canViewCosts}
         syncStatus={state.sync.status}
         lastSavedAt={state.sync.lastSavedAt}
         zoom={viewport.zoom}
@@ -634,7 +657,7 @@ function WbsCanvasInner({ projetoId, canEdit }: { projetoId: string; canEdit: bo
         }}
       />
 
-      <div className="relative flex flex-1 overflow-hidden">
+      {viewMode === 'gantt' ? <WbsGantt nodes={state.nodes} rootId={state.rootId} today={today} /> : <div className="relative flex flex-1 overflow-hidden">
         {/* Canvas */}
         <div
           ref={canvasRef}
@@ -687,6 +710,12 @@ function WbsCanvasInner({ projetoId, canEdit }: { projetoId: string; canEdit: bo
                 <WbsNodeCard
                   key={node.id}
                   node={node}
+                  viewMode={viewMode}
+                  canEdit={canEdit}
+                  canViewCosts={canViewCosts}
+                  owner={owners[node.properties.ownerUserId ?? '']}
+                  duration={rollups[node.id]?.durationDays}
+                  financial={finances[node.id]}
                   geom={geom}
                   isSelected={state.selectedNodeIds.includes(node.id)}
                   isEditing={state.editingNodeId === node.id}
@@ -740,13 +769,13 @@ function WbsCanvasInner({ projetoId, canEdit }: { projetoId: string; canEdit: bo
             onClose={() => setShowStylePanel(false)}
           />
         )}
-      </div>
+      </div>}
 
       {/* DnD ghost */}
       {drag && draggingNode && (
         <div style={{
-          position: 'fixed', left: drag.x + 12, top: drag.y - NODE_H / 2,
-          width: layout.geometry[drag.nodeId]?.width ?? NODE_W, height: NODE_H, boxSizing: 'border-box',
+          position: 'fixed', left: drag.x + 12, top: drag.y - nodeHeight / 2,
+          width: layout.geometry[drag.nodeId]?.width ?? NODE_W, height: nodeHeight, boxSizing: 'border-box',
           backgroundColor: draggingNode.style.backgroundColor,
           border: `${draggingNode.style.borderWidth}px solid ${draggingNode.style.borderColor}`,
           borderRadius: draggingNode.style.borderRadius,
@@ -769,7 +798,7 @@ function WbsCanvasInner({ projetoId, canEdit }: { projetoId: string; canEdit: bo
 
       {/* Badge indicando o que acontecerá no drop (Filho / Antes / Depois) */}
       {drag?.targetId && drag.targetPos && (
-        <div style={{ position: 'fixed', left: drag.x + 12, top: drag.y + NODE_H / 2 + 8, zIndex: 9999, pointerEvents: 'none' }}>
+        <div style={{ position: 'fixed', left: drag.x + 12, top: drag.y + nodeHeight / 2 + 8, zIndex: 9999, pointerEvents: 'none' }}>
           <div className={`inline-flex items-center gap-1 rounded-md px-2 py-0.5 text-xs font-semibold text-white shadow-lg ${
             drag.targetPos === 'INSIDE' ? 'bg-blue-600' : 'bg-emerald-600'
           }`}>
@@ -831,10 +860,10 @@ function WbsCanvasInner({ projetoId, canEdit }: { projetoId: string; canEdit: bo
   )
 }
 
-export default function WbsCanvas({ initialTree, projetoId, canEdit }: WbsCanvasProps) {
+export default function WbsCanvas({ initialTree, ...props }: WbsCanvasProps) {
   return (
     <WbsProvider initialTree={initialTree}>
-      <WbsCanvasInner projetoId={projetoId} canEdit={canEdit} />
+      <WbsCanvasInner {...props} />
     </WbsProvider>
   )
 }

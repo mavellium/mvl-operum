@@ -1,3 +1,4 @@
+export type WbsViewMode = 'chart' | 'details' | 'costs' | 'gantt';
 export type WbsLayoutOrientation = 'LADO_A_LADO' | 'ABAIXO' | 'ABAIXO_L';
 export type ClipboardActionType = 'COPY' | 'CUT' | null;
 export type DropPosition = 'INSIDE' | 'BEFORE' | 'AFTER';
