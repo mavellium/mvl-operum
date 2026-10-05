@@ -11,6 +11,7 @@ cleanup() {
   docker network rm "$NET" >/dev/null 2>&1 || true
 }
 trap cleanup EXIT
+docker build -f scripts/validation/Minio.Dockerfile -t operum-minio-validation .
 docker network create "$NET" >/dev/null
 start() {
   local name=$1; shift
@@ -20,7 +21,7 @@ start() {
 start "$PREFIX-pg" --network-alias postgres -e POSTGRES_PASSWORD=smoke-local-only -e POSTGRES_USER=operum -e POSTGRES_DB=operum postgres:17-alpine
 for i in {1..30}; do docker exec "$PREFIX-pg" pg_isready -U operum >/dev/null 2>&1 && break; sleep 2; done
 start "$PREFIX-redis" --network-alias redis --network-alias redis-queue --network-alias redis-cache redis:7-alpine redis-server --requirepass smoke-local-only --maxmemory-policy noeviction
-start "$PREFIX-minio" --network-alias minio -e MINIO_ROOT_USER=smoke-user -e MINIO_ROOT_PASSWORD=smoke-local-only quay.io/minio/minio:RELEASE.2025-04-08T15-41-24Z server /data
+start "$PREFIX-minio" --network-alias minio -e MINIO_ROOT_USER=smoke-user -e MINIO_ROOT_PASSWORD=smoke-local-only operum-minio-validation server /data
 # Isolated downstream fixture for gateway/MCP readiness, no application data.
 start "$PREFIX-downstream" --network-alias downstream node:22-alpine node -e 'require("http").createServer((q,s)=>{s.setHeader("Content-Type","application/json");s.end("{\"status\":\"ready\"}")}).listen(4000)'
 case "$SERVICE" in

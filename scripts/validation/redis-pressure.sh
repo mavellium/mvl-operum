@@ -16,7 +16,11 @@ docker exec "$PREFIX-cache" redis-cli eval 'for i=1,2000 do redis.call("SET","ca
 [ "$(docker exec "$PREFIX-session" redis-cli get session:jti)" = confirmed ]
 [ "$(docker exec "$PREFIX-queue" redis-cli lindex bull:notifications:wait 0)" = job-1 ]
 for kind in session queue; do
-  docker exec "$PREFIX-$kind" redis-cli eval 'for i=1,2000 do local r=redis.pcall("SET","pressure:"..i,string.rep("x",16384)); if type(r)=="table" and r.err then return r.err end end return "unexpected-success"' 0 | grep -i 'OOM'
+  # Lua is atomic and may exceed maxmemory during the script; probe the next
+  # independent write to verify the server's visible noeviction refusal.
+  docker exec "$PREFIX-$kind" redis-cli eval 'for i=1,2000 do redis.call("SET","pressure:"..i,string.rep("x",16384)) end return "filled"' 0 >/dev/null
+  docker exec "$PREFIX-$kind" redis-cli set pressure-probe rejected | grep -i 'OOM'
+
 done
 [ "$(docker exec "$PREFIX-session" redis-cli get session:jti)" = confirmed ]
 [ "$(docker exec "$PREFIX-queue" redis-cli lindex bull:notifications:wait 0)" = job-1 ]

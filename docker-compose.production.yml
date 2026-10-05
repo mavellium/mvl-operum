@@ -171,7 +171,8 @@ services:
     tmpfs:
       - /tmp
     volumes:
-      - ./observability:/etc/prometheus:ro
+      - ./observability/prometheus.yml:/etc/prometheus/prometheus.yml:ro
+      - ./observability/alerts.yml:/etc/prometheus/alerts.yml:ro
       - ./observability/private/metrics.token:/etc/prometheus/metrics.token:ro
       - prometheus-data:/prometheus
     command:
