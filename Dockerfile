@@ -1,8 +1,10 @@
 # ── Base: Node 22 Alpine + pnpm via corepack ──────────────────────────────────
 # corepack is bundled with Node 18+; no npm install -g pnpm needed.
 FROM node:22-alpine AS base
-RUN apk update && apk upgrade --no-cache libcrypto3 libssl3 \
- && apk add --no-cache libc6-compat
+RUN for attempt in 1 2 3; do \
+      if apk update && apk upgrade --no-cache libcrypto3 libssl3 && apk add --no-cache libc6-compat; then exit 0; fi; \
+      sleep 2; \
+    done; exit 1
 ENV PNPM_HOME="/pnpm"
 ENV PATH="$PNPM_HOME:$PNPM_HOME/bin:$PATH"
 RUN corepack enable
@@ -13,7 +15,10 @@ RUN corepack enable
 # The @prisma/engines postinstall downloads the musl binary here.
 # test -f at the end makes the build fail loudly if the download was skipped.
 FROM node:22-alpine AS engine-dl
-RUN apk update && apk upgrade --no-cache libcrypto3 libssl3
+RUN for attempt in 1 2 3; do \
+      if apk update && apk upgrade --no-cache libcrypto3 libssl3; then exit 0; fi; \
+      sleep 2; \
+    done; exit 1
 RUN npm install -g prisma@7.7.0 \
  && find /usr/local/lib/node_modules -name "schema-engine-linux-musl-openssl-3.0.x" -type f \
     | head -1 \
@@ -55,8 +60,10 @@ RUN pnpm build
 # run npm install, breaking the prisma CLI setup below. The runner doesn't use
 # pnpm, so corepack is not needed here.
 FROM node:22-alpine AS runner
-RUN apk update && apk upgrade --no-cache libcrypto3 libssl3 \
- && apk add --no-cache libc6-compat
+RUN for attempt in 1 2 3; do \
+      if apk update && apk upgrade --no-cache libcrypto3 libssl3 && apk add --no-cache libc6-compat; then exit 0; fi; \
+      sleep 2; \
+    done; exit 1
 WORKDIR /app
 ENV NODE_ENV=production
 ENV NEXT_TELEMETRY_DISABLED=1

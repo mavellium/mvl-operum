@@ -1,14 +1,19 @@
 # ── Base: Node 22 Alpine + pnpm via corepack ──────────────────────────────────
 FROM node:22-alpine AS base
-RUN apk update && apk upgrade --no-cache libcrypto3 libssl3 \
- && apk add --no-cache libc6-compat
+RUN for attempt in 1 2 3; do \
+      if apk update && apk upgrade --no-cache libcrypto3 libssl3 && apk add --no-cache libc6-compat; then exit 0; fi; \
+      sleep 2; \
+    done; exit 1
 ENV PNPM_HOME="/pnpm"
 ENV PATH="$PNPM_HOME:$PNPM_HOME/bin:$PATH"
 RUN corepack enable
 
 # ── Stage: Download Prisma schema-engine ──────────────────────────────────────
 FROM node:22-alpine AS engine-dl
-RUN apk update && apk upgrade --no-cache libcrypto3 libssl3
+RUN for attempt in 1 2 3; do \
+      if apk update && apk upgrade --no-cache libcrypto3 libssl3; then exit 0; fi; \
+      sleep 2; \
+    done; exit 1
 RUN npm install -g prisma@7.7.0 \
  && find /usr/local/lib/node_modules -name "schema-engine-linux-musl-openssl-3.0.x" -type f \
      | head -1 \
