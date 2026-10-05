@@ -1,4 +1,5 @@
 import { z } from 'zod'
+import { uploadLinks } from '../uploadLink.js'
 import type { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js'
 import type { TenantContext, TenantRegistry } from '../tenants.js'
 import type { Gateway } from '../gateway.js'
@@ -89,6 +90,15 @@ function defaultLinkTitle(url: URL): string {
 }
 
 export function registerAttachmentTools(server: McpServer, registry: TenantRegistry, deps: AttachmentDeps = defaultAttachmentDeps) {
+  defineTool(server, registry, 'operum_create_upload_link', {
+    title: 'Gerar link de upload de uso único',
+    description: 'Link HTTPS válido por 10 minutos para enviar arquivo local via curl multipart (até 50 MB), sem base64. Cada tentativa consome o link; em erro gere outro. Não compartilhe o link.',
+    inputSchema: { task_id: idSchema, file_name: z.string().min(1).max(255).optional() },
+    entity: 'Tarefa', annotations: { destructiveHint: false, idempotentHint: false },
+  }, async (args, ctx) => {
+    await assertTask(ctx, args.task_id)
+    return uploadLinks.issue(registry.tokenFor(ctx), args.task_id, ctx.tenantId, args.file_name)
+  })
   defineTool(
     server,
     registry,

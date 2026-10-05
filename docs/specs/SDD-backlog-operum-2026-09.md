@@ -717,7 +717,9 @@ Modelos recebidos nos anexos do Operum/Drive. Itens 7.1–7.4 implementados nest
 
 ## Fase 8 — MCP
 
-### 8.1 Copiar ou importar para um projeto existente
+Implementação 8.1/8.3 nesta entrega; 8.2/8.4 preservados e verificados pela suite MCP. Revisão pendente; detalhes operacionais em `mcp-server/README.md`.
+
+### 8.1 Copiar ou importar para um projeto existente ✅
 `target_project_id` opcional em `operum_copy_project` e `operum_import_project` (`mcp-server/src/migration/importer.ts`):
 - sprints e colunas são casadas pelo nome normalizado (as que não existirem são criadas);
 - tarefas com título igual, ou com similaridade de pelo menos 0,9, são puladas;
@@ -753,7 +755,7 @@ Continua `dry_run=true` por padrão.
 
 **Achado:** o file-service não confere o tenant nas rotas expostas pelo gateway. Virou o item 4.1.
 
-### 8.3 URL de upload de uso único (arquivo que está no computador)
+### 8.3 URL de upload de uso único (arquivo que está no computador) ✅
 **Card:** "MCP: URL de upload de uso único para anexar arquivo que está no computador" (média).
 
 **Problema:** no `operum_upload_attachment` (8.2), o arquivo chega em `content_base64` ou por `url` pública. Arquivo local e grande não tem URL, e em base64 o modelo precisaria escrever centenas de milhares de caracteres na chamada. Foi o caso da imagem da EAP que estava no `.docx`.

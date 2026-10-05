@@ -58,6 +58,9 @@ services:
       resources:
         limits:
           memory: 256M
+    environment:
+      MCP_PUBLIC_URL: ${MCP_PUBLIC_URL:-https://mcp.operum.adm.br}
+      MCP_UPLOAD_SECRET: ${MCP_UPLOAD_SECRET:-}
     env_file:
       - .env
     networks:

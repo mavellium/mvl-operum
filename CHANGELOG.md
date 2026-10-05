@@ -7,6 +7,15 @@ As versões até 1.6.0 foram reconstruídas retroativamente a partir do históri
 1.0.0 marca a entrada em produção na arquitetura de microsserviços, e cada marco de
 funcionalidade depois disso é uma versão MINOR.
 
+## [1.21.0] — 2026-10-15
+
+### Adicionado
+- **MCP:** `operum_copy_project` e `operum_import_project` aceitam `target_project_id` para copiar ou importar dentro de um projeto que já existe. Sprints e colunas são casadas pelo nome (as que faltam são criadas, no fim da ordem do destino); tarefas com título igual ou com similaridade de pelo menos 0,9 são puladas e listadas no relatório. Continua com `dry_run=true` por padrão.
+- **MCP:** `operum_create_upload_link` gera um link HTTPS de uso único (10 minutos) para enviar ao card um arquivo que está no computador, com `curl`, sem passar o conteúdo pela conversa. Até 50 MB, PAT cifrado (AES-256-GCM), autorização conferida de novo no gateway e limite de requisições na rota `/uploads/:token`. Exige `MCP_UPLOAD_SECRET` e `MCP_PUBLIC_URL` no ambiente; sem eles, só essa tool fica indisponível.
+
+### Observação
+- Implementado em 05/10 (PR #57), mas a PR foi mesclada na branch da PR #56 depois de a #56 já ter entrado na main, e o código não chegou à produção. Esta versão traz essas mudanças para a main.
+
 ## [1.20.0] — 2026-10-14
 
 ### Adicionado
