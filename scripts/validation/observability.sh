@@ -19,15 +19,18 @@ cleanup() {
 trap cleanup EXIT
 "${COMPOSE[@]}" up -d
 probe() {
+  "${COMPOSE[@]}" exec -T fixture node -e "$1"
+}
+proxy_probe() {
   "${COMPOSE[@]}" exec -T docker-log-proxy node -e "$1"
 }
 for i in {1..30}; do
-  if probe 'fetch("http://localhost:2375/_ping").then(r=>{if(!r.ok)process.exit(1)}).catch(()=>process.exit(1))'; then break; fi
+  if proxy_probe 'fetch("http://localhost:2375/_ping").then(r=>{if(!r.ok)process.exit(1)}).catch(()=>process.exit(1))'; then break; fi
   sleep 1
   [ "$i" -ne 30 ]
 done
-probe 'fetch("http://localhost:2375/containers/create",{method:"POST"}).then(r=>{if(r.status!==403)process.exit(1)})'
-probe 'fetch("http://localhost:2375/containers/json").then(r=>r.json()).then(async x=>{if(!x.length)throw Error("No scoped containers");const r=await fetch(`http://localhost:2375/containers/${x[0].Id}/json`);const d=await r.json();if(d.Config?.Env||d.Mounts||d.Path)throw Error("Sensitive inspect data exposed")}).catch(()=>process.exit(1))'
+proxy_probe 'fetch("http://localhost:2375/containers/create",{method:"POST"}).then(r=>{if(r.status!==403)process.exit(1)})'
+proxy_probe 'fetch("http://localhost:2375/containers/json").then(r=>r.json()).then(async x=>{if(!x.length)throw Error("No scoped containers");const r=await fetch(`http://localhost:2375/containers/${x[0].Id}/json`);const d=await r.json();if(d.Config?.Env||d.Mounts||d.Path)throw Error("Sensitive inspect data exposed")}).catch(()=>process.exit(1))'
 echo 'Proxy read-only and scoped inspect verified'
 # Validate all 8 synthetic metrics targets + 3 real Redis exporters, empty provisioning.
 for i in {1..45}; do
