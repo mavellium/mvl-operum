@@ -48,6 +48,7 @@ export function resolveDropPosition(
 interface SubtreeSize {
   width: number
   height: number
+  rootX: number
 }
 
 function visibleChildren(
@@ -68,14 +69,15 @@ function visibleChildren(
 function buildSubtreeSizes(
   rootId: string,
   nodes: Record<string, WbsNodeClient>,
-  nodeWidths: Record<string, number>
+  nodeWidths: Record<string, number>,
+  nodeHeight: number,
 ): Record<string, SubtreeSize> {
   const preOrder: string[] = []
   const seen = new Set<string>()
   const q: string[] = [rootId]
 
-  while (q.length > 0) {
-    const id = q.shift()!
+  for (let cursor = 0; cursor < q.length; cursor++) {
+    const id = q[cursor]
     if (!nodes[id] || seen.has(id)) continue
     seen.add(id)
     preOrder.push(id)
@@ -91,28 +93,21 @@ function buildSubtreeSizes(
     const nw = nodeWidths[id] ?? NODE_W
 
     if (ch.length === 0) {
-      sizes[id] = { width: nw, height: NODE_H }
+      sizes[id] = { width: nw, height: nodeHeight, rootX: 0 }
       continue
     }
 
+    const childrenHeight = ch.reduce((sum, c) => sum + (sizes[c.id]?.height ?? nodeHeight), 0)
     if (node.layout === 'LADO_A_LADO') {
-      const totalW =
-        ch.reduce((s, c) => s + (sizes[c.id]?.width ?? NODE_W), 0) +
-        GAP_X * (ch.length - 1)
-      const maxH = Math.max(...ch.map(c => sizes[c.id]?.height ?? NODE_H))
-      sizes[id] = { width: Math.max(nw, totalW), height: NODE_H + GAP_Y + maxH }
+      const totalW = ch.reduce((sum, c) => sum + sizes[c.id].width, 0) + GAP_X * (ch.length - 1)
+      const width = Math.max(nw, totalW)
+      sizes[id] = { width, rootX: (width - nw) / 2, height: nodeHeight + GAP_Y + Math.max(...ch.map(c => sizes[c.id].height)) }
+    } else if (node.layout === 'ABAIXO_L') {
+      sizes[id] = { rootX: 0, width: nw + GAP_X + Math.max(...ch.map(c => sizes[c.id].width)), height: nodeHeight + childrenHeight + GAP_Y * ch.length }
     } else {
-      // ABAIXO ou ABAIXO_L
-      const totalH = ch.reduce(
-        (s, c) => s + (sizes[c.id]?.height ?? NODE_H) + GAP_Y,
-        0
-      )
-      const maxW = Math.max(...ch.map(c => sizes[c.id]?.width ?? NODE_W))
-      const xOff = node.layout === 'ABAIXO_L' ? GAP_X : 0
-      sizes[id] = {
-        width: Math.max(nw, xOff + maxW),
-        height: NODE_H + totalH,
-      }
+      const rootCenter = Math.max(nw / 2, ...ch.map(c => sizes[c.id].rootX + (nodeWidths[c.id] ?? NODE_W) / 2))
+      const right = Math.max(nw / 2, ...ch.map(c => sizes[c.id].width - sizes[c.id].rootX - (nodeWidths[c.id] ?? NODE_W) / 2))
+      sizes[id] = { rootX: rootCenter - nw / 2, width: rootCenter + right, height: nodeHeight + childrenHeight + GAP_Y * ch.length }
     }
   }
 
@@ -126,18 +121,19 @@ function buildSubtreeSizes(
 export function computeLayout(
   nodes: Record<string, WbsNodeClient>,
   rootId: string | null,
-  nodeWidths: Record<string, number> = {}
+  nodeWidths: Record<string, number> = {},
+  nodeHeight: number = NODE_H,
 ): WbsLayoutResult {
   if (!rootId || !nodes[rootId]) {
     return { geometry: {}, connectors: [], bounds: { width: 0, height: 0 } }
   }
 
-  const sizes = buildSubtreeSizes(rootId, nodes, nodeWidths)
+  const sizes = buildSubtreeSizes(rootId, nodes, nodeWidths, nodeHeight)
   const geometry: Record<string, WbsNodeGeometry> = {}
   const connectors: WbsConnector[] = []
 
   const stack: Array<{ id: string; x: number; y: number }> = [
-    { id: rootId, x: 0, y: 0 },
+    { id: rootId, x: sizes[rootId].rootX, y: 0 },
   ]
 
   while (stack.length > 0) {
@@ -146,7 +142,7 @@ export function computeLayout(
     if (!node || geometry[id]) continue
 
     const nw = nodeWidths[id] ?? NODE_W
-    geometry[id] = { id, x, y, width: nw, height: NODE_H }
+    geometry[id] = { id, x, y, width: nw, height: nodeHeight }
 
     const ch = visibleChildren(node, nodes)
     if (ch.length === 0) continue
@@ -154,55 +150,55 @@ export function computeLayout(
     if (node.layout === 'LADO_A_LADO') {
       const childSubtreeWidths = ch.map(c => sizes[c.id]?.width ?? NODE_W)
       const totalW = childSubtreeWidths.reduce((s, w) => s + w, 0) + GAP_X * (ch.length - 1)
-      const childY = y + NODE_H + GAP_Y
+      const childY = y + nodeHeight + GAP_Y
       const pCx = x + nw / 2
-      const midY = y + NODE_H + GAP_Y / 2
-      let subtreeLeft = x + nw / 2 - totalW / 2
+      const midY = y + nodeHeight + GAP_Y / 2
+      let subtreeLeft = x - sizes[id].rootX + (sizes[id].width - totalW) / 2
 
       for (let i = 0; i < ch.length; i++) {
         const sw = childSubtreeWidths[i]
         const chW = nodeWidths[ch[i].id] ?? NODE_W
-        const childX = subtreeLeft + sw / 2 - chW / 2
+        const childX = subtreeLeft + sizes[ch[i].id].rootX
         stack.push({ id: ch[i].id, x: childX, y: childY })
 
         // Centro da subárvore (independente da largura do card filho)
-        const cCx = subtreeLeft + sw / 2
+        const cCx = childX + chW / 2
         connectors.push({
           fromId: id,
           toId: ch[i].id,
-          path: `M ${pCx} ${y + NODE_H} V ${midY} H ${cCx} V ${childY}`,
+          path: `M ${pCx} ${y + nodeHeight} V ${midY} H ${cCx} V ${childY}`,
         })
         subtreeLeft += sw + GAP_X
       }
     } else if (node.layout === 'ABAIXO') {
       const pCx = x + nw / 2
-      let childY = y + NODE_H + GAP_Y
+      let childY = y + nodeHeight + GAP_Y
 
       for (const child of ch) {
-        stack.push({ id: child.id, x, y: childY })
+        stack.push({ id: child.id, x: x + nw / 2 - (nodeWidths[child.id] ?? NODE_W) / 2, y: childY })
         connectors.push({
           fromId: id,
           toId: child.id,
-          path: `M ${pCx} ${y + NODE_H} V ${childY}`,
+          path: `M ${pCx} ${y + nodeHeight} V ${childY}`,
         })
-        childY += (sizes[child.id]?.height ?? NODE_H) + GAP_Y
+        childY += (sizes[child.id]?.height ?? nodeHeight) + GAP_Y
       }
     } else {
       // ABAIXO_L — pai à esquerda, filhos indentados à direita, conector em cotovelo
       // (sai do meio-direito do pai, desce/sobe e entra na borda esquerda do filho).
-      const childX = x + GAP_X
       const spineX = x + nw + 10
-      const parentMidY = y + NODE_H / 2
-      let childY = y + NODE_H + GAP_Y
+      const parentMidY = y + nodeHeight / 2
+      let childY = y + nodeHeight + GAP_Y
 
       for (const child of ch) {
+        const childX = x + nw + GAP_X + sizes[child.id].rootX
         stack.push({ id: child.id, x: childX, y: childY })
         connectors.push({
           fromId: id,
           toId: child.id,
           path: `M ${x + nw} ${parentMidY} H ${spineX} V ${childY + NODE_H / 2} H ${childX}`,
         })
-        childY += (sizes[child.id]?.height ?? NODE_H) + GAP_Y
+        childY += (sizes[child.id]?.height ?? nodeHeight) + GAP_Y
       }
     }
   }
@@ -211,7 +207,7 @@ export function computeLayout(
   let maxY = 0
   for (const g of Object.values(geometry)) {
     if (g.x + g.width > maxX) maxX = g.x + g.width
-    if (g.y + NODE_H > maxY) maxY = g.y + NODE_H
+    if (g.y + nodeHeight > maxY) maxY = g.y + nodeHeight
   }
 
   return { geometry, connectors, bounds: { width: maxX, height: maxY + PILL_OVERHANG } }

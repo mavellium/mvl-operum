@@ -7,10 +7,20 @@ As versões até 1.6.0 foram reconstruídas retroativamente a partir do históri
 1.0.0 marca a entrada em produção na arquitetura de microsserviços, e cada marco de
 funcionalidade depois disso é uma versão MINOR.
 
-## [Não lançado]
-
-## [1.13.3] — 2026-10-05
+## [1.14.1] — 2026-10-05
 - **Deploy:** tentativas repetidas do mesmo SHA usam registros independentes, sem sobrescrever snapshots anteriores nem bloquear retries após falha. Rollback seleciona a tentativa concluída e mantém compatibilidade com registros legados por SHA.
+
+## [1.14.0] - 2026-10-04
+
+### Adicionado
+- EAP com modos Chart View Details e Hours and Cost View; custos orçados e reais usam taxas individuais dos elaboradores e respeitam `planilha:ver`.
+- Gantt somente leitura com hierarquia expansível, linha de hoje e zoom dia/semana/mês, disponível por `?view=gantt`.
+
+### Corrigido
+- Geometria vertical e mista da EAP evita sobreposição entre subárvores de larguras diferentes e acomoda cartões detalhados.
+- Acesso somente leitura não inicializa nem permite renomear a EAP.
+
+## [Não lançado]
 
 ## [1.13.2] — 2026-10-04
 - **Sessões (SDD 11.1):** revogação verificada no auth-service por gateway e operações locais do Next; indisponibilidade bloqueia acesso e login/logout exigem confirmação da persistência.
