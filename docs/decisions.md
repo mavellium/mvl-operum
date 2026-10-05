@@ -422,4 +422,3 @@ Ao substituir uma decisão, manter o texto histórico, alterar seu status e liga
 - **Consequências:** registros falhos permanecem no disco; retenção pode ser definida posteriormente. Compatibilidade de schema continua obrigatória para rollback, sem reversão de migrations/dados. Retry realiza novamente os gates de configuração, pull, revisão das imagens, migration e readiness.
 - **Condições de revisão:** caso seja implementada retenção, preservar registros referenciados pelo deploy ativo e seu rollback.
 - **Referências:** `scripts/deploy/remote-deploy.sh`, `scripts/deploy/rollback.sh`, `scripts/validation/release-simulation.mjs`, PR #54 e execução 37305929972.
-
