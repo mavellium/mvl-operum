@@ -14,7 +14,9 @@ jobs:
       - uses: actions/setup-node@v4
         with: {node-version: 22}
       - name: Immutable release and rollback simulation
-        run: node scripts/validation/release-simulation.mjs
+        run: |
+          node scripts/validation/observability-config.mjs
+          node scripts/validation/release-simulation.mjs
       - name: Redis memory pressure and recovery
         run: bash scripts/validation/redis-pressure.sh
       - name: Install isolated restore test utility

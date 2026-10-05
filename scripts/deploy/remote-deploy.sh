@@ -30,6 +30,9 @@ for service in services:
  assert re.fullmatch(r'ghcr\.io/[a-z0-9-]+/'+service.lower().replace('_','-')+r'@sha256:[a-f0-9]{64}',values[service+'_IMAGE'])
 PY
 [ -f .env ]
+# Validate the incoming Compose environment before altering the active release.
+PRE_COMPOSE=(docker compose --project-directory "$DEPLOY_PATH" --env-file .env --env-file "$INCOMING/release.env" -f "$INCOMING/docker-compose.yml" -f "$INCOMING/docker-compose.production.yml")
+"${PRE_COMPOSE[@]}" config --format json | python3 "$INCOMING/configure-observability.py" --check
 # A failed attempt must never reserve the SHA or overwrite an earlier snapshot.
 mkdir -p "$DEPLOY_PATH/.releases"
 RELEASE_DIR=$(mktemp -d "$DEPLOY_PATH/.releases/$SHA.XXXXXXXX")

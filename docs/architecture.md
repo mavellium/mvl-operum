@@ -1049,10 +1049,18 @@ Grafana recebe datasources/dashboard versionados. Alloy envia logs Docker para
 Loki através de proxy GET limitado a listagem/logs do projeto Compose; não
 recebe o socket do Docker; inspect é reduzido a metadados de TTY/driver, sem env/exec. Esse proxy permanece
 um componente confiável com acesso ao socket, numa rede exclusiva do collector.
-Alertmanager recebe webhook configurado pelo operador (ALERT_WEBHOOK_URL), sem
-destino real predefinido. O deploy exige esse destino e sincroniza observability;
-alertas cobrem target ausente, erros HTTP e memória Redis acima de 80%. Ensaio
-usa receptor sintético; não envia notificações externas a pessoas reais.
+Alertmanager recebe webhook opcional configurado pelo operador (`ALERT_WEBHOOK_URL`),
+sem destino real predefinido. Vazio mantém regras e alertas locais disponíveis no
+Prometheus/Alertmanager, sem integração de envio; o deploy emite aviso explícito.
+Uma URL preenchida inválida bloqueia o deploy. `INTERNAL_API_KEY` permanece
+obrigatória para métricas privadas, com diagnóstico separado. O preflight usa os
+Compose incoming e o `.env` da VPS via `--project-directory`, antes de substituir
+configurações/registrar tentativa. A geração mantém `private` 0700 e arquivos
+individuais 0644 para bind mounts; não registra valores de chave ou webhook.
+Alertas cobrem target ausente, erros HTTP e memória Redis acima de 80%. O CI
+valida configurações com/sem webhook usando o amtool da imagem de produção e
+ensaia entrega a receptor sintético, sem notificações externas a pessoas reais.
+Ver ADR-032.
 
 
 ### Visualizações da EAP (fase 6)
