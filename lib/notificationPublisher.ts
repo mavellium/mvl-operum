@@ -9,13 +9,13 @@ export async function publishNotification(input: CreateNotificacaoInput): Promis
     const { Queue } = await import('bullmq')
     const queue = new Queue('notifications', {
       connection: {
-        host: process.env.REDIS_HOST ?? 'redis',
-        port: Number(process.env.REDIS_PORT ?? 6379),
+        host: process.env.REDIS_QUEUE_HOST ?? 'redis',
+        port: Number(process.env.REDIS_QUEUE_PORT ?? 6379),
         password: process.env.REDIS_PASSWORD,
       },
     })
-    await queue.add('create', input)
-    await queue.close()
+    try { await queue.add('create', input) }
+    finally { await queue.close() }
     return
   }
 

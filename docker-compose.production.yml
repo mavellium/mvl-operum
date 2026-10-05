@@ -4,7 +4,7 @@
 services:
 
   app:
-    image: ghcr.io/${GHCR_OWNER}/app:prod
+    image: ${APP_IMAGE:?release digest required}
     deploy:
       resources:
         limits:
@@ -26,10 +26,16 @@ services:
   # Migrations do app (schema public) — mesma imagem :prod do serviço app.
   # O remote-deploy.sh roda `run --rm migrate` antes do `up -d`.
   migrate:
-    image: ghcr.io/${GHCR_OWNER}/app:prod
+    image: ${APP_IMAGE:?release digest required}
+
+  migrate-auth-service:
+    image: ${AUTH_SERVICE_IMAGE:?release digest required}
+
+  migrate-file-service:
+    image: ${FILE_SERVICE_IMAGE:?release digest required}
 
   api-gateway:
-    image: ghcr.io/${GHCR_OWNER}/api-gateway:prod
+    image: ${API_GATEWAY_IMAGE:?release digest required}
     deploy:
       resources:
         limits:
@@ -47,7 +53,7 @@ services:
       - "traefik.http.routers.api-prod.middlewares=secure-headers@file"
 
   mcp-server:
-    image: ghcr.io/${GHCR_OWNER}/mcp-server:prod
+    image: ${MCP_SERVER_IMAGE:?release digest required}
     deploy:
       resources:
         limits:
@@ -72,7 +78,7 @@ services:
       - "traefik.http.routers.mcp-prod-api.middlewares=secure-headers@file"
 
   auth-service:
-    image: ghcr.io/${GHCR_OWNER}/auth-service:prod
+    image: ${AUTH_SERVICE_IMAGE:?release digest required}
     deploy:
       resources:
         limits:
@@ -81,7 +87,7 @@ services:
       - .env
 
   file-service:
-    image: ghcr.io/${GHCR_OWNER}/file-service:prod
+    image: ${FILE_SERVICE_IMAGE:?release digest required}
     deploy:
       resources:
         limits:
@@ -90,7 +96,7 @@ services:
       - .env
 
   notification-service:
-    image: ghcr.io/${GHCR_OWNER}/notification-service:prod
+    image: ${NOTIFICATION_SERVICE_IMAGE:?release digest required}
     deploy:
       resources:
         limits:
@@ -99,10 +105,10 @@ services:
       - .env
 
   project-service:
-    image: ghcr.io/${GHCR_OWNER}/project-service:prod
+    image: ${PROJECT_SERVICE_IMAGE:?release digest required}
 
   sprint-service:
-    image: ghcr.io/${GHCR_OWNER}/sprint-service:prod
+    image: ${SPRINT_SERVICE_IMAGE:?release digest required}
 
   postgres:
     volumes:
@@ -117,11 +123,15 @@ services:
     command: >
       redis-server
       --appendonly yes
-      --maxmemory 256mb
-      --maxmemory-policy allkeys-lru
+      --maxmemory 512mb
+      --maxmemory-policy noeviction
       --requirepass ${REDIS_PASSWORD}
     volumes:
       - prod-redis-data:/data
+
+  redis-session:
+    volumes:
+      - prod-redis-session-data:/data
 
   minio:
     # Fixado na imagem que já roda em produção (RELEASE.2025-09-07T16-13-09Z).
@@ -162,6 +172,8 @@ services:
       - /tmp
     volumes:
       - ./observability/prometheus.yml:/etc/prometheus/prometheus.yml:ro
+      - ./observability/alerts.yml:/etc/prometheus/alerts.yml:ro
+      - ./observability/private/metrics.token:/etc/prometheus/metrics.token:ro
       - prometheus-data:/prometheus
     command:
       - "--config.file=/etc/prometheus/prometheus.yml"
@@ -200,6 +212,8 @@ services:
       - no-new-privileges:true
     volumes:
       - grafana-data:/var/lib/grafana
+      - ./observability/grafana/provisioning:/etc/grafana/provisioning:ro
+      - ./observability/grafana/dashboards:/var/lib/grafana/dashboards:ro
     environment:
       - GF_SECURITY_ADMIN_PASSWORD=${GRAFANA_PASSWORD}
       - GF_SERVER_ROOT_URL=https://grafana.${BASE_DOMAIN}
@@ -224,14 +238,57 @@ services:
         limits:
           memory: 256M
 
+  alloy:
+    image: grafana/alloy:v1.20.1
+    restart: always
+    security_opt: ["no-new-privileges:true"]
+    volumes:
+      - ./observability/alloy.alloy:/etc/alloy/config.alloy:ro
+    command: run /etc/alloy/config.alloy
+    networks: [internal, logs-collector]
+
+  docker-log-proxy:
+    image: node:22-alpine
+    command: node /proxy.cjs
+    security_opt: ["no-new-privileges:true"]
+    read_only: true
+    environment: ["DOCKER_FILTER_PROJECT=${COMPOSE_PROJECT_NAME}"]
+    volumes:
+      - ./observability/docker-log-proxy.cjs:/proxy.cjs:ro
+      - /var/run/docker.sock:/var/run/docker.sock:ro
+    networks: [logs-collector]
+
+  alertmanager:
+    image: prom/alertmanager:v0.27.0
+    restart: always
+    security_opt: ["no-new-privileges:true"]
+    volumes: ["./observability/private/alertmanager.yml:/etc/alertmanager/alertmanager.yml:ro"]
+    networks: [internal]
+
+  redis-exporter:
+    image: oliver006/redis_exporter:v1.93.0
+    environment: ["REDIS_ADDR=redis://redis-session:6379", "REDIS_PASSWORD=${REDIS_PASSWORD}"]
+    networks: [internal]
+  redis-queue-exporter:
+    image: oliver006/redis_exporter:v1.93.0
+    environment: ["REDIS_ADDR=redis://redis:6379", "REDIS_PASSWORD=${REDIS_PASSWORD}"]
+    networks: [internal]
+  redis-cache-exporter:
+    image: oliver006/redis_exporter:v1.93.0
+    environment: ["REDIS_ADDR=redis://redis-cache:6379", "REDIS_PASSWORD=${REDIS_PASSWORD}"]
+    networks: [internal]
+
 volumes:
   prod-pg-data:
   prod-redis-data:
+  prod-redis-session-data:
   prod-minio-data:
   prometheus-data:
   loki-data:
   grafana-data:
 
 networks:
+  logs-collector:
+    internal: true
   traefik-public:
     external: true

@@ -64,7 +64,8 @@ describe('signupAction', () => {
 
   it('sets session cookie and redirects on success', async () => {
     mockRegister.mockResolvedValue({ id: 'u1', name: 'Ana', email: 'ana@x.com', role: 'member', tenantId: 't1', tokenVersion: 0 })
-    mockEncrypt.mockResolvedValue('jwt-token')
+    mockLogin.mockResolvedValue({ token: 'jwt-token' })
+    mockEncrypt.mockResolvedValue('local-token-must-not-be-used')
     const cookieStore = { set: vi.fn(), delete: vi.fn(), get: vi.fn() }
     mockCookies.mockResolvedValue(cookieStore)
 
@@ -74,6 +75,8 @@ describe('signupAction', () => {
       'jwt-token',
       expect.objectContaining({ httpOnly: true }),
     )
+    expect(mockLogin).toHaveBeenCalledWith('ana@x.com', 'Test@1234')
+    expect(mockEncrypt).not.toHaveBeenCalled()
     // Cookie de sessão do navegador: some ao fechar o navegador (inatividade no proxy).
     expect(cookieStore.set.mock.calls[0][2]).not.toHaveProperty('maxAge')
     expect(cookieStore.set).toHaveBeenCalledWith(

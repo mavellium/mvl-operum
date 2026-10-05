@@ -55,10 +55,13 @@ let redisClient: Redis | null = null
 function getRedis(): Redis {
   if (!redisClient) {
     redisClient = new Redis({
-      host: process.env.REDIS_HOST ?? 'redis',
-      port: Number(process.env.REDIS_PORT ?? 6379),
+      host: process.env.REDIS_CACHE_HOST ?? 'redis-cache',
+      port: Number(process.env.REDIS_CACHE_PORT ?? 6379),
       password: process.env.REDIS_PASSWORD,
       lazyConnect: true,
+      maxRetriesPerRequest: 1,
+      commandTimeout: 2000,
+      connectTimeout: 2000,
     })
   }
   return redisClient
@@ -117,9 +120,8 @@ function hashToken(token: string): string {
 /**
  * Introspecta um PAT junto ao auth-service, com cache no Redis (TTL 60s).
  * Retorna `null` quando nem o cache nem o auth-service estão disponíveis —
- * nesse caso o chamador deve falhar fechado (503), diferente da checagem de
- * sessão JWT acima, que falha aberto (PAT é credencial de automação/escrita
- * de longa duração, não pode ter a mesma tolerância).
+ * nesse caso o chamador deve falhar fechado (503). Sessões JWT também
+ * exigem prova atual da autoridade em produção.
  */
 async function introspectPat(token: string): Promise<IntrospectResult | null> {
   const hash = hashToken(token)
@@ -222,16 +224,24 @@ export function authMiddleware() {
       return res.status(401).json({ error: 'Token inválido' })
     }
 
-    // Verify session in Redis only in production (dev uses JWT signature only)
-    if (payload.jti && process.env.NODE_ENV === 'production') {
+    // A assinatura não comprova revogação. A autoridade verifica sessão e usuário
+    // persistido em toda requisição de produção, sem cache de validade.
+    if (process.env.NODE_ENV === 'production') {
+      if (!payload.jti) return res.status(401).json({ error: 'Sessão inválida' })
       try {
-        const redis = getRedis()
-        const session = await redis.get(`session:${payload.jti}`)
-        if (!session) {
-          return res.status(401).json({ error: 'Sessão expirada' })
+        const response = await fetch(`${process.env.AUTH_SERVICE_URL ?? 'http://auth-service:4001'}/auth/verify`, {
+          headers: { Authorization: `Bearer ${token}`, 'X-Request-ID': String(req.headers['x-request-id'] ?? '') },
+          signal: AbortSignal.timeout(3000),
+        })
+        if (response.status === 401) return res.status(401).json({ error: 'Sessão inválida ou expirada' })
+        if (!response.ok) return res.status(503).json({ error: 'Autenticação indisponível. Tente novamente.' })
+        const identity = await response.json() as Record<string, unknown>
+        if (identity.userId !== payload.userId || identity.tenantId !== payload.tenantId || typeof identity.role !== 'string') {
+          return res.status(503).json({ error: 'Autenticação indisponível. Tente novamente.' })
         }
+        payload.role = identity.role
       } catch {
-        // Redis unavailable — allow request (fail open in degraded mode)
+        return res.status(503).json({ error: 'Autenticação indisponível. Tente novamente.' })
       }
     }
 

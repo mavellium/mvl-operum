@@ -1,0 +1,12 @@
+discovery.docker "operum" {
+  host = "http://docker-log-proxy:2375"
+}
+loki.source.docker "operum" {
+  host = "http://docker-log-proxy:2375"
+  targets = discovery.docker.operum.targets
+  labels = {job = "operum"}
+  forward_to = [loki.write.operum.receiver]
+}
+loki.write "operum" {
+  endpoint { url = "http://loki:3100/loki/api/v1/push" }
+}

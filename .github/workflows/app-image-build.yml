@@ -2,7 +2,7 @@ name: App Image Build
 
 on:
   pull_request:
-    branches: [main, develop]
+    branches: [main, develop, 'fix/sdd-*', 'feat/sdd-*']
 
 permissions:
   contents: read
@@ -32,3 +32,6 @@ jobs:
             if (!notes.includes(`## [${version}]`)) throw new Error(`Missing release notes for ${version}`);
             console.log(`Standalone release history verified for ${version}`);
           '
+
+      - name: Final app image smoke with isolated dependencies
+        run: bash scripts/validation/image-smoke.sh app operum-app-check:${{ github.sha }}

@@ -1,4 +1,5 @@
 import 'dotenv/config'
+import { telemetry } from './telemetry'
 import { NestFactory, Reflector } from '@nestjs/core'
 import { AppModule } from './app.module'
 import { ValidationPipe } from '@nestjs/common'
@@ -11,6 +12,7 @@ if (!process.env.INTERNAL_API_KEY) {
 
 async function bootstrap() {
   const app = await NestFactory.create(AppModule)
+  app.use(telemetry)
   app.useGlobalPipes(new ValidationPipe({ whitelist: true }))
   app.useGlobalGuards(new InternalAuthGuard(app.get(Reflector)))
   app.useGlobalFilters(new ZodExceptionFilter())

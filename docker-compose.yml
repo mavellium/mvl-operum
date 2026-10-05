@@ -29,7 +29,9 @@ services:
       - FILE_SERVICE_URL=http://file-service:4005
       - INTERNAL_API_KEY=${INTERNAL_API_KEY}
       - DEFAULT_TENANT_ID=${DEFAULT_TENANT_ID}
-      - REDIS_HOST=redis
+      - REDIS_HOST=redis-session
+      - REDIS_QUEUE_HOST=redis
+      - REDIS_CACHE_HOST=redis-cache
       - REDIS_PORT=6379
       - REDIS_PASSWORD=${REDIS_PASSWORD}
     labels:
@@ -40,7 +42,7 @@ services:
     env_file:
       - .env
     healthcheck:
-      test: ["CMD-SHELL", "wget -qO- http://127.0.0.1:3000/api/health || exit 1"]
+      test: ["CMD-SHELL", "wget -qO- http://127.0.0.1:3000/api/health/ready || exit 1"]
       interval: 15s
       timeout: 5s
       retries: 3
@@ -49,6 +51,8 @@ services:
       - proxy
       - internal
     depends_on:
+      redis-session:
+        condition: service_healthy
       postgres:
         condition: service_healthy
       minio:
@@ -71,7 +75,9 @@ services:
       - JWT_PUBLIC_KEY=${JWT_PUBLIC_KEY}
       - SESSION_SECRET=${SESSION_SECRET}
       - INTERNAL_API_KEY=${INTERNAL_API_KEY}
-      - REDIS_HOST=redis
+      - REDIS_HOST=redis-session
+      - REDIS_QUEUE_HOST=redis
+      - REDIS_CACHE_HOST=redis-cache
       - REDIS_PORT=6379
       - REDIS_PASSWORD=${REDIS_PASSWORD}
       - AUTHORIZATION_SERVICE_URL=http://app:3000
@@ -86,7 +92,7 @@ services:
       - "traefik.enable=true"
       - "traefik.http.services.api-gateway-${COMPOSE_PROJECT_NAME}.loadbalancer.server.port=4000"
     healthcheck:
-      test: ["CMD-SHELL", "wget -qO- http://localhost:4000/health || exit 1"]
+      test: ["CMD-SHELL", "wget -qO- http://localhost:4000/health/ready || exit 1"]
       interval: 15s
       timeout: 5s
       retries: 3
@@ -116,12 +122,13 @@ services:
     environment:
       - NODE_ENV=${NODE_ENV}
       - API_GATEWAY_INTERNAL_URL=http://api-gateway:4000
+      - INTERNAL_API_KEY=${INTERNAL_API_KEY}
       - PORT=4006
     labels:
       - "traefik.enable=true"
       - "traefik.http.services.mcp-server-${COMPOSE_PROJECT_NAME}.loadbalancer.server.port=4006"
     healthcheck:
-      test: ["CMD-SHELL", "wget -qO- http://localhost:4006/health || exit 1"]
+      test: ["CMD-SHELL", "wget -qO- http://localhost:4006/health/ready || exit 1"]
       interval: 15s
       timeout: 5s
       retries: 3
@@ -146,12 +153,14 @@ services:
       - JWT_PUBLIC_KEY=${JWT_PUBLIC_KEY}
       - SESSION_SECRET=${SESSION_SECRET}
       - INTERNAL_API_KEY=${INTERNAL_API_KEY}
-      - REDIS_HOST=redis
+      - REDIS_HOST=redis-session
+      - REDIS_QUEUE_HOST=redis
+      - REDIS_CACHE_HOST=redis-cache
       - REDIS_PORT=6379
       - REDIS_PASSWORD=${REDIS_PASSWORD}
       - PORT=4001
     healthcheck:
-      test: ["CMD-SHELL", "wget -qO- http://localhost:4001/health || exit 1"]
+      test: ["CMD-SHELL", "wget -qO- http://localhost:4001/health/ready || exit 1"]
       interval: 15s
       timeout: 5s
       retries: 3
@@ -185,7 +194,7 @@ services:
       # Conferência do tenant dos cards (SDD 4.1): POST /cards/in-tenant
       - SPRINT_SERVICE_URL=http://sprint-service:4003
     healthcheck:
-      test: ["CMD-SHELL", "wget -qO- http://localhost:4005/health || exit 1"]
+      test: ["CMD-SHELL", "wget -qO- http://localhost:4005/health/ready || exit 1"]
       interval: 15s
       timeout: 5s
       retries: 3
@@ -210,7 +219,7 @@ services:
       - INTERNAL_API_KEY=${INTERNAL_API_KEY}
       - PORT=4002
     healthcheck:
-      test: ["CMD-SHELL", "wget -qO- http://localhost:4002/health || exit 1"]
+      test: ["CMD-SHELL", "wget -qO- http://localhost:4002/health/ready || exit 1"]
       interval: 15s
       timeout: 5s
       retries: 3
@@ -233,7 +242,7 @@ services:
       - INTERNAL_API_KEY=${INTERNAL_API_KEY}
       - PORT=4003
     healthcheck:
-      test: ["CMD-SHELL", "wget -qO- http://localhost:4003/health || exit 1"]
+      test: ["CMD-SHELL", "wget -qO- http://localhost:4003/health/ready || exit 1"]
       interval: 15s
       timeout: 5s
       retries: 3
@@ -254,12 +263,14 @@ services:
       - NODE_ENV=${NODE_ENV}
       - DATABASE_URL=${DATABASE_URL}
       - INTERNAL_API_KEY=${INTERNAL_API_KEY}
-      - REDIS_HOST=redis
+      - REDIS_HOST=redis-session
+      - REDIS_QUEUE_HOST=redis
+      - REDIS_CACHE_HOST=redis-cache
       - REDIS_PORT=6379
       - REDIS_PASSWORD=${REDIS_PASSWORD}
       - PORT=4004
     healthcheck:
-      test: ["CMD-SHELL", "wget -qO- http://localhost:4004/health || exit 1"]
+      test: ["CMD-SHELL", "wget -qO- http://localhost:4004/health/ready || exit 1"]
       interval: 15s
       timeout: 5s
       retries: 3
@@ -386,8 +397,8 @@ services:
     command: >
       redis-server
       --appendonly yes
-      --maxmemory 256mb
-      --maxmemory-policy allkeys-lru
+      --maxmemory 512mb
+      --maxmemory-policy noeviction
       --requirepass ${REDIS_PASSWORD}
     healthcheck:
       test: ["CMD", "redis-cli", "-a", "${REDIS_PASSWORD}", "ping"]
@@ -396,6 +407,32 @@ services:
       retries: 5
     networks:
       - internal
+
+  # Durable queue and expendable cache have independent memory/volumes.
+  redis-session:
+    image: redis:7-alpine
+    restart: always
+    security_opt: ["no-new-privileges:true"]
+    command: redis-server --appendonly yes --appendfsync everysec --maxmemory 256mb --maxmemory-policy noeviction --requirepass ${REDIS_PASSWORD}
+    volumes: ["redis-session-data:/data"]
+    healthcheck:
+      test: ["CMD", "redis-cli", "-a", "${REDIS_PASSWORD}", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks: [internal]
+
+  redis-cache:
+    image: redis:7-alpine
+    restart: always
+    security_opt: ["no-new-privileges:true"]
+    command: redis-server --save "" --appendonly no --maxmemory 128mb --maxmemory-policy allkeys-lru --requirepass ${REDIS_PASSWORD}
+    healthcheck:
+      test: ["CMD", "redis-cli", "-a", "${REDIS_PASSWORD}", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks: [internal]
 
   # ── MinIO (S3-compatible Storage) ─────────────────────────────────────────
   minio:
@@ -433,6 +470,7 @@ services:
 volumes:
   pg-data:
   redis-data:
+  redis-session-data:
   minio-data:
 
 networks:

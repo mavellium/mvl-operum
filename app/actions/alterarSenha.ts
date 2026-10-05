@@ -2,7 +2,7 @@
 
 import { cookies } from 'next/headers'
 import { redirect } from 'next/navigation'
-import { decrypt } from '@/lib/session'
+import { validatedSession } from '@/lib/validatedSession'
 import { authApi } from '@/lib/api-client'
 import { PasswordSchema } from '@/lib/validation/authSchemas'
 
@@ -20,7 +20,7 @@ export async function alterarSenhaObrigatoriaAction(_prevState: unknown, formDat
 
   const cookieStore = await cookies()
   const token = cookieStore.get('session')?.value
-  const session = await decrypt(token)
+  const session = await validatedSession(token)
 
   if (!session?.userId) {
     redirect('/login')

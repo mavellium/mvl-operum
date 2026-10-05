@@ -2,7 +2,7 @@ import 'server-only'
 import { cache } from 'react'
 import { cookies } from 'next/headers'
 import { redirect } from 'next/navigation'
-import { decrypt } from '@/lib/session'
+import { validatedSession } from '@/lib/validatedSession'
 
 export const verifySession = cache(async () => {
   const cookieStore = await cookies()
@@ -12,9 +12,10 @@ export const verifySession = cache(async () => {
 
   try {
     if (token) {
-      session = await decrypt(token)
+      session = await validatedSession(token)
     }
   } catch (error) {
+    if (error instanceof Error && 'status' in error && error.status === 503) throw error
     // Falhas de decodificação (expirado, assinatura inválida) caem aqui.
     // Ignoramos o erro propositalmente para que a variável 'session' 
     // continue nula e acione a trava de segurança abaixo.

@@ -4,7 +4,7 @@ on:
   push:
     branches: [main]
   pull_request:
-    branches: [main]
+    branches: [main, 'fix/sdd-*', 'feat/sdd-*']
   workflow_dispatch:
     inputs:
       confirm:
@@ -15,6 +15,14 @@ env:
   OWNER: ${{ github.repository_owner }}
 
 jobs:
+  service-validation:
+    if: github.event_name != 'pull_request'
+    uses: ./.github/workflows/services-validation.yml
+
+  operations-validation:
+    if: github.event_name != 'pull_request'
+    uses: ./.github/workflows/operations-validation.yml
+
   # ── 0. Manual confirmation guard ─────────────────────────────────────────────
   confirm:
     name: Confirm Manual Action
@@ -92,8 +100,8 @@ jobs:
   build:
     name: Build & Push
     # Garante que se for workflow_dispatch, o job confirm PRECISA passar antes do build rodar
-    needs: [confirm, security-scan, test]
-    if: github.event_name != 'pull_request' && always() && (needs.confirm.result == 'success' || needs.confirm.result == 'skipped') && needs.security-scan.result == 'success' && needs.test.result == 'success'
+    needs: [confirm, security-scan, test, service-validation, operations-validation]
+    if: github.event_name != 'pull_request' && always() && (needs.confirm.result == 'success' || needs.confirm.result == 'skipped') && needs.security-scan.result == 'success' && needs.test.result == 'success' && needs.service-validation.result == 'success' && needs.operations-validation.result == 'success'
     runs-on: ubuntu-latest
     permissions:
       contents: read
@@ -122,9 +130,9 @@ jobs:
         with:
           context: .
           push: true
+          labels: org.opencontainers.image.revision=${{ github.sha }}
           tags: |
             ghcr.io/${{ steps.meta.outputs.owner }}/app:${{ github.sha }}
-            ghcr.io/${{ steps.meta.outputs.owner }}/app:prod
           cache-from: type=registry,ref=ghcr.io/${{ steps.meta.outputs.owner }}/app:prod
           cache-to: type=inline
 
@@ -133,9 +141,9 @@ jobs:
         with:
           context: ./notification-service
           push: true
+          labels: org.opencontainers.image.revision=${{ github.sha }}
           tags: |
             ghcr.io/${{ steps.meta.outputs.owner }}/notification-service:${{ github.sha }}
-            ghcr.io/${{ steps.meta.outputs.owner }}/notification-service:prod
           cache-from: type=registry,ref=ghcr.io/${{ steps.meta.outputs.owner }}/notification-service:prod
           cache-to: type=inline
 
@@ -144,9 +152,9 @@ jobs:
         with:
           context: ./auth-service
           push: true
+          labels: org.opencontainers.image.revision=${{ github.sha }}
           tags: |
             ghcr.io/${{ steps.meta.outputs.owner }}/auth-service:${{ github.sha }}
-            ghcr.io/${{ steps.meta.outputs.owner }}/auth-service:prod
           cache-from: type=registry,ref=ghcr.io/${{ steps.meta.outputs.owner }}/auth-service:prod
           cache-to: type=inline
 
@@ -155,9 +163,9 @@ jobs:
         with:
           context: ./api-gateway
           push: true
+          labels: org.opencontainers.image.revision=${{ github.sha }}
           tags: |
             ghcr.io/${{ steps.meta.outputs.owner }}/api-gateway:${{ github.sha }}
-            ghcr.io/${{ steps.meta.outputs.owner }}/api-gateway:prod
           cache-from: type=registry,ref=ghcr.io/${{ steps.meta.outputs.owner }}/api-gateway:prod
           cache-to: type=inline
 
@@ -166,9 +174,9 @@ jobs:
         with:
           context: ./file-service
           push: true
+          labels: org.opencontainers.image.revision=${{ github.sha }}
           tags: |
             ghcr.io/${{ steps.meta.outputs.owner }}/file-service:${{ github.sha }}
-            ghcr.io/${{ steps.meta.outputs.owner }}/file-service:prod
           cache-from: type=registry,ref=ghcr.io/${{ steps.meta.outputs.owner }}/file-service:prod
           cache-to: type=inline
 
@@ -177,9 +185,9 @@ jobs:
         with:
           context: ./project-service
           push: true
+          labels: org.opencontainers.image.revision=${{ github.sha }}
           tags: |
             ghcr.io/${{ steps.meta.outputs.owner }}/project-service:${{ github.sha }}
-            ghcr.io/${{ steps.meta.outputs.owner }}/project-service:prod
           cache-from: type=registry,ref=ghcr.io/${{ steps.meta.outputs.owner }}/project-service:prod
           cache-to: type=inline
 
@@ -188,9 +196,9 @@ jobs:
         with:
           context: ./sprint-service
           push: true
+          labels: org.opencontainers.image.revision=${{ github.sha }}
           tags: |
             ghcr.io/${{ steps.meta.outputs.owner }}/sprint-service:${{ github.sha }}
-            ghcr.io/${{ steps.meta.outputs.owner }}/sprint-service:prod
           cache-from: type=registry,ref=ghcr.io/${{ steps.meta.outputs.owner }}/sprint-service:prod
           cache-to: type=inline
 
@@ -199,9 +207,9 @@ jobs:
         with:
           context: ./mcp-server
           push: true
+          labels: org.opencontainers.image.revision=${{ github.sha }}
           tags: |
             ghcr.io/${{ steps.meta.outputs.owner }}/mcp-server:${{ github.sha }}
-            ghcr.io/${{ steps.meta.outputs.owner }}/mcp-server:prod
           cache-from: type=registry,ref=ghcr.io/${{ steps.meta.outputs.owner }}/mcp-server:prod
           cache-to: type=inline
 
@@ -280,8 +288,28 @@ jobs:
           severity: CRITICAL,HIGH
           trivyignores: .trivyignore
 
+      - name: Record approved immutable release
+        env:
+          RELEASE_OWNER: ${{ steps.meta.outputs.owner }}
+          RELEASE_SHA: ${{ github.sha }}
+          ROLLBACK_COMPATIBLE: ${{ vars.RELEASE_ROLLBACK_COMPATIBLE || 'false' }}
+        run: |
+          printf 'RELEASE_SHA=%s\nROLLBACK_COMPATIBLE=%s\n' "$RELEASE_SHA" "$ROLLBACK_COMPATIBLE" > release.env
+          for service in app api-gateway auth-service file-service notification-service project-service sprint-service mcp-server; do
+            image="ghcr.io/$RELEASE_OWNER/$service"
+            digest=$(docker buildx imagetools inspect "$image:$RELEASE_SHA" --format '{{json .Manifest.Digest}}' | tr -d '"')
+            [[ "$digest" =~ ^sha256:[a-f0-9]{64}$ ]]
+            key=$(printf '%s' "$service" | tr '[:lower:]-' '[:upper:]_')
+            printf '%s_IMAGE=%s@%s\n' "$key" "$image" "$digest" >> release.env
+          done
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: approved-release
+          path: release.env
+
   # ── Deploy on VPS (SSH) ───────────────────────────────────────────────────────
-  # Sincroniza os docker-compose*.yml do repositório, baixa as imagens :prod e
+  # Sincroniza os docker-compose*.yml do repositório, baixa as imagens do manifesto aprovado e
   # sobe os serviços esperando o health de todos (scripts/deploy/remote-deploy.sh).
   # Secrets do environment `production`:
   #   VPS_HOST, VPS_USER, VPS_SSH_KEY (chave privada ed25519 do usuário de deploy),
@@ -311,7 +339,12 @@ jobs:
             docker-compose.yml
             docker-compose.production.yml
             scripts/deploy
+            observability
           sparse-checkout-cone-mode: false
+
+      - uses: actions/download-artifact@v4
+        with:
+          name: approved-release
 
       - name: Configure SSH
         env:
@@ -345,16 +378,17 @@ jobs:
         env:
           VPS_DEPLOY_PATH: ${{ secrets.VPS_DEPLOY_PATH }}
         run: |
-          incoming="$VPS_DEPLOY_PATH/.deploy-incoming"
+          incoming="$VPS_DEPLOY_PATH/.deploy-incoming/$GITHUB_SHA"
           ssh vps "mkdir -p $(printf %q "$incoming")"
-          scp -q docker-compose.yml docker-compose.production.yml scripts/deploy/remote-deploy.sh "vps:$incoming/"
+          scp -q docker-compose.yml docker-compose.production.yml release.env scripts/deploy/*.sh scripts/deploy/*.py "vps:$incoming/"
+          scp -qr observability "vps:$incoming/"
 
       - name: Deploy
         env:
           VPS_DEPLOY_PATH: ${{ secrets.VPS_DEPLOY_PATH }}
           GHCR_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
-          script="$VPS_DEPLOY_PATH/.deploy-incoming/remote-deploy.sh"
+          script="$VPS_DEPLOY_PATH/.deploy-incoming/$GITHUB_SHA/remote-deploy.sh"
           # O token vai por stdin — nunca na linha de comando (visível em `ps` na VPS).
           printf '%s' "$GHCR_TOKEN" | ssh vps "bash $(printf %q "$script") $(printf %q "$VPS_DEPLOY_PATH") $(printf %q "$GITHUB_SHA") $(printf %q "$GITHUB_ACTOR")"
 
