@@ -9,6 +9,9 @@ funcionalidade depois disso é uma versão MINOR.
 
 ## [Não lançado]
 
+## [1.13.3] — 2026-10-05
+- **Deploy:** tentativas repetidas do mesmo SHA usam registros independentes, sem sobrescrever snapshots anteriores nem bloquear retries após falha. Rollback seleciona a tentativa concluída e mantém compatibilidade com registros legados por SHA.
+
 ## [1.13.2] — 2026-10-04
 - **Sessões (SDD 11.1):** revogação verificada no auth-service por gateway e operações locais do Next; indisponibilidade bloqueia acesso e login/logout exigem confirmação da persistência.
 - **Redis (SDD 11.2):** sessões, fila e cache isolados; fila mantém host/volume original e noeviction, sessões migram para instância própria e exigem novo login na transição.

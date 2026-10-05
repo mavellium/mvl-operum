@@ -399,3 +399,16 @@ Ao substituir uma decisão, manter o texto histórico, alterar seu status e liga
 - **Consequências:** dependência operacional adicional no proxy/collector/exporters; proxy é confiável e tem acesso ao socket. App mede chamadas BFF. Webhook real precisa de configuração e inventário, sem enviar alertas reais nesta PR. Estado real do Grafana não foi consultado.
 - **Condições de revisão:** OpenTelemetry distribuído, maior volume de logs, autenticação distinta para scrape ou novo serviço/dependência.
 - **Referências:** SDD 11.7–11.8; observability/; src/health de cada serviço; lib/operationalTelemetry.ts; docs/architecture.md.
+
+
+## ADR-030 — Registro de deploy por tentativa
+
+- **Data:** 2026-10-05
+- **Status:** aceita nesta implementação.
+- **Contexto:** o deploy da PR #54 registrava `.releases/<SHA>` antes de finalizar. A execução 37305929972 falhou com “Release já registrada; não sobrescrever” ao encontrar um registro existente. Não foi inspecionado o conteúdo desse registro na VPS.
+- **Escolha:** diretórios exclusivos `.releases/<SHA>.<tentativa>` via mktemp sob flock; ponteiro `.current-release-record` identifica a tentativa concluída e seu snapshot anterior. Rollback mantém fallback para o formato legado.
+- **Justificativa:** liberar novas tentativas sem apagar evidências nem substituir backups de configurações/digests de tentativas anteriores.
+- **Alternativas consideradas:** apagar o registro existente perde evidências; reutilizá-lo pode restaurar configuração antiga que já não representa o estado anterior à nova tentativa; retornar sucesso sem readiness pode mascarar deploy incompleto.
+- **Consequências:** registros falhos permanecem no disco; retenção pode ser definida posteriormente. Compatibilidade de schema continua obrigatória para rollback, sem reversão de migrations/dados. Retry realiza novamente os gates de configuração, pull, revisão das imagens, migration e readiness.
+- **Condições de revisão:** caso seja implementada retenção, preservar registros referenciados pelo deploy ativo e seu rollback.
+- **Referências:** `scripts/deploy/remote-deploy.sh`, `scripts/deploy/rollback.sh`, `scripts/validation/release-simulation.mjs`, PR #54 e execução 37305929972.
