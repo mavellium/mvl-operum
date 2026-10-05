@@ -117,7 +117,7 @@ Lacunas do modelo de dados em relação ao spec original: ver [`docs/mcp/gaps.md
 
 ## Upload de arquivo local (8.3)
 
-Configure `MCP_PUBLIC_URL` como origem HTTPS pública (sem caminho) e `MCP_UPLOAD_SECRET` com 32 bytes aleatórios em base64 (`openssl rand -base64 32`). A origem precisa rotear `/uploads/` ao MCP; o fallback `/mcp` de api.operum.adm.br não cobre uploads. A ferramenta `operum_create_upload_link(task_id, file_name?)` devolve `upload_url`, `expires_at` e comando curl. Substitua `<caminho>` pelo arquivo local mantendo as aspas; use `curl --fail-with-body -F 'file=@/caminho/eap.png' '<upload_url>'`.
+Configure `MCP_PUBLIC_URL` como origem HTTPS pública (sem caminho) e `MCP_UPLOAD_SECRET` com 32 bytes aleatórios em base64 (`openssl rand -base64 32`). A origem precisa rotear `/uploads/` ao MCP. O fallback de produção em `https://api.operum.adm.br` agora cobre `/mcp` e `/uploads/`; ele é o padrão enquanto o DNS dedicado não estiver configurado. A ferramenta `operum_create_upload_link(task_id, file_name?)` devolve `upload_url`, `expires_at` e comando curl. Substitua `<caminho>` pelo arquivo local mantendo as aspas; use `curl --fail-with-body -F 'file=@/caminho/eap.png' '<upload_url>'`.
 
 Cada tentativa autenticada consome o link, mesmo em erro de arquivo/gateway: gere outro para tentar novamente. Expirado/usado/reinício responde 410; token adulterado 400 genérico. O token AES-256-GCM cifra PAT, tarefa, tenant, expiração/nonce e nome opcional por dez minutos. O PAT não aparece em claro em URL/logs. O link é uma credencial temporária: não compartilhar nem publicar. Não salvar comando/link no histórico operacional de chamados.
 
