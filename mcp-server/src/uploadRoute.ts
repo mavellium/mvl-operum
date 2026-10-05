@@ -1,5 +1,6 @@
-import type { Express, Request } from 'express'
+import type { Express, Request, Response as ExpressResponse, NextFunction } from 'express'
 import Busboy from 'busboy'
+import { rateLimit, ipKeyGenerator } from 'express-rate-limit'
 import { createReadStream, createWriteStream } from 'node:fs'
 import { mkdtemp, rm, stat } from 'node:fs/promises'
 import { tmpdir } from 'node:os'
@@ -14,14 +15,20 @@ import { UploadLinks, UploadLinkError, uploadLinks } from './uploadLink.js'
 class UploadError extends Error { constructor(readonly status: number, message: string) { super(message) } }
 export interface UploadRouteDeps { links: UploadLinks; fetch: typeof fetch; gateway: typeof gateway; maxBytes: number }
 export function registerUploadRoute(app: Express, deps: UploadRouteDeps = { links: uploadLinks, fetch, gateway, maxBytes: MAX_ATTACHMENT_BYTES }) {
-  const rates = new Map<string, { count: number; expires: number }>(); let active = 0
-  app.post('/uploads/:token', async (req, res) => {
-    // socket peer only: untrusted X-Forwarded-For cannot evade the limit. Proxy deployments share a conservative budget.
-    const ip = req.socket.remoteAddress || 'unknown', now = Date.now()
-    for (const [key, rate] of rates) if (rate.expires <= now) rates.delete(key)
-    if (!rates.has(ip) && rates.size >= 10_000) return res.status(429).json({ error: 'Tente novamente depois.' })
-    const rate = rates.get(ip) ?? { count: 0, expires: now+60_000 }; rates.set(ip,rate)
-    if (++rate.count > 10 || active >= 2) return res.status(429).json({ error: 'Tente novamente depois.' })
+  const peers = new Map<string, number>(); let active = 0, nextSweep = 0
+  const limiter = rateLimit({ windowMs: 60_000, limit: 10, standardHeaders: 'draft-8', legacyHeaders: false,
+    keyGenerator: req => ipKeyGenerator(req.socket.remoteAddress || 'unknown'),
+    validate: { xForwardedForHeader: false }, message: { error: 'Tente novamente depois.' },
+  })
+  function admitPeer(req: Request, res: ExpressResponse, next: NextFunction) {
+    // Cap peers before the middleware allocates an in-memory counter. Never trust X-Forwarded-For.
+    const ip = ipKeyGenerator(req.socket.remoteAddress || 'unknown'), now = Date.now()
+    if (now >= nextSweep) { for (const [key, expires] of peers) if (expires <= now) peers.delete(key); nextSweep = now+60_000 }
+    if (!peers.has(ip) && peers.size >= 10_000) return res.status(429).json({ error: 'Tente novamente depois.' })
+    peers.set(ip, now+60_000); next()
+  }
+  app.post('/uploads/:token', admitPeer, limiter, async (req, res) => {
+    if (active >= 2) return res.status(429).json({ error: 'Tente novamente depois.' })
     let dir: string | undefined
     active++
     const controller = new AbortController(), timer = setTimeout(() => controller.abort(),120_000)
