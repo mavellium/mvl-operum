@@ -5,7 +5,7 @@ for key in APP API_GATEWAY AUTH_SERVICE PROJECT_SERVICE SPRINT_SERVICE NOTIFICAT
   export "${key}_IMAGE=ghcr.io/validation/image@sha256:$(printf '0%.0s' {1..64})"
 done
 export REDIS_PASSWORD=validation-only GRAFANA_PASSWORD=validation-only BASE_DOMAIN=validation.invalid
-printf '%s' '{"services":{"app":{"environment":{"INTERNAL_API_KEY":"validation-only","ALERT_WEBHOOK_URL":"http://sink:8080"}}}}' | python3 scripts/deploy/configure-observability.py
+printf '%s' '{"services":{"app":{"environment":{"INTERNAL_API_KEY":"validation-only"}}}}' | python3 scripts/deploy/configure-observability.py
 COMPOSE=(docker compose -f docker-compose.validation.yml)
 cleanup() {
   local result=$?
@@ -17,6 +17,10 @@ cleanup() {
   rm -rf observability/private
 }
 trap cleanup EXIT
+# Validate both generated configurations using the production Alertmanager image.
+"${COMPOSE[@]}" run --rm --no-deps --entrypoint /bin/amtool alertmanager check-config /etc/alertmanager/alertmanager.yml
+printf '%s' '{"services":{"app":{"environment":{"INTERNAL_API_KEY":"validation-only","ALERT_WEBHOOK_URL":"http://sink:8080"}}}}' | python3 scripts/deploy/configure-observability.py
+"${COMPOSE[@]}" run --rm --no-deps --entrypoint /bin/amtool alertmanager check-config /etc/alertmanager/alertmanager.yml
 "${COMPOSE[@]}" up -d
 probe() {
   "${COMPOSE[@]}" exec -T fixture node -e "$1"

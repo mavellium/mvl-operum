@@ -15,7 +15,10 @@ set -eu
 printf '%s\\n' "$*" >> "$MOCK_LOG"
 if [[ "$*" == login* ]]; then exit 0; fi
 if [[ "$*" == "image inspect"* ]]; then echo "$MOCK_IMAGE_SHA"; fi
-if [[ "$*" == *"config --format json"* ]]; then echo '{"services":{"app":{"environment":{"INTERNAL_API_KEY":"synthetic-secret","ALERT_WEBHOOK_URL":"http://sink:8080"}}}}'; fi
+if [[ "$*" == *"config --format json"* ]]; then
+  if [[ "\${MOCK_MISSING_KEY:-}" == true ]]; then echo '{"services":{"app":{"environment":{}}}}'
+  else echo '{"services":{"app":{"environment":{"INTERNAL_API_KEY":"synthetic-secret","ALERT_WEBHOOK_URL":"http://sink:8080"}}}}'; fi
+fi
 if [[ "$*" == *"up -d"* && "\${MOCK_FAIL:-}" == up && ! -e "$MOCK_MARKER" ]]; then touch "$MOCK_MARKER"; exit 1; fi
 `, { mode: 0o700 })
   const setup = name => {
@@ -40,6 +43,12 @@ if [[ "$*" == *"up -d"* && "\${MOCK_FAIL:-}" == up && ! -e "$MOCK_MARKER" ]]; th
   assert.equal(run(locked).status,1)
   assert.equal(readFileSync(join(locked,'release.env'),'utf8'),manifest(previous))
   await holderExit
+  const missingConfig=setup('missing-config')
+  const configFailure=run(missingConfig,{MOCK_MISSING_KEY:'true'})
+  assert.equal(configFailure.status,1)
+  assert.match(configFailure.stderr,/INTERNAL_API_KEY/)
+  assert.equal(existsSync(join(missingConfig,'.releases')),false)
+  assert.equal(readFileSync(join(missingConfig,'release.env'),'utf8'),manifest(previous))
   const healthy=setup('healthy');assert.equal(run(healthy).status,0)
   assert.equal(readFileSync(join(healthy,'.current-release'),'utf8').trim(),sha)
   assert.match(readFileSync(join(healthy,'release.env'),'utf8'),/@sha256:/)

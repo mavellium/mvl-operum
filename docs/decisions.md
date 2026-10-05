@@ -391,7 +391,7 @@ Ao substituir uma decisão, manter o texto histórico, alterar seu status e liga
 ## ADR-026 — Prontidão limitada e telemetria operacional privada
 
 - **Data do registro:** 2026-10-04.
-- **Status:** implementada nesta entrega; aguardando validação/revisão.
+- **Status:** implementada; requisito de webhook no deploy parcialmente substituído por ADR-032.
 - **Contexto:** health constante não impedia deployment sem dependências; endpoints de métricas e provisioning/collector estavam ausentes.
 - **Escolha:** liveness independente e readiness com probes leves limitados; métricas com segredo interno, request ID sem dados sensíveis, Grafana provisionado, Alloy por proxy Docker GET de logs/listagem, regras e webhook operacional configurável.
 - **Justificativa:** distinguir falha de processo de indisponibilidade externa; implantar configuração reproduzível com limites de exposição e cardinalidade.
@@ -423,3 +423,15 @@ Ao substituir uma decisão, manter o texto histórico, alterar seu status e liga
 - **Consequências:** versões legadas mostram contexto/diff ausentes; uso de imagens externas depende de CORS; limite de 5 MB e falha explícita por imagem. PDF depende da impressão do navegador. Assinatura visual não constitui assinatura digital.
 - **Condições de revisão:** novos modelos ou necessidade de assinatura digital com verificação; requisito de exportação assíncrona no servidor exigiria armazenamento confiável de imagens.
 - **Referências:** `services/documentRevisionService.ts`, `lib/charterChanges.ts`, `lib/exports/`, `components/projetos/documentacao/ProjectCharter.tsx`, `docs/validation/sdd-7/README.md` e SDD fase 7.
+
+## ADR-032 — Alertas locais independentes do destino externo
+
+- **Data:** 2026-10-05
+- **Status:** aceita nesta implementação; substitui parcialmente ADR-026 quanto à obrigatoriedade de destino externo no deploy.
+- **Contexto:** deploy após a PR #59 abortou com mensagem única para chave de métricas e webhook. O destino externo não foi informado; .env.example apresenta webhook vazio. Não houve inspeção dos valores reais da VPS. O usuário pediu correção do bloqueio; solicitou-se o destino e adotou-se provisoriamente alertas locais, com aviso explícito.
+- **Escolha:** chave interna obrigatória; webhook opcional. Vazio gera receiver sem integração de envio e aviso, preservando regras/alertas locais. URL preenchida deve ser HTTP(S) válida. Preflight valida o ambiente Compose incoming contra o .env da VPS antes de alterar configuração ativa. Diagnósticos separados, sem valores secretos.
+- **Justificativa:** falta de canal de envio não deve impedir métricas privadas, logs, regras e disponibilidade da aplicação; estado de envio pendente permanece visível. Segurança da chave interna não recebe fallback.
+- **Alternativas consideradas:** exigir destino ainda desconhecido mantém bloqueio; inventar endpoint/envio externo não tem autorização/destino; ignorar configuração inteira desabilitaria observabilidade e proteção das métricas.
+- **Consequências:** sem webhook não há notificações externas; o operador deve configurar canal compatível quando disponível. CI valida ambos os formatos com amtool e mantém ensaio de entrega sintética. Uma URL sintaticamente válida não prova disponibilidade/compatibilidade do receptor real.
+- **Condições de revisão:** destino externo confirmado, política operacional que torne entrega externa mandatória ou suporte a outros receivers.
+- **Referências:** ADR-026, scripts/deploy/configure-observability.py, remote-deploy.sh, scripts/validation/observability-config.mjs, observability.sh, .env.example, relato do usuário após PR #59.
