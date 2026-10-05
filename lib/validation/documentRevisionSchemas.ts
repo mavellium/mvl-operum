@@ -11,6 +11,13 @@ export type TipoDocumento = z.infer<typeof tipoDocumento>
 const texto = z.string().max(50000).nullable().optional()
 export const charterSchema = z
   .object({
+    categoria: texto,
+    documentContext: z.object({
+      nomeProjeto: z.string().max(300), gerenteProjeto: z.string().max(1000),
+      logoUrl: z.string().max(2000).nullable().optional().transform(value => safeAvatarUrl(value) ?? null),
+      gerenteSignatureUrl: z.string().max(2000).nullable().optional().transform(value => safeAvatarUrl(value) ?? null),
+      membros: z.array(z.object({ name: z.string().max(300) }).strict()).max(1000),
+    }).strict().optional(),
     justificativa: texto,
     objetivos: texto,
     metodologia: texto,

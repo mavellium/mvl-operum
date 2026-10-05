@@ -1062,4 +1062,13 @@ O layout calcula a caixa de cada subárvore e a posição relativa da raiz antes
 
 Gantt é uma projeção somente leitura. `dataPrevista` define o último dia e `durationDays` estima os dias corridos anteriores. Não cria datas nem persiste o estado de expansão/zoom. Nós sem prazo permanecem visíveis sem barra. O estado da árvore continua no provider ao alternar de volta; as exportações existentes permanecem no formato clássico da EAP.
 
+
+### Documentos do projeto — fase 7
+
+O Termo alterna entre formulário privado e prévia explícita; alternar não salva nem publica uma versão. PDF usa impressão do componente, e Word é gerado no navegador com `docx`. Partes Interessadas usa A4 paisagem; Termo/Ata usam retrato. Ata mantém a exportação autenticada `/api/atas/:id/export` com autorização `documentos:ver`, e ganha prévia/PDF do rascunho.
+
+`DocumentVersion.payload` do Termo guarda campos, macrofases e `documentContext` (nome, logo, gerente, assinatura e equipe). `changes` JSON registra diferenças por campo contra a versão anterior na sequência de submissão; `previousVersionId` é uma referência histórica textual, não uma FK que impedisse a exclusão autorizada de versões. Criação de snapshot, sequência, diff e auditoria ocorrem na mesma transação com bloqueio do projeto. Aprovar não recalcula o histórico. Metadados de apresentação não são escritos no cadastro `Project`; a migration acrescenta os campos de histórico e `Ata.instituicao` como opcionais.
+
+Versões legadas sem contexto/diff mostram a ausência; não recebem cabeçalho atual silenciosamente. A prévia privada não exibe assinatura do gerente como aprovação. Imagens Word são buscadas exclusivamente no navegador, com URL segura, timeout e limite de 5 MB, preservando proporção; falha de imagem interrompe exportação com mensagem. O servidor da exportação de Ata não busca URLs de anexos.
+
 O “hoje” do Gantt usa snapshot estável do servidor para hidratação e calendário local do navegador em seguida, atualizado por assinatura a cada minuto (`useCalendarToday`). As datas planejadas permanecem date-only; a linha de hoje não desloca datas do projeto nem assume que o calendário do usuário é UTC.

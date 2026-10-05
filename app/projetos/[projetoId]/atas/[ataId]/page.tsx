@@ -66,9 +66,12 @@ export default async function EditarAtaPage({
         <AtaFormClient key={ata.updatedAt?.toISOString()}
           projetoId={projetoId}
           ataId={ata.id}
+          nomeProjeto={ata.nomeProjeto}
+          numero={ata.numero}
           mode="edit"
           members={members}
           initial={{
+            instituicao: ata.instituicao,
             local: ata.local,
             data: ata.data ? ata.data.toISOString() : undefined,
             elaboradoPor: ata.elaboradoPor ?? '',

@@ -411,26 +411,15 @@ Ao substituir uma decisão, manter o texto histórico, alterar seu status e liga
 - **Consequências:** Não há migrations. Datas estimadas não representam um calendário de dias úteis nem dependências; revisão necessária quando houver edição de barras/calendário. Exportações clássicas continuam existentes.
 - **Referências:** `lib/wbsLayout.ts`, `lib/wbsRollup.ts`, `lib/wbsGantt.ts`, `components/wbs/WbsGantt.tsx`, SDD fase 6.
 
-## ADR-030 — Registro de deploy por tentativa
+
+## ADR-028 — Modelos documentais e histórico imutável do Termo
 
 - **Data:** 2026-10-05
-- **Status:** aceita nesta implementação.
-- **Contexto:** o deploy da PR #54 registrava `.releases/<SHA>` antes de finalizar. A execução 37305929972 falhou com “Release já registrada; não sobrescrever” ao encontrar um registro existente. Não foi inspecionado o conteúdo desse registro na VPS.
-- **Escolha:** diretórios exclusivos `.releases/<SHA>.<tentativa>` via mktemp sob flock; ponteiro `.current-release-record` identifica a tentativa concluída e seu snapshot anterior. Rollback mantém fallback para o formato legado.
-- **Justificativa:** liberar novas tentativas sem apagar evidências nem substituir backups de configurações/digests de tentativas anteriores.
-- **Alternativas consideradas:** apagar o registro existente perde evidências; reutilizá-lo pode restaurar configuração antiga que já não representa o estado anterior à nova tentativa; retornar sucesso sem readiness pode mascarar deploy incompleto.
-- **Consequências:** registros falhos permanecem no disco; retenção pode ser definida posteriormente. Compatibilidade de schema continua obrigatória para rollback, sem reversão de migrations/dados. Retry realiza novamente os gates de configuração, pull, revisão das imagens, migration e readiness.
-- **Condições de revisão:** caso seja implementada retenção, preservar registros referenciados pelo deploy ativo e seu rollback.
-- **Referências:** `scripts/deploy/remote-deploy.sh`, `scripts/deploy/rollback.sh`, `scripts/validation/release-simulation.mjs`, PR #54 e execução 37305929972.
-
-## ADR-031 — Substituição de assets sem remover diretórios legados
-
-- **Data:** 2026-10-05
-- **Status:** aceita nesta implementação.
-- **Contexto:** após a PR #58, a execução 37314658106 falhou ao remover observability/prometheus.yml por permissão. O log confirma a falha; propriedade e modos reais da VPS não foram inspecionados.
-- **Escolha:** preparar cópia com propriedade do usuário de deploy e escrita somente para o proprietário; renomear o diretório antigo no mesmo pai e instalar a cópia. Guardar caminho da pasta arquivada no registro da tentativa. Recriar os cinco consumidores de bind mounts, com readiness, no deploy/rollback.
-- **Justificativa:** renomeação no mesmo pai não exige apagar arquivos nem atualizar a entrada pai interna de diretórios sem escrita; evita depender de sudo/chown ou abrir permissões do conteúdo legado. Recriação aplica os novos inodes aos containers existentes.
-- **Alternativas consideradas:** rm recursivo repete o erro; mover para dentro do registro da release também falha com diretório sem escrita; chmod/chown recursivo do legado exigiria propriedade/privilégios e alteraria evidências.
-- **Consequências:** arquivos legados e snapshots são retidos, inclusive configurações privadas; retenção futura deve preservar confidencialidade e referências de rollback. É necessária permissão de escrita no diretório de deploy. Não há remoção de dados ou volumes.
-- **Condições de revisão:** eventual política de retenção ou troca para configuração montada diretamente por release.
-- **Referências:** scripts/deploy/replace-observability.py, remote-deploy.sh, rollback.sh, scripts/validation/release-simulation.mjs, PR #58, execução 37314658106.
+- **Status:** implementada; revisão pendente.
+- **Contexto:** SDD 7.1–7.4 exige os modelos do Prof. Fábio e separação do formulário com histórico por campo. Dados atuais do projeto/equipe não podem alterar documentos anteriores.
+- **Escolha:** guardar contexto de apresentação no payload e diferenças na transação da submissão; gerar Word do Termo/Stakeholders no navegador e manter exportação autenticada de Ata no servidor.
+- **Justificativa:** snapshots reconstituem conteúdo da versão; uso do navegador para imagens evita transformar URLs do documento em acesso de rede do servidor. Modelos variam orientação e tabelas, mas compartilham helpers DOCX.
+- **Alternativas consideradas nesta entrega:** prévia sempre junto ao formulário (não atende separação); reconstituir histórico com dados atuais (altera passado); buscar imagens arbitrárias no servidor (amplia superfície de SSRF).
+- **Consequências:** versões legadas mostram contexto/diff ausentes; uso de imagens externas depende de CORS; limite de 5 MB e falha explícita por imagem. PDF depende da impressão do navegador. Assinatura visual não constitui assinatura digital.
+- **Condições de revisão:** novos modelos ou necessidade de assinatura digital com verificação; requisito de exportação assíncrona no servidor exigiria armazenamento confiável de imagens.
+- **Referências:** `services/documentRevisionService.ts`, `lib/charterChanges.ts`, `lib/exports/`, `components/projetos/documentacao/ProjectCharter.tsx`, `docs/validation/sdd-7/README.md` e SDD fase 7.

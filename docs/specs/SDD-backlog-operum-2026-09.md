@@ -89,9 +89,9 @@ Tarefas que pedem a mesma coisa foram **fundidas**. A tabela abaixo mostra quais
 | 6 | 6.2 | A EAP só organiza na forma normal e vertical · Adicionar o jeito de visualizar do vídeo | média |
 | 6 | 6.3 | EAP: modos "WBS Chart View Details" e "WBS Hours and Cost View" | média |
 | 6 | 6.4 | Gráfico de Gantt do projeto | média |
-| 7 | 7.1 | Documentos: Formulário de Partes Interessadas em paisagem | média ⛔ |
-| 7 | 7.2 | Documentos: corrigir Termo de Abertura | média ⛔ |
-| 7 | 7.3 | Documentos: corrigir Atas | média ⛔ |
+| 7 | 7.1 | Documentos: Formulário de Partes Interessadas em paisagem | implementado; revisão pendente |
+| 7 | 7.2 | Documentos: corrigir Termo de Abertura | implementado; revisão pendente |
+| 7 | 7.3 | Documentos: corrigir Atas | implementado; revisão pendente |
 | 7 | 7.4 | Termo de Abertura: formulário para digitar e botão para gerar o documento, com histórico | média |
 | 8 | 8.1 | MCP: copiar/importar para dentro de um projeto existente | média |
 | 8 | 8.2 | MCP: anexar imagens e links de vídeo em cards | alta |
@@ -691,7 +691,7 @@ Geometria vertical/mista validada sem sobreposição; expansão conserva o botã
 
 ## Fase 7 — Documentos
 
-Os itens 7.1 a 7.3 (⛔) estão bloqueados até o usuário enviar os modelos do Prof. Fábio (Termo de Abertura, Formulário de Partes Interessadas e Ata). O 7.4 não depende dos modelos. Com os modelos em mãos, cada item bloqueado passa por quatro passos:
+Modelos recebidos nos anexos do Operum/Drive. Itens 7.1–7.4 implementados nesta entrega; validação e mapeamento em `docs/validation/sdd-7/README.md`, revisão pendente. Os links do modelo de Ata e do exemplo foram anexados ao card 7.3 com autorização do usuário. Método aplicado:
 1. Mapear campo a campo o modelo contra os dados do Operum.
 2. Listar os campos que faltam no banco.
 3. Reproduzir o layout: paisagem para Partes Interessadas; tabelas e assinaturas iguais ao modelo.

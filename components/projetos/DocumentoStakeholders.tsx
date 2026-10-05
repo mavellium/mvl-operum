@@ -191,7 +191,7 @@ export default function DocumentoStakeholders({ membros = [] }: { membros?: Memb
     onBeforePrint: async () => { document.title = 'Formulário de parte interessada' },
     onAfterPrint: () => { document.title = 'Documentação' },
     pageStyle: `
-      @page { size: A4; margin: 0; }
+      @page { size: A4 landscape; margin: 0; }
       @media print { body { -webkit-print-color-adjust: exact; print-color-adjust: exact; } }
     `,
   })
@@ -335,7 +335,7 @@ export default function DocumentoStakeholders({ membros = [] }: { membros?: Memb
 
   return (
     <div className="min-h-screen bg-gray-300 flex flex-col items-center py-8 gap-6">
-      <div className="w-[210mm] flex flex-col gap-3">
+      <div className="w-full max-w-[297mm] flex flex-col gap-3">
         {/* Campos editáveis */}
         {!loading && !error && data && (
           <div className="bg-white rounded-xl shadow-md p-5 grid grid-cols-2 gap-4">
@@ -386,6 +386,11 @@ export default function DocumentoStakeholders({ membros = [] }: { membros?: Memb
         )}
 
         {/* Barra de ações */}
+        <button type="button" disabled={!mergedHeader || !data} className="self-end rounded bg-blue-600 px-4 py-2 text-white" onClick={async () => {
+          if (!mergedHeader || !data) return
+          try { await (await import('@/lib/exports/projectDocumentsDocx')).downloadStakeholderDocx(mergedHeader, data.stakeholders) }
+          catch { toast('Não foi possível gerar o Word. Verifique as imagens do documento.', 'error') }
+        }}>Baixar Word</button>
         <div className="flex justify-end gap-2">
           {/* Botão de histórico — ícone discreto */}
           <button
@@ -450,15 +455,15 @@ export default function DocumentoStakeholders({ membros = [] }: { membros?: Memb
 
       {/* States */}
       {loading && (
-        <div className="bg-white animate-pulse rounded shadow-2xl" style={{ width: '210mm', minHeight: '297mm' }} />
+        <div className="bg-white animate-pulse rounded shadow-2xl" style={{ width: '297mm', minHeight: '210mm' }} />
       )}
       {error && (
-        <div className="w-[210mm] rounded-xl bg-red-50 border border-red-200 p-6 text-red-700 text-sm">
+        <div className="w-full max-w-[297mm] rounded-xl bg-red-50 border border-red-200 p-6 text-red-700 text-sm">
           {error}
         </div>
       )}
       {mergedHeader && !loading && (
-        <div className="shadow-2xl">
+        <div role="region" aria-label="Prévia em paisagem das partes interessadas" tabIndex={0} className="w-full max-w-[297mm] overflow-x-auto shadow-2xl">
           <StakeholderDocument ref={documentRef} header={mergedHeader} stakeholders={data!.stakeholders} />
         </div>
       )}

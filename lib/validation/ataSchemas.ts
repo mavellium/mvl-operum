@@ -20,6 +20,7 @@ export const AtaAnexoSchema = z.object({
 
 export const CriarAtaSchema = z.object({
   projetoId: z.string().min(1),
+  instituicao: z.string().trim().max(1000).nullable().optional(),
   local: z.string().trim().max(200).optional().nullable(),
   data: z.string().datetime(),
   elaboradoPor: z.string().trim().min(1, 'Elaborado por obrigatório').max(200),

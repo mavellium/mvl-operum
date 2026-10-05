@@ -3,22 +3,28 @@
 import { useProjectPermissions } from '@/components/permissoes/ProjectPermissions'
 
 import HistoricoDocumento from '@/components/projetos/documentacao/HistoricoDocumento'
-import { useState } from 'react'
+import { useState, useRef } from 'react'
+import { useReactToPrint } from 'react-to-print'
+import AtaDocument from './AtaDocument'
 import { useRouter } from 'next/navigation'
 import { criarAtaAction, atualizarAtaAction } from '@/app/actions/atas'
 import MemberSelect, { type MemberOption } from '@/components/atas/MemberSelect'
 import DateInput from '@/components/ui/DateInput'
+import { toDateInputValue } from '@/lib/date'
 
 interface Presente { nome: string; setorEmpresa: string; userId: string }
 interface Acao { acao: string; prazo: string; responsavel: string; responsavelUserId: string }
 interface Anexo { nome: string; url: string }
 
 interface Props {
+  nomeProjeto?: string
+  numero?: number
   projetoId: string
   ataId?: string
   mode: 'create' | 'edit'
   members: MemberOption[]
   initial?: {
+    instituicao?: string | null
     local?: string | null
     data?: string
     elaboradoPor: string
@@ -35,21 +41,20 @@ interface Props {
   }
 }
 
-function toDateOnly(iso: string): string {
-  const d = new Date(iso)
-  if (Number.isNaN(d.getTime())) return ''
-  const pad = (n: number) => String(n).padStart(2, '0')
-  return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`
-}
+function toDateOnly(iso: string): string { return toDateInputValue(iso) }
 
 const inputCls =
   'w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500'
 
-export default function AtaFormClient({ projetoId, ataId, mode, members, initial }: Props) {
+export default function AtaFormClient({ projetoId, ataId, mode, members, initial, nomeProjeto = '', numero }: Props) {
   const permissions = useProjectPermissions()
   const canEdit = permissions.has('documentos:editar')
   const router = useRouter()
 
+  const [instituicao, setInstituicao] = useState(initial?.instituicao ?? '')
+  const [preview, setPreview] = useState(false)
+  const documentRef = useRef<HTMLDivElement>(null)
+  const print = useReactToPrint({ contentRef: documentRef, documentTitle: 'Ata de Reunião', pageStyle: '@page { size: A4; margin: 0 }' })
   const [local, setLocal] = useState(initial?.local ?? '')
   const [data, setData] = useState(initial?.data ? toDateOnly(initial.data) : '')
   const [elaboradoPor, setElaboradoPor] = useState(initial?.elaboradoPor ?? '')
@@ -64,7 +69,7 @@ export default function AtaFormClient({ projetoId, ataId, mode, members, initial
     initial?.presentes ?? [{ nome: '', setorEmpresa: '', userId: '' }],
   )
   const [acoes, setAcoes] = useState<Acao[]>(
-    initial?.acoes ?? [{ acao: '', prazo: '', responsavel: '', responsavelUserId: '' }],
+    initial?.acoes.map(a => ({ ...a, prazo: a.prazo ? toDateOnly(a.prazo) : '' })) ?? [{ acao: '', prazo: '', responsavel: '', responsavelUserId: '' }],
   )
   const [anexos, setAnexos] = useState<Anexo[]>(initial?.anexos ?? [])
   const [error, setError] = useState<string | null>(null)
@@ -109,8 +114,9 @@ export default function AtaFormClient({ projetoId, ataId, mode, members, initial
     }
 
     const payload = {
+      instituicao: instituicao || null,
       local: local || null,
-      data: new Date(`${data}T00:00:00`).toISOString(),
+      data: new Date(`${data}T00:00:00Z`).toISOString(),
       elaboradoPor,
       elaboradoPorUserId: elaboradoPorUserId || null,
       aprovadoPor: aprovadoPor || null,
@@ -129,7 +135,7 @@ export default function AtaFormClient({ projetoId, ataId, mode, members, initial
       acoes: acoes
         .map(a => ({
           acao: a.acao.trim(),
-          prazo: a.prazo ? new Date(`${a.prazo}T00:00:00`).toISOString() : null,
+          prazo: a.prazo ? new Date(`${a.prazo}T00:00:00Z`).toISOString() : null,
           responsavel: a.responsavel.trim() || null,
           responsavelUserId: a.responsavelUserId || null,
         }))
@@ -157,13 +163,21 @@ export default function AtaFormClient({ projetoId, ataId, mode, members, initial
     <form onSubmit={handleSubmit}>
       <p className="mb-4 rounded bg-blue-50 p-3 text-sm text-blue-800">Salvar envia uma nova versão para aprovação. A ata vigente permanece disponível até a aprovação.</p>
       {ataId && <HistoricoDocumento projetoId={projetoId} type="ATA" resourceId={ataId} />}
-    <fieldset disabled={!canEdit} className="space-y-6 min-w-0">
+      <div className="mb-4 flex gap-3">
+        <button type="button" className="rounded border px-3 py-2" onClick={() => setPreview(value => !value)}>{preview ? 'Voltar ao formulário' : 'Gerar documento'}</button>
+        {preview && <button type="button" className="rounded bg-blue-600 px-3 py-2 text-white" onClick={() => print()}>Baixar PDF</button>}
+      </div>
+      {preview && <><p className="mb-2 text-sm">Prévia do rascunho — ainda não publicada</p><div role="region" aria-label="Prévia da ata" tabIndex={0} className="max-w-full overflow-x-auto mb-4"><AtaDocument ref={documentRef} data={{ instituicao, numero: numero ?? 0, nomeProjeto, local, data: data ? new Date(`${data}T12:00:00`) : null, elaboradoPor, aprovadoPor, assuntosTratados: assuntos, decisoesTomadas: decisoes, observacoes, copiasPara: copias.split(',').map(x => x.trim()).filter(Boolean), presentes, acoes: acoes.map(a => ({ ...a, prazo: a.prazo ? new Date(`${a.prazo}T12:00:00`) : null })), anexos }} /></div></>}
+    <fieldset hidden={preview} disabled={!canEdit} className="space-y-6 min-w-0">
       {error && (
         <div className="rounded-lg bg-red-50 border border-red-200 px-4 py-3 text-sm text-red-700">
           {error}
         </div>
       )}
 
+      <label className="block text-sm font-medium">Instituição / curso / termo / semestre
+        <input className={inputCls} value={instituicao} onChange={e => setInstituicao(e.target.value)} />
+      </label>
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
         <div>
           <label className="block text-sm font-medium text-gray-700 mb-1">Data da reunião *</label>
@@ -224,7 +238,8 @@ export default function AtaFormClient({ projetoId, ataId, mode, members, initial
 
       <div>
         <label className="block text-sm font-medium text-gray-700 mb-1">II. Assuntos tratados</label>
-        <textarea rows={3} value={assuntos} onChange={e => setAssuntos(e.target.value)} className={inputCls} />
+        <p className="mb-2 text-xs text-gray-500">Registre os assuntos da reunião; as 11 etapas do documento de ajustes são uma referência de pauta.</p>
+        <textarea rows={8} value={assuntos} onChange={e => setAssuntos(e.target.value)} className={inputCls} />
       </div>
 
       <div>
