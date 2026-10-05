@@ -17,11 +17,13 @@ export function useRecoverableDraft(projectId: string, value: string, status: Au
       const storageKey = `operum:charter-draft:${user.id}:${projectId}`
       try {
         const raw = sessionStorage.getItem(storageKey)
+        let candidate: string | null = null
         if (raw) {
           const stored = JSON.parse(raw)
-          if (typeof stored.value === 'string' && typeof stored.updatedAt === 'number' && Date.now() - stored.updatedAt < 86400000) setBackup(stored.value)
+          if (typeof stored.value === 'string' && typeof stored.updatedAt === 'number' && Date.now() - stored.updatedAt < 86400000) candidate = stored.value
           else sessionStorage.removeItem(storageKey)
         }
+        setBackup(candidate)
         setKey(storageKey)
       } catch { /* Exit warning and server draft still remain available. */ }
     }).catch(() => {})

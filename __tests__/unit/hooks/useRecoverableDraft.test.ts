@@ -33,3 +33,13 @@ it('cópia expirada não é restaurada', async () => {
   expect(result.current.backup).toBeNull()
   expect(sessionStorage.getItem('operum:charter-draft:owner:p1')).toBeNull()
 })
+it('trocar de projeto não oferece nem copia o rascunho do projeto anterior', async () => {
+  sessionStorage.setItem('operum:charter-draft:owner:p1', JSON.stringify({ value: 'somente p1', updatedAt: Date.now() }))
+  const { result, rerender } = renderHook(({ projectId }) => useRecoverableDraft(projectId, 'atual', 'idle', true), { initialProps: { projectId: 'p1' } })
+  await waitFor(() => expect(result.current.backup).toBe('somente p1'))
+  rerender({ projectId: 'p2' })
+  expect(result.current.backup).toBeNull()
+  await act(async () => { await Promise.resolve() })
+  expect(result.current.backup).toBeNull()
+  expect(sessionStorage.getItem('operum:charter-draft:owner:p2')).toBeNull()
+})
