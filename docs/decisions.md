@@ -314,3 +314,39 @@ Ao substituir uma decisão, manter o texto histórico, alterar seu status e liga
 - **Consequências:** sem incremento SemVer, pois módulos retirados não possuem runtime e não há mudança de dependências/contratos. Serviços locais com consumidor continuam documentados; guard não é análise de fluxo completa e não prova equivalência de outros módulos sem consumidor. Helpers/regras legadas de departamentos não são incorporados ao serviço Nest nesta entrega.
 - **Condições de revisão:** migração de leitores locais de projetos/sprints/métricas, acesso direto novo, imports dinâmicos montados ou mudança de proprietário do domínio.
 - **Referências:** SDD 9.7; docs/domain-boundaries.md; scripts/check-domain-boundaries.mjs; project-service/src/department/department.service.spec.ts; .github/workflows/domain-boundaries.yml.
+
+## ADR-022 — Confirmar alterações e centralizar recuperação/foco na UI
+
+- **Data do registro:** 2026-10-04.
+- **Status:** implementada nesta entrega; aguardando revisão da PR.
+- **Contexto:** SDD 10.1–10.8 identificou estado otimista sem tratamento de `{error}`,
+  formulário fechado antes da persistência, timers divergentes, autosave sem flush
+  confirmado e overlays que competiam pelo foco. Reprodução em 360/390/768 px
+  confirmou lateral de 224 px mesmo no celular.
+- **Escolha:** aplicar mutações de quadro após confirmação, com retry por recurso;
+  contrato assíncrono explícito no formulário e sessão de criação parcial;
+  store de timer compartilhado por card; autosave serializado com flush booleano;
+  cópia privada em sessionStorage vinculada à identidade/projeto; uma pilha de
+  overlays para foco, inert e lock de scroll; menu sobreposto abaixo de 768 px.
+- **Justificativa:** evita rollback de snapshots que apagaria operações válidas;
+  preserva dados e comunica incerteza sem anunciar sucesso falso. Reutiliza APIs
+  existentes e permite testar falhas sem mudar permissões ou serviços. Identidade
+  é confirmada antes de ler a cópia local; recuperação explícita evita substituir
+  silenciosamente o rascunho servidor.
+- **Alternativas consideradas nesta entrega:** snapshot global com rollback
+  (conflita com alterações simultâneas); duplicar lógica de timer/foco por componente
+  (mantém divergência); gravar cópias locais sem autor ou em localStorage permanente
+  (risco de exposição/retenção); sincronização por push (exige contrato/infra novos).
+- **Consequências:** versão PATCH 1.13.1 sobre 1.13.0. UI aguarda persistência para
+  alterar o quadro; criação parcial mantém o card real e o formulário aberto.
+  Timer compartilhado vale dentro da mesma árvore/aba; atualização entre abas
+  depende de nova leitura. Cópia local é best-effort, expira em 24 horas e não
+  assegura recuperação após fechamento definitivo da aba. Menus/diálogos usam
+  inert nativo; regiões A4/Kanban continuam explicitamente bidimensionais.
+- **Condições de revisão:** sincronização entre abas, idempotência de anexos após
+  resposta perdida, navegação interna que não use links, novos tipos de overlay ou
+  política de retenção de dados locais.
+- **Referências:** hooks/useCardTimer.ts; hooks/useAutosave.ts;
+  hooks/useRecoverableDraft.ts; hooks/useOverlay.ts; components/sprint/SprintBoard.tsx;
+  components/card/CardModal.tsx; docs/validation/sdd-10/README.md; SDD 10.1–10.8;
+  .github/workflows/ui-reliability.yml.

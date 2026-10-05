@@ -52,7 +52,7 @@ export default function DocumentacaoLayout({ projetoId, atas, gerente, membros =
   }
 
   return (
-    <div data-testid="doc-layout" className="flex flex-1 h-full overflow-hidden">
+    <div data-testid="doc-layout" className="flex flex-col lg:flex-row flex-1 h-full overflow-hidden">
       <DocumentSidebar activeDoc={activeDoc} onSelect={handleSelect} />
       <div data-testid="doc-content" className="flex-1 min-w-0 overflow-y-auto">
         <HistoricoDocumento key={activeDoc} projetoId={projetoId} type={{ atas: 'ATA', charter: 'CHARTER', eap: 'EAP', stakeholder: 'STAKEHOLDER' }[activeDoc]} />

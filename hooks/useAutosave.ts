@@ -9,6 +9,7 @@ interface Options {
   delay?: number
   /** Desliga o autosave (ex.: modo somente-leitura ou card ainda não criado). */
   enabled?: boolean
+  guardNavigation?: boolean
 }
 
 /**
@@ -17,11 +18,13 @@ interface Options {
  * `reset(v)` marca `v` como já salvo (use ao carregar outro registro).
  * Enquanto houver alteração pendente, o navegador pede confirmação ao sair.
  */
-export function useAutosave<T>(value: T, save: (value: T) => Promise<void>, { delay = 800, enabled = true }: Options = {}) {
+export function useAutosave<T>(value: T, save: (value: T) => Promise<void>, { delay = 800, enabled = true, guardNavigation = false }: Options = {}) {
   const [status, setStatus] = useState<AutosaveStatus>('idle')
   const valueRef = useRef(value)
   const lastSavedRef = useRef(value)
   const saveRef = useRef(save)
+  const epoch = useRef(0)
+  const inFlight = useRef<Promise<boolean> | null>(null)
   const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
 
   useEffect(() => {
@@ -34,23 +37,35 @@ export function useAutosave<T>(value: T, save: (value: T) => Promise<void>, { de
     timerRef.current = null
   }
 
-  const flush = useCallback(async () => {
+  const flush = useCallback(async (): Promise<boolean> => {
     clearTimer()
-    const current = valueRef.current
-    if (!enabled || Object.is(current, lastSavedRef.current)) return
-    setStatus('saving')
-    try {
-      await saveRef.current(current)
-      lastSavedRef.current = current
-      // Se o usuário continuou digitando durante o save, o efeito abaixo já reagendou.
-      setStatus(Object.is(valueRef.current, current) ? 'saved' : 'pending')
-    } catch {
-      setStatus('error')
-    }
+    if (inFlight.current) return inFlight.current
+    if (!enabled || Object.is(valueRef.current, lastSavedRef.current)) return true
+    const generation = epoch.current
+    inFlight.current = (async () => {
+      try {
+        while (!Object.is(valueRef.current, lastSavedRef.current)) {
+          if (generation !== epoch.current) return false
+          const current = valueRef.current
+          setStatus('saving')
+          await saveRef.current(current)
+          if (generation !== epoch.current) return false
+          lastSavedRef.current = current
+        }
+        setStatus('saved')
+        return true
+      } catch {
+        if (generation === epoch.current) setStatus('error')
+        return false
+      } finally { if (generation === epoch.current) inFlight.current = null }
+    })()
+    return inFlight.current
   }, [enabled])
 
   const reset = useCallback((saved: T) => {
     clearTimer()
+    epoch.current += 1
+    inFlight.current = null
     lastSavedRef.current = saved
     valueRef.current = saved
     setStatus('idle')
@@ -69,10 +84,25 @@ export function useAutosave<T>(value: T, save: (value: T) => Promise<void>, { de
     if (!dirty) return
     const onBeforeUnload = (e: BeforeUnloadEvent) => {
       e.preventDefault()
+      e.returnValue = ''
     }
     window.addEventListener('beforeunload', onBeforeUnload)
     return () => window.removeEventListener('beforeunload', onBeforeUnload)
   }, [dirty])
+
+  useEffect(() => {
+    if (!dirty || !guardNavigation) return
+    const navigate = async (event: MouseEvent) => {
+      if (event.defaultPrevented || event.button !== 0 || event.ctrlKey || event.metaKey || event.shiftKey || event.altKey) return
+      const anchor = (event.target as Element).closest<HTMLAnchorElement>('a[href]')
+      if (!anchor || anchor.target === '_blank' || anchor.hasAttribute('download') || new URL(anchor.href).pathname === location.pathname) return
+      event.preventDefault()
+      event.stopPropagation()
+      if (await flush()) location.assign(anchor.href)
+    }
+    document.addEventListener('click', navigate, true)
+    return () => document.removeEventListener('click', navigate, true)
+  }, [dirty, guardNavigation, flush])
 
   // Ao desmontar, não descarta o que ainda não foi salvo.
   useEffect(() => () => { void flush() }, [flush])

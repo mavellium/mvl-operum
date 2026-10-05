@@ -1,7 +1,10 @@
 'use client'
 
-import { useEffect, useState, useTransition } from 'react'
+import { useEffect, useState, useTransition, useId, useRef } from 'react'
 import Link from 'next/link'
+import { useMediaQuery } from '@/hooks/useMediaQuery'
+import { useOverlay } from '@/hooks/useOverlay'
+import { usePathname } from 'next/navigation'
 import { PanelLeftClose, LogOut } from 'lucide-react'
 import UserAvatar from '@/components/user/UserAvatar'
 import GlobalSearch from '@/components/search/GlobalSearch'
@@ -11,6 +14,7 @@ import { logoutAction } from '@/app/actions/auth'
 import { fetchWithSession } from '@/lib/clientFetch'
 
 interface SidebarLayoutProps {
+  panelId?: string
   title: string
   searchPlaceholder: string
   searchContext: 'global_projects' | 'project_items' | 'sprint_items' | 'project_members' | 'default'
@@ -36,6 +40,7 @@ interface SidebarLayoutProps {
  * `logoHref` personaliza o destino da logo (ex.: admin → /admin/dashboard).
  */
 export default function SidebarLayout({
+  panelId: providedPanelId,
   title,
   searchPlaceholder,
   searchContext,
@@ -71,15 +76,45 @@ export default function SidebarLayout({
     return () => clearInterval(id)
   }, [user])
 
+  const mobile = useMediaQuery('(max-width: 767px)')
+  const [mobileOpen, setMobileOpen] = useState(false)
+  const generatedPanelId = useId()
+  const panelId = providedPanelId ?? generatedPanelId
+  const overlayRef = useRef<HTMLDivElement>(null)
+  const panelRef = useRef<HTMLElement>(null)
+  const mobileTrigger = useRef<HTMLButtonElement>(null)
+  const pathname = usePathname()
+  const lastPath = useRef(pathname)
+  const zIndex = useOverlay(overlayRef, () => setMobileOpen(false), mobile && mobileOpen)
+  useEffect(() => {
+    if (lastPath.current !== pathname) {
+      lastPath.current = pathname
+      setMobileOpen(false)
+    }
+  }, [pathname])
+  const wasCollapsed = useRef(collapsed)
+  useEffect(() => {
+    if (wasCollapsed.current && !collapsed && !mobile) panelRef.current?.querySelector<HTMLButtonElement>('[aria-label="Recolher menu lateral"]')?.focus()
+    wasCollapsed.current = collapsed
+    if (collapsed && !mobile) document.querySelector<HTMLButtonElement>('[data-sidebar-expand]')?.focus()
+  }, [collapsed, mobile])
+  const hidden = mobile ? !mobileOpen : collapsed
+
   return (
+    <>
+      <button ref={mobileTrigger} type="button" onClick={() => setMobileOpen(true)} aria-expanded={mobile && mobileOpen} aria-controls={panelId} aria-label="Abrir menu lateral" className="md:hidden fixed top-3 left-3 z-40 rounded-lg border bg-white p-2 shadow focus-visible:ring-2 focus-visible:ring-blue-500">☰</button>
+      <div ref={overlayRef} tabIndex={-1} role={mobile && mobileOpen ? 'dialog' : undefined} aria-label={mobile && mobileOpen ? 'Menu lateral' : undefined} aria-modal={mobile && mobileOpen ? true : undefined} className={mobile && mobileOpen ? 'fixed inset-0' : 'contents'} style={mobile && mobileOpen ? { zIndex } : undefined}>
+      {mobile && mobileOpen && <div className="fixed inset-0 bg-black/50 md:hidden" style={{ zIndex: zIndex - 1 }} onClick={() => setMobileOpen(false)} aria-hidden="true" />}
     <aside
-      className={`shrink-0 bg-white flex flex-col overflow-hidden ${
-        collapsed ? 'w-0' : 'w-56 border-r border-gray-200'
-      } ${animated ? 'transition-[width] duration-300 ease-in-out' : ''}`}
+      ref={panelRef} id={panelId} tabIndex={-1}
+      aria-hidden={hidden || undefined} inert={hidden}
+      style={mobile && mobileOpen ? { zIndex } : undefined}
+      onClick={event => { if (mobile && (event.target as HTMLElement).closest('a[href]')) setMobileOpen(false) }}
+      className={`shrink-0 bg-white flex-col overflow-hidden ${mobileOpen ? 'flex' : 'hidden md:flex'} fixed inset-y-0 left-0 md:static max-w-full ${collapsed ? 'md:w-0' : 'md:w-56 md:border-r md:border-gray-200'} w-56 ${animated ? 'transition-[width] duration-300 ease-in-out' : ''}`}
     >
-      <div
-        className={`w-56 flex flex-col h-full ${
-          collapsed ? '-translate-x-full' : 'translate-x-0'
+      <div hidden={hidden}
+        className={`w-56 max-w-full flex flex-col h-full ${
+          collapsed && !mobile ? '-translate-x-full' : 'translate-x-0'
         } ${animated ? 'transition-transform duration-300 ease-in-out' : ''}`}
       >
       {/* Logo do software + ícone hambúrguer */}
@@ -92,11 +127,13 @@ export default function SidebarLayout({
           </div>
           <span className="text-lg font-bold text-gray-900 tracking-tight truncate">Operum</span>
         </Link>
-        {onToggleCollapse && (
+        {(onToggleCollapse || mobile) && (
           <Tooltip label="Recolher menu" side="bottom">
             <button
               type="button"
-              onClick={onToggleCollapse}
+              onClick={() => { if (mobile) setMobileOpen(false); else onToggleCollapse?.() }}
+              aria-expanded={mobile ? mobileOpen : !collapsed}
+              aria-controls={panelId}
               aria-label="Recolher menu lateral"
               className="shrink-0 p-1.5 rounded-lg text-gray-500 hover:text-gray-700 hover:bg-gray-100 transition-colors cursor-pointer"
             >
@@ -176,5 +213,7 @@ export default function SidebarLayout({
       </div>
       </div>
     </aside>
+    </div>
+    </>
   )
 }

@@ -1,7 +1,8 @@
 'use client'
 
-import { useState, useEffect, useRef } from 'react'
-import { startTimerAction, pauseTimerAction, getCardTimeAction, getActiveTimerAction, addManualTimeAction } from '@/app/actions/time'
+import { useRef, useState } from 'react'
+import { addManualTimeAction } from '@/app/actions/time'
+import { useCardTimer } from '@/hooks/useCardTimer'
 
 function formatDuration(seconds: number): string {
   const h = Math.floor(seconds / 3600)
@@ -20,153 +21,34 @@ interface CardTimerProps {
 }
 
 export default function CardTimer({ cardId, onEntryChanged, timerKey, onTimerStarted }: CardTimerProps) {
-  const [isRunning, setIsRunning] = useState(false)
-  const [elapsed, setElapsed] = useState(0)
-  const [loading, setLoading] = useState(true)
-  const [error, setError] = useState('')
+  const timer = useCardTimer(cardId, timerKey)
+  const isRunning = timer.isRunning, elapsed = timer.elapsed, loading = timer.loading, error = timer.error
+  const manualPending = useRef(false)
+  const [manualSaving, setManualSaving] = useState(false)
   const [showManualForm, setShowManualForm] = useState(false)
   const [manualHours, setManualHours] = useState(0)
   const [manualMinutes, setManualMinutes] = useState(0)
   const [manualError, setManualError] = useState('')
 
-  const intervalRef      = useRef<ReturnType<typeof setInterval> | null>(null)
-  const startedAtRef     = useRef<Date | null>(null)
-  const baseSecondsRef   = useRef(0)
-  const activeEntryIdRef = useRef<string | null>(null)
-
-  async function fetchTotal() {
-    const res = await getCardTimeAction(cardId)
-    if ('seconds' in res && res.seconds != null) {
-      baseSecondsRef.current = res.seconds
-      setElapsed(res.seconds)
-    }
-  }
-
-  useEffect(() => {
-    let cancelled = false
-
-    async function init() {
-      setLoading(true)
-      const [timeResult, activeResult] = await Promise.all([
-        getCardTimeAction(cardId),
-        getActiveTimerAction(cardId),
-      ])
-      if (cancelled) return
-
-      const total  = ('seconds' in timeResult ? timeResult.seconds : 0) ?? 0
-      const active = 'entry' in activeResult ? activeResult.entry : null
-
-      if (active?.isRunning) {
-        const sinceStart = Math.floor((Date.now() - new Date(active.startedAt).getTime()) / 1000)
-        baseSecondsRef.current   = total - (active.duration ?? 0)
-        startedAtRef.current     = new Date(active.startedAt)
-        activeEntryIdRef.current = active.id
-        setElapsed(baseSecondsRef.current + sinceStart)
-        setIsRunning(true)
-      } else {
-        baseSecondsRef.current   = total
-        activeEntryIdRef.current = null
-        setElapsed(total)
-        setIsRunning(false)
-      }
-      setLoading(false)
-    }
-
-    init()
-    return () => { cancelled = true }
-  }, [cardId])
-
-  // Refresh leve quando tempo manual é adicionado externamente
-  useEffect(() => {
-    if (!timerKey) return
-    let cancelled = false
-    getCardTimeAction(cardId).then(res => {
-      if (cancelled) return
-      if ('seconds' in res && res.seconds != null) {
-        const total = res.seconds
-        if (startedAtRef.current) {
-          const sinceStart = Math.floor((Date.now() - startedAtRef.current.getTime()) / 1000)
-          baseSecondsRef.current = total - sinceStart
-        } else {
-          baseSecondsRef.current = total
-          setElapsed(total)
-        }
-      }
-    })
-    return () => { cancelled = true }
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [timerKey])
-
-  useEffect(() => {
-    if (isRunning) {
-      intervalRef.current = setInterval(() => {
-        const sinceStart = startedAtRef.current
-          ? Math.floor((Date.now() - startedAtRef.current.getTime()) / 1000)
-          : 0
-        setElapsed(baseSecondsRef.current + sinceStart)
-      }, 1000)
-    } else {
-      if (intervalRef.current) clearInterval(intervalRef.current)
-    }
-    return () => { if (intervalRef.current) clearInterval(intervalRef.current) }
-  }, [isRunning])
-
-  async function handleStart() {
-    setError('')
-    setLoading(true)
-    const result = await startTimerAction(cardId)
-    if ('error' in result && result.error) {
-      setError(result.error as string)
-      setLoading(false)
-      return
-    }
-    if ('entry' in result && result.entry) {
-      const entry = result.entry as { id: string }
-      activeEntryIdRef.current = entry.id
-      baseSecondsRef.current   = elapsed
-      startedAtRef.current     = new Date()
-      setIsRunning(true)
-      onTimerStarted?.(cardId)
-    }
-    setLoading(false)
-  }
-
-  async function handlePause() {
-    const entryId = activeEntryIdRef.current
-    if (!entryId) return
-    setError('')
-    setLoading(true)
-    if (intervalRef.current) clearInterval(intervalRef.current)
-    setIsRunning(false)
-    const result = await pauseTimerAction(entryId)
-    if ('error' in result && result.error) {
-      setError(result.error as string)
-    }
-    activeEntryIdRef.current = null
-    await fetchTotal()
-    setLoading(false)
-    onEntryChanged?.()
-  }
+  async function handleStart() { if (await timer.toggle()) onTimerStarted?.(cardId) }
+  async function handlePause() { if (await timer.toggle()) onEntryChanged?.() }
 
   async function handleSaveManual() {
+    if (manualPending.current) return
     setManualError('')
     if (manualHours === 0 && manualMinutes === 0) {
       setManualError('Informe um tempo válido')
       return
     }
-    setLoading(true)
-    const result = await addManualTimeAction(cardId, manualHours, manualMinutes)
-    if ('error' in result && result.error) {
-      setManualError(result.error as string)
-      setLoading(false)
-      return
-    }
-    setShowManualForm(false)
-    setManualHours(0)
-    setManualMinutes(0)
-    await fetchTotal()
-    setLoading(false)
-    onEntryChanged?.()
+    manualPending.current = true; setManualSaving(true)
+    try {
+      const result = await addManualTimeAction(cardId, manualHours, manualMinutes)
+      if ('error' in result && result.error) throw new Error(result.error)
+      setShowManualForm(false); setManualHours(0); setManualMinutes(0)
+      await timer.refresh()
+      onEntryChanged?.()
+    } catch (error) { setManualError(error instanceof Error ? error.message : 'Erro de rede. Tente novamente.') }
+    finally { manualPending.current = false; setManualSaving(false) }
   }
 
   return (
@@ -176,14 +58,14 @@ export default function CardTimer({ cardId, onEntryChanged, timerKey, onTimerSta
           className="text-2xl font-mono font-semibold text-slate-800 tabular-nums min-w-[80px]"
           aria-label="Tempo acumulado"
         >
-          {loading && elapsed === 0 ? '—' : formatDuration(elapsed)}
+          {timer.known ? formatDuration(elapsed) : '—'}
         </span>
 
         {isRunning ? (
           <button
             type="button"
             onClick={e => { e.stopPropagation(); handlePause() }}
-            disabled={loading}
+            disabled={loading || manualSaving || !timer.known}
             aria-label="Pausar timer"
             className="flex items-center gap-1.5 px-3 py-1.5 bg-amber-100 text-amber-700 rounded-lg text-sm font-medium hover:bg-amber-200 transition-colors disabled:opacity-50 cursor-pointer"
           >
@@ -196,7 +78,7 @@ export default function CardTimer({ cardId, onEntryChanged, timerKey, onTimerSta
           <button
             type="button"
             onClick={e => { e.stopPropagation(); handleStart() }}
-            disabled={loading}
+            disabled={loading || manualSaving || !timer.known}
             aria-label="Iniciar timer"
             className="flex items-center gap-1.5 px-3 py-1.5 bg-green-100 text-green-700 rounded-lg text-sm font-medium hover:bg-green-200 transition-colors disabled:opacity-50 cursor-pointer"
           >
@@ -208,7 +90,7 @@ export default function CardTimer({ cardId, onEntryChanged, timerKey, onTimerSta
         )}
       </div>
 
-      {error && <p className="text-xs text-red-500">{error}</p>}
+      {error && <p role="alert" className="text-xs text-red-500">{error} <button type="button" disabled={loading} onClick={() => void timer.refresh()}>Atualizar timer</button></p>}
 
       {!showManualForm ? (
         <button
@@ -258,7 +140,7 @@ export default function CardTimer({ cardId, onEntryChanged, timerKey, onTimerSta
             <button
               type="button"
               onClick={e => { e.stopPropagation(); handleSaveManual() }}
-              disabled={loading}
+              disabled={loading || manualSaving || !timer.known}
               className="px-3 py-1 text-xs font-medium bg-blue-600 text-white rounded hover:bg-blue-700 transition-colors disabled:opacity-60 cursor-pointer"
             >
               Salvar

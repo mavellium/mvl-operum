@@ -61,7 +61,7 @@ export default function DocumentSidebar({ activeDoc, onSelect }: Props) {
     .filter((d): d is (typeof DOCUMENTS)[number] => Boolean(d))
 
   return (
-    <nav className="w-56 shrink-0 border-r border-slate-200 bg-slate-50 flex flex-col py-4 gap-1 px-2">
+    <nav className="w-full lg:w-56 max-h-48 lg:max-h-none overflow-y-auto shrink-0 border-b lg:border-b-0 lg:border-r border-slate-200 bg-slate-50 flex flex-col py-4 gap-1 px-2">
       <p className="px-2 mb-2 text-xs font-semibold uppercase tracking-wider text-slate-400">
         Documentos
       </p>

@@ -838,7 +838,7 @@ Conferência ao vivo em 30/09/2026: 79 cards no projeto, sem outra página de re
 | 9.4 | Substituir macrofases sem janela de perda de dados (`cmuo1gmrs002f01ndhl51fd03`) | alta | Integrado na PR #48 |
 | 9.5 | Restaurar contratos dos dashboards global e por sprint, com teste integrado de rota (`cmuo1gmu4002h01ndvuxtgkht`) | alta | Integrado na PR #49 |
 | 9.6 | Paginar tarefas no serviço de origem e reduzir varreduras MCP (`cmuo1gmvx002j01ndsdfhjthj`) | media | Integrado na PR #51 |
-| 9.7 | Consolidar serviços legados e definir fronteiras de domínio verificáveis (`cmuo1gn0b002l01nd62w0nvb1`) | media | Implementado nesta entrega; aguardando revisão |
+| 9.7 | Consolidar serviços legados e definir fronteiras de domínio verificáveis (`cmuo1gn0b002l01nd62w0nvb1`) | media | Integrado na PR #52 |
 
 ### 9.1 Preservar vínculo com projeto e atomicidade ao excluir uma sprint
 
@@ -950,7 +950,7 @@ Entrega: `GET /cards/page`, filtros/cursor na origem, MCP sem varredura e resumo
 
 ### 9.7 Consolidar serviços legados e definir fronteiras de domínio verificáveis
 
-**Card:** `cmuo1gn0b002l01nd62w0nvb1`. **Prioridade:** media. **Status:** implementado nesta entrega; aguardando revisão.
+**Card:** `cmuo1gn0b002l01nd62w0nvb1`. **Prioridade:** media. **Status:** integrado na PR #52.
 
 Inventário, mapa de propriedade e revisão de consistência da fase 9 em `docs/domain-boundaries.md`. Retirados clientes diretos mortos e duplicatas de departamentos; testes no serviço Nest ativo e check contínuo de imports. Exceções locais usadas permanecem explícitas.
 
@@ -970,18 +970,18 @@ Inventário, mapa de propriedade e revisão de consistência da fase 9 em `docs/
 
 | Item | Card no Operum | Prioridade | Status |
 |---|---|---|---|
-| 10.1 | Reverter alterações otimistas do Kanban quando a API falhar (`cmuo1h9rx002p01ndby9xzsgq`) | alta | Pendente |
-| 10.2 | Preservar o formulário do card até a criação/edição ser confirmada (`cmuo1hanh002r01nd1uepu4jr`) | alta | Pendente |
-| 10.3 | Manter timer sincronizado quando pausar/iniciar falhar (`cmuo1hbit002t01ndbwlhgrnp`) | alta | Pendente |
-| 10.4 | Confirmar autosave do Termo antes de salvar versão ou sair (`cmuo1hcdi002v01ndlcro8f8u`) | alta | Pendente |
-| 10.5 | Permitir abrir cards pelo teclado independentemente do arraste (`cmuo1hdar002x01nd1isa1gx2`) | media | Pendente |
-| 10.6 | Retirar sidebar recolhida da ordem de foco (`cmuo1he4u002z01ndi88juuae`) | media | Pendente |
-| 10.7 | Unificar gestão de foco de Drawer e Modal (`cmuo1heyw003101ndy6pb87pm`) | media | Pendente |
-| 10.8 | Adaptar navegação lateral para celular com menu sobreposto (`cmuo1hfvo003301nddf04r2fs`) | media | Pendente |
+| 10.1 | Reverter alterações otimistas do Kanban quando a API falhar (`cmuo1h9rx002p01ndby9xzsgq`) | alta | Implementado nesta entrega; aguardando revisão |
+| 10.2 | Preservar o formulário do card até a criação/edição ser confirmada (`cmuo1hanh002r01nd1uepu4jr`) | alta | Implementado nesta entrega; aguardando revisão |
+| 10.3 | Manter timer sincronizado quando pausar/iniciar falhar (`cmuo1hbit002t01ndbwlhgrnp`) | alta | Implementado nesta entrega; aguardando revisão |
+| 10.4 | Confirmar autosave do Termo antes de salvar versão ou sair (`cmuo1hcdi002v01ndlcro8f8u`) | alta | Implementado nesta entrega; aguardando revisão |
+| 10.5 | Permitir abrir cards pelo teclado independentemente do arraste (`cmuo1hdar002x01nd1isa1gx2`) | media | Implementado nesta entrega; aguardando revisão |
+| 10.6 | Retirar sidebar recolhida da ordem de foco (`cmuo1he4u002z01ndi88juuae`) | media | Implementado nesta entrega; aguardando revisão |
+| 10.7 | Unificar gestão de foco de Drawer e Modal (`cmuo1heyw003101ndy6pb87pm`) | media | Implementado nesta entrega; aguardando revisão |
+| 10.8 | Adaptar navegação lateral para celular com menu sobreposto (`cmuo1hfvo003301nddf04r2fs`) | media | Implementado nesta entrega; aguardando revisão |
 
 ### 10.1 Reverter alterações otimistas do Kanban quando a API falhar
 
-**Card:** `cmuo1h9rx002p01ndby9xzsgq`. **Prioridade:** alta. **Status:** pendente.
+**Card:** `cmuo1h9rx002p01ndby9xzsgq`. **Prioridade:** alta. **Status:** implementado nesta entrega; aguardando revisão.
 
 **Avaliação UX01 · Interface e experiência**
 
@@ -994,7 +994,7 @@ Inventário, mapa de propriedade e revisão de consistência da fase 9 em `docs/
 
 ### 10.2 Preservar o formulário do card até a criação/edição ser confirmada
 
-**Card:** `cmuo1hanh002r01nd1uepu4jr`. **Prioridade:** alta. **Status:** pendente.
+**Card:** `cmuo1hanh002r01nd1uepu4jr`. **Prioridade:** alta. **Status:** implementado nesta entrega; aguardando revisão.
 
 **Avaliação UX02 · Interface e experiência**
 
@@ -1007,7 +1007,7 @@ Inventário, mapa de propriedade e revisão de consistência da fase 9 em `docs/
 
 ### 10.3 Manter timer sincronizado quando pausar/iniciar falhar
 
-**Card:** `cmuo1hbit002t01ndbwlhgrnp`. **Prioridade:** alta. **Status:** pendente.
+**Card:** `cmuo1hbit002t01ndbwlhgrnp`. **Prioridade:** alta. **Status:** implementado nesta entrega; aguardando revisão.
 
 **Avaliação UX03 · Interface e experiência**
 
@@ -1019,7 +1019,7 @@ Inventário, mapa de propriedade e revisão de consistência da fase 9 em `docs/
 
 ### 10.4 Confirmar autosave do Termo antes de salvar versão ou sair
 
-**Card:** `cmuo1hcdi002v01ndlcro8f8u`. **Prioridade:** alta. **Status:** pendente.
+**Card:** `cmuo1hcdi002v01ndlcro8f8u`. **Prioridade:** alta. **Status:** implementado nesta entrega; aguardando revisão.
 
 **Avaliação UX04 · Interface e experiência**
 
@@ -1032,7 +1032,7 @@ Inventário, mapa de propriedade e revisão de consistência da fase 9 em `docs/
 
 ### 10.5 Permitir abrir cards pelo teclado independentemente do arraste
 
-**Card:** `cmuo1hdar002x01nd1isa1gx2`. **Prioridade:** media. **Status:** pendente.
+**Card:** `cmuo1hdar002x01nd1isa1gx2`. **Prioridade:** media. **Status:** implementado nesta entrega; aguardando revisão.
 
 **Avaliação UX05 · Interface e experiência**
 
@@ -1045,7 +1045,7 @@ Inventário, mapa de propriedade e revisão de consistência da fase 9 em `docs/
 
 ### 10.6 Retirar sidebar recolhida da ordem de foco
 
-**Card:** `cmuo1he4u002z01ndi88juuae`. **Prioridade:** media. **Status:** pendente.
+**Card:** `cmuo1he4u002z01ndi88juuae`. **Prioridade:** media. **Status:** implementado nesta entrega; aguardando revisão.
 
 **Avaliação UX06 · Interface e experiência**
 
@@ -1057,7 +1057,7 @@ Inventário, mapa de propriedade e revisão de consistência da fase 9 em `docs/
 
 ### 10.7 Unificar gestão de foco de Drawer e Modal
 
-**Card:** `cmuo1heyw003101ndy6pb87pm`. **Prioridade:** media. **Status:** pendente.
+**Card:** `cmuo1heyw003101ndy6pb87pm`. **Prioridade:** media. **Status:** implementado nesta entrega; aguardando revisão.
 
 **Avaliação UX07 · Interface e experiência**
 
@@ -1069,7 +1069,7 @@ Inventário, mapa de propriedade e revisão de consistência da fase 9 em `docs/
 
 ### 10.8 Adaptar navegação lateral para celular com menu sobreposto
 
-**Card:** `cmuo1hfvo003301nddf04r2fs`. **Prioridade:** media. **Status:** pendente.
+**Card:** `cmuo1hfvo003301nddf04r2fs`. **Prioridade:** media. **Status:** implementado nesta entrega; aguardando revisão.
 
 **Avaliação UX08 · Interface e experiência**
 
@@ -1080,6 +1080,25 @@ Inventário, mapa de propriedade e revisão de consistência da fase 9 em `docs/
 - Evidência: AppShell coloca sidebar e main em flex horizontal; SidebarLayout reserva `w-56` sem breakpoint, e GlobalSidebar/ProjectSidebar iniciam `collapsed=false`, alterando apenas via localStorage ou botão. Fontes: [AppShell.tsx:27](https://github.com/mavellium/mvl-operum/blob/d90456ff/components/layout/AppShell.tsx#L27), [SidebarLayout.tsx:74](https://github.com/mavellium/mvl-operum/blob/d90456ff/components/layout/SidebarLayout.tsx#L74), [GlobalSidebar.tsx:43](https://github.com/mavellium/mvl-operum/blob/d90456ff/components/layout/GlobalSidebar.tsx#L43), [ProjectSidebar.tsx:65](https://github.com/mavellium/mvl-operum/blob/d90456ff/components/layout/ProjectSidebar.tsx#L65).
 - Impacto inferido: primeira visita em viewport de 360–390 px deixa pequena parte da largura para conteúdo até recolher manualmente. Não afirmo sobreposição observada, pois a análise foi estática.
 **Escopo e critérios de aceite:** em telas estreitas, conteúdo usa largura disponível e menu abre como overlay acessível; navegação fecha após escolha; comportamento desktop preservado; validar 360, 390 e 768 px em projetos, sprint e documentação, inclusive rotação, teclado e zoom; sem rolagem horizontal da página fora de áreas explicitamente bidimensionais.
+
+### Implementação e revisão de consistência da fase 10 (04/10/2026)
+
+Todos os itens 10.1–10.8 foram implementados na mesma entrega PATCH 1.13.1.
+Mutações de quadro só mudam a UI depois da confirmação, com retry por recurso;
+formulário espera resultado e mantém a sessão da criação parcial. Timer é
+compartilhado entre superfícies, reconcilia falhas e explicita estado desconhecido.
+Autosave serializado confirma flush antes da versão; texto permanece na falha,
+saída é protegida e cópia da mesma aba permite recuperação por autor/projeto.
+Abertura de card usa botão; lateral recolhida é inert; foco/Escape/scroll de
+overlays usa uma pilha comum. Reprodução obrigatória prévia confirmou 224 px
+reservados no celular; menu móvel e navegação documental foram adaptados.
+
+Arquitetura e ADR-022 registram o fluxo atual, limites da recuperação local e
+condições de revisão. Contratos HTTP, banco, permissões e fronteiras da fase 9
+foram preservados. Testes e evidências visuais em
+[docs/validation/sdd-10](../validation/sdd-10/README.md); a reprodução usou dados
+fictícios numa rota temporária removida. Não houve validação/deploy em produção.
+A fase 9 está integrada nas PRs #45–#49, #51 e #52; a fase 11 permanece pendente.
 
 ## Fase 11 — Segurança e operação
 

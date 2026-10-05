@@ -1,0 +1,282 @@
+[
+  {
+    "label": "projects-360",
+    "viewport": 360,
+    "height": 800,
+    "body": 360,
+    "sidebar": 0,
+    "main": 360,
+    "view": "projetos",
+    "open": false,
+    "mainInert": false,
+    "focus": "☰OperumProjeto OperumProjetosSprintDocumentaçãoUTOperum v1.13.0ProjetosProjeto O"
+  },
+  {
+    "label": "menu-sprint-360",
+    "viewport": 360,
+    "height": 800,
+    "body": 360,
+    "sidebar": 224,
+    "main": 360,
+    "view": "projetos",
+    "open": true,
+    "mainInert": true,
+    "focus": "Operum"
+  },
+  {
+    "label": "keyboard-sprint-360",
+    "inside": true
+  },
+  {
+    "label": "sprint-360",
+    "viewport": 360,
+    "height": 800,
+    "body": 360,
+    "sidebar": 0,
+    "main": 360,
+    "view": "sprint",
+    "open": false,
+    "mainInert": false,
+    "focus": "Abrir menu lateral"
+  },
+  {
+    "label": "menu-documentacao-360",
+    "viewport": 360,
+    "height": 800,
+    "body": 360,
+    "sidebar": 224,
+    "main": 360,
+    "view": "sprint",
+    "open": true,
+    "mainInert": true,
+    "focus": "Operum"
+  },
+  {
+    "label": "keyboard-documentacao-360",
+    "inside": true
+  },
+  {
+    "label": "documentacao-360",
+    "viewport": 360,
+    "height": 800,
+    "body": 360,
+    "sidebar": 0,
+    "main": 360,
+    "view": "documentacao",
+    "open": false,
+    "mainInert": false,
+    "focus": "Abrir menu lateral"
+  },
+  {
+    "label": "projects-390",
+    "viewport": 390,
+    "height": 800,
+    "body": 390,
+    "sidebar": 0,
+    "main": 390,
+    "view": "projetos",
+    "open": false,
+    "mainInert": false,
+    "focus": "☰OperumProjeto OperumProjetosSprintDocumentaçãoUTOperum v1.13.0ProjetosProjeto O"
+  },
+  {
+    "label": "menu-sprint-390",
+    "viewport": 390,
+    "height": 800,
+    "body": 390,
+    "sidebar": 224,
+    "main": 390,
+    "view": "projetos",
+    "open": true,
+    "mainInert": true,
+    "focus": "Operum"
+  },
+  {
+    "label": "keyboard-sprint-390",
+    "inside": true
+  },
+  {
+    "label": "sprint-390",
+    "viewport": 390,
+    "height": 800,
+    "body": 390,
+    "sidebar": 0,
+    "main": 390,
+    "view": "sprint",
+    "open": false,
+    "mainInert": false,
+    "focus": "Abrir menu lateral"
+  },
+  {
+    "label": "menu-documentacao-390",
+    "viewport": 390,
+    "height": 800,
+    "body": 390,
+    "sidebar": 224,
+    "main": 390,
+    "view": "sprint",
+    "open": true,
+    "mainInert": true,
+    "focus": "Operum"
+  },
+  {
+    "label": "keyboard-documentacao-390",
+    "inside": true
+  },
+  {
+    "label": "documentacao-390",
+    "viewport": 390,
+    "height": 800,
+    "body": 390,
+    "sidebar": 0,
+    "main": 390,
+    "view": "documentacao",
+    "open": false,
+    "mainInert": false,
+    "focus": "Abrir menu lateral"
+  },
+  {
+    "label": "projects-768",
+    "viewport": 768,
+    "height": 800,
+    "body": 768,
+    "sidebar": 224,
+    "main": 544,
+    "view": "projetos",
+    "open": false,
+    "mainInert": false,
+    "focus": "☰OperumProjeto OperumProjetosSprintDocumentaçãoUTOperum v1.13.0ProjetosProjeto O"
+  },
+  {
+    "label": "sprint-768",
+    "viewport": 768,
+    "height": 800,
+    "body": 768,
+    "sidebar": 224,
+    "main": 544,
+    "view": "sprint",
+    "open": false,
+    "mainInert": false,
+    "focus": "☰OperumProjeto OperumProjetosSprintDocumentaçãoUTOperum v1.13.0Sprint visualAtiv"
+  },
+  {
+    "label": "documentacao-768",
+    "viewport": 768,
+    "height": 800,
+    "body": 768,
+    "sidebar": 224,
+    "main": 544,
+    "view": "documentacao",
+    "open": false,
+    "mainInert": false,
+    "focus": "☰OperumProjeto OperumProjetosSprintDocumentaçãoUTOperum v1.13.0DocumentosFormulá"
+  },
+  {
+    "label": "rotation-landscape-projetos",
+    "viewport": 800,
+    "height": 390,
+    "body": 800,
+    "sidebar": 224,
+    "main": 576,
+    "view": "projetos",
+    "open": false,
+    "mainInert": false,
+    "focus": "☰OperumProjeto OperumProjetosSprintDocumentaçãoUTOperum v1.13.0ProjetosProjeto O"
+  },
+  {
+    "label": "rotation-landscape-sprint",
+    "viewport": 800,
+    "height": 390,
+    "body": 800,
+    "sidebar": 224,
+    "main": 576,
+    "view": "sprint",
+    "open": false,
+    "mainInert": false,
+    "focus": "☰OperumProjeto OperumProjetosSprintDocumentaçãoUTOperum v1.13.0Sprint visualAtiv"
+  },
+  {
+    "label": "rotation-landscape-documentacao",
+    "viewport": 800,
+    "height": 390,
+    "body": 800,
+    "sidebar": 224,
+    "main": 576,
+    "view": "documentacao",
+    "open": false,
+    "mainInert": false,
+    "focus": "☰OperumProjeto OperumProjetosSprintDocumentaçãoUTOperum v1.13.0DocumentosFormulá"
+  },
+  {
+    "label": "zoom-equivalent-200-menu-projetos",
+    "viewport": 195,
+    "height": 400,
+    "body": 195,
+    "sidebar": 195,
+    "main": 195,
+    "view": "documentacao",
+    "open": true,
+    "mainInert": true,
+    "focus": "Operum"
+  },
+  {
+    "label": "zoom-equivalent-200-projetos",
+    "viewport": 195,
+    "height": 400,
+    "body": 195,
+    "sidebar": 0,
+    "main": 195,
+    "view": "projetos",
+    "open": false,
+    "mainInert": false,
+    "focus": "Abrir menu lateral"
+  },
+  {
+    "label": "zoom-equivalent-200-menu-sprint",
+    "viewport": 195,
+    "height": 400,
+    "body": 195,
+    "sidebar": 195,
+    "main": 195,
+    "view": "projetos",
+    "open": true,
+    "mainInert": true,
+    "focus": "Operum"
+  },
+  {
+    "label": "zoom-equivalent-200-sprint",
+    "viewport": 195,
+    "height": 400,
+    "body": 195,
+    "sidebar": 0,
+    "main": 195,
+    "view": "sprint",
+    "open": false,
+    "mainInert": false,
+    "focus": "Abrir menu lateral"
+  },
+  {
+    "label": "zoom-equivalent-200-menu-documentacao",
+    "viewport": 195,
+    "height": 400,
+    "body": 195,
+    "sidebar": 195,
+    "main": 195,
+    "view": "sprint",
+    "open": true,
+    "mainInert": true,
+    "focus": "Operum"
+  },
+  {
+    "label": "zoom-equivalent-200-documentacao",
+    "viewport": 195,
+    "height": 400,
+    "body": 195,
+    "sidebar": 0,
+    "main": 195,
+    "view": "documentacao",
+    "open": false,
+    "mainInert": false,
+    "focus": "Abrir menu lateral"
+  }
+]

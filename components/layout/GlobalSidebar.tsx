@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect, useState } from 'react'
+import { useEffect, useState, useId } from 'react'
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
 import { LayoutDashboard, FolderKanban, Paperclip, PanelLeftOpen, Users, Building2, Briefcase, Landmark, Info } from 'lucide-react'
@@ -41,6 +41,7 @@ const STORAGE_KEY = 'wbs-global-sidebar-collapsed'
 
 /** Sidebar global do app (páginas sem sidebar própria). */
 export default function GlobalSidebar() {
+  const panelId = useId()
   const pathname = usePathname()
   const [collapsed, setCollapsed] = useState(false)
   const [animated, setAnimated] = useState(false)
@@ -94,6 +95,7 @@ export default function GlobalSidebar() {
   return (
     <>
       <SidebarLayout
+        panelId={panelId}
         title={title}
         searchPlaceholder={search.placeholder}
         searchContext={search.context}
@@ -124,9 +126,11 @@ export default function GlobalSidebar() {
           <button
             type="button"
             onClick={toggleCollapsed}
-            aria-expanded={false}
             aria-label="Expandir menu lateral"
-            className="fixed top-3.5 left-2 z-30 p-1.5 rounded-lg bg-white border border-gray-200 shadow-sm text-gray-500 hover:text-gray-700 hover:bg-gray-100 transition-colors cursor-pointer"
+            aria-expanded={false}
+            aria-controls={panelId}
+            data-sidebar-expand
+            className="hidden md:inline-flex fixed top-3.5 left-2 z-30 p-1.5 rounded-lg bg-white border border-gray-200 shadow-sm text-gray-500 hover:text-gray-700 hover:bg-gray-100 transition-colors cursor-pointer"
           >
             <PanelLeftOpen className="w-4 h-4" />
           </button>

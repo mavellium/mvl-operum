@@ -2,7 +2,7 @@
 
 import { useProjectPermissions } from '@/components/permissoes/ProjectPermissions'
 
-import { useState, useEffect, useRef, useCallback, startTransition } from 'react'
+import { useState, useEffect, useRef, useCallback, useId, startTransition } from 'react'
 import { Card, CardColor, Attachment } from '@/types/kanban'
 import { assignTagToCardAction, removeTagFromCardAction } from '@/app/actions/tags'
 import { addManualTimeAction, getTimeEntriesAction, updateTimeEntryAction, deleteTimeEntryAction } from '@/app/actions/time'
@@ -12,6 +12,7 @@ import UserAvatar from '@/components/user/UserAvatar'
 import ColorPicker from './ColorPicker'
 import { TagSelector } from '../tag/TagSelector'
 import MultiUserSelector from './MultiUserSelector'
+import { useOverlay } from '@/hooks/useOverlay'
 import { useAutosave } from '@/hooks/useAutosave'
 import { toDatetimeLocal, fromDatetimeLocal } from '@/lib/cardUtils'
 import {
@@ -26,10 +27,12 @@ interface TimeEntry { id: string; duration: number; description?: string | null;
 interface CardMovement { id: string; fromColumnTitle: string | null; toColumnTitle: string | null; reason: string | null; movedAt: string }
 interface Responsible { userId: string; user: { id: string; name: string; avatarUrl: string | null } }
 
+export type CardSubmitResult = { success: true } | { error: string }
+
 interface CardModalProps {
   isOpen: boolean
   onClose: () => void
-  onSubmit: (data: { title: string; description: string; color: CardColor; priority: string; responsibles?: string[]; files?: File[]; startDate?: string | null; endDate?: string | null }) => void
+  onSubmit: (data: { title: string; description: string; color: CardColor; priority: string; responsibles?: string[]; files?: File[]; startDate?: string | null; endDate?: string | null }) => Promise<CardSubmitResult>
   initialCard?: Card
   /** Modo somente-leitura: cards concluídos podem ser vistos mas não editados. */
   readOnly?: boolean
@@ -199,17 +202,6 @@ export default function CardModal({
   const [anexoErro, setAnexoErro] = useState('')
   const [preview, setPreview] = useState<Attachment | null>(null)
 
-  // Esc fecha só o lightbox; o card continua aberto.
-  useEffect(() => {
-    if (!preview) return
-    const onKey = (e: KeyboardEvent) => {
-      if (e.key !== 'Escape') return
-      e.stopPropagation()
-      setPreview(null)
-    }
-    window.addEventListener('keydown', onKey, true)
-    return () => window.removeEventListener('keydown', onKey, true)
-  }, [preview])
   const [enviandoAnexo, setEnviandoAnexo] = useState(false)
 
   const imageAttachments = attachments.filter(a => a.fileType.startsWith('image/'))
@@ -218,13 +210,17 @@ export default function CardModal({
 
   const initialCardId = initialCard?.id
 
+  const initialCardRef = useRef(initialCard)
+  useEffect(() => { initialCardRef.current = initialCard })
+
   const autosaveEnabled = isOpen && isEditing && !readOnly && !!onPatch
   const descAutosave = useAutosave(
     draftDescription,
     async (description: string) => {
+      const savingCardId = initialCard?.id
       const res = await onPatch?.({ description })
       if (res && res.error) throw new Error(res.error)
-      setSavedDescription(description)
+      if (initialCardRef.current?.id === savingCardId) setSavedDescription(description)
     },
     { enabled: autosaveEnabled },
   )
@@ -247,8 +243,6 @@ export default function CardModal({
   // O pai recria o objeto `initialCard` a cada render; reinicializar o
   // formulário por referência apagaria o que o usuário está digitando.
   // Só reinicializa quando abre ou quando troca de card.
-  const initialCardRef = useRef(initialCard)
-  useEffect(() => { initialCardRef.current = initialCard })
 
   const reloadTimeEntries = useCallback(async () => {
     if (!initialCardId) return
@@ -258,7 +252,7 @@ export default function CardModal({
   }, [initialCardId])
 
   useEffect(() => {
-    if (!isOpen) { document.body.style.overflow = 'unset'; return }
+    if (!isOpen) return
     const initialCard = initialCardRef.current
     resetDescAutosave(initialCard?.description ?? '')
     const inicio = toDatetimeLocal(initialCard?.startDate)
@@ -290,7 +284,6 @@ export default function CardModal({
       setEditingCommentId(null)
       setEditCommentContent('')
     })
-    document.body.style.overflow = 'hidden'
 
     if (initialCard?.id) {
       getTimeEntriesAction(initialCard.id).then(res => {
@@ -300,8 +293,6 @@ export default function CardModal({
         if ('movements' in res && res.movements) setMovements(res.movements as CardMovement[])
       })
     }
-
-    return () => { document.body.style.overflow = 'unset' }
   }, [isOpen, initialCardId, resetDescAutosave, resetDatasAutosave])
 
   const handleTagToggle = async (tagId: string) => {
@@ -312,49 +303,39 @@ export default function CardModal({
     else await removeTagFromCardAction(initialCard.id, tagId)
   }
 
-  const handleSave = () => {
+  const [saving, setSaving] = useState(false)
+  const savingRef = useRef(false)
+  const titleId = useId()
+  const previewRef = useRef<HTMLDivElement>(null)
+  const handleSave = async () => {
+    if (savingRef.current) return
     if (!title.trim()) { setError('O título é obrigatório para salvar.'); return }
     if (datasInvalidas) { setError('O prazo não pode ser antes do início.'); return }
-    void descAutosave.flush()
-    void datasAutosave.flush()
-    onSubmit({
-      title: title.trim(),
-      description: draftDescription,
-      startDate: fromDatetimeLocal(startLocal),
-      endDate: fromDatetimeLocal(endLocal),
-      color,
-      priority,
-      responsibles: selectedResponsibleIds,
-      files: pendingFiles,
-    })
-    onClose()
+    savingRef.current = true
+    setSaving(true); setError('')
+    try {
+      const flushed = await Promise.all([descAutosave.flush(), datasAutosave.flush()])
+      if (flushed.some(success => !success)) throw new Error('Não foi possível salvar as alterações. Tente novamente.')
+      const result = await onSubmit({ title: title.trim(), description: draftDescription,
+        startDate: fromDatetimeLocal(startLocal), endDate: fromDatetimeLocal(endLocal), color, priority,
+        responsibles: selectedResponsibleIds, files: pendingFiles })
+      if (!result || 'error' in result) throw new Error(result?.error || 'Não foi possível confirmar o salvamento.')
+      onClose()
+    } catch (error) { setError(error instanceof Error ? error.message : 'Erro de rede. Tente novamente.') }
+    finally { savingRef.current = false; setSaving(false) }
   }
-
-  const handleCancel = () => {
-    // Fechar pelo X/fundo não pode perder a descrição nem as datas.
-    void descAutosave.flush()
-    void datasAutosave.flush()
-    onClose()
+  const handleCancel = async () => {
+    if (savingRef.current) return
+    if (!autosaveEnabled || [descAutosave.status, datasAutosave.status].every(status => status === 'idle' || status === 'saved')) { onClose(); return }
+    savingRef.current = true; setSaving(true)
+    try {
+      const flushed = await Promise.all([descAutosave.flush(), datasAutosave.flush()])
+      if (flushed.every(Boolean)) onClose()
+      else setError('Não foi possível salvar as alterações. Tente novamente antes de fechar.')
+    } finally { savingRef.current = false; setSaving(false) }
   }
-
-  const handleDialogKeyDown = (e: React.KeyboardEvent) => {
-    if (e.key !== 'Tab' || !dialogRef.current) return
-    const focusables = Array.from(
-      dialogRef.current.querySelectorAll<HTMLElement>(
-        'button:not([disabled]), input:not([disabled]), select:not([disabled]), textarea:not([disabled]), a[href], [tabindex]:not([tabindex="-1"])',
-      ),
-    )
-    if (focusables.length === 0) return
-    const first = focusables[0]
-    const last = focusables[focusables.length - 1]
-    if (e.shiftKey && document.activeElement === first) {
-      e.preventDefault()
-      last.focus()
-    } else if (!e.shiftKey && document.activeElement === last) {
-      e.preventDefault()
-      first.focus()
-    }
-  }
+  const zIndex = useOverlay(dialogRef, () => void handleCancel(), isOpen)
+  const previewZIndex = useOverlay(previewRef, () => setPreview(null), isOpen && !!preview)
 
   const handleSaveDescription = () => {
     setSavedDescription(draftDescription)
@@ -437,12 +418,15 @@ export default function CardModal({
       ref={dialogRef}
       role="dialog"
       aria-modal="true"
-      onKeyDown={handleDialogKeyDown}
+      aria-labelledby={titleId}
+      tabIndex={-1}
+      style={{ zIndex }}
       className="fixed inset-0 z-[100] flex items-center justify-center p-4 sm:p-6 bg-slate-900/50 backdrop-blur-sm"
     >
+      <span id={titleId} className="sr-only">{isEditing ? `Tarefa: ${title}` : 'Nova tarefa'}</span>
       <div className="absolute inset-0" onClick={handleCancel} aria-hidden="true" />
 
-      <div className="relative w-full max-w-5xl h-[90vh] bg-white rounded-xl shadow-2xl font-sans flex flex-col overflow-hidden border border-slate-200">
+      <div aria-busy={saving} className="relative w-full max-w-5xl h-[90vh] bg-white rounded-xl shadow-2xl font-sans flex flex-col overflow-hidden border border-slate-200">
 
         {/* ── Header ── */}
         <div className="flex items-center gap-3 px-6 py-3 border-b border-slate-200 bg-white shrink-0">
@@ -456,14 +440,15 @@ export default function CardModal({
             <input
               autoFocus
               value={title}
+              disabled={saving}
               onChange={e => { setTitle(e.target.value); setError('') }}
-              className="flex-1 bg-transparent text-xl font-semibold text-slate-900 outline-none focus:ring-1 focus:ring-blue-400 rounded px-1"
+              className="min-w-0 flex-1 bg-transparent text-xl font-semibold text-slate-900 outline-none focus:ring-1 focus:ring-blue-400 rounded px-1"
               placeholder="Título da tarefa..."
             />
           )}
-          {error && <span className="text-red-500 text-xs shrink-0">{error}</span>}
           <button
             onClick={handleCancel}
+            disabled={saving}
             aria-label="Fechar"
             className="p-1.5 text-slate-400 hover:text-slate-600 hover:bg-slate-100 rounded-full transition-colors cursor-pointer shrink-0"
           >
@@ -473,6 +458,8 @@ export default function CardModal({
           </button>
         </div>
 
+        {error && <p role="alert" className="shrink-0 border-b bg-red-50 px-4 py-2 text-sm text-red-700">{error}</p>}
+
         {hasCover && (
           <div className="relative w-full h-40 bg-slate-100 shrink-0 border-b border-slate-200">
             {/* eslint-disable-next-line @next/next/no-img-element */}
@@ -481,7 +468,7 @@ export default function CardModal({
         )}
 
         {/* ── Body ── */}
-        <div className="flex-1 flex min-h-0 overflow-hidden">
+        <div inert={saving} className="flex-1 flex min-h-0 overflow-hidden">
 
           {/* Coluna esquerda */}
           <div className="flex-1 p-6 overflow-y-auto space-y-6 [&::-webkit-scrollbar]:w-1.5 [&::-webkit-scrollbar-thumb]:bg-slate-200 [&::-webkit-scrollbar-thumb]:rounded-full">
@@ -1175,6 +1162,7 @@ export default function CardModal({
           {readOnly ? (
             <button
               onClick={handleCancel}
+                disabled={saving}
               className="px-5 py-2 bg-blue-600 hover:bg-blue-700 text-white text-sm font-semibold rounded-lg transition-colors cursor-pointer shadow-sm"
             >
               Fechar
@@ -1183,15 +1171,17 @@ export default function CardModal({
             <>
               <button
                 onClick={handleCancel}
+                disabled={saving}
                 className="px-4 py-2 text-sm text-slate-500 hover:text-slate-800 hover:bg-slate-100 rounded-lg transition-colors cursor-pointer"
               >
                 {isEditing ? 'Fechar sem salvar' : 'Cancelar'}
               </button>
               <button
                 onClick={handleSave}
+                disabled={saving}
                 className="px-5 py-2 bg-blue-600 hover:bg-blue-700 text-white text-sm font-semibold rounded-lg transition-colors cursor-pointer shadow-sm"
               >
-                {isEditing ? 'Salvar alterações' : 'Criar card'}
+                {saving ? 'Salvando…' : isEditing ? 'Salvar alterações' : 'Criar card'}
               </button>
             </>
           )}
@@ -1199,7 +1189,7 @@ export default function CardModal({
       </div>
 
       {preview && initialCard && (
-        <div
+        <div ref={previewRef} tabIndex={-1} style={{ zIndex: previewZIndex }}
           role="dialog"
           aria-modal="true"
           aria-label={`Visualizar ${preview.fileName}`}

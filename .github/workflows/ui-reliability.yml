@@ -1,0 +1,26 @@
+name: UI Reliability
+on:
+  pull_request:
+    branches: [main, develop]
+permissions:
+  contents: read
+concurrency:
+  group: ui-reliability-${{ github.ref }}
+  cancel-in-progress: true
+jobs:
+  ui:
+    name: UI reliability, accessibility and root tests
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v3
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile --ignore-scripts
+      - run: pnpm exec prisma generate
+      - run: pnpm lint
+      - run: pnpm typecheck
+      - run: pnpm test:run
