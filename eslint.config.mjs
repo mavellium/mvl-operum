@@ -37,6 +37,8 @@ const eslintConfig = defineConfig([
     "project-service/**",
     "sprint-service/**",
     "prisma/**",
+    // Cópias de trabalho do git (git worktree): não fazem parte deste projeto.
+    ".worktrees/**",
   ]),
 ]);
 
