@@ -52,6 +52,7 @@ vi.mock('@/app/actions/time', () => ({
   pauseTimerAction: vi.fn(),
   getCardTimeAction: vi.fn().mockResolvedValue({ seconds: 0 }),
   getActiveTimerAction: vi.fn().mockResolvedValue({ entry: null }),
+  getCardsTimerAction: vi.fn(async (ids: string[]) => Object.fromEntries(ids.map(id => [id, { seconds: 0, entry: null }]))),
   getTimeEntriesAction: vi.fn().mockResolvedValue({ entries: [] }),
   addManualTimeAction: vi.fn().mockResolvedValue({ entry: { id: 'm1' } }),
   updateTimeEntryAction: vi.fn().mockResolvedValue({ entry: { id: 'm1' } }),
@@ -304,6 +305,23 @@ describe('SDD 10.1–10.2 recuperação', () => {
     expect(screen.getAllByRole('alert')[0]).toHaveTextContent(error)
     await act(async () => { fireEvent.click(screen.getByRole('button', { name: 'Tentar novamente' })) })
     expect(within(screen.getByTestId('drop-sc2')).getByText('Task 1')).toBeInTheDocument()
+  })
+  it('card vai para o destino ao soltar, antes da resposta do servidor (sem sumir e voltar)', async () => {
+    let release!: (value: { success: true }) => void
+    vi.mocked(moveCardInSprintAction).mockImplementationOnce(() => new Promise(resolve => { release = resolve }))
+    renderWithProviders(<SprintBoard sprint={sprint} columns={columns} projectId="proj1" />)
+    let pending!: Promise<void>
+    act(() => { pending = drag.end!(drop()) })
+    expect(within(screen.getByTestId('drop-sc2')).getByText('Task 1')).toBeInTheDocument()
+    await act(async () => { release({ success: true }); await pending })
+    expect(within(screen.getByTestId('drop-sc2')).getByText('Task 1')).toBeInTheDocument()
+  })
+  it('movimento recusado pelo servidor devolve o card à coluna de origem', async () => {
+    vi.mocked(moveCardInSprintAction).mockResolvedValueOnce({ error: '403' } as never)
+    renderWithProviders(<SprintBoard sprint={sprint} columns={columns} projectId="proj1" />)
+    await act(async () => { await drag.end!(drop()) })
+    expect(within(screen.getByTestId('drop-sc1')).getByText('Task 1')).toBeInTheDocument()
+    expect(within(screen.getByTestId('drop-sc2')).queryByText('Task 1')).not.toBeInTheDocument()
   })
   it('falha tardia de outro card não apaga movimento já confirmado', async () => {
     let release!: (value: { error: string }) => void

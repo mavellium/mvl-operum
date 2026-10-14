@@ -1,7 +1,9 @@
 'use server'
 
+import { propagarPlanilhaDeCustos } from '@/services/planilhaService'
 import { exigirPermissao, permissoesNoProjeto } from '@/services/authz'
 import { verifySession } from '@/lib/dal'
+import { z } from 'zod'
 import { revalidatePath } from 'next/cache'
 import {
   InsertChildSchema,
@@ -106,6 +108,7 @@ export async function insertSiblingAction(
 export async function deleteNodeAction(
   projetoId: string,
   nodeId: string,
+  motivoExclusao?: string,
 ): Promise<Result<{ serverVersion: number }>> {
   try {
     const sessao = await verifySession()
@@ -113,7 +116,7 @@ export async function deleteNodeAction(
     await exigirPermissao(sessao, projetoId, 'projeto:editar')
     await exigirPermissao(sessao, projetoId, 'planilha:orcado')
     await exigirPermissao(sessao, projetoId, 'planilha:realizado-todos')
-    const parsed = DeleteNodeSchema.safeParse({ nodeId, projectId: projetoId, tenantId })
+    const parsed = DeleteNodeSchema.safeParse({ nodeId, projectId: projetoId, tenantId, motivoExclusao })
     if (!parsed.success) return { ok: false, error: parsed.error.issues[0].message }
 
     const result = await deleteNode(parsed.data, userId)
@@ -198,6 +201,8 @@ export async function updateNodePropertiesAction(
     await exigirPermissao(sessao, projetoId, 'planilha:ver')
     const permissoes = await permissoesNoProjeto(sessao.userId, tenantId, sessao.role, projetoId)
     const result = await updateNodeProperties(parsed.data, { userId: sessao.userId, permissoes })
+    // Data prevista / orçado mudaram: atualiza data fim da fase/sprint/projeto e custo da fase.
+    await propagarPlanilhaDeCustos(projetoId, tenantId).catch(error => console.error('[planilha] falha ao propagar', error))
     revalidatePath(`/projetos/${projetoId}/planilha-custos`)
     return { ok: true, ...result }
   } catch (e) {
@@ -246,19 +251,28 @@ export async function setCollapsedAction(
 // ── Autosave ─────────────────────────────────────────────────────────────────
 
 export async function saveTreeAction(
-  payload: Omit<Parameters<typeof saveTree>[0], 'tenantId' | 'projectId'> & { projetoId: string },
+  payload: Omit<Parameters<typeof saveTree>[0], 'tenantId' | 'projectId'> & {
+    projetoId: string
+    /** Motivo informado ao excluir fase(s) cuja sprint tem dados. */
+    motivoExclusao?: string
+    /** cardId/sprintId de itens recortados ainda não colados: não são excluídos. */
+    preservar?: string[]
+  },
 ): Promise<Result<{ serverVersion: number }>> {
   try {
     const sessao = await verifySession()
     const { userId, tenantId } = sessao
-    const { projetoId, ...rest } = payload
+    const { projetoId, motivoExclusao, preservar, ...rest } = payload
+    const extras = z.object({ motivoExclusao: z.string().trim().max(1000).optional(), preservar: z.array(z.string().max(64)).max(5000).optional() })
+      .safeParse({ motivoExclusao, preservar })
+    if (!extras.success) return { ok: false, error: extras.error.issues[0].message }
     await exigirPermissao(sessao, projetoId, 'projeto:editar')
     await exigirPermissao(sessao, projetoId, 'planilha:orcado')
     await exigirPermissao(sessao, projetoId, 'planilha:realizado-todos')
     const parsed = SaveTreeSchema.safeParse({ ...rest, projectId: projetoId, tenantId })
     if (!parsed.success) return { ok: false, error: parsed.error.issues[0].message }
 
-    const result = await saveTree(parsed.data, userId)
+    const result = await saveTree(parsed.data, userId, { refletirExclusoes: true, motivoExclusao: extras.data.motivoExclusao, preservar: extras.data.preservar })
     if (!result.ok) return { ok: false, error: 'Conflito de edição detectado', conflict: true }
     return { ok: true, serverVersion: result.serverVersion }
   } catch (e) {

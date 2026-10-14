@@ -74,10 +74,8 @@ export async function updateDepartmentNameAction(id: string, name: string) {
 export async function deleteDepartmentAction(id: string) {
   try {
     await verifySession()
-    const inUse = await prisma.projetoDepartamento.count({ where: { departamentoId: id } })
-    if (inUse > 0) {
-      return { error: `Departamento em uso por ${inUse} projeto(s). Desassocie antes de remover.` }
-    }
+    // Associações por projeto não existem mais: limpa as antigas em vez de bloquear.
+    await prisma.projetoDepartamento.deleteMany({ where: { departamentoId: id } })
     await departmentsApi.delete(id)
     return { success: true }
   } catch (err) {

@@ -34,7 +34,7 @@ export async function criarAtaAction(input: CriarAtaInput) {
       },
       id,
     )
-    revalidatePath(`/projetos/${projetoId}/atas`)
+    revalidatePath(`/projetos/${projetoId}/documentacao`)
     revalidatePath(`/projetos/${projetoId}/documentacao`)
     return { success: true, id, status: version.status }
   } catch (e) {
@@ -68,7 +68,7 @@ export async function atualizarAtaAction(
       },
       ataId,
     )
-    revalidatePath(`/projetos/${projetoId}/atas`)
+    revalidatePath(`/projetos/${projetoId}/documentacao`)
     revalidatePath(`/projetos/${projetoId}/documentacao`)
     return { success: true, status: version.status }
   } catch (e) {
@@ -80,7 +80,7 @@ export async function removerAtaAction(ataId: string, projetoId: string) {
     const s = await verifySession()
     await exigirPermissao(s, projetoId, 'documentos:excluir')
     await excluirAta(s, projetoId, ataId)
-    revalidatePath(`/projetos/${projetoId}/atas`)
+    revalidatePath(`/projetos/${projetoId}/documentacao`)
     revalidatePath(`/projetos/${projetoId}/documentacao`)
     return { success: true }
   } catch (e) {

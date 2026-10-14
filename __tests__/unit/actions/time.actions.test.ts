@@ -18,6 +18,7 @@ import {
   pauseTimerAction,
   getCardTimeAction,
   getActiveTimerAction,
+  getCardsTimerAction,
 } from '@/app/actions/time'
 
 const mockVerify = verifySession as ReturnType<typeof vi.fn>
@@ -72,5 +73,23 @@ describe('getActiveTimerAction', () => {
     vi.mocked(cardsApi.getActiveTimer).mockResolvedValue(null)
     const result = await getActiveTimerAction('clh3v0v7z0000356wf5g95e3')
     expect(result.entry).toBeNull()
+  })
+})
+
+describe('getCardsTimerAction (leitura em lote do quadro)', () => {
+  const A = 'c' + 'a'.repeat(24)
+  const B = 'c' + 'b'.repeat(24)
+  it('lê total e timer ativo de cada card numa chamada, isolando o erro de um card', async () => {
+    mockVerify.mockResolvedValue({ userId: 'u1' })
+    vi.mocked(cardsApi.getTimeTotal).mockImplementation(async (id: string) => {
+      if (id === B) throw new Error('falhou')
+      return { seconds: 30 }
+    })
+    vi.mocked(cardsApi.getActiveTimer).mockResolvedValue(null)
+    const r = await getCardsTimerAction([A, B, A, 'invalido'])
+    expect(r[A]).toEqual({ seconds: 30, entry: null })
+    expect(r[B]).toEqual({ error: 'falhou' })
+    expect(r.invalido).toEqual({ error: 'cardId inválido' })
+    expect(cardsApi.getTimeTotal).toHaveBeenCalledTimes(2)
   })
 })

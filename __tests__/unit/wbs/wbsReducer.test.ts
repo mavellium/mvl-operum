@@ -694,3 +694,32 @@ describe('SET_COLLAPSED', () => {
     expect(act(s, { type: 'SET_COLLAPSED', payload: { nodeId: 'r', collapsed: false } }).nodes.r.collapsed).toBe(false)
   })
 })
+
+// ── Vínculo com card/sprint em cópias ──────────────────────────────────────────
+
+describe('cópias e vínculo com card/sprint', () => {
+  const base = () => makeState({
+    r: node('r', null, 0, ['a', 'b'], '1'),
+    a: { ...node('a', 'r', 0, [], '1.1'), properties: { cardId: 'c1', tempoMinutos: 30 } },
+    b: { ...node('b', 'r', 1, [], '1.2'), properties: { sprintId: 's1' } },
+  })
+  const copias = (s: State, antes: State) => Object.values(s.nodes).filter(n => !antes.nodes[n.id])
+
+  it('duplicar cria cópia sem cardId/sprintId (mantém o resto das propriedades)', () => {
+    const s0 = base()
+    const [copia] = copias(act(s0, { type: 'DUPLICATE', payload: { nodeIds: ['a'] } }), s0)
+    expect(copia.properties).toEqual({ tempoMinutos: 30 })
+  })
+
+  it('copiar e colar não leva o vínculo', () => {
+    const s0 = act(base(), { type: 'COPY', payload: { nodeIds: ['b'] } })
+    const [copia] = copias(act(s0, { type: 'PASTE', payload: { parentId: 'r' } }), s0)
+    expect(copia.properties).toEqual({})
+  })
+
+  it('recortar e colar mantém o vínculo (é o mesmo item mudando de lugar)', () => {
+    const s0 = act(base(), { type: 'CUT', payload: { nodeIds: ['a'] } })
+    const [colado] = copias(act(s0, { type: 'PASTE', payload: { parentId: 'b' } }), s0)
+    expect(colado.properties).toEqual({ cardId: 'c1', tempoMinutos: 30 })
+  })
+})

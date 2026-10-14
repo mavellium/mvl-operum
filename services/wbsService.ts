@@ -3,6 +3,7 @@ import type { Permissao } from '@/lib/permissoes'
 import prisma from '@/lib/prisma'
 import type { Prisma } from '@/lib/generated/prisma'
 import { registrarAcao } from './auditoriaService'
+import { MOTIVO_MINIMO, registrarHistoricoSprint, resumoDaSprint, sprintTemDados } from './sprintHistoricoService'
 import { recalcCodes } from '@/lib/wbsCode'
 import type { WbsNodeClient, WbsNodeStyle, WbsNodeProperties, WbsLayoutOrientation } from '@/types/wbs'
 import { WBS_LIMITS } from '@/lib/validation/wbsSchemas'
@@ -336,6 +337,59 @@ export async function insertSibling(
 /**
  * Deletes a node and its entire subtree. Root cannot be deleted here — use resetTree.
  */
+/**
+ * Excluir na EAP também exclui do outro lado (sincronização EAP ↔ sprint): o card
+ * ligado ao nó é excluído e a sprint ligada a uma fase é excluída — os cards que
+ * sobrarem nela vão para o fim do backlog, como no sprint-service. Sem isso, a
+ * sincronização recriava o nó a partir do card/sprint que continuavam abertos.
+ */
+async function refletirExclusoesDaEap(
+  tx: Tx, projectId: string, removidos: unknown[],
+  ctx: { tenantId: string; userId?: string; motivo?: string } = { tenantId: '' },
+): Promise<void> {
+  const props = removidos.map(p => (p as Record<string, unknown> | null) ?? {})
+  const cardIds = props.map(p => p.cardId).filter((v): v is string => typeof v === 'string')
+  const sprintIds = props.map(p => p.sprintId).filter((v): v is string => typeof v === 'string')
+  const agora = new Date()
+  // Sprint com dados só é excluída com motivo; o resumo é tirado antes de excluir os cards.
+  const resumos = []
+  for (const sid of sprintIds) {
+    const resumo = await resumoDaSprint(sid, tx)
+    if (resumo && resumo.projectId === projectId) resumos.push(resumo)
+  }
+  const motivo = ctx.motivo?.trim() ?? ''
+  if (resumos.some(sprintTemDados) && motivo.length < MOTIVO_MINIMO) {
+    throw new WbsValidationError(`Excluir uma fase com dados exclui a sprint dela: informe o motivo da exclusão (mín. ${MOTIVO_MINIMO} caracteres).`)
+  }
+  if (cardIds.length) {
+    await tx.card.updateMany({
+      where: { id: { in: cardIds }, deletedAt: null, OR: [{ projectId }, { sprint: { projectId } }] },
+      data: { deletedAt: agora },
+    })
+  }
+  if (!sprintIds.length) return
+  const sprints = await tx.sprint.findMany({ where: { id: { in: sprintIds }, projectId, deletedAt: null }, select: { id: true } })
+  for (const sp of sprints) {
+    const restantes = await tx.card.findMany({
+      where: { sprintId: sp.id, deletedAt: null },
+      select: { id: true },
+      orderBy: [{ sprintPosition: 'asc' }, { createdAt: 'asc' }],
+    })
+    let posicao = ((await tx.card.aggregate({ where: { projectId, sprintId: null, deletedAt: null }, _max: { position: true } }))._max.position ?? -1) + 1
+    for (const c of restantes) {
+      await tx.card.update({ where: { id: c.id }, data: { projectId, sprintId: null, sprintColumnId: null, sprintPosition: null, position: posicao++ } })
+    }
+    await tx.sprint.update({ where: { id: sp.id }, data: { deletedAt: agora } })
+    const resumo = resumos.find(r => r.id === sp.id)
+    if (resumo && ctx.tenantId) {
+      await registrarHistoricoSprint({
+        tenantId: ctx.tenantId, userId: ctx.userId, sprintId: sp.id, acao: 'DELETE', projectId, nome: resumo.nome, origem: 'eap',
+        motivo: motivo || null, resumo: { cards: resumo.cards, segundosRegistrados: resumo.segundosRegistrados, status: resumo.status },
+      }, tx)
+    }
+  }
+}
+
 export async function deleteNode(
   input: DeleteNodeInput,
   userId?: string,
@@ -348,8 +402,10 @@ export async function deleteNode(
     if (!node.parentId) throw new WbsValidationError('Use resetTree para limpar a EAP inteira')
 
     const subtreeIds = await collectSubtreeIds(tx, nodeId)
+    const removidos = await tx.wbsNode.findMany({ where: { id: { in: subtreeIds }, projectId, tenantId }, select: { properties: true } })
     // delete children-first to satisfy FK order; deleteMany with CASCADE handles it in PG
     await tx.wbsNode.deleteMany({ where: { id: { in: subtreeIds }, projectId, tenantId } })
+    await refletirExclusoesDaEap(tx, projectId, removidos.map(n => n.properties), { tenantId, userId, motivo: input.motivoExclusao })
     await recompactChildren(tx, node.parentId, projectId, tenantId)
     await syncCodes(tx, projectId, tenantId)
     const serverVersion = await bumpVersion(tx, projectId, tenantId)
@@ -530,6 +586,8 @@ export async function setCollapsed(input: SetCollapsedInput): Promise<MutationRe
 export async function saveTree(
   input: SaveTreeInput,
   userId?: string,
+  /** Edição do usuário no editor: nós que sumiram excluem card/sprint ligados (não usar em importação). */
+  opts: { refletirExclusoes?: boolean; motivoExclusao?: string; preservar?: string[] } = {},
 ): Promise<SaveResult> {
   return prisma.$transaction(async tx => {
     const { projectId, tenantId, serverVersion, nodes, rootId } = input
@@ -552,6 +610,25 @@ export async function saveTree(
     const recalculated = rootId ? recalcCodes(nodes) : nodes
     const nodeValues = Object.values(recalculated)
     const newVersion = serverVersion + 1
+
+    if (opts.refletirExclusoes) {
+      const mantidos = new Set(nodeValues.map(n => n.id))
+      const anteriores = await tx.wbsNode.findMany({ where: { projectId, tenantId }, select: { id: true, properties: true } })
+      // Card/sprint ainda ligados a algum nó salvo (ex.: recortar e colar recria o nó com id novo) não são excluídos.
+      const aindaLigados = new Set([
+        ...nodeValues.flatMap(n => [n.properties?.cardId, n.properties?.sprintId]).filter((v): v is string => typeof v === 'string'),
+        ...(opts.preservar ?? []),
+      ])
+      const removidos = anteriores.filter(n => !mantidos.has(n.id)).map(n => {
+        const { cardId, sprintId, ...resto } = (n.properties as Record<string, unknown> | null) ?? {}
+        return {
+          ...resto,
+          ...(typeof cardId === 'string' && !aindaLigados.has(cardId) ? { cardId } : {}),
+          ...(typeof sprintId === 'string' && !aindaLigados.has(sprintId) ? { sprintId } : {}),
+        }
+      })
+      if (removidos.length) await refletirExclusoesDaEap(tx, projectId, removidos, { tenantId, userId, motivo: opts.motivoExclusao })
+    }
 
     await tx.wbsNode.deleteMany({ where: { projectId, tenantId } })
     if (nodeValues.length > 0) {
@@ -696,10 +773,18 @@ export interface SyncEapSprintResult {
   nosCriados: number
   nosMovidos: number
   nosRemovidos: number
+  sprintsCriadas: number
+  cardsMovidos: number
   titulosAtualizados: number
 }
 
 const normalizarTitulo = (t: string) => t.trim().toLowerCase()
+/** Nome da sprint sem o código da EAP na frente ("1.2 Fase 2" → "Fase 2"). */
+export const tituloDaSprint = (nome: string) => nome.replace(/^\s*\d+(?:\.\d+)+\s*[-–]?\s*/, '').trim() || nome.trim()
+/** Nome da sprint criada/mantida pela EAP: "código título" (ex.: "1.1 Fase 1"). */
+export const nomeDaSprint = (code: string, title: string) => (code ? `${code} ${title.trim()}` : title.trim()).slice(0, 255)
+/** Colunas padrão da sprint — mesmas do sprint-service (`DEFAULT_SPRINT_COLUMNS`). */
+const COLUNAS_PADRAO_SPRINT = ['A Fazer', 'Em andamento', 'Em teste', 'Concluído']
 const texto = (v: unknown): string | undefined => (typeof v === 'string' ? v : undefined)
 
 /**
@@ -713,12 +798,14 @@ const texto = (v: unknown): string | undefined => (typeof v === 'string' ? v : u
  *  - card que mudou de sprint, ou cujo nó ficou no nível 2 (versão anterior) → o nó vai para a sprint do card;
  *  - nó e card/sprint com o mesmo título e sem vínculo → são vinculados, sem duplicar;
  *  - título diferente em par vinculado → vale o lado alterado por último.
- *  - card no backlog não aparece na EAP/planilha: o nó dele no nível 2 ou dentro de uma sprint é removido.
+ *  - nó do nível 2 sem sprint → cria a sprint (colunas padrão); o nome da sprint é "código título";
+ *  - card no backlog não aparece na EAP/planilha: o nó dele no nível 2 ou dentro de uma sprint é
+ *    removido; se a fase acabou de virar sprint, o card vai para "A Fazer" dela.
  * Card excluído não é recriado: o nó mantém o vínculo. Card do backlog sem nó não entra na EAP.
  */
 export async function sincronizarEapComSprint(projectId: string, tenantId: string): Promise<SyncEapSprintResult> {
   return prisma.$transaction(async tx => {
-    const result: SyncEapSprintResult = { cardsCriados: 0, nosCriados: 0, nosMovidos: 0, nosRemovidos: 0, titulosAtualizados: 0 }
+    const result: SyncEapSprintResult = { cardsCriados: 0, nosCriados: 0, nosMovidos: 0, nosRemovidos: 0, sprintsCriadas: 0, cardsMovidos: 0, titulosAtualizados: 0 }
     await tx.$executeRaw`SELECT pg_advisory_xact_lock(hashtext(${'eap-sprint:' + projectId}))`
 
     const project = await tx.project.findFirst({ where: { id: projectId, tenantId, deletedAt: null }, select: { id: true } })
@@ -788,22 +875,54 @@ export async function sincronizarEapComSprint(projectId: string, tenantId: strin
       const noId = noDaSprint.get(s.id)
       if (noId) {
         const n = nivel2.find(x => x.id === noId)!
-        if (normalizarTitulo(n.title) === normalizarTitulo(s.name)) continue
-        if (s.updatedAt > n.updatedAt) {
-          if (s.name.trim()) { await tx.wbsNode.update({ where: { id: n.id }, data: { title: s.name.slice(0, 500) } }); result.titulosAtualizados++ }
-        } else if (n.title.trim()) {
-          await tx.sprint.update({ where: { id: s.id }, data: { name: n.title } }); result.titulosAtualizados++
+        // Sprint renomeada por último muda o título do nó; o nome da sprint ("código título")
+        // é regravado a partir do nó no fim da sincronização.
+        if (normalizarTitulo(n.title) === normalizarTitulo(tituloDaSprint(s.name))) continue
+        if (s.updatedAt > n.updatedAt && tituloDaSprint(s.name)) {
+          await tx.wbsNode.update({ where: { id: n.id }, data: { title: tituloDaSprint(s.name).slice(0, 500) } })
+          result.titulosAtualizados++
         }
         continue
       }
-      const mesmoNome = nivel2.find(n => !sprintIdDe(n.id) && !cardIdDe(n.id) && normalizarTitulo(n.title) === normalizarTitulo(s.name))
+      const mesmoNome = nivel2.find(n => !sprintIdDe(n.id) && !cardIdDe(n.id) && normalizarTitulo(n.title) === normalizarTitulo(tituloDaSprint(s.name)))
       if (mesmoNome) {
         propsDe.get(mesmoNome.id)!.sprintId = s.id
         mudou.add(mesmoNome.id)
         noDaSprint.set(s.id, mesmoNome.id)
       } else if (total < WBS_LIMITS.MAX_NODES) {
-        noDaSprint.set(s.id, await criarNo(root.id, s.name, { sprintId: s.id }))
+        noDaSprint.set(s.id, await criarNo(root.id, tituloDaSprint(s.name), { sprintId: s.id }))
       }
+    }
+
+    /** Coluna "A Fazer" (ou a primeira) da sprint, com a próxima posição livre. */
+    const colunaAFazer = new Map<string, { id: string; posicao: number } | null>()
+    const colunaDa = async (sprintId: string) => {
+      if (!colunaAFazer.has(sprintId)) {
+        const coluna =
+          (await tx.sprintColumn.findFirst({ where: { sprintId, deletedAt: null, title: { equals: 'A Fazer', mode: 'insensitive' } }, select: { id: true } })) ??
+          (await tx.sprintColumn.findFirst({ where: { sprintId, deletedAt: null }, orderBy: { position: 'asc' }, select: { id: true } }))
+        const posicao = coluna
+          ? ((await tx.card.aggregate({ where: { sprintColumnId: coluna.id, deletedAt: null }, _max: { sprintPosition: true } }))._max.sprintPosition ?? -1) + 1
+          : 0
+        colunaAFazer.set(sprintId, coluna ? { id: coluna.id, posicao } : null)
+      }
+      return colunaAFazer.get(sprintId)
+    }
+    /** Nós do nível 2 que viraram sprint nesta sincronização. */
+    const fasesNovas = new Set<string>()
+
+    // 1b) nó do nível 2 sem sprint (ex.: "1.2 Fase 2") → cria a sprint, com as colunas padrão
+    for (const n of nivel2) {
+      if (sprintIdDe(n.id) || cardIdDe(n.id) || !n.title.trim()) continue
+      const sprint = await tx.sprint.create({ data: { name: nomeDaSprint(n.code, n.title), projectId }, select: { id: true } })
+      await tx.sprintColumn.createMany({ data: COLUNAS_PADRAO_SPRINT.map((title, position) => ({ title, position, sprintId: sprint.id })) })
+      propsDe.get(n.id)!.sprintId = sprint.id
+      mudou.add(n.id)
+      noDaSprint.set(sprint.id, n.id)
+      sprintViva.add(sprint.id)
+      fasesNovas.add(n.id)
+      result.sprintsCriadas++
+      await registrarHistoricoSprint({ tenantId, sprintId: sprint.id, acao: 'CREATE', projectId, nome: nomeDaSprint(n.code, n.title), origem: 'eap' }, tx)
     }
 
     // cards do projeto
@@ -872,7 +991,20 @@ export async function sincronizarEapComSprint(projectId: string, tenantId: strin
       const card = cardId ? cardPorId.get(cardId) : undefined
       if (!card || card.deletedAt || card.sprintId || filhos.has(n.id) || sprintIdDe(n.id)) continue
       const pai = paiDe.get(n.id)
-      if (!pai || (pai !== root.id && !sprintIdDe(nivel2De(n.id)))) continue
+      const fase = nivel2De(n.id)
+      if (!pai || (pai !== root.id && !sprintIdDe(fase))) continue
+      // Fase que acabou de virar sprint: o card ficou no backlog só porque não havia
+      // sprint — vai para "A Fazer" dela em vez de o nó ser apagado.
+      if (pai !== root.id && fase && fasesNovas.has(fase)) {
+        const sprintId = sprintIdDe(fase)!
+        const coluna = await colunaDa(sprintId)
+        if (coluna) {
+          await tx.card.update({ where: { id: card.id }, data: { sprintId, sprintColumnId: coluna.id, sprintPosition: coluna.posicao++ } })
+          card.sprintId = sprintId
+          result.cardsMovidos++
+          continue
+        }
+      }
       await tx.wbsNode.delete({ where: { id: n.id } })
       paiDe.delete(n.id)
       propsDe.delete(n.id)
@@ -894,19 +1026,6 @@ export async function sincronizarEapComSprint(projectId: string, tenantId: strin
             (await tx.sprint.findFirst({ where: { projectId, deletedAt: null, status: 'PLANNED' }, orderBy: { createdAt: 'asc' }, select: { id: true } }))
         }
         return reserva?.id
-      }
-      const colunaAFazer = new Map<string, { id: string; posicao: number } | null>()
-      const colunaDa = async (sprintId: string) => {
-        if (!colunaAFazer.has(sprintId)) {
-          const coluna =
-            (await tx.sprintColumn.findFirst({ where: { sprintId, deletedAt: null, title: { equals: 'A Fazer', mode: 'insensitive' } }, select: { id: true } })) ??
-            (await tx.sprintColumn.findFirst({ where: { sprintId, deletedAt: null }, orderBy: { position: 'asc' }, select: { id: true } }))
-          const posicao = coluna
-            ? ((await tx.card.aggregate({ where: { sprintColumnId: coluna.id, deletedAt: null }, _max: { sprintPosition: true } }))._max.sprintPosition ?? -1) + 1
-            : 0
-          colunaAFazer.set(sprintId, coluna ? { id: coluna.id, posicao } : null)
-        }
-        return colunaAFazer.get(sprintId)
       }
       for (const n of semCard) {
         const sid = sprintIdDe(nivel2De(n.id))
@@ -941,10 +1060,83 @@ export async function sincronizarEapComSprint(projectId: string, tenantId: strin
       await criarNo(destino, c.title, { cardId: c.id, ...(c.description.trim() ? { description: c.description.slice(0, 2000) } : {}) })
     }
 
-    if (result.nosCriados || result.cardsCriados || result.titulosAtualizados || result.nosMovidos || result.nosRemovidos || mudou.size) {
+    if (result.nosCriados || result.cardsCriados || result.titulosAtualizados || result.nosMovidos || result.nosRemovidos || result.cardsMovidos || mudou.size) {
       await syncCodes(tx, projectId, tenantId)
       await bumpVersion(tx, projectId, tenantId)
     }
+
+    // 7) nome de cada sprint = "código título" do seu nó no nível 2 (acompanha renumeração)
+    const fases = await tx.wbsNode.findMany({ where: { projectId, tenantId, parentId: root.id }, select: { code: true, title: true, properties: true } })
+    const nomeAtual = new Map(sprints.map(sp => [sp.id, sp.name]))
+    for (const f of fases) {
+      const sid = texto((f.properties as Record<string, unknown> | null)?.sprintId)
+      if (!sid || !sprintViva.has(sid)) continue
+      const nome = nomeDaSprint(f.code, f.title)
+      if (nomeAtual.get(sid) === nome) continue
+      await tx.sprint.update({ where: { id: sid }, data: { name: nome } })
+    }
     return result
+  })
+}
+
+// ── Planilha de custos → fases, sprints e projeto ────────────────────────────
+
+export interface ResumoFasePlanilha {
+  nodeId: string
+  /** Maior data prevista das atividades da fase (aaaa-mm-dd); null mantém o valor atual. */
+  dataFim: string | null
+  /** Valor orçado da fase; null mantém o custo atual. */
+  custo: number | null
+}
+
+/**
+ * Leva o resultado da planilha de custos para onde ele é usado:
+ *  - nó da fase (nível 2): `dataLimite` e `custo` — a "Data Limite" e o custo do
+ *    cronograma financeiro em Editar projeto;
+ *  - sprint da fase: data fim;
+ *  - projeto: data fim = a maior data fim das fases.
+ * Só grava o que mudou; sem data/custo calculado, mantém o valor informado à mão.
+ */
+export async function aplicarResumoDaPlanilha(
+  projectId: string, tenantId: string, fases: ResumoFasePlanilha[], dataFimProjeto: string | null,
+): Promise<{ fasesAtualizadas: number; sprintsAtualizadas: number; projetoAtualizado: boolean }> {
+  return prisma.$transaction(async tx => {
+    const out = { fasesAtualizadas: 0, sprintsAtualizadas: 0, projetoAtualizado: false }
+    const project = await tx.project.findFirst({ where: { id: projectId, tenantId, deletedAt: null }, select: { endDate: true } })
+    if (!project) return out
+    const nos = await tx.wbsNode.findMany({ where: { projectId, tenantId, id: { in: fases.map(f => f.nodeId) } }, select: { id: true, properties: true } })
+    const porId = new Map(nos.map(n => [n.id, { ...((n.properties as Record<string, unknown>) ?? {}) }]))
+    const sprintIds: string[] = []
+    for (const f of fases) {
+      const props = porId.get(f.nodeId)
+      if (!props) continue
+      let mudou = false
+      if (f.dataFim && props.dataLimite !== f.dataFim) { props.dataLimite = f.dataFim; mudou = true }
+      if (f.custo !== null && props.custo !== f.custo) { props.custo = f.custo; mudou = true }
+      if (mudou) {
+        await tx.wbsNode.update({ where: { id: f.nodeId }, data: { properties: toJson(props) } })
+        out.fasesAtualizadas++
+      }
+      if (f.dataFim && typeof props.sprintId === 'string') sprintIds.push(props.sprintId)
+    }
+    if (sprintIds.length) {
+      const sprints = await tx.sprint.findMany({ where: { id: { in: sprintIds }, projectId, deletedAt: null }, select: { id: true, endDate: true } })
+      const fimDaSprint = new Map(fases.flatMap(f => {
+        const sid = porId.get(f.nodeId)?.sprintId
+        return typeof sid === 'string' && f.dataFim ? [[sid, f.dataFim] as const] : []
+      }))
+      for (const sp of sprints) {
+        const fim = fimDaSprint.get(sp.id)
+        if (!fim || sp.endDate?.toISOString().slice(0, 10) === fim) continue
+        await tx.sprint.update({ where: { id: sp.id }, data: { endDate: new Date(fim) } })
+        out.sprintsAtualizadas++
+      }
+    }
+    if (dataFimProjeto && project.endDate?.toISOString().slice(0, 10) !== dataFimProjeto) {
+      await tx.project.update({ where: { id: projectId }, data: { endDate: new Date(dataFimProjeto) } })
+      out.projetoAtualizado = true
+    }
+    if (out.fasesAtualizadas) await bumpVersion(tx, projectId, tenantId)
+    return out
   })
 }

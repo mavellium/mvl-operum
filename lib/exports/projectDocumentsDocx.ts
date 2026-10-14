@@ -50,3 +50,8 @@ export async function buildCharterDocx(p: CharterDocumentProps) {
 }
 export async function downloadStakeholderDocx(h: ProjetoHeader, rows: Stakeholder[]) { await save(await buildStakeholderDocx(h, rows), 'partes-interessadas.docx') }
 export async function downloadCharterDocx(p: CharterDocumentProps) { await save(await buildCharterDocx(p), 'termo-de-abertura.docx') }
+/** Ata no layout do modelo, gerada no navegador para incluir a logo do projeto. */
+export async function downloadAtaDocx(d: import('./ataDocx').AtaExportData) {
+  const { buildAtaDocx, ataNumero } = await import('./ataDocx')
+  await save(buildAtaDocx(d, await image(d.logoUrl)), `ata-${ataNumero(d.numero)}.docx`)
+}

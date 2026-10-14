@@ -71,6 +71,8 @@ export const DeleteNodeSchema = z.object({
   nodeId: z.string().min(1),
   projectId: z.string().min(1),
   tenantId: z.string().min(1),
+  /** Motivo, quando o nó é uma fase cuja sprint tem dados. */
+  motivoExclusao: z.string().trim().max(1000).optional(),
 })
 
 export const MoveNodeSchema = z.object({

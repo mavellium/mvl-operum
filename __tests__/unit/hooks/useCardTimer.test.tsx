@@ -1,10 +1,11 @@
 import { act, renderHook } from '@testing-library/react'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { useCardTimer } from '@/hooks/useCardTimer'
-import { getActiveTimerAction, getCardTimeAction, pauseTimerAction, startTimerAction } from '@/app/actions/time'
-vi.mock('@/app/actions/time', () => ({ getActiveTimerAction: vi.fn(), getCardTimeAction: vi.fn(), pauseTimerAction: vi.fn(), startTimerAction: vi.fn() }))
+import { getActiveTimerAction, getCardTimeAction, getCardsTimerAction, pauseTimerAction, startTimerAction } from '@/app/actions/time'
+import { timerEmLote } from '../../helpers/timerEmLote'
+vi.mock('@/app/actions/time', () => ({ getActiveTimerAction: vi.fn(), getCardTimeAction: vi.fn(), getCardsTimerAction: vi.fn(), pauseTimerAction: vi.fn(), startTimerAction: vi.fn() }))
 const active = { id: 'entry', startedAt: '2026-10-04T00:00:00Z', isRunning: true }
-beforeEach(() => { vi.resetAllMocks(); vi.useFakeTimers(); vi.mocked(getCardTimeAction).mockResolvedValue({ seconds: 90 }); vi.mocked(getActiveTimerAction).mockResolvedValue({ entry: active } as never) })
+beforeEach(() => { vi.resetAllMocks(); vi.useFakeTimers(); vi.mocked(getCardTimeAction).mockResolvedValue({ seconds: 90 }); vi.mocked(getActiveTimerAction).mockResolvedValue({ entry: active } as never); vi.mocked(getCardsTimerAction).mockImplementation(timerEmLote(getCardTimeAction, getActiveTimerAction) as never) })
 afterEach(() => vi.useRealTimers())
 async function ready() { await act(async () => { await Promise.resolve() }) }
 describe('timer confirmado e compartilhado', () => {
@@ -38,6 +39,13 @@ describe('timer confirmado e compartilhado', () => {
     expect(pauseTimerAction).toHaveBeenCalledTimes(1)
     await act(async () => { release({ entry: { id: 'entry', duration: 30 } }); expect(await first).toBe(true); expect(await second).toBe(true) })
     expect(result.current.entry).toBeNull()
+  })
+  it('cards montados juntos leem o timer numa única chamada', async () => {
+    const { result } = renderHook(() => [useCardTimer('a'), useCardTimer('b'), useCardTimer('c')])
+    await ready()
+    expect(getCardsTimerAction).toHaveBeenCalledTimes(1)
+    expect(vi.mocked(getCardsTimerAction).mock.calls[0][0]).toEqual(['a', 'b', 'c'])
+    expect(result.current.map(t => t.known)).toEqual([true, true, true])
   })
   it('timeout da pausa e da reconciliação deixa estado desconhecido explícito', async () => {
     const { result } = renderHook(() => useCardTimer('timeout'))

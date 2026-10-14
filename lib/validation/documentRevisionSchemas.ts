@@ -16,7 +16,8 @@ export const charterSchema = z
       nomeProjeto: z.string().max(300), gerenteProjeto: z.string().max(1000),
       logoUrl: z.string().max(2000).nullable().optional().transform(value => safeAvatarUrl(value) ?? null),
       gerenteSignatureUrl: z.string().max(2000).nullable().optional().transform(value => safeAvatarUrl(value) ?? null),
-      membros: z.array(z.object({ name: z.string().max(300) }).strict()).max(1000),
+      // papel: função do cadastro, para os integrantes saírem "Nome – papel" no Termo.
+      membros: z.array(z.object({ name: z.string().max(300), papel: z.string().max(300).optional() }).strict()).max(1000),
     }).strict().optional(),
     justificativa: texto,
     objetivos: texto,

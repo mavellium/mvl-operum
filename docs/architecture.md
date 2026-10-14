@@ -307,7 +307,7 @@ Não existe database-per-service: **todos os 5 microsserviços apontam para o me
 | Modelo | Domínio |
 |--------|---------|
 | `ProjectDraft` | Rascunho de projeto antes da criação |
-| `ProjetoDepartamento`, `ProjetoFuncao` | Cadastros de departamento/função **por projeto** (distintos de `Department`/`Role` globais do project-service) |
+| `ProjetoDepartamento`, `ProjetoFuncao` | Legado: associação de departamento/função a projeto. Desde a 1.20.0 não é usada (todo o catálogo vale em qualquer projeto); só `ProjetoDepartamento` segue espelhando o campo Departamentos do projeto (Editar projeto) |
 | `DocumentVersion` (+ enums `DocumentVersionStatus`, `DocumentType`) | Snapshots de Termo, Partes Interessadas, EAP e Atas; status, recurso, sequência, autor e aprovação |
 | `DocumentDraft` | Rascunho privado por projeto, autor, tipo e recurso; referências a tenant/projeto/usuário |
 | `Ata`, `AtaPresente`, `AtaAcao`, `AtaAnexo` | Atas de reunião: presentes (com assinatura), ações, anexos |
@@ -329,7 +329,7 @@ As funcionalidades mais recentes (EAP, WBS, Atas, Cadastros) **não passam pelo 
 | WBS (canvas interativo de EAP) | `app/actions/wbs.ts` | `services/wbsService.ts` (`WbsNode`, `WbsConflictError` p/ concorrência otimista) | `app/projetos/[projetoId]/wbs/` |
 | EAP (documento gerado por template) | via `app/api/projects/[projetoId]/eap/route.ts` | `services/eapService.ts` (`EapTemplate`, `EapDocument`) | integrado à página de WBS/documentação |
 | Atas de reunião | `app/actions/atas.ts` | `services/ataService.ts` (`Ata`, `AtaPresente`, `AtaAcao`, `AtaAnexo`) | `app/projetos/[projetoId]/atas/` |
-| Cadastros (departamento/função por projeto) | `app/actions/cadastros.ts` | `services/projetoCadastroService.ts` (`ProjetoDepartamento`, `ProjetoFuncao`) | `app/admin/cadastros/` |
+| Cadastros (departamentos e funções globais) | `app/actions/departments.ts`, `app/actions/roles.ts` | catálogo do tenant (sem associação por projeto desde a 1.20.0) | `app/admin/cadastros/` |
 
 `app/actions/stakeholders.ts` é misto: CRUD de stakeholder via `project-service` (gateway), mas grava `user.signatureUrl` (usado para assinatura de atas) direto via `lib/prisma` + upload MinIO.
 
@@ -628,7 +628,7 @@ Continua sendo a camada de negócio para tudo que **não** foi extraído para mi
 | `csvImportService` | Parse e importação de CSV |
 | `roleService` / `permissionService` | CRUD de roles/permissões RBAC |
 | Departamentos | CRUD canônico no project-service; duplicatas locais retiradas na SDD 9.7 |
-| `projetoCadastroService` | `ProjetoDepartamento`/`ProjetoFuncao` — cadastros por projeto |
+| `projetoCadastroService` | Erros de cadastro compartilhados (a associação por projeto foi removida na 1.20.0) |
 | `wbsService` | Canvas de EAP/WBS: CRUD de nós, `WbsConflictError` (concorrência otimista) |
 | `eapService` | Templates e documentos EAP gerados |
 | `ataService` | Atas de reunião: presentes, ações, anexos |
@@ -847,7 +847,7 @@ A ordem é: admin recebe tudo; não membro ativo recebe nada; membro recebe a un
 
 `app/actions/permissoes.ts` autentica e restringe a configuração ao admin, valida os dados e registra auditoria. `services/permissoesService.ts` confere o tenant dos alvos; tanto leitura quanto escrita de ajustes conferem o projeto. `components/permissoes/PermissoesFuncoes.tsx` atende Cadastros → Funções; `PermissoesUsuario.tsx` atende Usuários (global) e Stakeholders (projeto). A UI só confirma ajuste após resposta de sucesso e preserva escolhas da matriz em falhas.
 
-**Consumidores implementados (03/10/2026, SDD 5.1):** `services/projectAccess.ts` protege as leituras das páginas/metadata e as actions diretas no Prisma; autorização de equipe/cadastros/documentos usa o catálogo. `ProjectPermissionsProvider` recebe permissões resolvidas no servidor e controla navegação e edição/movimento/exclusão no quadro. Atribuir cargos e papel de gerente (fontes de privilégios) e editar o catálogo global permanecem operações administrativas; `cadastros:gerenciar` autoriza as associações de funções/departamentos ao projeto.
+**Consumidores implementados (03/10/2026, SDD 5.1):** `services/projectAccess.ts` protege as leituras das páginas/metadata e as actions diretas no Prisma; autorização de equipe/cadastros/documentos usa o catálogo. `ProjectPermissionsProvider` recebe permissões resolvidas no servidor e controla navegação e edição/movimento/exclusão no quadro. Atribuir cargos e papel de gerente (fontes de privilégios) e editar o catálogo global permanecem operações administrativas; `cadastros:gerenciar` autorizava as associações de funções/departamentos ao projeto, removidas na 1.20.0 (ADR-040): todo o catálogo vale em qualquer projeto, as páginas `/projetos/:id/funcoes` e `/departamentos` redirecionam para Stakeholders e excluir item do catálogo limpa associações antigas.
 
 O gateway, após autenticação e limites de requisição, executa `authorizationMiddleware`: envia identidade, método, caminho e JSON para `POST /api/internal/authorize`, protegido por `INTERNAL_API_KEY` (comparação constante). O app confere usuário ativo no tenant, lê seu papel no banco e executa `services/apiAuthorization.ts`. Não há cache de concessões no gateway: cada operação reavalia acesso. Negação retorna 403; falha de infraestrutura/timeout (10 s) retorna 503 e não encaminha a operação. O parse de JSON é limitado a 2 MB e `fixRequestBody` repõe o corpo no proxy; uploads multipart continuam usando o stream original. PATs/MCP passam pelo mesmo controle, além dos escopos do token.
 
@@ -888,6 +888,14 @@ O sprint-service mantém a responsabilidade pela transferência ao backlog. `Spr
 
 O check `Sprint Integrity` usa PostgreSQL 17 dedicado e testa o serviço real com rollback injetado e concorrência, além de compilar o pacote. Esta garantia cobre a operação de exclusão; criação/movimentação de cards e outras mutações ainda têm as pendências de atomicidade do SDD 9.3. Não há migration nem reparo histórico automático. Diagnósticos históricos devem ser somente leitura: cards sem `projectId` e sem `sprintId` não oferecem evidência suficiente para inferir o projeto; links divergentes precisam ser revisados pelo operador antes de qualquer correção autorizada.
 
+
+### Histórico e exclusão de sprints
+
+`services/sprintHistoricoService.ts` grava criação, alteração e exclusão de sprint na auditoria (`AuditLog`, entity `Sprint`, `details` com `projectId`, `nome`, `origem` quadro/eap, `alteracoes` de → para, `motivo` e `resumo` de cards/horas). As actions de sprint (`app/actions/sprints.ts`, `updateSprintMetaAction`) e a sincronização EAP ↔ sprint chamam esse serviço; a página Sprints do projeto mostra o histórico (`HistoricoSprints`). Sprint com dados (cards abertos ou horas registradas) só é excluída com motivo (mín. 5 caracteres): `deleteSprintAction` recusa sem motivo, e na EAP o diálogo de exclusão pede o motivo e o envia no autosave (`saveTree`/`deleteNode` recusam sem ele). O autosave também envia os vínculos de itens recortados ainda não colados, que não são excluídos. Ver ADR-039.
+
+### Leitura do timer no quadro
+
+O cliente executa Server Actions uma de cada vez. `useCardTimer` agrupa num microtask as leituras dos cards montados juntos e chama `getCardsTimerAction` (`app/actions/time.ts`) uma vez por lote (até 200 cards); a action lê total e timer ativo de cada card no sprint-service em paralelo (8 por vez) e isola o erro de cada card.
 
 ### Integridade do timer (SDD 9.2)
 
@@ -1073,7 +1081,7 @@ Gantt é uma projeção somente leitura. `dataPrevista` define o último dia e `
 
 ### Sincronização EAP ↔ sprint (SDD 12.8)
 
-`sincronizarEapComSprint` (`services/wbsService.ts`) reconcilia `WbsNode`, `Sprint` e `Card` do projeto sob advisory lock, dentro de uma transação. Estrutura: raiz = projeto; nível 2 = sprints (vínculo `WbsNode.properties.sprintId`); nível 3+ = cards (vínculo `WbsNode.properties.cardId`). Sprint não excluída sem nó ganha nó no nível 2 (ou é ligada ao nó de mesmo nome); folhas do nível 3+ sem card criam card em "A Fazer" da sprint do seu nível 2 (se o nível 2 não for sprint, a sprint ativa ou planejada; sem sprint, nenhum card é criado); cards de sprint sem nó criam nó dentro do nó da sprint; nó cujo card mudou de sprint, ou que ficou no nível 2, é movido para a sprint do card; nó e card/sprint sem vínculo e com o mesmo título são ligados; títulos divergentes convergem para o lado alterado por último; card excluído não é recriado; card do backlog não entra na EAP nem na planilha: o nó dele solto no nível 2 ou dentro de uma sprint é removido (folhas sob um nível 2 que não é sprint são preservadas). `services/eapSprintSyncService.ts` executa ao abrir EAP, planilha de custos, quadro da sprint e o documento da EAP, apenas com `projeto:editar` e `quadro:cards`, e nunca derruba a página. O quadro (`getSprintBoardAction`) anexa a cada card o `eapCode` (código do nó vinculado) e o card exibe "código - título" sem alterar `Card.title`. Ver ADR-033, ADR-034 e ADR-036.
+`sincronizarEapComSprint` (`services/wbsService.ts`) reconcilia `WbsNode`, `Sprint` e `Card` do projeto sob advisory lock, dentro de uma transação. Estrutura: raiz = projeto; nível 2 = sprints (vínculo `WbsNode.properties.sprintId`); nível 3+ = cards (vínculo `WbsNode.properties.cardId`). Sprint não excluída sem nó ganha nó no nível 2 (ou é ligada ao nó de mesmo nome); folhas do nível 3+ sem card criam card em "A Fazer" da sprint do seu nível 2 (nível 2 sem sprint ganha uma sprint com as colunas padrão; o nome da sprint é "código título" e é regravado a cada sincronização); cards de sprint sem nó criam nó dentro do nó da sprint; nó cujo card mudou de sprint, ou que ficou no nível 2, é movido para a sprint do card; nó e card/sprint sem vínculo e com o mesmo título são ligados; títulos divergentes convergem para o lado alterado por último; card excluído não é recriado; card do backlog não entra na EAP nem na planilha: o nó dele solto no nível 2 ou dentro de uma sprint é removido (se a fase acabou de virar sprint, o card vai para "A Fazer" dela). `services/eapSprintSyncService.ts` executa ao abrir EAP, planilha de custos, quadro da sprint e o documento da EAP, apenas com `projeto:editar` e `quadro:cards`, e nunca derruba a página; em seguida `propagarPlanilhaDeCustos` (`services/planilhaService.ts`) leva o resultado da planilha para fases, sprints e projeto: data fim da fase = maior data prevista das atividades (`LinhaMacrofase.dataFim`) → `properties.dataLimite` do nó (Data Limite do cronograma financeiro) e `Sprint.endDate`; data fim do projeto = maior data fim das fases → `Project.endDate`; custo da fase = valor orçado → `properties.custo` (`aplicarResumoDaPlanilha`, `services/wbsService.ts`). A mesma propagação roda após editar a planilha (`updateNodePropertiesAction`). O quadro (`getSprintBoardAction`) anexa a cada card o `eapCode` (código do nó vinculado) e o card exibe "código - título" sem alterar `Card.title`. Excluir na EAP reflete na sprint: o autosave (`saveTreeAction` → `saveTree(..., { refletirExclusoes: true })`) e `deleteNode` excluem (soft delete) o card dos nós removidos e a sprint das fases removidas, com os cards restantes indo para o fim do backlog; card/sprint ainda referenciados por outro nó salvo (recortar e colar) não são excluídos, e importação não reflete exclusões. O editor (`WbsProvider`) busca a árvore atual (`getWbsTreeAction`) ao abrir e ao voltar para a aba, adota uma árvore mais nova vinda do servidor quando não há alteração pendente e, em conflito no autosave, recarrega a árvore. Ver ADR-033, ADR-034, ADR-036, ADR-037 e ADR-038.
 
 ### Inativação de stakeholder e numeração de página (1.16.0)
 
@@ -1081,7 +1089,7 @@ Gantt é uma projeção somente leitura. `dataPrevista` define o último dia e `
 
 ### Documentos do projeto — fase 7
 
-O Termo alterna entre formulário privado e prévia explícita; alternar não salva nem publica uma versão. PDF usa impressão do componente, e Word é gerado no navegador com `docx`. Partes Interessadas usa A4 paisagem; Termo/Ata usam retrato. Ata mantém a exportação autenticada `/api/atas/:id/export` com autorização `documentos:ver`, e ganha prévia/PDF do rascunho.
+O Termo alterna entre formulário privado e prévia explícita; alternar não salva nem publica uma versão. PDF usa impressão do componente, e Word é gerado no navegador com `docx`. Partes Interessadas usa A4 paisagem; Termo/Ata usam retrato. A lista de atas fica em Documentação (`/projetos/:id/documentacao?doc=atas`); a rota antiga `/projetos/:id/atas` só redireciona para lá. Ata mantém a exportação autenticada `/api/atas/:id/export` com autorização `documentos:ver`, e ganha prévia/PDF do rascunho. Word e PDF da Ata seguem o modelo "01_Form Ata de Reunião" com as mesmas regras (`lib/exports/ataDocx.ts`, `components/atas/AtaDocument.tsx`); o Word com logo é gerado no navegador ("Baixar Word"), e a rota do servidor gera o mesmo layout sem logo, para não buscar URLs externas no servidor. A linha institucional da Ata e da EAP vem de `linhaInstitucional` (`lib/linhaInstitucional.ts`): localização, departamentos, termo (provisório) e período/ano do projeto.
 
 `DocumentVersion.payload` do Termo guarda campos, macrofases e `documentContext` (nome, logo, gerente, assinatura e equipe). `changes` JSON registra diferenças por campo contra a versão anterior na sequência de submissão; `previousVersionId` é uma referência histórica textual, não uma FK que impedisse a exclusão autorizada de versões. Criação de snapshot, sequência, diff e auditoria ocorrem na mesma transação com bloqueio do projeto. Aprovar não recalcula o histórico. Metadados de apresentação não são escritos no cadastro `Project`; a migration acrescenta os campos de histórico e `Ata.instituicao` como opcionais.
 

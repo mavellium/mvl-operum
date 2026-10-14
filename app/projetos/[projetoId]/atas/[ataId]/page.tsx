@@ -2,7 +2,7 @@ import { canProjectPermission } from '@/services/projectAccess'
 import Link from 'next/link'
 import { notFound } from 'next/navigation'
 import { verifySession } from '@/lib/dal'
-import { buscarAta } from '@/services/ataService'
+import { buscarAta, cabecalhoDaAta } from '@/services/ataService'
 import prisma from '@/lib/prisma'
 import AtaFormClient from '@/components/atas/AtaFormClient'
 import type { MemberOption } from '@/components/atas/MemberSelect'
@@ -25,6 +25,7 @@ export default async function EditarAtaPage({
   const ata = await buscarAta(tenantId, ataId)
   if (!ata || ata.projetoId !== projetoId) notFound()
 
+  const cabecalho = await cabecalhoDaAta(tenantId, projetoId)
   const members: MemberOption[] = (
     await prisma.userProject.findMany({
       where: { projectId: projetoId, active: true },
@@ -48,7 +49,7 @@ export default async function EditarAtaPage({
     <div className="min-h-screen bg-gray-50">
       <main className="max-w-3xl mx-auto px-4 py-8">
         <div className="flex items-center justify-between">
-          <Link href={`/projetos/${projetoId}/atas`} className="text-sm text-blue-600 hover:underline">
+          <Link href={`/projetos/${projetoId}/documentacao?doc=atas`} className="text-sm text-blue-600 hover:underline">
             ← Voltar às atas
           </Link>
           <a
@@ -67,6 +68,8 @@ export default async function EditarAtaPage({
           projetoId={projetoId}
           ataId={ata.id}
           nomeProjeto={ata.nomeProjeto}
+          instituicaoProjeto={cabecalho.instituicao}
+          logoUrl={cabecalho.logoUrl}
           numero={ata.numero}
           mode="edit"
           members={members}

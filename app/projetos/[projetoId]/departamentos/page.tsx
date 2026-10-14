@@ -1,54 +1,12 @@
-import { notFound } from 'next/navigation'
-import { verifySession } from '@/lib/dal'
-import { findById } from '@/services/projectAccess'
-import { canProjectPermission } from '@/services/projectAccess'
-import { listarDepartamentosAssociados } from '@/services/projetoCadastroService'
-import prisma from '@/lib/prisma'
-import ProjetoDepartamentosClient from '@/components/projetos/ProjetoDepartamentosClient'
-import type { Metadata } from 'next'
+import { redirect } from 'next/navigation'
 
 export const dynamic = 'force-dynamic'
 
-export const metadata: Metadata = { title: 'Departamentos' }
-
-export default async function ProjetoDepartamentosPage({ params }: { params: Promise<{ projetoId: string }> }) {
+/**
+ * Funções e departamentos não são mais associados a cada projeto: todo o catálogo
+ * (Admin > Cadastros) vale em qualquer projeto. A rota antiga leva aos Stakeholders.
+ */
+export default async function Page({ params }: { params: Promise<{ projetoId: string }> }) {
   const { projetoId } = await params
-  const { tenantId, role, userId } = await verifySession()
-
-  if (!(await canProjectPermission({ tenantId, role, userId }, projetoId, 'cadastros:gerenciar'))) {
-    notFound()
-  }
-
-  const [project, departments, associados] = await Promise.all([
-    findById(projetoId),
-    prisma.department.findMany({
-      where: { tenantId, deletedAt: null },
-      orderBy: { name: 'asc' },
-    }),
-    listarDepartamentosAssociados(projetoId),
-  ])
-
-  if (!project) notFound()
-
-  const catalogo = departments.map(d => ({
-    id: d.id,
-    name: d.name,
-  }))
-
-  return (
-    <div className="min-h-screen bg-gray-50">
-      <main className="max-w-3xl mx-auto px-4 py-8">
-        <div className="mb-6">
-          <h1 className="text-xl font-bold text-gray-900">Departamentos</h1>
-          <p className="text-sm text-gray-500 mt-1">Associe ao projeto os departamentos do catálogo global da organização.</p>
-        </div>
-
-        <ProjetoDepartamentosClient
-          projetoId={projetoId}
-          catalogo={catalogo}
-          associadosIniciais={associados}
-        />
-      </main>
-    </div>
-  )
+  redirect(`/projetos/${projetoId}/stakeholders`)
 }

@@ -3,7 +3,6 @@ import { notFound } from 'next/navigation'
 import { verifySession } from '@/lib/dal'
 import { findById } from '@/services/projectAccess'
 import { getProjectRoleForMember } from '@/services/projectRoleService'
-import { listarDepartamentosAssociados } from '@/services/projetoCadastroService'
 import { nomesUnicosDeFuncoes } from '@/lib/funcoesDedupe'
 import prisma from '@/lib/prisma'
 import ProjetoStakeholdersClient, {
@@ -26,7 +25,7 @@ export default async function ProjetoStakeholdersPage({ params }: { params: Prom
 
   const userRole: 'admin' | 'gerente' = role === 'admin' ? 'admin' : 'gerente'
 
-  const [project, projectStakeholders, allGlobalStakeholders, userProjects, allUsers, rolesDb, departmentsDb, departamentosAssociados] =
+  const [project, projectStakeholders, allGlobalStakeholders, userProjects, allUsers, rolesDb, departmentsDb] =
     await Promise.all([
       findById(projetoId),
       prisma.projectStakeholder.findMany({
@@ -81,7 +80,6 @@ export default async function ProjetoStakeholdersPage({ params }: { params: Prom
         select: { id: true, name: true },
         orderBy: { name: 'asc' },
       }),
-      listarDepartamentosAssociados(projetoId),
     ])
 
   if (!project) notFound()
@@ -183,14 +181,11 @@ export default async function ProjetoStakeholdersPage({ params }: { params: Prom
 
   const todosStakeholders: StakeholderUnificado[] = [...membrosComRole, ...stakeholdersExternos]
 
-  // Funções são globais: todo o catálogo do tenant fica disponível em qualquer
-  // projeto, sem precisar associar (pedido do Prof. Fábio, 26/09/26). Nomes
-  // equivalentes ("Gerente de Projeto(s)") aparecem uma vez só.
-  // Departamentos continuam restritos aos associados ao projeto.
+  // Funções e departamentos são globais: todo o catálogo do tenant fica disponível em
+  // qualquer projeto, sem precisar associar. Nomes equivalentes ("Gerente de Projeto(s)")
+  // aparecem uma vez só.
   const funcoesDoProjeto = nomesUnicosDeFuncoes(rolesDb)
-  const departamentosDoProjeto = departmentsDb
-    .filter(d => departamentosAssociados.includes(d.id))
-    .map(d => d.name)
+  const departamentosDoProjeto = departmentsDb.map(d => d.name)
 
   return (
     <div className="min-h-screen bg-gray-50">

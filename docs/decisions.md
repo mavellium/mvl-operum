@@ -424,6 +424,50 @@ Ao substituir uma decisão, manter o texto histórico, alterar seu status e liga
 - **Condições de revisão:** novos modelos ou necessidade de assinatura digital com verificação; requisito de exportação assíncrona no servidor exigiria armazenamento confiável de imagens.
 - **Referências:** `services/documentRevisionService.ts`, `lib/charterChanges.ts`, `lib/exports/`, `components/projetos/documentacao/ProjectCharter.tsx`, `docs/validation/sdd-7/README.md` e SDD fase 7.
 
+## ADR-040 — Funções e departamentos sem associação por projeto
+
+- **Data:** 2026-10-14
+- **Status:** implementada; substitui a associação por projeto de funções/departamentos (cadastros por projeto, `cadastros:gerenciar` para associar — ver ADR de autorização da fase 5). As funções já eram globais nos Stakeholders desde 26/09/26; os departamentos ainda eram restritos.
+- **Contexto:** o usuário pediu para remover a obrigação de associar funções e departamentos a cada projeto: todos devem poder ser escolhidos.
+- **Escolha:** todo o catálogo do tenant vale em qualquer projeto; telas, actions e serviço de associação foram removidos; as rotas antigas redirecionam para Stakeholders; excluir item do catálogo limpa associações antigas em vez de bloquear. As tabelas ficam (sem migration); `ProjetoDepartamento` segue espelhando o campo Departamentos do projeto.
+- **Justificativa:** a associação era um passo extra sem regra de negócio que dependesse dela.
+- **Alternativas consideradas:** manter a associação como destaque opcional (mantinha telas e confusão sobre por que associar).
+- **Consequências:** listas de escolha mostram o catálogo inteiro do tenant; `ProjetoFuncao` fica sem uso e pode ser removida numa migration futura.
+- **Referências:** `app/projetos/[projetoId]/stakeholders/page.tsx`, `components/layout/ProjectSidebar.tsx`, `app/actions/departments.ts`, `app/actions/roles.ts`, SDD 12.21.
+
+## ADR-039 — Motivo obrigatório e histórico na exclusão de sprint
+
+- **Data:** 2026-10-14
+- **Status:** implementada.
+- **Contexto:** o usuário pediu que excluir uma sprint com dados exija justificativa e que o histórico de alterações seja salvo. Com o ADR-038, excluir uma fase na EAP também exclui a sprint.
+- **Escolha:** "com dados" = cards abertos ou horas registradas nos cards. Sem motivo (mín. 5 caracteres), a exclusão é recusada no servidor (quadro e EAP). Criação, alteração e exclusão de sprint vão para a auditoria existente (`AuditLog`, entity `Sprint`), com campos de → para, motivo e resumo; a página Sprints do projeto exibe esse histórico.
+- **Justificativa:** reaproveita a auditoria já usada por documentos e EAP, sem migration; a regra no servidor vale também para chamadas fora da tela.
+- **Alternativas consideradas:** tabela própria de histórico de sprint (migration nova, sem ganho sobre `AuditLog`); motivo em toda exclusão (atrito sem necessidade em sprints vazias).
+- **Consequências:** a exclusão feita direto no sprint-service/gateway (fora das actions do app, ex.: MCP) não exige motivo nem grava este histórico. A busca por projeto usa filtro JSON em `details.projectId`.
+- **Referências:** ADR-038, `services/sprintHistoricoService.ts`, `app/actions/sprints.ts`, `components/sprint/DeleteSprintButton.tsx`, `components/sprint/HistoricoSprints.tsx`, `__tests__/unit/sprintHistorico.test.ts`, SDD 12.19.
+
+## ADR-038 — Excluir na EAP exclui o card e a sprint ligados
+
+- **Data:** 2026-10-14
+- **Status:** implementada.
+- **Contexto:** o usuário relatou que excluir um item na EAP dava conflito e não excluía. Além do conflito de versão, mesmo uma exclusão gravada voltava: a sincronização EAP ↔ sprint (ADR-033/034) via o card ou a sprint ainda abertos e recriava o nó.
+- **Escolha:** o autosave do editor e `deleteNode` excluem (soft delete) o card dos nós removidos; uma fase removida exclui a sprint, com os cards restantes indo para o fim do backlog (mesma regra do `remove` do sprint-service). Card/sprint ainda referenciados por outro nó salvo não são excluídos; importação de EAP não reflete exclusões. Cópias (copiar/colar, duplicar) não herdam o vínculo.
+- **Justificativa:** com a sincronização nos dois sentidos, a EAP é uma visão do mesmo trabalho da sprint; excluir de um lado sem excluir do outro faz o item reaparecer.
+- **Alternativas consideradas:** guardar uma lista de itens "excluídos da EAP" para a sincronização ignorar (mantém cards sem lugar na EAP); só desvincular (o card voltaria como nó novo).
+- **Consequências:** excluir uma fase na EAP exclui a sprint dela; os cards excluídos ficam com `deletedAt` (recuperáveis no banco), como as exclusões feitas no quadro.
+- **Referências:** ADR-033, ADR-034, `services/wbsService.ts` (`refletirExclusoesDaEap`), `lib/wbsReducer.ts`, `components/wbs/WbsContext.tsx`, `__tests__/unit/wbsExclusaoReflete.test.ts`, SDD 12.18.
+
+## ADR-037 — Nível 2 da EAP sempre é sprint e a planilha define datas e custos
+
+- **Data:** 2026-10-14
+- **Status:** implementada; amplia o ADR-034 (antes, só sprints existentes ganhavam nó no nível 2).
+- **Contexto:** o usuário tinha "1.1 Sprint 1" e "1.2 Fase 2" na EAP, mas só "Sprint 1" na aba Sprints, e definiu que cada fase da EAP é uma sprint com o nome "1.2 Fase 2". Também definiu que a data fim da sprint é a maior data prevista das atividades na planilha de custos, que a data fim do projeto é a maior data fim das fases e que isso alimenta a Data Limite e o custo (valor orçado) do cronograma financeiro em Editar projeto.
+- **Escolha:** `sincronizarEapComSprint` cria a sprint (com as colunas padrão do sprint-service) para todo nó do nível 2 sem sprint e regrava o nome como "código título"; `propagarPlanilhaDeCustos` grava `dataLimite`/`custo` no nó da fase, `Sprint.endDate` e `Project.endDate`, só quando há valor calculado.
+- **Justificativa:** uma única fonte para fases, sprints e datas evita cadastro duplicado; manter o valor manual quando a planilha não tem dados preserva o fluxo atual.
+- **Alternativas consideradas:** mostrar o código só na tela, sem gravar no nome da sprint (o nome sairia sem código em listas, MCP e relatórios); data de início também pela planilha (não foi definida pelo usuário).
+- **Consequências:** macrofases do nível 2 viram sprints; o nome da sprint muda quando a EAP é renumerada; datas e custos digitados à mão são sobrescritos assim que a planilha tem dados. As colunas padrão ficam duplicadas como constante no monolito.
+- **Referências:** ADR-034, `services/wbsService.ts`, `services/planilhaService.ts`, `lib/planilhaCustos.ts`, `__tests__/unit/wbsSprintSync.test.ts`, `__tests__/unit/aplicarResumoPlanilha.test.ts`, SDD 12.14–12.15.
+
 ## ADR-036 — Cards do backlog fora da EAP
 
 - **Data:** 2026-10-14

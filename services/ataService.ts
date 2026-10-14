@@ -1,4 +1,5 @@
 import prisma from '@/lib/prisma'
+import { linhaInstitucional } from '@/lib/linhaInstitucional'
 import { CriarAtaSchema, AtualizarAtaSchema } from '@/lib/validation/ataSchemas'
 import type { CriarAtaInput, AtualizarAtaInput } from '@/lib/validation/ataSchemas'
 import { NotFoundError, ConflictError } from '@/services/projetoCadastroService'
@@ -162,4 +163,27 @@ export async function removerAta(tenantId: string, ataId: string) {
   const existing = await prisma.ata.findFirst({ where: { id: ataId, tenantId, deletedAt: null } })
   if (!existing) throw new NotFoundError('Ata não encontrada')
   return prisma.ata.update({ where: { id: ataId }, data: { deletedAt: new Date() } })
+}
+
+/** Cabeçalho da Ata a partir do projeto: linha institucional (Editar projeto > Informações iniciais) e logo. */
+export async function cabecalhoDaAta(tenantId: string, projectId: string): Promise<{ instituicao: string; logoUrl: string | null }> {
+  const p = await prisma.project.findFirst({
+    where: { id: projectId, tenantId, deletedAt: null },
+    select: { location: true, departamentos: true, semestre: true, ano: true, logoUrl: true },
+  })
+  return { instituicao: p ? linhaInstitucional(p) : '', logoUrl: p?.logoUrl ?? null }
+}
+
+/** Função (primeiro cargo do cadastro no projeto, ou departamento) de cada membro, para "nome e função". */
+export async function funcoesNoProjeto(projectId: string, userIds: Array<string | null | undefined>): Promise<Map<string, string>> {
+  const ids = [...new Set(userIds.filter((v): v is string => !!v))]
+  if (!ids.length) return new Map()
+  const ups = await prisma.userProject.findMany({
+    where: { projectId, userId: { in: ids } },
+    select: { userId: true, role: true, department: { select: { name: true } } },
+  })
+  return new Map(ups.flatMap(up => {
+    const funcao = up.role?.split(',').map(s => s.trim()).find(Boolean) ?? up.department?.name ?? ''
+    return funcao ? [[up.userId, funcao] as const] : []
+  }))
 }

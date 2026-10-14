@@ -4,6 +4,7 @@ import { verifySession } from '@/lib/dal'
 import { revalidatePath } from 'next/cache'
 import { sprintsApi, cardsApi, tagsApi, filesApi } from '@/lib/api-client'
 import prisma from '@/lib/prisma'
+import { camposDaSprint, diferencasSprint, registrarHistoricoSprint } from '@/services/sprintHistoricoService'
 import { z } from 'zod'
 
 /** Card como o board consome (colunas e backlog têm o mesmo formato). */
@@ -395,8 +396,14 @@ export async function updateSprintMetaAction(
   data: { qualidade?: number; dificuldade?: number; description?: string; name?: string; startDate?: Date | null; endDate?: Date | null },
 ) {
   try {
-    await verifySession()
+    const { userId, tenantId } = await verifySession()
+    const antes = await camposDaSprint(sprintId)
     const sprint = await sprintsApi.update(sprintId, data as Record<string, unknown>)
+    // Histórico de alterações da sprint (nome, datas, notas).
+    try {
+      const depois = await camposDaSprint(sprintId)
+      if (depois) await registrarHistoricoSprint({ tenantId, userId, sprintId, acao: 'UPDATE', projectId: depois.projectId, nome: depois.name ?? '', alteracoes: diferencasSprint(antes, depois), origem: 'quadro' })
+    } catch (error) { console.error('[sprint] falha ao gravar histórico', error) }
     revalidatePath(`/sprints/${sprintId}`)
     revalidatePath('/sprints')
     return { sprint }

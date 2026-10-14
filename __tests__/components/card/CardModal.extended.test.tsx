@@ -14,6 +14,7 @@ vi.mock('@/app/actions/time', () => ({
   pauseTimerAction: vi.fn(),
   getCardTimeAction: vi.fn().mockResolvedValue({ seconds: 0 }),
   getActiveTimerAction: vi.fn().mockResolvedValue({ entry: null }),
+  getCardsTimerAction: vi.fn(async (ids: string[]) => Object.fromEntries(ids.map(id => [id, { seconds: 0, entry: null }]))),
   getTimeEntriesAction: vi.fn().mockResolvedValue({ entries: [] }),
   addManualTimeAction: vi.fn().mockResolvedValue({ entry: { id: 'm1' } }),
   updateTimeEntryAction: vi.fn().mockResolvedValue({ entry: { id: 'm1' } }),

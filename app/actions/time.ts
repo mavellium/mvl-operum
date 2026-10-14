@@ -75,6 +75,36 @@ export async function getActiveTimerAction(cardId: string) {
   }
 }
 
+export type CardTimerState =
+  | { seconds: number; entry: { id: string; isRunning?: boolean; startedAt: string | Date; duration?: number | null } | null }
+  | { error: string }
+
+/**
+ * Total e timer ativo de vários cards numa única Server Action. O cliente executa
+ * Server Actions uma de cada vez; com uma chamada por card, o quadro inteiro
+ * enfileirava e estourava o tempo do timer. Aqui as leituras rodam em paralelo.
+ */
+export async function getCardsTimerAction(cardIds: string[]): Promise<Record<string, CardTimerState>> {
+  await verifySession()
+  const ids = [...new Set(cardIds)].slice(0, 200)
+  const result: Record<string, CardTimerState> = {}
+  let next = 0
+  const worker = async () => {
+    while (next < ids.length) {
+      const id = ids[next++]
+      try {
+        assertValidId(id, 'cardId')
+        const [total, entry] = await Promise.all([cardsApi.getTimeTotal(id), cardsApi.getActiveTimer(id)])
+        result[id] = { seconds: total.seconds, entry: entry ?? null }
+      } catch (err) {
+        result[id] = { error: err instanceof Error ? err.message : 'Erro ao buscar timer' }
+      }
+    }
+  }
+  await Promise.all(Array.from({ length: Math.min(8, ids.length) }, worker))
+  return result
+}
+
 export async function addManualTimeAction(cardId: string, hours: number, minutes: number, secs = 0, description?: string) {
   try {
     await verifySession()

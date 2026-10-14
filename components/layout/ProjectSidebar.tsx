@@ -33,18 +33,6 @@ const StakeholdersIcon = () => (
   </svg>
 )
 
-const CargosIcon = () => (
-  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 13.255A23.931 23.931 0 0112 15c-3.183 0-6.22-.62-9-1.745M16 6V4a2 2 0 00-2-2h-4a2 2 0 00-2 2v2m4 6h.01M5 20h14a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
-  </svg>
-)
-
-const DepartamentosIcon = () => (
-  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" />
-  </svg>
-)
-
 const DocumentosIcon = () => (
   <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
@@ -101,8 +89,6 @@ export default function ProjectSidebar({ projetoId, canManageMembers }: Props) {
     ...((canManageMembers || permissions.has('cadastros:gerenciar'))
       ? [
           { href: `/projetos/${projetoId}/stakeholders`, label: 'Stakeholders', Icon: StakeholdersIcon },
-          { href: `/projetos/${projetoId}/funcoes`, label: 'Funções', Icon: CargosIcon },
-          { href: `/projetos/${projetoId}/departamentos`, label: 'Departamentos', Icon: DepartamentosIcon }
         ]
       : []),
   ].filter(item => {
@@ -110,7 +96,6 @@ export default function ProjectSidebar({ projetoId, canManageMembers }: Props) {
     if (item.label === 'Documentação') return permissions.has('documentos:ver')
     if (item.label === 'Planilha de Custos') return permissions.has('planilha:ver')
     if (item.label === 'Stakeholders') return canManageMembers
-    if (item.label === 'Funções' || item.label === 'Departamentos') return permissions.has('cadastros:gerenciar')
     return true
   })
 
@@ -122,9 +107,7 @@ export default function ProjectSidebar({ projetoId, canManageMembers }: Props) {
   const search: { placeholder: string; context: 'global_projects' | 'project_items' | 'sprint_items' | 'project_members' | 'default'; contextId?: string } = (
     subRoute === 'membros'
       ? { placeholder: 'Buscar membros no projeto...', context: 'project_members', contextId: projetoId }
-      : subRoute === 'funcoes' || subRoute === 'departamentos'
-        ? { placeholder: 'Buscar cards e sprints no projeto...', context: 'default' }
-        : { placeholder: 'Buscar cards, sprints e pessoas...', context: 'project_items', contextId: projetoId }
+      : { placeholder: 'Buscar cards, sprints e pessoas...', context: 'project_items', contextId: projetoId }
   )
 
   const title = navItems.find(i => isActive(i.href))?.label ?? 'Projeto'

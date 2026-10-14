@@ -5,6 +5,11 @@ describe('validação dos snapshots', () => {
   it('Termo recusa campos capazes de alterar projeto/tenant', () => {
     expect(() => validarDocumento('CHARTER', { name: 'Outro', tenantId: 'outro' })).toThrow()
   })
+  it('Termo aceita a função (papel) dos integrantes no contexto do documento', () => {
+    const payload = { documentContext: { nomeProjeto: 'P', gerenteProjeto: 'G', membros: [{ name: 'Ana', papel: 'Back-end' }, { name: 'Bia' }] } }
+    expect(() => validarDocumento('CHARTER', payload)).not.toThrow()
+    expect(() => validarDocumento('CHARTER', { documentContext: { ...payload.documentContext, membros: [{ name: 'Ana', tenantId: 'x' }] } })).toThrow()
+  })
   it('somente atas têm identificador de recurso', () => {
     expect(() => validarRecurso('CHARTER', 'ata1', true)).toThrow()
     expect(() => validarRecurso('ATA', '', true)).toThrow()

@@ -1,7 +1,7 @@
 import { act, fireEvent, render, screen } from '@testing-library/react'
 import { describe, expect, it, vi } from 'vitest'
 import CardModal from '@/components/card/CardModal'
-vi.mock('@/app/actions/time', () => ({ getTimeEntriesAction: vi.fn().mockResolvedValue({ entries: [] }), getCardTimeAction: vi.fn().mockResolvedValue({ seconds: 0 }), getActiveTimerAction: vi.fn().mockResolvedValue({ entry: null }) }))
+vi.mock('@/app/actions/time', () => ({ getTimeEntriesAction: vi.fn().mockResolvedValue({ entries: [] }), getCardTimeAction: vi.fn().mockResolvedValue({ seconds: 0 }), getActiveTimerAction: vi.fn().mockResolvedValue({ entry: null }), getCardsTimerAction: vi.fn(async (ids: string[]) => Object.fromEntries(ids.map(id => [id, { seconds: 0, entry: null }]))) }))
 describe('formulário confirmado', () => {
   it('mantém campos e arquivos no erro, bloqueia envio duplo e fecha somente no sucesso', async () => {
     let release!: (value: { error: string }) => void

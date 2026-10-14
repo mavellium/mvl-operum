@@ -1220,6 +1220,14 @@ Cards do Prof. Fábio de 05–07/10, implementados nesta ordem (1.16.0). Todos e
 | 12.11 | Documento da EAP preenchido com a aba EAP/WBS | Implementado (1.19.0); ADR-035 |
 | 12.12 | Gerente automático e campos de pessoa padronizados (select + "+") em todos os documentos | Implementado (1.19.0); ADR-035 |
 | 12.13 | Cards do backlog fora da EAP/WBS e da planilha de custos | Implementado (1.19.0); ADR-036 |
+| 12.14 | Fases do nível 2 da EAP viram sprints "código título" | Implementado (1.20.0); ADR-037 |
+| 12.15 | Data fim da sprint/projeto e Data Limite/custo do cronograma pela planilha de custos | Implementado (1.20.0); ADR-037 |
+| 12.16 | Ata no layout do modelo e linha institucional do projeto | Implementado (1.20.0) |
+| 12.17 | Timer do quadro em lote; correções ao salvar versão do Termo e da EAP | Implementado (1.20.0) |
+| 12.18 | Excluir na EAP sem conflito, refletindo no card/sprint | Implementado (1.20.0); ADR-038 |
+| 12.19 | Motivo ao excluir sprint com dados e histórico de alterações das sprints | Implementado (1.20.0); ADR-039 |
+| 12.20 | Quadro da sprint: arrastar entre colunas sem travar nem "sumir e voltar" | Implementado (1.20.0) |
+| 12.21 | Funções e departamentos sem associação por projeto | Implementado (1.20.0); ADR-040 |
 | 12.9 | Ajuste do 12.8: nível 2 = sprints, cards no nível 3+ e código da EAP no card | Implementado (1.17.0); ADR-034 |
 
 ---

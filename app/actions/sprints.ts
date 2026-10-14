@@ -3,17 +3,39 @@
 import { verifySession } from '@/lib/dal'
 import { revalidatePath } from 'next/cache'
 import { sprintsApi } from '@/lib/api-client'
+import {
+  MOTIVO_MINIMO, camposDaSprint, diferencasSprint, registrarHistoricoSprint, resumoDaSprint, sprintTemDados,
+} from '@/services/sprintHistoricoService'
+
+/** Grava a alteração no histórico da sprint; falha no histórico não desfaz a alteração. */
+async function historicoDeAlteracao(tenantId: string, userId: string, id: string, antes: Awaited<ReturnType<typeof camposDaSprint>>) {
+  try {
+    const depois = await camposDaSprint(id)
+    if (!depois) return
+    await registrarHistoricoSprint({
+      tenantId, userId, sprintId: id, acao: 'UPDATE', projectId: depois.projectId, nome: depois.name ?? '',
+      alteracoes: diferencasSprint(antes, depois), origem: 'quadro',
+    })
+  } catch (error) { console.error('[sprint] falha ao gravar histórico', error) }
+}
 
 export async function createSprintAction(
   _prevState: unknown,
   input: { name: string; startDate?: string; endDate?: string; projectId?: string },
 ) {
   try {
-    const { userId } = await verifySession()
+    const { userId, tenantId } = await verifySession()
     const { startDate, endDate, ...rest } = input
     // <input type="date"> envia "YYYY-MM-DD"; o sprint-service exige datetime ISO completo.
     const toISO = (d?: string) => d ? new Date(d).toISOString() : undefined
     const sprint = await sprintsApi.create({ ...rest, createdBy: userId, startDate: toISO(startDate), endDate: toISO(endDate) })
+    const sprintId = (sprint as { id?: string } | null)?.id
+    if (sprintId) {
+      await registrarHistoricoSprint({
+        tenantId, userId, sprintId, acao: 'CREATE', projectId: input.projectId ?? null, nome: input.name, origem: 'quadro',
+        alteracoes: diferencasSprint(null, { name: input.name, startDate: toISO(startDate) ?? null, endDate: toISO(endDate) ?? null }),
+      }).catch(error => console.error('[sprint] falha ao gravar histórico', error))
+    }
     revalidatePath('/sprints')
     if (input.projectId) {
       revalidatePath(`/projetos/${input.projectId}`)
@@ -27,8 +49,10 @@ export async function createSprintAction(
 
 export async function updateSprintAction(_prevState: unknown, id: string, data: Record<string, unknown>) {
   try {
-    await verifySession()
+    const { userId, tenantId } = await verifySession()
+    const antes = await camposDaSprint(id)
     const sprint = await sprintsApi.update(id, data)
+    await historicoDeAlteracao(tenantId, userId, id, antes)
     revalidatePath('/sprints')
     revalidatePath(`/sprints/${id}`)
     return { sprint }
@@ -37,10 +61,33 @@ export async function updateSprintAction(_prevState: unknown, id: string, data: 
   }
 }
 
-export async function deleteSprintAction(id: string, projectId?: string) {
+/** Dados da sprint antes de excluir: com cards ou tempo registrado, o motivo é obrigatório. */
+export async function getSprintExclusaoInfoAction(id: string) {
   try {
     await verifySession()
+    const resumo = await resumoDaSprint(id)
+    if (!resumo) return { error: 'Sprint não encontrada' }
+    return { cards: resumo.cards, segundosRegistrados: resumo.segundosRegistrados, exigeMotivo: sprintTemDados(resumo) }
+  } catch (err) {
+    return { error: err instanceof Error ? err.message : 'Erro ao consultar a sprint' }
+  }
+}
+
+export async function deleteSprintAction(id: string, projectId?: string, motivo?: string) {
+  try {
+    const { userId, tenantId } = await verifySession()
+    const resumo = await resumoDaSprint(id)
+    const justificativa = motivo?.trim() ?? ''
+    if (resumo && sprintTemDados(resumo) && justificativa.length < MOTIVO_MINIMO) {
+      return { error: `Esta sprint tem dados (cards ou horas registradas). Informe o motivo da exclusão (mín. ${MOTIVO_MINIMO} caracteres).` }
+    }
     await sprintsApi.delete(id)
+    if (resumo) {
+      await registrarHistoricoSprint({
+        tenantId, userId, sprintId: id, acao: 'DELETE', projectId: resumo.projectId, nome: resumo.nome, origem: 'quadro',
+        motivo: justificativa || null, resumo: { cards: resumo.cards, segundosRegistrados: resumo.segundosRegistrados, status: resumo.status },
+      }).catch(error => console.error('[sprint] falha ao gravar histórico', error))
+    }
     revalidatePath('/sprints')
     if (projectId) {
       revalidatePath(`/projetos/${projectId}/sprints`)
@@ -53,8 +100,10 @@ export async function deleteSprintAction(id: string, projectId?: string) {
 
 export async function completeSprintAction(id: string) {
   try {
-    await verifySession()
+    const { userId, tenantId } = await verifySession()
+    const antes = await camposDaSprint(id)
     const sprint = await sprintsApi.update(id, { status: 'COMPLETED' })
+    await historicoDeAlteracao(tenantId, userId, id, antes)
     revalidatePath('/sprints')
     revalidatePath(`/sprints/${id}`)
     return { sprint }

@@ -6,6 +6,8 @@ import { findAllByProjeto } from '@/services/sprintService'
 import { getSprintMetrics } from '@/services/dashboardService'
 import EmptyState from '@/components/ui/EmptyState'
 import DeleteSprintButton from '@/components/sprint/DeleteSprintButton'
+import HistoricoSprints from '@/components/sprint/HistoricoSprints'
+import { historicoDasSprints } from '@/services/sprintHistoricoService'
 import Link from 'next/link'
 import type { Metadata } from 'next'
 import { sprintPath } from '@/lib/sprintPath'
@@ -62,9 +64,10 @@ export default async function ProjetoSprintsPage({
   if (!(await canProjectPermission({ tenantId, role, userId }, projetoId, 'quadro:ver'))) notFound()
   const canEdit = await canProjectPermission({ tenantId, role, userId }, projetoId, 'quadro:sprints')
 
-  const [projeto, sprints] = await Promise.all([
+  const [projeto, sprints, historico] = await Promise.all([
     findById(projetoId),
     findAllByProjeto(projetoId),
+    historicoDasSprints(tenantId, projetoId).catch(() => []),
   ])
 
   if (!projeto) notFound()
@@ -216,6 +219,7 @@ export default async function ProjetoSprintsPage({
             })}
           </div>
         )}
+        <HistoricoSprints eventos={historico} />
       </main>
     </div>
   )

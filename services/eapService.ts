@@ -1,4 +1,5 @@
 import prisma from '@/lib/prisma'
+import { linhaInstitucional, type ProjetoInstitucional } from '@/lib/linhaInstitucional'
 import type { Prisma } from '@/lib/generated/prisma'
 import type { InputJsonValue } from '@/lib/generated/prisma/runtime/client'
 import type { EapDocument, EapNode } from '@/types/eap'
@@ -185,17 +186,7 @@ export async function resetDocument(projectId: string, tenantId: string, prefill
   return toClientDocument(doc)
 }
 
-/** Linha institucional do cabeçalho (Instituição / Curso / Turma / Período). */
-export function formatInstitucionalInfo(project: {
-  departamentos?: string[]
-  semestre?: string | null
-  ano?: number | null
-}): string {
-  const dept = project.departamentos?.[0] ?? ''
-  const semestre =
-    project.semestre === '1' ? '1º Semestre' :
-    project.semestre === '2' ? '2º Semestre' :
-    (project.semestre ?? '')
-  const ano = project.ano ? String(project.ano) : ''
-  return [dept, semestre, ano].filter(Boolean).join(' · ') || 'Instituição / Curso / Turma / Período'
+/** Linha institucional do cabeçalho — mesma regra da Ata (`lib/linhaInstitucional.ts`). */
+export function formatInstitucionalInfo(project: ProjetoInstitucional): string {
+  return linhaInstitucional(project)
 }
