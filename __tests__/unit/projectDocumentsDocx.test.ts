@@ -26,9 +26,21 @@ describe('modelos documentais', () => {
     const xml = await inspect('stakeholders', await buildStakeholderDocx({ categoria: 'Faculdade', nomeProjeto: 'Operum', gerenteProjeto: 'Gerente', elaboradoPor: 'Elaborador', aprovadoPor: '', versao: '1', dataCriacao: '', dataAprovacao: '' }, [{ ref: '01', nome: 'Integrante', empresaEquipe: 'Equipe', cargoCompetencia: 'Desenvolvedor', email: 'pessoa@example.test', telefoneFax: '(11) 90000-0000', endereco: 'Campus', observacoes: 'Parte interessada' }]))
     expect(xml).toContain('w:orient="landscape"'); expect(xml).toContain('w:w="15138"'); expect(xml).toContain('Telefone/Celular'); expect(xml).toContain('Observação')
   })
+  it('partes interessadas inativas saem em vermelho no docx, com o motivo na observação', async () => {
+    const header = { categoria: 'Faculdade', nomeProjeto: 'Operum', gerenteProjeto: 'Gerente', elaboradoPor: '', aprovadoPor: '', versao: '1', dataCriacao: '', dataAprovacao: '' }
+    const base = { ref: '01', nome: 'Pessoa', empresaEquipe: 'Equipe', cargoCompetencia: 'Dev', email: 'p@example.test', telefoneFax: '', endereco: '' }
+    const ativo = await inspect('stakeholders-ativo', await buildStakeholderDocx(header, [base]))
+    const inativo = await inspect('stakeholders-inativo', await buildStakeholderDocx(header, [{ ...base, inativo: true, motivoInativo: 'Contrato encerrado' }]))
+    expect(ativo).not.toContain('B91C1C')
+    expect(inativo).toContain('B91C1C'); expect(inativo).toContain('Inativo: Contrato encerrado')
+  })
   it('termo mantém a ordem do modelo, numera fases e calcula total', async () => {
     const xml = await inspect('charter', await buildCharterDocx(charter))
     expect(xml).toContain('3.000,75'); expect(xml).toContain('1.1 Planejamento'); expect(xml.indexOf('Descrição do produto')).toBeLessThan(xml.indexOf('Macro fases')); expect(xml.indexOf('Designação de gerente')).toBeLessThan(xml.indexOf('Metodologia do projeto'))
+  })
+  it('integrantes do termo saem como "Nome – Papel" quando o cadastro tem função', async () => {
+    const xml = await inspect('charter-papel', await buildCharterDocx({ ...charter, membros: [{ name: 'Ana', papel: 'Desenvolvedora' }, { name: 'Bia' }] }))
+    expect(xml).toContain('Ana – Desenvolvedora'); expect(xml).toContain('Bia')
   })
   it('ata mantém ações em três colunas e assinaturas vazias', async () => {
     const xml = await inspect('ata', buildAtaDocx({ instituicao: 'Faculdade', numero: 1, nomeProjeto: 'Operum', local: 'Campus', data: new Date('2026-10-05T12:00:00Z'), elaboradoPor: 'Autor', aprovadoPor: null, assuntosTratados: 'Planejamento\nDesenvolvimento', decisoesTomadas: 'Entregar a versão', observacoes: 'Próxima reunião', copiasPara: ['Equipe'], presentes: [{ nome: 'Integrante', setorEmpresa: 'Equipe' }], acoes: [{ acao: 'Entregar projeto', prazo: new Date('2026-11-01T12:00:00Z'), responsavel: 'Integrante' }], anexos: [{ nome: 'Plano de projeto', url: null }] }))

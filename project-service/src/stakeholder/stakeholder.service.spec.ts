@@ -24,7 +24,7 @@ vi.mock('../common/tenant-scope', () => ({ assertProjectInTenant: vi.fn() }))
 
 import { NotFoundException } from '@nestjs/common'
 import { assertProjectInTenant } from '../common/tenant-scope'
-import { StakeholderService } from './stakeholder.service'
+import { StakeholderService, UpdateStakeholderSchema } from './stakeholder.service'
 
 const assertProjectMock = assertProjectInTenant as unknown as ReturnType<typeof vi.fn>
 
@@ -87,6 +87,49 @@ describe('StakeholderService', () => {
       expect(mockProjectStakeholder.findMany).not.toHaveBeenCalled()
       expect(mockProjectStakeholder.updateMany).not.toHaveBeenCalled()
       expect(mockProjectStakeholder.upsert).not.toHaveBeenCalled()
+    })
+  })
+
+  describe('inativação com motivo', () => {
+    it('inativar exige o motivo (schema)', () => {
+      expect(UpdateStakeholderSchema.safeParse({ isActive: false }).success).toBe(false)
+      expect(UpdateStakeholderSchema.safeParse({ isActive: false, inactiveReason: '  ' }).success).toBe(false)
+      expect(UpdateStakeholderSchema.safeParse({ isActive: false, inactiveReason: 'Saiu do projeto' }).success).toBe(true)
+      expect(UpdateStakeholderSchema.safeParse({ isActive: true }).success).toBe(true)
+      expect(UpdateStakeholderSchema.safeParse({ name: 'Ana' }).success).toBe(true)
+    })
+
+    it('inativa gravando motivo e data', async () => {
+      const { prisma } = await import('../prisma')
+      const p = prisma as unknown as { stakeholder: Record<string, ReturnType<typeof vi.fn>> }
+      p.stakeholder.findFirst.mockResolvedValue({ id: 'sk1' })
+      p.stakeholder.update.mockResolvedValue({})
+      await service.update('sk1', 't1', { isActive: false, inactiveReason: 'Saiu do projeto' })
+      expect(p.stakeholder.update).toHaveBeenCalledWith({
+        where: { id: 'sk1' },
+        data: { isActive: false, inactiveReason: 'Saiu do projeto', inactivatedAt: expect.any(Date) },
+      })
+    })
+
+    it('reativar limpa motivo e data', async () => {
+      const { prisma } = await import('../prisma')
+      const p = prisma as unknown as { stakeholder: Record<string, ReturnType<typeof vi.fn>> }
+      p.stakeholder.findFirst.mockResolvedValue({ id: 'sk1' })
+      p.stakeholder.update.mockResolvedValue({})
+      await service.update('sk1', 't1', { isActive: true })
+      expect(p.stakeholder.update).toHaveBeenCalledWith({
+        where: { id: 'sk1' },
+        data: { isActive: true, inactiveReason: null, inactivatedAt: null },
+      })
+    })
+
+    it('editar dados sem mexer em isActive não altera o estado de ativação', async () => {
+      const { prisma } = await import('../prisma')
+      const p = prisma as unknown as { stakeholder: Record<string, ReturnType<typeof vi.fn>> }
+      p.stakeholder.findFirst.mockResolvedValue({ id: 'sk1' })
+      p.stakeholder.update.mockResolvedValue({})
+      await service.update('sk1', 't1', { name: 'Novo nome' })
+      expect(p.stakeholder.update).toHaveBeenCalledWith({ where: { id: 'sk1' }, data: { name: 'Novo nome' } })
     })
   })
 })

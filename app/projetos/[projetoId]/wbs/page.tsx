@@ -3,6 +3,7 @@ import { verifySession } from '@/lib/dal'
 import { findById } from '@/services/projectAccess'
 import { canProjectPermission } from '@/services/projectAccess'
 import { getTree, resetTree } from '@/services/wbsService'
+import { sincronizarEapSprintSePermitido } from '@/services/eapSprintSyncService'
 import WbsCanvas from '@/components/wbs/WbsCanvas'
 import prisma from '@/lib/prisma'
 import { valorPorMinutoDoElaborador } from '@/lib/planilhaCustos'
@@ -35,6 +36,7 @@ export default async function WbsPage({
   const rates = canViewCosts ? Object.fromEntries(members.map(m => [m.userId, valorPorMinutoDoElaborador({ userId: m.userId, name: m.user.name, remuneracao: m.remuneracao ?? null, horasDiarias: m.horasDiarias ?? null })])) : {}
   const requested = (await searchParams).view
   const initialView: WbsViewMode = requested === 'details' || requested === 'gantt' || (requested === 'costs' && canViewCosts) ? requested : 'chart'
+  await sincronizarEapSprintSePermitido({ userId, tenantId, role }, projetoId)
   let initialTree = await getTree(projetoId, tenantId)
 
   // Auto-initialize on first access

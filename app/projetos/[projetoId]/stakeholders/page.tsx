@@ -177,6 +177,8 @@ export default async function ProjetoStakeholdersPage({ params }: { params: Prom
     company: ps.stakeholder.company,
     competence: ps.stakeholder.competence,
     isActive: ps.stakeholder.isActive,
+    inactiveReason: ps.stakeholder.inactiveReason,
+    inactivatedAt: ps.stakeholder.inactivatedAt?.toISOString() ?? null,
   }))
 
   const todosStakeholders: StakeholderUnificado[] = [...membrosComRole, ...stakeholdersExternos]

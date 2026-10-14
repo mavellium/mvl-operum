@@ -245,6 +245,8 @@ model Stakeholder {
   estado      String?
   notes       String?  @db.Text
   isActive    Boolean  @default(true)
+  inactiveReason String?  @db.Text // Motivo da inativação (obrigatório ao desativar)
+  inactivatedAt  DateTime? // Quando foi inativado
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
 

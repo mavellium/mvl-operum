@@ -4,7 +4,7 @@ import { useProjectPermissions } from '@/components/permissoes/ProjectPermission
 
 import PermissoesUsuario from '@/components/permissoes/PermissoesUsuario'
 
-import { useState, useTransition, useEffect, useRef } from 'react'
+import { Fragment, useState, useTransition, useEffect, useRef } from 'react'
 import {
   Plus,
   Pencil,
@@ -20,6 +20,7 @@ import {
   Briefcase,
   DollarSign,
   GripVertical,
+  Power,
 } from 'lucide-react'
 import AvatarUpload from '@/components/profile/AvatarUpload'
 import AddressFields, { type AddressValues, emptyAddress } from '@/components/ui/AddressFields'
@@ -32,12 +33,15 @@ import {
   reorderStakeholdersAction,
   reorderMembersAction,
   uploadMemberSignatureAction,
+  setStakeholderAtivoAction,
 } from '@/app/actions/stakeholders'
 import { addMemberAction, removeMemberAction } from '@/app/actions/projects'
 import { updateProjetoMemberAction } from '@/app/actions/projetos'
 import { adminCreateUserAction } from '@/app/actions/admin'
 import { parseHoras, formatHoras } from '@/lib/validation/horas'
 import PasswordInput from '@/components/ui/PasswordInput'
+import Modal from '@/components/ui/Modal'
+import Button from '@/components/ui/Button'
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -73,6 +77,9 @@ export type StakeholderUnificado = {
   company?: string | null
   competence?: string | null
   isActive?: boolean
+  /** Motivo informado ao inativar; só existe com isActive === false. */
+  inactiveReason?: string | null
+  inactivatedAt?: string | null
 }
 
 export type UsuarioDisponivel = {
@@ -486,6 +493,13 @@ export default function ProjetoStakeholdersClient({
     )
   })
 
+  // Equipe primeiro, externos depois, cada grupo com o seu cabeçalho. A ordem de cada
+  // grupo é salva separadamente (reorderMembers / reorderStakeholders), então misturar
+  // os dois na lista não tinha significado.
+  const exibidos = [...filteredProjeto].sort((a, b) => Number(a.tipo === 'externo') - Number(b.tipo === 'externo'))
+  const totalEquipe = exibidos.filter(s => s.tipo === 'interno').length
+  const totalExternos = exibidos.length - totalEquipe
+
   const filteredDispExterno = dispExterno.filter(s => {
     const q = searchDir.toLowerCase()
     return s.name.toLowerCase().includes(q) || (s.company ?? '').toLowerCase().includes(q)
@@ -886,6 +900,59 @@ export default function ProjetoStakeholdersClient({
     })
   }
 
+  // ── Inativar / reativar stakeholder externo (com motivo)
+  const [inativando, setInativando] = useState<StakeholderUnificado | null>(null)
+  const [motivoInativo, setMotivoInativo] = useState('')
+  const [erroInativo, setErroInativo] = useState<string | null>(null)
+
+  function abrirInativacao(s: StakeholderUnificado) {
+    setMotivoInativo('')
+    setErroInativo(null)
+    setInativando(s)
+  }
+
+  function aplicarSituacao(s: StakeholderUnificado, ativo: boolean, motivo: string | null) {
+    const novo: StakeholderUnificado = {
+      ...s,
+      isActive: ativo,
+      inactiveReason: ativo ? null : motivo,
+      inactivatedAt: ativo ? null : new Date().toISOString(),
+    }
+    setProjeto(prev => prev.map(x => (x.id === s.id ? novo : x)))
+    setSelected(prev => (prev && prev.id === s.id ? novo : prev))
+  }
+
+  function confirmarInativacao() {
+    const alvo = inativando
+    if (!alvo?.stakeholderId) return
+    const motivo = motivoInativo.trim()
+    if (motivo.length < 3) {
+      setErroInativo('Informe o motivo da inativação.')
+      return
+    }
+    startTransition(async () => {
+      setLoadingId(alvo.id)
+      const r = await setStakeholderAtivoAction(projetoId, alvo.stakeholderId!, false, motivo)
+      setLoadingId(null)
+      if ('error' in r) { setErroInativo(r.error ?? 'Erro ao inativar.'); return }
+      aplicarSituacao(alvo, false, motivo)
+      setInativando(null)
+      toast(`"${alvo.name}" foi inativado.`, 'success')
+    })
+  }
+
+  function reativar(s: StakeholderUnificado) {
+    if (!s.stakeholderId) return
+    startTransition(async () => {
+      setLoadingId(s.id)
+      const r = await setStakeholderAtivoAction(projetoId, s.stakeholderId!, true)
+      setLoadingId(null)
+      if ('error' in r) { toast(r.error ?? 'Erro ao reativar.', 'error'); return }
+      aplicarSituacao(s, true, null)
+      toast(`"${s.name}" foi reativado.`, 'success')
+    })
+  }
+
   function handleUnlink(s: StakeholderUnificado) {
     if (s.tipo === 'interno') handleRemoveInterno(s)
     else handleUnbindExterno(s)
@@ -1243,6 +1310,27 @@ export default function ProjetoStakeholdersClient({
 
   return (
     <div className="flex flex-col lg:flex-row gap-4 items-start">
+      <Modal isOpen={inativando !== null} onClose={() => setInativando(null)} title="Inativar stakeholder">
+        <p className="text-sm text-gray-600 mb-3">
+          {inativando ? <>Informe por que <strong>{inativando.name}</strong> foi inativado. O motivo fica registrado e aparece no cadastro.</> : null}
+        </p>
+        <label htmlFor="motivo-inativo" className="block text-xs font-medium text-gray-600 mb-1">Motivo da inativação</label>
+        <textarea
+          id="motivo-inativo"
+          value={motivoInativo}
+          onChange={e => { setMotivoInativo(e.target.value); setErroInativo(null) }}
+          rows={3}
+          maxLength={500}
+          autoFocus
+          className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm text-gray-900 focus:outline-none focus:ring-2 focus:ring-blue-500"
+          placeholder="Ex.: saiu do projeto, empresa encerrou o contrato…"
+        />
+        {erroInativo && <p role="alert" className="mt-1 text-xs text-red-600">{erroInativo}</p>}
+        <div className="flex justify-end gap-3 mt-4">
+          <Button variant="secondary" onClick={() => setInativando(null)}>Cancelar</Button>
+          <Button variant="danger" onClick={confirmarInativacao}>Inativar</Button>
+        </div>
+      </Modal>
 
       {/* ── COLUMN 1 — Lista Unificada ── */}
       <div className={`${col1Width} w-full bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden transition-all duration-300`}>
@@ -1320,9 +1408,23 @@ export default function ProjetoStakeholdersClient({
           </div>
         ) : (
           <ul className={`space-y-2 overflow-y-auto max-h-[600px] px-2 py-2${isReordering ? ' opacity-70' : ''}`}>
-            {filteredProjeto.map((s, index) => (
+            {exibidos.map((s, posicao) => {
+              // Índice real em `projeto`: o arrastar reordena essa lista, não a filtrada/agrupada.
+              const index = projeto.indexOf(s)
+              const novoGrupo = s.tipo !== exibidos[posicao - 1]?.tipo
+              return (
+              <Fragment key={s.id}>
+              {novoGrupo && (
+                <li
+                  role="presentation"
+                  data-testid={`grupo-${s.tipo}`}
+                  className="flex items-center justify-between px-1 pt-2 pb-0.5 text-[11px] font-bold uppercase tracking-wider text-slate-500"
+                >
+                  <span>{s.tipo === 'interno' ? 'Membros da equipe' : 'Stakeholders externos'}</span>
+                  <span className="font-semibold text-slate-400">{s.tipo === 'interno' ? totalEquipe : totalExternos}</span>
+                </li>
+              )}
               <li
-                key={s.id}
                 draggable={canManage}
                 onDragStart={() => handleDragStart(index)}
                 onDragOver={(e) => handleDragOver(e, index)}
@@ -1343,9 +1445,15 @@ export default function ProjetoStakeholdersClient({
                   <Avatar name={s.name} url={s.avatarUrl} size="lg" />
                   <div className="flex flex-col min-w-0 gap-0.5">
                     <div className="flex items-center gap-2 flex-wrap">
-                      <span className="text-[15px] font-bold text-slate-800 leading-tight truncate">{s.name}</span>
+                      <span className={`text-[15px] font-bold leading-tight truncate ${s.tipo === 'externo' && s.isActive === false ? 'text-red-700' : 'text-slate-800'}`}>{s.name}</span>
                       <TipoBadge tipo={s.tipo} />
+                      {s.tipo === 'externo' && s.isActive === false && (
+                        <span className="inline-flex items-center px-2 py-0.5 rounded text-[10px] font-semibold text-red-700 bg-red-50 border border-red-200">Inativo</span>
+                      )}
                     </div>
+                    {s.tipo === 'externo' && s.isActive === false && s.inactiveReason && (
+                      <span className="text-[11px] text-red-600 break-words">Motivo: {s.inactiveReason}</span>
+                    )}
                     {s.tipo === 'externo' && s.company && (
                       <span className="flex items-center gap-1 text-[11px] text-slate-400 font-medium truncate">
                         <Building2 className="w-3 h-3 shrink-0" />
@@ -1391,6 +1499,29 @@ export default function ProjetoStakeholdersClient({
                   >
                     <Pencil className="w-4 h-4" />
                   </button>
+                  {canManage && s.tipo === 'externo' && s.stakeholderId && (
+                    s.isActive === false ? (
+                      <button
+                        onClick={() => reativar(s)}
+                        disabled={loadingId === s.id}
+                        title="Reativar stakeholder"
+                        aria-label={`Reativar ${s.name}`}
+                        className="p-1.5 rounded-lg text-slate-400 hover:text-emerald-600 hover:bg-emerald-50 transition-colors disabled:opacity-40"
+                      >
+                        <Power className="w-4 h-4" />
+                      </button>
+                    ) : (
+                      <button
+                        onClick={() => abrirInativacao(s)}
+                        disabled={loadingId === s.id}
+                        title="Inativar stakeholder"
+                        aria-label={`Inativar ${s.name}`}
+                        className="p-1.5 rounded-lg text-slate-400 hover:text-amber-600 hover:bg-amber-50 transition-colors disabled:opacity-40"
+                      >
+                        <Power className="w-4 h-4" />
+                      </button>
+                    )
+                  )}
                   {canManage && (
                     <button
                       onClick={() => handleUnlink(s)}
@@ -1403,7 +1534,9 @@ export default function ProjetoStakeholdersClient({
                   )}
                 </div>
               </li>
-            ))}
+              </Fragment>
+              )
+            })}
           </ul>
         )}
 

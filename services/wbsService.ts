@@ -688,3 +688,136 @@ export async function syncMacrofasesComEapInTransaction(
   if (changed) { await syncCodes(tx, projectId, tenantId); await bumpVersion(tx, projectId, tenantId) }
   return result
 }
+
+// ── Sincronização EAP ↔ sprint ───────────────────────────────────────────────
+
+export interface SyncEapSprintResult {
+  cardsCriados: number
+  nosCriados: number
+  titulosAtualizados: number
+}
+
+const normalizarTitulo = (t: string) => t.trim().toLowerCase()
+
+/**
+ * Mantém a EAP/planilha e os cards do projeto em sincronia, nos dois sentidos.
+ * O vínculo fica em `WbsNode.properties.cardId`. Idempotente.
+ *  - folha sem card → cria o card na coluna "A Fazer" da sprint ativa (ou planejada;
+ *    sem sprint, vai para o backlog do projeto);
+ *  - card sem nó → cria o nó como filho da raiz;
+ *  - nó e card com o mesmo título e sem vínculo → são vinculados, sem duplicar;
+ *  - título diferente em par vinculado → vale o lado alterado por último.
+ * Card excluído não é recriado: o nó mantém o vínculo.
+ */
+export async function sincronizarEapComSprint(projectId: string, tenantId: string): Promise<SyncEapSprintResult> {
+  return prisma.$transaction(async tx => {
+    const result: SyncEapSprintResult = { cardsCriados: 0, nosCriados: 0, titulosAtualizados: 0 }
+    await tx.$executeRaw`SELECT pg_advisory_xact_lock(hashtext(${'eap-sprint:' + projectId}))`
+
+    const project = await tx.project.findFirst({ where: { id: projectId, tenantId, deletedAt: null }, select: { id: true } })
+    if (!project) return result
+    const nodes = await tx.wbsNode.findMany({ where: { projectId, tenantId }, orderBy: { order: 'asc' } })
+    const root = nodes.find(n => n.parentId === null)
+    if (!root) return result
+
+    const propsDe = new Map(nodes.map(n => [n.id, { ...((n.properties as Record<string, unknown>) ?? {}) }]))
+    const linkedIds = nodes.map(n => propsDe.get(n.id)!.cardId).filter((v): v is string => typeof v === 'string')
+    const [linkedCards, openCards] = await Promise.all([
+      tx.card.findMany({ where: { id: { in: linkedIds } }, select: { id: true, title: true, deletedAt: true, updatedAt: true } }),
+      tx.card.findMany({
+        where: { deletedAt: null, OR: [{ projectId }, { sprint: { projectId, deletedAt: null } }] },
+        select: { id: true, title: true, description: true, updatedAt: true },
+        orderBy: { createdAt: 'asc' },
+      }),
+    ])
+    const cardPorId = new Map(linkedCards.map(c => [c.id, c]))
+    const mudou = new Set<string>()
+    const vinculados = new Set(linkedIds)
+    const filhos = new Set(nodes.filter(n => n.parentId).map(n => n.parentId as string))
+    const salvarProps = (id: string) => mudou.add(id)
+
+    // 1) vincula por título nó↔card ainda sem vínculo (folhas e cards soltos)
+    const soltos = openCards.filter(c => !vinculados.has(c.id))
+    for (const n of nodes) {
+      if (n.parentId === null || filhos.has(n.id) || typeof propsDe.get(n.id)!.cardId === 'string') continue
+      const i = soltos.findIndex(c => normalizarTitulo(c.title) === normalizarTitulo(n.title))
+      if (i < 0) continue
+      const [card] = soltos.splice(i, 1)
+      propsDe.get(n.id)!.cardId = card.id
+      vinculados.add(card.id)
+      cardPorId.set(card.id, { id: card.id, title: card.title, deletedAt: null, updatedAt: card.updatedAt })
+      salvarProps(n.id)
+    }
+
+    // 2) títulos: nó e card vinculados convergem para o lado alterado por último
+    for (const n of nodes) {
+      const cardId = propsDe.get(n.id)!.cardId
+      const card = typeof cardId === 'string' ? cardPorId.get(cardId) : undefined
+      if (!card || card.deletedAt || normalizarTitulo(card.title) === normalizarTitulo(n.title)) continue
+      if (card.updatedAt > n.updatedAt) {
+        if (card.title.trim()) { await tx.wbsNode.update({ where: { id: n.id }, data: { title: card.title.slice(0, 500) } }); result.titulosAtualizados++ }
+      } else {
+        await tx.card.update({ where: { id: card.id }, data: { title: n.title } }); result.titulosAtualizados++
+      }
+    }
+
+    // 3) folhas sem card → cards
+    const semCard = nodes.filter(n => n.parentId !== null && !filhos.has(n.id) && typeof propsDe.get(n.id)!.cardId !== 'string')
+    if (semCard.length) {
+      const sprint =
+        (await tx.sprint.findFirst({ where: { projectId, deletedAt: null, status: 'ACTIVE' }, orderBy: { createdAt: 'desc' }, select: { id: true } })) ??
+        (await tx.sprint.findFirst({ where: { projectId, deletedAt: null, status: 'PLANNED' }, orderBy: { createdAt: 'asc' }, select: { id: true } }))
+      const colunas = sprint ? await tx.sprintColumn.findMany({ where: { sprintId: sprint.id }, orderBy: { position: 'asc' }, select: { id: true } }) : []
+      const aFazer = sprint
+        ? (await tx.sprintColumn.findFirst({ where: { sprintId: sprint.id, title: { equals: 'A Fazer', mode: 'insensitive' } }, select: { id: true } })) ?? colunas[0]
+        : undefined
+      let posicao = aFazer
+        ? ((await tx.card.aggregate({ where: { sprintColumnId: aFazer.id, deletedAt: null }, _max: { sprintPosition: true } }))._max.sprintPosition ?? -1) + 1
+        : 0
+      for (const n of semCard) {
+        const descricao = typeof propsDe.get(n.id)!.description === 'string' ? (propsDe.get(n.id)!.description as string) : ''
+        const card = await tx.card.create({
+          data: {
+            title: n.title, description: descricao, projectId,
+            ...(sprint && aFazer ? { sprintId: sprint.id, sprintColumnId: aFazer.id, sprintPosition: posicao++ } : {}),
+          },
+          select: { id: true },
+        })
+        propsDe.get(n.id)!.cardId = card.id
+        vinculados.add(card.id)
+        salvarProps(n.id)
+        result.cardsCriados++
+      }
+    }
+
+    for (const id of mudou) {
+      await tx.wbsNode.update({ where: { id }, data: { properties: toJson(propsDe.get(id)) } })
+    }
+
+    // 4) cards sem nó → nós filhos da raiz
+    const orfaos = openCards.filter(c => !vinculados.has(c.id))
+    if (orfaos.length) {
+      let ordem = await tx.wbsNode.count({ where: { parentId: root.id, projectId, tenantId } })
+      let total = nodes.length
+      for (const c of orfaos) {
+        if (total >= WBS_LIMITS.MAX_NODES) break
+        await tx.wbsNode.create({
+          data: {
+            tenantId, projectId, parentId: root.id, order: ordem++, code: '',
+            title: (c.title.trim() || 'Sem título').slice(0, 500), layout: 'LADO_A_LADO', collapsed: false,
+            style: toJson(DEFAULT_STYLE),
+            properties: toJson({ cardId: c.id, ...(c.description.trim() ? { description: c.description.slice(0, 2000) } : {}) }),
+          },
+        })
+        total++
+        result.nosCriados++
+      }
+    }
+
+    if (result.nosCriados || result.cardsCriados || result.titulosAtualizados) {
+      await syncCodes(tx, projectId, tenantId)
+      await bumpVersion(tx, projectId, tenantId)
+    }
+    return result
+  })
+}

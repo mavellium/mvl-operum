@@ -1071,6 +1071,14 @@ O layout calcula a caixa de cada subárvore e a posição relativa da raiz antes
 Gantt é uma projeção somente leitura. `dataPrevista` define o último dia e `durationDays` estima os dias corridos anteriores. Não cria datas nem persiste o estado de expansão/zoom. Nós sem prazo permanecem visíveis sem barra. O estado da árvore continua no provider ao alternar de volta; as exportações existentes permanecem no formato clássico da EAP.
 
 
+### Sincronização EAP ↔ sprint (SDD 12.8)
+
+`sincronizarEapComSprint` (`services/wbsService.ts`) reconcilia `WbsNode` e `Card` do projeto sob advisory lock, dentro de uma transação. O vínculo é `WbsNode.properties.cardId`. Folhas sem card criam card em "A Fazer" da sprint ativa (ou planejada; sem sprint, backlog); cards sem nó criam nó filho da raiz; nó e card sem vínculo e com o mesmo título são ligados; títulos divergentes convergem para o lado alterado por último; card excluído não é recriado. `services/eapSprintSyncService.ts` executa ao abrir EAP, planilha de custos e quadro da sprint, apenas com `projeto:editar` e `quadro:cards`, e nunca derruba a página. Ver ADR-033.
+
+### Inativação de stakeholder e numeração de página (1.16.0)
+
+`Stakeholder` ganha `inactiveReason` e `inactivatedAt` (migration `20261014000000_stakeholder_inactive_reason`); o PATCH do project-service inativa com motivo (mín. 3 caracteres) e reativar limpa ambos. A impressão em PDF usa `lib/printPageStyle.ts` (A4 com "Página X de Y" na margem inferior via `@page`); a EAP gráfica usa página nomeada em paisagem.
+
 ### Documentos do projeto — fase 7
 
 O Termo alterna entre formulário privado e prévia explícita; alternar não salva nem publica uma versão. PDF usa impressão do componente, e Word é gerado no navegador com `docx`. Partes Interessadas usa A4 paisagem; Termo/Ata usam retrato. Ata mantém a exportação autenticada `/api/atas/:id/export` com autorização `documentos:ver`, e ganha prévia/PDF do rascunho.

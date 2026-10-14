@@ -25,6 +25,7 @@ import { verifySession } from '@/lib/dal'
 import { canProjectPermission } from '@/services/projectAccess'
 import prisma from '@/lib/prisma'
 import { GET } from '@/app/api/projects/[projetoId]/documento/route'
+import { documentoVigente } from '@/services/documentRevisionService'
 
 const mockVerifySession = verifySession as ReturnType<typeof vi.fn>
 const mockCan = canProjectPermission as ReturnType<typeof vi.fn>
@@ -185,4 +186,37 @@ describe('GET /api/projects/[projetoId]/documento', () => {
     expect(res.status).toBe(200)
     expect(data.header.signatureUrl).toBeNull()
   })
+
+  it('stakeholder inativo sai marcado (inativo + motivo) e o ativo não ganha a marca', async () => {
+    mockPrisma.projectStakeholder.findMany.mockResolvedValue([
+      { ...MOCK_PROJECT_STAKEHOLDERS[0], stakeholder: { ...MOCK_PROJECT_STAKEHOLDERS[0].stakeholder, isActive: true } },
+      { ...MOCK_PROJECT_STAKEHOLDERS[1], stakeholder: { ...MOCK_PROJECT_STAKEHOLDERS[1].stakeholder, isActive: false, inactiveReason: 'Contrato encerrado' } },
+    ])
+    const res = await GET(makeRequest('p1') as never, { params: Promise.resolve({ projetoId: 'p1' }) })
+    const data = await res.json() as { stakeholders: { nome: string; inativo?: boolean; motivoInativo?: string }[] }
+    const beta = data.stakeholders.find(s => s.nome === 'Empresa Beta')!
+    const alpha = data.stakeholders.find(s => s.nome === 'Empresa Alpha')!
+    expect(beta.inativo).toBeUndefined()
+    expect(alpha).toMatchObject({ inativo: true, motivoInativo: 'Contrato encerrado' })
+  })
+
+  it('versão vigente antiga (sem a marca) ganha o vermelho pelo nome do stakeholder inativo', async () => {
+    mockPrisma.projectStakeholder.findMany.mockResolvedValue([
+      { ...MOCK_PROJECT_STAKEHOLDERS[1], stakeholder: { ...MOCK_PROJECT_STAKEHOLDERS[1].stakeholder, isActive: false, inactiveReason: 'Saiu' } },
+    ])
+    vi.mocked(documentoVigente).mockResolvedValueOnce({
+      payload: {
+        header: {},
+        stakeholders: [
+          { ref: '01', nome: ' empresa alpha ' },
+          { ref: '02', nome: 'Outra', inativo: false },
+        ],
+      },
+    } as never)
+    const res = await GET(makeRequest('p1') as never, { params: Promise.resolve({ projetoId: 'p1' }) })
+    const data = await res.json() as { stakeholders: { nome: string; inativo?: boolean; motivoInativo?: string }[] }
+    expect(data.stakeholders[0]).toMatchObject({ inativo: true, motivoInativo: 'Saiu' })
+    expect(data.stakeholders[1].inativo).toBe(false)
+  })
 })
+

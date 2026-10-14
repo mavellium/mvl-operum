@@ -49,6 +49,35 @@ export async function updateStakeholderAction(stakeholderId: string, data: Stake
   }
 }
 
+/**
+ * Inativa (com motivo) ou reativa um stakeholder externo. A inativação mantém o
+ * vínculo com o projeto: ele continua nos documentos, destacado como inativo.
+ * A autorização é a da edição do cadastro (projeto:equipe em todos os projetos
+ * onde ele aparece), aplicada pelo gateway.
+ */
+export async function setStakeholderAtivoAction(
+  projectId: string,
+  stakeholderId: string,
+  ativo: boolean,
+  motivo?: string,
+) {
+  try {
+    await verifySession()
+    const reason = (motivo ?? '').trim()
+    if (!ativo && reason.length < 3) return { error: 'Informe o motivo da inativação.' }
+    if (reason.length > 500) return { error: 'O motivo pode ter no máximo 500 caracteres.' }
+    const stakeholder = await stakeholdersApi.update(
+      stakeholderId,
+      (ativo ? { isActive: true } : { isActive: false, inactiveReason: reason }) as unknown as Record<string, unknown>,
+      projectId,
+    )
+    revalidatePath(`/projetos/${projectId}/stakeholders`)
+    return { success: true as const, stakeholder }
+  } catch (err) {
+    return { error: err instanceof Error ? err.message : 'Erro ao alterar a situação do stakeholder.' }
+  }
+}
+
 export async function bindStakeholderAction(projectId: string, stakeholderId: string) {
   try {
     await verifySession()

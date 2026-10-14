@@ -22,6 +22,7 @@ export const WbsNodeStyleSchema = z.object({
 })
 
 export const WbsNodePropertiesSchema = z.object({
+  cardId: z.string().max(64).optional(),
   cost: z.number().min(0).optional(),
   durationDays: z.number().min(0).optional(),
   ownerUserId: z.string().optional(),

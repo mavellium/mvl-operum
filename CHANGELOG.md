@@ -7,6 +7,16 @@ As versões até 1.6.0 foram reconstruídas retroativamente a partir do históri
 1.0.0 marca a entrada em produção na arquitetura de microsserviços, e cada marco de
 funcionalidade depois disso é uma versão MINOR.
 
+## [1.16.0] — 2026-10-14
+
+### Adicionado
+- **Stakeholders:** inativação de stakeholder externo com motivo obrigatório (reativação limpa o motivo; migration `20261014000000_stakeholder_inactive_reason`). Inativos aparecem em vermelho com o motivo no formulário de Partes Interessadas, na tela e no Word.
+- **Stakeholders:** a aba separa membros da equipe e stakeholders externos, com contagem por grupo.
+- **Termo de Abertura:** integrantes mostram a função do cadastro ("Nome – papel"); formulário na mesma ordem do modelo.
+- **Documentos:** numeração "Página X de Y" na impressão em PDF do Termo, Partes Interessadas, EAP e Ata.
+- **EAP:** a página da EAP gráfica sai em paisagem com a árvore inteira visível.
+- **EAP ↔ sprint:** folhas da EAP/planilha viram cards em "A Fazer" da sprint ativa e cards criados na sprint viram nós da EAP e da planilha (vínculo em `WbsNode.properties.cardId`).
+
 ## [1.15.2] — 2026-10-14
 - **Segurança:** atualiza dependências de produção com avisos novos: `next` 16.3.8 (SSRF na otimização de imagens), `proxy-addr` ≥ 2.0.8 (gateway), `sharp`, `source-map-js`, `shell-quote` e `@modelcontextprotocol/sdk` ≥ 1.31.0 (mcp-server). Sem mudança de comportamento.
 

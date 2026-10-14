@@ -10,7 +10,7 @@ function Table({ rows, header = false }: { rows: string[][]; header?: boolean })
 function Section({ title, text }: { title: string; text: string | null }) { return <><h2 style={{ fontSize: '10pt', marginTop: 14 }}>{title}</h2><p style={{ whiteSpace: 'pre-wrap' }}>{text || '—'}</p></> }
 const date = (value: Date | null) => value ? value.toLocaleDateString('pt-BR') : '—'
 export default forwardRef<HTMLDivElement, { data: AtaExportData }>(function AtaDocument({ data: d }, ref) {
-  return <div ref={ref} style={{ width: '210mm', minHeight: '297mm', padding: '15mm', boxSizing: 'border-box', background: 'white', color: 'black', fontFamily: 'Arial', fontSize: '9pt' }}>
+  return <div ref={ref} data-print-sheet style={{ width: '210mm', minHeight: '297mm', padding: '15mm', boxSizing: 'border-box', background: 'white', color: 'black', fontFamily: 'Arial', fontSize: '9pt' }}>
     <h1 style={{ textAlign: 'center', fontSize: '13pt' }}>Ata de Reunião Nº {d.numero ? String(d.numero).padStart(2,'0') : 'a definir'}</h1>
     <Table rows={[[d.instituicao || 'Instituição / curso / termo / semestre'],[`Nome do projeto: ${d.nomeProjeto}`]]} />
     <Table rows={[[`Local: ${d.local || '—'}`,`Data: ${date(d.data)}`],[`Elaborado por: ${d.elaboradoPor || '—'}`,''],[`Aprovado por: ${d.aprovadoPor || '—'}`,'']]} />

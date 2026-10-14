@@ -30,11 +30,20 @@ export interface EapDocumentSheetProps {
 // ── Constantes de página (mm→px: 1mm ≈ 3.7795px) ────────────────────────────
 const PAGE_W = 210
 const PAGE_H = 297
+// Página 1 (EAP gráfica) em paisagem: a árvore inteira cabe, mesmo que fique pequena.
+const LANDSCAPE_W = 297
+const LANDSCAPE_H = 210
 const PAD_X = 16
 const PAD_Y = 14
 
 const MM = 3.7795
-const CONTENT_W = (PAGE_W - PAD_X * 2) * MM
+const CONTENT_W = (LANDSCAPE_W - PAD_X * 2) * MM
+
+/** Página nomeada: só a EAP gráfica é impressa em paisagem; a textual segue em retrato. */
+export const EAP_PRINT_CSS = `
+  @page eap-landscape { size: A4 landscape; }
+  @media print { .eap-page-1 { page: eap-landscape; width: ${LANDSCAPE_W}mm !important; height: ${LANDSCAPE_H - 8}mm !important; } }
+`
 
 // Estilos fixos do documento (layout de impressão, não responsivo)
 const pageStyle: React.CSSProperties = {
@@ -139,7 +148,8 @@ const EapDocumentSheet = forwardRef<HTMLDivElement, EapDocumentSheetProps>(
     const flat = useMemo(() => flattenTree(nodes), [nodes])
 
     // Área disponível para a árvore (após cabeçalho + título da seção)
-    const TREE_AVAIL_H = 186 * MM
+    // Paisagem: altura útil menos faixa da numeração, padding e cabeçalho (~58mm).
+    const TREE_AVAIL_H = (LANDSCAPE_H - 8 - PAD_Y * 2 - 62) * MM
     const scale = fitScale(layout.bounds.width, layout.bounds.height || 1, CONTENT_W, TREE_AVAIL_H)
     const svgW = layout.bounds.width * scale
     const svgH = (layout.bounds.height || 1) * scale
@@ -312,10 +322,10 @@ const EapDocumentSheet = forwardRef<HTMLDivElement, EapDocumentSheetProps>(
         ref={ref}
         data-testid="eap-sheet"
         className="eap-sheet"
-        style={{ width: `${PAGE_W}mm`, fontFamily: 'Arial, Helvetica, sans-serif' }}
+        style={{ fontFamily: 'Arial, Helvetica, sans-serif' }}
       >
         {/* ── PÁGINA 1 — EAP GRÁFICA ─────────────────────────────────────── */}
-        <div className="eap-page eap-page-1" style={{ ...pageStyle, pageBreakAfter: 'always' }}>
+        <div className="eap-page eap-page-1" data-print-sheet-fixed style={{ ...pageStyle, width: `${LANDSCAPE_W}mm`, height: `${LANDSCAPE_H}mm`, pageBreakAfter: 'always' }}>
           {renderHeader('Modelo de Estrutura Analítica do Projeto (EAP - Gráfica)')}
           {root && (
             <div style={{ ...sectionTitleStyle, marginTop: 4 }}>
@@ -326,7 +336,7 @@ const EapDocumentSheet = forwardRef<HTMLDivElement, EapDocumentSheetProps>(
         </div>
 
         {/* ── PÁGINA 2 — EAP TEXTUAL ─────────────────────────────────────── */}
-        <div className="eap-page eap-page-2" style={pageStyle}>
+        <div className="eap-page eap-page-2" data-print-sheet-fixed style={pageStyle}>
           {renderHeader('Modelo de Estrutura Analítica do Projeto (EAP - Texto)')}
           <div style={{ ...sectionTitleStyle, marginTop: 4 }}>
             Estrutura Analítica do Projeto — Texto

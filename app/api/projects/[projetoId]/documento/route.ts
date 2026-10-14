@@ -140,10 +140,28 @@ export async function GET(
       telefoneFax: ps.stakeholder.phone ?? '',
       endereco: buildAddress(ps.stakeholder),
       observacoes: ps.stakeholder.notes ?? '',
+      ...(ps.stakeholder.isActive === false
+        ? { inativo: true, motivoInativo: ps.stakeholder.inactiveReason ?? '' }
+        : {}),
     }))
 
+    // Snapshots antigos não têm a marca de inativo: cruza pelo nome com os inativos atuais.
+    const inativosPorNome = new Map(
+      projectStakeholders
+        .filter(ps => ps.stakeholder.isActive === false)
+        .map(ps => [ps.stakeholder.name.trim().toLowerCase(), ps.stakeholder.inactiveReason ?? '']),
+    )
+
     const vigente = await documentoVigente({ tenantId, role, userId }, projetoId, 'STAKEHOLDER')
-    return NextResponse.json(vigente?.payload ?? { header, stakeholders: [...membros, ...externos] })
+    const payload = vigente?.payload as { stakeholders?: Stakeholder[] } | null | undefined
+    if (payload && Array.isArray(payload.stakeholders)) {
+      payload.stakeholders = payload.stakeholders.map(row =>
+        row.inativo === undefined && inativosPorNome.has(row.nome.trim().toLowerCase())
+          ? { ...row, inativo: true, motivoInativo: inativosPorNome.get(row.nome.trim().toLowerCase()) }
+          : row,
+      )
+    }
+    return NextResponse.json(payload ?? { header, stakeholders: [...membros, ...externos] })
   } catch (err) {
     console.error('[documento/route]', err)
     return NextResponse.json({ error: 'Erro interno' }, { status: 500 })

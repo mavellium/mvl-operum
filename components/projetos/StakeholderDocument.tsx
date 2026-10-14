@@ -26,6 +26,16 @@ export interface Stakeholder {
   telefoneFax: string
   endereco: string
   observacoes?: string
+  /** Stakeholder inativo: a linha sai em vermelho (card de 07/10). */
+  inativo?: boolean
+  /** Motivo informado ao inativar; aparece na Observação. */
+  motivoInativo?: string
+}
+
+/** Texto da coluna Observação: o motivo da inativação vem antes das observações livres. */
+export function observacaoDaLinha(s: Stakeholder): string {
+  const motivo = s.inativo ? `Inativo${s.motivoInativo ? `: ${s.motivoInativo}` : ''}` : ''
+  return [motivo, s.observacoes ?? ''].filter(Boolean).join('\n')
 }
 
 interface Props {
@@ -40,6 +50,7 @@ const StakeholderDocument = forwardRef<HTMLDivElement, Props>(
     return (
       <div
         ref={ref}
+        data-print-sheet
         className="bg-white text-black font-sans"
         style={{
           width: '297mm',
@@ -174,7 +185,7 @@ const StakeholderDocument = forwardRef<HTMLDivElement, Props>(
           </thead>
           <tbody>
             {stakeholders.map(s => (
-              <tr key={s.ref}>
+              <tr key={s.ref} data-inativo={s.inativo ? 'true' : undefined} style={s.inativo ? { color: '#b91c1c' } : undefined}>
                 {[
                   s.ref,
                   s.nome,
@@ -183,7 +194,7 @@ const StakeholderDocument = forwardRef<HTMLDivElement, Props>(
                   s.email,
                   s.telefoneFax,
                   s.endereco,
-                  s.observacoes ?? '',
+                  observacaoDaLinha(s),
                 ].map((val, i) => (
                   <td
                     key={i}

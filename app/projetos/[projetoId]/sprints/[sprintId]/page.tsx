@@ -6,6 +6,8 @@ import { redirect } from 'next/navigation'
 import { sprintPath } from '@/lib/sprintPath'
 import type { Metadata } from 'next'
 import { sprintsApi } from '@/lib/api-client'
+import { verifySession } from '@/lib/dal'
+import { sincronizarEapSprintSePermitido } from '@/services/eapSprintSyncService'
 
 export const dynamic = 'force-dynamic'
 
@@ -27,6 +29,8 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
 export default async function SprintPage({ params, searchParams }: Props) {
   const { projetoId, sprintId } = await params
   const { card: initialCardId } = await searchParams
+  // Folhas da EAP/planilha aparecem como cards antes de montar o quadro.
+  await sincronizarEapSprintSePermitido(await verifySession(), projetoId)
   const [result, currentUser] = await Promise.all([
     getSprintBoardAction(sprintId, projetoId),
     getCurrentUserAction(),
