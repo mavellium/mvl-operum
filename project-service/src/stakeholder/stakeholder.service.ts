@@ -21,7 +21,22 @@ export const CreateStakeholderSchema = z.object({
   notes: z.string().optional(),
 })
 
-export const UpdateStakeholderSchema = CreateStakeholderSchema.partial().omit({ tenantId: true })
+/** Motivo mínimo ao inativar: "x" não explica nada para quem ler o histórico depois. */
+export const MIN_INACTIVE_REASON = 3
+export const MAX_INACTIVE_REASON = 500
+
+export const UpdateStakeholderSchema = CreateStakeholderSchema.partial()
+  .omit({ tenantId: true })
+  .extend({
+    /** false inativa (exige inactiveReason); true reativa e limpa o motivo. */
+    isActive: z.boolean().optional(),
+    inactiveReason: z.string().trim().max(MAX_INACTIVE_REASON).optional(),
+  })
+  .superRefine((dto, ctx) => {
+    if (dto.isActive === false && (dto.inactiveReason ?? '').length < MIN_INACTIVE_REASON) {
+      ctx.addIssue({ code: 'custom', path: ['inactiveReason'], message: 'Informe o motivo da inativação.' })
+    }
+  })
 
 export type CreateStakeholderDto = z.infer<typeof CreateStakeholderSchema>
 export type UpdateStakeholderDto = z.infer<typeof UpdateStakeholderSchema>
@@ -50,12 +65,19 @@ export class StakeholderService {
 
   async update(id: string, tenantId: string, dto: UpdateStakeholderDto) {
     await this.findOne(id, tenantId)
-    return prisma.stakeholder.update({ where: { id }, data: dto })
+    const { isActive, inactiveReason, ...dados } = dto
+    const estado =
+      isActive === false
+        ? { isActive: false, inactiveReason: inactiveReason ?? null, inactivatedAt: new Date() }
+        : isActive === true
+          ? { isActive: true, inactiveReason: null, inactivatedAt: null }
+          : {}
+    return prisma.stakeholder.update({ where: { id }, data: { ...dados, ...estado } })
   }
 
   async remove(id: string, tenantId: string) {
     await this.findOne(id, tenantId)
-    await prisma.stakeholder.update({ where: { id }, data: { isActive: false } })
+    await prisma.stakeholder.update({ where: { id }, data: { isActive: false, inactivatedAt: new Date() } })
   }
 
   async linkProject(stakeholderId: string, projectId: string, tenantId: string) {
