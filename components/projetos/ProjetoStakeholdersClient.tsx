@@ -4,7 +4,7 @@ import { useProjectPermissions } from '@/components/permissoes/ProjectPermission
 
 import PermissoesUsuario from '@/components/permissoes/PermissoesUsuario'
 
-import { useState, useTransition, useEffect, useRef } from 'react'
+import { Fragment, useState, useTransition, useEffect, useRef } from 'react'
 import {
   Plus,
   Pencil,
@@ -492,6 +492,13 @@ export default function ProjetoStakeholdersClient({
       (s.company ?? '').toLowerCase().includes(q)
     )
   })
+
+  // Equipe primeiro, externos depois, cada grupo com o seu cabeçalho. A ordem de cada
+  // grupo é salva separadamente (reorderMembers / reorderStakeholders), então misturar
+  // os dois na lista não tinha significado.
+  const exibidos = [...filteredProjeto].sort((a, b) => Number(a.tipo === 'externo') - Number(b.tipo === 'externo'))
+  const totalEquipe = exibidos.filter(s => s.tipo === 'interno').length
+  const totalExternos = exibidos.length - totalEquipe
 
   const filteredDispExterno = dispExterno.filter(s => {
     const q = searchDir.toLowerCase()
@@ -1401,9 +1408,23 @@ export default function ProjetoStakeholdersClient({
           </div>
         ) : (
           <ul className={`space-y-2 overflow-y-auto max-h-[600px] px-2 py-2${isReordering ? ' opacity-70' : ''}`}>
-            {filteredProjeto.map((s, index) => (
+            {exibidos.map((s, posicao) => {
+              // Índice real em `projeto`: o arrastar reordena essa lista, não a filtrada/agrupada.
+              const index = projeto.indexOf(s)
+              const novoGrupo = s.tipo !== exibidos[posicao - 1]?.tipo
+              return (
+              <Fragment key={s.id}>
+              {novoGrupo && (
+                <li
+                  role="presentation"
+                  data-testid={`grupo-${s.tipo}`}
+                  className="flex items-center justify-between px-1 pt-2 pb-0.5 text-[11px] font-bold uppercase tracking-wider text-slate-500"
+                >
+                  <span>{s.tipo === 'interno' ? 'Membros da equipe' : 'Stakeholders externos'}</span>
+                  <span className="font-semibold text-slate-400">{s.tipo === 'interno' ? totalEquipe : totalExternos}</span>
+                </li>
+              )}
               <li
-                key={s.id}
                 draggable={canManage}
                 onDragStart={() => handleDragStart(index)}
                 onDragOver={(e) => handleDragOver(e, index)}
@@ -1513,7 +1534,9 @@ export default function ProjetoStakeholdersClient({
                   )}
                 </div>
               </li>
-            ))}
+              </Fragment>
+              )
+            })}
           </ul>
         )}
 

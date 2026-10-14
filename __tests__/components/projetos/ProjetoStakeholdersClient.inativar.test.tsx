@@ -90,3 +90,30 @@ describe('inativar stakeholder com motivo', () => {
     expect(screen.queryByText('Inativo')).not.toBeInTheDocument()
   })
 })
+
+describe('lista dividida em equipe e externos', () => {
+  const membro = (id: string, name: string): StakeholderUnificado => ({
+    id, tipo: 'interno', userId: id, name, email: `${id}@x.com`, avatarUrl: null, phone: null, cep: null, logradouro: null,
+    numero: null, complemento: null, bairro: null, cidade: null, estado: null, notes: null, cargos: [], departamento: [],
+    isGerente: false, hourlyRate: null, startDate: '2026-09-01T00:00:00.000Z', userRole: 'member',
+  })
+
+  it('membros da equipe primeiro, externos depois, cada grupo com cabeçalho e contagem', () => {
+    // Externo vem antes na entrada: a tela agrupa mesmo assim.
+    renderComponent([externo({ id: 'sk1', name: 'Girassol' }), membro('u1', 'Ana'), membro('u2', 'Bia')])
+    const cabecalhos = screen.getAllByTestId(/^grupo-/)
+    expect(cabecalhos.map(c => c.dataset.testid)).toEqual(['grupo-interno', 'grupo-externo'])
+    expect(cabecalhos[0]).toHaveTextContent('Membros da equipe')
+    expect(cabecalhos[0]).toHaveTextContent('2')
+    expect(cabecalhos[1]).toHaveTextContent('Stakeholders externos')
+    expect(cabecalhos[1]).toHaveTextContent('1')
+    const nomes = screen.getAllByText(/^(Ana|Bia|Girassol)$/).map(n => n.textContent)
+    expect(nomes).toEqual(['Ana', 'Bia', 'Girassol'])
+  })
+
+  it('sem externos, só o cabeçalho da equipe', () => {
+    renderComponent([membro('u1', 'Ana')])
+    expect(screen.queryByTestId('grupo-externo')).not.toBeInTheDocument()
+    expect(screen.getByTestId('grupo-interno')).toBeInTheDocument()
+  })
+})
