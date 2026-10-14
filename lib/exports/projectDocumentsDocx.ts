@@ -1,8 +1,8 @@
 import { AlignmentType, ImageRun, Packer, Paragraph, TextRun } from 'docx'
 import type { CharterDocumentProps } from '@/components/projetos/documentacao/ProjectCharterDocument'
-import type { ProjetoHeader, Stakeholder } from '@/components/projetos/StakeholderDocument'
+import { observacaoDaLinha, type ProjetoHeader, type Stakeholder } from '@/components/projetos/StakeholderDocument'
 import { safeAvatarUrl } from '@/lib/validation/avatarUrl'
-import { heading, modelDocument, modelTable, paragraphs } from './documentModel'
+import { heading, modelDocument, modelTable, paragraphs, redParagraphs } from './documentModel'
 import { parseDocumentCost } from '@/lib/documentCost'
 export { parseDocumentCost } from '@/lib/documentCost'
 async function image(url?: string | null): Promise<Paragraph[]> {
@@ -32,7 +32,7 @@ export async function buildStakeholderDocx(h: ProjetoHeader, rows: Stakeholder[]
   return modelDocument('Formulário de Stakeholders', [ ...await image(h.logoUrl), title('Formulário de Stakeholders'),
     modelTable([11353,3785], [[h.categoria,''],[`Nome do projeto: ${h.nomeProjeto}`,''],[`Gerente do projeto: ${h.gerenteProjeto}`,''],[`Elaborado por: ${h.elaboradoPor}`,''],[`Aprovado por: ${h.aprovadoPor}`,[...paragraphs('Assinatura:'), ...await image(h.signatureUrl)]],[`Versão: ${h.versao}`,`Data de aprovação: ${h.dataAprovacao}`]], false, true),
     heading('Partes interessadas'),
-    modelTable([650,2000,1700,2300,2200,1800,2300,2188], [['Ref','Nome','Empresa/Equipe','Cargo/Competência','e-mail','Telefone/Celular','Endereço','Observação'], ...rows.map(s => [s.ref,s.nome,s.empresaEquipe,s.cargoCompetencia,s.email,s.telefoneFax,s.endereco,s.observacoes ?? ''])], true)
+    modelTable([650,2000,1700,2300,2200,1800,2300,2188], [['Ref','Nome','Empresa/Equipe','Cargo/Competência','e-mail','Telefone/Celular','Endereço','Observação'], ...rows.map(s => { const cells = [s.ref,s.nome,s.empresaEquipe,s.cargoCompetencia,s.email,s.telefoneFax,s.endereco,observacaoDaLinha(s)]; return s.inativo ? cells.map(redParagraphs) : cells })], true)
   ], '© 03_Form Stakeholders', true)
 }
 export async function buildCharterDocx(p: CharterDocumentProps) {
