@@ -1202,6 +1202,23 @@ Lacuna confirmada. Health do app, auth e project retorna status ok constante; co
 
 Lacuna confirmada no repo. Prometheus aponta app:3000/api/metrics, mas inventário app/api não contém essa rota; não há scrape dos serviços de domínio. Compose sobe Loki/Grafana, porém não define agente de envio nem provisioning; deploy só sincroniza compose/script, apesar de montar ./observability/prometheus.yml. Fontes: [Prometheus:5](https://github.com/mavellium/mvl-operum/blob/c92d3934/observability/prometheus.yml#L5), [rotas app](https://github.com/mavellium/mvl-operum/blob/c92d3934/app/api), [compose produção:153](https://github.com/mavellium/mvl-operum/blob/c92d3934/docker-compose.production.yml#L153), [workflow:307](https://github.com/mavellium/mvl-operum/blob/c92d3934/.github/workflows/deploy-production.yml#L307), [workflow:346](https://github.com/mavellium/mvl-operum/blob/c92d3934/.github/workflows/deploy-production.yml#L346). Proposta: implementar endpoints métricos e scrape por serviço; versionar collector/datasources/dashboards/regras e sincronizar assets no deploy; propagação de request ID e logs sem segredos. Aceite: ambiente vazio recebe toda a configuração; cada target esperado UP; erro de teste rastreável app→gateway→serviço; indisponibilidade gera alerta em destino configurado. Configuração manual existente não foi consultada, portanto não afirmar que Grafana real está vazio.
 
+## Fase 12 — Ajustes de 05–10/10 (documentos, stakeholders e EAP↔sprint)
+
+Cards do Prof. Fábio de 05–07/10, implementados nesta ordem (1.16.0). Todos em "Em teste" no Operum; validação visual no app pendente.
+
+| Item | Card no Operum | Status |
+|---|---|---|
+| 12.1 | Desativar um stakeholder (`cmuvhoyo8000001pm8j6486lq`) | Implementado: motivo obrigatório, `inactiveReason`/`inactivatedAt` |
+| 12.2 | Stakeholders inativos em vermelho no formulário (`cmuy87ixf000001pmb8h8wt9a`) | Implementado: tela, PDF e Word |
+| 12.3 | Papel/instituição puxa a função (`cmuy87o7w000201pmczojx0kj`) | Implementado: integrantes do Termo com a função do cadastro |
+| 12.4 | Aba separa equipe e externos (`cmuy87ooy000401pmh1h3b7z5`) | Implementado |
+| 12.5 | Termo: ordem das seções do modelo (`cmuy87p35000601pm40i72arg`) | Implementado: formulário e documento seguem o modelo |
+| 12.6 | Numeração de página (`cmuy87phy000801pmca4lo867`) | Implementado em PDF (`lib/printPageStyle.ts`); `.docx` já tinha |
+| 12.7 | EAP em paisagem e inteira visível (`cmuy87pvw000a01pmp3d85vuz`) | Implementado só na página gráfica; a textual segue em retrato |
+| 12.8 | Tudo da EAP aparece na sprint (`cmuy87qbk000c01pmfo11m6s1`) | Implementado nos dois sentidos; limites no ADR-033 |
+
+---
+
 ## Fora do escopo
 
 - **Integração com o Zoom:** épico próprio (OAuth, webhook, extração por IA e tela de revisão), com SDD separado.

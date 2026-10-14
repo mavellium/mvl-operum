@@ -424,6 +424,18 @@ Ao substituir uma decisão, manter o texto histórico, alterar seu status e liga
 - **Condições de revisão:** novos modelos ou necessidade de assinatura digital com verificação; requisito de exportação assíncrona no servidor exigiria armazenamento confiável de imagens.
 - **Referências:** `services/documentRevisionService.ts`, `lib/charterChanges.ts`, `lib/exports/`, `components/projetos/documentacao/ProjectCharter.tsx`, `docs/validation/sdd-7/README.md` e SDD fase 7.
 
+## ADR-033 — EAP e sprint sincronizadas por vínculo no nó
+
+- **Data:** 2026-10-14
+- **Status:** implementada; validação com dados reais pendente.
+- **Contexto:** o cliente pediu que tudo da EAP apareça na sprint e que cards criados na sprint apareçam na EAP e na planilha de custos (card `cmuy87qbk000c01pmfo11m6s1`, SDD 12.8). Não havia vínculo entre `WbsNode` (monolito) e `Card` (sprint-service); o banco é compartilhado.
+- **Escolha:** guardar `cardId` em `WbsNode.properties` e reconciliar, de forma idempotente, ao abrir EAP, planilha e quadro da sprint (`sincronizarEapComSprint`, `services/wbsService.ts`). Folhas viram cards em "A Fazer" da sprint ativa; cards sem nó viram filhos da raiz. Escolhas do usuário: só folhas; coluna "A Fazer" com sincronização, sem duplicar por título.
+- **Justificativa:** evita migration e mudança de contrato no gateway/sprint-service; o `properties` já é validado e preservado por `saveTree`.
+- **Alternativas consideradas:** coluna `wbsNodeId` em `Card` (exige migration nos dois schemas e no gateway); todos os nós como cards (volume); visão só de leitura da EAP.
+- **Consequências:** sincronização ocorre ao abrir as telas, não em tempo real; só título e descrição inicial convergem; o lado alterado por último vence; card excluído não é recriado; um `saveTree` de cliente antigo pode perder o `cardId` (religa por título).
+- **Condições de revisão:** necessidade de tempo real, de sincronizar responsável/prazo/custo ou de extrair EAP para serviço próprio.
+- **Referências:** `services/wbsService.ts`, `services/eapSprintSyncService.ts`, `__tests__/unit/wbsSprintSync.test.ts`, SDD 12.8.
+
 ## ADR-032 — Alertas locais independentes do destino externo
 
 - **Data:** 2026-10-05
