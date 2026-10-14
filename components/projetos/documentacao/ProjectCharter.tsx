@@ -49,7 +49,7 @@ interface CharterData {
   macroFases: MacroFase[]
   gerente: Gerente | null
   gerenteProjeto: string
-  membros: { name: string }[]
+  membros: { name: string; papel?: string }[]
 }
 
 interface DocumentVersion {

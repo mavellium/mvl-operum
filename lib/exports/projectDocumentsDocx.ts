@@ -43,7 +43,7 @@ export async function buildCharterDocx(p: CharterDocumentProps) {
     heading('Descrição do produto do projeto'), ...p.descricaoProduto.split('\n').filter(Boolean).map(text => new Paragraph({ bullet: { level: 0 }, children: [new TextRun({ text, size: 18 })] })),
     heading('Premissas (hipóteses) e restrições para o projeto'), modelTable([5103,5103],[['Premissas (hipóteses)','Restrições'],[p.premissas,p.restricoes]],true),
     heading('Macro fases, prazos e custo'), modelTable([6124,2041,2041],[['Macro fase','Data limite','Custo'],...p.fases.map((f,i) => [`1.${i+1} ${f.fase}`,date(f.dataLimite),money(parseDocumentCost(f.custo))]),['Custo total','',money(total)]],true),
-    heading('Principais envolvidos'), ...paragraphs(p.principaisEnvolvidos), heading('Integrantes do grupo'), ...p.membros.flatMap(m => paragraphs(m.name)),
+    heading('Principais envolvidos'), ...paragraphs(p.principaisEnvolvidos), heading('Integrantes do grupo'), ...p.membros.flatMap(m => paragraphs(m.papel?.trim() ? `${m.name} – ${m.papel.trim()}` : m.name)),
     heading('Designação de gerente'), modelTable([3062,7144],[['Gerente do projeto',p.gerenteProjeto],['Limites de autoridade',p.limitesAutoridade]]),
     ...(p.metodologia ? [heading('Metodologia do projeto'),...paragraphs(p.metodologia)] : [])
   ], '© 02_Project Charter')

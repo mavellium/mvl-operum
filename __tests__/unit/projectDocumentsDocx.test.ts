@@ -38,6 +38,10 @@ describe('modelos documentais', () => {
     const xml = await inspect('charter', await buildCharterDocx(charter))
     expect(xml).toContain('3.000,75'); expect(xml).toContain('1.1 Planejamento'); expect(xml.indexOf('Descrição do produto')).toBeLessThan(xml.indexOf('Macro fases')); expect(xml.indexOf('Designação de gerente')).toBeLessThan(xml.indexOf('Metodologia do projeto'))
   })
+  it('integrantes do termo saem como "Nome – Papel" quando o cadastro tem função', async () => {
+    const xml = await inspect('charter-papel', await buildCharterDocx({ ...charter, membros: [{ name: 'Ana', papel: 'Desenvolvedora' }, { name: 'Bia' }] }))
+    expect(xml).toContain('Ana – Desenvolvedora'); expect(xml).toContain('Bia')
+  })
   it('ata mantém ações em três colunas e assinaturas vazias', async () => {
     const xml = await inspect('ata', buildAtaDocx({ instituicao: 'Faculdade', numero: 1, nomeProjeto: 'Operum', local: 'Campus', data: new Date('2026-10-05T12:00:00Z'), elaboradoPor: 'Autor', aprovadoPor: null, assuntosTratados: 'Planejamento\nDesenvolvimento', decisoesTomadas: 'Entregar a versão', observacoes: 'Próxima reunião', copiasPara: ['Equipe'], presentes: [{ nome: 'Integrante', setorEmpresa: 'Equipe' }], acoes: [{ acao: 'Entregar projeto', prazo: new Date('2026-11-01T12:00:00Z'), responsavel: 'Integrante' }], anexos: [{ nome: 'Plano de projeto', url: null }] }))
     expect(xml).toContain('Setor/Empresa'); expect(xml).toContain('Responsável'); expect(xml).toContain('________________________'); expect(xml.indexOf('II. Assuntos')).toBeLessThan(xml.indexOf('III. Decisões'))

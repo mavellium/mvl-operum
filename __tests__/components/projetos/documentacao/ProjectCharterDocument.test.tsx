@@ -41,4 +41,11 @@ describe('ProjectCharterDocument — igual ao modelo do professor', () => {
     rerender(<ProjectCharterDocument {...base} metodologia="Scrum" />)
     expect(screen.getByText('Metodologia do projeto')).toBeInTheDocument()
   })
+
+  it('integrantes saem como "Nome – Papel", puxando a função do cadastro', () => {
+    render(<ProjectCharterDocument {...base} membros={[{ name: 'Ana', papel: 'Dev, Tech Lead' }, { name: 'Bia' }]} />)
+    expect(screen.getByText('Ana – Dev, Tech Lead')).toBeInTheDocument()
+    expect(screen.getByText('Bia')).toBeInTheDocument()
+  })
 })
+

@@ -87,7 +87,8 @@ export async function GET(
 
     const membros = userProjects
       .filter(up => up.user !== null)
-      .map(up => ({ name: up.user.name }))
+      // papel: cargos do cadastro (UserProject.role), para sair "Nome – Papel" em Principais envolvidos.
+      .map(up => ({ name: up.user.name, papel: up.role ?? '' }))
 
     const vigente = await documentoVigente(sessao, projetoId, 'CHARTER')
     const snapshot = vigente?.payload as Record<string, unknown> | null

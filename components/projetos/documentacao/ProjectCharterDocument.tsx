@@ -27,7 +27,8 @@ export interface CharterDocumentProps {
   restricoes: string
   limitesAutoridade: string
   principaisEnvolvidos: string
-  membros: { name: string }[]
+  /** `papel` é a função do membro no projeto (cargos do cadastro); sai como "Nome – Papel". */
+  membros: { name: string; papel?: string }[]
   fases: MacroFase[]
 }
 
@@ -114,7 +115,7 @@ const ProjectCharterDocument = forwardRef<HTMLDivElement, CharterDocumentProps>(
 
     const grupos = agruparEnvolvidos(principaisEnvolvidos)
     const instituicao = grupos.find(g => /^institui[cç][aã]o/i.test(g.rotulo))?.valores.join(' / ') ?? ''
-    const integrantes = membros.map(m => m.name).filter(Boolean)
+    const integrantes = membros.filter(m => m.name).map(m => (m.papel?.trim() ? `${m.name} – ${m.papel.trim()}` : m.name))
     // "Integrantes do Grupo" (a equipe do projeto) entra depois do professor, como no modelo.
     const idxProfessor = grupos.findIndex(g => /^professor/i.test(g.rotulo))
     const blocos: { rotulo: string; valores: string[] }[] = [...grupos]
