@@ -18,7 +18,7 @@ vi.mock('@/lib/api-client', () => ({
 
 vi.mock('@/lib/prisma', () => ({
   default: {
-    projetoDepartamento: { count: vi.fn().mockResolvedValue(0) },
+    projetoDepartamento: { deleteMany: vi.fn().mockResolvedValue({ count: 0 }) },
   },
 }))
 

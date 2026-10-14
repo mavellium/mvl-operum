@@ -223,3 +223,28 @@ describe('computarPlanilhaCustos — dataset de exemplo', () => {
     expect(joao.percentual).toBeCloseTo(33.3, 1)
   })
 })
+describe('data fim das fases e do projeto (maior data prevista)', () => {
+  it('fase usa a maior data prevista das atividades; projeto, a maior das fases', () => {
+    const nodes = {
+      r: node('r', null, ['f1', 'f2', 'f3']),
+      f1: node('f1', 'r', ['t1', 't2', 't3']),
+      t1: node('t1', 'f1', [], { dataPrevista: '2026-10-15' }),
+      t2: node('t2', 'f1', [], { dataPrevista: '2026-11-01' }),
+      t3: node('t3', 'f1', [], { dataPrevista: '2026-10-20' }),
+      f2: node('f2', 'r', ['u1'], { }),
+      u1: node('u1', 'f2', [], { dataPrevista: '2026-12-01T00:00:00.000Z' }),
+      f3: node('f3', 'r', ['v1', 'v2']),
+      v1: node('v1', 'f3', [], { dataPrevista: '2027-12-01' }),
+      v2: node('v2', 'f3', []),
+    }
+    const p = computarPlanilhaCustos(nodes, 'r', { valorReferencia: 4000, horasPorDia: 8 })
+    expect(p.macrofases.map(f => f.dataFim)).toEqual(['2026-11-01', '2026-12-01', '2027-12-01'])
+    expect(p.dataFimProjeto).toBe('2027-12-01')
+  })
+
+  it('sem datas previstas → null (não sobrescreve o que foi informado à mão)', () => {
+    const p = computarPlanilhaCustos({ r: node('r', null, ['f']), f: node('f', 'r', ['t']), t: node('t', 'f', []) }, 'r', { valorReferencia: 4000, horasPorDia: 8 })
+    expect(p.macrofases[0].dataFim).toBeNull()
+    expect(p.dataFimProjeto).toBeNull()
+  })
+})

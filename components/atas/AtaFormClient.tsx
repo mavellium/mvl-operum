@@ -7,6 +7,7 @@ import HistoricoDocumento from '@/components/projetos/documentacao/HistoricoDocu
 import { useState, useRef } from 'react'
 import { useReactToPrint } from 'react-to-print'
 import AtaDocument from './AtaDocument'
+import type { AtaExportData } from '@/lib/exports/ataDocx'
 import { useRouter } from 'next/navigation'
 import { criarAtaAction, atualizarAtaAction } from '@/app/actions/atas'
 import { type MemberOption } from '@/components/atas/MemberSelect'
@@ -20,6 +21,9 @@ interface Anexo { nome: string; url: string }
 
 interface Props {
   nomeProjeto?: string
+  /** Linha institucional do projeto (Editar projeto > Informações iniciais). */
+  instituicaoProjeto?: string
+  logoUrl?: string | null
   numero?: number
   projetoId: string
   ataId?: string
@@ -48,14 +52,15 @@ function toDateOnly(iso: string): string { return toDateInputValue(iso) }
 const inputCls =
   'w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500'
 
-export default function AtaFormClient({ projetoId, ataId, mode, members, initial, nomeProjeto = '', numero }: Props) {
+export default function AtaFormClient({ projetoId, ataId, mode, members, initial, nomeProjeto = '', numero, instituicaoProjeto, logoUrl = null }: Props) {
   const permissions = useProjectPermissions()
   const canEdit = permissions.has('documentos:editar')
   // Pessoas da ata: membros da equipe, com "+" para criar membro (padrão dos documentos).
   const { todos: todosMembros, registrarCriado } = useMembrosEquipe(members)
   const router = useRouter()
 
-  const [instituicao, setInstituicao] = useState(initial?.instituicao ?? '')
+  // Vem sempre do projeto (Localização - Departamentos - termo - Período Ano); não é digitada.
+  const instituicao = instituicaoProjeto ?? initial?.instituicao ?? ''
   const [preview, setPreview] = useState(false)
   const documentRef = useRef<HTMLDivElement>(null)
   const print = useReactToPrint({ contentRef: documentRef, documentTitle: 'Ata de Reunião', pageStyle: printPageStyle() })
@@ -78,6 +83,22 @@ export default function AtaFormClient({ projetoId, ataId, mode, members, initial
   const [anexos, setAnexos] = useState<Anexo[]>(initial?.anexos ?? [])
   const [error, setError] = useState<string | null>(null)
   const [saving, setSaving] = useState(false)
+
+  const funcaoDe = (userId: string | null | undefined) => (userId ? todosMembros.find(m => m.id === userId)?.setor ?? null : null)
+  // Mesmos dados na prévia/PDF e no Word (layout do modelo "01_Form Ata de Reunião").
+  const dadosDocumento: AtaExportData = {
+    instituicao, numero: numero ?? 0, nomeProjeto, local, logoUrl,
+    data: data ? new Date(`${data}T12:00:00`) : null,
+    elaboradoPor, elaboradoPorFuncao: funcaoDe(elaboradoPorUserId),
+    aprovadoPor, aprovadoPorFuncao: funcaoDe(aprovadoPorUserId),
+    assuntosTratados: assuntos, decisoesTomadas: decisoes, observacoes,
+    copiasPara: copias.split(',').map(x => x.trim()).filter(Boolean),
+    presentes, acoes: acoes.map(a => ({ ...a, prazo: a.prazo ? new Date(`${a.prazo}T12:00:00`) : null })), anexos,
+  }
+  async function baixarWord() {
+    try { await (await import('@/lib/exports/projectDocumentsDocx')).downloadAtaDocx(dadosDocumento) }
+    catch { setError('Não foi possível gerar o Word. Verifique a logo do projeto.') }
+  }
 
   function pickElaborador(member: MemberOption | null) {
     setElaboradoPor(member?.name ?? '')
@@ -170,8 +191,9 @@ export default function AtaFormClient({ projetoId, ataId, mode, members, initial
       <div className="mb-4 flex gap-3">
         <button type="button" className="rounded border px-3 py-2" onClick={() => setPreview(value => !value)}>{preview ? 'Voltar ao formulário' : 'Gerar documento'}</button>
         {preview && <button type="button" className="rounded bg-blue-600 px-3 py-2 text-white" onClick={() => print()}>Baixar PDF</button>}
+        {preview && <button type="button" className="rounded bg-gray-800 px-3 py-2 text-white" onClick={baixarWord}>Baixar Word</button>}
       </div>
-      {preview && <><p className="mb-2 text-sm">Prévia do rascunho — ainda não publicada</p><div role="region" aria-label="Prévia da ata" tabIndex={0} className="max-w-full overflow-x-auto mb-4"><AtaDocument ref={documentRef} data={{ instituicao, numero: numero ?? 0, nomeProjeto, local, data: data ? new Date(`${data}T12:00:00`) : null, elaboradoPor, aprovadoPor, assuntosTratados: assuntos, decisoesTomadas: decisoes, observacoes, copiasPara: copias.split(',').map(x => x.trim()).filter(Boolean), presentes, acoes: acoes.map(a => ({ ...a, prazo: a.prazo ? new Date(`${a.prazo}T12:00:00`) : null })), anexos }} /></div></>}
+      {preview && <><p className="mb-2 text-sm">Prévia do rascunho — ainda não publicada</p><div role="region" aria-label="Prévia da ata" tabIndex={0} className="max-w-full overflow-x-auto mb-4"><AtaDocument ref={documentRef} data={dadosDocumento} /></div></>}
     <fieldset hidden={preview} disabled={!canEdit} className="space-y-6 min-w-0">
       {error && (
         <div className="rounded-lg bg-red-50 border border-red-200 px-4 py-3 text-sm text-red-700">
@@ -180,7 +202,8 @@ export default function AtaFormClient({ projetoId, ataId, mode, members, initial
       )}
 
       <label className="block text-sm font-medium">Instituição / curso / termo / semestre
-        <input className={inputCls} value={instituicao} onChange={e => setInstituicao(e.target.value)} />
+        <input className={`${inputCls} bg-gray-100 cursor-not-allowed`} value={instituicao} readOnly title="Preenchido com os dados do projeto (Editar projeto > Informações iniciais)" />
+        <span className="mt-1 block text-xs text-gray-500">Vem de Editar projeto &gt; Informações iniciais (localização, departamentos, período e ano).</span>
       </label>
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
         <div>
@@ -205,7 +228,8 @@ export default function AtaFormClient({ projetoId, ataId, mode, members, initial
         <label className="block text-sm font-medium text-gray-700 mb-1">I. Relação dos presentes</label>
         {presentes.map((p, i) => (
           <div key={i} className="flex flex-col sm:flex-row gap-2 mb-2">
-            <div className="flex-1">
+            {/* Nome com 2/3 da linha: o setor (w-full) espremia o seletor até ficar ilegível. */}
+            <div className="min-w-0 sm:flex-[2]">
               <MembroEquipeSelect
                 membros={todosMembros}
                 projetoId={projetoId}
@@ -215,15 +239,18 @@ export default function AtaFormClient({ projetoId, ataId, mode, members, initial
                 placeholder="Selecionar presente"
               />
             </div>
-            <input
-              type="text"
-              value={p.setorEmpresa}
-              onChange={e => {
-                const next = [...presentes]; next[i].setorEmpresa = e.target.value; setPresentes(next)
-              }}
-              placeholder="Setor (auto pela função)"
-              className={inputCls}
-            />
+            <div className="min-w-0 sm:flex-1">
+              <input
+                type="text"
+                value={p.setorEmpresa}
+                onChange={e => {
+                  const next = [...presentes]; next[i].setorEmpresa = e.target.value; setPresentes(next)
+                }}
+                placeholder="Setor (auto pela função)"
+                aria-label="Setor/Empresa"
+                className={inputCls}
+              />
+            </div>
             <button
               type="button"
               onClick={() => setPresentes(presentes.filter((_, j) => j !== i))}

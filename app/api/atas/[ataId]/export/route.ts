@@ -1,7 +1,7 @@
 import { NextResponse } from 'next/server'
 import { verifySession } from '@/lib/dal'
 import { canProjectPermission } from '@/services/projectAccess'
-import { buscarAta } from '@/services/ataService'
+import { buscarAta, cabecalhoDaAta, funcoesNoProjeto } from '@/services/ataService'
 import { gerarAtaDocx, type AtaExportData } from '@/lib/exports/ataDocx'
 
 export const dynamic = 'force-dynamic'
@@ -21,8 +21,15 @@ export async function GET(
 
     if (!(await canProjectPermission(session, ata.projetoId, 'documentos:ver'))) return NextResponse.json({ error: 'Sem permissão' }, { status: 403 })
 
+    const [cabecalho, funcoes] = await Promise.all([
+      cabecalhoDaAta(session.tenantId, ata.projetoId),
+      funcoesNoProjeto(ata.projetoId, [ata.elaboradoPorUserId, ata.aprovadoPorUserId]),
+    ])
+    // Layout do modelo; a logo só entra no Word gerado pelo navegador (botão "Baixar Word" da ata).
     const data: AtaExportData = {
-      instituicao: ata.instituicao,
+      instituicao: cabecalho.instituicao || ata.instituicao,
+      elaboradoPorFuncao: ata.elaboradoPorUserId ? funcoes.get(ata.elaboradoPorUserId) ?? null : null,
+      aprovadoPorFuncao: ata.aprovadoPorUserId ? funcoes.get(ata.aprovadoPorUserId) ?? null : null,
       numero: ata.numero,
       nomeProjeto: ata.nomeProjeto,
       local: ata.local,

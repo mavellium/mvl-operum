@@ -290,9 +290,20 @@ export default function SprintBoard({ sprint, columns: initialColumns, backlogCa
   async function move(cardId: string, source: string, destination: string, index: number, reason?: string) {
     const card = backlogCards.find(c => c.id === cardId) ?? columns.flatMap(c => c.cards).find(c => c.id === cardId)
     if (!card) return { error: 'Tarefa não encontrada.' }
-    return confirmed(`card:${cardId}`, () => destination === 'BACKLOG' ? moveCardToBacklogAction(cardId)
+    if (pendingActions.current.has(`card:${cardId}`)) return { error: 'Aguarde a operação em andamento.' }
+    // Otimista: o card já fica no destino ao soltar (antes, voltava à origem até o
+    // servidor responder e "sumia e voltava"); se o servidor recusar, desfaz.
+    const antes = boardState.current
+    const origemIndex = source === 'BACKLOG'
+      ? antes.backlogCards.findIndex(c => c.id === cardId)
+      : antes.columns.find(col => col.id === source)?.cards.findIndex(c => c.id === cardId) ?? -1
+    applyMove(card, destination, index)
+    const result = await confirmed(`card:${cardId}`, () => destination === 'BACKLOG' ? moveCardToBacklogAction(cardId)
       : source === 'BACKLOG' ? moveCardToSprintAction(cardId, sprint.id, destination, index)
       : moveCardInSprintAction(cardId, destination, index, reason), () => applyMove(card, destination, index))
+    // Desfaz só este card (outros movimentos confirmados no meio-tempo ficam).
+    if ('error' in result) applyMove(card, source, Math.max(0, origemIndex))
+    return result
   }
   async function handleDragEnd(result: DropResult) {
     const { destination, source, draggableId, type } = result

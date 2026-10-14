@@ -57,6 +57,8 @@ export interface LinhaMacrofase {
   minReal: number
   materiaisReal: number
   totalReal: number
+  /** Data fim da fase (sprint): a maior data prevista das atividades; null sem datas. */
+  dataFim: string | null
 }
 
 export interface QuadroValor {
@@ -85,6 +87,8 @@ export interface PlanilhaDeCustos {
   totalReal: number
   tempoOrcadoTotal: number
   tempoRealTotal: number
+  /** Data fim do projeto: a maior data fim das fases; null sem datas. */
+  dataFimProjeto: string | null
   quadros: {
     valor: QuadroValor[]
     tempo: QuadroTempo[]
@@ -125,6 +129,16 @@ export function fmtDataBR(iso: string | null | undefined): string {
   const [y, m, d] = iso.slice(0, 10).split('-')
   if (!y || !m || !d) return ''
   return `${d}/${m}/${y}`
+}
+
+/** Maior data `aaaa-mm-dd` da lista (ignora vazias); null quando não há nenhuma. */
+export function maiorData(datas: Array<string | null | undefined>): string | null {
+  let maior: string | null = null
+  for (const d of datas) {
+    const dia = d?.slice(0, 10)
+    if (dia && /^\d{4}-\d{2}-\d{2}$/.test(dia) && (!maior || dia > maior)) maior = dia
+  }
+  return maior
 }
 
 export function situacaoDe(prevista: string | null, realizacao: string | null): SituacaoAtividade {
@@ -219,6 +233,7 @@ export function computarPlanilhaCustos(
         minReal: atividades.reduce((s, a) => s + a.minReal, 0),
         materiaisReal: atividades.reduce((s, a) => s + a.materiaisReal, 0),
         totalReal: atividades.reduce((s, a) => s + (a.totalReal ?? 0), 0),
+        dataFim: maiorData(atividades.map(a => a.dataPrevista)),
       })
     }
   }
@@ -249,6 +264,7 @@ export function computarPlanilhaCustos(
     totalReal: round2(macrofases.reduce((s, f) => s + f.totalReal, 0)),
     tempoOrcadoTotal: macrofases.reduce((s, f) => s + f.minOrcado, 0),
     tempoRealTotal: macrofases.reduce((s, f) => s + f.minReal, 0),
+    dataFimProjeto: maiorData(macrofases.map(f => f.dataFim)),
     quadros: {
       valor: macrofases.map(f => ({ fase: `${f.codigo} ${f.titulo}`, orcado: f.totalOrcado, realizado: f.totalReal })),
       tempo: macrofases.map(f => ({ fase: `${f.codigo} ${f.titulo}`, minOrcado: f.minOrcado, minReal: f.minReal })),

@@ -8,15 +8,16 @@ import { computeLayout, resolveDropPosition, NODE_W, NODE_H } from '@/lib/wbsLay
 import { computeFinancialRollups, computeRollups } from '@/lib/wbsRollup'
 import WbsGantt from './WbsGantt'
 import { useCalendarToday } from '@/hooks/useCalendarToday'
-import type { WbsNodeClient, WbsViewMode } from '@/types/wbs'
+import type { WbsNodeClient, WbsTreeState, WbsViewMode } from '@/types/wbs'
 import { useToast } from '@/components/ui/Toast'
 import ConfirmDialog from '@/components/ui/ConfirmDialog'
-import { WbsProvider, useWbs } from './WbsContext'
+import { WbsProvider, useWbs, arvoresDoServidor } from './WbsContext'
 import WbsMenubar from './WbsMenubar'
 import WbsNodeCard from './WbsNode'
 import WbsContextMenu, { type WbsContextMenuState } from './WbsContextMenu'
 import WbsPropertiesPanel from './WbsPropertiesPanel'
-import { saveTreeAction } from '@/app/actions/wbs'
+import { getWbsTreeAction, saveTreeAction } from '@/app/actions/wbs'
+import { getSprintExclusaoInfoAction } from '@/app/actions/sprints'
 import type { GetTreeResult } from '@/services/wbsService'
 import type { DropPosition } from '@/types/wbs'
 
@@ -68,6 +69,19 @@ interface PendingDrag {
   startY: number
 }
 
+/**
+ * Junto do autosave: o motivo informado ao excluir uma fase com dados e os vínculos
+ * (card/sprint) dos itens recortados que ainda não foram colados — recortar não exclui.
+ */
+function extrasDoSalvamento(s: WbsTreeState, motivo: string) {
+  return {
+    motivoExclusao: motivo || undefined,
+    preservar: s.clipboard.actionType === 'CUT'
+      ? s.clipboard.nodes.flatMap(n => [n.properties?.cardId, n.properties?.sprintId]).filter((v): v is string => typeof v === 'string')
+      : undefined,
+  }
+}
+
 function WbsCanvasInner({ projetoId, canEdit, initialView = 'chart', canViewCosts = false, rates = {}, owners = {}, today = new Date().toISOString().slice(0, 10) }: Omit<WbsCanvasProps, 'initialTree' | 'tenantId' | 'userId'>) {
   const calendarToday = useCalendarToday(today)
   const [viewMode, setViewMode] = useState<WbsViewMode>(initialView === 'costs' && !canViewCosts ? 'chart' : initialView)
@@ -99,6 +113,10 @@ function WbsCanvasInner({ projetoId, canEdit, initialView = 'chart', canViewCost
 
   const [drag, setDrag] = useState<DragState | null>(null)
   const [confirmDelete, setConfirmDelete] = useState(false)
+  // Fases (sprints) com dados na exclusão: motivo obrigatório, enviado no próximo autosave.
+  const [sprintsComDados, setSprintsComDados] = useState<Array<{ nome: string; cards: number; segundos: number }>>([])
+  const [motivoExclusao, setMotivoExclusao] = useState('')
+  const motivoExclusaoRef = useRef('')
   // Snapshot dos nós a excluir: ao abrir o modal, a seleção é limpa para o foco
   // do teclado ficar só dentro do modal (Tab não volta aos cards).
   const [pendingDeleteIds, setPendingDeleteIds] = useState<string[]>([])
@@ -142,28 +160,57 @@ function WbsCanvasInner({ projetoId, canEdit, initialView = 'chart', canViewCost
   }, [state.focusNodeId, layout.geometry, dispatch])
 
   const requestDelete = useCallback(() => {
-    setPendingDeleteIds(stateRef.current.selectedNodeIds)
+    const ids = stateRef.current.selectedNodeIds
+    setPendingDeleteIds(ids)
+    setSprintsComDados([])
+    setMotivoExclusao('')
     dispatch({ type: 'SET_SELECTION', payload: { nodeIds: [] } })
     setConfirmDelete(true)
+    // Excluir uma fase exclui a sprint dela: se a sprint tem dados, pede o motivo.
+    const nodes = stateRef.current.nodes
+    const fases: Array<{ sprintId: string; nome: string }> = []
+    const pilha = [...ids]
+    while (pilha.length) {
+      const n = nodes[pilha.pop()!]
+      if (!n) continue
+      const sid = n.properties?.sprintId
+      if (typeof sid === 'string') fases.push({ sprintId: sid, nome: `${n.code} ${n.title}` })
+      pilha.push(...n.childrenIds)
+    }
+    if (fases.length) {
+      void Promise.all(fases.map(async f => ({ f, info: await getSprintExclusaoInfoAction(f.sprintId) }))).then(lista => {
+        setSprintsComDados(lista.flatMap(({ f, info }) => ('exigeMotivo' in info && info.exigeMotivo ? [{ nome: f.nome, cards: info.cards, segundos: info.segundosRegistrados }] : [])))
+      })
+    }
   }, [dispatch])
 
   // ── Autosave ────────────────────────────────────────────────────────────────
   useEffect(() => {
     if (state.nodes === prevNodesRef.current) return
     prevNodesRef.current = state.nodes
-    if (!canEdit) return
+    if (!canEdit || arvoresDoServidor.has(state.nodes)) return
 
     if (saveTimerRef.current) clearTimeout(saveTimerRef.current)
     saveTimerRef.current = setTimeout(async () => {
       const s = stateRef.current
       saveTimerRef.current = null
       dispatch({ type: 'SET_SYNC_STATUS', payload: { status: 'SAVING' } })
-      const res = await saveTreeAction({ projetoId, serverVersion: s.sync.serverVersion, rootId: s.rootId, nodes: s.nodes })
+      const res = await saveTreeAction({ projetoId, serverVersion: s.sync.serverVersion, rootId: s.rootId, nodes: s.nodes, ...extrasDoSalvamento(s, motivoExclusaoRef.current) })
       if (res.ok) {
+        motivoExclusaoRef.current = ''
         dispatch({ type: 'SET_SYNC_STATUS', payload: { status: 'IDLE', serverVersion: res.serverVersion, lastSavedAt: Date.now() } })
       } else if (res.conflict) {
-        dispatch({ type: 'SET_SYNC_STATUS', payload: { status: 'CONFLICT' } })
-        toast('Conflito: esta EAP foi editada por outra pessoa. Recarregue a página.', 'warning')
+        // A EAP mudou no servidor (outra pessoa ou a sincronização com as sprints):
+        // carrega a versão atual em vez de deixar o editor travado em conflito.
+        const atual = await getWbsTreeAction(projetoId)
+        if (atual.ok) {
+          arvoresDoServidor.add(atual.nodes)
+          dispatch({ type: 'SET_TREE', payload: { nodes: atual.nodes, rootId: atual.rootId, serverVersion: atual.serverVersion } })
+          toast('A EAP foi atualizada no servidor enquanto você editava. Carregamos a versão atual; refaça a última alteração.', 'warning')
+        } else {
+          dispatch({ type: 'SET_SYNC_STATUS', payload: { status: 'CONFLICT' } })
+          toast('Conflito: esta EAP foi editada por outra pessoa. Recarregue a página.', 'warning')
+        }
       } else {
         dispatch({ type: 'SET_SYNC_STATUS', payload: { status: 'ERROR' } })
         toast(res.error || 'Erro ao salvar automaticamente', 'error')
@@ -182,7 +229,7 @@ function WbsCanvasInner({ projetoId, canEdit, initialView = 'chart', canViewCost
       const s = stateRef.current
       if (!canEdit || s.sync.status === 'IDLE') return
       if (saveTimerRef.current) { clearTimeout(saveTimerRef.current); saveTimerRef.current = null }
-      saveTreeAction({ projetoId, serverVersion: s.sync.serverVersion, rootId: s.rootId, nodes: s.nodes })
+      saveTreeAction({ projetoId, serverVersion: s.sync.serverVersion, rootId: s.rootId, nodes: s.nodes, ...extrasDoSalvamento(s, motivoExclusaoRef.current) })
         .then(res => {
           if (res.ok) {
             dispatch({ type: 'SET_SYNC_STATUS', payload: { status: 'IDLE', serverVersion: res.serverVersion, lastSavedAt: Date.now() } })
@@ -210,7 +257,7 @@ function WbsCanvasInner({ projetoId, canEdit, initialView = 'chart', canViewCost
     const s = stateRef.current
     if (saveTimerRef.current) { clearTimeout(saveTimerRef.current); saveTimerRef.current = null }
     dispatch({ type: 'SET_SYNC_STATUS', payload: { status: 'SAVING' } })
-    const res = await saveTreeAction({ projetoId, serverVersion: s.sync.serverVersion, rootId: s.rootId, nodes: s.nodes })
+    const res = await saveTreeAction({ projetoId, serverVersion: s.sync.serverVersion, rootId: s.rootId, nodes: s.nodes, ...extrasDoSalvamento(s, motivoExclusaoRef.current) })
     if (res.ok) {
       dispatch({ type: 'SET_SYNC_STATUS', payload: { status: 'IDLE', serverVersion: res.serverVersion, lastSavedAt: Date.now() } })
       toast('EAP salva com sucesso', 'success')
@@ -815,6 +862,7 @@ function WbsCanvasInner({ projetoId, canEdit, initialView = 'chart', canViewCost
         onClose={() => setConfirmDelete(false)}
         onConfirm={() => {
           if (pendingDeleteIds.length > 0) {
+            motivoExclusaoRef.current = motivoExclusao.trim()
             dispatch({ type: 'DELETE_NODES', payload: { nodeIds: pendingDeleteIds } })
           }
           setConfirmDelete(false)
@@ -833,7 +881,28 @@ function WbsCanvasInner({ projetoId, canEdit, initialView = 'chart', canViewCost
         cancelVariant="primary"
         cancelAutoFocus
         confirmLabel="Excluir"
-      />
+        confirmDisabled={sprintsComDados.length > 0 && motivoExclusao.trim().length < 5}
+      >
+        {sprintsComDados.length > 0 && (
+          <div className="flex flex-col gap-2">
+            <p className="text-sm text-amber-800 bg-amber-50 border border-amber-200 rounded-lg px-3 py-2">
+              Excluir {sprintsComDados.length === 1 ? 'esta fase exclui a sprint' : 'estas fases exclui as sprints'} com dados:{' '}
+              {sprintsComDados.map(s => `${s.nome} (${s.cards} card${s.cards === 1 ? '' : 's'}${s.segundos > 0 ? `, ${Math.floor(s.segundos / 3600)}h${String(Math.round((s.segundos % 3600) / 60)).padStart(2, '0')}` : ''})`).join('; ')}.
+              A exclusão fica no histórico de alterações das sprints.
+            </p>
+            <label htmlFor="wbs-motivo-exclusao" className="text-sm font-medium text-gray-700">Motivo da exclusão *</label>
+            <textarea
+              id="wbs-motivo-exclusao"
+              value={motivoExclusao}
+              onChange={e => setMotivoExclusao(e.target.value)}
+              rows={3}
+              maxLength={1000}
+              placeholder="Por que esta fase/sprint está sendo excluída?"
+              className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-red-400"
+            />
+          </div>
+        )}
+      </ConfirmDialog>
 
       {/* Menu de contexto (clique direito) */}
       <WbsContextMenu
@@ -864,7 +933,7 @@ function WbsCanvasInner({ projetoId, canEdit, initialView = 'chart', canViewCost
 
 export default function WbsCanvas({ initialTree, ...props }: WbsCanvasProps) {
   return (
-    <WbsProvider initialTree={initialTree}>
+    <WbsProvider initialTree={initialTree} projetoId={props.projetoId}>
       <WbsCanvasInner {...props} />
     </WbsProvider>
   )

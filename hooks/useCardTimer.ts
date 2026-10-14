@@ -1,6 +1,6 @@
 'use client'
 import { useCallback, useEffect, useState, useSyncExternalStore } from 'react'
-import { getActiveTimerAction, getCardTimeAction, pauseTimerAction, startTimerAction } from '@/app/actions/time'
+import { getCardTimeAction, getCardsTimerAction, pauseTimerAction, startTimerAction, type CardTimerState } from '@/app/actions/time'
 
 type Entry = { id: string; isRunning?: boolean; startedAt: string | Date; duration?: number | null }
 type Snapshot = { seconds: number; entry: Entry | null; known: boolean; loading: boolean; error: string }
@@ -18,10 +18,37 @@ async function bounded<T>(promise: Promise<T>): Promise<T> {
   try { return await Promise.race([promise, new Promise<never>((_, reject) => { timeout = setTimeout(() => reject(new Error('Não foi possível confirmar o timer. Atualize e tente novamente.')), 15000) })]) }
   finally { clearTimeout(timeout!) }
 }
+// Leituras do mesmo instante (todos os cards do quadro ao montar) viram uma única
+// Server Action: o cliente executa Server Actions uma de cada vez, e uma chamada por
+// card enfileirava o quadro inteiro até estourar o tempo do timer.
+type Pedido = { id: string; resolve: (state: CardTimerState) => void; reject: (error: unknown) => void }
+let fila: Pedido[] = []
+let agendado = false
+const LOTE_MAX = 200
+async function processarFila() {
+  const pedidos = fila
+  fila = []
+  agendado = false
+  for (let i = 0; i < pedidos.length; i += LOTE_MAX) {
+    const lote = pedidos.slice(i, i + LOTE_MAX)
+    try {
+      const estados = await getCardsTimerAction(lote.map(p => p.id))
+      for (const p of lote) p.resolve(estados[p.id] ?? { error: 'Não foi possível carregar o timer' })
+    } catch (error) {
+      for (const p of lote) p.reject(error)
+    }
+  }
+}
+function lerEmLote(id: string): Promise<CardTimerState> {
+  return new Promise((resolve, reject) => {
+    fila.push({ id, resolve, reject })
+    if (!agendado) { agendado = true; queueMicrotask(() => { void processarFila() }) }
+  })
+}
 async function read(id: string, store: Store) {
-  const [total, active] = await bounded(Promise.all([getCardTimeAction(id), getActiveTimerAction(id)]))
-  if ('error' in total || 'error' in active || !('seconds' in total) || total.seconds == null) throw new Error(('error' in total ? total.error : 'error' in active ? active.error : '') || 'Não foi possível carregar o timer')
-  update(store, { seconds: total.seconds, entry: active.entry?.isRunning ? active.entry : null, known: true })
+  const state = await bounded(lerEmLote(id))
+  if ('error' in state || state.seconds == null) throw new Error(('error' in state ? state.error : '') || 'Não foi possível carregar o timer')
+  update(store, { seconds: state.seconds, entry: state.entry?.isRunning ? state.entry : null, known: true })
 }
 function run(id: string, action: 'refresh' | 'toggle'): Promise<boolean> {
   const store = storeFor(id)

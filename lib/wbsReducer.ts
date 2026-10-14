@@ -223,9 +223,16 @@ function makeNode(parentId: string | null, order: number, style: WbsNodeStyle): 
 }
 
 /** Clone profundo iterativo — novos IDs, mantém estrutura interna. */
+function semVinculoComSprint(properties: WbsNodeClient['properties']): WbsNodeClient['properties'] {
+  const { cardId: _cardId, sprintId: _sprintId, ...resto } = properties ?? {}
+  return resto
+}
+
 function cloneSubtree(
   rootId: string,
-  nodes: Record<string, WbsNodeClient>
+  nodes: Record<string, WbsNodeClient>,
+  /** Cópia (não recorte): a cópia não herda o vínculo com card/sprint, senão dois nós apontariam para o mesmo. */
+  semVinculo = false,
 ): { cloned: Record<string, WbsNodeClient>; newRootId: string } {
   const idMap = new Map<string, string>()
   const stack = [rootId]
@@ -250,6 +257,7 @@ function cloneSubtree(
       id: newId,
       parentId: n.parentId ? (idMap.get(n.parentId) ?? null) : null,
       childrenIds: n.childrenIds.map(cid => idMap.get(cid) ?? cid),
+      ...(semVinculo ? { properties: semVinculoComSprint(n.properties) } : {}),
     }
   }
   return { cloned, newRootId: idMap.get(rootId)! }
@@ -540,7 +548,7 @@ export function wbsReducer(state: WbsTreeState, action: WbsAction): WbsTreeState
       let insertOrder = parent.childrenIds.length
 
       for (const root of roots) {
-        const { cloned, newRootId } = cloneSubtree(root.id, clipMap)
+        const { cloned, newRootId } = cloneSubtree(root.id, clipMap, state.clipboard.actionType !== 'CUT')
         Object.assign(newNodes, cloned)
         newNodes[newRootId] = { ...newNodes[newRootId], parentId, order: insertOrder }
         newNodes[parentId] = { ...newNodes[parentId], childrenIds: [...newNodes[parentId].childrenIds, newRootId] }
@@ -591,7 +599,7 @@ export function wbsReducer(state: WbsTreeState, action: WbsAction): WbsTreeState
           .sort((a, b) => b.order - a.order)
 
         for (const root of sorted) {
-          const { cloned, newRootId } = cloneSubtree(root.id, state.nodes)
+          const { cloned, newRootId } = cloneSubtree(root.id, state.nodes, true)
           const newOrder = root.order + 1
           shiftUp(parentId, newOrder)
           Object.assign(newNodes, cloned)

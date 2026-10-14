@@ -7,6 +7,29 @@ As versões até 1.6.0 foram reconstruídas retroativamente a partir do históri
 1.0.0 marca a entrada em produção na arquitetura de microsserviços, e cada marco de
 funcionalidade depois disso é uma versão MINOR.
 
+## [1.20.0] — 2026-10-14
+
+### Adicionado
+- **EAP ↔ sprint:** todo item do nível 2 da EAP vira sprint, com as colunas padrão; o nome da sprint é "código título" (ex.: "1.2 Fase 2") e acompanha a renumeração da EAP. Card do backlog de uma fase que acabou de virar sprint vai para "A Fazer" dela.
+- **Planilha de custos:** a linha de subtotal de cada fase mostra a data fim (a maior data prevista das atividades). Essa data passa a ser a data fim da sprint e a "Data Limite" da fase no cronograma financeiro de Editar projeto; a maior delas é a data fim do projeto. O custo da fase no cronograma financeiro passa a ser o valor orçado. Sem datas ou valores calculados, vale o que foi informado à mão.
+- **Sprints:** excluir uma sprint com dados (cards ou horas registradas) exige justificar o motivo, no quadro e na EAP (excluir uma fase exclui a sprint dela). O diálogo mostra quantos cards e horas a sprint tem.
+- **Sprints:** histórico de alterações das sprints na página Sprints do projeto: criação, alterações (nome, datas, status, descrição, qualidade, dificuldade, de → para) e exclusão com motivo e resumo do que a sprint tinha, com quem fez e quando, inclusive o que veio da EAP.
+- **Ata de Reunião:** Word e PDF no layout do modelo "01_Form Ata de Reunião": logo e "Ata de Reunião Nº", quadro com instituição em cinza, Local/Data, "Elaborado por" e "Aprovado por" com nome e função, tabelas de presentes (7 linhas) e ações (6 linhas), Documentos anexos, "Enviar cópias para" com caixas e "Plano do Projeto", Assinaturas e Obs. Novo botão "Baixar Word" na Ata, com a logo do projeto.
+
+### Alterado
+- **Funções e departamentos:** não é mais preciso associá-los a cada projeto. Todas as funções e departamentos do cadastro podem ser escolhidos em qualquer projeto (Stakeholders passa a oferecer todos os departamentos). Saem do menu do projeto os itens "Funções" e "Departamentos" (os endereços antigos levam a Stakeholders), e excluir uma função ou departamento do cadastro não pede mais para "desassociar" antes.
+- **Documentos:** a linha da instituição da Ata e da EAP vem de Editar projeto > Informações iniciais: "Localização - Departamentos - termo - Período Ano". O termo fica "A definir no Operum (ex: 5° termo Noturno)" até existir no cadastro. Na Ata, o campo deixa de ser digitado.
+
+### Corrigido
+- **Timer:** "Não foi possível confirmar o timer" nos cards do quadro. Cada card fazia duas chamadas ao servidor, e o Next executa Server Actions do cliente uma de cada vez; com muitos cards, a fila passava do limite de 15 s. Agora o quadro lê o timer de todos os cards numa única chamada, em paralelo no servidor.
+- **Quadro da sprint:** arrastar cards entre colunas demorava ou parecia não funcionar, e o card sumia e voltava. O movimento esperava a fila de chamadas ao servidor (a leitura do timer de cada card, corrigida acima) e só era aplicado depois da resposta, então o card voltava à origem até o servidor confirmar. Agora o card vai para o destino ao soltar e só volta, sozinho, se o servidor recusar.
+- **Termo de Abertura:** salvar versão falhava com "Unrecognized key: papel" desde a 1.16.0 (a função dos integrantes não estava na validação da versão).
+- **EAP:** salvar versão do documento falhava com erro interno desde a 1.19.0 (os ids de "Elaborado por"/"Aprovado por" eram gravados na tabela do documento, que não tem essas colunas).
+- **EAP:** excluir um item mostrava "Conflito: esta EAP foi editada por outra pessoa" e não excluía. A sincronização com as sprints (ao abrir quadro, planilha ou documento, inclusive em outra aba) avança a versão da EAP, e o editor continuava com a versão antiga, inclusive ao voltar pela página em cache. O editor agora busca a versão atual ao abrir e ao voltar para a aba, adota a versão nova do servidor quando não há alteração pendente e, se ainda houver conflito, recarrega a árvore em vez de travar.
+- **EAP ↔ sprint:** excluir um item na EAP agora exclui o card ligado, e excluir uma fase exclui a sprint dela (os cards que sobrarem vão para o fim do backlog). Antes, a sincronização recriava o item a partir do card ou da sprint. Recortar e colar mantém o vínculo; copiar/colar e duplicar criam cópias sem vínculo.
+- **Ata:** "← Voltar às atas" (Nova Ata e Editar Ata) levava à lista antiga `/projetos/:id/atas` e dava 404; agora volta para Documentação > Atas de Reunião, e a rota antiga redireciona para lá.
+- **Ata:** em "I. Relação dos presentes", o seletor do nome ficava espremido pelo campo de setor e não dava para ler; agora o nome ocupa 2/3 da linha.
+
 ## [1.19.0] — 2026-10-14
 
 ### Alterado

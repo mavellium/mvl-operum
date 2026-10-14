@@ -94,10 +94,8 @@ export async function updateRoleNameAction(id: string, name: string) {
 export async function deleteRoleAction(id: string) {
   try {
     await verifySession()
-    const inUse = await prisma.projetoFuncao.count({ where: { funcaoId: id } })
-    if (inUse > 0) {
-      return { error: `Função em uso por ${inUse} projeto(s). Desassocie antes de remover.` }
-    }
+    // Associações por projeto não existem mais: limpa as antigas em vez de bloquear.
+    await prisma.projetoFuncao.deleteMany({ where: { funcaoId: id } })
     await rolesApi.delete(id)
     return { success: true }
   } catch (err) {

@@ -9,11 +9,13 @@ vi.mock('@/app/actions/time', () => ({
   pauseTimerAction: vi.fn(),
   getCardTimeAction: vi.fn(),
   getActiveTimerAction: vi.fn(),
+  getCardsTimerAction: vi.fn(),
   addManualTimeAction: vi.fn(),
   getTimeEntriesAction: vi.fn().mockResolvedValue({ entries: [] }),
 }))
 
-import { startTimerAction, pauseTimerAction, getCardTimeAction, getActiveTimerAction, addManualTimeAction } from '@/app/actions/time'
+import { startTimerAction, pauseTimerAction, getCardTimeAction, getActiveTimerAction, getCardsTimerAction, addManualTimeAction } from '@/app/actions/time'
+import { timerEmLote } from '../../helpers/timerEmLote'
 
 const mockStart = startTimerAction as ReturnType<typeof vi.fn>
 const mockPause = pauseTimerAction as ReturnType<typeof vi.fn>
@@ -25,6 +27,7 @@ beforeEach(() => {
   vi.clearAllMocks()
   mockGetTime.mockResolvedValue({ seconds: 0 })
   mockGetActive.mockResolvedValue({ entry: null })
+  vi.mocked(getCardsTimerAction).mockImplementation(timerEmLote(mockGetTime, mockGetActive) as never)
   mockAddManual.mockResolvedValue({ entry: { id: 'm1' } })
 })
 

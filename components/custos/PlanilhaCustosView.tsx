@@ -7,7 +7,7 @@ import { useToast } from '@/components/ui/Toast'
 import DateInput from '@/components/ui/DateInput'
 import { updateNodePropertiesAction } from '@/app/actions/wbs'
 import { addMemberAction } from '@/app/actions/projetos'
-import { fmtDataBR, situacaoDe, type PlanilhaDeCustos, type SituacaoAtividade, type Elaborador } from '@/lib/planilhaCustos'
+import { fmtDataBR, maiorData, situacaoDe, type PlanilhaDeCustos, type SituacaoAtividade, type Elaborador } from '@/lib/planilhaCustos'
 import { minutosDeHoras, minutosDeDias, round2 } from '@/lib/custosCalc'
 import { ResponsiveContainer, BarChart, Bar, XAxis, YAxis, Tooltip, Legend, CartesianGrid, PieChart, Pie, Cell } from 'recharts'
 
@@ -538,7 +538,10 @@ const FaseFragment = memo(function FaseFragment({
         <td className="border border-gray-200 px-2 py-1 text-right">{texto(hhmm(subO.min))}</td>
         <td className="border border-gray-200 px-2 py-1 text-right">{texto(subO.temDias ? dois(subO.dias) : '—')}</td>
         <td colSpan={3} className="border border-gray-200 px-2 py-1 text-right">{texto(subO.temR ? brl(subO.total) : '—')}</td>
-        <td className="border border-gray-200 px-2 py-1 text-right"></td>
+        {/* Data fim da fase (sprint): a maior data prevista das atividades, ao vivo. */}
+        <td className="border border-gray-200 px-2 py-1 text-center" title="Data fim da fase: maior data prevista">
+          {texto(fmtDataBR(maiorData(fase.atividades.map(a => valorDe(a.nodeId, 'dataPrevista', a.dataPrevista)))))}
+        </td>
         <td className="border border-gray-200 px-2 py-1 text-right">{texto(String(subR.min))}</td>
         <td className="border border-gray-200 px-2 py-1 text-right">{texto(hhmm(subR.min))}</td>
         <td className="border border-gray-200 px-2 py-1 text-right">{texto(subR.temDias ? dois(subR.dias) : '—')}</td>

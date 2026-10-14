@@ -200,7 +200,9 @@ async function aplicarDocumento(
     await tx.project.update({ where: { id: projectId }, data })
   }
   if (documentType === 'EAP') {
-    const data = validarEap(content)
+    // Os ids dos selects de membro (Elaborado/Aprovado por) ficam só na versão;
+    // `EapDocument` guarda os nomes.
+    const { preparedByUserId: _preparedByUserId, approvedByUserId: _approvedByUserId, ...data } = validarEap(content)
     const changed = await tx.eapDocument.updateMany({
       where: { projectId, tenantId: s.tenantId },
       data: { ...data, nodes: data.nodes as unknown as Prisma.InputJsonValue },

@@ -2,7 +2,10 @@
 
 import { useEffect, useRef, useState, useTransition } from 'react'
 import { useRouter } from 'next/navigation'
-import { deleteSprintAction } from '@/app/actions/sprints'
+import { deleteSprintAction, getSprintExclusaoInfoAction } from '@/app/actions/sprints'
+
+const MOTIVO_MINIMO = 5
+const horas = (s: number) => `${Math.floor(s / 3600)}h ${String(Math.round((s % 3600) / 60)).padStart(2, '0')}m`
 
 interface Props {
   sprintId: string
@@ -15,10 +18,26 @@ export default function DeleteSprintButton({ sprintId, sprintName, projectId }: 
   const [isPending, startTransition] = useTransition()
   const cancelRef = useRef<HTMLButtonElement>(null)
   const router = useRouter()
+  const [info, setInfo] = useState<{ cards: number; segundosRegistrados: number; exigeMotivo: boolean } | null>(null)
+  const [motivo, setMotivo] = useState('')
+  const [erro, setErro] = useState<string | null>(null)
 
   useEffect(() => {
     if (open) cancelRef.current?.focus()
   }, [open])
+
+  // Sprint com dados (cards ou horas): a exclusão exige justificar o motivo.
+  useEffect(() => {
+    if (!open) return
+    let ativo = true
+    getSprintExclusaoInfoAction(sprintId).then(r => {
+      if (!ativo) return
+      if ('error' in r) setErro(r.error ?? 'Erro ao consultar a sprint')
+      else setInfo(r)
+    })
+    return () => { ativo = false }
+  }, [open, sprintId])
+  const faltaMotivo = !!info?.exigeMotivo && motivo.trim().length < MOTIVO_MINIMO
 
   useEffect(() => {
     if (!open) return
@@ -31,7 +50,8 @@ export default function DeleteSprintButton({ sprintId, sprintName, projectId }: 
 
   function handleDelete() {
     startTransition(async () => {
-      await deleteSprintAction(sprintId, projectId)
+      const result = await deleteSprintAction(sprintId, projectId, motivo)
+      if ('error' in result) { setErro(result.error ?? 'Erro ao excluir sprint'); return }
       setOpen(false)
       router.refresh()
     })
@@ -40,7 +60,7 @@ export default function DeleteSprintButton({ sprintId, sprintName, projectId }: 
   return (
     <>
       <button
-        onClick={e => { e.preventDefault(); setOpen(true) }}
+        onClick={e => { e.preventDefault(); setInfo(null); setMotivo(''); setErro(null); setOpen(true) }}
         className="p-1.5 text-gray-300 hover:text-red-500 hover:bg-red-50 rounded-lg transition-colors opacity-0 group-hover/sprint:opacity-100"
         title="Excluir sprint"
       >
@@ -69,10 +89,29 @@ export default function DeleteSprintButton({ sprintId, sprintName, projectId }: 
               </div>
             </div>
 
+            {info?.exigeMotivo && (
+              <div className="flex flex-col gap-1.5">
+                <p className="text-sm text-amber-800 bg-amber-50 border border-amber-200 rounded-lg px-3 py-2">
+                  Esta sprint tem dados: {info.cards} card{info.cards === 1 ? '' : 's'}{info.segundosRegistrados > 0 ? ` e ${horas(info.segundosRegistrados)} registradas` : ''}. A exclusão fica no histórico de alterações.
+                </p>
+                <label htmlFor={`motivo-${sprintId}`} className="text-sm font-medium text-gray-700">Motivo da exclusão *</label>
+                <textarea
+                  id={`motivo-${sprintId}`}
+                  value={motivo}
+                  onChange={e => setMotivo(e.target.value)}
+                  rows={3}
+                  maxLength={1000}
+                  placeholder="Por que esta sprint está sendo excluída?"
+                  className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-red-400"
+                />
+              </div>
+            )}
+            {erro && <p role="alert" className="text-sm text-red-600">{erro}</p>}
+
             <div className="flex gap-3 justify-end">
               <button
                 onClick={handleDelete}
-                disabled={isPending}
+                disabled={isPending || !info || faltaMotivo}
                 className="px-4 py-2 text-sm font-medium text-red-600 border border-red-200 rounded-xl hover:bg-red-50 disabled:opacity-50 transition-colors"
               >
                 {isPending ? 'Excluindo…' : 'Sim, excluir'}

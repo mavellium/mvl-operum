@@ -18,6 +18,7 @@ import { getTree } from '@/services/wbsService'
 import { gerenteDoProjeto } from '@/services/gerenteProjeto'
 import { sincronizarEapSprintSePermitido } from '@/services/eapSprintSyncService'
 import { ZodError } from 'zod'
+import { DocumentRevisionError } from '@/lib/documentRevisionError'
 
 type RouteCtx = { params: Promise<{ projetoId: string }> }
 
@@ -30,7 +31,7 @@ async function requireProjectAccess(userId: string, role: string, tenantId: stri
 async function loadProject(tenantId: string, projetoId: string) {
   return prisma.project.findFirst({
     where: { id: projetoId, tenantId, deletedAt: null },
-    select: { id: true, name: true, departamentos: true, semestre: true, ano: true, logoUrl: true },
+    select: { id: true, name: true, location: true, departamentos: true, semestre: true, ano: true, logoUrl: true },
   })
 }
 
@@ -50,6 +51,7 @@ function errorResponse(err: unknown, where: string, projetoId: string) {
     return NextResponse.json({ error: err.message }, { status: 403 })
   }
   if (err instanceof ZodError) return NextResponse.json({ error: err.issues[0]?.message ?? 'Dados inválidos' }, { status: 400 })
+  if (err instanceof DocumentRevisionError) return NextResponse.json({ error: err.message }, { status: 422 })
   if (err instanceof EapValidationError) {
     return NextResponse.json({ error: err.message }, { status: 422 })
   }
