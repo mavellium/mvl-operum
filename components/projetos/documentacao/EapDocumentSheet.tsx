@@ -2,191 +2,110 @@
 
 import { forwardRef, useMemo } from 'react'
 import type { EapNode, EapDocumentMetadata } from '@/types/eap'
-import { computeEapLayout, fitScale } from '@/lib/eapLayout'
+import { computeEapColumnLayout, eapBoxLabel, eapWrapLines, fitScale, EAP_COL_LINE_H, EAP_COL_PAD_Y } from '@/lib/eapLayout'
 import { flattenTree } from '@/lib/eapCode'
 import { formatDateBR } from '@/lib/date'
 
 /**
- * Folha A4 do documento EAP (SPEC §5–§8, §12).
+ * Documento EAP no layout do modelo do professor ("04 Aula GP - Modelo de
+ * Estrutura Analítica do Projeto"), todo em A4 paisagem.
  *
- * PÁGINA 1 — EAP GRÁFICA: cabeçalho institucional, informações do projeto e a
- *   árvore em organograma (caixas + conectores).
- * PÁGINA 2 — EAP TEXTUAL: mesmo cabeçalho e a EAP gerada automaticamente a
- *   partir da MESMA árvore de dados (nunca há duas EAPs independentes).
+ * PÁGINA 1 — EAP GRÁFICA: logo + título, quadro de identificação e a árvore em
+ *   colunas (raiz no topo, nível 2 lado a lado, descendentes empilhados).
+ * PÁGINAS 2+ — EAP TEXTO: mesmo cabeçalho e a lista numerada gerada da MESMA
+ *   árvore; o texto continua nas páginas seguintes sem repetir o cabeçalho.
  *
- * `ref` é usado pelo react-to-print para exportar o PDF com layout fixo A4.
+ * `ref` é usado pelo react-to-print para exportar o PDF.
  */
 
 export interface EapDocumentSheetProps {
   metadata: EapDocumentMetadata
   nodes: EapNode[]
   instituicao: string
+  logoUrl?: string | null
   /** Habilita interação (clique nos blocos) — usado pelo editor. */
   interactive?: boolean
   selectedId?: string | null
   onSelectBlock?: (id: string) => void
 }
 
-// ── Constantes de página (mm→px: 1mm ≈ 3.7795px) ────────────────────────────
-const PAGE_W = 210
-const PAGE_H = 297
-// Página 1 (EAP gráfica) em paisagem: a árvore inteira cabe, mesmo que fique pequena.
-const LANDSCAPE_W = 297
-const LANDSCAPE_H = 210
-const PAD_X = 16
-const PAD_Y = 14
-
+// ── Página (mm; 1mm ≈ 3.7795px) ─────────────────────────────────────────────
+const PAGE_W = 297
+const PAGE_H = 210
+const PAD_X = 14
+const PAD_Y = 8
 const MM = 3.7795
-const CONTENT_W = (LANDSCAPE_W - PAD_X * 2) * MM
+/** Margem superior do papel: dá respiro às páginas de continuação do texto. */
+export const EAP_PRINT_MARGIN_TOP_MM = 8
 
-/** Página nomeada: só a EAP gráfica é impressa em paisagem; a textual segue em retrato. */
-export const EAP_PRINT_CSS = `
-  @page eap-landscape { size: A4 landscape; }
-  @media print { .eap-page-1 { page: eap-landscape; width: ${LANDSCAPE_W}mm !important; height: ${LANDSCAPE_H - 8}mm !important; } }
-`
+const BORDA = '1px solid #000'
+const FONTE_QUADRO = 'Calibri, Carlito, Arial, Helvetica, sans-serif'
+const FONTE_TEXTO = '"Times New Roman", Times, serif'
+const AZUL = '#4472c4'
+const AZUL_BORDA = '#2f528f'
 
-// Estilos fixos do documento (layout de impressão, não responsivo)
-const pageStyle: React.CSSProperties = {
+const pageBase: React.CSSProperties = {
   width: `${PAGE_W}mm`,
-  height: `${PAGE_H}mm`,
   padding: `${PAD_Y}mm ${PAD_X}mm`,
   boxSizing: 'border-box',
   background: '#fff',
-  color: '#0f172a',
-  fontFamily: 'Arial, Helvetica, sans-serif',
-  fontSize: '9.5pt',
-  lineHeight: 1.35,
-  overflow: 'hidden',
+  color: '#000',
   position: 'relative',
 }
 
-const headerTitleStyle: React.CSSProperties = {
-  fontSize: '13pt',
-  fontWeight: 700,
-  textAlign: 'center',
-  textTransform: 'uppercase',
-  letterSpacing: 0.5,
-}
-
-const institucionalStyle: React.CSSProperties = {
-  fontSize: '8.5pt',
-  textAlign: 'center',
-  color: '#334155',
-  marginTop: 2,
-  marginBottom: 10,
-  textTransform: 'uppercase',
-}
-
-const fieldLabelStyle: React.CSSProperties = {
-  fontSize: '8pt',
-  fontWeight: 700,
-  color: '#334155',
-  textTransform: 'uppercase',
-  letterSpacing: 0.3,
-  whiteSpace: 'nowrap',
-}
-
-const fieldValueStyle: React.CSSProperties = {
+const celula: React.CSSProperties = {
+  border: BORDA,
+  padding: '1px 5px',
+  fontFamily: FONTE_QUADRO,
   fontSize: '9pt',
-  color: '#0f172a',
-  borderBottom: '1px solid #475569',
-  minWidth: 42,
-  padding: '1px 2px 2px',
-  whiteSpace: 'nowrap',
-  overflow: 'hidden',
-  textOverflow: 'ellipsis',
-  maxWidth: '100%',
+  fontWeight: 'bold',
+  lineHeight: 1.3,
+  textAlign: 'left',
 }
 
-const sectionTitleStyle: React.CSSProperties = {
-  fontSize: '10pt',
-  fontWeight: 700,
-  textAlign: 'center',
-  textTransform: 'uppercase',
-  letterSpacing: 0.5,
-  borderBottom: '1.5px solid #334155',
-  paddingBottom: 4,
-  marginBottom: 10,
-}
-
-/** Quebra aproximada de palavras para caber na largura do bloco. */
-function wrapText(text: string, maxChars: number): string[] {
-  const words = (text || '').split(/\s+/).filter(Boolean)
-  if (words.length === 0) return ['']
-  const lines: string[] = []
-  let current = ''
-  for (const word of words) {
-    const candidate = current ? `${current} ${word}` : word
-    if (candidate.length > maxChars && current) {
-      lines.push(current)
-      current = word
-    } else {
-      current = candidate
-    }
-  }
-  if (current) lines.push(current)
-  // Máximo de 2 linhas visíveis — texto longo vira elipse.
-  const kept = lines.slice(0, 2)
-  const overflow = lines.length > 2
-  return kept.map((l, i) =>
-    overflow && i === kept.length - 1 && l.length >= maxChars - 1 ? `${l.slice(0, maxChars - 2).trimEnd()}…` : l,
-  )
-}
-
-function FieldRow({ label, value }: { label: string; value: string }) {
+function Cabecalho({ titulo, metadata, instituicao, logoUrl }: { titulo: string; metadata: EapDocumentMetadata; instituicao: string; logoUrl?: string | null }) {
   return (
-    <td style={{ padding: '2px 6px', verticalAlign: 'bottom', textAlign: 'left' }}>
-      <span style={fieldLabelStyle}>{label}:</span>
-      <span style={fieldValueStyle}>{value}</span>
-    </td>
+    <div style={{ marginBottom: '7mm' }}>
+      <div style={{ display: 'flex', alignItems: 'center', minHeight: '20mm', marginBottom: '4mm' }}>
+        <div style={{ width: '24mm', flexShrink: 0, display: 'flex', justifyContent: 'center' }}>
+          {logoUrl
+            // eslint-disable-next-line @next/next/no-img-element
+            ? <img src={logoUrl} alt="Logo" style={{ maxHeight: '20mm', maxWidth: '24mm', objectFit: 'contain' }} />
+            : null}
+        </div>
+        <h1 style={{ flex: 1, margin: 0, textAlign: 'center', fontFamily: 'Arial, Helvetica, sans-serif', fontSize: '14pt', fontWeight: 'bold', paddingRight: '24mm' }}>
+          {titulo}
+        </h1>
+      </div>
+      <table style={{ width: '100%', borderCollapse: 'collapse' }}>
+        <tbody>
+          <tr><td colSpan={2} style={{ ...celula, background: '#bfbfbf', height: '1.5em' }}>{instituicao}</td></tr>
+          <tr><td colSpan={2} style={celula}>Nome do projeto: {metadata.projectName}</td></tr>
+          <tr><td colSpan={2} style={celula}>Gerente do projeto: {metadata.projectManager}</td></tr>
+          <tr>
+            <td style={{ ...celula, width: '64%' }}>Elaborado por: {metadata.preparedBy}</td>
+            <td style={celula}><em>Versão:</em> <span style={{ fontWeight: 'normal' }}>{metadata.version || '1.0'}</span></td>
+          </tr>
+          <tr><td colSpan={2} style={celula}>Aprovado por: {metadata.approvedBy}</td></tr>
+          <tr>
+            <td style={celula}>Assinatura: <span style={{ fontWeight: 'normal' }}>{metadata.signature}</span></td>
+            <td style={celula}><em>Data de aprovação:</em> <span style={{ fontWeight: 'normal' }}>{formatDateBR(metadata.approvalDate, '')}</span></td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
   )
 }
 
 const EapDocumentSheet = forwardRef<HTMLDivElement, EapDocumentSheetProps>(
-  function EapDocumentSheet({ metadata, nodes, instituicao, interactive, selectedId, onSelectBlock }, ref) {
-    const layout = useMemo(() => computeEapLayout(nodes), [nodes])
+  function EapDocumentSheet({ metadata, nodes, instituicao, logoUrl, interactive, selectedId, onSelectBlock }, ref) {
+    const layout = useMemo(() => computeEapColumnLayout(nodes), [nodes])
     const flat = useMemo(() => flattenTree(nodes), [nodes])
 
-    // Área disponível para a árvore (após cabeçalho + título da seção)
-    // Paisagem: altura útil menos faixa da numeração, padding e cabeçalho (~58mm).
-    const TREE_AVAIL_H = (LANDSCAPE_H - 8 - PAD_Y * 2 - 62) * MM
-    const scale = fitScale(layout.bounds.width, layout.bounds.height || 1, CONTENT_W, TREE_AVAIL_H)
-    const svgW = layout.bounds.width * scale
-    const svgH = (layout.bounds.height || 1) * scale
-
-    const maxChars = 22
-    const root = nodes[0]
-
-    function renderHeader(title: string) {
-      return (
-        <div style={{ marginBottom: 12 }}>
-          <div style={headerTitleStyle}>{title}</div>
-          <div style={institucionalStyle}>{instituicao}</div>
-          <table style={{ width: '100%', borderCollapse: 'collapse' }}>
-            <tbody>
-              <tr>
-                <FieldRow label="Nome do projeto" value={metadata.projectName} />
-                <FieldRow label="Gerente do projeto" value={metadata.projectManager} />
-              </tr>
-              <tr>
-                <FieldRow label="Elaborado por" value={metadata.preparedBy} />
-                <FieldRow label="Versão" value={metadata.version || '1.0'} />
-              </tr>
-              <tr>
-                <FieldRow label="Aprovado por" value={metadata.approvedBy} />
-                <FieldRow label="Assinatura" value={metadata.signature} />
-              </tr>
-              <tr>
-                <td colSpan={2} style={{ padding: '2px 6px', verticalAlign: 'bottom' }}>
-                  <span style={fieldLabelStyle}>Data de aprovação:</span>
-                  <span style={fieldValueStyle}>{formatDateBR(metadata.approvalDate, '')}</span>
-                </td>
-              </tr>
-            </tbody>
-          </table>
-        </div>
-      )
-    }
+    // Área da árvore: página menos padding, cabeçalho (~62mm), rodapé e faixa da numeração.
+    const availW = (PAGE_W - PAD_X * 2) * MM
+    const availH = (PAGE_H - EAP_PRINT_MARGIN_TOP_MM - 8 - PAD_Y * 2 - 72) * MM
+    const scale = fitScale(layout.bounds.width, layout.bounds.height || 1, availW, availH)
 
     function renderGraphicTree() {
       if (nodes.length === 0) {
@@ -199,30 +118,20 @@ const EapDocumentSheet = forwardRef<HTMLDivElement, EapDocumentSheetProps>(
       return (
         <svg
           viewBox={`0 0 ${layout.bounds.width} ${layout.bounds.height}`}
-          width={svgW}
-          height={svgH}
-          style={{ display: 'block', margin: '0 auto', maxWidth: '100%' }}
+          width={layout.bounds.width * scale}
+          height={(layout.bounds.height || 1) * scale}
+          style={{ display: 'block', margin: '0 auto' }}
           role="tree"
         >
-          {/* Conectores */}
           {layout.connectors.map((c, i) => (
-            <path
-              key={`${c.fromId}-${c.toId}-${i}`}
-              d={c.path}
-              fill="none"
-              stroke="#334155"
-              strokeWidth={1.6}
-            />
+            <path key={`${c.fromId}-${c.toId}-${i}`} d={c.path} fill="none" stroke="#7f8fa6" strokeWidth={1} />
           ))}
-
-          {/* Blocos */}
           {flat.map(node => {
             const g = layout.geometry[node.id]
             if (!g) return null
-            const isRoot = Boolean(g.isRoot)
             const selected = interactive && selectedId === node.id
-            const lines = wrapText(node.title, maxChars)
-
+            const lines = eapWrapLines(eapBoxLabel(node, g.isRoot))
+            const top = g.y + (g.height - lines.length * EAP_COL_LINE_H) / 2
             return (
               <g
                 key={node.id}
@@ -233,49 +142,23 @@ const EapDocumentSheet = forwardRef<HTMLDivElement, EapDocumentSheetProps>(
                 style={interactive ? { cursor: 'pointer' } : undefined}
               >
                 <rect
-                  x={g.x}
-                  y={g.y}
-                  width={g.width}
-                  height={g.height}
-                  fill="#ffffff"
-                  stroke={selected ? '#2563eb' : '#1e293b'}
-                  strokeWidth={selected ? 2.5 : 1.4}
-                  rx={3}
+                  x={g.x} y={g.y} width={g.width} height={g.height}
+                  fill={AZUL} stroke={selected ? '#f59e0b' : AZUL_BORDA} strokeWidth={selected ? 2.5 : 0.8}
                 />
-                <text
-                  x={g.x + g.width / 2}
-                  y={g.y + 13}
-                  textAnchor="middle"
-                  fontSize={isRoot ? 11 : 9.5}
-                  fontWeight={700}
-                  fill="#334155"
-                >
-                  {isRoot ? `${node.code} —` : node.code}
-                </text>
-                <text
-                  x={g.x + g.width / 2}
-                  y={g.y + (isRoot ? 30 : 30)}
-                  textAnchor="middle"
-                  fontSize={isRoot ? 9.5 : 8.5}
-                  fontWeight={600}
-                  fill="#0f172a"
-                  style={{ textTransform: 'uppercase' }}
-                >
-                  {lines[0]}
-                </text>
-                {lines[1] !== undefined && (
+                {lines.map((line, i) => (
                   <text
+                    key={i}
                     x={g.x + g.width / 2}
-                    y={g.y + (isRoot ? 39 : 39)}
+                    y={top + EAP_COL_LINE_H * (i + 1) - EAP_COL_PAD_Y / 3}
                     textAnchor="middle"
-                    fontSize={isRoot ? 9.5 : 8.5}
-                    fontWeight={600}
-                    fill="#0f172a"
-                    style={{ textTransform: 'uppercase' }}
+                    fontFamily="Calibri, Carlito, Arial, sans-serif"
+                    fontSize={9}
+                    fontWeight={g.isRoot ? 700 : 400}
+                    fill="#fff"
                   >
-                    {lines[1]}
+                    {line}
                   </text>
-                )}
+                ))}
               </g>
             )
           })}
@@ -285,31 +168,26 @@ const EapDocumentSheet = forwardRef<HTMLDivElement, EapDocumentSheetProps>(
 
     function renderTextualTree() {
       if (flat.length === 0) {
-        return (
-          <div style={{ color: '#94a3b8', fontStyle: 'italic' }}>
-            Estrutura da EAP vazia — use o editor para montar a árvore.
-          </div>
-        )
+        return <div style={{ color: '#94a3b8', fontStyle: 'italic' }}>Estrutura da EAP vazia — use o editor para montar a árvore.</div>
       }
       return (
-        <div>
+        <div style={{ fontFamily: FONTE_TEXTO, fontSize: '11pt', lineHeight: 1.25 }}>
           {flat.map(node => {
-            const hasChildren = (node.children?.length ?? 0) > 0
-            const isRootLevel = node.level === 1
-            const text = isRootLevel ? `${node.code}- ${node.title.toUpperCase()}` : `${node.code} ${node.title.toUpperCase()}`
+            const temFilhos = (node.children?.length ?? 0) > 0
+            const texto = node.level === 1 ? `${node.code}. ${node.title}` : `${node.code} ${node.title}`
             return (
               <div
                 key={node.id}
                 style={{
-                  marginLeft: node.level > 2 ? (node.level - 2) * 26 : 0,
-                  marginTop: 2,
-                  marginBottom: hasChildren ? 10 : 2,
-                  fontSize: isRootLevel ? '11pt' : '9.5pt',
-                  fontWeight: isRootLevel ? 700 : 500,
-                  whiteSpace: 'pre-wrap',
+                  marginLeft: node.level <= 1 ? 0 : `${(node.level - 2) * 5 + 1}mm`,
+                  marginTop: node.level === 2 ? '1.25em' : 0,
+                  marginBottom: node.level === 1 ? '0.25em' : 0,
+                  fontWeight: node.level <= 2 || temFilhos ? 'bold' : 'normal',
+                  breakInside: 'avoid',
+                  breakAfter: temFilhos ? 'avoid' : 'auto',
                 }}
               >
-                {text}
+                {texto}
               </div>
             )
           })}
@@ -318,29 +196,19 @@ const EapDocumentSheet = forwardRef<HTMLDivElement, EapDocumentSheetProps>(
     }
 
     return (
-      <div
-        ref={ref}
-        data-testid="eap-sheet"
-        className="eap-sheet"
-        style={{ fontFamily: 'Arial, Helvetica, sans-serif' }}
-      >
+      <div ref={ref} data-testid="eap-sheet" className="eap-sheet">
         {/* ── PÁGINA 1 — EAP GRÁFICA ─────────────────────────────────────── */}
-        <div className="eap-page eap-page-1" data-print-sheet-fixed style={{ ...pageStyle, width: `${LANDSCAPE_W}mm`, height: `${LANDSCAPE_H}mm`, pageBreakAfter: 'always' }}>
-          {renderHeader('Modelo de Estrutura Analítica do Projeto (EAP - Gráfica)')}
-          {root && (
-            <div style={{ ...sectionTitleStyle, marginTop: 4 }}>
-              Estrutura Analítica do Projeto — Gráfica
-            </div>
-          )}
-          <div style={{ display: 'flex', justifyContent: 'center' }}>{renderGraphicTree()}</div>
+        <div className="eap-page eap-page-1" data-print-sheet-fixed style={{ ...pageBase, height: `${PAGE_H}mm`, overflow: 'hidden', breakAfter: 'page' }}>
+          <Cabecalho titulo="Modelo de Estrutura Analítica do Projeto (EAP - Gráfica)" metadata={metadata} instituicao={instituicao} logoUrl={logoUrl} />
+          {renderGraphicTree()}
+          <div style={{ position: 'absolute', left: `${PAD_X + 6}mm`, bottom: `${PAD_Y}mm`, fontFamily: FONTE_QUADRO, fontSize: '7pt' }}>
+            © 05_Modelo EAP Gráfica
+          </div>
         </div>
 
-        {/* ── PÁGINA 2 — EAP TEXTUAL ─────────────────────────────────────── */}
-        <div className="eap-page eap-page-2" data-print-sheet-fixed style={pageStyle}>
-          {renderHeader('Modelo de Estrutura Analítica do Projeto (EAP - Texto)')}
-          <div style={{ ...sectionTitleStyle, marginTop: 4 }}>
-            Estrutura Analítica do Projeto — Texto
-          </div>
+        {/* ── PÁGINAS 2+ — EAP TEXTO (o texto continua nas páginas seguintes) ── */}
+        <div className="eap-page eap-page-2" data-print-sheet style={{ ...pageBase, minHeight: `${PAGE_H}mm` }}>
+          <Cabecalho titulo="Modelo de Estrutura Analítica do Projeto (EAP - Texto)" metadata={metadata} instituicao={instituicao} logoUrl={logoUrl} />
           {renderTextualTree()}
         </div>
       </div>

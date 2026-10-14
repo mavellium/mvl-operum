@@ -7,6 +7,11 @@ As versões até 1.6.0 foram reconstruídas retroativamente a partir do históri
 1.0.0 marca a entrada em produção na arquitetura de microsserviços, e cada marco de
 funcionalidade depois disso é uma versão MINOR.
 
+## [1.18.0] — 2026-10-14
+
+### Alterado
+- **Documentos → EAP:** o documento segue o modelo do professor ("Modelo de Estrutura Analítica do Projeto"): logo do projeto e título, quadro de identificação com bordas (instituição em cinza, nome, gerente, elaborado por/versão, aprovado por, assinatura/data de aprovação) e todas as páginas em A4 paisagem. A EAP gráfica mostra a raiz no topo, o nível 2 lado a lado e os demais itens empilhados em coluna, em caixas azuis com "código título", com o rodapé "© 05_Modelo EAP Gráfica". A EAP texto usa Times New Roman, recuo por nível, itens com filhos em negrito e continua nas páginas seguintes sem cortar. A API `GET /api/projects/:id/eap` passa a devolver `logoUrl`.
+
 ## [1.17.0] — 2026-10-14
 
 ### Alterado

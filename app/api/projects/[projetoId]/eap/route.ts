@@ -26,7 +26,7 @@ async function requireProjectAccess(userId: string, role: string, tenantId: stri
 async function loadProject(tenantId: string, projetoId: string) {
   return prisma.project.findFirst({
     where: { id: projetoId, tenantId, deletedAt: null },
-    select: { id: true, name: true, departamentos: true, semestre: true, ano: true },
+    select: { id: true, name: true, departamentos: true, semestre: true, ano: true, logoUrl: true },
   })
 }
 
@@ -73,6 +73,7 @@ export async function GET(_: Request, { params }: RouteCtx) {
     return NextResponse.json({
       document,
       instituicao: formatInstitucionalInfo(project),
+      logoUrl: project.logoUrl ?? null,
     })
   } catch (err) {
     return errorResponse(err, 'GET', projetoId)

@@ -1214,8 +1214,9 @@ Cards do Prof. Fábio de 05–07/10, implementados nesta ordem (1.16.0). Todos e
 | 12.4 | Aba separa equipe e externos (`cmuy87ooy000401pmh1h3b7z5`) | Implementado |
 | 12.5 | Termo: ordem das seções do modelo (`cmuy87p35000601pm40i72arg`) | Implementado: formulário e documento seguem o modelo |
 | 12.6 | Numeração de página (`cmuy87phy000801pmca4lo867`) | Implementado em PDF (`lib/printPageStyle.ts`); `.docx` já tinha |
-| 12.7 | EAP em paisagem e inteira visível (`cmuy87pvw000a01pmp3d85vuz`) | Implementado só na página gráfica; a textual segue em retrato |
+| 12.7 | EAP em paisagem e inteira visível (`cmuy87pvw000a01pmp3d85vuz`) | Implementado só na página gráfica; a textual segue em retrato. Revisto em 12.10 |
 | 12.8 | Tudo da EAP aparece na sprint (`cmuy87qbk000c01pmfo11m6s1`) | Implementado nos dois sentidos; limites no ADR-033 |
+| 12.10 | Documento da EAP idêntico ao modelo do professor (gráfica em colunas + texto, tudo em paisagem) | Implementado (1.18.0) |
 | 12.9 | Ajuste do 12.8: nível 2 = sprints, cards no nível 3+ e código da EAP no card | Implementado (1.17.0); ADR-034 |
 
 ---
