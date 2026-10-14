@@ -592,31 +592,25 @@ export default function ProjectCharter({ membros = [] }: { membros?: MembroEquip
         <FormSection title="Instituição / curso / termo / semestre">
           <textarea aria-label="Instituição / curso / termo / semestre" rows={2} className={textareaClass} value={fields.categoria} onChange={e => setFields(f => ({ ...f, categoria: e.target.value }))} />
         </FormSection>
-        <FormSection title="1. Justificativa do Projeto">
+        <FormSection title="Justificativa do projeto">
           <textarea rows={5} className={textareaClass} value={fields.justificativa}
             onChange={e => setFields(f => ({ ...f, justificativa: e.target.value }))}
             placeholder="Descreva a justificativa do projeto…" />
         </FormSection>
 
-        <FormSection title="2. Objetivo(s) do Projeto">
+        <FormSection title="Objetivo(s) do projeto">
           <textarea rows={5} className={textareaClass} value={fields.objetivos}
             onChange={e => setFields(f => ({ ...f, objetivos: e.target.value }))}
             placeholder="Liste os objetivos do projeto…" />
         </FormSection>
 
-        <FormSection title="3. Metodologia do Projeto">
-          <textarea rows={4} className={textareaClass} value={fields.metodologia}
-            onChange={e => setFields(f => ({ ...f, metodologia: e.target.value }))}
-            placeholder="Descreva a metodologia utilizada…" />
-        </FormSection>
-
-        <FormSection title="4. Descrição do Produto do Projeto">
+        <FormSection title="Descrição do produto do projeto">
           <textarea rows={4} className={textareaClass} value={fields.descricaoProduto}
             onChange={e => setFields(f => ({ ...f, descricaoProduto: e.target.value }))}
             placeholder="Descreva o produto que será entregue…" />
         </FormSection>
 
-        <FormSection title="5. Premissas e Restrições">
+        <FormSection title="Premissas (hipóteses) e restrições para o projeto">
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div>
               <label className={labelClass}>Premissas (Hipóteses)</label>
@@ -633,7 +627,7 @@ export default function ProjectCharter({ membros = [] }: { membros?: MembroEquip
           </div>
         </FormSection>
 
-        <FormSection title="6. Macro Fases, Prazos e Custos">
+        <FormSection title="Macro fases, prazos e custo">
           <MacroFaseTable
             fases={fases}
             onChange={handleFaseChange}
@@ -643,17 +637,23 @@ export default function ProjectCharter({ membros = [] }: { membros?: MembroEquip
           />
         </FormSection>
 
-        <FormSection title="7. Principais Envolvidos">
+        <FormSection title="Principais envolvidos">
           <label className={labelClass}>Instituição / Professores / Outros (manual, uma linha por pessoa)</label>
           <textarea rows={3} className={textareaClass} value={fields.principaisEnvolvidos}
             onChange={e => setFields(f => ({ ...f, principaisEnvolvidos: e.target.value }))}
             placeholder="Ex: Prof. João Silva – Orientador&#10;FATEC São Paulo" />
         </FormSection>
 
-        <FormSection title="8. Limites de Autoridade do Gerente">
+        <FormSection title="Designação de gerente: limites de autoridade">
           <textarea rows={4} className={textareaClass} value={fields.limitesAutoridade}
             onChange={e => setFields(f => ({ ...f, limitesAutoridade: e.target.value }))}
             placeholder="Descreva os limites de autoridade do gerente…" />
+        </FormSection>
+
+        <FormSection title="Metodologia do projeto (opcional, fora do modelo)">
+          <textarea rows={4} className={textareaClass} value={fields.metodologia}
+            onChange={e => setFields(f => ({ ...f, metodologia: e.target.value }))}
+            placeholder="Descreva a metodologia utilizada…" />
         </FormSection>
         </fieldset>
       </div>}
