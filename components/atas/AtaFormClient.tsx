@@ -1,5 +1,6 @@
 'use client'
 
+import { printPageStyle } from '@/lib/printPageStyle'
 import { useProjectPermissions } from '@/components/permissoes/ProjectPermissions'
 
 import HistoricoDocumento from '@/components/projetos/documentacao/HistoricoDocumento'
@@ -54,7 +55,7 @@ export default function AtaFormClient({ projetoId, ataId, mode, members, initial
   const [instituicao, setInstituicao] = useState(initial?.instituicao ?? '')
   const [preview, setPreview] = useState(false)
   const documentRef = useRef<HTMLDivElement>(null)
-  const print = useReactToPrint({ contentRef: documentRef, documentTitle: 'Ata de Reunião', pageStyle: '@page { size: A4; margin: 0 }' })
+  const print = useReactToPrint({ contentRef: documentRef, documentTitle: 'Ata de Reunião', pageStyle: printPageStyle() })
   const [local, setLocal] = useState(initial?.local ?? '')
   const [data, setData] = useState(initial?.data ? toDateOnly(initial.data) : '')
   const [elaboradoPor, setElaboradoPor] = useState(initial?.elaboradoPor ?? '')

@@ -124,6 +124,7 @@ const ProjectCharterDocument = forwardRef<HTMLDivElement, CharterDocumentProps>(
     return (
       <div
         ref={ref}
+        data-print-sheet
         className="bg-white text-black"
         style={{
           width: '210mm',

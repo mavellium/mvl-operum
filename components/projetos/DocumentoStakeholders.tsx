@@ -1,5 +1,6 @@
 'use client'
 
+import { printPageStyle } from '@/lib/printPageStyle'
 import { useProjectPermissions } from '@/components/permissoes/ProjectPermissions'
 
 import { useRef, useState, useEffect, useCallback } from 'react'
@@ -190,10 +191,7 @@ export default function DocumentoStakeholders({ membros = [] }: { membros?: Memb
     documentTitle: 'Formulário de parte interessada',
     onBeforePrint: async () => { document.title = 'Formulário de parte interessada' },
     onAfterPrint: () => { document.title = 'Documentação' },
-    pageStyle: `
-      @page { size: A4 landscape; margin: 0; }
-      @media print { body { -webkit-print-color-adjust: exact; print-color-adjust: exact; } }
-    `,
+    pageStyle: printPageStyle({ landscape: true }),
   })
 
   // ── Commit (salvar versão) ──────────────────────────────────────────────────

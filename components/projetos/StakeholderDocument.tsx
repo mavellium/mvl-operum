@@ -50,6 +50,7 @@ const StakeholderDocument = forwardRef<HTMLDivElement, Props>(
     return (
       <div
         ref={ref}
+        data-print-sheet
         className="bg-white text-black font-sans"
         style={{
           width: '297mm',

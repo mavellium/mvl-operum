@@ -315,7 +315,7 @@ const EapDocumentSheet = forwardRef<HTMLDivElement, EapDocumentSheetProps>(
         style={{ width: `${PAGE_W}mm`, fontFamily: 'Arial, Helvetica, sans-serif' }}
       >
         {/* ── PÁGINA 1 — EAP GRÁFICA ─────────────────────────────────────── */}
-        <div className="eap-page eap-page-1" style={{ ...pageStyle, pageBreakAfter: 'always' }}>
+        <div className="eap-page eap-page-1" data-print-sheet-fixed style={{ ...pageStyle, pageBreakAfter: 'always' }}>
           {renderHeader('Modelo de Estrutura Analítica do Projeto (EAP - Gráfica)')}
           {root && (
             <div style={{ ...sectionTitleStyle, marginTop: 4 }}>
@@ -326,7 +326,7 @@ const EapDocumentSheet = forwardRef<HTMLDivElement, EapDocumentSheetProps>(
         </div>
 
         {/* ── PÁGINA 2 — EAP TEXTUAL ─────────────────────────────────────── */}
-        <div className="eap-page eap-page-2" style={pageStyle}>
+        <div className="eap-page eap-page-2" data-print-sheet-fixed style={pageStyle}>
           {renderHeader('Modelo de Estrutura Analítica do Projeto (EAP - Texto)')}
           <div style={{ ...sectionTitleStyle, marginTop: 4 }}>
             Estrutura Analítica do Projeto — Texto

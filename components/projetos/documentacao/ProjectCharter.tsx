@@ -1,5 +1,6 @@
 'use client'
 
+import { printPageStyle } from '@/lib/printPageStyle'
 import { useProjectPermissions } from '@/components/permissoes/ProjectPermissions'
 
 import { useRef, useState, useEffect, useCallback } from 'react'
@@ -305,10 +306,7 @@ export default function ProjectCharter({ membros = [] }: { membros?: MembroEquip
   const handlePrint = useReactToPrint({
     contentRef: printRef,
     documentTitle: 'Termo de Abertura de Projeto',
-    pageStyle: `
-      @page { size: A4; margin: 15mm 20mm; }
-      @media print { body { -webkit-print-color-adjust: exact; print-color-adjust: exact; } }
-    `,
+    pageStyle: printPageStyle({ marginMm: { top: 15, x: 20 } }),
   })
 
   // ── Commit (save version) ──────────────────────────────────────────────────
