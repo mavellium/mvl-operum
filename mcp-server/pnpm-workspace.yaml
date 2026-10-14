@@ -1,1 +1,4 @@
 packages: []
+overrides:
+  proxy-addr: ">=2.0.8"
+  source-map-js: ">=1.2.2"

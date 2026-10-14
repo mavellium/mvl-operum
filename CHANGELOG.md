@@ -7,6 +7,9 @@ As versões até 1.6.0 foram reconstruídas retroativamente a partir do históri
 1.0.0 marca a entrada em produção na arquitetura de microsserviços, e cada marco de
 funcionalidade depois disso é uma versão MINOR.
 
+## [1.15.2] — 2026-10-14
+- **Segurança:** atualiza dependências de produção com avisos novos: `next` 16.3.8 (SSRF na otimização de imagens), `proxy-addr` ≥ 2.0.8 (gateway), `sharp`, `source-map-js`, `shell-quote` e `@modelcontextprotocol/sdk` ≥ 1.31.0 (mcp-server). Sem mudança de comportamento.
+
 ## [1.15.1] — 2026-10-05
 - **Deploy:** valida a chave de métricas antes de alterar a release; webhook vazio mantém alertas locais com aviso de envio externo pendente. Webhook preenchido inválido continua bloqueado, com diagnóstico específico sem expor segredos.
 
