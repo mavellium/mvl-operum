@@ -1,6 +1,7 @@
 'use client'
 
 import { printPageStyle } from '@/lib/printPageStyle'
+import { EAP_PRINT_CSS } from './EapDocumentSheet'
 import { useProjectPermissions } from '@/components/permissoes/ProjectPermissions'
 
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
@@ -230,7 +231,7 @@ export default function EapDocument() {
   const handlePrint = useReactToPrint({
     contentRef: printRef,
     documentTitle: doc ? `EAP - ${doc.projectName || 'Projeto'}` : 'EAP - Estrutura Analítica do Projeto',
-    pageStyle: printPageStyle(),
+    pageStyle: printPageStyle({ extraCss: EAP_PRINT_CSS }),
   })
 
   // ── Salvar (PUT) ──────────────────────────────────────────────────────────

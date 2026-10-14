@@ -11,9 +11,11 @@ interface PrintPageStyleOptions {
   landscape?: boolean
   /** Margens laterais/superior do papel, em mm. Padrão: 0 (a folha já tem o próprio padding). */
   marginMm?: { top: number; x: number }
+  /** CSS adicional, ex.: páginas nomeadas com orientação própria. */
+  extraCss?: string
 }
 
-export function printPageStyle({ landscape = false, marginMm = { top: 0, x: 0 } }: PrintPageStyleOptions = {}): string {
+export function printPageStyle({ landscape = false, marginMm = { top: 0, x: 0 }, extraCss = '' }: PrintPageStyleOptions = {}): string {
   const height = landscape ? 210 : 297
   const usable = height - marginMm.top - PAGE_NUMBER_MARGIN_MM
   return `
@@ -31,5 +33,6 @@ export function printPageStyle({ landscape = false, marginMm = { top: 0, x: 0 } 
       [data-print-sheet] { min-height: ${usable}mm !important; }
       [data-print-sheet-fixed] { height: ${usable}mm !important; }
     }
+    ${extraCss}
   `
 }
