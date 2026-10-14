@@ -695,6 +695,7 @@ export interface SyncEapSprintResult {
   cardsCriados: number
   nosCriados: number
   nosMovidos: number
+  nosRemovidos: number
   titulosAtualizados: number
 }
 
@@ -707,16 +708,17 @@ const texto = (v: unknown): string | undefined => (typeof v === 'string' ? v : u
  * (`properties.cardId`). Idempotente.
  *  - sprint sem nó → vincula o nó de nível 2 de mesmo nome ou cria um no nível 2;
  *  - folha do nível 3+ sem card → cria o card em "A Fazer" da sprint do seu nó de nível 2
- *    (se o nível 2 não for sprint: sprint ativa, ou planejada; sem sprint, backlog do projeto);
+ *    (se o nível 2 não for sprint: sprint ativa, ou planejada; sem sprint, nenhum card é criado);
  *  - card de sprint sem nó → cria o nó dentro do nó da sprint;
  *  - card que mudou de sprint, ou cujo nó ficou no nível 2 (versão anterior) → o nó vai para a sprint do card;
  *  - nó e card/sprint com o mesmo título e sem vínculo → são vinculados, sem duplicar;
  *  - título diferente em par vinculado → vale o lado alterado por último.
+ *  - card no backlog não aparece na EAP/planilha: o nó dele no nível 2 ou dentro de uma sprint é removido.
  * Card excluído não é recriado: o nó mantém o vínculo. Card do backlog sem nó não entra na EAP.
  */
 export async function sincronizarEapComSprint(projectId: string, tenantId: string): Promise<SyncEapSprintResult> {
   return prisma.$transaction(async tx => {
-    const result: SyncEapSprintResult = { cardsCriados: 0, nosCriados: 0, nosMovidos: 0, titulosAtualizados: 0 }
+    const result: SyncEapSprintResult = { cardsCriados: 0, nosCriados: 0, nosMovidos: 0, nosRemovidos: 0, titulosAtualizados: 0 }
     await tx.$executeRaw`SELECT pg_advisory_xact_lock(hashtext(${'eap-sprint:' + projectId}))`
 
     const project = await tx.project.findFirst({ where: { id: projectId, tenantId, deletedAt: null }, select: { id: true } })
@@ -861,11 +863,28 @@ export async function sincronizarEapComSprint(projectId: string, tenantId: strin
       paisAntigos.add(pai)
       result.nosMovidos++
     }
+
+    // 4b) card no backlog não aparece na EAP nem na planilha: remove o nó dele quando está
+    //     solto no nível 2 (versões anteriores) ou dentro de uma sprint (card voltou ao backlog).
+    //     Folhas sob nível 2 que não é sprint (estrutura do usuário) são preservadas.
+    for (const n of nodes) {
+      const cardId = cardIdDe(n.id)
+      const card = cardId ? cardPorId.get(cardId) : undefined
+      if (!card || card.deletedAt || card.sprintId || filhos.has(n.id) || sprintIdDe(n.id)) continue
+      const pai = paiDe.get(n.id)
+      if (!pai || (pai !== root.id && !sprintIdDe(nivel2De(n.id)))) continue
+      await tx.wbsNode.delete({ where: { id: n.id } })
+      paiDe.delete(n.id)
+      propsDe.delete(n.id)
+      mudou.delete(n.id)
+      paisAntigos.add(pai)
+      result.nosRemovidos++
+    }
     for (const pai of paisAntigos) await recompactChildren(tx, pai, projectId, tenantId)
 
     // 5) folhas do nível 3+ sem card → cards em "A Fazer" da sprint do nível 2
     filhos = comFilhos()
-    const semCard = nodes.filter(n => ehFolhaDeCard(n.id, filhos) && !cardIdDe(n.id))
+    const semCard = nodes.filter(n => paiDe.has(n.id) && ehFolhaDeCard(n.id, filhos) && !cardIdDe(n.id))
     if (semCard.length) {
       let reserva: { id: string } | null | undefined
       const sprintReserva = async () => {
@@ -892,12 +911,14 @@ export async function sincronizarEapComSprint(projectId: string, tenantId: strin
       for (const n of semCard) {
         const sid = sprintIdDe(nivel2De(n.id))
         const sprintId = sid && sprintViva.has(sid) ? sid : await sprintReserva()
+        // Sem sprint não há card: a EAP nunca cria card no backlog.
         const coluna = sprintId ? await colunaDa(sprintId) : null
+        if (!sprintId || !coluna) continue
         const descricao = texto(propsDe.get(n.id)!.description) ?? ''
         const card = await tx.card.create({
           data: {
             title: n.title, description: descricao, projectId,
-            ...(sprintId && coluna ? { sprintId, sprintColumnId: coluna.id, sprintPosition: coluna.posicao++ } : {}),
+            sprintId, sprintColumnId: coluna.id, sprintPosition: coluna.posicao++,
           },
           select: { id: true },
         })
@@ -920,7 +941,7 @@ export async function sincronizarEapComSprint(projectId: string, tenantId: strin
       await criarNo(destino, c.title, { cardId: c.id, ...(c.description.trim() ? { description: c.description.slice(0, 2000) } : {}) })
     }
 
-    if (result.nosCriados || result.cardsCriados || result.titulosAtualizados || result.nosMovidos || mudou.size) {
+    if (result.nosCriados || result.cardsCriados || result.titulosAtualizados || result.nosMovidos || result.nosRemovidos || mudou.size) {
       await syncCodes(tx, projectId, tenantId)
       await bumpVersion(tx, projectId, tenantId)
     }

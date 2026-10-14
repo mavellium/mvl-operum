@@ -11,14 +11,14 @@ import { useReactToPrint } from 'react-to-print'
 import { Save, History } from 'lucide-react'
 import Modal from '@/components/ui/Modal'
 import Drawer from '@/components/ui/Drawer'
-import DateInput from '@/components/ui/DateInput'
+import CamposQuadroDocumento from './CamposQuadroDocumento'
 import { useToast } from '@/components/ui/Toast'
 import { fetchWithSession } from '@/lib/clientFetch'
 import { formatDateBR, toDateInputValue } from '@/lib/date'
 import MacroFaseTable, { type MacroFase } from './MacroFaseTable'
 import ProjectCharterDocument, { type CharterDocumentProps } from './ProjectCharterDocument'
 import type { CharterChange } from '@/lib/charterChanges'
-import MembroEquipeSelect, {
+import {
   type MembroEquipeOption,
   useMembrosEquipe,
 } from './MembroEquipeSelect'
@@ -495,43 +495,23 @@ export default function ProjectCharter({ membros = [] }: { membros?: MembroEquip
       </div>}
       {/* ── Version meta ──────────────────────────────────────────────────── */}
       {screenMode === 'form' && <div inert={savingVersion} className="w-full max-w-[210mm] bg-white rounded-xl shadow-md p-5 grid grid-cols-1 sm:grid-cols-2 gap-4">
-        <div>
-          <label className={labelClass} htmlFor="pc-elaborado-por">Elaborado por</label>
-          <MembroEquipeSelect
-            id="pc-elaborado-por"
-            membros={todosMembros}
-            projetoId={projetoId}
-            value={versionMeta.elaboradoPorUserId}
-            onChange={handleSelectElaborado}
-            onCriarMembro={registrarCriado}
-            placeholder="Selecionar membro da equipe"
-            className={inputClass}
-          />
-        </div>
-        <div>
-          <label className={labelClass} htmlFor="pc-aprovado-por">Aprovado por</label>
-          <MembroEquipeSelect
-            id="pc-aprovado-por"
-            membros={todosMembros}
-            projetoId={projetoId}
-            value={versionMeta.aprovadoPorUserId}
-            onChange={handleSelectAprovado}
-            onCriarMembro={registrarCriado}
-            placeholder="Selecionar membro da equipe"
-            className={inputClass}
-          />
-        </div>
-        <div>
-          <label className={labelClass}>Versão</label>
-          <input className={inputClass} value={versionMeta.versao}
-            onChange={e => setVersionMeta(m => ({ ...m, versao: e.target.value }))}
-            placeholder="1.0" />
-        </div>
-        <div>
-          <label className={labelClass}>Data de aprovação</label>
-          <DateInput className={inputClass} value={versionMeta.dataAprovacaoRaw}
-            onChange={v => setVersionMeta(m => ({ ...m, dataAprovacaoRaw: v }))} />
-        </div>
+        <CamposQuadroDocumento
+          idPrefix="pc"
+          projetoId={projetoId}
+          membros={todosMembros}
+          onCriarMembro={registrarCriado}
+          gerenteProjeto={data?.gerenteProjeto ?? ''}
+          elaboradoPorUserId={versionMeta.elaboradoPorUserId}
+          onElaboradoPor={handleSelectElaborado}
+          aprovadoPorUserId={versionMeta.aprovadoPorUserId}
+          onAprovadoPor={handleSelectAprovado}
+          versao={versionMeta.versao}
+          onVersao={v => setVersionMeta(m => ({ ...m, versao: v }))}
+          dataAprovacao={versionMeta.dataAprovacaoRaw}
+          onDataAprovacao={v => setVersionMeta(m => ({ ...m, dataAprovacaoRaw: v }))}
+          labelClass={labelClass}
+          inputClass={inputClass}
+        />
       </div>}
 
       {draftError && (

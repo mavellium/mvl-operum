@@ -6,6 +6,7 @@ import { useProjectPermissions } from '@/components/permissoes/ProjectPermission
 
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { useParams, useRouter } from 'next/navigation'
+import Link from 'next/link'
 import { useReactToPrint } from 'react-to-print'
 import {
   ArrowLeft, Undo2, Redo2, Plus, ZoomIn, ZoomOut, Save, Eye, Download,
@@ -13,7 +14,8 @@ import {
 } from 'lucide-react'
 import Modal from '@/components/ui/Modal'
 import ConfirmDialog from '@/components/ui/ConfirmDialog'
-import DateInput from '@/components/ui/DateInput'
+import CamposQuadroDocumento from './CamposQuadroDocumento'
+import { type MembroEquipeOption, useMembrosEquipe } from './MembroEquipeSelect'
 import { useToast } from '@/components/ui/Toast'
 import { fetchWithSession } from '@/lib/clientFetch'
 import type { EapDocument, EapNode, EapDocumentMetadata } from '@/types/eap'
@@ -58,7 +60,7 @@ function defaultSiblingTitle(level: number): string {
   return level <= 1 ? '[ENTREGA / FASE]' : '[PACOTE DE TRABALHO]'
 }
 
-export default function EapDocument() {
+export default function EapDocument({ membros = [] }: { membros?: MembroEquipeOption[] }) {
   const permissions = useProjectPermissions()
   const canEdit = permissions.has('documentos:editar')
   const { projetoId } = useParams<{ projetoId: string }>()
@@ -71,6 +73,14 @@ export default function EapDocument() {
   const [doc, setDoc] = useState<EapDocument | null>(null)
   const [instituicao, setInstituicao] = useState('')
   const [logoUrl, setLogoUrl] = useState<string | null>(null)
+  /** Estrutura vinda da aba EAP/WBS: no documento, só leitura. */
+  const [origemWbs, setOrigemWbs] = useState(false)
+  /** Assinatura do gerente (só com versão aprovada). */
+  const [assinaturaUrl, setAssinaturaUrl] = useState<string | null>(null)
+  const { todos: todosMembros, registrarCriado } = useMembrosEquipe(membros)
+  // Documentos antigos só guardavam o nome: recupera o membro pelo nome para o select.
+  const membrosRef = useRef(membros)
+  useEffect(() => { membrosRef.current = membros }, [membros])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
 
@@ -98,6 +108,7 @@ export default function EapDocument() {
     if (!projetoId) return
     setLoading(true)
     setError(null)
+    const membroPorNome = (nome?: string | null) => (nome ? membrosRef.current.find(m => m.name === nome)?.id ?? null : null)
     try {
       const r = await fetchWithSession(`/api/projects/${projetoId}/eap`)
       if (!r.ok) {
@@ -108,10 +119,14 @@ export default function EapDocument() {
       setDoc(data.document)
       setInstituicao(data.instituicao ?? '')
       setLogoUrl(data.logoUrl ?? null)
+      setOrigemWbs(Boolean(data.origemWbs))
+      setAssinaturaUrl(data.assinaturaUrl ?? null)
       setMetadata({
         projectName: data.document.projectName ?? '',
         projectManager: data.document.projectManager ?? '',
         preparedBy: data.document.preparedBy ?? '',
+        preparedByUserId: data.document.preparedByUserId ?? membroPorNome(data.document.preparedBy),
+        approvedByUserId: data.document.approvedByUserId ?? membroPorNome(data.document.approvedBy),
         version: data.document.version || '1.0',
         approvedBy: data.document.approvedBy ?? '',
         signature: data.document.signature ?? '',
@@ -220,7 +235,7 @@ export default function EapDocument() {
   // ── Abrir/atualizar o painel de edição do bloco ───────────────────────────
 
   function openBlock(id: string) {
-    if (!canEdit) return
+    if (!canEdit || origemWbs) return
     setSelectedId(id)
     const node = findNode(nodes, id)
     setEditingTitle(node?.title ?? '')
@@ -322,6 +337,11 @@ export default function EapDocument() {
     setMetadata(prev => ({ ...prev, [field]: value }))
   }
 
+  function updateMembro(nome: 'preparedBy' | 'approvedBy', idField: 'preparedByUserId' | 'approvedByUserId', membro: MembroEquipeOption | null) {
+    if (!canEdit) return
+    setMetadata(prev => ({ ...prev, [nome]: membro?.name ?? '', [idField]: membro?.id ?? null }))
+  }
+
   return (
     <div className="min-h-screen bg-gray-300 flex flex-col items-center py-8 gap-5">
       {/* ── Toolbar (SPEC §19) ───────────────────────────────────────────── */}
@@ -354,6 +374,7 @@ export default function EapDocument() {
           <Redo2 className="w-4 h-4" />
         </button>
         <span className="w-px h-6 bg-slate-400/50 mx-1" />
+        {!origemWbs && <>
         <button
           onClick={handleAddLevel}
           className={`${toolButton} bg-white text-blue-700 border border-blue-200 hover:bg-blue-50 transition-colors`}
@@ -366,6 +387,7 @@ export default function EapDocument() {
         >
           <CornerDownRight className="w-4 h-4" /> Adicionar item
         </button>
+        </>}
         <span className="w-px h-6 bg-slate-400/50 mx-1" />
         <div className="flex items-center gap-1 bg-white rounded-lg border border-slate-300 px-1 py-0.5">
           <button
@@ -407,14 +429,14 @@ export default function EapDocument() {
         >
           <Save className="w-4 h-4" /> {saving ? 'Salvando…' : 'Salvar'}
         </button>
-        <button
+        {!origemWbs && <button
           onClick={() => setConfirmReset(true)}
           disabled={saving || !canEdit || !permissions.has('documentos:excluir')}
           className={`${toolButton} text-amber-700 bg-white border border-amber-200 hover:bg-amber-50 transition-colors`}
           title="Recriar o documento a partir do modelo EAP (matriz original)"
         >
           <RotateCcw className="w-4 h-4" /> Modelo
-        </button>
+        </button>}
         <button
           onClick={() => handlePrint()}
           disabled={!doc}
@@ -422,6 +444,12 @@ export default function EapDocument() {
         >
           <Download className="w-4 h-4" /> Exportar PDF
         </button>
+      </div>
+
+      <div className="w-[297mm] rounded-lg border border-blue-200 bg-blue-50 px-4 py-2 text-sm text-blue-900 print:hidden">
+        {origemWbs
+          ? <>A estrutura deste documento vem da aba <strong>EAP/WBS</strong>. Para incluir, renomear ou mover itens, <Link href={`/projetos/${projetoId}/wbs`} className="font-semibold underline">edite a EAP/WBS</Link>.</>
+          : <>A aba <strong>EAP/WBS</strong> ainda não foi montada; o documento usa a estrutura do modelo. <Link href={`/projetos/${projetoId}/wbs`} className="font-semibold underline">Montar a EAP/WBS</Link>.</>}
       </div>
 
       {/* ── Metadados do documento (SPEC §17) ────────────────────────────── */}
@@ -437,69 +465,28 @@ export default function EapDocument() {
               placeholder="Nome do projeto"
             />
           </div>
-          <div>
-            <label className={labelClass} htmlFor="eap-gerente">Gerente do projeto</label>
-            <input
-              id="eap-gerente"
-              className={inputClass}
-              value={metadata.projectManager}
-              onChange={e => updateMetadata('projectManager', e.target.value)}
-              placeholder="Gerente do projeto"
-            />
-          </div>
-          <div>
-            <label className={labelClass} htmlFor="eap-elaborado-por">Elaborado por</label>
-            <input
-              id="eap-elaborado-por"
-              className={inputClass}
-              value={metadata.preparedBy}
-              onChange={e => updateMetadata('preparedBy', e.target.value)}
-              placeholder="Elaborado por"
-            />
-          </div>
-          <div>
-            <label className={labelClass} htmlFor="eap-versao">Versão</label>
-            <input
-              id="eap-versao"
-              className={inputClass}
-              value={metadata.version}
-              onChange={e => updateMetadata('version', e.target.value)}
-              placeholder="1.0"
-            />
-          </div>
-          <div>
-            <label className={labelClass} htmlFor="eap-aprovado-por">Aprovado por</label>
-            <input
-              id="eap-aprovado-por"
-              className={inputClass}
-              value={metadata.approvedBy}
-              onChange={e => updateMetadata('approvedBy', e.target.value)}
-              placeholder="Aprovado por"
-            />
-          </div>
-          <div>
-            <label className={labelClass} htmlFor="eap-assinatura">Assinatura</label>
-            <input
-              id="eap-assinatura"
-              className={inputClass}
-              value={metadata.signature}
-              onChange={e => updateMetadata('signature', e.target.value)}
-              placeholder="Assinatura"
-            />
-          </div>
-          <div>
-            <label className={labelClass} htmlFor="eap-data-aprovacao">Data de aprovação</label>
-            <DateInput
-              id="eap-data-aprovacao"
-              className={inputClass}
-              value={metadata.approvalDate ?? ''}
-              onChange={v => updateMetadata('approvalDate', v || null)}
-            />
-          </div>
+          <CamposQuadroDocumento
+            idPrefix="eap"
+            projetoId={projetoId}
+            membros={todosMembros}
+            onCriarMembro={registrarCriado}
+            gerenteProjeto={metadata.projectManager}
+            elaboradoPorUserId={metadata.preparedByUserId}
+            onElaboradoPor={m => updateMembro('preparedBy', 'preparedByUserId', m)}
+            aprovadoPorUserId={metadata.approvedByUserId}
+            onAprovadoPor={m => updateMembro('approvedBy', 'approvedByUserId', m)}
+            versao={metadata.version}
+            onVersao={v => updateMetadata('version', v)}
+            dataAprovacao={metadata.approvalDate ?? ''}
+            onDataAprovacao={v => updateMetadata('approvalDate', v || null)}
+            disabled={!canEdit}
+            labelClass={labelClass}
+            inputClass={inputClass}
+          />
           <div className="flex items-end">
             <p className="text-xs text-slate-500 leading-relaxed">
               <strong>{totalNodes}</strong> {totalNodes === 1 ? 'bloco' : 'blocos'} na EAP ·{' '}
-              {selectedNode ? `selecionado: ${selectedNode.code}` : 'clique em um bloco para editar'}
+              {origemWbs ? 'estrutura da aba EAP/WBS' : selectedNode ? `selecionado: ${selectedNode.code}` : 'clique em um bloco para editar'}
             </p>
           </div>
         </div>
@@ -514,7 +501,8 @@ export default function EapDocument() {
             nodes={snapshot.nodes}
             instituicao={instituicao}
             logoUrl={logoUrl}
-            interactive={!viewing}
+            assinaturaUrl={assinaturaUrl}
+            interactive={!viewing && !origemWbs}
             selectedId={selectedId}
             onSelectBlock={id => !viewing && openBlock(id)}
           />

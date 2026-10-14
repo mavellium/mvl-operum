@@ -11,13 +11,13 @@ import StakeholderDocument, {
   type ProjetoHeader,
   type Stakeholder,
 } from './StakeholderDocument'
-import MembroEquipeSelect, {
+import {
   type MembroEquipeOption,
   useMembrosEquipe,
 } from './documentacao/MembroEquipeSelect'
 import Modal from '@/components/ui/Modal'
 import Drawer from '@/components/ui/Drawer'
-import DateInput from '@/components/ui/DateInput'
+import CamposQuadroDocumento from './documentacao/CamposQuadroDocumento'
 import { useToast } from '@/components/ui/Toast'
 import { fetchWithSession } from '@/lib/clientFetch'
 import { formatDateBR, toDateInputValue } from '@/lib/date'
@@ -337,49 +337,23 @@ export default function DocumentoStakeholders({ membros = [] }: { membros?: Memb
         {/* Campos editáveis */}
         {!loading && !error && data && (
           <div className="bg-white rounded-xl shadow-md p-5 grid grid-cols-2 gap-4">
-            <div>
-              <label className={labelClass} htmlFor="ds-elaborado-por">Elaborado por</label>
-              <MembroEquipeSelect
-                id="ds-elaborado-por"
-                membros={todosMembros}
-                projetoId={projetoId}
-                value={editable.elaboradoPorUserId}
-                onChange={handleSelectElaborado}
-                onCriarMembro={registrarCriado}
-                placeholder="Selecionar membro da equipe"
-                className={inputClass}
-              />
-            </div>
-            <div>
-              <label className={labelClass} htmlFor="ds-aprovado-por">Aprovado por</label>
-              <MembroEquipeSelect
-                id="ds-aprovado-por"
-                membros={todosMembros}
-                projetoId={projetoId}
-                value={editable.aprovadoPorUserId}
-                onChange={handleSelectAprovado}
-                onCriarMembro={registrarCriado}
-                placeholder="Selecionar membro da equipe"
-                className={inputClass}
-              />
-            </div>
-            <div>
-              <label className={labelClass}>Versão</label>
-              <input
-                className={inputClass}
-                value={editable.versao}
-                onChange={e => update('versao', e.target.value)}
-                placeholder="1.0"
-              />
-            </div>
-            <div>
-              <label className={labelClass}>Data de aprovação</label>
-              <DateInput
-                className={inputClass}
-                value={editable.dataAprovacaoRaw}
-                onChange={v => update('dataAprovacaoRaw', v)}
-              />
-            </div>
+            <CamposQuadroDocumento
+              idPrefix="ds"
+              projetoId={projetoId}
+              membros={todosMembros}
+              onCriarMembro={registrarCriado}
+              gerenteProjeto={data.header.gerenteProjeto ?? ''}
+              elaboradoPorUserId={editable.elaboradoPorUserId}
+              onElaboradoPor={handleSelectElaborado}
+              aprovadoPorUserId={editable.aprovadoPorUserId}
+              onAprovadoPor={handleSelectAprovado}
+              versao={editable.versao}
+              onVersao={v => update('versao', v)}
+              dataAprovacao={editable.dataAprovacaoRaw}
+              onDataAprovacao={v => update('dataAprovacaoRaw', v)}
+              labelClass={labelClass}
+              inputClass={inputClass}
+            />
           </div>
         )}
 

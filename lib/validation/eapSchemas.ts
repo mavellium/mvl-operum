@@ -40,8 +40,10 @@ export const SaveEapDocumentSchema = z.object({
   projectName: z.string().trim().max(300).default(''),
   projectManager: z.string().trim().max(300).default(''),
   preparedBy: z.string().trim().max(300).default(''),
+  preparedByUserId: z.string().max(64).nullable().optional(),
   version: z.string().trim().max(50).default('1.0'),
   approvedBy: z.string().trim().max(300).default(''),
+  approvedByUserId: z.string().max(64).nullable().optional(),
   signature: z.string().trim().max(300).default(''),
   approvalDate: z
     .string()
