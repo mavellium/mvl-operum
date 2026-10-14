@@ -15,6 +15,8 @@ export interface WbsNodeStyle {
 export interface WbsNodeProperties {
   /** Card da sprint vinculado a este nó (sincronização EAP ↔ sprint). */
   cardId?: string;
+  /** Sprint representada por este nó (nível 2 da EAP). */
+  sprintId?: string;
   /** Folha: custo DERIVADO de tempo×valorPorMinuto+materiais (§5.4). Rollup soma. >= 0 */
   cost?: number;
   /** INPUT só em folhas; rollup soma os filhos. >= 0 */

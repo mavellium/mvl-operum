@@ -48,6 +48,8 @@ export interface CardResponsible {
 export interface Card {
   id: string
   title: string
+  /** Código do nó vinculado na EAP (ex.: "1.2.3"); exibido como "1.2.3 - título". */
+  eapCode?: string
   description: string
   color: CardColor
   priority?: string

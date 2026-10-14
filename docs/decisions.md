@@ -424,10 +424,22 @@ Ao substituir uma decisão, manter o texto histórico, alterar seu status e liga
 - **Condições de revisão:** novos modelos ou necessidade de assinatura digital com verificação; requisito de exportação assíncrona no servidor exigiria armazenamento confiável de imagens.
 - **Referências:** `services/documentRevisionService.ts`, `lib/charterChanges.ts`, `lib/exports/`, `components/projetos/documentacao/ProjectCharter.tsx`, `docs/validation/sdd-7/README.md` e SDD fase 7.
 
+## ADR-034 — Nível 2 da EAP representa as sprints
+
+- **Data:** 2026-10-14
+- **Status:** implementada; substitui o posicionamento de nós do ADR-033 (cards sem nó como filhos da raiz). Validação com dados reais pendente.
+- **Contexto:** após a 1.16.0, os nós criados a partir de cards apareceram no nível 2, como filhos diretos do projeto. O usuário definiu a estrutura: nível 2 são as sprints e do nível 3 para baixo ficam os cards; os cards devem mostrar o código da EAP ("1.1.1 - Fazer isso").
+- **Escolha:** guardar `sprintId` em `WbsNode.properties` dos nós do nível 2. A reconciliação (`sincronizarEapComSprint`) cria/vincula um nó de nível 2 por sprint não excluída, cria nós de card dentro do nó da sprint, move o nó quando o card muda de sprint (inclusive os deixados no nível 2 pela 1.16.0) e só transforma em card as folhas do nível 3+, na sprint do seu nível 2 (nível 2 que não é sprint, como uma macrofase: sprint ativa/planejada). O código é exibido no quadro a partir de `WbsNode.code`, sem alterar `Card.title`.
+- **Justificativa:** segue a estrutura pedida sem migration nem mudança no sprint-service; mantém o código como dado derivado da EAP, que muda ao reordenar a árvore.
+- **Alternativas consideradas:** gravar o código no título do card (ficaria desatualizado ao renumerar e entraria no sync de títulos); criar sprints a partir de nós de nível 2 (não adotado: macrofases também ficam no nível 2 e criar sprint exige colunas/datas).
+- **Consequências:** nós do nível 2 sem sprint não viram cards; card do backlog sem nó não aparece na EAP; o nome da sprint e o título do nó convergem para o lado alterado por último; um card criado no quadro só mostra o código depois do próximo carregamento.
+- **Condições de revisão:** pedido para criar sprints a partir da EAP, para levar backlog à EAP ou para exibir o código em outras telas de cards.
+- **Referências:** ADR-033, `services/wbsService.ts`, `app/actions/sprintBoard.ts`, `components/card/Card.tsx`, `__tests__/unit/wbsSprintSync.test.ts`, SDD 12.9.
+
 ## ADR-033 — EAP e sprint sincronizadas por vínculo no nó
 
 - **Data:** 2026-10-14
-- **Status:** implementada; validação com dados reais pendente.
+- **Status:** implementada; posicionamento dos nós substituído pelo ADR-034 (nível 2 = sprints).
 - **Contexto:** o cliente pediu que tudo da EAP apareça na sprint e que cards criados na sprint apareçam na EAP e na planilha de custos (card `cmuy87qbk000c01pmfo11m6s1`, SDD 12.8). Não havia vínculo entre `WbsNode` (monolito) e `Card` (sprint-service); o banco é compartilhado.
 - **Escolha:** guardar `cardId` em `WbsNode.properties` e reconciliar, de forma idempotente, ao abrir EAP, planilha e quadro da sprint (`sincronizarEapComSprint`, `services/wbsService.ts`). Folhas viram cards em "A Fazer" da sprint ativa; cards sem nó viram filhos da raiz. Escolhas do usuário: só folhas; coluna "A Fazer" com sincronização, sem duplicar por título.
 - **Justificativa:** evita migration e mudança de contrato no gateway/sprint-service; o `properties` já é validado e preservado por `saveTree`.

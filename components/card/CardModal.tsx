@@ -434,6 +434,9 @@ export default function CardModal({
             className="w-3.5 h-3.5 rounded-full shrink-0 ring-2 ring-slate-200"
             style={{ backgroundColor: color }}
           />
+          {initialCard?.eapCode && (
+            <span className="shrink-0 text-xl font-semibold text-slate-400 tabular-nums" title="Código na EAP">{initialCard.eapCode} -</span>
+          )}
           {readOnly ? (
             <h2 className="flex-1 text-xl font-semibold text-slate-900 rounded px-1 truncate">{title}</h2>
           ) : (

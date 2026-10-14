@@ -20,6 +20,8 @@ type BoardCard = {
   responsibles?: { user: { id: string; name: string; avatarUrl: string | null } }[]
   startDate?: string | Date | null
   endDate?: string | Date | null
+  /** Código do nó vinculado na EAP (ex.: "1.2.3"), exibido antes do título. */
+  eapCode?: string
 }
 
 type BacklogCard = BoardCard
@@ -52,6 +54,21 @@ function enrichCardResponsibles<T extends { responsibles?: { user: ResponsibleUs
         avatarUrl: r.user.avatarUrl ?? avatarByUserId.get(r.user.id) ?? null,
       },
     })),
+  }
+}
+
+async function codigosEapDosCards(projectId: string, tenantId: string): Promise<Map<string, string>> {
+  if (!projectId) return new Map()
+  try {
+    const nos = await prisma.wbsNode.findMany({ where: { projectId, tenantId }, select: { code: true, properties: true } })
+    const mapa = new Map<string, string>()
+    for (const no of nos) {
+      const cardId = (no.properties as Record<string, unknown> | null)?.cardId
+      if (typeof cardId === 'string' && no.code) mapa.set(cardId, no.code)
+    }
+    return mapa
+  } catch {
+    return new Map() // sem EAP o quadro carrega sem os códigos
   }
 }
 
@@ -133,6 +150,17 @@ export async function getSprintBoardAction(sprintId: string, projectId?: string)
       }))
       finalBacklog = baseBacklog.map(card => ({ ...card, attachments: enrich(card.id) }))
     } catch { /* file-service indisponível — sprint board carrega sem anexos */ }
+
+    // Código da EAP de cada card (vínculo em WbsNode.properties.cardId).
+    const codigoPorCard = await codigosEapDosCards(resolvedProjectId, tenantId)
+    if (codigoPorCard.size) {
+      const comCodigo = <T extends { id: string }>(card: T) => {
+        const eapCode = codigoPorCard.get(card.id)
+        return eapCode ? { ...card, eapCode } : card
+      }
+      finalColumns = finalColumns.map(col => ({ ...col, cards: (col.cards ?? []).map(comCodigo) }))
+      finalBacklog = finalBacklog.map(comCodigo)
+    }
 
     return { sprint, columns: finalColumns, backlogCards: finalBacklog, users, tags } as unknown as SprintBoardData
   } catch (err) {

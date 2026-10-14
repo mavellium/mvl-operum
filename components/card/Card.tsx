@@ -75,6 +75,7 @@ export default function Card({ card, index, columnId, onDelete, onClick, onTimer
   const elapsedSeconds = timer.elapsed
 
   const hasDescription = !!card.description?.trim()
+  const tituloExibido = card.eapCode ? `${card.eapCode} - ${card.title}` : card.title
   const hasAttachments = card.attachments && card.attachments.length > 0
   const cover = card.attachments?.find(a => a.isCover)
 
@@ -143,8 +144,8 @@ export default function Card({ card, index, columnId, onDelete, onClick, onTimer
 
               {/* Título + botões de ação (prioridade + lixeira) */}
               <div className="flex items-start justify-between gap-2 mb-2">
-                <button type="button" onClick={event => { event.stopPropagation(); onClick() }} aria-label={`Abrir tarefa ${card.title}`} className="text-[14px] font-bold text-gray-800 leading-snug flex-1 break-words text-left rounded focus-visible:ring-2 focus-visible:ring-blue-500">
-                  {card.title}
+                <button type="button" onClick={event => { event.stopPropagation(); onClick() }} aria-label={`Abrir tarefa ${tituloExibido}`} className="text-[14px] font-bold text-gray-800 leading-snug flex-1 break-words text-left rounded focus-visible:ring-2 focus-visible:ring-blue-500">
+                  {tituloExibido}
                 </button>
                 <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 focus-within:opacity-100 transition-opacity shrink-0 -mt-1 -mr-1">
                   <button

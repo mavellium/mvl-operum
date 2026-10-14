@@ -694,24 +694,29 @@ export async function syncMacrofasesComEapInTransaction(
 export interface SyncEapSprintResult {
   cardsCriados: number
   nosCriados: number
+  nosMovidos: number
   titulosAtualizados: number
 }
 
 const normalizarTitulo = (t: string) => t.trim().toLowerCase()
+const texto = (v: unknown): string | undefined => (typeof v === 'string' ? v : undefined)
 
 /**
- * Mantém a EAP/planilha e os cards do projeto em sincronia, nos dois sentidos.
- * O vínculo fica em `WbsNode.properties.cardId`. Idempotente.
- *  - folha sem card → cria o card na coluna "A Fazer" da sprint ativa (ou planejada;
- *    sem sprint, vai para o backlog do projeto);
- *  - card sem nó → cria o nó como filho da raiz;
- *  - nó e card com o mesmo título e sem vínculo → são vinculados, sem duplicar;
+ * Mantém a EAP/planilha, as sprints e os cards do projeto em sincronia, nos dois sentidos.
+ * Estrutura: raiz (projeto) → nível 2 = sprints (`properties.sprintId`) → nível 3+ = cards
+ * (`properties.cardId`). Idempotente.
+ *  - sprint sem nó → vincula o nó de nível 2 de mesmo nome ou cria um no nível 2;
+ *  - folha do nível 3+ sem card → cria o card em "A Fazer" da sprint do seu nó de nível 2
+ *    (se o nível 2 não for sprint: sprint ativa, ou planejada; sem sprint, backlog do projeto);
+ *  - card de sprint sem nó → cria o nó dentro do nó da sprint;
+ *  - card que mudou de sprint, ou cujo nó ficou no nível 2 (versão anterior) → o nó vai para a sprint do card;
+ *  - nó e card/sprint com o mesmo título e sem vínculo → são vinculados, sem duplicar;
  *  - título diferente em par vinculado → vale o lado alterado por último.
- * Card excluído não é recriado: o nó mantém o vínculo.
+ * Card excluído não é recriado: o nó mantém o vínculo. Card do backlog sem nó não entra na EAP.
  */
 export async function sincronizarEapComSprint(projectId: string, tenantId: string): Promise<SyncEapSprintResult> {
   return prisma.$transaction(async tx => {
-    const result: SyncEapSprintResult = { cardsCriados: 0, nosCriados: 0, titulosAtualizados: 0 }
+    const result: SyncEapSprintResult = { cardsCriados: 0, nosCriados: 0, nosMovidos: 0, titulosAtualizados: 0 }
     await tx.$executeRaw`SELECT pg_advisory_xact_lock(hashtext(${'eap-sprint:' + projectId}))`
 
     const project = await tx.project.findFirst({ where: { id: projectId, tenantId, deletedAt: null }, select: { id: true } })
@@ -721,38 +726,117 @@ export async function sincronizarEapComSprint(projectId: string, tenantId: strin
     if (!root) return result
 
     const propsDe = new Map(nodes.map(n => [n.id, { ...((n.properties as Record<string, unknown>) ?? {}) }]))
-    const linkedIds = nodes.map(n => propsDe.get(n.id)!.cardId).filter((v): v is string => typeof v === 'string')
+    const paiDe = new Map(nodes.map(n => [n.id, n.parentId]))
+    const sprintIdDe = (id: string | undefined) => (id ? texto(propsDe.get(id)?.sprintId) : undefined)
+    const cardIdDe = (id: string) => texto(propsDe.get(id)?.cardId)
+    const comFilhos = () => new Set([...paiDe.values()].filter((p): p is string => !!p))
+    const nivelDe = (id: string) => {
+      let nivel = 1
+      for (let p = paiDe.get(id); p && nivel <= WBS_LIMITS.MAX_DEPTH + 1; p = paiDe.get(p)) nivel++
+      return nivel
+    }
+    /** Nó de nível 2 (filho da raiz) acima de `id`, ou o próprio. */
+    const nivel2De = (id: string): string | undefined => {
+      let atual = id
+      for (let i = 0; i <= WBS_LIMITS.MAX_DEPTH && paiDe.get(atual); i++) {
+        if (paiDe.get(atual) === root.id) return atual
+        atual = paiDe.get(atual)!
+      }
+      return undefined
+    }
+    const proximaOrdem = new Map<string, number>()
+    const ordemEm = async (parentId: string) => {
+      let ordem = proximaOrdem.get(parentId)
+      if (ordem === undefined) {
+        ordem = ((await tx.wbsNode.aggregate({ where: { parentId, projectId, tenantId }, _max: { order: true } }))._max.order ?? -1) + 1
+      }
+      proximaOrdem.set(parentId, ordem + 1)
+      return ordem
+    }
+    const mudou = new Set<string>()
+    let total = nodes.length
+    const criarNo = async (parentId: string, title: string, properties: Record<string, unknown>) => {
+      const criado = await tx.wbsNode.create({
+        data: {
+          tenantId, projectId, parentId, order: await ordemEm(parentId), code: '',
+          title: (title.trim() || 'Sem título').slice(0, 500), layout: 'LADO_A_LADO', collapsed: false,
+          style: toJson(DEFAULT_STYLE), properties: toJson(properties),
+        },
+        select: { id: true },
+      })
+      propsDe.set(criado.id, properties)
+      paiDe.set(criado.id, parentId)
+      total++
+      result.nosCriados++
+      return criado.id
+    }
+
+    // 1) sprints ↔ nós do nível 2
+    const sprints = await tx.sprint.findMany({
+      where: { projectId, deletedAt: null }, orderBy: { createdAt: 'asc' }, select: { id: true, name: true, updatedAt: true },
+    })
+    const sprintViva = new Set(sprints.map(s => s.id))
+    const nivel2 = nodes.filter(n => n.parentId === root.id)
+    const noDaSprint = new Map<string, string>()
+    for (const n of nivel2) {
+      const sid = sprintIdDe(n.id)
+      if (sid && !noDaSprint.has(sid)) noDaSprint.set(sid, n.id)
+    }
+    for (const s of sprints) {
+      const noId = noDaSprint.get(s.id)
+      if (noId) {
+        const n = nivel2.find(x => x.id === noId)!
+        if (normalizarTitulo(n.title) === normalizarTitulo(s.name)) continue
+        if (s.updatedAt > n.updatedAt) {
+          if (s.name.trim()) { await tx.wbsNode.update({ where: { id: n.id }, data: { title: s.name.slice(0, 500) } }); result.titulosAtualizados++ }
+        } else if (n.title.trim()) {
+          await tx.sprint.update({ where: { id: s.id }, data: { name: n.title } }); result.titulosAtualizados++
+        }
+        continue
+      }
+      const mesmoNome = nivel2.find(n => !sprintIdDe(n.id) && !cardIdDe(n.id) && normalizarTitulo(n.title) === normalizarTitulo(s.name))
+      if (mesmoNome) {
+        propsDe.get(mesmoNome.id)!.sprintId = s.id
+        mudou.add(mesmoNome.id)
+        noDaSprint.set(s.id, mesmoNome.id)
+      } else if (total < WBS_LIMITS.MAX_NODES) {
+        noDaSprint.set(s.id, await criarNo(root.id, s.name, { sprintId: s.id }))
+      }
+    }
+
+    // cards do projeto
+    const linkedIds = nodes.map(n => cardIdDe(n.id)).filter((v): v is string => !!v)
     const [linkedCards, openCards] = await Promise.all([
-      tx.card.findMany({ where: { id: { in: linkedIds } }, select: { id: true, title: true, deletedAt: true, updatedAt: true } }),
+      tx.card.findMany({ where: { id: { in: linkedIds } }, select: { id: true, title: true, deletedAt: true, updatedAt: true, sprintId: true } }),
       tx.card.findMany({
         where: { deletedAt: null, OR: [{ projectId }, { sprint: { projectId, deletedAt: null } }] },
-        select: { id: true, title: true, description: true, updatedAt: true },
+        select: { id: true, title: true, description: true, updatedAt: true, sprintId: true },
         orderBy: { createdAt: 'asc' },
       }),
     ])
     const cardPorId = new Map(linkedCards.map(c => [c.id, c]))
-    const mudou = new Set<string>()
     const vinculados = new Set(linkedIds)
-    const filhos = new Set(nodes.filter(n => n.parentId).map(n => n.parentId as string))
-    const salvarProps = (id: string) => mudou.add(id)
+    const ehFolhaDeCard = (id: string, filhos: Set<string>) => id !== root.id && !filhos.has(id) && nivelDe(id) >= 3 && !sprintIdDe(id)
 
-    // 1) vincula por título nó↔card ainda sem vínculo (folhas e cards soltos)
+    // 2) vincula por título folhas do nível 3+ e cards ainda sem vínculo (na mesma sprint, se houver)
     const soltos = openCards.filter(c => !vinculados.has(c.id))
+    let filhos = comFilhos()
     for (const n of nodes) {
-      if (n.parentId === null || filhos.has(n.id) || typeof propsDe.get(n.id)!.cardId === 'string') continue
-      const i = soltos.findIndex(c => normalizarTitulo(c.title) === normalizarTitulo(n.title))
+      if (!ehFolhaDeCard(n.id, filhos) || cardIdDe(n.id)) continue
+      const sid = sprintIdDe(nivel2De(n.id))
+      const i = soltos.findIndex(c => normalizarTitulo(c.title) === normalizarTitulo(n.title) && (!sid || c.sprintId === sid))
       if (i < 0) continue
       const [card] = soltos.splice(i, 1)
       propsDe.get(n.id)!.cardId = card.id
       vinculados.add(card.id)
-      cardPorId.set(card.id, { id: card.id, title: card.title, deletedAt: null, updatedAt: card.updatedAt })
-      salvarProps(n.id)
+      cardPorId.set(card.id, { id: card.id, title: card.title, deletedAt: null, updatedAt: card.updatedAt, sprintId: card.sprintId })
+      mudou.add(n.id)
     }
 
-    // 2) títulos: nó e card vinculados convergem para o lado alterado por último
+    // 3) títulos: nó e card vinculados convergem para o lado alterado por último
     for (const n of nodes) {
-      const cardId = propsDe.get(n.id)!.cardId
-      const card = typeof cardId === 'string' ? cardPorId.get(cardId) : undefined
+      const cardId = cardIdDe(n.id)
+      const card = cardId ? cardPorId.get(cardId) : undefined
       if (!card || card.deletedAt || normalizarTitulo(card.title) === normalizarTitulo(n.title)) continue
       if (card.updatedAt > n.updatedAt) {
         if (card.title.trim()) { await tx.wbsNode.update({ where: { id: n.id }, data: { title: card.title.slice(0, 500) } }); result.titulosAtualizados++ }
@@ -761,31 +845,65 @@ export async function sincronizarEapComSprint(projectId: string, tenantId: strin
       }
     }
 
-    // 3) folhas sem card → cards
-    const semCard = nodes.filter(n => n.parentId !== null && !filhos.has(n.id) && typeof propsDe.get(n.id)!.cardId !== 'string')
+    // 4) nó de card fora da sprint do card (ou solto no nível 2) → vai para dentro do nó da sprint
+    const paisAntigos = new Set<string>()
+    for (const n of nodes) {
+      const cardId = cardIdDe(n.id)
+      const card = cardId ? cardPorId.get(cardId) : undefined
+      if (!card || card.deletedAt || !card.sprintId || filhos.has(n.id) || sprintIdDe(n.id)) continue
+      const destino = noDaSprint.get(card.sprintId)
+      const pai = paiDe.get(n.id)
+      if (!destino || !pai || pai === destino) continue
+      const sprintAtual = sprintIdDe(nivel2De(n.id))
+      if (pai !== root.id && (!sprintAtual || sprintAtual === card.sprintId)) continue
+      await tx.wbsNode.update({ where: { id: n.id }, data: { parentId: destino, order: await ordemEm(destino) } })
+      paiDe.set(n.id, destino)
+      paisAntigos.add(pai)
+      result.nosMovidos++
+    }
+    for (const pai of paisAntigos) await recompactChildren(tx, pai, projectId, tenantId)
+
+    // 5) folhas do nível 3+ sem card → cards em "A Fazer" da sprint do nível 2
+    filhos = comFilhos()
+    const semCard = nodes.filter(n => ehFolhaDeCard(n.id, filhos) && !cardIdDe(n.id))
     if (semCard.length) {
-      const sprint =
-        (await tx.sprint.findFirst({ where: { projectId, deletedAt: null, status: 'ACTIVE' }, orderBy: { createdAt: 'desc' }, select: { id: true } })) ??
-        (await tx.sprint.findFirst({ where: { projectId, deletedAt: null, status: 'PLANNED' }, orderBy: { createdAt: 'asc' }, select: { id: true } }))
-      const colunas = sprint ? await tx.sprintColumn.findMany({ where: { sprintId: sprint.id }, orderBy: { position: 'asc' }, select: { id: true } }) : []
-      const aFazer = sprint
-        ? (await tx.sprintColumn.findFirst({ where: { sprintId: sprint.id, title: { equals: 'A Fazer', mode: 'insensitive' } }, select: { id: true } })) ?? colunas[0]
-        : undefined
-      let posicao = aFazer
-        ? ((await tx.card.aggregate({ where: { sprintColumnId: aFazer.id, deletedAt: null }, _max: { sprintPosition: true } }))._max.sprintPosition ?? -1) + 1
-        : 0
+      let reserva: { id: string } | null | undefined
+      const sprintReserva = async () => {
+        if (reserva === undefined) {
+          reserva =
+            (await tx.sprint.findFirst({ where: { projectId, deletedAt: null, status: 'ACTIVE' }, orderBy: { createdAt: 'desc' }, select: { id: true } })) ??
+            (await tx.sprint.findFirst({ where: { projectId, deletedAt: null, status: 'PLANNED' }, orderBy: { createdAt: 'asc' }, select: { id: true } }))
+        }
+        return reserva?.id
+      }
+      const colunaAFazer = new Map<string, { id: string; posicao: number } | null>()
+      const colunaDa = async (sprintId: string) => {
+        if (!colunaAFazer.has(sprintId)) {
+          const coluna =
+            (await tx.sprintColumn.findFirst({ where: { sprintId, deletedAt: null, title: { equals: 'A Fazer', mode: 'insensitive' } }, select: { id: true } })) ??
+            (await tx.sprintColumn.findFirst({ where: { sprintId, deletedAt: null }, orderBy: { position: 'asc' }, select: { id: true } }))
+          const posicao = coluna
+            ? ((await tx.card.aggregate({ where: { sprintColumnId: coluna.id, deletedAt: null }, _max: { sprintPosition: true } }))._max.sprintPosition ?? -1) + 1
+            : 0
+          colunaAFazer.set(sprintId, coluna ? { id: coluna.id, posicao } : null)
+        }
+        return colunaAFazer.get(sprintId)
+      }
       for (const n of semCard) {
-        const descricao = typeof propsDe.get(n.id)!.description === 'string' ? (propsDe.get(n.id)!.description as string) : ''
+        const sid = sprintIdDe(nivel2De(n.id))
+        const sprintId = sid && sprintViva.has(sid) ? sid : await sprintReserva()
+        const coluna = sprintId ? await colunaDa(sprintId) : null
+        const descricao = texto(propsDe.get(n.id)!.description) ?? ''
         const card = await tx.card.create({
           data: {
             title: n.title, description: descricao, projectId,
-            ...(sprint && aFazer ? { sprintId: sprint.id, sprintColumnId: aFazer.id, sprintPosition: posicao++ } : {}),
+            ...(sprintId && coluna ? { sprintId, sprintColumnId: coluna.id, sprintPosition: coluna.posicao++ } : {}),
           },
           select: { id: true },
         })
         propsDe.get(n.id)!.cardId = card.id
         vinculados.add(card.id)
-        salvarProps(n.id)
+        mudou.add(n.id)
         result.cardsCriados++
       }
     }
@@ -794,27 +912,15 @@ export async function sincronizarEapComSprint(projectId: string, tenantId: strin
       await tx.wbsNode.update({ where: { id }, data: { properties: toJson(propsDe.get(id)) } })
     }
 
-    // 4) cards sem nó → nós filhos da raiz
-    const orfaos = openCards.filter(c => !vinculados.has(c.id))
-    if (orfaos.length) {
-      let ordem = await tx.wbsNode.count({ where: { parentId: root.id, projectId, tenantId } })
-      let total = nodes.length
-      for (const c of orfaos) {
-        if (total >= WBS_LIMITS.MAX_NODES) break
-        await tx.wbsNode.create({
-          data: {
-            tenantId, projectId, parentId: root.id, order: ordem++, code: '',
-            title: (c.title.trim() || 'Sem título').slice(0, 500), layout: 'LADO_A_LADO', collapsed: false,
-            style: toJson(DEFAULT_STYLE),
-            properties: toJson({ cardId: c.id, ...(c.description.trim() ? { description: c.description.slice(0, 2000) } : {}) }),
-          },
-        })
-        total++
-        result.nosCriados++
-      }
+    // 6) cards de sprint sem nó → nós dentro do nó da sprint
+    for (const c of openCards) {
+      const destino = c.sprintId ? noDaSprint.get(c.sprintId) : undefined
+      if (vinculados.has(c.id) || !destino) continue
+      if (total >= WBS_LIMITS.MAX_NODES) break
+      await criarNo(destino, c.title, { cardId: c.id, ...(c.description.trim() ? { description: c.description.slice(0, 2000) } : {}) })
     }
 
-    if (result.nosCriados || result.cardsCriados || result.titulosAtualizados) {
+    if (result.nosCriados || result.cardsCriados || result.titulosAtualizados || result.nosMovidos || mudou.size) {
       await syncCodes(tx, projectId, tenantId)
       await bumpVersion(tx, projectId, tenantId)
     }
