@@ -48,6 +48,7 @@ interface SprintCard {
   responsibles?: { user: { id: string; name: string; avatarUrl: string | null } }[]
   startDate?: string | Date | null
   endDate?: string | Date | null
+  eapCode?: string
 }
 
 type NewCardData = {
@@ -98,6 +99,7 @@ function toCardType(card: SprintCard, sprintId: string): CardType {
   return {
     id: card.id,
     title: card.title,
+    eapCode: card.eapCode,
     description: card.description ?? '',
     color: (card.color ?? '#6b7280') as CardColor,
     priority: card.priority ?? 'media',

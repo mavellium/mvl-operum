@@ -58,7 +58,9 @@ async function request<T>(path: string, init: RequestInit = {}): Promise<T> {
     throw err
   }
 
-  return res.json() as Promise<T>
+  // NestJS responde `null` como 200 com corpo vazio (ex.: card sem timer ativo).
+  const body = await res.text()
+  return (body ? JSON.parse(body) : null) as T
 }
 
 // ── Auth ──────────────────────────────────────────────────

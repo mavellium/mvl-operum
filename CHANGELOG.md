@@ -7,6 +7,17 @@ As versões até 1.6.0 foram reconstruídas retroativamente a partir do históri
 1.0.0 marca a entrada em produção na arquitetura de microsserviços, e cada marco de
 funcionalidade depois disso é uma versão MINOR.
 
+## [1.17.0] — 2026-10-14
+
+### Alterado
+- **EAP ↔ sprint:** o nível 2 da EAP passa a ser as sprints (`WbsNode.properties.sprintId`) e os cards ficam do nível 3 para baixo, dentro da sprint deles. Sprint sem nó ganha nó no nível 2 (ou é ligada ao nó de mesmo nome); folha do nível 3+ vira card em "A Fazer" da sprint do seu nível 2; card que muda de sprint leva o nó junto. Os nós de card que a 1.16.0 criou direto sob o projeto são movidos para dentro da sprint do card. Card do backlog sem nó não entra na EAP.
+
+### Adicionado
+- **Sprint:** os cards vinculados à EAP mostram o código do nó antes do título ("1.1.1 - Fazer isso"), no quadro e no cabeçalho do card. O título gravado não muda.
+
+### Corrigido
+- **Timer:** card sem timer ativo mostrava "Unexpected end of JSON input — Atualizar timer". O sprint-service responde `null` como 200 sem corpo e o cliente da API (`lib/api-client.ts`) tentava ler JSON; resposta vazia agora vira `null`.
+
 ## [1.16.0] — 2026-10-14
 
 ### Adicionado
