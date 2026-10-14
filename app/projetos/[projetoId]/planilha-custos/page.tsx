@@ -3,6 +3,7 @@ import { verifySession } from '@/lib/dal'
 import { findById } from '@/services/projectAccess'
 import { permissoesNoProjeto } from '@/services/authz'
 import { getTree } from '@/services/wbsService'
+import { sincronizarEapSprintSePermitido } from '@/services/eapSprintSyncService'
 import { computarPlanilhaCustos, fmtDataBR, type Elaborador } from '@/lib/planilhaCustos'
 import prisma from '@/lib/prisma'
 import PlanilhaCustosView from '@/components/custos/PlanilhaCustosView'
@@ -59,6 +60,7 @@ export default async function PlanilhaCustosPage({
   })
   const usuariosDisponiveis = allUsers.map(u => ({ id: u.id, name: u.name, email: u.email }))
 
+  await sincronizarEapSprintSePermitido({ userId, tenantId, role }, projetoId)
   const tree = await getTree(projetoId, tenantId)
   const planilha = computarPlanilhaCustos(tree.nodes, tree.rootId, { valorReferencia, horasPorDia }, elaboradoresPorId)
 
