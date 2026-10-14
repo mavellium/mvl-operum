@@ -65,7 +65,7 @@ const StakeholderDocument = forwardRef<HTMLDivElement, Props>(
         <div className="flex items-center gap-4 mb-4">
           <div
             className="flex items-center justify-center shrink-0 overflow-hidden"
-            style={{ width: '28mm', height: '28mm' }}
+            style={{ width: 110, height: 62, border: header.logoUrl ? 'none' : '1px solid #4a6fa5', background: header.logoUrl ? 'transparent' : '#6f93c8' }}
           >
             {header.logoUrl ? (
               // eslint-disable-next-line @next/next/no-img-element
@@ -75,20 +75,12 @@ const StakeholderDocument = forwardRef<HTMLDivElement, Props>(
                 style={{ width: '100%', height: '100%', objectFit: 'contain' }}
               />
             ) : (
-              <div
-                className="w-full h-full flex items-center justify-center text-center text-[8pt] text-gray-500"
-                style={{ border: '1.5px dashed #9ca3af' }}
-              >
-                Logo
-              </div>
+              <span style={{ color: '#fff', fontSize: '12pt', textAlign: 'center', lineHeight: 1.15 }}>Logo do<br />Projeto</span>
             )}
           </div>
           <div className="flex-1 text-center">
-            <p
-              className="font-bold uppercase tracking-wide"
-              style={{ fontSize: '11pt' }}
-            >
-              FORMULÁRIO DE STAKEHOLDER – PARTES INTERESSADAS
+            <p className="font-bold" style={{ fontSize: '13pt' }}>
+              Formulário de Stakeholders
             </p>
           </div>
         </div>
@@ -161,10 +153,14 @@ const StakeholderDocument = forwardRef<HTMLDivElement, Props>(
           style={{
             borderCollapse: 'collapse',
             border: '1px solid black',
+            tableLayout: 'fixed',
           }}
         >
+          <colgroup>
+            {['4%', '14%', '11%', '14%', '17%', '10%', '16%', '14%'].map((w, i) => <col key={i} style={{ width: w }} />)}
+          </colgroup>
           <thead>
-            <tr className="bg-gray-200">
+            <tr>
               {['Ref.', 'Nome', 'Empresa/Equipe', 'Cargo/Competência', 'e-mail', 'Telefone/Celular', 'Endereço', 'Observação'].map(
                 col => (
                   <th
@@ -201,9 +197,10 @@ const StakeholderDocument = forwardRef<HTMLDivElement, Props>(
                     style={{
                       border: '1px solid black',
                       padding: '3px 4px',
-                      fontSize: '8pt',
-                      verticalAlign: 'middle',
-                      textAlign: 'center',
+                      fontSize: '8.5pt',
+                      verticalAlign: 'top',
+                      textAlign: i === 0 ? 'center' : 'left',
+                      overflowWrap: 'anywhere',
                       whiteSpace: i === 7 ? 'pre-wrap' : 'normal',
                     }}
                   >
@@ -214,6 +211,7 @@ const StakeholderDocument = forwardRef<HTMLDivElement, Props>(
             ))}
           </tbody>
         </table>
+        <p style={{ fontSize: '7pt', color: '#444', marginTop: 4 }}>© stake.doc</p>
       </div>
     )
   }

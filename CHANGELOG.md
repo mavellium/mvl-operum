@@ -15,6 +15,7 @@ funcionalidade depois disso é uma versão MINOR.
 - **Termo de Abertura:** integrantes mostram a função do cadastro ("Nome – papel"); formulário na mesma ordem do modelo.
 - **Documentos:** numeração "Página X de Y" na impressão em PDF do Termo, Partes Interessadas, EAP e Ata.
 - **EAP:** a página da EAP gráfica sai em paisagem com a árvore inteira visível.
+- **Documentos:** Partes Interessadas (logo, título "Formulário de Stakeholders", tabela alinhada à esquerda e rodapé) e Ata (quadro único com faixas cinza, listas e caixas de cópias/assinaturas/obs.) refeitas para ficar iguais aos modelos do professor.
 - **EAP ↔ sprint:** folhas da EAP/planilha viram cards em "A Fazer" da sprint ativa e cards criados na sprint viram nós da EAP e da planilha (vínculo em `WbsNode.properties.cardId`).
 
 ## [1.15.2] — 2026-10-14
