@@ -4,7 +4,7 @@ import { describe, it, expect, vi, beforeEach } from 'vitest'
 const tx = vi.hoisted(() => ({
   $executeRaw: vi.fn(),
   project: { findFirst: vi.fn() },
-  wbsNode: { findMany: vi.fn(), update: vi.fn(), create: vi.fn(), count: vi.fn(), findFirst: vi.fn(), aggregate: vi.fn() },
+  wbsNode: { findMany: vi.fn(), update: vi.fn(), create: vi.fn(), count: vi.fn(), findFirst: vi.fn(), aggregate: vi.fn(), delete: vi.fn() },
   card: { findMany: vi.fn(), create: vi.fn(), update: vi.fn(), aggregate: vi.fn() },
   sprint: { findFirst: vi.fn(), findMany: vi.fn(), update: vi.fn() },
   sprintColumn: { findFirst: vi.fn() },
@@ -17,7 +17,7 @@ import { sincronizarEapComSprint } from '@/services/wbsService'
 const node = (id: string, parentId: string | null, title: string, props: object = {}, updatedAt = new Date('2026-10-01')) =>
   ({ id, parentId, title, order: 0, code: '', properties: props, updatedAt })
 const sprint = (id: string, name: string, updatedAt = new Date('2026-09-01')) => ({ id, name, updatedAt })
-const ZERO = { cardsCriados: 0, nosCriados: 0, nosMovidos: 0, titulosAtualizados: 0 }
+const ZERO = { cardsCriados: 0, nosCriados: 0, nosMovidos: 0, nosRemovidos: 0, titulosAtualizados: 0 }
 
 beforeEach(() => {
   vi.resetAllMocks()
@@ -159,6 +159,53 @@ describe('sincronizarEapComSprint', () => {
     expect(r.titulosAtualizados).toBe(2)
     expect(tx.wbsNode.update).toHaveBeenCalledWith({ where: { id: 'n1' }, data: { title: 'Novo' } })
     expect(tx.wbsNode.update).toHaveBeenCalledWith({ where: { id: 'ns' }, data: { title: 'Sprint nova' } })
+  })
+
+  it('card do backlog solto no nível 2 (versão anterior) sai da EAP', async () => {
+    tx.wbsNode.findMany.mockResolvedValueOnce([
+      node('r', null, 'Projeto'), node('ns', 'r', 'Sprint 1', { sprintId: 's1' }), node('nb', 'r', 'Ideia', { cardId: 'cb' }),
+    ]).mockResolvedValue([])
+    tx.sprint.findMany.mockResolvedValue([sprint('s1', 'Sprint 1')])
+    tx.card.findMany
+      .mockResolvedValueOnce([{ id: 'cb', title: 'Ideia', deletedAt: null, updatedAt: new Date('2026-10-01'), sprintId: null }])
+      .mockResolvedValueOnce([{ id: 'cb', title: 'Ideia', description: '', updatedAt: new Date('2026-10-01'), sprintId: null }])
+    const r = await sincronizarEapComSprint('p1', 't1')
+    expect(r.nosRemovidos).toBe(1)
+    expect(tx.wbsNode.delete).toHaveBeenCalledWith({ where: { id: 'nb' } })
+    expect(tx.wbsNode.create).not.toHaveBeenCalled()
+    expect(tx.card.create).not.toHaveBeenCalled()
+  })
+
+  it('card que voltou ao backlog sai de dentro da sprint', async () => {
+    tx.wbsNode.findMany.mockResolvedValueOnce([
+      node('r', null, 'Projeto'), node('ns', 'r', 'Sprint 1', { sprintId: 's1' }), node('n1', 'ns', 'Tarefa', { cardId: 'c1' }),
+    ]).mockResolvedValue([])
+    tx.sprint.findMany.mockResolvedValue([sprint('s1', 'Sprint 1')])
+    tx.card.findMany
+      .mockResolvedValueOnce([{ id: 'c1', title: 'Tarefa', deletedAt: null, updatedAt: new Date('2026-10-01'), sprintId: null }])
+      .mockResolvedValueOnce([{ id: 'c1', title: 'Tarefa', description: '', updatedAt: new Date('2026-10-01'), sprintId: null }])
+    expect((await sincronizarEapComSprint('p1', 't1')).nosRemovidos).toBe(1)
+    expect(tx.wbsNode.delete).toHaveBeenCalledWith({ where: { id: 'n1' } })
+  })
+
+  it('folha do usuário sob nível 2 que não é sprint é preservada, mesmo ligada a card do backlog', async () => {
+    tx.wbsNode.findMany.mockResolvedValueOnce([
+      node('r', null, 'Projeto'), node('m', 'r', 'Macrofase'), node('n1', 'm', 'Tarefa', { cardId: 'c1' }),
+    ]).mockResolvedValue([])
+    tx.card.findMany
+      .mockResolvedValueOnce([{ id: 'c1', title: 'Tarefa', deletedAt: null, updatedAt: new Date('2026-10-01'), sprintId: null }])
+      .mockResolvedValueOnce([{ id: 'c1', title: 'Tarefa', description: '', updatedAt: new Date('2026-10-01'), sprintId: null }])
+    expect(await sincronizarEapComSprint('p1', 't1')).toEqual(ZERO)
+    expect(tx.wbsNode.delete).not.toHaveBeenCalled()
+  })
+
+  it('sem sprint no projeto, folha da EAP não vira card no backlog', async () => {
+    tx.wbsNode.findMany.mockResolvedValueOnce([node('r', null, 'Projeto'), node('m', 'r', 'Fase'), node('n1', 'm', 'Tarefa')]).mockResolvedValue([])
+    tx.sprint.findFirst.mockReset()
+    tx.sprint.findFirst.mockResolvedValue(null)
+    tx.card.findMany.mockResolvedValue([])
+    expect(await sincronizarEapComSprint('p1', 't1')).toEqual(ZERO)
+    expect(tx.card.create).not.toHaveBeenCalled()
   })
 
   it('sem raiz (EAP ainda não criada) não cria nada', async () => {

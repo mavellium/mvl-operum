@@ -50,8 +50,12 @@ export interface EapDocument {
   projectName: string
   projectManager: string
   preparedBy: string
+  /** Membro da equipe em "Elaborado por" (select de membros). */
+  preparedByUserId?: string | null
   version: string
   approvedBy: string
+  /** Membro da equipe em "Aprovado por" (select de membros). */
+  approvedByUserId?: string | null
   signature: string
   /** yyyy-mm-dd (string p/ evitar viés de fuso, padrão do app). */
   approvalDate: string | null
@@ -68,8 +72,10 @@ export type EapDocumentMetadata = Pick<
   | 'projectName'
   | 'projectManager'
   | 'preparedBy'
+  | 'preparedByUserId'
   | 'version'
   | 'approvedBy'
+  | 'approvedByUserId'
   | 'signature'
   | 'approvalDate'
 >

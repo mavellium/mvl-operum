@@ -1,4 +1,5 @@
 import { NextResponse } from 'next/server'
+import { gerenteDoProjeto } from '@/services/gerenteProjeto'
 import { verifySession } from '@/lib/dal'
 import prisma from '@/lib/prisma'
 import { canProjectPermission as can } from '@/services/projectAccess'
@@ -42,7 +43,7 @@ export async function GET(
       return NextResponse.json({ error: 'Não autorizado' }, { status: 403 })
     }
 
-    const [project, userProjects, projectStakeholders, gerenteEntries] = await Promise.all([
+    const [project, userProjects, projectStakeholders, gerente] = await Promise.all([
       prisma.project.findFirst({
         where: { id: projetoId, tenantId, deletedAt: null },
       }),
@@ -73,29 +74,15 @@ export async function GET(
         include: { stakeholder: true },
         orderBy: { order: 'asc' },
       }),
-      prisma.userProjectRole.findMany({
-        where: {
-          projectId: projetoId,
-          deletedAt: null,
-          role: { nameKey: 'gerente' },
-        },
-        select: { userId: true },
-      }),
+      gerenteDoProjeto(projetoId),
     ])
 
     if (!project) {
       return NextResponse.json({ error: 'Projeto não encontrado' }, { status: 404 })
     }
 
-    const gerenteUserIds = gerenteEntries.map(e => e.userId)
-    const gerenteUsers = gerenteUserIds.length
-      ? await prisma.user.findMany({
-          where: { id: { in: gerenteUserIds } },
-          select: { name: true, signatureUrl: true },
-        })
-      : []
-    const gerenteProjeto = gerenteUsers.map(u => u.name).join(' e ')
-    const signatureUrl = gerenteUsers[0]?.signatureUrl ?? null
+    const gerenteProjeto = gerente.nome
+    const signatureUrl = gerente.signatureUrl
 
     const dept = project.departamentos?.[0] ?? ''
     const semestreLabel =

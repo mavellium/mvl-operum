@@ -23,6 +23,8 @@ export interface EapDocumentSheetProps {
   nodes: EapNode[]
   instituicao: string
   logoUrl?: string | null
+  /** Assinatura do gerente (documento com versão aprovada). */
+  assinaturaUrl?: string | null
   /** Habilita interação (clique nos blocos) — usado pelo editor. */
   interactive?: boolean
   selectedId?: string | null
@@ -63,7 +65,7 @@ const celula: React.CSSProperties = {
   textAlign: 'left',
 }
 
-function Cabecalho({ titulo, metadata, instituicao, logoUrl }: { titulo: string; metadata: EapDocumentMetadata; instituicao: string; logoUrl?: string | null }) {
+function Cabecalho({ titulo, metadata, instituicao, logoUrl, assinaturaUrl }: { titulo: string; metadata: EapDocumentMetadata; instituicao: string; logoUrl?: string | null; assinaturaUrl?: string | null }) {
   return (
     <div style={{ marginBottom: '7mm' }}>
       <div style={{ display: 'flex', alignItems: 'center', minHeight: '20mm', marginBottom: '4mm' }}>
@@ -88,7 +90,13 @@ function Cabecalho({ titulo, metadata, instituicao, logoUrl }: { titulo: string;
           </tr>
           <tr><td colSpan={2} style={celula}>Aprovado por: {metadata.approvedBy}</td></tr>
           <tr>
-            <td style={celula}>Assinatura: <span style={{ fontWeight: 'normal' }}>{metadata.signature}</span></td>
+            <td style={celula}>
+              Assinatura:{' '}
+              {assinaturaUrl
+                // eslint-disable-next-line @next/next/no-img-element
+                ? <img src={assinaturaUrl} alt="Assinatura" style={{ maxHeight: '8mm', maxWidth: '45mm', verticalAlign: 'middle', objectFit: 'contain' }} />
+                : <span style={{ fontWeight: 'normal' }}>{metadata.signature}</span>}
+            </td>
             <td style={celula}><em>Data de aprovação:</em> <span style={{ fontWeight: 'normal' }}>{formatDateBR(metadata.approvalDate, '')}</span></td>
           </tr>
         </tbody>
@@ -98,7 +106,7 @@ function Cabecalho({ titulo, metadata, instituicao, logoUrl }: { titulo: string;
 }
 
 const EapDocumentSheet = forwardRef<HTMLDivElement, EapDocumentSheetProps>(
-  function EapDocumentSheet({ metadata, nodes, instituicao, logoUrl, interactive, selectedId, onSelectBlock }, ref) {
+  function EapDocumentSheet({ metadata, nodes, instituicao, logoUrl, assinaturaUrl, interactive, selectedId, onSelectBlock }, ref) {
     const layout = useMemo(() => computeEapColumnLayout(nodes), [nodes])
     const flat = useMemo(() => flattenTree(nodes), [nodes])
 
@@ -199,7 +207,7 @@ const EapDocumentSheet = forwardRef<HTMLDivElement, EapDocumentSheetProps>(
       <div ref={ref} data-testid="eap-sheet" className="eap-sheet">
         {/* ── PÁGINA 1 — EAP GRÁFICA ─────────────────────────────────────── */}
         <div className="eap-page eap-page-1" data-print-sheet-fixed style={{ ...pageBase, height: `${PAGE_H}mm`, overflow: 'hidden', breakAfter: 'page' }}>
-          <Cabecalho titulo="Modelo de Estrutura Analítica do Projeto (EAP - Gráfica)" metadata={metadata} instituicao={instituicao} logoUrl={logoUrl} />
+          <Cabecalho titulo="Modelo de Estrutura Analítica do Projeto (EAP - Gráfica)" metadata={metadata} instituicao={instituicao} logoUrl={logoUrl} assinaturaUrl={assinaturaUrl} />
           {renderGraphicTree()}
           <div style={{ position: 'absolute', left: `${PAD_X + 6}mm`, bottom: `${PAD_Y}mm`, fontFamily: FONTE_QUADRO, fontSize: '7pt' }}>
             © 05_Modelo EAP Gráfica
@@ -208,7 +216,7 @@ const EapDocumentSheet = forwardRef<HTMLDivElement, EapDocumentSheetProps>(
 
         {/* ── PÁGINAS 2+ — EAP TEXTO (o texto continua nas páginas seguintes) ── */}
         <div className="eap-page eap-page-2" data-print-sheet style={{ ...pageBase, minHeight: `${PAGE_H}mm` }}>
-          <Cabecalho titulo="Modelo de Estrutura Analítica do Projeto (EAP - Texto)" metadata={metadata} instituicao={instituicao} logoUrl={logoUrl} />
+          <Cabecalho titulo="Modelo de Estrutura Analítica do Projeto (EAP - Texto)" metadata={metadata} instituicao={instituicao} logoUrl={logoUrl} assinaturaUrl={assinaturaUrl} />
           {renderTextualTree()}
         </div>
       </div>

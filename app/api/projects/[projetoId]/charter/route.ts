@@ -1,4 +1,5 @@
 import { NextResponse } from 'next/server'
+import { gerenteDoProjeto } from '@/services/gerenteProjeto'
 import { verifySession } from '@/lib/dal'
 import prisma from '@/lib/prisma'
 import { canProjectPermission as can } from '@/services/projectAccess'
@@ -65,25 +66,14 @@ export async function GET(
       }))
     }
 
-    const [gerenteEntries, userProjects] = await Promise.all([
-      prisma.userProjectRole.findMany({
-        where: { projectId: projetoId, deletedAt: null, role: { nameKey: 'gerente' } },
-        select: { userId: true },
-      }),
+    const [gerente, userProjects] = await Promise.all([
+      gerenteDoProjeto(projetoId),
       prisma.userProject.findMany({
         where: { projectId: projetoId, active: true },
         include: { user: { select: { name: true, signatureUrl: true } } },
         orderBy: { order: 'asc' },
       }),
     ])
-
-    const gerenteIds = gerenteEntries.map(e => e.userId)
-    const gerenteUsers = gerenteIds.length
-      ? await prisma.user.findMany({
-          where: { id: { in: gerenteIds } },
-          select: { name: true, signatureUrl: true },
-        })
-      : []
 
     const membros = userProjects
       .filter(up => up.user !== null)
@@ -96,8 +86,8 @@ export async function GET(
     return NextResponse.json({
       project,
       macroFases,
-      gerente: gerenteUsers[0] ?? null,
-      gerenteProjeto: gerenteUsers.map(u => u.name).join(' e '),
+      gerente: gerente.nome ? { name: gerente.nome, signatureUrl: gerente.signatureUrl } : null,
+      gerenteProjeto: gerente.nome,
       membros,
     })
   } catch (err) {

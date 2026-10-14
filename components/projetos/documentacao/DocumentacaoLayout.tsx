@@ -61,7 +61,7 @@ export default function DocumentacaoLayout({ projetoId, atas, gerente, membros =
         ) : activeDoc === 'charter' ? (
           <ProjectCharterWrapper key={publication} membros={membros} />
         ) : activeDoc === 'eap' ? (
-          <EapDocument key={publication} />
+          <EapDocument key={publication} membros={membros} />
         ) : (
           <DocumentoStakeholders key={publication} membros={membros} />
         )}

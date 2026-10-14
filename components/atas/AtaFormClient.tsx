@@ -9,7 +9,8 @@ import { useReactToPrint } from 'react-to-print'
 import AtaDocument from './AtaDocument'
 import { useRouter } from 'next/navigation'
 import { criarAtaAction, atualizarAtaAction } from '@/app/actions/atas'
-import MemberSelect, { type MemberOption } from '@/components/atas/MemberSelect'
+import { type MemberOption } from '@/components/atas/MemberSelect'
+import MembroEquipeSelect, { useMembrosEquipe } from '@/components/projetos/documentacao/MembroEquipeSelect'
 import DateInput from '@/components/ui/DateInput'
 import { toDateInputValue } from '@/lib/date'
 
@@ -50,6 +51,8 @@ const inputCls =
 export default function AtaFormClient({ projetoId, ataId, mode, members, initial, nomeProjeto = '', numero }: Props) {
   const permissions = useProjectPermissions()
   const canEdit = permissions.has('documentos:editar')
+  // Pessoas da ata: membros da equipe, com "+" para criar membro (padrão dos documentos).
+  const { todos: todosMembros, registrarCriado } = useMembrosEquipe(members)
   const router = useRouter()
 
   const [instituicao, setInstituicao] = useState(initial?.instituicao ?? '')
@@ -190,11 +193,11 @@ export default function AtaFormClient({ projetoId, ataId, mode, members, initial
         </div>
         <div>
           <label className="block text-sm font-medium text-gray-700 mb-1">Elaborado por *</label>
-          <MemberSelect members={members} value={elaboradoPorUserId ?? undefined} onChange={pickElaborador} placeholder="Selecionar membro" />
+          <MembroEquipeSelect membros={todosMembros} projetoId={projetoId} onCriarMembro={registrarCriado} value={elaboradoPorUserId} onChange={pickElaborador} placeholder="Selecionar membro" />
         </div>
         <div>
           <label className="block text-sm font-medium text-gray-700 mb-1">Aprovado por</label>
-          <MemberSelect members={members} value={aprovadoPorUserId ?? undefined} onChange={pickAprovador} placeholder="Selecionar membro" />
+          <MembroEquipeSelect membros={todosMembros} projetoId={projetoId} onCriarMembro={registrarCriado} value={aprovadoPorUserId} onChange={pickAprovador} placeholder="Selecionar membro" />
         </div>
       </div>
 
@@ -203,8 +206,10 @@ export default function AtaFormClient({ projetoId, ataId, mode, members, initial
         {presentes.map((p, i) => (
           <div key={i} className="flex flex-col sm:flex-row gap-2 mb-2">
             <div className="flex-1">
-              <MemberSelect
-                members={members}
+              <MembroEquipeSelect
+                membros={todosMembros}
+                projetoId={projetoId}
+                onCriarMembro={registrarCriado}
                 value={p.userId}
                 onChange={m => pickPresente(i, m)}
                 placeholder="Selecionar presente"
@@ -272,8 +277,10 @@ export default function AtaFormClient({ projetoId, ataId, mode, members, initial
                 />
               </div>
               <div className="flex-1">
-                <MemberSelect
-                  members={members}
+                <MembroEquipeSelect
+                  membros={todosMembros}
+                  projetoId={projetoId}
+                  onCriarMembro={registrarCriado}
                   value={a.responsavelUserId}
                   onChange={m => pickResponsavel(i, m)}
                   placeholder="Responsável (membro)"

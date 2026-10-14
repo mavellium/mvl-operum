@@ -424,6 +424,28 @@ Ao substituir uma decisão, manter o texto histórico, alterar seu status e liga
 - **Condições de revisão:** novos modelos ou necessidade de assinatura digital com verificação; requisito de exportação assíncrona no servidor exigiria armazenamento confiável de imagens.
 - **Referências:** `services/documentRevisionService.ts`, `lib/charterChanges.ts`, `lib/exports/`, `components/projetos/documentacao/ProjectCharter.tsx`, `docs/validation/sdd-7/README.md` e SDD fase 7.
 
+## ADR-036 — Cards do backlog fora da EAP
+
+- **Data:** 2026-10-14
+- **Status:** implementada; substitui, do ADR-033, a criação de card no backlog a partir de folha da EAP e a criação de nós a partir de cards do backlog.
+- **Contexto:** o usuário viu cards do backlog no nível 2 da EAP/WBS, como se fossem sprints (nós criados pela 1.16.0), e pediu que cards do backlog não apareçam na EAP nem na planilha de custos.
+- **Escolha:** `sincronizarEapComSprint` remove o nó ligado a card do backlog quando ele está solto no nível 2 ou dentro de um nó de sprint (card que voltou ao backlog); não cria mais card no backlog a partir de folha da EAP (sem sprint, a folha fica sem card). Folhas sob um nível 2 que não é sprint, ligadas a card do backlog, são preservadas por serem estrutura montada pelo usuário.
+- **Justificativa:** a planilha de custos lê a mesma árvore; remover o nó é o que tira o card das duas telas sem filtro duplicado.
+- **Alternativas consideradas:** filtrar na leitura (exigiria tratar `saveTree`, códigos e rollups de custo separadamente); remover também as folhas sob nível 2 que não é sprint (apagaria estrutura do usuário).
+- **Consequências:** dados do nó removido (tempo, custo) se perdem; se o card voltar a uma sprint, o nó é recriado dentro dela sem esses dados.
+- **Referências:** ADR-033, ADR-034, `services/wbsService.ts`, `__tests__/unit/wbsSprintSync.test.ts`, SDD 12.13.
+
+## ADR-035 — Documento EAP lê a aba EAP/WBS e quadro padronizado nos documentos
+
+- **Data:** 2026-10-14
+- **Status:** implementada.
+- **Contexto:** o documento EAP tinha árvore própria, copiada do modelo e editada à parte da aba EAP/WBS; o usuário pediu que ele seja preenchido com os dados da aba. Também definiu a regra: "Gerente do projeto" automático em todos os documentos e campos de pessoa como select de membro com botão de adicionar, em componentes compartilhados.
+- **Escolha:** `GET /api/projects/:id/eap` monta a árvore a partir de `WbsNode` (`eapNodesFromWbs`) e o PUT grava essa estrutura na versão; o editor do documento deixa a estrutura só para leitura quando há WBS. O gerente vem de `gerenteDoProjeto` (fonte única para Termo, Partes Interessadas e EAP). Os campos do quadro ficam em `CamposQuadroDocumento`.
+- **Justificativa:** uma só fonte da estrutura evita duas EAPs divergentes; o gerente cadastrado evita digitação e inconsistência entre documentos.
+- **Alternativas consideradas:** botão "importar da WBS" mantendo árvore editável no documento (as duas voltariam a divergir).
+- **Consequências:** projetos sem WBS continuam com a estrutura do modelo; versões já salvas mantêm a árvore que tinham.
+- **Referências:** `lib/eapFromWbs.ts`, `services/gerenteProjeto.ts`, `components/projetos/documentacao/CamposQuadroDocumento.tsx`, `app/api/projects/[projetoId]/eap/route.ts`, SDD 12.11–12.12.
+
 ## ADR-034 — Nível 2 da EAP representa as sprints
 
 - **Data:** 2026-10-14

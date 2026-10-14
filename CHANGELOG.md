@@ -7,6 +7,14 @@ As versões até 1.6.0 foram reconstruídas retroativamente a partir do históri
 1.0.0 marca a entrada em produção na arquitetura de microsserviços, e cada marco de
 funcionalidade depois disso é uma versão MINOR.
 
+## [1.19.0] — 2026-10-14
+
+### Alterado
+- **Documentos → EAP:** a estrutura do documento vem da aba EAP/WBS (títulos, ordem e códigos). No documento ela fica só para leitura, com link para editar na aba; a versão salva guarda a estrutura da WBS. Sem WBS montada, continua o modelo.
+- **Documentos:** "Gerente do projeto" é sempre o gerente cadastrado no projeto (papel gerente), em todos os documentos, e aparece só para leitura no formulário. A assinatura da EAP passa a ser a do gerente, em versão aprovada, como no Termo.
+- **Documentos:** campos do quadro padronizados em um componente (`CamposQuadroDocumento`): Elaborado por e Aprovado por são o select de membro da equipe com "+" para criar membro, mais Versão e Data de aprovação. Usado no Termo, em Partes Interessadas e na EAP (que tinha inputs de texto). Na Ata, Elaborado por, Aprovado por, presentes e responsáveis passam a usar o mesmo select com "+".
+- **EAP ↔ sprint:** cards do backlog não aparecem na EAP/WBS nem na planilha de custos. Os nós de card do backlog que ficaram no nível 2 (como se fossem sprints) ou dentro de uma sprint são removidos; folhas da EAP não criam mais cards no backlog quando o projeto não tem sprint. O documento da EAP roda a mesma sincronização ao abrir.
+
 ## [1.18.0] — 2026-10-14
 
 ### Alterado

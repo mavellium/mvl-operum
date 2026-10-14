@@ -13,6 +13,10 @@ import {
 import { SaveEapDocumentSchema, validateEapDepth } from '@/lib/validation/eapSchemas'
 import type { EapNode } from '@/types/eap'
 import { structureFromTemplate } from '@/lib/eapTemplate'
+import { eapNodesFromWbs } from '@/lib/eapFromWbs'
+import { getTree } from '@/services/wbsService'
+import { gerenteDoProjeto } from '@/services/gerenteProjeto'
+import { sincronizarEapSprintSePermitido } from '@/services/eapSprintSyncService'
 import { ZodError } from 'zod'
 
 type RouteCtx = { params: Promise<{ projetoId: string }> }
@@ -28,6 +32,13 @@ async function loadProject(tenantId: string, projetoId: string) {
     where: { id: projetoId, tenantId, deletedAt: null },
     select: { id: true, name: true, departamentos: true, semestre: true, ano: true, logoUrl: true },
   })
+}
+
+/** Árvore da aba EAP/WBS no formato do documento; `null` quando a WBS ainda não existe. */
+async function nodesDaWbs(projetoId: string, tenantId: string): Promise<EapNode[] | null> {
+  const tree = await getTree(projetoId, tenantId)
+  const nodes = eapNodesFromWbs(tree.nodes, tree.rootId)
+  return nodes.length > 0 ? nodes : null
 }
 
 /**
@@ -69,11 +80,25 @@ export async function GET(_: Request, { params }: RouteCtx) {
 
     const base = await getOrCreateDocument(projetoId, tenantId, project.name)
     const vigente = await documentoVigente({ tenantId, role, userId }, projetoId, 'EAP')
-    const document = vigente?.payload ? { ...base, ...(vigente.payload as object) } : base
+    const salvo = vigente?.payload ? { ...base, ...(vigente.payload as object) } : base
+    // A estrutura vem sempre da aba EAP/WBS; os campos vazios do quadro são pré-preenchidos.
+    // Mesma reconciliação EAP ↔ sprint da aba EAP/WBS (ex.: tira cards do backlog) antes de ler a árvore.
+    await sincronizarEapSprintSePermitido({ userId, tenantId, role }, projetoId)
+    const [wbs, gerente] = await Promise.all([nodesDaWbs(projetoId, tenantId), gerenteDoProjeto(projetoId)])
+    const document = {
+      ...salvo,
+      projectName: salvo.projectName || project.name,
+      // Gerente do projeto é sempre o do cadastro, nunca digitado.
+      projectManager: gerente.nome,
+      ...(wbs ? { nodes: wbs } : {}),
+    }
     return NextResponse.json({
       document,
       instituicao: formatInstitucionalInfo(project),
       logoUrl: project.logoUrl ?? null,
+      origemWbs: Boolean(wbs),
+      // Assinatura do gerente só em documento com versão aprovada (mesma regra do Termo).
+      assinaturaUrl: vigente ? gerente.signatureUrl : null,
     })
   } catch (err) {
     return errorResponse(err, 'GET', projetoId)
@@ -100,6 +125,10 @@ export async function PUT(request: Request, { params }: RouteCtx) {
       return NextResponse.json({ error: message }, { status: 400 })
     }
 
+    // Com a aba EAP/WBS montada, a versão salva guarda a estrutura dela (não a do cliente).
+    const wbs = await nodesDaWbs(projetoId, tenantId)
+    if (wbs) parsed.data.nodes = wbs as unknown as typeof parsed.data.nodes
+    parsed.data.projectManager = (await gerenteDoProjeto(projetoId)).nome
     const nodes = parsed.data.nodes as unknown as EapNode[]
     if (!validateEapDepth(nodes)) {
       return NextResponse.json(
@@ -134,7 +163,7 @@ export async function POST(_: Request, { params }: RouteCtx) {
     await exigirPermissao({ userId, role, tenantId }, projetoId, 'documentos:editar')
     const template = await ensureTemplate(tenantId)
     const base = await getOrCreateDocument(projetoId, tenantId, project.name)
-    const document = { ...base, projectName: project.name, version: '1.0', projectManager: '', preparedBy: '', approvedBy: '', signature: '', approvalDate: null, nodes: structureFromTemplate(template.structure as unknown as EapNode[]) }
+    const document = { ...base, projectName: project.name, version: '1.0', projectManager: (await gerenteDoProjeto(projetoId)).nome, preparedBy: '', approvedBy: '', signature: '', approvalDate: null, nodes: structureFromTemplate(template.structure as unknown as EapNode[]) }
     await submeterDocumento({ tenantId, role, userId }, projetoId, 'EAP', document, { commitTitle: 'Restaurar modelo da EAP', versao: document.version, elaboradoPor: document.preparedBy, aprovadoPor: document.approvedBy, dataAprovacao: document.approvalDate ?? '' })
     return NextResponse.json({ document })
   } catch (err) {
