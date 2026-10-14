@@ -1077,7 +1077,7 @@ Gantt é uma projeção somente leitura. `dataPrevista` define o último dia e `
 
 ### Inativação de stakeholder e numeração de página (1.16.0)
 
-`Stakeholder` ganha `inactiveReason` e `inactivatedAt` (migration `20261014000000_stakeholder_inactive_reason`); o PATCH do project-service inativa com motivo (mín. 3 caracteres) e reativar limpa ambos. A impressão em PDF usa `lib/printPageStyle.ts` (A4 com "Página X de Y" na margem inferior via `@page`); a EAP gráfica usa página nomeada em paisagem.
+`Stakeholder` ganha `inactiveReason` e `inactivatedAt` (migration `20261014000000_stakeholder_inactive_reason`); o PATCH do project-service inativa com motivo (mín. 3 caracteres) e reativar limpa ambos. A impressão em PDF usa `lib/printPageStyle.ts` (A4 com "Página X de Y" na margem inferior via `@page`); o documento da EAP (`EapDocumentSheet`) segue o modelo do professor, todo em A4 paisagem: página gráfica com layout em colunas (`computeEapColumnLayout`, `lib/eapLayout.ts`) e texto que flui pelas páginas seguintes; `GET /api/projects/:id/eap` devolve também `logoUrl` do projeto.
 
 ### Documentos do projeto — fase 7
 

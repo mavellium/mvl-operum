@@ -1,7 +1,7 @@
 'use client'
 
 import { printPageStyle } from '@/lib/printPageStyle'
-import { EAP_PRINT_CSS } from './EapDocumentSheet'
+import { EAP_PRINT_MARGIN_TOP_MM } from './EapDocumentSheet'
 import { useProjectPermissions } from '@/components/permissoes/ProjectPermissions'
 
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
@@ -70,6 +70,7 @@ export default function EapDocument() {
   // ── Documento ─────────────────────────────────────────────────────────────
   const [doc, setDoc] = useState<EapDocument | null>(null)
   const [instituicao, setInstituicao] = useState('')
+  const [logoUrl, setLogoUrl] = useState<string | null>(null)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
 
@@ -106,6 +107,7 @@ export default function EapDocument() {
       const data = await r.json()
       setDoc(data.document)
       setInstituicao(data.instituicao ?? '')
+      setLogoUrl(data.logoUrl ?? null)
       setMetadata({
         projectName: data.document.projectName ?? '',
         projectManager: data.document.projectManager ?? '',
@@ -231,7 +233,7 @@ export default function EapDocument() {
   const handlePrint = useReactToPrint({
     contentRef: printRef,
     documentTitle: doc ? `EAP - ${doc.projectName || 'Projeto'}` : 'EAP - Estrutura Analítica do Projeto',
-    pageStyle: printPageStyle({ extraCss: EAP_PRINT_CSS }),
+    pageStyle: printPageStyle({ landscape: true, marginMm: { top: EAP_PRINT_MARGIN_TOP_MM, x: 0 } }),
   })
 
   // ── Salvar (PUT) ──────────────────────────────────────────────────────────
@@ -302,7 +304,7 @@ export default function EapDocument() {
   if (loading) {
     return (
       <div className="flex items-center justify-center p-16">
-        <div className="bg-white animate-pulse rounded shadow-2xl" style={{ width: '210mm', height: '297mm' }} />
+        <div className="bg-white animate-pulse rounded shadow-2xl" style={{ width: '297mm', height: '210mm' }} />
       </div>
     )
   }
@@ -310,7 +312,7 @@ export default function EapDocument() {
   if (error) {
     return (
       <div className="flex items-start justify-center p-8">
-        <div className="w-[210mm] rounded-xl bg-red-50 border border-red-200 p-6 text-red-700 text-sm">{error}</div>
+        <div className="w-[297mm] rounded-xl bg-red-50 border border-red-200 p-6 text-red-700 text-sm">{error}</div>
       </div>
     )
   }
@@ -323,7 +325,7 @@ export default function EapDocument() {
   return (
     <div className="min-h-screen bg-gray-300 flex flex-col items-center py-8 gap-5">
       {/* ── Toolbar (SPEC §19) ───────────────────────────────────────────── */}
-      <div className="w-[210mm] flex items-center gap-1.5 flex-wrap print:hidden">
+      <div className="w-[297mm] flex items-center gap-1.5 flex-wrap print:hidden">
         <button
           aria-label="Voltar"
           title="Voltar"
@@ -424,7 +426,7 @@ export default function EapDocument() {
 
       {/* ── Metadados do documento (SPEC §17) ────────────────────────────── */}
       {!viewing && (
-        <div className="w-[210mm] bg-white rounded-xl shadow-md p-6 grid grid-cols-2 gap-4 print:hidden">
+        <div className="w-[297mm] bg-white rounded-xl shadow-md p-6 grid grid-cols-2 gap-4 print:hidden">
           <div>
             <label className={labelClass} htmlFor="eap-nome-projeto">Nome do projeto</label>
             <input
@@ -511,6 +513,7 @@ export default function EapDocument() {
             metadata={snapshot.metadata}
             nodes={snapshot.nodes}
             instituicao={instituicao}
+            logoUrl={logoUrl}
             interactive={!viewing}
             selectedId={selectedId}
             onSelectBlock={id => !viewing && openBlock(id)}
