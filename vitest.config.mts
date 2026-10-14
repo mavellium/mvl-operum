@@ -28,6 +28,6 @@ export default defineConfig({
       reporter: ['text', 'lcov'],
       exclude: ['node_modules', '.next', 'lib/generated'],
     },
-    exclude: ['**/node_modules/**', '**/dist/**', '.next', 'auth-service/**', 'notification-service/**', 'project-service/**'],
+    exclude: ['**/node_modules/**', '**/dist/**', '.next', 'auth-service/**', 'notification-service/**', 'project-service/**', '.worktrees/**'],
   },
 })

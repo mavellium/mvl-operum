@@ -8,6 +8,7 @@ import { parseDocumentCost } from '@/lib/documentCost'
 // ── Types ──────────────────────────────────────────────────────────────────────
 
 export interface CharterDocumentProps {
+  /** Linha cinza do topo (instituição / curso / termo / semestre). */
   categoria?: string
   nomeProjeto: string
   logoUrl?: string | null
@@ -38,50 +39,71 @@ function parseCusto(value: string | null | undefined): number {
 
 function formatCusto(value: string | null | undefined): string {
   const n = parseCusto(value)
-  return n === 0 ? '–' : n.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })
+  return n === 0 ? '–' : n.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })
 }
 
-// ── Shared inline styles ───────────────────────────────────────────────────────
+/** "Rótulo: valor" por linha → grupos (o mesmo rótulo repetido junta os valores). */
+function agruparEnvolvidos(texto: string): { rotulo: string; valores: string[] }[] {
+  const grupos: { rotulo: string; valores: string[] }[] = []
+  for (const linha of texto.split('\n').map(l => l.trim()).filter(Boolean)) {
+    const i = linha.indexOf(':')
+    const rotulo = i > 0 ? linha.slice(0, i).trim() : ''
+    const valor = i > 0 ? linha.slice(i + 1).trim() : linha
+    const grupo = grupos.find(g => g.rotulo.toLowerCase() === rotulo.toLowerCase())
+    if (grupo) grupo.valores.push(valor)
+    else grupos.push({ rotulo, valores: [valor] })
+  }
+  return grupos
+}
 
-const cell: React.CSSProperties = {
-  border: '1px solid #475569',
-  padding: '5px 8px',
+// ── Estilos (Termo de Abertura do professor: caixas simples, sem sublinhado) ──
+
+const BORDA = '1px solid #000'
+const FONTE = 'Arial, Helvetica, sans-serif'
+
+const celula: React.CSSProperties = {
+  border: BORDA,
+  padding: '2px 5px',
   verticalAlign: 'top',
-  fontSize: '9pt',
-  lineHeight: 1.35,
+  fontSize: '9.5pt',
+  lineHeight: 1.3,
 }
 
-const sectionTitleStyle: React.CSSProperties = {
-  fontSize: '8.5pt',
+const tabela: React.CSSProperties = { width: '100%', borderCollapse: 'collapse' }
+
+const titulo: React.CSSProperties = {
+  fontSize: '9pt',
   fontWeight: 'bold',
-  color: '#1e293b',
-  textTransform: 'uppercase',
-  letterSpacing: 0.4,
-  borderBottom: '1.5px solid #334155',
-  paddingBottom: 3,
-  marginBottom: 6,
-  marginTop: 14,
+  margin: '18px 0 4px 28px',
 }
 
-const bodyText: React.CSSProperties = {
-  fontSize: '9pt',
-  lineHeight: 1.5,
-  color: '#1e293b',
+/** Caixa de texto corrido, justificado, com borda em volta (justificativa, objetivos, produto). */
+const caixa: React.CSSProperties = {
+  border: BORDA,
+  padding: '2px 4px',
+  fontSize: '10pt',
+  lineHeight: 1.3,
+  textAlign: 'justify',
   whiteSpace: 'pre-wrap',
+  margin: 0,
 }
 
-const emptyText: React.CSSProperties = {
-  ...bodyText,
-  color: '#94a3b8',
-  fontStyle: 'italic',
+const vazio: React.CSSProperties = { color: '#6b7280', fontStyle: 'italic' }
+
+function Rotulo({ children }: { children: React.ReactNode }) {
+  return <span style={{ fontWeight: 'bold' }}>{children}</span>
 }
 
-// ── Component ─────────────────────────────────────────────────────────────────
+function Texto({ valor }: { valor: string }) {
+  return <p style={caixa}>{valor || <span style={vazio}>Não informado.</span>}</p>
+}
+
+// ── Componente ─────────────────────────────────────────────────────────────────
 
 const ProjectCharterDocument = forwardRef<HTMLDivElement, CharterDocumentProps>(
   function ProjectCharterDocument(props, ref) {
     const {
-      nomeProjeto, logoUrl, gerenteProjeto, gerenteSignatureUrl,
+      categoria, nomeProjeto, logoUrl, gerenteProjeto, gerenteSignatureUrl,
       elaboradoPor, aprovadoPor, versao, dataAprovacao,
       justificativa, objetivos, metodologia, descricaoProduto,
       premissas, restricoes, limitesAutoridade,
@@ -90,7 +112,13 @@ const ProjectCharterDocument = forwardRef<HTMLDivElement, CharterDocumentProps>(
 
     const total = fases.reduce((sum, f) => sum + parseCusto(f.custo), 0)
 
-    const envolvidos = principaisEnvolvidos.split('\n').filter(Boolean)
+    const grupos = agruparEnvolvidos(principaisEnvolvidos)
+    const instituicao = grupos.find(g => /^institui[cç][aã]o/i.test(g.rotulo))?.valores.join(' / ') ?? ''
+    const integrantes = membros.map(m => m.name).filter(Boolean)
+    // "Integrantes do Grupo" (a equipe do projeto) entra depois do professor, como no modelo.
+    const idxProfessor = grupos.findIndex(g => /^professor/i.test(g.rotulo))
+    const blocos: { rotulo: string; valores: string[] }[] = [...grupos]
+    if (integrantes.length > 0) blocos.splice(idxProfessor + 1, 0, { rotulo: 'Integrantes do Grupo', valores: integrantes })
 
     return (
       <div
@@ -99,133 +127,148 @@ const ProjectCharterDocument = forwardRef<HTMLDivElement, CharterDocumentProps>(
         style={{
           width: '210mm',
           minHeight: '297mm',
-          padding: '12mm 15mm 15mm',
-          fontFamily: 'Arial, Helvetica, sans-serif',
-          fontSize: '9pt',
-          lineHeight: 1.35,
+          padding: '15mm 18mm 20mm',
+          fontFamily: FONTE,
+          fontSize: '9.5pt',
+          lineHeight: 1.3,
           boxSizing: 'border-box',
-          color: '#0f172a',
+          color: '#000',
         }}
       >
-        {logoUrl && <img src={logoUrl} alt="Logo" style={{ maxWidth: 100, maxHeight: 75, objectFit: 'contain' }} />}
-        <h1 style={{ textAlign: 'center', fontSize: '13pt', marginBottom: 12 }}>Termo de Abertura de Projeto - project charter</h1>
-        <table style={{ width: '100%', borderCollapse: 'collapse' }}><tbody>
-          <tr><td colSpan={2} style={{ ...cell, background: '#ddd' }}>{props.categoria || 'Instituição / curso / termo / semestre'}</td></tr>
-          <tr><td colSpan={2} style={cell}>Nome do projeto: {nomeProjeto}</td></tr>
-          <tr><td style={cell}>Elaborado por: {elaboradoPor || '—'}</td><td style={cell}>Versão: {versao}</td></tr>
-          <tr><td colSpan={2} style={cell}>Aprovado por: {aprovadoPor || '—'}</td></tr>
-          <tr><td style={cell}>Assinatura: {gerenteSignatureUrl && <img src={gerenteSignatureUrl} alt="Assinatura" style={{ maxWidth: 160, maxHeight: 36, objectFit: 'contain' }} />}</td><td style={cell}>Data de aprovação: {dataAprovacao || '—'}</td></tr>
-        </tbody></table>
+        {/* ── Cabeçalho: logo + título ──────────────────────────────────────── */}
+        <div style={{ display: 'flex', alignItems: 'center', gap: 22, marginBottom: 22 }}>
+          <div style={{ width: 110, height: 62, flexShrink: 0, display: 'flex', alignItems: 'center', justifyContent: 'center', border: logoUrl ? 'none' : '1px solid #4a6fa5', background: logoUrl ? 'transparent' : '#6f93c8' }}>
+            {logoUrl
+              // eslint-disable-next-line @next/next/no-img-element
+              ? <img src={logoUrl} alt="Logo" style={{ maxHeight: 62, maxWidth: 110, objectFit: 'contain' }} />
+              : <span style={{ color: '#fff', fontSize: '12pt', textAlign: 'center', lineHeight: 1.15 }}>Logo do<br />Projeto</span>}
+          </div>
+          <h1 style={{ margin: 0, fontSize: '15pt', fontWeight: 'bold' }}>
+            Termo de Abertura de Projeto - <em>project charter</em>
+          </h1>
+        </div>
 
-        {/* ── 1. Justificativa ──────────────────────────────────────────────── */}
-        <p style={sectionTitleStyle}>1. Justificativa do Projeto</p>
-        <p style={justificativa ? bodyText : emptyText}>{justificativa || 'Não informado.'}</p>
-
-        {/* ── 2. Objetivos ──────────────────────────────────────────────────── */}
-        <p style={sectionTitleStyle}>2. Objetivo(s) do Projeto</p>
-        <p style={objetivos ? bodyText : emptyText}>{objetivos || 'Não informado.'}</p>
-
-        {/* ── 4. Descrição do Produto ───────────────────────────────────────── */}
-        <p style={sectionTitleStyle}>4. Descrição do Produto do Projeto</p>
-        <p style={descricaoProduto ? bodyText : emptyText}>{descricaoProduto || 'Não informado.'}</p>
-
-        {/* ── 5. Premissas e Restrições ─────────────────────────────────────── */}
-        <p style={sectionTitleStyle}>5. Premissas e Restrições</p>
-        <table style={{ width: '100%', borderCollapse: 'collapse' }}>
-          <thead>
-            <tr>
-              <th style={{ ...cell, width: '50%', background: '#f8fafc', fontWeight: 'bold', fontSize: '8.5pt', textAlign: 'left' }}>
-                Premissas (Hipóteses)
-              </th>
-              <th style={{ ...cell, width: '50%', background: '#f8fafc', fontWeight: 'bold', fontSize: '8.5pt', textAlign: 'left' }}>
-                Restrições (Imposições)
-              </th>
-            </tr>
-          </thead>
+        {/* ── Quadro de identificação ──────────────────────────────────────── */}
+        <table style={tabela}>
           <tbody>
             <tr>
-              <td style={{ ...cell, verticalAlign: 'top' }}>
-                <p style={premissas ? bodyText : emptyText}>{premissas || 'Não informado.'}</p>
+              <td colSpan={2} style={{ ...celula, background: '#bfbfbf', fontWeight: 'bold', height: '1.6em' }}>{categoria || instituicao}</td>
+            </tr>
+            <tr>
+              <td colSpan={2} style={celula}><Rotulo>Nome do projeto:</Rotulo> {nomeProjeto}</td>
+            </tr>
+            <tr>
+              <td style={{ ...celula, width: '75%' }}><Rotulo>Elaborado por:</Rotulo> {elaboradoPor}</td>
+              <td style={celula}><Rotulo>Versão:</Rotulo> {versao}</td>
+            </tr>
+            <tr>
+              <td colSpan={2} style={celula}><Rotulo>Aprovado por:</Rotulo> {aprovadoPor}</td>
+            </tr>
+            <tr>
+              <td style={celula}>
+                <Rotulo>Assinatura:</Rotulo>
+                {gerenteSignatureUrl
+                  // eslint-disable-next-line @next/next/no-img-element
+                  ? <img src={gerenteSignatureUrl} alt="Assinatura" style={{ maxHeight: 34, maxWidth: 160, marginLeft: 6, verticalAlign: 'middle', objectFit: 'contain' }} />
+                  : null}
               </td>
-              <td style={{ ...cell, verticalAlign: 'top' }}>
-                <p style={restricoes ? bodyText : emptyText}>{restricoes || 'Não informado.'}</p>
-              </td>
+              <td style={celula}><Rotulo>Data de aprovação:</Rotulo> {dataAprovacao}</td>
             </tr>
           </tbody>
         </table>
 
-        {/* ── 6. Macro Fases ────────────────────────────────────────────────── */}
-        <p style={sectionTitleStyle}>6. Macro Fases, Prazos e Custos</p>
-        <table style={{ width: '100%', borderCollapse: 'collapse' }}>
+        <p style={titulo}>Justificativa do projeto</p>
+        <Texto valor={justificativa} />
+
+        <p style={titulo}>Objetivo(s) do Projeto</p>
+        <Texto valor={objetivos} />
+
+        <p style={titulo}>Descrição do produto do projeto</p>
+        <Texto valor={descricaoProduto} />
+
+        <p style={titulo}>Premissas (hipóteses) e restrições para o projeto</p>
+        <table style={tabela}>
           <thead>
-            <tr style={{ background: '#f8fafc' }}>
-              <th style={{ ...cell, width: '45%', fontWeight: 'bold', fontSize: '8.5pt', textAlign: 'left' }}>Macro Fase</th>
-              <th style={{ ...cell, width: '25%', fontWeight: 'bold', fontSize: '8.5pt', textAlign: 'left' }}>Data Limite</th>
-              <th style={{ ...cell, width: '30%', fontWeight: 'bold', fontSize: '8.5pt', textAlign: 'right' }}>Custo</th>
+            <tr>
+              <th style={{ ...celula, width: '50%', textAlign: 'center', borderBottom: BORDA }}>Premissas (hipóteses)</th>
+              <th style={{ ...celula, width: '50%', textAlign: 'center', borderBottom: BORDA }}>Restrições</th>
             </tr>
           </thead>
           <tbody>
-            {fases.length === 0
-              ? (
-                <tr>
-                  <td colSpan={3} style={{ ...cell, color: '#94a3b8', fontStyle: 'italic' }}>
-                    Nenhuma macro fase cadastrada.
-                  </td>
-                </tr>
-              )
-              : fases.map((f, i) => (
-                <tr key={f.id}>
-                  <td style={cell}>1.{i + 1} {f.fase || '–'}</td>
-                  <td style={cell}>{formatDateBR(f.dataLimite)}</td>
-                  <td style={{ ...cell, textAlign: 'right' }}>{formatCusto(f.custo)}</td>
-                </tr>
-              ))
-            }
+            <tr>
+              <td style={{ ...celula, whiteSpace: 'pre-wrap' }}>{premissas || <span style={vazio}>Não informado.</span>}</td>
+              <td style={{ ...celula, whiteSpace: 'pre-wrap' }}>{restricoes || <span style={vazio}>Não informado.</span>}</td>
+            </tr>
+          </tbody>
+        </table>
+
+        <p style={titulo}>Macro Fases, prazos e custo</p>
+        <table style={tabela}>
+          <thead>
+            <tr>
+              <th style={{ ...celula, width: '64%', fontWeight: 'normal', textAlign: 'center' }}>Macro fase</th>
+              <th style={{ ...celula, width: '16%', fontWeight: 'normal', textAlign: 'center' }}>Data limite</th>
+              <th style={{ ...celula, width: '20%', fontWeight: 'normal', textAlign: 'center' }}>Custo</th>
+            </tr>
+          </thead>
+          <tbody>
+            {fases.length === 0 ? (
+              <tr><td colSpan={3} style={{ ...celula, ...vazio }}>Nenhuma macro fase cadastrada.</td></tr>
+            ) : fases.map(f => (
+              <tr key={f.id}>
+                <td style={{ ...celula, borderTop: 'none', borderBottom: 'none' }}>{f.fase || '–'}</td>
+                <td style={{ ...celula, borderTop: 'none', borderBottom: 'none', textAlign: 'center' }}>{formatDateBR(f.dataLimite)}</td>
+                <td style={{ ...celula, borderTop: 'none', borderBottom: 'none', textAlign: 'right' }}>{formatCusto(f.custo)}</td>
+              </tr>
+            ))}
           </tbody>
           <tfoot>
-            <tr style={{ background: '#f1f5f9', fontWeight: 'bold' }}>
-              <td colSpan={2} style={{ ...cell, fontSize: '8.5pt' }}>Total</td>
-              <td style={{ ...cell, textAlign: 'right', fontSize: '8.5pt' }}>
-                {total.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}
+            <tr>
+              <td colSpan={2} style={{ ...celula, textAlign: 'right', fontWeight: 'bold' }}>Custo total</td>
+              <td style={{ ...celula, textAlign: 'right' }}>
+                {total.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
               </td>
             </tr>
           </tfoot>
         </table>
 
-        {/* ── 7. Principais Envolvidos ──────────────────────────────────────── */}
-        <p style={sectionTitleStyle}>7. Principais Envolvidos</p>
-        <table style={{ width: '100%', borderCollapse: 'collapse' }}>
-          <thead>
-            <tr style={{ background: '#f8fafc' }}>
-              <th style={{ ...cell, width: '60%', fontWeight: 'bold', fontSize: '8.5pt', textAlign: 'left' }}>Nome</th>
-              <th style={{ ...cell, width: '40%', fontWeight: 'bold', fontSize: '8.5pt', textAlign: 'left' }}>Papel / Instituição</th>
-            </tr>
-          </thead>
+        <p style={titulo}>Principais envolvidos</p>
+        <div style={{ border: BORDA, padding: '14px 18px 10px', minHeight: 60, fontSize: '9.5pt', lineHeight: 1.35 }}>
+          {blocos.length === 0 ? (
+            <span style={vazio}>Não informado.</span>
+          ) : blocos.map((g, i) => (
+            <div key={i} style={{ marginBottom: 14 }}>
+              {g.rotulo && <div style={{ fontWeight: 'bold' }}>{g.rotulo}</div>}
+              {g.valores.map((v, j) => (
+                <div key={j} style={{ marginLeft: g.rotulo ? '32mm' : 0 }}>{v}</div>
+              ))}
+            </div>
+          ))}
+        </div>
+
+        <p style={titulo}>Designação de gerente</p>
+        <table style={tabela}>
           <tbody>
-            {membros.map((m, i) => (
-              <tr key={i}>
-                <td style={cell}>{m.name}</td>
-                <td style={cell}>Integrante</td>
-              </tr>
-            ))}
-            {envolvidos.map((line, i) => (
-              <tr key={`m-${i}`}>
-                <td colSpan={2} style={cell}>{line}</td>
-              </tr>
-            ))}
-            {membros.length === 0 && envolvidos.length === 0 && (
-              <tr>
-                <td colSpan={2} style={{ ...cell, color: '#94a3b8', fontStyle: 'italic' }}>Não informado.</td>
-              </tr>
-            )}
+            <tr>
+              <td style={{ ...celula, width: '22%' }}>Gerente do projeto</td>
+              <td style={celula}>{gerenteProjeto ? `A gerência do projeto será de responsabilidade de ${gerenteProjeto}.` : <span style={vazio}>Não informado.</span>}</td>
+            </tr>
+            <tr>
+              <td style={celula}>Limites de autoridade</td>
+              <td style={{ ...celula, whiteSpace: 'pre-wrap', minHeight: 60 }}>{limitesAutoridade || <span style={vazio}>Não informado.</span>}</td>
+            </tr>
           </tbody>
         </table>
 
-        {/* ── 8. Limites de Autoridade ──────────────────────────────────────── */}
-        <p style={sectionTitleStyle}>Designação de gerente</p><p style={bodyText}>Gerente do projeto: {gerenteProjeto || '—'}</p><p style={sectionTitleStyle}>Limites de Autoridade do Gerente</p>
-        <p style={limitesAutoridade ? bodyText : emptyText}>{limitesAutoridade || 'Não informado.'}</p>
-        {metodologia && <><p style={sectionTitleStyle}>Metodologia do projeto</p><p style={bodyText}>{metodologia}</p></>}
-        <p style={{ fontSize: '8pt', marginTop: 20 }}>© 02_Project Charter</p>
+        {/* Metodologia não existe no modelo do professor; fica no fim, no mesmo estilo. */}
+        {metodologia && (
+          <>
+            <p style={titulo}>Metodologia do projeto</p>
+            <Texto valor={metodologia} />
+          </>
+        )}
+
+        <p style={{ margin: '10px 0 0 28px', fontSize: '7.5pt' }}>© 02_Project Charter</p>
       </div>
     )
   },

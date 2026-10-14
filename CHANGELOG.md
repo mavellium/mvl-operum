@@ -7,6 +7,10 @@ As versões até 1.6.0 foram reconstruídas retroativamente a partir do históri
 1.0.0 marca a entrada em produção na arquitetura de microsserviços, e cada marco de
 funcionalidade depois disso é uma versão MINOR.
 
+## [1.15.2] — 2026-10-07
+- **Documentos:** o Termo de Abertura passa a seguir o modelo do professor: caixas com borda em Justificativa, Objetivos e Descrição do produto, títulos sem numeração e sem sublinhado, quadro de identificação com linha cinza, custos sem "R$" e "Principais envolvidos" agrupados. A Metodologia, que não existe no modelo, só aparece se preenchida.
+- **Desenvolvimento:** ESLint e Vitest ignoram `.worktrees`.
+
 ## [1.15.1] — 2026-10-05
 - **Deploy:** valida a chave de métricas antes de alterar a release; webhook vazio mantém alertas locais com aviso de envio externo pendente. Webhook preenchido inválido continua bloqueado, com diagnóstico específico sem expor segredos.
 
