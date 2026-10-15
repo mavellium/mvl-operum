@@ -7,6 +7,11 @@ As versões até 1.6.0 foram reconstruídas retroativamente a partir do históri
 1.0.0 marca a entrada em produção na arquitetura de microsserviços, e cada marco de
 funcionalidade depois disso é uma versão MINOR.
 
+## [1.24.1] — 2026-10-15
+
+### Corrigido
+- **Esqueci minha senha:** sem SMTP configurado, o auth-service não enviava o e-mail, respondia sucesso e **gravava o código no log**. Em produção ele agora nunca registra o código e registra um erro claro, na subida e a cada pedido. Com SMTP, testa a conexão ao subir, e os logs mostram o e-mail mascarado. O deploy avisa quando falta SMTP no `.env` da VPS, e as variáveis (`SMTP_HOST`, `SMTP_PORT`, `SMTP_USER`, `SMTP_PASSWORD`, `SMTP_FROM`, `APP_PUBLIC_URL`) foram documentadas no `.env.example`. Para o e-mail chegar, é preciso preencher o SMTP no `.env` da VPS.
+
 ## [1.24.0] — 2026-10-15
 
 ### Adicionado
