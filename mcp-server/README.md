@@ -4,6 +4,8 @@ Servidor MCP remoto do Operum (Streamable HTTP, stateless). Expõe tools de leit
 
 Este serviço **nunca** acessa o banco de dados diretamente — é apenas mais um cliente HTTP do `api-gateway`, autenticado com um Personal Access Token (PAT) do Operum (`opr_pat_...`). Toda autorização e isolamento por tenant acontece no gateway/auth-service (ver `SDD — Integração MCP Operum ↔ Claude`, seções 3 e 6).
 
+> Guia para quem usa o Operum (passo a passo, problemas comuns e roteiro do vídeo): [`docs/tutoriais/integracao-mcp-claude.md`](../docs/tutoriais/integracao-mcp-claude.md).
+
 ## Gerar um token
 
 Gere um PAT em `/perfil/tokens` no Operum.

@@ -20,7 +20,9 @@ type ApiTokenSummary = {
   createdAt: string
 }
 
-const MCP_SERVER_URL = process.env.NEXT_PUBLIC_MCP_SERVER_URL || 'https://mcp.operum.adm.br/mcp'
+// NEXT_PUBLIC_* é fixada no build da imagem, que não recebe o .env da VPS: o padrão
+// precisa ser um endereço que funciona. mcp.operum.adm.br ainda não tem DNS.
+const MCP_SERVER_URL = process.env.NEXT_PUBLIC_MCP_SERVER_URL || 'https://api.operum.adm.br/mcp'
 
 export default function ApiTokensManager({ tokens }: { tokens: ApiTokenSummary[] }) {
   const [state, formAction, isPending] = useActionState(createApiTokenAction, {} as CreateApiTokenState)

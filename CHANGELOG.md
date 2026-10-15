@@ -7,6 +7,14 @@ As versões até 1.6.0 foram reconstruídas retroativamente a partir do históri
 1.0.0 marca a entrada em produção na arquitetura de microsserviços, e cada marco de
 funcionalidade depois disso é uma versão MINOR.
 
+## [1.28.1] — 2026-10-15
+
+### Corrigido
+- **Tokens (Perfil > Gerenciar tokens):** o comando "Conectar no Claude Code" vinha com `https://mcp.operum.adm.br/mcp`, endereço que ainda não tem DNS, então a conexão não funcionava. O padrão passa a ser `https://api.operum.adm.br/mcp`, que é o endereço em uso. A variável `NEXT_PUBLIC_MCP_SERVER_URL` é fixada no build da imagem e não era passada.
+
+### Documentação
+- Guia "Como conectar o Claude ao Operum (MCP)" com o roteiro do vídeo tutorial: `docs/tutoriais/integracao-mcp-claude.md`.
+
 ## [1.25.1] — 2026-10-15
 
 ### Corrigido
