@@ -8,8 +8,11 @@ vi.mock('@/lib/api-client', () => ({
     stopTimer: vi.fn(),
     getActiveTimer: vi.fn(),
     getTimeTotal: vi.fn(),
+    get: vi.fn(),
+    addResponsible: vi.fn(),
   },
 }))
+vi.mock('@/services/wbsService', () => ({ refletirResponsaveisNoNo: vi.fn().mockResolvedValue(true) }))
 
 import { verifySession } from '@/lib/dal'
 import { cardsApi } from '@/lib/api-client'
@@ -38,6 +41,24 @@ describe('startTimerAction', () => {
     mockVerify.mockRejectedValue(new Error('Não autenticado'))
     const result = await startTimerAction('clh3v0v7z0000356wf5g95e3')
     expect(result).toHaveProperty('error')
+  })
+
+  it('card sem responsável: quem iniciou o timer vira responsável (ADR-045)', async () => {
+    mockVerify.mockResolvedValue({ userId: 'u1' })
+    vi.mocked(cardsApi.startTimer).mockResolvedValue({ id: 't1', isRunning: true })
+    vi.mocked(cardsApi.get).mockResolvedValue({ responsibles: [] } as never)
+    const result = await startTimerAction('clh3v0v7z0000356wf5g95e3')
+    expect(cardsApi.addResponsible).toHaveBeenCalledWith('clh3v0v7z0000356wf5g95e3', 'u1')
+    expect(result).toMatchObject({ responsavelAdicionado: true })
+  })
+
+  it('card com responsável: não adiciona ninguém', async () => {
+    mockVerify.mockResolvedValue({ userId: 'u1' })
+    vi.mocked(cardsApi.startTimer).mockResolvedValue({ id: 't1', isRunning: true })
+    vi.mocked(cardsApi.get).mockResolvedValue({ responsibles: [{ userId: 'u2' }] } as never)
+    const result = await startTimerAction('clh3v0v7z0000356wf5g95e3')
+    expect(cardsApi.addResponsible).not.toHaveBeenCalled()
+    expect(result).toMatchObject({ responsavelAdicionado: false })
   })
 })
 

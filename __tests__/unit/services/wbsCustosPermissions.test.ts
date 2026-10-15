@@ -9,6 +9,8 @@ const tx = vi.hoisted(() => ({
   auditLog: { create: vi.fn() },
   userProject: { findMany: vi.fn() },
   cardResponsible: { findMany: vi.fn(), deleteMany: vi.fn(), createMany: vi.fn() },
+  card: { findUnique: vi.fn() },
+  sprintColumn: { findMany: vi.fn() },
 }))
 vi.mock('@/lib/prisma', () => ({ default: { $transaction: (fn: (db: typeof tx) => unknown) => fn(tx) } }))
 import { updateNodeProperties } from '@/services/wbsService'
@@ -99,3 +101,23 @@ describe('Elaborado por = responsáveis do card', () => {
     await expect(updateNodeProperties({ ...input, properties: { elaboradoPorUserIds: ['u1', 'u2'] } }, { userId: 'u1', permissoes: permissions('planilha:realizado-proprio') })).rejects.toThrow('Sem permissão')
   })
 })
+
+describe('Elaborado por vazio com card em "Em andamento" ou depois (ADR-045)', () => {
+  it('recusa esvaziar: o card não pode ficar sem responsável', async () => {
+    tx.wbsNode.findFirst.mockReset().mockResolvedValueOnce({ id: 'n1', properties: { cardId: 'c1', elaboradoPorUserIds: ['ana'] } })
+    tx.card.findUnique.mockResolvedValue({ sprintId: 's1', sprintColumnId: 'doing' })
+    tx.sprintColumn.findMany.mockResolvedValue([{ id: 'todo', title: 'A Fazer', position: 0 }, { id: 'doing', title: 'Em andamento', position: 1 }])
+    await expect(updateNodeProperties({ ...input, properties: { elaboradoPorUserIds: [] } }, { userId: 'g', permissoes: permissions('planilha:orcado') })).rejects.toThrow('precisa de pelo menos um responsável')
+    expect(tx.cardResponsible.deleteMany).not.toHaveBeenCalled()
+  })
+
+  it('em "A Fazer" pode esvaziar', async () => {
+    tx.wbsNode.findFirst.mockReset().mockResolvedValueOnce({ id: 'n1', properties: { cardId: 'c1', elaboradoPorUserIds: ['ana'] } }).mockResolvedValue({ id: 'root', version: 1 })
+    tx.card.findUnique.mockResolvedValue({ sprintId: 's1', sprintColumnId: 'todo' })
+    tx.sprintColumn.findMany.mockResolvedValue([{ id: 'todo', title: 'A Fazer', position: 0 }, { id: 'doing', title: 'Em andamento', position: 1 }])
+    tx.cardResponsible.findMany.mockResolvedValue([{ userId: 'ana' }])
+    await updateNodeProperties({ ...input, properties: { elaboradoPorUserIds: [] } }, { userId: 'g', permissoes: permissions('planilha:orcado') })
+    expect(tx.cardResponsible.deleteMany).toHaveBeenCalledWith({ where: { cardId: 'c1', userId: { in: ['ana'] } } })
+  })
+})
+

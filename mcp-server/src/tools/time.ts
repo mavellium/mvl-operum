@@ -72,7 +72,7 @@ export function registerTimeTools(server: McpServer, registry: TenantRegistry) {
     {
       title: 'Iniciar timer da tarefa',
       description:
-        'Inicia o timer do usuário (dono do token) na tarefa. Como no app, o card vai para a coluna "Em andamento" se estiver numa coluna anterior (nunca volta de "Em teste" ou "Concluído"). ' +
+        'Inicia o timer do usuário (dono do token) na tarefa. Como no app, o card vai para a coluna "Em andamento" se estiver numa coluna anterior (nunca volta de "Em teste" ou "Concluído"); sem responsável, o dono do token vira o responsável (responsible_added=true), porque "Em andamento" exige um. ' +
         'Só pode haver um timer rodando por usuário: com stop_running=true, o timer de outra tarefa é parado antes; sem isso, o erro diz qual tarefa está com o timer. ' +
         'Se o timer já está rodando nesta tarefa, não faz nada (already_running=true).',
       inputSchema: {
@@ -104,6 +104,16 @@ export function registerTimeTools(server: McpServer, registry: TenantRegistry) {
 
       const entry = await ctx.gw.post<RawEntry>(`/cards/${task_id}/time-entries/start`, description ? { description } : {})
 
+      // "Em andamento" exige responsável (ADR-045): sem nenhum, o dono do token vira o responsável.
+      let responsibleAdded = false
+      const semResponsavel = !Array.isArray(card.responsibles) || card.responsibles.length === 0
+      if (semResponsavel && entry.userId) {
+        try {
+          await ctx.gw.post(`/cards/${task_id}/responsibles/${String(entry.userId)}`)
+          responsibleAdded = true
+        } catch { /* segue: o movimento abaixo avisa se faltar responsável */ }
+      }
+
       // O timer já está correndo: se mover o card falhar, avisa em vez de falhar a tool.
       let movedTo: { id: string; title: string } | null = null
       let moveError: string | undefined
@@ -121,6 +131,7 @@ export function registerTimeTools(server: McpServer, registry: TenantRegistry) {
         entry: serializeTimeEntry(entry),
         already_running: false,
         moved_to: movedTo,
+        responsible_added: responsibleAdded,
         stopped_previous: previous ? stopped(previous) : null,
         ...(moveError ? { warning: moveError } : {}),
       }

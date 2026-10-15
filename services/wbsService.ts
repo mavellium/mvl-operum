@@ -7,6 +7,7 @@ import { MOTIVO_MINIMO, registrarHistoricoSprint, resumoDaSprint, sprintTemDados
 import { recalcCodes } from '@/lib/wbsCode'
 import type { WbsNodeClient, WbsNodeStyle, WbsNodeProperties, WbsLayoutOrientation } from '@/types/wbs'
 import { WBS_LIMITS } from '@/lib/validation/wbsSchemas'
+import { colunaExigeResponsavel, mensagemUltimoResponsavel } from '@/lib/responsavelObrigatorio'
 import { elaboradoresDe, propsDosElaboradores, reconciliarElaboradores, diferencaParaCard, type PropsElaboradores } from '@/lib/elaboradores'
 import type {
   InsertChildInput,
@@ -556,6 +557,16 @@ export async function updateNodeProperties(input: UpdateNodePropertiesInput, ace
       // Nomes e o id antigo saem do cadastro, nunca do que o cliente mandou.
       properties = { ...properties, ...propsDosElaboradores(escolhidos, nomes), elaboradoSincronizado: true }
       if (cardId) {
+        if (escolhidos.length === 0) {
+          // Elaborado por = responsáveis: o card em "Em andamento" ou depois não fica sem ninguém.
+          const card = await tx.card.findUnique({ where: { id: cardId }, select: { sprintId: true, sprintColumnId: true } })
+          if (card?.sprintId && card.sprintColumnId) {
+            const colunas = await tx.sprintColumn.findMany({ where: { sprintId: card.sprintId, deletedAt: null }, select: { id: true, title: true, position: true } })
+            if (colunaExigeResponsavel(colunas, card.sprintColumnId)) {
+              throw new WbsValidationError(mensagemUltimoResponsavel(colunas.find(c => c.id === card.sprintColumnId)!.title))
+            }
+          }
+        }
         const atuais = (await tx.cardResponsible.findMany({ where: { cardId }, select: { userId: true } })).map(r => r.userId)
         const { adicionarNoCard, removerDoCard } = diferencaParaCard(escolhidos, atuais)
         if (removerDoCard.length) await tx.cardResponsible.deleteMany({ where: { cardId, userId: { in: removerDoCard } } })

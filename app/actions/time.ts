@@ -1,5 +1,7 @@
 'use server'
 
+import { refletirResponsaveisNoNo } from '@/services/wbsService'
+
 import { verifySession } from '@/lib/dal'
 import { cardsApi, timeEntriesApi } from '@/lib/api-client'
 
@@ -33,10 +35,13 @@ function sanitizeDescription(desc?: string): string | undefined {
 
 export async function startTimerAction(cardId: string) {
   try {
-    await verifySession()
+    const session = await verifySession()
     assertValidId(cardId, 'cardId')
     const entry = await cardsApi.startTimer(cardId)
-    return { entry }
+    // Iniciar o timer leva o card para "Em andamento", que exige responsável (ADR-045):
+    // sem nenhum, quem iniciou vira o responsável.
+    const responsavelAdicionado = await tornarResponsavelSeVazio(cardId, session.userId)
+    return { entry, responsavelAdicionado }
   } catch (err) {
     return { error: err instanceof Error ? err.message : 'Erro ao iniciar timer' }
   }
@@ -167,5 +172,17 @@ export async function deleteTimeEntryAction(entryId: string) {
     return { success: true }
   } catch (err) {
     return { error: err instanceof Error ? err.message : 'Erro ao excluir registro' }
+  }
+}
+
+async function tornarResponsavelSeVazio(cardId: string, userId: string): Promise<boolean> {
+  try {
+    const card = await cardsApi.get(cardId) as { responsibles?: unknown[] }
+    if ((card.responsibles ?? []).length > 0) return false
+    await cardsApi.addResponsible(cardId, userId)
+    await refletirResponsaveisNoNo(cardId).catch(() => {})
+    return true
+  } catch {
+    return false // best-effort: o timer já está correndo; o movimento avisa se faltar responsável
   }
 }
