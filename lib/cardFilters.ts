@@ -60,3 +60,34 @@ export function aplicarFiltros<T extends FiltravelCard>(cards: T[], f: CardFilte
     .sort((a, b) => chave(a.c) - chave(b.c) || a.i - b.i)
     .map(x => x.c)
 }
+
+/** Minúsculas e sem acentos, para a busca não depender de "ç", "ã" ou maiúsculas. */
+export function normalizarBusca(texto: string): string {
+  return texto.normalize('NFD').replace(/[̀-ͯ]/g, '').toLowerCase().trim()
+}
+
+interface BuscavelCard {
+  title: string
+  eapCode?: string
+  description?: string | null
+  responsibles?: { user: { name: string } }[]
+  tags?: { tag: { name: string } }[]
+}
+
+/**
+ * Busca da coluna: cada palavra digitada precisa aparecer no título, no código
+ * da EAP, na descrição, no nome de um responsável ou de uma etiqueta.
+ */
+export function buscarCards<T extends BuscavelCard>(cards: T[], busca: string): T[] {
+  const termos = normalizarBusca(busca).split(/\s+/).filter(Boolean)
+  if (termos.length === 0) return cards
+  return cards.filter(c => {
+    const texto = normalizarBusca([
+      c.eapCode ? `${c.eapCode} - ${c.title}` : c.title,
+      c.description ?? '',
+      ...(c.responsibles ?? []).map(r => r.user.name),
+      ...(c.tags ?? []).map(t => t.tag.name),
+    ].join(' '))
+    return termos.every(t => texto.includes(t))
+  })
+}

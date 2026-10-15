@@ -7,6 +7,11 @@ As versões até 1.6.0 foram reconstruídas retroativamente a partir do históri
 1.0.0 marca a entrada em produção na arquitetura de microsserviços, e cada marco de
 funcionalidade depois disso é uma versão MINOR.
 
+## [1.22.0] — 2026-10-15
+
+### Adicionado
+- **Quadro da sprint:** lupa no cabeçalho de cada coluna, inclusive no Backlog, para buscar só nos cards daquela coluna. A busca ignora acentos e maiúsculas, exige todas as palavras digitadas e procura no título, no código da EAP, na descrição, nos responsáveis e nas etiquetas. Soma-se aos filtros do quadro. O selo mostra "encontrados/total"; Escape ou o "×" limpam e fecham. Enquanto a coluna está filtrada, o arraste dela fica pausado (não sai nem entra card), para o card não cair na posição errada.
+
 ## [1.21.0] — 2026-10-15
 
 ### Adicionado
