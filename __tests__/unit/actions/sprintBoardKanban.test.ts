@@ -20,6 +20,9 @@ vi.mock('@/lib/api-client', () => ({
   },
 }))
 
+const bloqueio = vi.hoisted(() => vi.fn())
+vi.mock('@/services/membroInativo', () => ({ bloqueioDeConclusao: bloqueio }))
+
 vi.mock('@/lib/prisma', () => ({
   default: {
     userProject: { findMany: vi.fn() },
@@ -41,6 +44,7 @@ const mockVerify = verifySession as ReturnType<typeof vi.fn>
 beforeEach(() => {
   vi.clearAllMocks()
   vi.mocked(prisma.userProject.findMany).mockResolvedValue([])
+  bloqueio.mockResolvedValue(null)
 })
 
 // ── Teste 1: Query Híbrida ─────────────────────────────────
@@ -145,6 +149,15 @@ describe('moveCardInSprintAction — coluna da sprint → coluna da sprint', () 
 // ── Teste 3: moveCardToSprintAction (Backlog → Sprint) ─────
 
 describe('moveCardToSprintAction — Backlog → coluna da sprint', () => {
+  it('recusa trazer direto para a conclusão um card só com responsáveis inativos', async () => {
+    mockVerify.mockResolvedValue({ userId: 'u1' })
+    bloqueio.mockResolvedValue('Responsável inativo no projeto: adicione outro responsável para concluir este card.')
+    const result = await moveCardToSprintAction('c1', 's1', 'col-concluido', 0)
+    expect(bloqueio).toHaveBeenCalledWith('c1', 'col-concluido')
+    expect(result).toHaveProperty('error')
+    expect(cardsApi.update).not.toHaveBeenCalled()
+  })
+
   it('atualiza sprintId, sprintColumnId e sprintPosition', async () => {
     mockVerify.mockResolvedValue({ userId: 'u1', tenantId: 'tenant1' })
     vi.mocked(cardsApi.update).mockResolvedValue(undefined)

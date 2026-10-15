@@ -187,6 +187,10 @@ export const projectsApi = {
   removeMember: (projectId: string, userId: string) =>
     request(`/projects/${projectId}/members/${userId}`, { method: 'DELETE' }),
 
+  /** Inativa (com motivo) ou reativa o membro no projeto; inativo perde o acesso. */
+  setMemberSituacao: (projectId: string, userId: string, ativo: boolean, motivo?: string) =>
+    request(`/projects/${projectId}/members/${userId}/situacao`, { method: 'PATCH', body: JSON.stringify({ ativo, motivo }) }),
+
   reorderMembers: (projectId: string, orderedUserIds: string[]) =>
     request(`/projects/${projectId}/members/reorder`, { method: 'PATCH', body: JSON.stringify({ orderedUserIds }) }),
 

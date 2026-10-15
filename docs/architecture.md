@@ -438,6 +438,7 @@ Admin cria usuário com forcePasswordChange=true
 | GET | `/projects/user/:userId` | Projetos ativos do usuário |
 | PATCH/DELETE | `/projects/:id` | Editar/remover |
 | GET/POST | `/projects/:id/members` · DELETE `/projects/:id/members/:userId` · PATCH `/members/reorder` | Membros do projeto |
+| PATCH | `/projects/:id/members/:userId/situacao` | Inativa (`{ ativo: false, motivo }`) ou reativa (`{ ativo: true }`) o membro no projeto; permissão `projeto:equipe` |
 | GET/POST | `/projects/:id/macro-fases` | Macro-fases do projeto |
 | GET/POST/PATCH/DELETE | `/roles`, `/roles/:id` | Roles RBAC |
 | POST/DELETE | `/roles/:roleId/permissions/:permissionId` | Vínculo role↔permission |
@@ -572,7 +573,7 @@ Lista, criação e detalhe de projeto (dados básicos, status, ações).
 Gerenciamento de membros com dados **por projeto** (`UsuarioProjeto`): listagem, edição inline (cargo/departamento/valorHora), adicionar/remover.
 
 ### `/projetos/:id/stakeholders`
-Cadastro e vínculo de stakeholders (internos/externos) ao projeto, com reordenação.
+Cadastro e vínculo de stakeholders (internos/externos) ao projeto, com reordenação. Membros da equipe e externos têm o botão "Inativar"/"Reativar" na linha e no formulário de edição; inativos aparecem em vermelho com o motivo (ver "Inativação de membro da equipe").
 
 ### `/projetos/:id/departamentos`, `/projetos/:id/funcoes`
 Departamentos e papéis/funções do projeto (RBAC por projeto).
@@ -1088,6 +1089,12 @@ Gantt é uma projeção somente leitura. `dataPrevista` define o último dia e `
 ### Inativação de stakeholder e numeração de página (1.16.0)
 
 `Stakeholder` ganha `inactiveReason` e `inactivatedAt` (migration `20261014000000_stakeholder_inactive_reason`); o PATCH do project-service inativa com motivo (mín. 3 caracteres) e reativar limpa ambos. A impressão em PDF usa `lib/printPageStyle.ts` (A4 com "Página X de Y" na margem inferior via `@page`); o documento da EAP (`EapDocumentSheet`) segue o modelo do professor, todo em A4 paisagem: página gráfica com layout em colunas (`computeEapColumnLayout`, `lib/eapLayout.ts`) e texto que flui pelas páginas seguintes; `GET /api/projects/:id/eap` devolve também `logoUrl`, `assinaturaUrl` (gerente, só com versão aprovada) e `origemWbs`. A árvore do documento vem da aba EAP/WBS (`eapNodesFromWbs`, `lib/eapFromWbs.ts`) e o PUT grava a estrutura da WBS, não a do cliente; sem WBS, vale a do modelo. "Gerente do projeto" de todos os documentos vem de `gerenteDoProjeto` (`services/gerenteProjeto.ts`, papel `gerente` em `UserProjectRole`). Os campos do quadro (gerente só leitura, Elaborado/Aprovado por com `MembroEquipeSelect` e "+", Versão, Data de aprovação) ficam em `components/projetos/documentacao/CamposQuadroDocumento.tsx`, usado por Termo, Partes Interessadas e EAP; a Ata usa `MembroEquipeSelect` nos campos de pessoa. Ver ADR-035.
+
+### Inativação de membro da equipe (1.23.0)
+
+`UserProject` ganha `inactiveReason` e `inactivatedAt` (migration `20261015000000_user_project_inactive_reason`, nos schemas do monolito, do project-service e do sprint-service). Inativar usa `active = false` com motivo: o membro perde o acesso ao projeto (é o mesmo `active` que `services/authz.ts` consulta), mas o motivo o mantém em Stakeholders e no formulário de Partes Interessadas, em vermelho. Desvincular (`DELETE /members/:userId`) e re-adicionar limpam o motivo; desvinculado sem motivo some das duas telas. Escrita em `PATCH /projects/:id/members/:userId/situacao` (project-service); a action `setMembroAtivoAction` exige `projeto:equipe` e recusa motivo com menos de 3 caracteres, inativar a si mesmo e inativar um gerente do projeto (tirar o papel de gerente antes).
+
+Os cards continuam com o responsável inativo. `services/membroInativo.ts` lista os cards abertos do projeto (backlog ou sprint, fora da coluna de conclusão) em que todos os responsáveis estão inativos (`precisaDeOutroResponsavel`, `lib/responsavelInativo.ts`) e, ao inativar, publica uma notificação `UPDATE` para cada gerente do projeto com essa pendência (link para o card, se for um só, ou para a sprint). O quadro recebe `inactiveUserIds`, mostra o aviso no minicard e `moveCardInSprintAction`/`moveCardToSprintAction` recusam levar esse card para a coluna de conclusão (`bloqueioDeConclusao`); o quadro já desfaz o movimento quando o servidor recusa. Movimentos feitos direto no sprint-service (MCP/API) não passam por essa regra. Ver ADR-041.
 
 ### Documentos do projeto — fase 7
 

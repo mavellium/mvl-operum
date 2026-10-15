@@ -48,7 +48,8 @@ export async function GET(
         where: { id: projetoId, tenantId, deletedAt: null },
       }),
       prisma.userProject.findMany({
-        where: { projectId: projetoId, active: true },
+        // Membros inativados com motivo entram em vermelho; desvinculados não.
+        where: { projectId: projetoId, OR: [{ active: true }, { inactiveReason: { not: null } }] },
         include: {
           user: {
             select: {
@@ -116,6 +117,7 @@ export async function GET(
         telefoneFax: up.user.phone ?? '',
         endereco: buildAddress(up.user),
         observacoes: up.user.notes ?? '',
+        ...(up.active === false ? { inativo: true, motivoInativo: up.inactiveReason ?? '' } : {}),
       }))
 
     const externos: Stakeholder[] = projectStakeholders.map((ps, i) => ({
@@ -133,11 +135,14 @@ export async function GET(
     }))
 
     // Snapshots antigos não têm a marca de inativo: cruza pelo nome com os inativos atuais.
-    const inativosPorNome = new Map(
-      projectStakeholders
+    const inativosPorNome = new Map([
+      ...projectStakeholders
         .filter(ps => ps.stakeholder.isActive === false)
-        .map(ps => [ps.stakeholder.name.trim().toLowerCase(), ps.stakeholder.inactiveReason ?? '']),
-    )
+        .map(ps => [ps.stakeholder.name.trim().toLowerCase(), ps.stakeholder.inactiveReason ?? ''] as const),
+      ...userProjects
+        .filter(up => up.active === false)
+        .map(up => [up.user.name.trim().toLowerCase(), up.inactiveReason ?? ''] as const),
+    ])
 
     const vigente = await documentoVigente({ tenantId, role, userId }, projetoId, 'STAKEHOLDER')
     const payload = vigente?.payload as { stakeholders?: Stakeholder[] } | null | undefined

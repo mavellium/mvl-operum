@@ -38,7 +38,8 @@ export default async function ProjetoStakeholdersPage({ params }: { params: Prom
         orderBy: { name: 'asc' },
       }),
       prisma.userProject.findMany({
-        where: { projectId: projetoId, active: true },
+        // Inativados com motivo continuam na lista (em vermelho); desvinculados não.
+        where: { projectId: projetoId, OR: [{ active: true }, { inactiveReason: { not: null } }] },
         include: {
           user: {
             select: {
@@ -151,6 +152,9 @@ export default async function ProjetoStakeholdersPage({ params }: { params: Prom
           startDate: up.startDate.toISOString(),
           userRole: up.user.role,
           signatureUrl: up.user.signatureUrl,
+          isActive: up.active,
+          inactiveReason: up.active ? null : up.inactiveReason,
+          inactivatedAt: up.active ? null : up.inactivatedAt?.toISOString() ?? null,
         }
       }),
   )

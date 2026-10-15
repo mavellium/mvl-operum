@@ -5,7 +5,7 @@ import { NotFoundException } from '@nestjs/common'
 vi.mock('../prisma', () => ({
   prisma: {
     project: { findFirst: vi.fn() },
-    userProject: { upsert: vi.fn() },
+    userProject: { upsert: vi.fn(), update: vi.fn(), findUnique: vi.fn() },
   },
 }))
 
@@ -39,6 +39,51 @@ describe('ProjectService.addMember', () => {
     await service.addMember('p1', 't1', 'u1', { role: 'dev' })
     expect(assertUser).toHaveBeenCalledWith('u1', 't1')
     expect(db.userProject.upsert).toHaveBeenCalled()
+  })
+})
+
+describe('ProjectService.setMemberSituacao', () => {
+  let service: ProjectService
+
+  beforeEach(() => {
+    vi.clearAllMocks()
+    db.project.findFirst.mockResolvedValue({ id: 'p1', tenantId: 't1' })
+    db.userProject.findUnique.mockResolvedValue({ id: 'up1', active: true })
+    db.userProject.update.mockResolvedValue({})
+    service = new ProjectService()
+  })
+
+  it('inativa com motivo: perde o acesso (active false) e guarda motivo e data', async () => {
+    await service.setMemberSituacao('p1', 't1', 'u1', false, '  Saiu da equipe  ')
+    const data = db.userProject.update.mock.calls[0][0].data
+    expect(data).toMatchObject({ active: false, inactiveReason: 'Saiu da equipe' })
+    expect(data.inactivatedAt).toBeInstanceOf(Date)
+    expect(data.endDate).toBeInstanceOf(Date)
+  })
+
+  it('recusa inativar sem motivo ou membro que já não está ativo', async () => {
+    await expect(service.setMemberSituacao('p1', 't1', 'u1', false, ' a ')).rejects.toThrow('Informe o motivo')
+    db.userProject.findUnique.mockResolvedValue({ id: 'up1', active: false })
+    await expect(service.setMemberSituacao('p1', 't1', 'u1', false, 'Saiu da equipe')).rejects.toThrow('não está ativo')
+    expect(db.userProject.update).not.toHaveBeenCalled()
+  })
+
+  it('reativa limpando motivo, data e fim do vínculo', async () => {
+    db.userProject.findUnique.mockResolvedValue({ id: 'up1', active: false, inactiveReason: 'x' })
+    await service.setMemberSituacao('p1', 't1', 'u1', true)
+    expect(db.userProject.update.mock.calls[0][0].data).toEqual({ active: true, endDate: null, inactiveReason: null, inactivatedAt: null })
+  })
+
+  it('404 para quem nunca foi membro e para projeto de outro tenant', async () => {
+    db.userProject.findUnique.mockResolvedValue(null)
+    await expect(service.setMemberSituacao('p1', 't1', 'u9', false, 'motivo')).rejects.toThrow(NotFoundException)
+    db.project.findFirst.mockResolvedValue(null)
+    await expect(service.setMemberSituacao('p1', 't2', 'u1', true)).rejects.toThrow(NotFoundException)
+  })
+
+  it('desvincular limpa o motivo, para o membro sair também de Stakeholders', async () => {
+    await service.removeMember('p1', 't1', 'u1')
+    expect(db.userProject.update.mock.calls[0][0].data).toEqual({ active: false, inactiveReason: null, inactivatedAt: null })
   })
 })
 

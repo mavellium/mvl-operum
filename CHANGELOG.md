@@ -11,6 +11,17 @@ funcionalidade depois disso é uma versão MINOR.
 
 ### Adicionado
 - **Anexos:** arquivos `.svg` podem ser anexados aos cards (também pelo MCP), com miniatura e lightbox. Por segurança, só é aceito SVG sem conteúdo ativo: script, atributos de evento (como `onload`), `javascript:`, `foreignObject`, links e recursos externos e DOCTYPE/ENTITY são recusados com uma mensagem clara. O SVG é gravado para baixar quando aberto direto, e a pré-visualização é servida com CSP `sandbox` (ADR-042).
+## [1.23.0] — 2026-10-15
+
+### Adicionado
+- **Stakeholders:** membros da equipe também podem ser inativados, com motivo obrigatório. Na linha de cada stakeholder e no formulário de edição, o botão "Inativar"/"Reativar" tem texto (antes era só um ícone, que não era encontrado). Inativos aparecem em vermelho com o motivo em Stakeholders e no formulário de Partes Interessadas.
+- **Membro inativo:** perde o acesso ao projeto (como no desvincular), mas continua nos cards em que já era responsável. Card cujos responsáveis estão todos inativos mostra "Responsável inativo: adicione outro para concluir" e não pode ir para a coluna de conclusão até ganhar outro responsável.
+- **Notificação:** ao inativar um membro, cada gerente do projeto recebe a pendência com os cards que ficaram sem responsável ativo.
+- Migration `20261015000000_user_project_inactive_reason` (só colunas anuláveis em `UserProject`) e rota `PATCH /projects/:id/members/:userId/situacao` no project-service.
+
+### Observações
+- Não é possível inativar a si mesmo nem um gerente do projeto (tire o papel de gerente antes).
+- A regra de conclusão vale para o quadro; movimentos feitos direto pela API/MCP não são bloqueados (ADR-041).
 
 ## [1.22.1] — 2026-10-15
 

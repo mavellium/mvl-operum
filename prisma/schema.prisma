@@ -169,6 +169,8 @@ model UserProject {
   userId       String
   projectId    String
   active       Boolean     @default(true)
+  inactiveReason String?   @db.Text // Motivo da inativação do membro no projeto (com active = false)
+  inactivatedAt  DateTime? // Quando foi inativado
   role         String?
   departmentId String?
   hourlyRate   Float?
