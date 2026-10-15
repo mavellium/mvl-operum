@@ -1,3 +1,4 @@
+import { elaboradoresDe, somaValoresPorMinuto } from './elaboradores'
 import type { WbsNodeClient, WbsRollup } from '@/types/wbs'
 import { custoFolhaPrevisto, custoFolhaRealizado, round2 } from './custosCalc'
 
@@ -86,7 +87,8 @@ export function computeFinancialRollups(
   for (const id of order.reverse()) {
     const n = nodes[id], children = n.childrenIds.filter(c => nodes[c])
     if (!children.length) {
-      const p = n.properties, rate = rates[p.elaboradoPorUserId ?? '']
+      // Vários elaboradores trabalham o tempo inteiro: soma o valor/minuto de cada um.
+      const p = n.properties, rate = somaValoresPorMinuto(elaboradoresDe(p).map(id => rates[id]))
       result[id] = {
         budgetHours: (p.tempoMinutos ?? 0) / 60,
         actualHours: (p.tempoRealMinutos ?? 0) / 60,

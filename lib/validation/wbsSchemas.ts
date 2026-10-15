@@ -43,6 +43,8 @@ export const WbsNodePropertiesSchema = z.object({
   dataRealizacao: z.string().max(10).nullable().optional(),
   elaboradoPor: z.string().max(200).optional(),
   elaboradoPorUserId: z.string().nullable().optional(),
+  elaboradoPorUserIds: z.array(z.string().min(1).max(64)).max(30).nullable().optional(),
+  elaboradoSincronizado: z.boolean().optional(),
   percentualConclusao: z.number().int().min(0).max(100).optional(),
 })
 

@@ -1,3 +1,4 @@
+import { elaboradoresDe, menorJornada, somaValoresPorMinuto } from './elaboradores'
 import type { WbsNodeClient } from '@/types/wbs'
 import { custoFolhaPrevisto, custoFolhaRealizado, round2 } from '@/lib/custosCalc'
 
@@ -25,11 +26,15 @@ export interface LinhaAtividade {
   titulo: string
   /** Descrição da tarefa (do card ligado, quando houver; senão a do nó da EAP). Vazia sem descrição. */
   descricao: string
+  /** Nomes dos elaboradores, separados por vírgula. */
   elaboradoPor: string
+  /** Primeiro elaborador (formato antigo). */
   elaboradoPorUserId: string | null
-  /** valor por minuto do elaborador da linha; null quando sem elaborador, sem salário ou sem jornada */
+  /** Elaboradores da linha = responsáveis do card ligado. */
+  elaboradoPorUserIds: string[]
+  /** soma do valor por minuto dos elaboradores (todos trabalham o tempo inteiro); null sem nenhum com salário e jornada */
   vpm: number | null
-  /** jornada diária (horas/dia) do elaborador; null quando não cadastrada */
+  /** menor jornada diária (horas/dia) entre os elaboradores; null quando nenhuma cadastrada */
   jornadaDiaria: number | null
   // Orçado
   minOrcado: number
@@ -199,16 +204,19 @@ export function computarPlanilhaCustos(
         const materiaisReal = p.materiaisReal ?? 0
         // Jornada/valor derivam SOMENTE de quem elaborou a linha; sem elaborador
         // (ou sem salário/jornada) o valor é nenhum — não existe valor padrão.
-        const elaborador = p.elaboradoPorUserId ? elaboradores?.get(p.elaboradoPorUserId) : undefined
-        const jornadaDiaria = horasPorDiaDoElaborador(elaborador)
-        const vpm = elaborador ? valorPorMinutoDoElaborador(elaborador) : null
+        // Vários elaboradores: soma os valores e usa a menor jornada (ADR-044).
+        const ids = elaboradoresDe(p)
+        const doLinha = ids.map(id => elaboradores?.get(id)).filter((e): e is Elaborador => !!e)
+        const jornadaDiaria = menorJornada(doLinha.map(horasPorDiaDoElaborador))
+        const vpm = somaValoresPorMinuto(doLinha.map(valorPorMinutoDoElaborador))
         return {
           nodeId: n.id,
           codigo: n.code,
           titulo: n.title,
           descricao: (p.description ?? '').trim(),
           elaboradoPor: p.elaboradoPor ?? '',
-          elaboradoPorUserId: p.elaboradoPorUserId ?? null,
+          elaboradoPorUserId: ids[0] ?? null,
+          elaboradoPorUserIds: ids,
           vpm,
           jornadaDiaria,
           minOrcado,
@@ -246,9 +254,9 @@ export function computarPlanilhaCustos(
   // Quadro 3 — elaboradores
   const porElaborador = new Map<string, number>()
   for (const a of todas) {
-    const nome = a.elaboradoPor.trim()
-    if (!nome) continue
-    porElaborador.set(nome, (porElaborador.get(nome) ?? 0) + 1)
+    // Cada elaborador da linha conta a atividade (com vários, a soma passa de 100%).
+    const nomes = a.elaboradoPor.split(',').map(n => n.trim()).filter(Boolean)
+    for (const nome of new Set(nomes)) porElaborador.set(nome, (porElaborador.get(nome) ?? 0) + 1)
   }
   const totalAtividades = todas.length
   const quadroElaboradores = [...porElaborador.entries()]

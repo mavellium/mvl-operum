@@ -7,6 +7,7 @@ import { MOTIVO_MINIMO, registrarHistoricoSprint, resumoDaSprint, sprintTemDados
 import { recalcCodes } from '@/lib/wbsCode'
 import type { WbsNodeClient, WbsNodeStyle, WbsNodeProperties, WbsLayoutOrientation } from '@/types/wbs'
 import { WBS_LIMITS } from '@/lib/validation/wbsSchemas'
+import { elaboradoresDe, propsDosElaboradores, reconciliarElaboradores, diferencaParaCard, type PropsElaboradores } from '@/lib/elaboradores'
 import type {
   InsertChildInput,
   InsertSiblingInput,
@@ -531,14 +532,38 @@ export async function updateNodeStyle(input: UpdateNodeStyleInput): Promise<Muta
 }
 
 /** Merges properties (cost, durationDays, owner, description) into the node. */
-export async function updateNodeProperties(input: UpdateNodePropertiesInput, acesso: { userId: string; permissoes: ReadonlySet<Permissao> }): Promise<MutationResult> {
+export async function updateNodeProperties(input: UpdateNodePropertiesInput, acesso: { userId: string; permissoes: ReadonlySet<Permissao> }): Promise<MutationResult & { responsaveisAdicionados: string[]; cardId: string | null }> {
   return prisma.$transaction(async tx => {
-    const { nodeId, properties, projectId, tenantId } = input
+    const { nodeId, projectId, tenantId } = input
+    let properties: Record<string, unknown> = { ...input.properties }
     // Serializa alterações da mesma linha, inclusive troca do elaborador.
     await tx.$queryRaw`SELECT id FROM "WbsNode" WHERE id = ${nodeId} AND "projectId" = ${projectId} AND "tenantId" = ${tenantId} FOR UPDATE`
     const node = await tx.wbsNode.findFirst({ where: { id: nodeId, projectId, tenantId } })
     if (!node) throw new WbsNotFoundError('Nó não encontrado')
     validarCamposCustos(acesso.permissoes, acesso.userId, (node.properties as Record<string, unknown>) ?? {}, properties)
+
+    // Elaborado por = responsáveis do card (ADR-044): a lista escolhida na planilha
+    // vira os responsáveis do card ligado, na mesma transação.
+    let responsaveisAdicionados: string[] = []
+    const cardId = texto((node.properties as Record<string, unknown> | null)?.cardId) ?? null
+    if (Array.isArray(properties.elaboradoPorUserIds)) {
+      const escolhidos = [...new Set(properties.elaboradoPorUserIds as string[])]
+      const membros = escolhidos.length
+        ? await tx.userProject.findMany({ where: { projectId, active: true, userId: { in: escolhidos }, user: { tenantId, deletedAt: null } }, select: { userId: true, user: { select: { name: true } } } })
+        : []
+      if (membros.length !== escolhidos.length) throw new WbsValidationError('Elaborado por aceita só membros ativos do projeto.')
+      const nomes = new Map(membros.map(m => [m.userId, m.user.name]))
+      // Nomes e o id antigo saem do cadastro, nunca do que o cliente mandou.
+      properties = { ...properties, ...propsDosElaboradores(escolhidos, nomes), elaboradoSincronizado: true }
+      if (cardId) {
+        const atuais = (await tx.cardResponsible.findMany({ where: { cardId }, select: { userId: true } })).map(r => r.userId)
+        const { adicionarNoCard, removerDoCard } = diferencaParaCard(escolhidos, atuais)
+        if (removerDoCard.length) await tx.cardResponsible.deleteMany({ where: { cardId, userId: { in: removerDoCard } } })
+        if (adicionarNoCard.length) await tx.cardResponsible.createMany({ data: adicionarNoCard.map(userId => ({ cardId, userId })), skipDuplicates: true })
+        responsaveisAdicionados = adicionarNoCard
+      }
+    }
+
     await tx.wbsNode.update({
       where: { id: nodeId },
       data: { properties: toJson({ ...(node.properties as object), ...properties }) },
@@ -546,9 +571,29 @@ export async function updateNodeProperties(input: UpdateNodePropertiesInput, ace
     const serverVersion = await bumpVersion(tx, projectId, tenantId)
     await tx.auditLog.create({ data: {
       tenantId, userId: acesso.userId, action: 'PLANILHA_EDITAR', entity: 'WbsNode', entityId: nodeId,
-      details: { projetoId: projectId, campos: Object.keys(properties) },
+      details: { projetoId: projectId, campos: Object.keys(input.properties) },
     } })
-    return { serverVersion }
+    return { serverVersion, responsaveisAdicionados, cardId }
+  })
+}
+
+/**
+ * Responsáveis do card mudaram (modal do card): o nó ligado passa a ter a mesma
+ * lista em "Elaborado por" na hora, sem esperar a próxima sincronização.
+ * Devolve false quando o card não está ligado a nenhum nó da EAP.
+ */
+export async function refletirResponsaveisNoNo(cardId: string): Promise<boolean> {
+  return prisma.$transaction(async tx => {
+    const node = await tx.wbsNode.findFirst({ where: { properties: { path: ['cardId'], equals: cardId } }, select: { id: true, projectId: true, tenantId: true, properties: true } })
+    if (!node) return false
+    const responsaveis = await tx.cardResponsible.findMany({ where: { cardId }, select: { userId: true, user: { select: { name: true } } } })
+    const ids = responsaveis.map(r => r.userId)
+    const props = (node.properties as Record<string, unknown>) ?? {}
+    const novos = { ...propsDosElaboradores(ids, new Map(responsaveis.map(r => [r.userId, r.user.name]))), elaboradoSincronizado: true }
+    if (JSON.stringify(elaboradoresDe(props as PropsElaboradores)) === JSON.stringify(ids) && props.elaboradoSincronizado === true && props.elaboradoPor === novos.elaboradoPor) return true
+    await tx.wbsNode.update({ where: { id: node.id }, data: { properties: toJson({ ...props, ...novos }) } })
+    await bumpVersion(tx, node.projectId, node.tenantId)
+    return true
   })
 }
 
@@ -776,6 +821,8 @@ export interface SyncEapSprintResult {
   sprintsCriadas: number
   cardsMovidos: number
   titulosAtualizados: number
+  /** Nós cujo "Elaborado por" foi alinhado aos responsáveis do card. */
+  elaboradoresSincronizados: number
 }
 
 const normalizarTitulo = (t: string) => t.trim().toLowerCase()
@@ -805,7 +852,7 @@ const texto = (v: unknown): string | undefined => (typeof v === 'string' ? v : u
  */
 export async function sincronizarEapComSprint(projectId: string, tenantId: string): Promise<SyncEapSprintResult> {
   return prisma.$transaction(async tx => {
-    const result: SyncEapSprintResult = { cardsCriados: 0, nosCriados: 0, nosMovidos: 0, nosRemovidos: 0, sprintsCriadas: 0, cardsMovidos: 0, titulosAtualizados: 0 }
+    const result: SyncEapSprintResult = { cardsCriados: 0, nosCriados: 0, nosMovidos: 0, nosRemovidos: 0, sprintsCriadas: 0, cardsMovidos: 0, titulosAtualizados: 0, elaboradoresSincronizados: 0 }
     await tx.$executeRaw`SELECT pg_advisory_xact_lock(hashtext(${'eap-sprint:' + projectId}))`
 
     const project = await tx.project.findFirst({ where: { id: projectId, tenantId, deletedAt: null }, select: { id: true } })
@@ -1045,6 +1092,37 @@ export async function sincronizarEapComSprint(projectId: string, tenantId: strin
         vinculados.add(card.id)
         mudou.add(n.id)
         result.cardsCriados++
+      }
+    }
+
+    // 5b) Elaborado por = responsáveis do card (ADR-044). Na primeira vez junta os
+    //     dois lados; depois o card manda e o nó só espelha.
+    // Nós removidos nos passos anteriores (ex.: card que voltou ao backlog) já saíram de propsDe.
+    const paresCard = nodes
+      .filter(n => propsDe.has(n.id))
+      .map(n => ({ id: n.id, cardId: texto(propsDe.get(n.id)!.cardId) }))
+      .filter((p): p is { id: string; cardId: string } => !!p.cardId && !(cardPorId.get(p.cardId)?.deletedAt))
+    if (paresCard.length) {
+      const resp = await tx.cardResponsible.findMany({ where: { cardId: { in: paresCard.map(p => p.cardId) } }, select: { cardId: true, userId: true } })
+      const doCard = new Map<string, string[]>()
+      for (const r of resp) doCard.set(r.cardId, [...(doCard.get(r.cardId) ?? []), r.userId])
+      const planos = paresCard.map(p => {
+        const props = propsDe.get(p.id)! as PropsElaboradores & Record<string, unknown>
+        return { ...p, props, plano: reconciliarElaboradores(elaboradoresDe(props), doCard.get(p.cardId) ?? [], props.elaboradoSincronizado === true) }
+      })
+      const todosIds = [...new Set(planos.flatMap(p => p.plano.ids))]
+      const nomes = new Map((todosIds.length ? await tx.user.findMany({ where: { id: { in: todosIds } }, select: { id: true, name: true } }) : []).map(u => [u.id, u.name]))
+      for (const { id, cardId, props, plano } of planos) {
+        if (plano.adicionarNoCard.length) {
+          await tx.cardResponsible.createMany({ data: plano.adicionarNoCard.map(userId => ({ cardId, userId })), skipDuplicates: true })
+        }
+        const novos = { ...propsDosElaboradores(plano.ids, nomes), elaboradoSincronizado: true }
+        // Nada a fazer: mesma lista e nomes, e já marcado (ou ninguém dos dois lados).
+        const mesmaLista = JSON.stringify(elaboradoresDe(props)) === JSON.stringify(novos.elaboradoPorUserIds)
+        if (mesmaLista && (plano.ids.length === 0 || (props.elaboradoSincronizado === true && (props.elaboradoPor ?? '') === novos.elaboradoPor))) continue
+        Object.assign(props, novos)
+        mudou.add(id)
+        result.elaboradoresSincronizados++
       }
     }
 

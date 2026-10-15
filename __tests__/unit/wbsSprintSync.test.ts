@@ -8,6 +8,8 @@ const tx = vi.hoisted(() => ({
   card: { findMany: vi.fn(), create: vi.fn(), update: vi.fn(), aggregate: vi.fn() },
   sprint: { findFirst: vi.fn(), findMany: vi.fn(), update: vi.fn(), create: vi.fn() },
   sprintColumn: { findFirst: vi.fn(), createMany: vi.fn() },
+  cardResponsible: { findMany: vi.fn(), createMany: vi.fn() },
+  user: { findMany: vi.fn() },
 }))
 vi.mock('@/lib/prisma', () => ({ default: { $transaction: (fn: (t: typeof tx) => unknown) => fn(tx) } }))
 vi.mock('@/services/auditoriaService', () => ({ registrarAcao: vi.fn() }))
@@ -17,7 +19,7 @@ import { sincronizarEapComSprint } from '@/services/wbsService'
 const node = (id: string, parentId: string | null, title: string, props: object = {}, updatedAt = new Date('2026-10-01')) =>
   ({ id, parentId, title, order: 0, code: '', properties: props, updatedAt })
 const sprint = (id: string, name: string, updatedAt = new Date('2026-09-01')) => ({ id, name, updatedAt })
-const ZERO = { cardsCriados: 0, nosCriados: 0, nosMovidos: 0, nosRemovidos: 0, sprintsCriadas: 0, cardsMovidos: 0, titulosAtualizados: 0 }
+const ZERO = { cardsCriados: 0, nosCriados: 0, nosMovidos: 0, nosRemovidos: 0, sprintsCriadas: 0, cardsMovidos: 0, titulosAtualizados: 0, elaboradoresSincronizados: 0 }
 
 beforeEach(() => {
   vi.resetAllMocks()
@@ -33,6 +35,8 @@ beforeEach(() => {
   tx.card.aggregate.mockResolvedValue({ _max: { sprintPosition: 4 } })
   tx.card.create.mockResolvedValue({ id: 'card-novo' })
   tx.sprint.create.mockResolvedValue({ id: 's-nova' })
+  tx.cardResponsible.findMany.mockResolvedValue([])
+  tx.user.findMany.mockResolvedValue([])
 })
 
 describe('sincronizarEapComSprint', () => {
@@ -221,5 +225,45 @@ describe('sincronizarEapComSprint', () => {
     tx.wbsNode.findMany.mockResolvedValueOnce([])
     expect(await sincronizarEapComSprint('p1', 't1')).toEqual(ZERO)
     expect(tx.card.create).not.toHaveBeenCalled()
+  })
+
+  describe('Elaborado por = responsáveis do card (ADR-044)', () => {
+    const arvore = (props: object) => {
+      tx.wbsNode.findMany.mockResolvedValueOnce([
+        node('r', null, 'Projeto'), node('ns', 'r', 'Sprint 1', { sprintId: 's1' }),
+        node('n1', 'ns', 'Tarefa', { cardId: 'c1', ...props }),
+      ]).mockResolvedValue([])
+      tx.sprint.findMany.mockResolvedValue([sprint('s1', 'Sprint 1')])
+      tx.card.findMany
+        .mockResolvedValueOnce([{ id: 'c1', title: 'Tarefa', deletedAt: null, updatedAt: new Date('2026-09-01'), sprintId: 's1' }])
+        .mockResolvedValueOnce([{ id: 'c1', title: 'Tarefa', description: '', updatedAt: new Date('2026-09-01'), sprintId: 's1' }])
+      tx.user.findMany.mockResolvedValue([{ id: 'ana', name: 'Ana' }, { id: 'bia', name: 'Bia' }])
+    }
+    const propsGravadas = () => tx.wbsNode.update.mock.calls.find(c => c[0].where.id === 'n1' && c[0].data.properties)?.[0].data.properties
+
+    it('primeira vez: junta elaborador antigo e responsáveis, e põe no card quem faltava', async () => {
+      arvore({ elaboradoPorUserId: 'ana' })
+      tx.cardResponsible.findMany.mockResolvedValue([{ cardId: 'c1', userId: 'bia' }])
+      const r = await sincronizarEapComSprint('p1', 't1')
+      expect(tx.cardResponsible.createMany).toHaveBeenCalledWith({ data: [{ cardId: 'c1', userId: 'ana' }], skipDuplicates: true })
+      expect(propsGravadas()).toMatchObject({ elaboradoPorUserIds: ['bia', 'ana'], elaboradoPorUserId: 'bia', elaboradoPor: 'Bia, Ana', elaboradoSincronizado: true })
+      expect(r.elaboradoresSincronizados).toBe(1)
+    })
+
+    it('depois de sincronizado o card manda: quem saiu do card sai do Elaborado por', async () => {
+      arvore({ elaboradoPorUserIds: ['ana', 'bia'], elaboradoPor: 'Ana, Bia', elaboradoSincronizado: true })
+      tx.cardResponsible.findMany.mockResolvedValue([{ cardId: 'c1', userId: 'bia' }])
+      await sincronizarEapComSprint('p1', 't1')
+      expect(tx.cardResponsible.createMany).not.toHaveBeenCalled()
+      expect(propsGravadas()).toMatchObject({ elaboradoPorUserIds: ['bia'], elaboradoPor: 'Bia' })
+    })
+
+    it('ninguém dos dois lados: não grava nada', async () => {
+      arvore({})
+      tx.cardResponsible.findMany.mockResolvedValue([])
+      const r = await sincronizarEapComSprint('p1', 't1')
+      expect(r).toEqual(ZERO)
+      expect(propsGravadas()).toBeUndefined()
+    })
   })
 })

@@ -30,7 +30,7 @@ const planilha: PlanilhaDeCustos = {
         {
           nodeId: 'a1', codigo: 'A1', titulo: 'Atividade 1',
           descricao: 'Levantar os requisitos\ncom o cliente',
-          elaboradoPor: 'Maria', elaboradoPorUserId: 'u1',
+          elaboradoPor: 'Maria', elaboradoPorUserId: 'u1', elaboradoPorUserIds: ['u1'],
           vpm: 1, jornadaDiaria: 8,
           minOrcado: 90, materiaisOrcado: 0, dataPrevista: null,
           rOrcado: 90, totalOrcado: 90,
@@ -331,5 +331,41 @@ describe('descrição da tarefa ao passar o mouse', () => {
     const tarefa = screen.getByText('A1 Atividade 1')
     expect(tarefa.tagName).toBe('TD')
     expect(screen.queryByRole('tooltip')).toBeNull()
+  })
+})
+
+describe('Elaborado por com várias pessoas (= responsáveis do card)', () => {
+  it('marca mais de um elaborador e salva a lista; a jornada usada é a menor', async () => {
+    vi.useFakeTimers()
+    try {
+      const dois: Elaborador[] = [...elaboradores, { userId: 'u2', name: 'João', remuneracao: 4000, horasDiarias: 6 }]
+      render(<ToastProvider><PlanilhaCustosView {...props} elaboradores={dois} /></ToastProvider>)
+      const botao = screen.getByRole('button', { name: /Elaborado por — Atividade 1: Maria/ })
+      fireEvent.click(botao)
+      const grupo = screen.getByRole('group', { name: 'Elaborado por — Atividade 1' })
+      expect(within(grupo).getByRole('checkbox', { name: 'Maria' })).toBeChecked()
+      fireEvent.click(within(grupo).getByRole('checkbox', { name: 'João' }))
+      expect(screen.getByRole('button', { name: /Elaborado por — Atividade 1: Maria, João/ })).toBeInTheDocument()
+      // 90 min com a menor jornada (6h) = 0,25 dia
+      expect(screen.getAllByDisplayValue('0,25').length).toBeGreaterThan(0)
+
+      await act(async () => { await vi.advanceTimersByTimeAsync(1100) })
+      expect(updateNodePropertiesAction).toHaveBeenCalledWith('p1', 'a1', { elaboradoPorUserIds: ['u1', 'u2'] })
+    } finally {
+      vi.useRealTimers()
+    }
+  })
+
+  it('desmarcar todos salva lista vazia', async () => {
+    vi.useFakeTimers()
+    try {
+      renderizar()
+      fireEvent.click(screen.getByRole('button', { name: /Elaborado por — Atividade 1/ }))
+      fireEvent.click(screen.getByRole('checkbox', { name: 'Maria' }))
+      await act(async () => { await vi.advanceTimersByTimeAsync(1100) })
+      expect(updateNodePropertiesAction).toHaveBeenCalledWith('p1', 'a1', { elaboradoPorUserIds: [] })
+    } finally {
+      vi.useRealTimers()
+    }
   })
 })
