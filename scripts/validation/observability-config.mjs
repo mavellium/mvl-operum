@@ -7,8 +7,8 @@ import assert from 'node:assert/strict'
 const base=mkdtempSync(join(tmpdir(),'operum-observability-config-'))
 const script=resolve('scripts/deploy/configure-observability.py')
 const secret='synthetic-private-metrics-key'
-const run=(environment,args=[])=>spawnSync('python3',[script,...args],{
-  cwd:base,input:JSON.stringify({services:{app:{environment}}}),encoding:'utf8',
+const run=(environment,args=[],extra={})=>spawnSync('python3',[script,...args],{
+  cwd:base,input:JSON.stringify({services:{app:{environment},...extra}}),encoding:'utf8',
 })
 try {
   const absent=run({})
@@ -40,5 +40,14 @@ try {
   assert.match(readFileSync(join(privateDir,'alertmanager.yml'),'utf8'),/webhook_configs:/)
   assert.equal(run({INTERNAL_API_KEY:secret,ALERT_WEBHOOK_URL:'   '}).status,0)
   assert.equal(readFileSync(join(privateDir,'alertmanager.yml'),'utf8').includes('webhook_configs'),false)
-  console.log('Required metrics key, local alerts, webhook validation and secret-safe diagnostics verified.')
+  // SMTP do auth-service: só avisa (não bloqueia) e nunca mostra a senha.
+  const webhook={INTERNAL_API_KEY:secret,ALERT_WEBHOOK_URL:'https://sink.example/alert'}
+  const semSmtp=run(webhook,[],{'auth-service':{environment:{SMTP_HOST:'smtp.example',SMTP_PASSWORD:'synthetic-smtp-pass'}}})
+  assert.equal(semSmtp.status,0)
+  assert.match(semSmtp.stderr,/SMTP incompleto no \.env da VPS \(SMTP_PORT, SMTP_USER\)/)
+  assert.equal(semSmtp.stderr.includes('synthetic-smtp-pass'),false)
+  const comSmtp=run(webhook,[],{'auth-service':{environment:{SMTP_HOST:'h',SMTP_PORT:'587',SMTP_USER:'u',SMTP_PASSWORD:'p'}}})
+  assert.equal(comSmtp.status,0)
+  assert.equal(comSmtp.stderr,'')
+  console.log('Required metrics key, local alerts, webhook validation, SMTP warning and secret-safe diagnostics verified.')
 } finally { rmSync(base,{recursive:true,force:true}) }
