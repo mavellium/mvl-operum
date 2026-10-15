@@ -430,7 +430,7 @@ Admin cria usuário com forcePasswordChange=true
 | GET | `/auth/users`, `/auth/all-users` | Listagem (admin) |
 | POST | `/auth/admin/users` / PATCH `/auth/admin/users/:id`, `/:id/active`, `/:id/role` | CRUD de usuário pelo admin |
 
-**E-mail da recuperação de senha (1.24.1):** o auth-service envia o código por SMTP (`nodemailer`, `src/mailer/mailer.service.ts`) com `SMTP_HOST`, `SMTP_PORT`, `SMTP_USER`, `SMTP_PASSWORD`, `SMTP_FROM` e `APP_PUBLIC_URL` do `.env` da VPS. Sem SMTP, o pedido continua respondendo sucesso (anti-enumeração), mas nada é enviado. Em produção, o serviço registra erro na subida e a cada pedido, **sem o código** (só fora de produção ele aparece no log, para testes). Com SMTP, a subida testa a conexão (`verify`). Os logs mostram o e-mail mascarado. O deploy (`scripts/deploy/configure-observability.py`) avisa quando o SMTP está incompleto, sem bloquear a release.
+**E-mail da recuperação de senha (1.25.1):** o auth-service envia o código por SMTP (`nodemailer`, `src/mailer/mailer.service.ts`) com `SMTP_HOST`, `SMTP_PORT`, `SMTP_USER`, `SMTP_PASSWORD`, `SMTP_FROM` e `APP_PUBLIC_URL` do `.env` da VPS. Sem SMTP, o pedido continua respondendo sucesso (anti-enumeração), mas nada é enviado. Em produção, o serviço registra erro na subida e a cada pedido, **sem o código** (só fora de produção ele aparece no log, para testes). Com SMTP, a subida testa a conexão (`verify`). Os logs mostram o e-mail mascarado. O deploy (`scripts/deploy/configure-observability.py`) avisa quando o SMTP do `auth-service` está incompleto, sem bloquear a release; a checagem só roda quando o compose tem o `auth-service`.
 
 ### project-service (via `/projects`, `/departments`, `/roles`, `/permissions`, `/stakeholders`)
 

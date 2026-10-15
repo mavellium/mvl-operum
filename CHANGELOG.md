@@ -7,16 +7,17 @@ As versões até 1.6.0 foram reconstruídas retroativamente a partir do históri
 1.0.0 marca a entrada em produção na arquitetura de microsserviços, e cada marco de
 funcionalidade depois disso é uma versão MINOR.
 
+## [1.25.1] — 2026-10-15
+
+### Corrigido
+- **Esqueci minha senha:** sem SMTP configurado, o auth-service não enviava o e-mail, respondia sucesso e **gravava o código no log**. Em produção ele agora nunca registra o código e registra um erro claro, na subida e a cada pedido. Com SMTP, testa a conexão ao subir, e os logs mostram o e-mail mascarado. O deploy avisa quando falta SMTP no `.env` da VPS, e as variáveis (`SMTP_HOST`, `SMTP_PORT`, `SMTP_USER`, `SMTP_PASSWORD`, `SMTP_FROM`, `APP_PUBLIC_URL`) foram documentadas no `.env.example`. Para o e-mail chegar, é preciso preencher o SMTP no `.env` da VPS.
+- **Deploy:** o aviso de SMTP ausente quebrava a validação de observabilidade do deploy (`observability-config.mjs` exige stderr vazio com webhook configurado), e a release parou antes de publicar. O aviso agora só considera o SMTP quando o compose tem o `auth-service`, e a validação ganhou os casos de SMTP. Esta correção saiu como 1.24.1 na PR #75, que entrou depois da 1.25.0 e não chegou a ser publicada.
+
 ## [1.25.0] — 2026-10-15
 
 ### Alterado
 - **EAP → Organizar:** o menu virou um select com os 6 ícones desenhados pelo Vinícius, e cada um desenha os filhos do item selecionado do jeito do ícone: Padrão (organograma), Direita e Esquerda (filhos empilhados ao lado da linha que desce do centro do pai), Horizontal, Horizontal (topo) e Horizontal (base) (pai à esquerda, no meio, no topo ou na base da coluna de filhos). O layout "Abaixo" foi removido, e quem usava "Abaixo" ou "Abaixo com L" passa a ver "Direita" (migration `20261015010000_wbs_layouts_organizar`; arquivos `.wbs` antigos também são convertidos ao importar).
 - **EAP → Visualização:** o seletor de modo usa o mesmo select com ícone, dentro da barra, com os nomes em português: EAP (gráfico), EAP com detalhes, Horas e custos e Gantt.
-
-## [1.24.1] — 2026-10-15
-
-### Corrigido
-- **Esqueci minha senha:** sem SMTP configurado, o auth-service não enviava o e-mail, respondia sucesso e **gravava o código no log**. Em produção ele agora nunca registra o código e registra um erro claro, na subida e a cada pedido. Com SMTP, testa a conexão ao subir, e os logs mostram o e-mail mascarado. O deploy avisa quando falta SMTP no `.env` da VPS, e as variáveis (`SMTP_HOST`, `SMTP_PORT`, `SMTP_USER`, `SMTP_PASSWORD`, `SMTP_FROM`, `APP_PUBLIC_URL`) foram documentadas no `.env.example`. Para o e-mail chegar, é preciso preencher o SMTP no `.env` da VPS.
 
 ## [1.24.0] — 2026-10-15
 
