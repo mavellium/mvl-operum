@@ -7,6 +7,11 @@ As versões até 1.6.0 foram reconstruídas retroativamente a partir do históri
 1.0.0 marca a entrada em produção na arquitetura de microsserviços, e cada marco de
 funcionalidade depois disso é uma versão MINOR.
 
+## [1.22.1] — 2026-10-15
+
+### Corrigido
+- **Cadastros Globais:** no menu do admin, "Funções" abria a aba Departamentos, e era preciso um segundo clique. Cada seção agora tem o próprio endereço (`/admin/cadastros/funcoes` e `/admin/cadastros/departamentos`): o menu abre direto na seção e destaca só o item dela, e as abas da página trocam o endereço. `/admin/cadastros` continua funcionando e abre Departamentos.
+
 ## [1.22.0] — 2026-10-15
 
 ### Adicionado

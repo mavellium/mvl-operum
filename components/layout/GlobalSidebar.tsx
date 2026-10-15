@@ -20,8 +20,8 @@ const ADMIN_ITEMS = [
   { href: '/projetos', label: 'Projetos', Icon: FolderKanban },
   { href: '/admin/users', label: 'Usuários', Icon: Users },
   { href: '/arquivos', label: 'Arquivos', Icon: Paperclip },
-  { href: '/admin/cadastros', label: 'Departamentos', Icon: Building2 },
-  { href: '/admin/cadastros', label: 'Funções', Icon: Briefcase },
+  { href: '/admin/cadastros/departamentos', label: 'Departamentos', Icon: Building2 },
+  { href: '/admin/cadastros/funcoes', label: 'Funções', Icon: Briefcase },
   { href: '/admin/tenants', label: 'Instituições', Icon: Landmark },
 ]
 
