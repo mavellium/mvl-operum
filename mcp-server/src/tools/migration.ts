@@ -1,12 +1,13 @@
 import { z } from 'zod'
 import type { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js'
 import type { TenantRegistry } from '../tenants.js'
-import { audit, defineTool, progressReporter } from '../tool.js'
+import { audit, defineTool, progressReporter, idSchema } from '../tool.js'
 import { exportProject } from '../migration/export.js'
 import { importProject, type ImportReport } from '../migration/importer.js'
 import { throttledGateway } from '../migration/throttle.js'
 
 const importOptionsShape = {
+  target_project_id: idSchema.optional().describe('Projeto existente no tenant destino. Reaproveita sprints/colunas por nome e pula títulos similares >=0,9.'),
   user_mapping: z
     .record(z.string(), z.string())
     .optional()
@@ -67,9 +68,10 @@ export function registerMigrationTools(server: McpServer, registry: TenantRegist
       entity: 'Projeto',
       annotations: { readOnlyHint: false, destructiveHint: false, idempotentHint: false },
     },
-    async ({ target_tenant_id, bundle, user_mapping, new_name, include_comments, dry_run }, _ctx, extra) => {
+    async ({ target_tenant_id, bundle, user_mapping, new_name, include_comments, dry_run, target_project_id }, _ctx, extra) => {
       const target = await registry.resolve(target_tenant_id)
       const report = await importProject(target, throttledGateway(target.gw), bundle, {
+        targetProjectId: target_project_id,
         userMapping: user_mapping,
         newName: new_name,
         includeComments: include_comments !== false,
@@ -104,7 +106,7 @@ export function registerMigrationTools(server: McpServer, registry: TenantRegist
       entity: 'Projeto',
       annotations: { readOnlyHint: false, destructiveHint: false, idempotentHint: false },
     },
-    async ({ source_tenant_id, project_id, target_tenant_id, user_mapping, new_name, include_comments, dry_run }, _ctx, extra) => {
+    async ({ source_tenant_id, project_id, target_tenant_id, user_mapping, new_name, include_comments, dry_run, target_project_id }, _ctx, extra) => {
       const progress = progressReporter(extra)
       const source = await registry.resolve(source_tenant_id)
       const target = await registry.resolve(target_tenant_id)
@@ -112,6 +114,7 @@ export function registerMigrationTools(server: McpServer, registry: TenantRegist
 
       const bundle = await exportProject(source, throttledGateway(source.gw), project_id, { includeComments, progress })
       const report = await importProject(target, throttledGateway(target.gw), bundle, {
+        targetProjectId: target_project_id,
         userMapping: user_mapping,
         newName: new_name,
         includeComments,

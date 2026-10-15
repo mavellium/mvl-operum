@@ -717,13 +717,17 @@ Modelos recebidos nos anexos do Operum/Drive. Itens 7.1–7.4 implementados nest
 
 ## Fase 8 — MCP
 
-### 8.1 Copiar ou importar para um projeto existente
+Implementação 8.1/8.3 nesta entrega; 8.2/8.4 preservados e verificados pela suite MCP. Revisão pendente; detalhes operacionais em `mcp-server/README.md`.
+
+### 8.1 Copiar ou importar para um projeto existente ✅
 `target_project_id` opcional em `operum_copy_project` e `operum_import_project` (`mcp-server/src/migration/importer.ts`):
 - sprints e colunas são casadas pelo nome normalizado (as que não existirem são criadas);
 - tarefas com título igual, ou com similaridade de pelo menos 0,9, são puladas;
 - o relatório lista as tarefas puladas.
 
 Continua `dry_run=true` por padrão.
+
+**Integração (15/10/2026):** 8.1 e 8.3 foram implementados em 05/10 (PR #57), mas a PR foi mesclada na branch `feat/sdd-7-project-documents` 54 s depois de a PR #56 dessa branch já ter entrado na main, e o código não chegou à produção. Os quatro commits foram reaplicados sobre a 1.20.0 na versão 1.21.0, com o SDK do MCP mantido em `^1.31.0` (correção de segurança da 1.15.2).
 
 ### 8.2 Anexos pelo MCP ✅
 **Card:** "MCP: anexar imagens e links de vídeo em cards".
@@ -753,7 +757,7 @@ Continua `dry_run=true` por padrão.
 
 **Achado:** o file-service não confere o tenant nas rotas expostas pelo gateway. Virou o item 4.1.
 
-### 8.3 URL de upload de uso único (arquivo que está no computador)
+### 8.3 URL de upload de uso único (arquivo que está no computador) ✅
 **Card:** "MCP: URL de upload de uso único para anexar arquivo que está no computador" (média).
 
 **Problema:** no `operum_upload_attachment` (8.2), o arquivo chega em `content_base64` ou por `url` pública. Arquivo local e grande não tem URL, e em base64 o modelo precisaria escrever centenas de milhares de caracteres na chamada. Foi o caso da imagem da EAP que estava no `.docx`.

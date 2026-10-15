@@ -140,3 +140,44 @@ describe('export + import separados', () => {
     expect(res.content[0].text).toMatch(/Bundle inválido/)
   })
 })
+
+describe('importação para projeto existente', () => {
+  it('dry-run lista duplicadas e preserva cadastro; execução reaproveita nomes normalizados', async () => {
+    const gw = h.op.gateway('u-vini-fab')
+    const target = await gw.post<Record<string,string>>('/projects',{ name: 'Destino', description: 'Preservar', justificativa: 'Texto vigente' })
+    const sprint = await gw.post<Record<string,string>>('/sprints',{ projectId: target.id, name: '  SPRINT   1  ' })
+    const columns = await gw.get<Record<string,string>[]>(`/sprints/${sprint.id}/columns`)
+    await gw.patch(`/sprints/${sprint.id}/columns/${columns[0].id}`,{ title: '  FEITO ' })
+    await gw.post('/cards',{ projectId: target.id, title: 'LOGIN' })
+    const preview = await h.call('operum_copy_project',{ ...copyArgs(), target_project_id: target.id })
+    expect(preview.dry_run).toBe(true)
+    expect(preview.skipped).toContainEqual(expect.objectContaining({ entity: 'task', message: expect.stringContaining('LOGIN') }))
+    expect(preview.target).toMatchObject({ project_id: target.id, project_name: 'Destino' })
+    expect((preview.counts as { planned: Record<string,number> }).planned).toMatchObject({ project: 0, tasks: 3, sprints: 1 })
+    const before = h.op.calls.length
+    const report = await h.call('operum_copy_project',{ ...copyArgs(), target_project_id: target.id, dry_run: false })
+    expect(report.errors).toEqual([])
+    expect((report.counts as { created: Record<string,number> }).created).toMatchObject({ project: 0, tasks: 3, sprints: 1 })
+    const writes = h.op.calls.slice(before).filter(c=>c.tenantId==='t-fab' && c.method!=='GET')
+    expect(writes.some(c=>c.method==='DELETE')).toBe(false)
+    expect(writes.some(c=>c.method==='PATCH' && c.path.includes(sprint.id))).toBe(false)
+    const project = await gw.get<Record<string,unknown>>(`/projects/${target.id}`)
+    expect(project).toMatchObject({ name: 'Destino', description: 'Preservar', justificativa: 'Texto vigente' })
+    const repeated = await h.call('operum_copy_project',{ ...copyArgs(), target_project_id: target.id, dry_run: false })
+    expect((repeated.counts as { created: Record<string,number> }).created.tasks).toBe(0)
+    expect((repeated.skipped as { entity: string }[]).filter(x=>x.entity==='task')).toHaveLength(4)
+  })
+  it('destino de outro tenant e ID com caminho são recusados sem escrita', async () => {
+    const before = h.op.calls.length
+    await expect(h.call('operum_copy_project',{ ...copyArgs(), target_project_id: seed.project.id, dry_run: false })).rejects.toThrow()
+    await expect(h.call('operum_copy_project',{ ...copyArgs(), target_project_id: '../projects', dry_run: false })).rejects.toThrow()
+    expect(h.op.calls.slice(before).filter(c=>c.tenantId==='t-fab' && c.method!=='GET')).toEqual([])
+  })
+})
+
+it('similaridade respeita o limite de 0,9 e normalização Unicode', async()=>{
+  const { titleSimilarity }=await import('../migration/importer.js')
+  expect(titleSimilarity('ABCDEFGHIJ','ABCDEFGHIX')).toBeCloseTo(0.9)
+  expect(titleSimilarity('ABCDEFGHIJ','ABCDEFGHXX')).toBeLessThan(0.9)
+  expect(titleSimilarity('  RELATÓRIO   DE HORAS ','relato\u0301rio de horas')).toBe(1)
+})

@@ -1,5 +1,6 @@
 import 'dotenv/config'
 import express from 'express'
+import { registerUploadRoute } from './uploadRoute.js'
 import { telemetry, metrics } from './telemetry.js'
 import { StreamableHTTPServerTransport } from '@modelcontextprotocol/sdk/server/streamableHttp.js'
 import { buildServer } from './server.js'
@@ -14,6 +15,7 @@ app.get('/health/metrics', (req, res) => {
 // 15 MB: operum_upload_attachment aceita até 10 MB em content_base64 (≈13,4 MB em base64).
 // O parse vem depois da checagem do token, para requisição sem PAT não fazer o
 // servidor ler um corpo desse tamanho.
+registerUploadRoute(app)
 const jsonBody = express.json({ limit: '15mb' })
 
 app.post('/mcp', (req, res, next) => {
