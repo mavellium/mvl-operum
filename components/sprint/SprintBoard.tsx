@@ -646,6 +646,7 @@ export default function SprintBoard({ sprint, columns: initialColumns, backlogCa
 
         return (
           <CardModal
+            key={openCardId}
             isOpen
             readOnly={readOnly}
             onClose={fecharCard}
@@ -735,7 +736,8 @@ export default function SprintBoard({ sprint, columns: initialColumns, backlogCa
         )
       })()}
 
-      <CardModal
+      {/* Montados só quando abertos: cada abertura começa com o formulário limpo. */}
+      {addingCardToColumn && <CardModal
         isOpen={!!addingCardToColumn}
         onClose={() => { if (addingCardToColumn) creations.current.delete(addingCardToColumn); setAddingCardToColumn(null) }}
         onSubmit={async (data) => {
@@ -743,15 +745,15 @@ export default function SprintBoard({ sprint, columns: initialColumns, backlogCa
         }}
         users={users}
         boardTags={tags}
-      />
+      />}
 
-      <CardModal
+      {addingBacklogCard && <CardModal
         isOpen={addingBacklogCard}
         onClose={() => { creations.current.delete('BACKLOG'); setAddingBacklogCard(false) }}
         onSubmit={handleAddBacklogCardModal}
         users={users}
         boardTags={tags}
-      />
+      />}
 
       {/* Diálogo de motivo para movimentação retroativa */}
       {pendingMove && (

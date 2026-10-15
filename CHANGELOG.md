@@ -7,6 +7,11 @@ As versões até 1.6.0 foram reconstruídas retroativamente a partir do históri
 1.0.0 marca a entrada em produção na arquitetura de microsserviços, e cada marco de
 funcionalidade depois disso é uma versão MINOR.
 
+## [1.26.1] — 2026-10-15
+
+### Corrigido
+- **Card:** ao abrir um card, título, descrição, prioridade, cor, etiquetas e datas levavam de 3 a 10 s para aparecer. O modal começava vazio e preenchia os campos dentro de uma transição do React, e o React 19 segura transições enquanto houver Server Action pendente; como o Next executa as Server Actions do cliente uma de cada vez, o card só era preenchido depois que tempo, movimentações e comentários carregavam. Agora o modal já nasce com os dados que o quadro tem, e só o histórico de tempo, as movimentações e os comentários chegam depois. Cada card aberto (e cada modal de criação) é montado do zero, então o formulário não herda o card anterior.
+
 ## [1.25.1] — 2026-10-15
 
 ### Corrigido
