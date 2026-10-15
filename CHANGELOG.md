@@ -7,6 +7,7 @@ As versões até 1.6.0 foram reconstruídas retroativamente a partir do históri
 1.0.0 marca a entrada em produção na arquitetura de microsserviços, e cada marco de
 funcionalidade depois disso é uma versão MINOR.
 
+
 ## [1.28.1] — 2026-10-15
 
 ### Corrigido
@@ -14,6 +15,32 @@ funcionalidade depois disso é uma versão MINOR.
 
 ### Documentação
 - Guia "Como conectar o Claude ao Operum (MCP)" com o roteiro do vídeo tutorial: `docs/tutoriais/integracao-mcp-claude.md`.
+
+## [1.28.0] — 2026-10-15
+
+### Adicionado
+- **Responsável obrigatório:** a partir de "Em andamento" (Em andamento, Em teste, Concluído), todo card precisa de pelo menos um responsável. Mover um card sem responsável para essas colunas é recusado, assim como remover o último responsável de um card que já está nelas e esvaziar o "Elaborado por" dele na planilha. A regra vale para a tela, o MCP e a API. Até "A Fazer", pode ficar sem responsável.
+- **Timer:** iniciar o timer num card sem responsável torna responsável quem iniciou (na tela e pelo MCP), já que o card vai para "Em andamento".
+- **Quadro da sprint:** aviso para quem edita cards com os cards em "Em andamento" ou depois sem responsável ativo (nenhum, ou só inativos), e um diálogo para atribuir alguém em cada um.
+
+### Corrigido
+- **Card → responsáveis:** recusas do servidor ao adicionar ou remover responsável eram ignoradas sem aviso; agora aparecem como mensagem.
+
+## [1.27.0] — 2026-10-15
+
+### Alterado
+- **Planilha de custos:** "Elaborado por" passa a aceitar várias pessoas e é o mesmo dado dos responsáveis do card da tarefa: mudar de um lado muda do outro. Na primeira sincronização de cada projeto, os dois lados são juntados (quem estava no Elaborado por entra como responsável do card, sem notificação); depois disso, o card manda. Só membros ativos do projeto podem ser escolhidos, e quem passa a ser elaborador pela planilha recebe o aviso "Nova tarefa atribuída".
+- **Custos com várias pessoas:** o custo da tarefa soma o valor por minuto de cada elaborador (todos trabalham o tempo inteiro), na planilha e em "Horas e custos" da EAP. A conversão de minutos em dias usa a menor jornada entre elas. O quadro de elaboradores conta a tarefa para cada um. Qualquer um dos elaboradores pode lançar o realizado próprio.
+
+## [1.26.1] — 2026-10-15
+
+### Corrigido
+- **Card:** ao abrir um card, título, descrição, prioridade, cor, etiquetas e datas levavam de 3 a 10 s para aparecer. O modal começava vazio e preenchia os campos dentro de uma transição do React, e o React 19 segura transições enquanto houver Server Action pendente; como o Next executa as Server Actions do cliente uma de cada vez, o card só era preenchido depois que tempo, movimentações e comentários carregavam. Agora o modal já nasce com os dados que o quadro tem, e só o histórico de tempo, as movimentações e os comentários chegam depois. Cada card aberto (e cada modal de criação) é montado do zero, então o formulário não herda o card anterior.
+
+## [1.26.0] — 2026-10-15
+
+### Adicionado
+- **Planilha de custos:** ao passar o mouse (ou focar pelo teclado) sobre uma tarefa, aparece a descrição dela, com as quebras de linha. A descrição é a atual do card ligado à tarefa; sem card, a do item da EAP. Tarefas com descrição ficam com um sublinhado pontilhado.
 
 ## [1.25.1] — 2026-10-15
 

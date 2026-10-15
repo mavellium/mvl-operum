@@ -2,7 +2,7 @@
 
 import { useProjectPermissions } from '@/components/permissoes/ProjectPermissions'
 
-import { useState, useEffect, useRef, useCallback, useId, startTransition } from 'react'
+import { useState, useEffect, useRef, useCallback, useId } from 'react'
 import { Card, CardColor, Attachment } from '@/types/kanban'
 import { assignTagToCardAction, removeTagFromCardAction } from '@/app/actions/tags'
 import { addManualTimeAction, getTimeEntriesAction, updateTimeEntryAction, deleteTimeEntryAction } from '@/app/actions/time'
@@ -153,20 +153,25 @@ export default function CardModal({
 
   const permissions = useProjectPermissions()
   const readOnly = requestedReadOnly || !permissions.has('quadro:cards')
-  const [title, setTitle]                   = useState('')
-  const [color, setColor]                   = useState<CardColor>(DEFAULT_COLOR)
-  const [priority, setPriority]             = useState('media')
-  const [selectedTagIds, setSelectedTagIds] = useState<string[]>([])
+  // O estado começa com os dados do card que o quadro já tem: o card abre preenchido
+  // na hora. O pai monta um modal novo por card (key), então não é preciso reiniciar
+  // o formulário num efeito. Antes isso era feito num startTransition, que o React 19
+  // prende às Server Actions em andamento (fila serial do Next): título e descrição
+  // só apareciam 3–10 s depois, quando terminavam tempo, movimentações e comentários.
+  const [title, setTitle]                   = useState(() => initialCard?.title ?? '')
+  const [color, setColor]                   = useState<CardColor>(() => initialCard?.color ?? DEFAULT_COLOR)
+  const [priority, setPriority]             = useState(() => initialCard?.priority ?? 'media')
+  const [selectedTagIds, setSelectedTagIds] = useState<string[]>(() => initialCard?.tags?.map(t => t.tagId) ?? [])
   const [selectedResponsibleIds, setSelectedResponsibleIds] = useState<string[]>([])
   const [error, setError]                   = useState('')
 
-  const [savedDescription, setSavedDescription] = useState('')
-  const [draftDescription, setDraftDescription] = useState('')
+  const [savedDescription, setSavedDescription] = useState(() => initialCard?.description ?? '')
+  const [draftDescription, setDraftDescription] = useState(() => initialCard?.description ?? '')
   const [isEditingDesc, setIsEditingDesc]       = useState(false)
 
   // Datas no formato do <input type="datetime-local"> (fuso do navegador).
-  const [startLocal, setStartLocal] = useState('')
-  const [endLocal, setEndLocal]     = useState('')
+  const [startLocal, setStartLocal] = useState(() => toDatetimeLocal(initialCard?.startDate))
+  const [endLocal, setEndLocal]     = useState(() => toDatetimeLocal(initialCard?.endDate))
 
   const [commentText, setCommentText]   = useState('')
   const [isCommenting, setIsCommenting] = useState(false)
@@ -241,8 +246,8 @@ export default function CardModal({
   const resetDatasAutosave = datasAutosave.reset
 
   // O pai recria o objeto `initialCard` a cada render; reinicializar o
-  // formulário por referência apagaria o que o usuário está digitando.
-  // Só reinicializa quando abre ou quando troca de card.
+  // formulário por referência apagaria o que o usuário está digitando. O efeito
+  // abaixo só alinha o autosave e busca tempo e movimentações (seções secundárias).
 
   const reloadTimeEntries = useCallback(async () => {
     if (!initialCardId) return
@@ -258,32 +263,6 @@ export default function CardModal({
     const inicio = toDatetimeLocal(initialCard?.startDate)
     const fim = toDatetimeLocal(initialCard?.endDate)
     resetDatasAutosave(`${inicio}|${fim}`)
-
-    startTransition(() => {
-      setTitle(initialCard?.title ?? '')
-      setSavedDescription(initialCard?.description ?? '')
-      setDraftDescription(initialCard?.description ?? '')
-      setStartLocal(inicio)
-      setEndLocal(fim)
-      setColor(initialCard?.color ?? DEFAULT_COLOR)
-      setPriority(initialCard?.priority ?? 'media')
-      setSelectedTagIds(initialCard?.tags?.map(t => t.tagId) ?? [])
-      setSelectedResponsibleIds([])
-      setPendingFiles([])
-      setError('')
-      setTimeError('')
-      setIsEditingDesc(false)
-      setIsCommenting(false)
-      setShowManualForm(false)
-      setManualHours('')
-      setManualMinutes('')
-      setManualDesc('')
-      setTimeEntries([])
-      setMovements([])
-      setEditingEntryId(null)
-      setEditingCommentId(null)
-      setEditCommentContent('')
-    })
 
     if (initialCard?.id) {
       getTimeEntriesAction(initialCard.id).then(res => {

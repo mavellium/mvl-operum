@@ -7,6 +7,8 @@ interface TooltipProps {
   label: string
   children: ReactNode
   side?: 'top' | 'bottom'
+  /** Texto longo (ex.: descrição de tarefa): quebra linhas e respeita os parágrafos. */
+  multiline?: boolean
 }
 
 const MARGIN = 8
@@ -24,12 +26,14 @@ function Tip({
   baseX,
   baseY,
   side,
+  multiline,
 }: {
   id: string
   label: string
   baseX: number
   baseY: number
   side: 'top' | 'bottom'
+  multiline?: boolean
 }) {
   const ref = useRef<HTMLSpanElement>(null)
   const [style, setStyle] = useState<{ left: number; top: number }>({ left: baseX, top: baseY })
@@ -59,14 +63,14 @@ function Tip({
       id={id}
       role="tooltip"
       style={{ left: style.left, top: style.top }}
-      className="pointer-events-none fixed z-[9999] whitespace-nowrap rounded-md bg-gray-900 px-2 py-1 text-[11px] font-medium text-white shadow-lg -translate-x-1/2"
+      className={`pointer-events-none fixed z-[9999] rounded-md bg-gray-900 px-2 py-1 text-[11px] font-medium text-white shadow-lg -translate-x-1/2 ${multiline ? 'whitespace-pre-line text-left max-w-sm leading-relaxed' : 'whitespace-nowrap'}`}
     >
       {label}
     </span>
   )
 }
 
-export default function Tooltip({ label, children, side = 'bottom' }: TooltipProps) {
+export default function Tooltip({ label, children, side = 'bottom', multiline = false }: TooltipProps) {
   const [visible, setVisible] = useState(false)
   const [pos, setPos] = useState<{ left: number; top: number } | null>(null)
   const id = useId()
@@ -83,7 +87,7 @@ export default function Tooltip({ label, children, side = 'bottom' }: TooltipPro
 
   const tip = visible && pos
     ? createPortal(
-        <Tip id={id} label={label} baseX={pos.left} baseY={pos.top} side={side} />,
+        <Tip id={id} label={label} baseX={pos.left} baseY={pos.top} side={side} multiline={multiline} />,
         document.body,
       )
     : null

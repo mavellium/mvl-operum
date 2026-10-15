@@ -55,6 +55,23 @@ describe('operum_start_timer', () => {
     expect(h.op.audit.at(-1)).toMatchObject({ action: 'START_TIMER', entity: 'time_entry', details: { cardId: aFazer, movedTo: 'Em andamento' } })
   })
 
+  it('card sem responsável: o dono do token vira responsável antes de ir para "Em andamento"', async () => {
+    const res = await h.call('operum_start_timer', { task_id: aFazer })
+    expect(res.responsible_added).toBe(true)
+    expect(h.op.cardResponsibles.filter(r => r.cardId === aFazer).map(r => r.userId)).toEqual(['u-vini-mav'])
+    const add = h.op.calls.findIndex(c => c.method === 'POST' && c.path === `/cards/${aFazer}/responsibles/u-vini-mav`)
+    const move = h.op.calls.findIndex(c => c.method === 'PATCH' && c.path === `/cards/${aFazer}`)
+    expect(add).toBeGreaterThan(-1)
+    expect(add).toBeLessThan(move)
+  })
+
+  it('card que já tem responsável: não adiciona ninguém', async () => {
+    await h.op.gateway('u-vini-mav').post(`/cards/${aFazer}/responsibles/u-ana-mav`)
+    const res = await h.call('operum_start_timer', { task_id: aFazer })
+    expect(res.responsible_added).toBe(false)
+    expect(h.op.cardResponsibles.filter(r => r.cardId === aFazer).map(r => r.userId)).toEqual(['u-ana-mav'])
+  })
+
   it('card em "Em teste" não volta de coluna', async () => {
     const res = await h.call('operum_start_timer', { task_id: emTeste })
     expect(res.moved_to).toBeNull()

@@ -35,6 +35,8 @@ import { aplicarFiltros, buscarCards, filtrosAtivos, FILTROS_PADRAO, type CardFi
 import { ColumnSearchButton, ColumnSearchInput } from '@/components/board/ColumnSearch'
 import { isColunaConcluida } from '@/lib/cardUtils'
 import { precisaDeOutroResponsavel } from '@/lib/responsavelInativo'
+import { colunaExigeResponsavel } from '@/lib/responsavelObrigatorio'
+import CardsSemResponsavel, { type CardPendente } from './CardsSemResponsavel'
 import { useClientNow } from '@/hooks/useClientNow'
 
 interface SprintCard {
@@ -346,11 +348,35 @@ export default function SprintBoard({ sprint, columns: initialColumns, backlogCa
   }
   function cancelPendingMove() { setPendingMove(null) }
   async function handleCardTimerStarted(cardId: string) {
+    // O servidor torna responsável quem iniciou o timer num card sem ninguém (ADR-045).
+    const atual = columns.flatMap(c => c.cards).find(c => c.id === cardId) ?? backlogCards.find(c => c.id === cardId)
+    if (atual && (atual.responsibles ?? []).length === 0 && currentUser) {
+      patchCardState(cardId, c => ({ ...c, responsibles: [{ user: { id: currentUser.id, name: currentUser.name, avatarUrl: currentUser.avatarUrl ?? null } }] }))
+    }
     const target = columns.find(col => col.title.trim().toLowerCase() === 'em andamento')
     const source = columns.find(col => col.cards.some(card => card.id === cardId))
     if (!target || (source && source.position >= target.position)) return
     await move(cardId, source?.id ?? 'BACKLOG', target.id, target.cards.length)
   }
+  // Cards em "Em andamento" ou depois sem responsável ativo: aviso e atribuição rápida.
+  const colunasPos = columns.map(c => ({ id: c.id, title: c.title, position: c.position }))
+  const cardsSemResponsavel: CardPendente[] = columns
+    .filter(col => colunaExigeResponsavel(colunasPos, col.id))
+    .flatMap(col => col.cards.flatMap((card): CardPendente[] => {
+      const ids = (card.responsibles ?? []).map(r => r.user.id)
+      if (ids.length === 0) return [{ id: card.id, title: card.title, coluna: col.title, motivo: 'sem' }]
+      if (precisaDeOutroResponsavel(ids, inativos)) return [{ id: card.id, title: card.title, coluna: col.title, motivo: 'inativo' }]
+      return []
+    }))
+  async function atribuirResponsavel(cardId: string, userId: string): Promise<{ error?: string }> {
+    const r = await addResponsibleAction(cardId, userId)
+    if ('error' in r && r.error) return { error: r.error }
+    const u = users?.find(x => x.id === userId)
+    if (u) patchCardState(cardId, c => ({ ...c, responsibles: [...(c.responsibles ?? []), { user: { id: u.id, name: u.name, avatarUrl: u.avatarUrl ?? null } }] }))
+    toast('Responsável definido.', 'success')
+    return {}
+  }
+
   async function handleAddColumn() {
     if (!permissions.has('quadro:sprints') || !newColTitle.trim()) return
     await confirmed('new-column', async () => {
@@ -452,6 +478,15 @@ export default function SprintBoard({ sprint, columns: initialColumns, backlogCa
         onChangeBackground={setBoardBg} 
         projectId={projectId}
       />
+
+      {permissions.has('quadro:cards') && (
+        <CardsSemResponsavel
+          pendentes={cardsSemResponsavel}
+          users={users ?? []}
+          onAtribuir={atribuirResponsavel}
+          onAbrirCard={id => setOpenCardId(id)}
+        />
+      )}
 
       <div
         ref={scrollContainerRef}
@@ -646,6 +681,7 @@ export default function SprintBoard({ sprint, columns: initialColumns, backlogCa
 
         return (
           <CardModal
+            key={openCardId}
             isOpen
             readOnly={readOnly}
             onClose={fecharCard}
@@ -735,7 +771,8 @@ export default function SprintBoard({ sprint, columns: initialColumns, backlogCa
         )
       })()}
 
-      <CardModal
+      {/* Montados só quando abertos: cada abertura começa com o formulário limpo. */}
+      {addingCardToColumn && <CardModal
         isOpen={!!addingCardToColumn}
         onClose={() => { if (addingCardToColumn) creations.current.delete(addingCardToColumn); setAddingCardToColumn(null) }}
         onSubmit={async (data) => {
@@ -743,15 +780,15 @@ export default function SprintBoard({ sprint, columns: initialColumns, backlogCa
         }}
         users={users}
         boardTags={tags}
-      />
+      />}
 
-      <CardModal
+      {addingBacklogCard && <CardModal
         isOpen={addingBacklogCard}
         onClose={() => { creations.current.delete('BACKLOG'); setAddingBacklogCard(false) }}
         onSubmit={handleAddBacklogCardModal}
         users={users}
         boardTags={tags}
-      />
+      />}
 
       {/* Diálogo de motivo para movimentação retroativa */}
       {pendingMove && (

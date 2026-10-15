@@ -4,14 +4,14 @@ import { BadRequestException, NotFoundException } from '@nestjs/common'
 
 vi.mock('../prisma', () => ({
   prisma: {
-    card: { findFirst: vi.fn(), findMany: vi.fn(), create: vi.fn(), update: vi.fn(), findUniqueOrThrow: vi.fn() },
+    card: { findFirst: vi.fn(), findMany: vi.fn(), create: vi.fn(), update: vi.fn(), findUniqueOrThrow: vi.fn(), findUnique: vi.fn() },
     sprint: { findUnique: vi.fn(), findFirst: vi.fn() },
     project: { findFirst: vi.fn() },
     user: { findFirst: vi.fn() },
-    sprintColumn: { findUnique: vi.fn(), findFirst: vi.fn() },
+    sprintColumn: { findUnique: vi.fn(), findFirst: vi.fn(), findMany: vi.fn() },
     cardMovement: { create: vi.fn(), findMany: vi.fn() },
     cardTag: { upsert: vi.fn(), delete: vi.fn() },
-    cardResponsible: { upsert: vi.fn(), delete: vi.fn() },
+    cardResponsible: { upsert: vi.fn(), delete: vi.fn(), count: vi.fn() },
     tag: { delete: vi.fn() },
     $transaction: vi.fn(),
   },
@@ -61,6 +61,8 @@ beforeEach(() => {
   db.sprintColumn.findFirst.mockResolvedValue({ id: 'col', title: 'Coluna' })
   db.card.findMany.mockResolvedValue([])
   db.card.findUniqueOrThrow.mockResolvedValue({})
+  db.sprintColumn.findMany.mockResolvedValue([])
+  db.cardResponsible.count.mockResolvedValue(1)
   for (const fn of ['assertProject', 'assertSprint', 'assertColumn', 'assertCard', 'assertTag', 'assertUserInTenant']) {
     assert[fn].mockResolvedValue(undefined)
   }
@@ -284,3 +286,52 @@ it('ids vazios de posicionamento são recusados antes de chegar ao banco', () =>
     expect(UpdateCardSchema.safeParse({ [field]: '' }).success).toBe(false)
   }
 })
+
+describe('responsável obrigatório a partir de "Em andamento"', () => {
+  const colunas = [
+    { id: 'todo', title: 'A Fazer', position: 0 },
+    { id: 'doing', title: 'Em andamento', position: 1 },
+    { id: 'test', title: 'Em teste', position: 2 },
+  ]
+  beforeEach(() => {
+    db.card.findFirst.mockResolvedValue({ id: 'c1', projectId: 'p1', sprintId: 's1', sprintColumnId: 'todo', sprintPosition: 0 })
+    db.sprintColumn.findMany.mockResolvedValue(colunas)
+  })
+
+  it('recusa mover card sem responsável para "Em andamento" ou depois', async () => {
+    db.cardResponsible.count.mockResolvedValue(0)
+    db.sprintColumn.findFirst.mockImplementation(async ({ where }: { where: { id: string } }) => colunas.find(c => c.id === where.id) ?? null)
+    await expect(service.update('t1', 'c1', { sprintColumnId: 'doing' })).rejects.toThrow('Defina um responsável antes de mover o card para "Em andamento".')
+    await expect(service.update('t1', 'c1', { sprintColumnId: 'test' })).rejects.toThrow(BadRequestException)
+    expect(db.card.update).not.toHaveBeenCalled()
+  })
+
+  it('com responsável, move normalmente; sem responsável ainda pode ficar em "A Fazer"', async () => {
+    db.sprintColumn.findFirst.mockImplementation(async ({ where }: { where: { id: string } }) => colunas.find(c => c.id === where.id) ?? null)
+    db.cardResponsible.count.mockResolvedValue(1)
+    await service.update('t1', 'c1', { sprintColumnId: 'doing' })
+    expect(db.card.update).toHaveBeenCalled()
+
+    db.card.findFirst.mockResolvedValue({ id: 'c1', projectId: 'p1', sprintId: 's1', sprintColumnId: 'doing', sprintPosition: 0 })
+    db.cardResponsible.count.mockResolvedValue(0)
+    await expect(service.update('t1', 'c1', { sprintColumnId: 'todo' })).resolves.toBeDefined()
+  })
+
+  it('não deixa remover o último responsável de card em "Em andamento" ou depois', async () => {
+    db.card.findUnique.mockResolvedValue({ sprintId: 's1', sprintColumnId: 'test' })
+    db.cardResponsible.count.mockResolvedValue(0)
+    await expect(service.removeResponsible('t1', 'c1', 'u1')).rejects.toThrow('precisa de pelo menos um responsável')
+    expect(db.cardResponsible.delete).not.toHaveBeenCalled()
+  })
+
+  it('remove quando sobra outro responsável, ou quando o card está em "A Fazer"', async () => {
+    db.card.findUnique.mockResolvedValue({ sprintId: 's1', sprintColumnId: 'test' })
+    db.cardResponsible.count.mockResolvedValue(1)
+    await service.removeResponsible('t1', 'c1', 'u1')
+    db.card.findUnique.mockResolvedValue({ sprintId: 's1', sprintColumnId: 'todo' })
+    db.cardResponsible.count.mockResolvedValue(0)
+    await service.removeResponsible('t1', 'c1', 'u1')
+    expect(db.cardResponsible.delete).toHaveBeenCalledTimes(2)
+  })
+})
+

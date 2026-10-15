@@ -16,12 +16,14 @@ vi.mock('@/lib/prisma', () => ({
 }))
 vi.mock('@/services/projectService', () => ({ findById: vi.fn() }))
 vi.mock('@/lib/notificationPublisher', () => ({ publishNotification: vi.fn() }))
+vi.mock('@/services/wbsService', () => ({ refletirResponsaveisNoNo: vi.fn() }))
 
 import { verifySession } from '@/lib/dal'
 import { cardsApi } from '@/lib/api-client'
 import { publishNotification } from '@/lib/notificationPublisher'
 import { findById } from '@/services/projectService'
 import { addResponsibleAction, removeResponsibleAction } from '@/app/actions/cardResponsible'
+import { refletirResponsaveisNoNo } from '@/services/wbsService'
 
 const mockVerify = verifySession as ReturnType<typeof vi.fn>
 const _mockPublish = publishNotification as ReturnType<typeof vi.fn>
@@ -122,5 +124,27 @@ describe('removeResponsibleAction', () => {
     expect(cardsApi.removeResponsible).toHaveBeenCalledWith('c1', 'u2')
     expect(result).toEqual({ success: true })
     expect(publishNotification).not.toHaveBeenCalled()
+  })
+})
+describe('responsáveis do card refletem no Elaborado por da planilha', () => {
+  it('adicionar e remover acionam o espelho no nó da EAP', async () => {
+    mockVerify.mockResolvedValue({ userId: 'g' })
+    vi.mocked(cardsApi.addResponsible).mockResolvedValue({} as never)
+    vi.mocked(cardsApi.get).mockResolvedValue({ title: 'T' } as never)
+    await addResponsibleAction('c1', 'u1')
+    expect(refletirResponsaveisNoNo).toHaveBeenCalledWith('c1')
+    vi.mocked(cardsApi.removeResponsible).mockResolvedValue({} as never)
+    await removeResponsibleAction('c1', 'u1')
+    expect(refletirResponsaveisNoNo).toHaveBeenCalledTimes(2)
+  })
+
+  it('falha ao espelhar não desfaz a atribuição', async () => {
+    mockVerify.mockResolvedValue({ userId: 'g' })
+    vi.mocked(cardsApi.addResponsible).mockResolvedValue({ id: 'e1' } as never)
+    vi.mocked(cardsApi.get).mockResolvedValue({ title: 'T' } as never)
+    vi.mocked(refletirResponsaveisNoNo).mockRejectedValueOnce(new Error('db'))
+    const erro = vi.spyOn(console, 'error').mockImplementation(() => {})
+    expect(await addResponsibleAction('c1', 'u1')).toEqual({ entry: { id: 'e1' } })
+    erro.mockRestore()
   })
 })

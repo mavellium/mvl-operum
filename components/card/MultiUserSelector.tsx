@@ -28,6 +28,7 @@ interface Responsible {
 export default function MultiUserSelector({ cardId, users, onResponsiblesChange, pending = false }: MultiUserSelectorProps) {
   const [responsibles, setResponsibles] = useState<Responsible[]>([])
   const [loading, setLoading] = useState(!pending)
+  const [erro, setErro] = useState<string | null>(null)
 
   useEffect(() => {
     let cancelled = false
@@ -64,9 +65,11 @@ export default function MultiUserSelector({ cardId, users, onResponsiblesChange,
       return
     }
 
+    setErro(null)
     if (isSelected) {
       const result = await removeResponsibleAction(cardId, userId)
-      if ('error' in result) return
+      // Ex.: último responsável de card em "Em andamento" ou depois (ADR-045).
+      if ('error' in result) { setErro(result.error ?? 'Não foi possível remover o responsável.'); return }
       const next = responsibles.filter(r => r.userId !== userId)
       setResponsibles(next)
       onResponsiblesChange?.(next)
@@ -74,7 +77,7 @@ export default function MultiUserSelector({ cardId, users, onResponsiblesChange,
       const user = users.find(u => u.id === userId)
       if (!user) return
       const result = await addResponsibleAction(cardId, userId)
-      if ('error' in result) return
+      if ('error' in result) { setErro(result.error ?? 'Não foi possível adicionar o responsável.'); return }
       const next = [...responsibles, {
         userId,
         user: { id: user.id, name: user.name, cargo: user.cargo ?? null, avatarUrl: user.avatarUrl ?? null },
@@ -88,6 +91,7 @@ export default function MultiUserSelector({ cardId, users, onResponsiblesChange,
 
   return (
     <div className="space-y-2">
+      {erro && <p role="alert" className="text-xs text-red-600">{erro}</p>}
       {responsibles.length > 0 && (
         <div className="flex flex-wrap gap-2 mb-2">
           {responsibles.filter(r => r.user != null).map(r => (

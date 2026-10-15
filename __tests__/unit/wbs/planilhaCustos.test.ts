@@ -6,6 +6,8 @@ import {
   valorPorMinutoDoElaborador,
   situacaoDe,
   fmtDataBR,
+  aplicarDescricoesDosCards,
+  cardsDasAtividades,
   type Elaborador,
 } from '@/lib/planilhaCustos'
 import type { WbsNodeClient } from '@/types/wbs'
@@ -246,5 +248,66 @@ describe('data fim das fases e do projeto (maior data prevista)', () => {
     const p = computarPlanilhaCustos({ r: node('r', null, ['f']), f: node('f', 'r', ['t']), t: node('t', 'f', []) }, 'r', { valorReferencia: 4000, horasPorDia: 8 })
     expect(p.macrofases[0].dataFim).toBeNull()
     expect(p.dataFimProjeto).toBeNull()
+  })
+})
+
+describe('descrição das atividades', () => {
+  const nodes = () => ({
+    r: node('r', null, ['m1']),
+    m1: node('m1', 'r', ['a1', 'a2', 'a3']),
+    a1: node('a1', 'm1', [], { description: '  do nó  ', cardId: 'c1' }),
+    a2: node('a2', 'm1', [], { description: 'só no nó' }),
+    a3: node('a3', 'm1', [], { cardId: 'c3' }),
+  })
+
+  it('vem do nó da EAP, sem espaços nas pontas', () => {
+    const p = computarPlanilhaCustos(nodes(), 'r', { valorReferencia: 4000, horasPorDia: 8 })
+    expect(p.macrofases[0].atividades.map(a => a.descricao)).toEqual(['do nó', 'só no nó', ''])
+  })
+
+  it('linha com card ligado usa a descrição atual do card; sem card, mantém a do nó', () => {
+    const n = nodes()
+    const p = computarPlanilhaCustos(n, 'r', { valorReferencia: 4000, horasPorDia: 8 })
+    expect(cardsDasAtividades(p, n)).toEqual(['c1', 'c3'])
+    const r = aplicarDescricoesDosCards(p, n, new Map([['c1', 'editada no card'], ['c3', '']]))
+    expect(r.macrofases[0].atividades.map(a => a.descricao)).toEqual(['editada no card', 'só no nó', ''])
+  })
+
+  it('card excluído (fora do mapa) mantém a descrição do nó', () => {
+    const n = nodes()
+    const p = computarPlanilhaCustos(n, 'r', { valorReferencia: 4000, horasPorDia: 8 })
+    expect(aplicarDescricoesDosCards(p, n, new Map()).macrofases[0].atividades[0].descricao).toBe('do nó')
+  })
+})
+
+describe('vários elaboradores na mesma tarefa (ADR-044)', () => {
+  // Ana: 4800/mês, 8h/dia → 4800/30/8/60 = 1/3 por minuto. Bruno: 2x isso, 6h/dia.
+  const ana: Elaborador = { userId: 'ana', name: 'Ana', remuneracao: 4800, horasDiarias: 8 }
+  const bruno: Elaborador = { userId: 'bruno', name: 'Bruno', remuneracao: 7200, horasDiarias: 6 }
+  const elab = new Map([[ana.userId, ana], [bruno.userId, bruno]])
+  const nodes = () => ({
+    r: node('r', null, ['m1']),
+    m1: node('m1', 'r', ['a1', 'a2']),
+    a1: node('a1', 'm1', [], { tempoMinutos: 60, elaboradoPorUserIds: ['ana', 'bruno'], elaboradoPor: 'Ana, Bruno' }),
+    a2: node('a2', 'm1', [], { tempoMinutos: 60, elaboradoPorUserId: 'ana', elaboradoPor: 'Ana' }),
+  })
+
+  it('custo soma o valor/minuto de todos; jornada é a menor', () => {
+    const p = computarPlanilhaCustos(nodes(), 'r', { valorReferencia: 4000, horasPorDia: 8 }, elab)
+    const [a1, a2] = p.macrofases[0].atividades
+    const vAna = valorPorMinutoDoElaborador(ana)!, vBruno = valorPorMinutoDoElaborador(bruno)!
+    expect(a1.vpm).toBeCloseTo(vAna + vBruno, 10)
+    expect(a1.jornadaDiaria).toBe(6)
+    expect(a1.elaboradoPorUserIds).toEqual(['ana', 'bruno'])
+    expect(a2.vpm).toBeCloseTo(vAna, 10)
+    expect(a2.elaboradoPorUserIds).toEqual(['ana'])
+  })
+
+  it('quadro de elaboradores conta a tarefa para cada um', () => {
+    const p = computarPlanilhaCustos(nodes(), 'r', { valorReferencia: 4000, horasPorDia: 8 }, elab)
+    expect(p.quadros.elaboradores).toEqual([
+      { elaborador: 'Ana', qtdeAtividades: 2, percentual: 100 },
+      { elaborador: 'Bruno', qtdeAtividades: 1, percentual: 50 },
+    ])
   })
 })

@@ -4,7 +4,7 @@ import { findById } from '@/services/projectAccess'
 import { permissoesNoProjeto } from '@/services/authz'
 import { getTree } from '@/services/wbsService'
 import { sincronizarEapSprintSePermitido } from '@/services/eapSprintSyncService'
-import { computarPlanilhaCustos, fmtDataBR, type Elaborador } from '@/lib/planilhaCustos'
+import { computarPlanilhaCustos, fmtDataBR, aplicarDescricoesDosCards, cardsDasAtividades, type Elaborador } from '@/lib/planilhaCustos'
 import prisma from '@/lib/prisma'
 import PlanilhaCustosView from '@/components/custos/PlanilhaCustosView'
 import type { Metadata } from 'next'
@@ -62,7 +62,13 @@ export default async function PlanilhaCustosPage({
 
   await sincronizarEapSprintSePermitido({ userId, tenantId, role }, projetoId)
   const tree = await getTree(projetoId, tenantId)
-  const planilha = computarPlanilhaCustos(tree.nodes, tree.rootId, { valorReferencia, horasPorDia }, elaboradoresPorId)
+  const calculada = computarPlanilhaCustos(tree.nodes, tree.rootId, { valorReferencia, horasPorDia }, elaboradoresPorId)
+  // Descrição mostrada ao passar o mouse na tarefa: a atual do card ligado, quando houver.
+  const cardIds = cardsDasAtividades(calculada, tree.nodes)
+  const cards = cardIds.length
+    ? await prisma.card.findMany({ where: { id: { in: cardIds }, deletedAt: null }, select: { id: true, description: true } })
+    : []
+  const planilha = aplicarDescricoesDosCards(calculada, tree.nodes, new Map(cards.map(c => [c.id, c.description ?? ''])))
 
   return (
     <PlanilhaCustosView

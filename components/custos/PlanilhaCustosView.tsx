@@ -1,5 +1,9 @@
 'use client'
 
+import Dica from '@/components/ui/Tooltip'
+import ElaboradoresSelect from './ElaboradoresSelect'
+import { menorJornada } from '@/lib/elaboradores'
+
 import { memo, useCallback, useEffect, useLayoutEffect, useRef, useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { RefreshCw, Download, UserPlus, Undo2 } from 'lucide-react'
@@ -34,9 +38,15 @@ type CampoLinha = Partial<{
   minReal: string
   materiaisReal: string
   dataRealizacao: string
-  elaboradoPorUserId: string
+  /** Ids separados por vírgula (o rascunho guarda texto). */
+  elaboradoPorUserIds: string
   elaboradoPor: string
 }>
+
+const lista = (csv: string): string[] => csv.split(',').map(v => v.trim()).filter(Boolean)
+/** Elaboradores da linha; aceita dados no formato antigo (um só). */
+const idsDaLinha = (a: { elaboradoPorUserIds?: string[]; elaboradoPorUserId: string | null }): string[] =>
+  a.elaboradoPorUserIds ?? (a.elaboradoPorUserId ? [a.elaboradoPorUserId] : [])
 
 const useIsomorphicLayoutEffect = typeof window !== 'undefined' ? useLayoutEffect : useEffect
 
@@ -126,12 +136,8 @@ export default function PlanilhaCustosView({
         if (campos.minReal !== undefined) props.tempoRealMinutos = Math.round(num(campos.minReal, 0))
         if (campos.materiaisReal !== undefined) props.materiaisReal = Math.round(num(campos.materiaisReal, 0) * 100) / 100
         if (campos.dataRealizacao !== undefined) props.dataRealizacao = campos.dataRealizacao || null
-        if (campos.elaboradoPorUserId !== undefined) {
-          props.elaboradoPorUserId = campos.elaboradoPorUserId || null
-          const nome = elaboradores.find(e => e.userId === campos.elaboradoPorUserId)?.name ?? ''
-          props.elaboradoPor = nome
-        }
-        if (campos.elaboradoPor !== undefined) props.elaboradoPor = campos.elaboradoPor.trim()
+        // Nomes e responsáveis do card são acertados no servidor (ADR-044).
+        if (campos.elaboradoPorUserIds !== undefined) props.elaboradoPorUserIds = lista(campos.elaboradoPorUserIds)
 
         const res = await updateNodePropertiesAction(projetoId, nodeId, props)
         if (!res.ok) erros.push(res.error)
@@ -335,19 +341,14 @@ const FaseFragment = memo(function FaseFragment({
     const realizacao = valorDe(nodeId, 'dataRealizacao', real).slice(0, 10) || null
     return situacaoDe(prevista, realizacao)
   }
-  const esborcoPorCurrent = (nodeId: string, originalUserId: string | null): string => {
-    const r = rascunho[nodeId]?.elaboradoPorUserId
-    if (r !== undefined) return r
-    return originalUserId ?? ''
+  const esborcoPorCurrent = (nodeId: string, originais: string[]): string[] => {
+    const r = rascunho[nodeId]?.elaboradoPorUserIds
+    return r !== undefined ? lista(r) : originais
   }
-  // Jornada diária da linha: horas do elaborador em "Elaborada por"; sem
-  // elaborador (ou sem jornada cadastrada) cai para a jornada padrão do projeto.
-  const horasDe = (userId: string | null): number => {
-    if (!userId) return horasPorDiaPadrao
-    const e = elaboradores.find(x => x.userId === userId)
-    const h = e?.horasDiarias ?? null
-    return h && h > 0 ? h : horasPorDiaPadrao
-  }
+  // Jornada diária da linha: a menor jornada entre os elaboradores (todos trabalham
+  // em paralelo); sem elaborador ou sem jornada cadastrada, a padrão do projeto.
+  const horasDe = (userIds: string[]): number =>
+    menorJornada(userIds.map(id => elaboradores.find(x => x.userId === id)?.horasDiarias)) ?? horasPorDiaPadrao
   // Sub-total da fase (orçado/realizado): soma os MESMOS valores exibidos nas
   // linhas (rascunho incluso), cada célula derivada da jornada/salário de quem
   // elaborou a linha e arredondada como na célula da linha — o sub-total bate
@@ -373,7 +374,7 @@ const FaseFragment = memo(function FaseFragment({
         campo === 'minOrcado' ? a.materiaisOrcado : a.materiaisReal
       )
       min += m
-      const horas = horasDe(esborcoPorCurrent(a.nodeId, a.elaboradoPorUserId))
+      const horas = horasDe(esborcoPorCurrent(a.nodeId, idsDaLinha(a)))
       if (horas !== null) {
         temDias = true
         dias += round2(m / 60 / horas)
@@ -459,7 +460,7 @@ const FaseFragment = memo(function FaseFragment({
         <td colSpan={18} className="border border-gray-200 px-3 py-1.5 text-sm">{fase.codigo} {fase.titulo}</td>
       </tr>
       {fase.atividades.map(a => {
-        const canReal = canEditAllActual || (canEditOwnActual && !!currentUserId && a.elaboradoPorUserId === currentUserId)
+        const canReal = canEditAllActual || (canEditOwnActual && !!currentUserId && idsDaLinha(a).includes(currentUserId))
         const minO = num(rascunho[a.nodeId]?.minOrcado, a.minOrcado)
         const matO = num(rascunho[a.nodeId]?.materiaisOrcado, a.materiaisOrcado)
         const minR = num(rascunho[a.nodeId]?.minReal, a.minReal)
@@ -467,27 +468,30 @@ const FaseFragment = memo(function FaseFragment({
         const vpm = a.vpm
         const brutoO = vpm !== null ? minO * vpm : null
         const brutoR = vpm !== null ? minR * vpm : null
-        const userId = esborcoPorCurrent(a.nodeId, a.elaboradoPorUserId)
-        const horasLinha = horasDe(userId)
+        const userIds = esborcoPorCurrent(a.nodeId, idsDaLinha(a))
+        const horasLinha = horasDe(userIds)
         return (
           <tr key={a.nodeId} className="bg-white align-top hover:bg-blue-50/30">
             <td className="border border-gray-100 px-2 py-1"></td>
             <td className="border border-gray-100 px-2 py-1 text-xs whitespace-nowrap font-medium text-gray-800">
-              {a.codigo} {a.titulo}
+              {a.descricao ? (
+                <Dica label={a.descricao} multiline>
+                  <span tabIndex={0} className="cursor-help underline decoration-dotted decoration-gray-300 underline-offset-2 focus:outline-none focus-visible:ring-2 focus-visible:ring-blue-400 rounded-sm">
+                    {a.codigo} {a.titulo}
+                  </span>
+                </Dica>
+              ) : (
+                <>{a.codigo} {a.titulo}</>
+              )}
             </td>
             <td className="border border-gray-100 px-1 py-1">
               {canEdit ? (
-                <select
-                  value={userId}
-                  onChange={e => onCampoChange(a.nodeId, 'elaboradoPorUserId', e.target.value)}
-                  aria-label={`Elaborado por — ${a.titulo}`}
-                  className="w-full min-w-[110px] rounded border border-blue-200 bg-white px-1.5 py-0.5 text-xs focus:border-blue-500 focus:outline-none"
-                >
-                  <option value="">—</option>
-                  {elaboradores.map(e => (
-                    <option key={e.userId} value={e.userId}>{e.name}</option>
-                  ))}
-                </select>
+                <ElaboradoresSelect
+                  tarefa={a.titulo}
+                  value={userIds}
+                  options={elaboradores}
+                  onChange={ids => onCampoChange(a.nodeId, 'elaboradoPorUserIds', ids.join(','))}
+                />
               ) : texto(a.elaboradoPor)}
             </td>
             <td className="border border-gray-100 px-1 py-1 text-right">

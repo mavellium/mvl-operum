@@ -45,8 +45,12 @@ export interface WbsNodeProperties {
   dataRealizacao?: string | null;
   /** Planilha de Custos — folha: nome/identificação de quem elaborou. */
   elaboradoPor?: string;
-  /** Planilha de Custos — folha: id do membro (UserProject) que elaborou. */
+  /** Planilha de Custos — folha: id do primeiro elaborador (formato antigo; = elaboradoPorUserIds[0]). */
   elaboradoPorUserId?: string | null;
+  /** Planilha de Custos — folha: quem elaborou = responsáveis do card ligado (lib/elaboradores.ts). */
+  elaboradoPorUserIds?: string[] | null;
+  /** Os elaboradores já foram juntados com os responsáveis do card uma vez; depois o card manda. */
+  elaboradoSincronizado?: boolean;
   /** Planilha de Custos — folha: % de conclusão (0-100) para situação. */
   percentualConclusao?: number;
 }
