@@ -1,0 +1,124 @@
+# Como conectar o Claude ao Operum (MCP)
+
+Este guia mostra como ligar o Claude ao seu Operum. Depois de conectado, você pede em português e o Claude consulta e atualiza o Operum por você: lista as tarefas da sprint, cria cards, move para "Em andamento", liga o timer, comenta e anexa arquivos.
+
+O fim deste documento traz o **roteiro do vídeo tutorial**, com as cenas na ordem.
+
+---
+
+## O que você precisa
+
+- Uma conta no Operum, com acesso aos projetos que quer usar.
+- O **Claude Code** instalado: no terminal ou na extensão do VS Code. As instruções de instalação estão em https://claude.com/claude-code.
+
+> **Onde funciona:** a conexão usa um token pessoal enviado no cabeçalho da requisição. Isso funciona no **Claude Code** (terminal e VS Code). Os conectores personalizados do site claude.ai exigem login OAuth, que o Operum ainda não oferece, então por enquanto **não dá para conectar pelo claude.ai**.
+
+---
+
+## Passo 1 — Gerar o seu token no Operum
+
+1. Entre no Operum.
+2. Clique na **sua foto**, no topo da barra lateral, para abrir **Meu perfil**.
+3. No quadro **Personal Access Tokens**, clique em **Gerenciar tokens →**.
+4. Preencha:
+   - **Nome:** algo que identifique onde você vai usar, por exemplo `Claude Code - notebook`.
+   - **Permitir escrita:** marque se quer que o Claude crie e altere coisas (cards, comentários, timer). Sem essa opção, ele só consulta.
+   - **Validade:** 30, 90 ou 180 dias.
+5. Clique em **Gerar token**.
+
+O token aparece **uma única vez**. Logo abaixo dele, em **Conectar no Claude Code**, já vem o comando pronto. Clique em **Copiar** ao lado do comando.
+
+> Trate o token como uma senha: não mande por chat, não cole em documentos e não suba para o Git. Se ele vazar, volte em **Gerenciar tokens** e clique em **Revogar**. O token para de funcionar na hora.
+
+---
+
+## Passo 2 — Conectar no Claude Code
+
+Abra o terminal (ou o terminal do VS Code), cole o comando que você copiou e aperte Enter. Ele tem este formato:
+
+```bash
+claude mcp add --transport http operum https://api.operum.adm.br/mcp --header "Authorization: Bearer opr_pat_..."
+```
+
+Para conferir, rode `claude mcp list`. O `operum` deve aparecer como conectado.
+
+---
+
+## Passo 3 — Testar
+
+Abra o Claude Code (`claude`) e peça:
+
+> Liste os meus projetos no Operum.
+
+Na primeira vez, o Claude pede autorização para usar a ferramenta do Operum. Autorize. Ele deve responder com os seus projetos.
+
+---
+
+## O que pedir ao Claude
+
+Alguns exemplos que funcionam bem:
+
+- "Quais tarefas estão em **A Fazer** na sprint atual do projeto Operum?"
+- "Crie um card **Revisar o Termo de Abertura** na sprint 1, com prioridade alta e eu como responsável."
+- "Mova o card **Revisar o Termo de Abertura** para **Em andamento** e inicie o timer."
+- "Comente no card que a revisão terminou e pare o timer."
+- "Anexe o arquivo `relatorio.pdf` que está na minha pasta Downloads ao card **Relatório mensal**."
+- "Resuma o que foi feito nesta semana no projeto, pelas movimentações dos cards."
+
+O Claude respeita as suas permissões no Operum: ele só vê e altera o que você mesmo poderia ver e alterar.
+
+---
+
+## Se você participa de mais de uma instituição
+
+Cada token vale para uma instituição. Para usar várias com a mesma conexão:
+
+1. Gere um token em cada instituição (troque de instituição no topo do Operum e repita o Passo 1).
+2. Conecte com o primeiro token no `Authorization` e os demais, separados por vírgula, no `X-Operum-Tokens`:
+
+```bash
+claude mcp add --transport http operum https://api.operum.adm.br/mcp \
+  --header "Authorization: Bearer opr_pat_PRIMEIRA" \
+  --header "X-Operum-Tokens: opr_pat_SEGUNDA,opr_pat_TERCEIRA"
+```
+
+A primeira instituição é a padrão. Para falar de outra, cite o nome dela no pedido: "No Fábio, liste...".
+
+Se você já tinha conectado antes, remova a conexão antiga com `claude mcp remove operum` e rode o comando novo.
+
+---
+
+## Problemas comuns
+
+| O que aparece | O que fazer |
+|---|---|
+| `operum` não aparece em `claude mcp list` | Rode o comando do Passo 2 de novo, no mesmo terminal em que você usa o Claude. |
+| O Claude diz que não tem permissão para criar ou alterar | O token foi gerado sem **Permitir escrita**. Gere outro com a opção marcada. |
+| "Token inválido" ou "não autorizado" | O token venceu ou foi revogado. Gere outro e conecte de novo (`claude mcp remove operum` e o comando novo). |
+| O Claude não encontra um projeto | Confira se você é membro do projeto no Operum e se ele é da instituição do token. |
+| Cópias ou importações grandes param no meio | Aumente o tempo limite das ferramentas: `MCP_TOOL_TIMEOUT=600000 claude`. |
+
+---
+
+## Roteiro do vídeo tutorial
+
+**Duração estimada:** de 5 a 6 minutos. **Para quem:** quem usa o Operum e nunca conectou o Claude.
+
+Antes de gravar:
+- Use uma conta de teste, ou **revogue o token logo depois de gravar**, porque ele aparece na tela.
+- Deixe aberto um projeto com uma sprint e alguns cards, para a demonstração.
+- Aumente a fonte do terminal para o texto ficar legível no vídeo.
+
+| # | Tempo | O que mostrar na tela | O que falar |
+|---|---|---|---|
+| 1 | 0:00–0:30 | Quadro de uma sprint no Operum. | "Neste vídeo você vai conectar o Claude ao Operum. Depois disso, dá para pedir em português: criar cards, mover, iniciar o timer, comentar e anexar arquivos, sem sair do editor." |
+| 2 | 0:30–0:50 | Página do Claude Code e o terminal com `claude --version`. | "Você precisa do Claude Code instalado, no terminal ou no VS Code. O link de instalação está na descrição. Pelo site claude.ai ainda não funciona." |
+| 3 | 0:50–1:40 | Clicar na foto → **Meu perfil** → **Gerenciar tokens →**. Preencher **Nome**, marcar **Permitir escrita**, escolher **Validade** e clicar em **Gerar token**. | "O Claude acessa o Operum com um token pessoal. Dê um nome que lembre onde você vai usar. Marque Permitir escrita se quiser que ele crie e altere coisas. O token aparece uma única vez, então guarde como se fosse uma senha." |
+| 4 | 1:40–2:10 | Em **Conectar no Claude Code**, clicar em **Copiar**. Colar no terminal, apertar Enter e rodar `claude mcp list`. | "O Operum já monta o comando. É só copiar, colar no terminal e conferir com `claude mcp list`: o operum aparece conectado." |
+| 5 | 2:10–2:50 | Abrir `claude` e pedir "Liste os meus projetos no Operum". Autorizar a ferramenta. | "Na primeira vez, ele pede autorização para usar o Operum. Autorize, e pronto: ele já lê os seus projetos." |
+| 6 | 2:50–4:10 | Pedir: "Crie um card 'Gravar tutorial' na sprint 1 com prioridade alta e eu como responsável", e depois "Mova para Em andamento e inicie o timer". Mostrar o quadro do Operum atualizando (recarregar a página). | "Agora uma tarefa de verdade. Ele cria o card, coloca você como responsável, move para Em andamento e liga o timer. Repare que no Operum o card já aparece em Em andamento com o tempo correndo." |
+| 7 | 4:10–4:40 | Pedir "Comente no card que terminei e pare o timer". Mostrar o comentário e o tempo registrado no card. | "Para fechar: um comentário e o timer parado. O tempo fica registrado no card, como se você tivesse feito pela tela." |
+| 8 | 4:40–5:10 | Voltar em **Gerenciar tokens** e mostrar a lista de tokens ativos e o botão **Revogar**. | "Se o token vazar ou você trocar de computador, revogue aqui. Ele para de funcionar na hora. Se você participa de mais de uma instituição, o guia escrito mostra como usar vários tokens." |
+| 9 | 5:10–5:30 | Tela final com o link do guia. | "O passo a passo completo e os problemas mais comuns estão no guia. Até a próxima." |
+
+Depois de gravar: **revogue o token mostrado no vídeo** e anexe o vídeo, ou o link dele, ao card do tutorial no Operum.
