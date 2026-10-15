@@ -1,5 +1,6 @@
 'use client'
 
+import Dica from '@/components/ui/Tooltip'
 import { memo, useCallback, useEffect, useLayoutEffect, useRef, useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { RefreshCw, Download, UserPlus, Undo2 } from 'lucide-react'
@@ -473,7 +474,15 @@ const FaseFragment = memo(function FaseFragment({
           <tr key={a.nodeId} className="bg-white align-top hover:bg-blue-50/30">
             <td className="border border-gray-100 px-2 py-1"></td>
             <td className="border border-gray-100 px-2 py-1 text-xs whitespace-nowrap font-medium text-gray-800">
-              {a.codigo} {a.titulo}
+              {a.descricao ? (
+                <Dica label={a.descricao} multiline>
+                  <span tabIndex={0} className="cursor-help underline decoration-dotted decoration-gray-300 underline-offset-2 focus:outline-none focus-visible:ring-2 focus-visible:ring-blue-400 rounded-sm">
+                    {a.codigo} {a.titulo}
+                  </span>
+                </Dica>
+              ) : (
+                <>{a.codigo} {a.titulo}</>
+              )}
             </td>
             <td className="border border-gray-100 px-1 py-1">
               {canEdit ? (

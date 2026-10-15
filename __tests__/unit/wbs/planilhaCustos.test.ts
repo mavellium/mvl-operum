@@ -6,6 +6,8 @@ import {
   valorPorMinutoDoElaborador,
   situacaoDe,
   fmtDataBR,
+  aplicarDescricoesDosCards,
+  cardsDasAtividades,
   type Elaborador,
 } from '@/lib/planilhaCustos'
 import type { WbsNodeClient } from '@/types/wbs'
@@ -246,5 +248,34 @@ describe('data fim das fases e do projeto (maior data prevista)', () => {
     const p = computarPlanilhaCustos({ r: node('r', null, ['f']), f: node('f', 'r', ['t']), t: node('t', 'f', []) }, 'r', { valorReferencia: 4000, horasPorDia: 8 })
     expect(p.macrofases[0].dataFim).toBeNull()
     expect(p.dataFimProjeto).toBeNull()
+  })
+})
+
+describe('descrição das atividades', () => {
+  const nodes = () => ({
+    r: node('r', null, ['m1']),
+    m1: node('m1', 'r', ['a1', 'a2', 'a3']),
+    a1: node('a1', 'm1', [], { description: '  do nó  ', cardId: 'c1' }),
+    a2: node('a2', 'm1', [], { description: 'só no nó' }),
+    a3: node('a3', 'm1', [], { cardId: 'c3' }),
+  })
+
+  it('vem do nó da EAP, sem espaços nas pontas', () => {
+    const p = computarPlanilhaCustos(nodes(), 'r', { valorReferencia: 4000, horasPorDia: 8 })
+    expect(p.macrofases[0].atividades.map(a => a.descricao)).toEqual(['do nó', 'só no nó', ''])
+  })
+
+  it('linha com card ligado usa a descrição atual do card; sem card, mantém a do nó', () => {
+    const n = nodes()
+    const p = computarPlanilhaCustos(n, 'r', { valorReferencia: 4000, horasPorDia: 8 })
+    expect(cardsDasAtividades(p, n)).toEqual(['c1', 'c3'])
+    const r = aplicarDescricoesDosCards(p, n, new Map([['c1', 'editada no card'], ['c3', '']]))
+    expect(r.macrofases[0].atividades.map(a => a.descricao)).toEqual(['editada no card', 'só no nó', ''])
+  })
+
+  it('card excluído (fora do mapa) mantém a descrição do nó', () => {
+    const n = nodes()
+    const p = computarPlanilhaCustos(n, 'r', { valorReferencia: 4000, horasPorDia: 8 })
+    expect(aplicarDescricoesDosCards(p, n, new Map()).macrofases[0].atividades[0].descricao).toBe('do nó')
   })
 })
