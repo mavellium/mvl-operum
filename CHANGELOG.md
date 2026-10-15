@@ -7,6 +7,16 @@ As versões até 1.6.0 foram reconstruídas retroativamente a partir do históri
 1.0.0 marca a entrada em produção na arquitetura de microsserviços, e cada marco de
 funcionalidade depois disso é uma versão MINOR.
 
+## [1.28.0] — 2026-10-15
+
+### Adicionado
+- **Responsável obrigatório:** a partir de "Em andamento" (Em andamento, Em teste, Concluído), todo card precisa de pelo menos um responsável. Mover um card sem responsável para essas colunas é recusado, assim como remover o último responsável de um card que já está nelas e esvaziar o "Elaborado por" dele na planilha. A regra vale para a tela, o MCP e a API. Até "A Fazer", pode ficar sem responsável.
+- **Timer:** iniciar o timer num card sem responsável torna responsável quem iniciou (na tela e pelo MCP), já que o card vai para "Em andamento".
+- **Quadro da sprint:** aviso para quem edita cards com os cards em "Em andamento" ou depois sem responsável ativo (nenhum, ou só inativos), e um diálogo para atribuir alguém em cada um.
+
+### Corrigido
+- **Card → responsáveis:** recusas do servidor ao adicionar ou remover responsável eram ignoradas sem aviso; agora aparecem como mensagem.
+
 ## [1.27.0] — 2026-10-15
 
 ### Alterado

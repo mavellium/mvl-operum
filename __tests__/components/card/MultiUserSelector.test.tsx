@@ -98,4 +98,17 @@ describe('MultiUserSelector', () => {
     await user.click(screen.getByRole('button', { name: /remover Ana/i }))
     expect(onResponsiblesChange).toHaveBeenCalledWith([])
   })
+
+  it('recusa do servidor (ex.: último responsável em "Em andamento") aparece como mensagem e mantém o chip', async () => {
+    const user = userEvent.setup()
+    mockGetResponsibles.mockResolvedValue({
+      responsibles: [{ userId: 'u1', user: { id: 'u1', name: 'Ana', cargo: 'Dev', avatarUrl: null } }],
+    })
+    mockRemove.mockResolvedValue({ error: 'O card está em "Em teste" e precisa de pelo menos um responsável.' })
+    render(<MultiUserSelector cardId="c1" users={users} />)
+    await user.click(await screen.findByRole('button', { name: /remover Ana/i }))
+    expect(await screen.findByRole('alert')).toHaveTextContent('precisa de pelo menos um responsável')
+    expect(screen.getByText('Ana')).toBeInTheDocument()
+  })
 })
+

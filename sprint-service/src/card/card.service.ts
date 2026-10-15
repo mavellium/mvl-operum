@@ -1,3 +1,4 @@
+import { colunaExigeResponsavel, mensagemSemResponsavel, mensagemUltimoResponsavel } from './responsavel-obrigatorio'
 import { isTransactionConflict } from '../common/transaction-conflict'
 import { BadRequestException, ConflictException, Injectable, NotFoundException } from '@nestjs/common'
 import { prisma } from '../prisma'
@@ -264,6 +265,14 @@ export class CardService {
           const target = this.bucket(projectId, sprintId, sprintColumnId)
           const moved = source.key !== target.key
           if (moved && userId && !await tx.user.findFirst({ where: { id: userId, tenantId }, select: { id: true } })) throw new NotFoundException('Usuário não encontrado')
+          // A partir de "Em andamento" o card precisa de responsável (só ao mover para lá:
+          // cards antigos que já estão na coluna continuam editáveis).
+          if (moved && targetColumn && sprintId) {
+            const colunas = await tx.sprintColumn.findMany({ where: { sprintId, deletedAt: null }, select: { id: true, title: true, position: true } })
+            if (colunaExigeResponsavel(colunas, targetColumn.id) && await tx.cardResponsible.count({ where: { cardId: id } }) === 0) {
+              throw new BadRequestException(mensagemSemResponsavel(targetColumn.title))
+            }
+          }
 
           await tx.card.update({ where: { id }, data: {
             ...data, projectId, sprintId, sprintColumnId,
@@ -352,7 +361,17 @@ export class CardService {
 
   async removeResponsible(tenantId: string, cardId: string, userId: string) {
     await assertCard(tenantId, cardId)
-    await prisma.cardResponsible.delete({ where: { cardId_userId: { cardId, userId } } })
+    await prisma.$transaction(async tx => {
+      const card = await tx.card.findUnique({ where: { id: cardId }, select: { sprintId: true, sprintColumnId: true } })
+      if (card?.sprintId && card.sprintColumnId) {
+        const colunas = await tx.sprintColumn.findMany({ where: { sprintId: card.sprintId, deletedAt: null }, select: { id: true, title: true, position: true } })
+        const restantes = await tx.cardResponsible.count({ where: { cardId, userId: { not: userId } } })
+        if (restantes === 0 && colunaExigeResponsavel(colunas, card.sprintColumnId)) {
+          throw new BadRequestException(mensagemUltimoResponsavel(colunas.find(c => c.id === card.sprintColumnId)!.title))
+        }
+      }
+      await tx.cardResponsible.delete({ where: { cardId_userId: { cardId, userId } } })
+    })
   }
 
   async listTags(tenantId: string) {

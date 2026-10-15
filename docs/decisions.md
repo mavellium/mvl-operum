@@ -436,6 +436,18 @@ Ao substituir uma decisão, manter o texto histórico, alterar seu status e liga
 - **Condições de revisão:** múltiplas réplicas exigem reserva Redis atômica; rate limit por IP real exige proxy explicitamente confiável; importações concorrentes podem exigir lock por projeto.
 - **Referências:** `mcp-server/src/uploadLink.ts`, `uploadRoute.ts`, `migration/importer.ts`, `mcp-server/README.md`, SDD 8.1/8.3.
 
+## ADR-045 — Card precisa de responsável a partir de "Em andamento"
+
+- **Data:** 2026-10-15
+- **Status:** implementada.
+- **Contexto:** havia cards concluídos sem responsável. O usuário definiu em 15/10: até "A Fazer" o card pode ficar sem responsável; a partir de "Em andamento" precisa ter; o gerente do projeto deve saber quais cards estão sem responsável e conseguir definir alguém; ao iniciar o timer num card sem responsável, quem iniciou vira o responsável.
+- **Escolha:** a regra fica no sprint-service (mover para a coluna e remover o último responsável), para valer em todos os clientes (tela, MCP, API). Ela é espelhada no app para a planilha, que grava responsáveis direto (ADR-044). O timer torna responsável quem o iniciou, na tela e no MCP. O quadro mostra um aviso com atribuição rápida para quem tem `quadro:cards`.
+- **Justificativa:** no serviço, a regra não depende de cada cliente lembrar dela; o `operum_move_task` do MCP também passa a respeitá-la. Bloquear só o movimento (e não a edição) não trava cards antigos que já estão nessas colunas sem responsável; esses cards aparecem para o gerente resolver.
+- **Alternativas consideradas:** regra só nas actions do app (o MCP e a API passariam por fora); recusar o timer em card sem responsável (o usuário preferiu atribuir automaticamente); bloquear a criação direto na coluna (quebraria o fluxo da tela, que cria e depois adiciona os responsáveis); notificação periódica aos gerentes (o aviso no quadro aparece sempre que há pendência, sem gerar volume).
+- **Consequências:** arrastar um card sem responsável para "Em andamento" ou depois mostra o erro e o card volta. O `operum_start_timer` pode adicionar o dono do token como responsável. A regra existe em dois arquivos com teste de paridade. A notificação do membro inativo (ADR-041) continua sendo o aviso ativo ao gerente; os demais casos aparecem no quadro.
+- **Condições de revisão:** pedido de notificação periódica, de bloquear também a criação ou de outra coluna de corte.
+- **Referências:** `sprint-service/src/card/responsavel-obrigatorio.ts`, `sprint-service/src/card/card.service.ts`, `lib/responsavelObrigatorio.ts`, `app/actions/time.ts`, `mcp-server/src/tools/time.ts`, `components/sprint/CardsSemResponsavel.tsx`, `services/wbsService.ts`.
+
 ## ADR-044 — Elaborado por da planilha são os responsáveis do card
 
 - **Data:** 2026-10-15

@@ -55,6 +55,25 @@ describe.skipIf(!testUrl)('movimentação de card — PostgreSQL real', () => {
     remainingId = (await cards.create(tenantId, { title: 'Origem restante', sprintId, sprintColumnId: sourceId, sprintPosition: 1 })).id
     targetA = (await cards.create(tenantId, { title: 'Destino A', sprintId, sprintColumnId: targetId, sprintPosition: 0 })).id
     targetB = (await cards.create(tenantId, { title: 'Destino B', sprintId, sprintColumnId: targetId, sprintPosition: 1 })).id
+    // A partir de "Em andamento" o card precisa de responsável (ADR-045).
+    await fixtures.cardResponsible.createMany({ data: [movedId, remainingId, targetA, targetB].map(cardId => ({ cardId, userId })) })
+  })
+
+  it('card sem responsável não entra em "Em andamento": nada muda (card, posições, histórico)', async () => {
+    await fixtures.cardResponsible.deleteMany({ where: { cardId: movedId } })
+    const antes = await snapshot()
+    await expect(cards.update(tenantId, movedId, { sprintColumnId: targetId, sprintPosition: 0, userId })).rejects.toThrow('Defina um responsável antes de mover o card para "Em andamento".')
+    expect(await snapshot()).toEqual(antes)
+    expect(await fixtures.cardMovement.count({ where: { cardId: movedId } })).toBe(0)
+  })
+
+  it('último responsável de card em "Em andamento" não pode ser removido; com outro, pode', async () => {
+    await expect(cards.removeResponsible(tenantId, targetA, userId)).rejects.toThrow('precisa de pelo menos um responsável')
+    expect(await fixtures.cardResponsible.count({ where: { cardId: targetA } })).toBe(1)
+    const outro = (await fixtures.user.create({ data: { tenantId, name: 'Outro', email: `${randomUUID()}@move.test`, passwordHash: 'fixture-only' } })).id
+    await fixtures.cardResponsible.create({ data: { cardId: targetA, userId: outro } })
+    await cards.removeResponsible(tenantId, targetA, userId)
+    expect(await fixtures.cardResponsible.findMany({ where: { cardId: targetA }, select: { userId: true } })).toEqual([{ userId: outro }])
   })
   afterAll(async () => { await Promise.all([fixtures.$disconnect(), sprintDb.$disconnect()]) })
 
