@@ -436,6 +436,18 @@ Ao substituir uma decisão, manter o texto histórico, alterar seu status e liga
 - **Condições de revisão:** múltiplas réplicas exigem reserva Redis atômica; rate limit por IP real exige proxy explicitamente confiável; importações concorrentes podem exigir lock por projeto.
 - **Referências:** `mcp-server/src/uploadLink.ts`, `uploadRoute.ts`, `migration/importer.ts`, `mcp-server/README.md`, SDD 8.1/8.3.
 
+## ADR-043 — Seis layouts do menu Organizar da EAP, sem "Abaixo"
+
+- **Data:** 2026-10-15
+- **Status:** implementada; substitui os layouts `ABAIXO` e `ABAIXO_L` da fase 6 (SDD 6.2; não havia ADR própria).
+- **Contexto:** o card "Em EAP, adicionar o jeito de visualizar que está no vídeo" voltou com 6 ícones SVG desenhados pelo usuário, com o pedido de seguir exatamente esses desenhos, apresentá-los como um select (como no vídeo de referência) e remover o "Abaixo".
+- **Escolha:** o enum `WbsLayoutOrientation` passa a ter `LADO_A_LADO`, `DIREITA`, `ESQUERDA`, `HORIZONTAL`, `HORIZONTAL_TOPO` e `HORIZONTAL_BASE`. A migration recria o tipo, porque o PostgreSQL não remove valores de enum, e converte os valores antigos para `DIREITA`. A validação normaliza `.wbs` antigos e o motor desenha valores desconhecidos como Direita. O motor (`lib/wbsLayout.ts`) passa a guardar `rootY` por subárvore. Organizar e Visualização usam um select de ícones (`ToolbarSelect`).
+- **Justificativa:** um conjunto fechado com o desenho do usuário evita opções parecidas entre si. "Abaixo com L" era o mesmo arranjo da Direita, com outro recuo. Recriar o enum mantém o schema igual ao banco, sem valores mortos.
+- **Alternativas consideradas:** manter `ABAIXO`/`ABAIXO_L` no banco e só escondê-los na tela (sobrariam valores que a interface não sabe editar); converter `ABAIXO` para `LADO_A_LADO` (mudaria mais a aparência de árvores existentes do que `DIREITA`).
+- **Consequências:** nós que estavam em Abaixo ou Abaixo com L aparecem em Direita depois da migration. A migration troca o tipo da coluna `WbsNode.layout` dentro de uma transação. O documento da EAP (`lib/eapLayout.ts`) segue o layout próprio do modelo do professor e não muda.
+- **Condições de revisão:** pedido de novos arranjos (ex.: radial) ou de aplicar o layout à árvore inteira de uma vez.
+- **Referências:** `lib/wbsLayout.ts`, `components/wbs/OrganizarIcons.tsx`, `components/wbs/ToolbarSelect.tsx`, `components/wbs/WbsMenubar.tsx`, `lib/validation/wbsSchemas.ts`, migration `20261015010000_wbs_layouts_organizar`, SDD 6.2.
+
 ## ADR-042 — SVG como anexo, só sem conteúdo ativo e sem execução
 
 - **Data:** 2026-10-15

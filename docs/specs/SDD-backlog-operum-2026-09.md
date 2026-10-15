@@ -669,6 +669,8 @@ Implementado em `lib/wbsLayout.ts`:
 
 Testes de geometria sem sobreposição.
 
+**Revisão de 15/10/2026 (1.25.0):** o card voltou com 6 ícones desenhados pelo usuário e o pedido de seguir esses desenhos, em um select, e de remover o "Abaixo". O Organizar passou a ter Padrão, Direita, Esquerda, Horizontal, Horizontal (topo) e Horizontal (base); "Abaixo" saiu, e "Abaixo com L" virou "Direita". Foi seguido o print do vídeo anexado ao card (`eap-menu-organizar.jpg`, botão com seta e lista de ícones). O vídeo em si não foi assistido (sem acesso ao YouTube). Ver ADR-043.
+
 ### 6.3 Modos de visualização ✅
 - **Chart View Details:** o nó mostra código, título, responsável, duração, datas e custo.
 - **Hours and Cost View:** o nó mostra horas e custo, orçado × real, com rollup (`lib/wbsRollup.ts`, `lib/custosCalc.ts`).
