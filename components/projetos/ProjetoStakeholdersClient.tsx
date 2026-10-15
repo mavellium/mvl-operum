@@ -36,7 +36,7 @@ import {
   setStakeholderAtivoAction,
 } from '@/app/actions/stakeholders'
 import { addMemberAction, removeMemberAction } from '@/app/actions/projects'
-import { updateProjetoMemberAction } from '@/app/actions/projetos'
+import { updateProjetoMemberAction, setMembroAtivoAction } from '@/app/actions/projetos'
 import { adminCreateUserAction } from '@/app/actions/admin'
 import { parseHoras, formatHoras } from '@/lib/validation/horas'
 import PasswordInput from '@/components/ui/PasswordInput'
@@ -76,6 +76,7 @@ export type StakeholderUnificado = {
   tenantId?: string
   company?: string | null
   competence?: string | null
+  /** Interno: inativo no projeto (sem acesso). Externo: inativo no cadastro global. */
   isActive?: boolean
   /** Motivo informado ao inativar; só existe com isActive === false. */
   inactiveReason?: string | null
@@ -900,7 +901,8 @@ export default function ProjetoStakeholdersClient({
     })
   }
 
-  // ── Inativar / reativar stakeholder externo (com motivo)
+  // ── Inativar / reativar stakeholder (com motivo). Externo: cadastro global.
+  // Membro da equipe: perde o acesso ao projeto, mas continua listado e nos cards.
   const [inativando, setInativando] = useState<StakeholderUnificado | null>(null)
   const [motivoInativo, setMotivoInativo] = useState('')
   const [erroInativo, setErroInativo] = useState<string | null>(null)
@@ -922,9 +924,20 @@ export default function ProjetoStakeholdersClient({
     setSelected(prev => (prev && prev.id === s.id ? novo : prev))
   }
 
+  function podeAlterarSituacao(s: StakeholderUnificado): boolean {
+    return canManage && (s.tipo === 'externo' ? Boolean(s.stakeholderId) : Boolean(s.userId))
+  }
+
+  async function gravarSituacao(s: StakeholderUnificado, ativo: boolean, motivo?: string) {
+    if (s.tipo === 'interno') {
+      return ativo ? setMembroAtivoAction(projetoId, s.userId!, true) : setMembroAtivoAction(projetoId, s.userId!, false, motivo)
+    }
+    return ativo ? setStakeholderAtivoAction(projetoId, s.stakeholderId!, true) : setStakeholderAtivoAction(projetoId, s.stakeholderId!, false, motivo)
+  }
+
   function confirmarInativacao() {
     const alvo = inativando
-    if (!alvo?.stakeholderId) return
+    if (!alvo || !podeAlterarSituacao(alvo)) return
     const motivo = motivoInativo.trim()
     if (motivo.length < 3) {
       setErroInativo('Informe o motivo da inativação.')
@@ -932,20 +945,26 @@ export default function ProjetoStakeholdersClient({
     }
     startTransition(async () => {
       setLoadingId(alvo.id)
-      const r = await setStakeholderAtivoAction(projetoId, alvo.stakeholderId!, false, motivo)
+      const r = await gravarSituacao(alvo, false, motivo)
       setLoadingId(null)
       if ('error' in r) { setErroInativo(r.error ?? 'Erro ao inativar.'); return }
       aplicarSituacao(alvo, false, motivo)
       setInativando(null)
-      toast(`"${alvo.name}" foi inativado.`, 'success')
+      const pendentes = 'pendentes' in r ? r.pendentes ?? 0 : 0
+      toast(
+        pendentes > 0
+          ? `"${alvo.name}" foi inativado. ${pendentes} card(s) precisam de outro responsável; o gerente foi avisado.`
+          : `"${alvo.name}" foi inativado.`,
+        'success',
+      )
     })
   }
 
   function reativar(s: StakeholderUnificado) {
-    if (!s.stakeholderId) return
+    if (!podeAlterarSituacao(s)) return
     startTransition(async () => {
       setLoadingId(s.id)
-      const r = await setStakeholderAtivoAction(projetoId, s.stakeholderId!, true)
+      const r = await gravarSituacao(s, true)
       setLoadingId(null)
       if ('error' in r) { toast(r.error ?? 'Erro ao reativar.', 'error'); return }
       aplicarSituacao(s, true, null)
@@ -1314,6 +1333,11 @@ export default function ProjetoStakeholdersClient({
         <p className="text-sm text-gray-600 mb-3">
           {inativando ? <>Informe por que <strong>{inativando.name}</strong> foi inativado. O motivo fica registrado e aparece no cadastro.</> : null}
         </p>
+        {inativando?.tipo === 'interno' && (
+          <p className="text-sm text-amber-700 bg-amber-50 border border-amber-100 rounded-lg px-3 py-2 mb-3">
+            O membro perde o acesso ao projeto. Os cards em que ele é responsável continuam com ele, mas precisam de outro responsável para serem concluídos, e o gerente do projeto recebe essa pendência.
+          </p>
+        )}
         <label htmlFor="motivo-inativo" className="block text-xs font-medium text-gray-600 mb-1">Motivo da inativação</label>
         <textarea
           id="motivo-inativo"
@@ -1445,13 +1469,13 @@ export default function ProjetoStakeholdersClient({
                   <Avatar name={s.name} url={s.avatarUrl} size="lg" />
                   <div className="flex flex-col min-w-0 gap-0.5">
                     <div className="flex items-center gap-2 flex-wrap">
-                      <span className={`text-[15px] font-bold leading-tight truncate ${s.tipo === 'externo' && s.isActive === false ? 'text-red-700' : 'text-slate-800'}`}>{s.name}</span>
+                      <span className={`text-[15px] font-bold leading-tight truncate ${s.isActive === false ? 'text-red-700' : 'text-slate-800'}`}>{s.name}</span>
                       <TipoBadge tipo={s.tipo} />
-                      {s.tipo === 'externo' && s.isActive === false && (
+                      {s.isActive === false && (
                         <span className="inline-flex items-center px-2 py-0.5 rounded text-[10px] font-semibold text-red-700 bg-red-50 border border-red-200">Inativo</span>
                       )}
                     </div>
-                    {s.tipo === 'externo' && s.isActive === false && s.inactiveReason && (
+                    {s.isActive === false && s.inactiveReason && (
                       <span className="text-[11px] text-red-600 break-words">Motivo: {s.inactiveReason}</span>
                     )}
                     {s.tipo === 'externo' && s.company && (
@@ -1499,28 +1523,13 @@ export default function ProjetoStakeholdersClient({
                   >
                     <Pencil className="w-4 h-4" />
                   </button>
-                  {canManage && s.tipo === 'externo' && s.stakeholderId && (
-                    s.isActive === false ? (
-                      <button
-                        onClick={() => reativar(s)}
-                        disabled={loadingId === s.id}
-                        title="Reativar stakeholder"
-                        aria-label={`Reativar ${s.name}`}
-                        className="p-1.5 rounded-lg text-slate-400 hover:text-emerald-600 hover:bg-emerald-50 transition-colors disabled:opacity-40"
-                      >
-                        <Power className="w-4 h-4" />
-                      </button>
-                    ) : (
-                      <button
-                        onClick={() => abrirInativacao(s)}
-                        disabled={loadingId === s.id}
-                        title="Inativar stakeholder"
-                        aria-label={`Inativar ${s.name}`}
-                        className="p-1.5 rounded-lg text-slate-400 hover:text-amber-600 hover:bg-amber-50 transition-colors disabled:opacity-40"
-                      >
-                        <Power className="w-4 h-4" />
-                      </button>
-                    )
+                  {podeAlterarSituacao(s) && (
+                    <SituacaoButton
+                      ativo={s.isActive !== false}
+                      nome={s.name}
+                      disabled={loadingId === s.id}
+                      onClick={() => (s.isActive === false ? reativar(s) : abrirInativacao(s))}
+                    />
                   )}
                   {canManage && (
                     <button
@@ -2122,6 +2131,22 @@ export default function ProjetoStakeholdersClient({
               <p className="text-xs text-red-500 bg-red-50 px-3 py-2 rounded-lg">{formError}</p>
             )}
 
+            {selected && !isCreating && podeAlterarSituacao(selected) && (
+              <div className={`flex items-center justify-between gap-3 rounded-xl border px-3 py-2 ${selected.isActive === false ? 'border-red-200 bg-red-50' : 'border-gray-200 bg-gray-50'}`}>
+                <p className="text-xs text-gray-600 min-w-0">
+                  {selected.isActive === false
+                    ? <>Inativo{selected.inactiveReason ? <>: <span className="text-red-700">{selected.inactiveReason}</span></> : null}</>
+                    : selected.tipo === 'interno' ? 'Ativo no projeto' : 'Stakeholder ativo'}
+                </p>
+                <SituacaoButton
+                  ativo={selected.isActive !== false}
+                  nome={selected.name}
+                  disabled={loadingId === selected.id}
+                  onClick={() => (selected.isActive === false ? reativar(selected) : abrirInativacao(selected))}
+                />
+              </div>
+            )}
+
             <div className="flex gap-2">
               <button
                 type="button"
@@ -2146,5 +2171,24 @@ export default function ProjetoStakeholdersClient({
         </div>
       )}
     </div>
+  )
+}
+
+/** Botão com texto para inativar/reativar: só o ícone não era encontrado. */
+function SituacaoButton({ ativo, nome, disabled, onClick }: { ativo: boolean; nome: string; disabled?: boolean; onClick: () => void }) {
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      disabled={disabled}
+      aria-label={ativo ? `Inativar ${nome}` : `Reativar ${nome}`}
+      title={ativo ? 'Inativar (com motivo)' : 'Reativar'}
+      className={`inline-flex items-center gap-1 px-2 py-1 rounded-lg text-xs font-medium border transition-colors disabled:opacity-40 shrink-0 ${ativo
+        ? 'text-amber-700 border-amber-200 bg-amber-50 hover:bg-amber-100'
+        : 'text-emerald-700 border-emerald-200 bg-emerald-50 hover:bg-emerald-100'}`}
+    >
+      <Power className="w-3.5 h-3.5" aria-hidden="true" />
+      {ativo ? 'Inativar' : 'Reativar'}
+    </button>
   )
 }

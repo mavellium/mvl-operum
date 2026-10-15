@@ -2,7 +2,7 @@
 
 import { useProjectPermissions } from '@/components/permissoes/ProjectPermissions'
 
-import { useState, useEffect, useRef } from 'react'
+import { useState, useEffect, useRef, useMemo } from 'react'
 import { useSearchParams } from 'next/navigation'
 import { useToast } from '@/components/ui/Toast'
 import { DragDropContext, Droppable, DropResult } from '@hello-pangea/dnd'
@@ -34,6 +34,7 @@ import { fetchWithSession } from '@/lib/clientFetch'
 import { aplicarFiltros, buscarCards, filtrosAtivos, FILTROS_PADRAO, type CardFilters } from '@/lib/cardFilters'
 import { ColumnSearchButton, ColumnSearchInput } from '@/components/board/ColumnSearch'
 import { isColunaConcluida } from '@/lib/cardUtils'
+import { precisaDeOutroResponsavel } from '@/lib/responsavelInativo'
 import { useClientNow } from '@/hooks/useClientNow'
 
 interface SprintCard {
@@ -90,17 +91,20 @@ interface SprintBoardProps {
   currentUser?: { id: string; name: string; email: string; avatarUrl?: string | null } | null
   initialCardId?: string | null
   projectId?: string | null
+  /** Membros inativados no projeto (continuam nos cards em que já eram responsáveis). */
+  inactiveUserIds?: string[]
 }
 
 function toColumnType(col: SprintColumnData): ColumnType {
   return { id: col.id, title: col.title, cardIds: col.cards.map(c => c.id) }
 }
 
-function toCardType(card: SprintCard, sprintId: string): CardType {
+function toCardType(card: SprintCard, sprintId: string, inativos?: ReadonlySet<string>): CardType {
   return {
     id: card.id,
     title: card.title,
     eapCode: card.eapCode,
+    precisaResponsavel: inativos ? precisaDeOutroResponsavel((card.responsibles ?? []).map(r => r.user.id), inativos) : false,
     description: card.description ?? '',
     color: (card.color ?? '#6b7280') as CardColor,
     priority: card.priority ?? 'media',
@@ -139,8 +143,9 @@ function toSprintAttachment(att: Record<string, unknown>): NonNullable<SprintCar
   }
 }
 
-export default function SprintBoard({ sprint, columns: initialColumns, backlogCards: initialBacklogCards, users, tags, currentUser, initialCardId, projectId }: SprintBoardProps) {
+export default function SprintBoard({ sprint, columns: initialColumns, backlogCards: initialBacklogCards, users, tags, currentUser, initialCardId, projectId, inactiveUserIds }: SprintBoardProps) {
   const { toast } = useToast()
+  const inativos = useMemo(() => new Set(inactiveUserIds ?? []), [inactiveUserIds])
   const permissions = useProjectPermissions()
   const [columns, setColumns] = useState(initialColumns)
   const [newColTitle, setNewColTitle] = useState('')
@@ -513,7 +518,7 @@ export default function SprintBoard({ sprint, columns: initialColumns, backlogCa
                       {backlogShown.map((card, index) => (
                         <div key={card.id} className="shrink-0">
                           <CardComponent
-                            card={toCardType(card, sprint.id)}
+                            card={toCardType(card, sprint.id, inativos)}
                             index={index}
                             columnId="BACKLOG"
                             onUpdate={handleUpdateBacklogCard}
@@ -556,7 +561,7 @@ export default function SprintBoard({ sprint, columns: initialColumns, backlogCa
                       <div key={col.id} className="h-full">
                         <ColumnComponent
                           column={toColumnType(col)}
-                          cards={visibleCards(col.cards, isColunaConcluida(col.title)).map(c => toCardType(c, sprint.id))}
+                          cards={visibleCards(col.cards, isColunaConcluida(col.title)).map(c => toCardType(c, sprint.id, inativos))}
                           dragDisabled={filtering}
                           index={index}
                           onRenameColumn={handleRenameColumn}
@@ -634,7 +639,7 @@ export default function SprintBoard({ sprint, columns: initialColumns, backlogCa
 
         if (!openCardRaw) return null
 
-        const openCardType = toCardType(openCardRaw, sprint.id)
+        const openCardType = toCardType(openCardRaw, sprint.id, inativos)
         // Cards em "Concluído": só visualização, edição desabilitada.
         const readOnly = !!currentColumn && currentColumn.title === 'Concluído'
         const isBacklog = !currentColumn

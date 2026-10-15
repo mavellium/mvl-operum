@@ -4,7 +4,8 @@ import { verifySession } from '@/lib/dal'
 import { revalidatePath } from 'next/cache'
 import { projectsApi } from '@/lib/api-client'
 import prisma from '@/lib/prisma'
-import { setProjectManagerRole, removeProjectRole } from '@/services/projectRoleService'
+import { setProjectManagerRole, removeProjectRole, isProjectManager } from '@/services/projectRoleService'
+import { notificarPendenciasDoMembroInativo } from '@/services/membroInativo'
 import { getTree } from '@/services/wbsService'
 import { validateAvatarUrl } from '@/lib/validation/avatarUrl'
 import { requireProjectPermission } from '@/services/projectAccess'
@@ -303,6 +304,41 @@ export async function removeMemberAction(projetoId: string, userId: string) {
     return { success: true }
   } catch (err) {
     return { error: err instanceof Error ? err.message : 'Erro ao remover membro' }
+  }
+}
+
+/**
+ * Inativa (com motivo) ou reativa um membro da equipe no projeto. Inativo perde o
+ * acesso, mas continua em Stakeholders e em Partes Interessadas, em vermelho com o
+ * motivo, e nos cards em que já era responsável. Os gerentes recebem a pendência
+ * dos cards que ficaram sem responsável ativo. Exige projeto:equipe (aqui e no gateway).
+ */
+export async function setMembroAtivoAction(projetoId: string, userId: string, ativo: boolean, motivo?: string) {
+  try {
+    const session = await verifySession()
+    await requireProjectPermission(session, projetoId, 'projeto:equipe')
+    const reason = (motivo ?? '').trim()
+    if (!ativo) {
+      if (reason.length < 3) return { error: 'Informe o motivo da inativação.' }
+      if (reason.length > 500) return { error: 'O motivo pode ter no máximo 500 caracteres.' }
+      if (userId === session.userId) return { error: 'Você não pode inativar a si mesmo.' }
+      if (await isProjectManager(userId, projetoId)) {
+        return { error: 'Este membro é gerente do projeto. Tire o papel de gerente antes de inativá-lo.' }
+      }
+    }
+    await projectsApi.setMemberSituacao(projetoId, userId, ativo, ativo ? undefined : reason)
+    let pendentes = 0
+    if (!ativo) {
+      const user = await prisma.user.findUnique({ where: { id: userId }, select: { id: true, name: true } })
+      try {
+        pendentes = (await notificarPendenciasDoMembroInativo(projetoId, user ?? { id: userId, name: 'Membro' }, reason)).pendentes
+      } catch { /* best-effort: a inativação já foi gravada */ }
+    }
+    revalidatePath(`/projetos/${projetoId}/stakeholders`)
+    revalidatePath(`/projetos/${projetoId}`, 'layout')
+    return { success: true as const, pendentes }
+  } catch (err) {
+    return { error: err instanceof Error ? err.message : 'Erro ao alterar a situação do membro.' }
   }
 }
 

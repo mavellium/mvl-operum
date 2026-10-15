@@ -21,6 +21,9 @@ vi.mock('@/lib/api-client', () => ({
   },
 }))
 
+const bloqueio = vi.hoisted(() => vi.fn())
+vi.mock('@/services/membroInativo', () => ({ bloqueioDeConclusao: bloqueio }))
+
 vi.mock('@/lib/prisma', () => ({
   default: {
     userProject: { findMany: vi.fn() },
@@ -41,6 +44,7 @@ const mockVerify = verifySession as ReturnType<typeof vi.fn>
 beforeEach(() => {
   vi.clearAllMocks()
   vi.mocked(prisma.userProject.findMany).mockResolvedValue([])
+  bloqueio.mockResolvedValue(null)
 })
 
 describe('getSprintBoardAction', () => {
@@ -83,6 +87,16 @@ describe('addSprintColumnAction', () => {
 })
 
 describe('moveCardInSprintAction', () => {
+  it('recusa concluir card só com responsáveis inativos, sem gravar', async () => {
+    mockVerify.mockResolvedValue({ userId: 'u1' })
+    bloqueio.mockResolvedValue('Responsável inativo no projeto: adicione outro responsável para concluir este card.')
+    const result = await moveCardInSprintAction('c1', 'col-concluido', 0)
+    expect(bloqueio).toHaveBeenCalledWith('c1', 'col-concluido')
+    expect(result).toEqual({ error: expect.stringContaining('adicione outro responsável') })
+    expect(cardsApi.update).not.toHaveBeenCalled()
+  })
+
+
   it('calls cardsApi.update with sprintColumnId and sprintPosition', async () => {
     mockVerify.mockResolvedValue({ userId: 'u1' })
     vi.mocked(cardsApi.update).mockResolvedValue(undefined)

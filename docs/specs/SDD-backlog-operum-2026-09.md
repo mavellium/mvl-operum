@@ -1233,6 +1233,7 @@ Cards do Prof. Fábio de 05–07/10, implementados nesta ordem (1.16.0). Todos e
 | 12.20 | Quadro da sprint: arrastar entre colunas sem travar nem "sumir e voltar" | Implementado (1.20.0) |
 | 12.21 | Funções e departamentos sem associação por projeto | Implementado (1.20.0); ADR-040 |
 | 12.9 | Ajuste do 12.8: nível 2 = sprints, cards no nível 3+ e código da EAP no card | Implementado (1.17.0); ADR-034 |
+| 12.22 | Desativar stakeholder (reprovado em 15/10: não encontrado): membros da equipe também, botão com texto, perda de acesso, cards pedem outro responsável e pendência ao gerente | Implementado (1.23.0); ADR-041 |
 
 ---
 

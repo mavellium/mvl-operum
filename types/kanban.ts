@@ -50,6 +50,8 @@ export interface Card {
   title: string
   /** Código do nó vinculado na EAP (ex.: "1.2.3"); exibido como "1.2.3 - título". */
   eapCode?: string
+  /** Todos os responsáveis estão inativos no projeto: precisa de outro para concluir. */
+  precisaResponsavel?: boolean
   description: string
   color: CardColor
   priority?: string

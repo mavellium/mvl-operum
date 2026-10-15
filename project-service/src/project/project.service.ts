@@ -155,15 +155,42 @@ export class ProjectService {
     return prisma.userProject.upsert({
       where: { userId_projectId: { userId, projectId } },
       create: { userId, projectId, ...data },
-      update: { active: true, ...data },
+      update: { active: true, inactiveReason: null, inactivatedAt: null, ...data },
     })
   }
 
   async removeMember(projectId: string, tenantId: string, userId: string) {
     await this.findOne(projectId, tenantId)
+    // Desvincular não é inativar: sem motivo, o membro sai também de Stakeholders.
     await prisma.userProject.update({
       where: { userId_projectId: { userId, projectId } },
-      data: { active: false },
+      data: { active: false, inactiveReason: null, inactivatedAt: null },
+    })
+  }
+
+  /**
+   * Inativa (com motivo) ou reativa um membro da equipe no projeto. Inativo perde o
+   * acesso (active = false, como no desvincular), mas o motivo o mantém visível em
+   * Stakeholders e nos documentos. Só vale para quem é ou foi membro do projeto.
+   */
+  async setMemberSituacao(projectId: string, tenantId: string, userId: string, ativo: boolean, motivo?: string) {
+    await this.findOne(projectId, tenantId)
+    const existing = await prisma.userProject.findUnique({ where: { userId_projectId: { userId, projectId } } })
+    if (!existing) throw new NotFoundException('Membro não encontrado neste projeto')
+    if (ativo) {
+      return prisma.userProject.update({
+        where: { id: existing.id },
+        data: { active: true, endDate: null, inactiveReason: null, inactivatedAt: null },
+      })
+    }
+    const reason = (motivo ?? '').trim()
+    if (reason.length < 3) throw new BadRequestException('Informe o motivo da inativação.')
+    if (reason.length > 500) throw new BadRequestException('O motivo pode ter no máximo 500 caracteres.')
+    if (!existing.active) throw new BadRequestException('Este membro não está ativo no projeto.')
+    const agora = new Date()
+    return prisma.userProject.update({
+      where: { id: existing.id },
+      data: { active: false, endDate: agora, inactiveReason: reason, inactivatedAt: agora },
     })
   }
 

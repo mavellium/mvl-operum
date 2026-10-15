@@ -1,5 +1,6 @@
 'use client'
 
+import { MENSAGEM_RESPONSAVEL_INATIVO } from '@/lib/responsavelInativo'
 import { useProjectPermissions } from '@/components/permissoes/ProjectPermissions'
 
 import { useState } from 'react'
@@ -160,6 +161,16 @@ export default function Card({ card, index, columnId, onDelete, onClick, onTimer
                   </button>
                 </div>
               </div>
+
+              {card.precisaResponsavel && !concluido && (
+                <p
+                  role="note"
+                  title={MENSAGEM_RESPONSAVEL_INATIVO}
+                  className="mb-2 rounded-md border border-amber-200 bg-amber-50 px-2 py-1 text-[11px] font-medium text-amber-800"
+                >
+                  Responsável inativo: adicione outro para concluir
+                </p>
+              )}
 
               {/* Descrição truncada */}
               {hasDescription && (

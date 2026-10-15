@@ -436,6 +436,18 @@ Ao substituir uma decisão, manter o texto histórico, alterar seu status e liga
 - **Condições de revisão:** múltiplas réplicas exigem reserva Redis atômica; rate limit por IP real exige proxy explicitamente confiável; importações concorrentes podem exigir lock por projeto.
 - **Referências:** `mcp-server/src/uploadLink.ts`, `uploadRoute.ts`, `migration/importer.ts`, `mcp-server/README.md`, SDD 8.1/8.3.
 
+## ADR-041 — Membro da equipe inativado perde o acesso e continua nos cards
+
+- **Data:** 2026-10-15
+- **Status:** implementada.
+- **Contexto:** o card "Desativar um stakeholder" voltou do teste porque o usuário não encontrou a função: a 1.16.0 só inativava stakeholders externos, por um ícone na linha. O usuário definiu em 15/10: inativar vale também para membros da equipe; o membro inativo perde o acesso ao projeto; as tarefas que ele já fez ou em que trabalhou continuam com ele, mas pedem outro responsável para serem concluídas; o gerente do projeto recebe uma notificação de pendência.
+- **Escolha:** reaproveitar `UserProject.active = false` (o mesmo campo do desvincular e da autorização) e diferenciar a inativação por `inactiveReason`/`inactivatedAt` não nulos. Rota `PATCH /projects/:id/members/:userId/situacao` no project-service. Card cujos responsáveis estão todos inativos ganha aviso e não vai para a coluna de conclusão pelas actions do quadro; os gerentes recebem a lista desses cards por notificação. Gerente do projeto e o próprio usuário não podem ser inativados por essa ação.
+- **Justificativa:** usar o mesmo `active` garante a perda de acesso em todos os caminhos (gateway, páginas, listagens) sem duplicar regra; o motivo separa "saiu, mas o histórico importa" de "foi removido por engano". O bloqueio no servidor vale para a tela e não depende só do aviso visual.
+- **Alternativas consideradas:** flag própria de inativo mantendo o acesso (o usuário escolheu perder o acesso); remover o membro dos cards ao inativar (perderia o histórico pedido); bloquear também no sprint-service (amplia o contrato do serviço e afetaria MCP/API; adiado).
+- **Consequências:** inativos somem das listas de escolha de responsável e de "Elaborado por" (que usam `active = true`), mas continuam nos cards antigos. Movimentos para a conclusão feitos direto no sprint-service (MCP/API) não são bloqueados. Inativar um gerente exige tirar o papel antes, para ele não continuar como "Gerente do projeto" nos documentos.
+- **Condições de revisão:** pedido para bloquear também via MCP/API, para inativar gerentes direto ou para reatribuir os cards automaticamente.
+- **Referências:** `project-service/src/project/project.service.ts` (`setMemberSituacao`), `app/actions/projetos.ts` (`setMembroAtivoAction`), `services/membroInativo.ts`, `lib/responsavelInativo.ts`, `app/actions/sprintBoard.ts`, `components/projetos/ProjetoStakeholdersClient.tsx`, migration `20261015000000_user_project_inactive_reason`.
+
 ## ADR-040 — Funções e departamentos sem associação por projeto
 
 - **Data:** 2026-10-14

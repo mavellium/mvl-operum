@@ -97,6 +97,18 @@ export class ProjectController {
     return this.projectService.removeMember(projectId, tenantId, userId)
   }
 
+  @Patch(':id/members/:userId/situacao')
+  setMemberSituacao(
+    @Param('id') projectId: string,
+    @Param('userId') userId: string,
+    @Headers('x-tenant-id') tenantId: string,
+    @Body() body: { ativo?: unknown; motivo?: unknown },
+  ) {
+    if (typeof body?.ativo !== 'boolean') throw new BadRequestException('ativo deve ser true ou false')
+    if (body.motivo !== undefined && typeof body.motivo !== 'string') throw new BadRequestException('motivo deve ser texto')
+    return this.projectService.setMemberSituacao(projectId, tenantId, userId, body.ativo, body.motivo as string | undefined)
+  }
+
   @Patch(':id/members/reorder')
   @HttpCode(HttpStatus.NO_CONTENT)
   reorderMembers(
