@@ -427,7 +427,7 @@ Ao substituir uma decisão, manter o texto histórico, alterar seu status e liga
 ## ADR-029 — Upload local com grant cifrado de uso único
 
 - **Data:** 2026-10-05
-- **Status:** implementada; revisão pendente.
+- **Status:** implementada; integrada à main em 2026-10-15 (1.21.0). A PR #57 foi mesclada na branch da PR #56 depois de a #56 já estar na main, e o registro ficou fora da main até essa data. Revisão pendente.
 - **Contexto:** SDD 8.3 exige arquivos locais/grandes sem base64 na conversa, mantendo autorização do PAT pelo gateway.
 - **Escolha:** AES-256-GCM, nonce reservado em memória por dez minutos, validação multipart em temporário privado e envio por stream; consumo por tentativa.
 - **Justificativa:** não expõe PAT em claro; revalida permissões atuais; evita upload upstream de multipart inválido e buffers de 50 MB na memória.

@@ -727,6 +727,8 @@ Implementação 8.1/8.3 nesta entrega; 8.2/8.4 preservados e verificados pela su
 
 Continua `dry_run=true` por padrão.
 
+**Integração (15/10/2026):** 8.1 e 8.3 foram implementados em 05/10 (PR #57), mas a PR foi mesclada na branch `feat/sdd-7-project-documents` 54 s depois de a PR #56 dessa branch já ter entrado na main, e o código não chegou à produção. Os quatro commits foram reaplicados sobre a 1.20.0 na versão 1.21.0, com o SDK do MCP mantido em `^1.31.0` (correção de segurança da 1.15.2).
+
 ### 8.2 Anexos pelo MCP ✅
 **Card:** "MCP: anexar imagens e links de vídeo em cards".
 
