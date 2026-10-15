@@ -4,6 +4,7 @@ import { verifySession } from '@/lib/dal'
 import { revalidatePath } from 'next/cache'
 import { sprintsApi, cardsApi, tagsApi, filesApi } from '@/lib/api-client'
 import prisma from '@/lib/prisma'
+import { bloqueioDeConclusao } from '@/services/membroInativo'
 import { camposDaSprint, diferencasSprint, registrarHistoricoSprint } from '@/services/sprintHistoricoService'
 import { z } from 'zod'
 
@@ -32,6 +33,8 @@ type SprintBoardData = {
   columns: { id: string; title: string; position: number; cards: BoardCard[] }[]
   backlogCards: BacklogCard[]
   users: { id: string; name: string; email: string; avatarUrl?: string | null }[]
+  /** Membros inativados no projeto: os cards só com eles pedem outro responsável. */
+  inactiveUserIds: string[]
   tags: { id: string; name: string; color: string }[]
 }
 
@@ -98,6 +101,14 @@ export async function getSprintBoardAction(sprintId: string, projectId?: string)
         })
       : []
     const users = projectMembers.map(m => m.user).filter((u): u is { id: string; name: string; email: string; avatarUrl: string | null } => u != null)
+    // Membros inativados continuam nos cards em que já eram responsáveis.
+    const inativos = resolvedProjectId
+      ? await prisma.userProject.findMany({
+          where: { projectId: resolvedProjectId, active: false, inactiveReason: { not: null } },
+          select: { user: { select: { id: true, avatarUrl: true } } },
+        })
+      : []
+    const inactiveUserIds = inativos.map(i => i.user.id)
 
     const typedColumns = columns as SprintBoardData['columns']
     const typedBacklog = backlogCards as BacklogCard[]
@@ -105,7 +116,7 @@ export async function getSprintBoardAction(sprintId: string, projectId?: string)
     // Responsáveis vindos do sprint-service não têm avatarUrl (réplica local do
     // User). Enriquecer cruzando com o banco principal (userProject -> User.avatarUrl),
     // mesmo padrão usado para anexos abaixo. Resolve avatar sumindo ao reabrir card.
-    const avatarByUserId = buildAvatarMap(users)
+    const avatarByUserId = buildAvatarMap([...users, ...inativos.map(i => i.user)])
 
     const baseColumns = typedColumns.map(col => ({
       ...col,
@@ -163,7 +174,7 @@ export async function getSprintBoardAction(sprintId: string, projectId?: string)
       finalBacklog = finalBacklog.map(comCodigo)
     }
 
-    return { sprint, columns: finalColumns, backlogCards: finalBacklog, users, tags } as unknown as SprintBoardData
+    return { sprint, columns: finalColumns, backlogCards: finalBacklog, users, tags, inactiveUserIds } as unknown as SprintBoardData
   } catch (err) {
     return { error: err instanceof Error ? err.message : 'Erro ao carregar sprint board' }
   }
@@ -189,6 +200,8 @@ export async function moveCardInSprintAction(
 ) {
   try {
     await verifySession()
+    const bloqueio = await bloqueioDeConclusao(cardId, sprintColumnId)
+    if (bloqueio) return { error: bloqueio }
     await cardsApi.update(cardId, { sprintColumnId, sprintPosition, ...(reason ? { reason } : {}) })
     return { success: true }
   } catch (err) {
@@ -354,6 +367,8 @@ export async function moveCardToSprintAction(
 ) {
   try {
     await verifySession()
+    const bloqueio = await bloqueioDeConclusao(cardId, columnId)
+    if (bloqueio) return { error: bloqueio }
     await cardsApi.update(cardId, { sprintId, sprintColumnId: columnId, sprintPosition: position })
     return { success: true }
   } catch (err) {

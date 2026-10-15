@@ -13,7 +13,7 @@ vi.mock('@/app/actions/stakeholders', () => ({
   setStakeholderAtivoAction: vi.fn(),
 }))
 vi.mock('@/app/actions/projects', () => ({ addMemberAction: vi.fn(), removeMemberAction: vi.fn() }))
-vi.mock('@/app/actions/projetos', () => ({ updateProjetoMemberAction: vi.fn() }))
+vi.mock('@/app/actions/projetos', () => ({ updateProjetoMemberAction: vi.fn(), setMembroAtivoAction: vi.fn() }))
 vi.mock('@/app/actions/admin', () => ({ adminCreateUserAction: vi.fn() }))
 vi.mock('@/components/profile/AvatarUpload', () => ({ default: () => <div /> }))
 vi.mock('@/components/ui/AddressFields', () => ({
@@ -23,6 +23,7 @@ vi.mock('@/components/ui/AddressFields', () => ({
 
 import ProjetoStakeholdersClient, { type StakeholderUnificado } from '@/components/projetos/ProjetoStakeholdersClient'
 import { setStakeholderAtivoAction } from '@/app/actions/stakeholders'
+import { setMembroAtivoAction } from '@/app/actions/projetos'
 
 const externo = (over: Partial<StakeholderUnificado> = {}): StakeholderUnificado => ({
   id: 'sk1', tipo: 'externo', stakeholderId: 'sk1', tenantId: 't1', name: 'Girassol', email: null, avatarUrl: null,
@@ -115,5 +116,50 @@ describe('lista dividida em equipe e externos', () => {
     renderComponent([membro('u1', 'Ana')])
     expect(screen.queryByTestId('grupo-externo')).not.toBeInTheDocument()
     expect(screen.getByTestId('grupo-interno')).toBeInTheDocument()
+  })
+})
+
+describe('inativar membro da equipe', () => {
+  const membro = (over: Partial<StakeholderUnificado> = {}): StakeholderUnificado => ({
+    id: 'u1', tipo: 'interno', userId: 'u1', name: 'Ana', email: 'ana@x.com', avatarUrl: null, phone: null, cep: null,
+    logradouro: null, numero: null, complemento: null, bairro: null, cidade: null, estado: null, notes: null, cargos: [],
+    departamento: [], isGerente: false, hourlyRate: null, startDate: '2026-09-01T00:00:00.000Z', userRole: 'member',
+    isActive: true, ...over,
+  })
+
+  it('o botão tem texto e aparece também para membros; avisa que perde o acesso', async () => {
+    vi.mocked(setMembroAtivoAction).mockResolvedValue({ success: true, pendentes: 2 } as never)
+    renderComponent([membro()])
+
+    const botao = screen.getByRole('button', { name: 'Inativar Ana' })
+    expect(botao).toHaveTextContent('Inativar')
+    fireEvent.click(botao)
+    expect(screen.getByText(/perde o acesso ao projeto/)).toBeInTheDocument()
+
+    fireEvent.change(screen.getByLabelText('Motivo da inativação'), { target: { value: 'Saiu da equipe' } })
+    fireEvent.click(screen.getByRole('button', { name: 'Inativar' }))
+
+    await waitFor(() => expect(setMembroAtivoAction).toHaveBeenCalledWith('p1', 'u1', false, 'Saiu da equipe'))
+    expect(setStakeholderAtivoAction).not.toHaveBeenCalled()
+    await waitFor(() => expect(screen.getByText('Motivo: Saiu da equipe')).toBeInTheDocument())
+    expect(screen.getByText('Ana').className).toContain('text-red-700')
+    expect(await screen.findByText(/2 card\(s\) precisam de outro responsável/)).toBeInTheDocument()
+  })
+
+  it('membro inativo reativa pelo próprio botão', async () => {
+    vi.mocked(setMembroAtivoAction).mockResolvedValue({ success: true, pendentes: 0 } as never)
+    renderComponent([membro({ isActive: false, inactiveReason: 'Licença' })])
+    fireEvent.click(screen.getByRole('button', { name: 'Reativar Ana' }))
+    await waitFor(() => expect(setMembroAtivoAction).toHaveBeenCalledWith('p1', 'u1', true))
+    await waitFor(() => expect(screen.queryByText('Motivo: Licença')).not.toBeInTheDocument())
+  })
+
+  it('erro do servidor (ex.: gerente) aparece no diálogo', async () => {
+    vi.mocked(setMembroAtivoAction).mockResolvedValue({ error: 'Este membro é gerente do projeto.' } as never)
+    renderComponent([membro()])
+    fireEvent.click(screen.getByRole('button', { name: 'Inativar Ana' }))
+    fireEvent.change(screen.getByLabelText('Motivo da inativação'), { target: { value: 'Saiu da equipe' } })
+    fireEvent.click(screen.getByRole('button', { name: 'Inativar' }))
+    await waitFor(() => expect(screen.getByRole('alert')).toHaveTextContent('gerente do projeto'))
   })
 })

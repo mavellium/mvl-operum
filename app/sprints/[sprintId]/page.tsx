@@ -73,6 +73,7 @@ export default async function SprintPage({ params, searchParams }: Props) {
       backlogCards={result.backlogCards}
       projectId={(result.sprint as { projectId?: string }).projectId ?? ''}
       users={result.users}
+      inactiveUserIds={result.inactiveUserIds}
       tags={result.tags}
       currentUser={currentUser}
       initialCardId={initialCardId}
