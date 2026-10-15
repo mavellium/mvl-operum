@@ -59,7 +59,7 @@ export async function salvarPermissoesFuncaoAction(input: { roleId: string | nul
       tenantId, userId, action: 'PERMISSOES_FUNCAO', entity: 'role', entityId: role.id,
       details: { funcao: role.name, permissoes },
     })
-    revalidatePath('/admin/cadastros')
+    revalidatePath('/admin/cadastros', 'layout')
     return { success: true as const, roleId: role.id, funcoes: await listarFuncoesComPermissoes(tenantId) }
   } catch (err) {
     return erro(err, 'Erro ao salvar as permissões da função.')
@@ -74,7 +74,7 @@ export async function restaurarPadraoFuncaoAction(roleId: string) {
       tenantId, userId, action: 'PERMISSOES_FUNCAO_PADRAO', entity: 'role', entityId: role.id,
       details: { funcao: role.name },
     })
-    revalidatePath('/admin/cadastros')
+    revalidatePath('/admin/cadastros', 'layout')
     return { success: true as const, funcoes: await listarFuncoesComPermissoes(tenantId) }
   } catch (err) {
     return erro(err, 'Erro ao restaurar o padrão da função.')

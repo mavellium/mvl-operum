@@ -3,6 +3,8 @@
 import PermissoesFuncoes from '@/components/permissoes/PermissoesFuncoes'
 
 import { useState, useTransition } from 'react'
+import Link from 'next/link'
+import { SECOES_CADASTROS, hrefCadastros, type SecaoCadastros } from '@/lib/cadastrosSecoes'
 import {
   getOrCreateDepartmentAction,
   updateDepartmentNameAction,
@@ -20,24 +22,23 @@ interface RoleItem { id: string; name: string; scope: string; description: strin
 interface Props {
   departamentosIniciais: DeptItem[]
   funcoesIniciais: RoleItem[]
+  section: SecaoCadastros
 }
 
-type Section = 'departamentos' | 'funcoes'
-
-export default function AdminCadastrosClient({ departamentosIniciais, funcoesIniciais }: Props) {
+export default function AdminCadastrosClient({ departamentosIniciais, funcoesIniciais, section }: Props) {
   const [departamentos, setDepartamentos] = useState<DeptItem[]>(departamentosIniciais)
   const [funcoes, setFuncoes] = useState<RoleItem[]>(funcoesIniciais)
-  const [section, setSection] = useState<Section>('departamentos')
 
   const [error] = useState<string | null>(null)
 
   return (
     <div className="space-y-6">
       <div className="flex gap-2">
-        {(['departamentos', 'funcoes'] as Section[]).map(s => (
-          <button
+        {SECOES_CADASTROS.map(s => (
+          <Link
             key={s}
-            onClick={() => setSection(s)}
+            href={hrefCadastros(s)}
+            aria-current={section === s ? 'page' : undefined}
             className={`px-4 py-2 text-sm font-medium rounded-xl transition-colors ${
               section === s
                 ? 'bg-blue-600 text-white'
@@ -45,7 +46,7 @@ export default function AdminCadastrosClient({ departamentosIniciais, funcoesIni
             }`}
           >
             {s === 'departamentos' ? 'Departamentos' : 'Funções'}
-          </button>
+          </Link>
         ))}
       </div>
 
