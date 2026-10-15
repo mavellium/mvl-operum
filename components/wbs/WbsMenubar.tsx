@@ -7,11 +7,13 @@ import {
   Undo2, Redo2, CornerDownRight, Plus, Trash2, Palette, Save, Printer,
   ZoomIn, ZoomOut, Maximize2, Search,
   FolderOpen, Scissors, Copy, ClipboardPaste, CopyPlus, Paintbrush, PaintRoller, Eraser,
-  PencilLine, ChevronsUpDown, Columns2, Rows2, Rows3,
+  PencilLine, ChevronsUpDown, Network, Table2, Coins, ChartGantt,
   FileImage, ImageDown, FileCode2, FileJson, HelpCircle, BookOpen,
 } from 'lucide-react'
 import Modal from '@/components/ui/Modal'
 import Tooltip from '@/components/ui/Tooltip'
+import ToolbarSelect from './ToolbarSelect'
+import { IconeOrganizar, OPCOES_ORGANIZAR } from './OrganizarIcons'
 import { exportMspdi } from '@/lib/wbsExportMspdi'
 import { exportWbsSvg, exportWbsPng } from '@/lib/wbsExportSvg'
 import { importWbsAction, getWbsTreeAction } from '@/app/actions/wbs'
@@ -191,9 +193,11 @@ function ManualContent() {
               terceiro filho do segundo filho do elemento raiz.
             </p>
             <p>
-              Quanto ao <strong>layout</strong>, use <em>Lado a Lado</em> para visualizar o
-              primeiro nível de decomposição de forma ampla; use <em>Abaixo</em> ou{' '}
-              <em>Abaixo-L</em> para árvores profundas, pois economizam espaço horizontal.
+              Quanto ao <strong>layout</strong> (menu <em>Organizar</em>, vale para os filhos do
+              item selecionado), use <em>Padrão</em> para ver o primeiro nível de decomposição de
+              forma ampla; <em>Direita</em> ou <em>Esquerda</em> para árvores profundas, pois
+              economizam espaço horizontal; e os <em>Horizontais</em> para ler a EAP da esquerda
+              para a direita, com o item pai no meio, no topo ou na base dos filhos.
             </p>
           </>
         )}
@@ -382,14 +386,8 @@ export default function WbsMenubar({
         { label: 'Remover (Delete)', icon: <Trash2 className="w-4 h-4" />, onClick: onRequestDelete, disabled: !canDelete || !canEdit },
       ],
     },
-    {
-      title: 'Organizar',
-      items: [
-        { label: 'Lado a Lado', icon: <Columns2 className="w-4 h-4" />, onClick: () => { if (firstSelected) dispatch({ type: 'SET_LAYOUT', payload: { nodeId: firstSelected, layout: 'LADO_A_LADO' } }) }, disabled: !firstSelected || !canEdit, active: selectedNode?.layout === 'LADO_A_LADO' },
-        { label: 'Abaixo', icon: <Rows2 className="w-4 h-4" />, onClick: () => { if (firstSelected) dispatch({ type: 'SET_LAYOUT', payload: { nodeId: firstSelected, layout: 'ABAIXO' } }) }, disabled: !firstSelected || !canEdit, active: selectedNode?.layout === 'ABAIXO' },
-        { label: 'Abaixo com conector em L', icon: <Rows3 className="w-4 h-4" />, onClick: () => { if (firstSelected) dispatch({ type: 'SET_LAYOUT', payload: { nodeId: firstSelected, layout: 'ABAIXO_L' } }) }, disabled: !firstSelected || !canEdit, active: selectedNode?.layout === 'ABAIXO_L' },
-      ],
-    },
+    // Organizar é um select de ícones (ver ORGANIZAR abaixo), renderizado nesta posição.
+    { title: 'Organizar', items: [] },
     {
       title: 'Download',
       items: [
@@ -416,16 +414,33 @@ export default function WbsMenubar({
   return (
     <>
       <div className="flex items-center gap-1.5 px-1.5 py-1 border-b border-gray-200 bg-white select-none overflow-x-auto">
-        {cards.map(card => (
+        {onChangeView && (
+          <ToolbarSelect<WbsViewMode>
+            title="Visualização"
+            value={viewMode}
+            onChange={onChangeView}
+            options={[
+              { value: 'chart', label: 'EAP (gráfico)', icon: <Network className="w-5 h-5" /> },
+              { value: 'details', label: 'EAP com detalhes', icon: <Table2 className="w-5 h-5" /> },
+              { value: 'costs', label: 'Horas e custos', icon: <Coins className="w-5 h-5" />, disabled: !canViewCosts, hint: 'Sem permissão para ver custos' },
+              { value: 'gantt', label: 'Gantt', icon: <ChartGantt className="w-5 h-5" /> },
+            ]}
+          />
+        )}
+
+        {cards.map(card => card.title === 'Organizar' ? (
+          <ToolbarSelect
+            key={card.title}
+            title="Organizar"
+            value={selectedNode?.layout ?? null}
+            placeholder="Selecione um item"
+            disabled={!firstSelected || !canEdit}
+            onChange={layout => { if (firstSelected) dispatch({ type: 'SET_LAYOUT', payload: { nodeId: firstSelected, layout } }) }}
+            options={OPCOES_ORGANIZAR.map(o => ({ ...o, icon: <IconeOrganizar layout={o.value} size={28} /> }))}
+          />
+        ) : (
           <ToolbarCard key={card.title} title={card.title} items={card.items} />
         ))}
-
-        {onChangeView && <label className="text-xs flex items-center gap-1">Visualização
-          <select aria-label="Visualização da EAP" className="border rounded p-1" value={viewMode} onChange={e => onChangeView(e.target.value as WbsViewMode)}>
-            <option value="chart">EAP</option><option value="details">Chart View Details</option>
-            <option value="costs" disabled={!canViewCosts}>Hours and Cost View</option><option value="gantt">Gantt</option>
-          </select>
-        </label>}
         {/* Sync indicator */}
         <div className="flex items-center pl-1">
           <Tooltip label={sync.label}>

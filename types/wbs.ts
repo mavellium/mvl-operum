@@ -1,5 +1,12 @@
 export type WbsViewMode = 'chart' | 'details' | 'costs' | 'gantt';
-export type WbsLayoutOrientation = 'LADO_A_LADO' | 'ABAIXO' | 'ABAIXO_L';
+/**
+ * Como os filhos de um nó são organizados (menu Organizar, ícones em components/wbs/OrganizarIcons):
+ * LADO_A_LADO = padrão (organograma); DIREITA/ESQUERDA = pai no topo e filhos empilhados
+ * à direita/esquerda da linha que desce do centro dele; HORIZONTAL* = pai à esquerda e
+ * filhos empilhados à direita, com o pai no meio, no topo ou na base da coluna.
+ */
+export type WbsLayoutOrientation =
+  | 'LADO_A_LADO' | 'DIREITA' | 'ESQUERDA' | 'HORIZONTAL' | 'HORIZONTAL_TOPO' | 'HORIZONTAL_BASE';
 export type ClipboardActionType = 'COPY' | 'CUT' | null;
 export type DropPosition = 'INSIDE' | 'BEFORE' | 'AFTER';
 

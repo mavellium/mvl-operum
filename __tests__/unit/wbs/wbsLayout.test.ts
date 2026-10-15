@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest'
-import { computeLayout, resolveDropPosition, NODE_W, NODE_H, GAP_X, GAP_Y, PILL_OVERHANG } from '@/lib/wbsLayout'
+import { computeLayout, resolveDropPosition, NODE_W, NODE_H, GAP_X, GAP_Y, GAP_STACK, indentDe, PILL_OVERHANG } from '@/lib/wbsLayout'
 import type { WbsNodeClient, WbsLayoutOrientation } from '@/types/wbs'
 
 const S = {
@@ -12,7 +12,7 @@ function node(
   parentId: string | null,
   order: number,
   childrenIds: string[],
-  layout: WbsLayoutOrientation = 'ABAIXO',
+  layout: WbsLayoutOrientation = 'DIREITA',
   collapsed = false
 ): WbsNodeClient {
   return { id, parentId, order, code: '', title: id, layout, collapsed, style: S, properties: {}, childrenIds }
@@ -78,95 +78,132 @@ describe('computeLayout', () => {
     })
   })
 
-  // ── ABAIXO ──────────────────────────────────────────────────────────────────
+  // ── Direita (organizar-direita.svg) ───────────────────────────────────────
 
-  describe('ABAIXO', () => {
+  describe('DIREITA', () => {
     const make = () => ({
-      r: node('r', null, 0, ['a', 'b'], 'ABAIXO'),
+      r: node('r', null, 0, ['a', 'b'], 'DIREITA'),
       a: node('a', 'r', 0, []),
       b: node('b', 'r', 1, []),
     })
 
-    it('primeiro filho está em Y = parent_Y + NODE_H + GAP_Y', () => {
-      const { geometry } = computeLayout(make(), 'r')
-      expect(geometry.a.y).toBe(NODE_H + GAP_Y)
+    it('recuo na proporção do ícone: filho começa a 11/12 da largura do pai', () => {
+      expect(NODE_W / 2 + indentDe(NODE_W)).toBe(Math.round(NODE_W * 11 / 12))
     })
 
-    it('empilha filhos verticalmente — b.y > a.y', () => {
+    it('pai no topo à esquerda; filhos empilhados à direita da linha que desce do centro do pai', () => {
       const { geometry } = computeLayout(make(), 'r')
-      expect(geometry.b.y).toBeGreaterThan(geometry.a.y)
+      expect(geometry.r).toMatchObject({ x: 0, y: 0 })
+      const spineX = NODE_W / 2
+      expect(geometry.a.x).toBe(spineX + indentDe(NODE_W))
+      expect(geometry.b.x).toBe(spineX + indentDe(NODE_W))
+      expect(geometry.a.y).toBe(NODE_H + GAP_Y / 2)
+      expect(geometry.b.y).toBe(geometry.a.y + NODE_H + GAP_STACK)
     })
 
-    it('filhos ficam na mesma coluna X que o pai', () => {
-      const { geometry } = computeLayout(make(), 'r')
-      expect(geometry.a.x).toBe(geometry.r.x)
-      expect(geometry.b.x).toBe(geometry.r.x)
-    })
-
-    it('path do conector usa apenas V (linha vertical)', () => {
-      const { connectors } = computeLayout(make(), 'r')
-      connectors.forEach(c => {
-        expect(c.path).toContain('V')
-        expect(c.path).not.toContain('H')
-      })
+    it('conector desce do centro inferior do pai e entra na borda esquerda do filho', () => {
+      const { geometry, connectors } = computeLayout(make(), 'r')
+      const c = connectors.find(x => x.toId === 'b')!
+      expect(c.path).toBe(`M ${NODE_W / 2} ${NODE_H} V ${geometry.b.y + NODE_H / 2} H ${geometry.b.x}`)
     })
   })
 
-  // ── ABAIXO_L ────────────────────────────────────────────────────────────────
+  // ── Esquerda (organizar-esquerda.svg) ─────────────────────────────────────
 
-  describe('ABAIXO_L', () => {
-    const make = () => ({
-      r: node('r', null, 0, ['a', 'b'], 'ABAIXO_L'),
-      a: node('a', 'r', 0, []),
-      b: node('b', 'r', 1, []),
-    })
-
-    it('filhos à direita da borda do pai, com GAP_X de espaço', () => {
-      const { geometry } = computeLayout(make(), 'r')
-      expect(geometry.a.x).toBe(geometry.r.x + NODE_W + GAP_X)
-      expect(geometry.b.x).toBe(geometry.r.x + NODE_W + GAP_X)
-    })
-
-    it('empilha verticalmente', () => {
-      const { geometry } = computeLayout(make(), 'r')
-      expect(geometry.b.y).toBeGreaterThan(geometry.a.y)
-    })
-
-    it('path do conector contém V e H (forma em L)', () => {
-      const { connectors } = computeLayout(make(), 'r')
-      expect(connectors).toHaveLength(2)
-      connectors.forEach(c => {
-        expect(c.path).toContain('V')
-        expect(c.path).toContain('H')
-      })
-    })
-
-    it('conector sai do meio-direito do pai e entra na borda esquerda do filho (cotovelo)', () => {
-      const nodes = make()
-      const { geometry, connectors } = computeLayout(nodes, 'r')
-      const c = connectors.find(x => x.toId === 'a')!
-      const parentMidY = geometry.r.y + NODE_H / 2
-      const spineX = geometry.r.x + NODE_W + 10
-      const childLeft = geometry.a.x
-      const childMidY = geometry.a.y + NODE_H / 2
-      expect(c.path).toBe(`M ${geometry.r.x + NODE_W} ${parentMidY} H ${spineX} V ${childMidY} H ${childLeft}`)
-    })
-
-    it('LADO_A_LADO largo (5 filhos) — nenhum par se sobrepõe', () => {
+  describe('ESQUERDA', () => {
+    it('espelho da Direita: pai à direita, filhos à esquerda da linha, ramal na borda direita', () => {
       const nodes = {
-        r: node('r', null, 0, ['a', 'b', 'c', 'd', 'e'], 'LADO_A_LADO'),
+        r: node('r', null, 0, ['a', 'b'], 'ESQUERDA'),
         a: node('a', 'r', 0, []),
         b: node('b', 'r', 1, []),
-        c: node('c', 'r', 2, []),
-        d: node('d', 'r', 3, []),
-        e: node('e', 'r', 4, []),
+      }
+      const { geometry, connectors } = computeLayout(nodes, 'r')
+      const spineX = geometry.r.x + NODE_W / 2
+      expect(geometry.a.x + NODE_W).toBe(spineX - indentDe(NODE_W))
+      expect(geometry.r.x).toBeGreaterThan(geometry.a.x)
+      expect(geometry.a.x).toBe(0)
+      const c = connectors.find(x => x.toId === 'a')!
+      expect(c.path).toBe(`M ${spineX} ${NODE_H} V ${geometry.a.y + NODE_H / 2} H ${geometry.a.x + NODE_W}`)
+    })
+  })
+
+  // ── Horizontais (organizar-horizontal-*.svg) ──────────────────────────────
+
+  describe('horizontais', () => {
+    const make = (layout: WbsLayoutOrientation) => ({
+      r: node('r', null, 0, ['a', 'b', 'c'], layout),
+      a: node('a', 'r', 0, []),
+      b: node('b', 'r', 1, []),
+      c: node('c', 'r', 2, []),
+    })
+    const centro = (g: { y: number }) => g.y + NODE_H / 2
+
+    it('filhos em coluna à direita do pai, com GAP_X', () => {
+      const { geometry } = computeLayout(make('HORIZONTAL'), 'r')
+      for (const id of ['a', 'b', 'c']) expect(geometry[id].x).toBe(NODE_W + GAP_X)
+      expect(geometry.a.y).toBe(0)
+      expect(geometry.b.y).toBe(NODE_H + GAP_STACK)
+    })
+
+    it('Horizontal: pai centralizado entre o primeiro e o último filho', () => {
+      const { geometry } = computeLayout(make('HORIZONTAL'), 'r')
+      expect(centro(geometry.r)).toBe((centro(geometry.a) + centro(geometry.c)) / 2)
+    })
+
+    it('Horizontal (topo): pai alinhado ao primeiro filho', () => {
+      const { geometry } = computeLayout(make('HORIZONTAL_TOPO'), 'r')
+      expect(centro(geometry.r)).toBe(centro(geometry.a))
+    })
+
+    it('Horizontal (base): pai alinhado ao último filho', () => {
+      const { geometry } = computeLayout(make('HORIZONTAL_BASE'), 'r')
+      expect(centro(geometry.r)).toBe(centro(geometry.c))
+      expect(geometry.r.y).toBeGreaterThan(0)
+    })
+
+    it('conector sai do meio-direito do pai, passa pela linha vertical e entra na borda esquerda do filho', () => {
+      const { geometry, connectors } = computeLayout(make('HORIZONTAL'), 'r')
+      const spineX = NODE_W + GAP_X / 2
+      const c = connectors.find(x => x.toId === 'c')!
+      expect(c.path).toBe(`M ${NODE_W} ${centro(geometry.r)} H ${spineX} V ${centro(geometry.c)} H ${NODE_W + GAP_X}`)
+    })
+
+    it('filho horizontal com netos: a subárvore inteira cabe sem sobrepor o irmão de baixo', () => {
+      const nodes = {
+        r: node('r', null, 0, ['a', 'b'], 'HORIZONTAL'),
+        a: node('a', 'r', 0, ['a1', 'a2', 'a3'], 'HORIZONTAL_BASE'),
+        a1: node('a1', 'a', 0, []), a2: node('a2', 'a', 1, []), a3: node('a3', 'a', 2, []),
+        b: node('b', 'r', 1, []),
       }
       const { geometry } = computeLayout(nodes, 'r')
-      const xs = ['a', 'b', 'c', 'd', 'e'].map(id => geometry[id].x)
-      for (let i = 1; i < xs.length; i++) {
-        expect(xs[i]).toBeGreaterThanOrEqual(xs[i - 1] + NODE_W)
-      }
+      expect(geometry.b.y).toBeGreaterThanOrEqual(geometry.a3.y + NODE_H + GAP_STACK)
+      expect(centro(geometry.a)).toBe(centro(geometry.a3))
     })
+  })
+
+  it('valor antigo ("ABAIXO") é desenhado como Direita, sem perder filhos', () => {
+    const nodes = {
+      r: node('r', null, 0, ['a'], 'ABAIXO' as WbsLayoutOrientation),
+      a: node('a', 'r', 0, []),
+    }
+    const { geometry } = computeLayout(nodes, 'r')
+    expect(geometry.a).toMatchObject({ x: NODE_W / 2 + indentDe(NODE_W), y: NODE_H + GAP_Y / 2 })
+  })
+
+  it('LADO_A_LADO largo (5 filhos) — nenhum par se sobrepõe', () => {
+    const nodes = {
+      r: node('r', null, 0, ['a', 'b', 'c', 'd', 'e'], 'LADO_A_LADO'),
+      a: node('a', 'r', 0, []),
+      b: node('b', 'r', 1, []),
+      c: node('c', 'r', 2, []),
+      d: node('d', 'r', 3, []),
+      e: node('e', 'r', 4, []),
+    }
+    const { geometry } = computeLayout(nodes, 'r')
+    const xs = ['a', 'b', 'c', 'd', 'e'].map(id => geometry[id].x)
+    for (let i = 1; i < xs.length; i++) {
+      expect(xs[i]).toBeGreaterThanOrEqual(xs[i - 1] + NODE_W)
+    }
   })
 
   // ── Colapsado ────────────────────────────────────────────────────────────────
@@ -174,7 +211,7 @@ describe('computeLayout', () => {
   describe('collapsed', () => {
     it('nó colapsado não gera filhos na geometria', () => {
       const nodes = {
-        r: node('r', null, 0, ['a'], 'ABAIXO'),
+        r: node('r', null, 0, ['a'], 'DIREITA'),
         a: { ...node('a', 'r', 0, ['aa']), collapsed: true },
         aa: node('aa', 'a', 0, []),
       }
@@ -185,7 +222,7 @@ describe('computeLayout', () => {
 
     it('nó colapsado não gera conectores para seus filhos', () => {
       const nodes = {
-        r: node('r', null, 0, ['a'], 'ABAIXO'),
+        r: node('r', null, 0, ['a'], 'DIREITA'),
         a: { ...node('a', 'r', 0, ['aa']), collapsed: true },
         aa: node('aa', 'a', 0, []),
       }
@@ -198,9 +235,9 @@ describe('computeLayout', () => {
   // ── Layout misto ─────────────────────────────────────────────────────────────
 
   describe('layout misto', () => {
-    it('pai ABAIXO com filho LADO_A_LADO: netos ficam lado a lado', () => {
+    it('pai DIREITA com filho LADO_A_LADO: netos ficam lado a lado', () => {
       const nodes = {
-        r: node('r', null, 0, ['a'], 'ABAIXO'),
+        r: node('r', null, 0, ['a'], 'DIREITA'),
         a: node('a', 'r', 0, ['aa', 'ab'], 'LADO_A_LADO'),
         aa: node('aa', 'a', 0, []),
         ab: node('ab', 'a', 1, []),
@@ -260,16 +297,17 @@ describe('resolveDropPosition', () => {
 
 it('mixed layouts keep every subtree inside bounds with wide cards and taller details', () => {
   const nodes: Record<string, WbsNodeClient> = {}, widths: Record<string, number> = {}
-  const layouts: WbsLayoutOrientation[] = ['LADO_A_LADO','ABAIXO_L','ABAIXO']
+  const layouts: WbsLayoutOrientation[] = ['LADO_A_LADO','DIREITA','ESQUERDA','HORIZONTAL','HORIZONTAL_TOPO','HORIZONTAL_BASE']
   for (let i=0;i<60;i++) {
     const id=String(i), parent=i===0?null:String(Math.floor((i-1)/3))
-    nodes[id]=node(id,parent,i,[],layouts[i%3]); widths[id]=120+(i%5)*70
+    nodes[id]=node(id,parent,i,[],layouts[(i*7)%6]); widths[id]=120+(i%5)*70
     if(parent)nodes[parent].childrenIds.push(id)
   }
   const { geometry, bounds } = computeLayout(nodes,'0',widths,162)
   const cards=Object.values(geometry)
   for(const [i,a] of cards.entries()) {
     expect(a.x).toBeGreaterThanOrEqual(0)
+    expect(a.y).toBeGreaterThanOrEqual(0)
     expect(a.x+a.width).toBeLessThanOrEqual(bounds.width)
     expect(a.y+a.height).toBeLessThanOrEqual(bounds.height)
     for(const b of cards.slice(i+1)) {

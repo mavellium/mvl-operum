@@ -1,5 +1,7 @@
 'use server'
 
+import type { WbsLayoutOrientation } from '@/types/wbs'
+
 import { propagarPlanilhaDeCustos } from '@/services/planilhaService'
 import { exigirPermissao, permissoesNoProjeto } from '@/services/authz'
 import { verifySession } from '@/lib/dal'
@@ -213,7 +215,7 @@ export async function updateNodePropertiesAction(
 export async function setLayoutAction(
   projetoId: string,
   nodeId: string,
-  layout: 'LADO_A_LADO' | 'ABAIXO' | 'ABAIXO_L',
+  layout: WbsLayoutOrientation,
 ): Promise<Result<{ serverVersion: number }>> {
   try {
     const sessao = await verifySession()

@@ -768,9 +768,12 @@ model AtaAnexo {
 // ── WBS / EAP ─────────────────────────────────────────────
 
 enum WbsLayoutOrientation {
-  LADO_A_LADO // filhos lado a lado (organograma / WBS-chart)
-  ABAIXO // filhos empilhados verticalmente, alinhados ao pai
-  ABAIXO_L // filhos empilhados com conector em L
+  LADO_A_LADO // padrão: filhos lado a lado abaixo do pai (organograma / WBS-chart)
+  DIREITA // pai no topo, filhos empilhados à direita da linha que desce do centro dele
+  ESQUERDA // espelho de DIREITA: filhos empilhados à esquerda
+  HORIZONTAL // pai à esquerda, centralizado na coluna de filhos à direita
+  HORIZONTAL_TOPO // pai à esquerda, alinhado ao primeiro filho
+  HORIZONTAL_BASE // pai à esquerda, alinhado ao último filho
 }
 
 model WbsNode {
