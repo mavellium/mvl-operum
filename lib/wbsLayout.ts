@@ -48,8 +48,21 @@ export function resolveDropPosition(
 interface SubtreeSize {
   width: number
   height: number
+  /** Posição do card do nó dentro da caixa da subárvore. */
   rootX: number
+  rootY: number
 }
+
+/**
+ * Recuo dos filhos em relação à linha vertical (Direita/Esquerda), na proporção do
+ * organizar-direita.svg: linha no centro do pai (x 9 de 3–15) e filho em x 14, ou
+ * seja, 5/12 da largura do pai depois da linha.
+ */
+export function indentDe(parentWidth: number): number {
+  return Math.round((parentWidth * 5) / 12)
+}
+/** Espaço vertical entre filhos empilhados (Direita, Esquerda e horizontais). */
+export const GAP_STACK = 24
 
 function visibleChildren(
   node: WbsNodeClient,
@@ -60,6 +73,22 @@ function visibleChildren(
     .map(id => nodes[id])
     .filter((n): n is WbsNodeClient => Boolean(n))
     .sort((a, b) => a.order - b.order)
+}
+
+type Layout = WbsNodeClient['layout']
+const CONHECIDOS: ReadonlySet<string> = new Set(['LADO_A_LADO', 'DIREITA', 'ESQUERDA', 'HORIZONTAL', 'HORIZONTAL_TOPO', 'HORIZONTAL_BASE'])
+/** Valores antigos ("Abaixo", "Abaixo com L") ou desconhecidos são desenhados como Direita. */
+function layoutDe(node: WbsNodeClient): Layout {
+  return CONHECIDOS.has(node.layout) ? node.layout : 'DIREITA'
+}
+const isHorizontal = (l: Layout) => l === 'HORIZONTAL' || l === 'HORIZONTAL_TOPO' || l === 'HORIZONTAL_BASE'
+
+/** Topo de cada filho numa coluna empilhada, a partir de 0. */
+function stackTops(heights: number[]): number[] {
+  const tops: number[] = []
+  let y = 0
+  for (const h of heights) { tops.push(y); y += h + GAP_STACK }
+  return tops
 }
 
 /**
@@ -89,25 +118,41 @@ function buildSubtreeSizes(
   for (let i = preOrder.length - 1; i >= 0; i--) {
     const id = preOrder[i]
     const node = nodes[id]
-    const ch = visibleChildren(node, nodes)
+    const layout = layoutDe(node)
+    const ch = visibleChildren(node, nodes).map(c => sizes[c.id])
     const nw = nodeWidths[id] ?? NODE_W
+    const H = nodeHeight
 
     if (ch.length === 0) {
-      sizes[id] = { width: nw, height: nodeHeight, rootX: 0 }
+      sizes[id] = { width: nw, height: H, rootX: 0, rootY: 0 }
       continue
     }
 
-    const childrenHeight = ch.reduce((sum, c) => sum + (sizes[c.id]?.height ?? nodeHeight), 0)
-    if (node.layout === 'LADO_A_LADO') {
-      const totalW = ch.reduce((sum, c) => sum + sizes[c.id].width, 0) + GAP_X * (ch.length - 1)
+    const stackH = ch.reduce((sum, c) => sum + c.height, 0) + GAP_STACK * (ch.length - 1)
+    const maxChildW = Math.max(...ch.map(c => c.width))
+
+    if (layout === 'LADO_A_LADO') {
+      const totalW = ch.reduce((sum, c) => sum + c.width, 0) + GAP_X * (ch.length - 1)
       const width = Math.max(nw, totalW)
-      sizes[id] = { width, rootX: (width - nw) / 2, height: nodeHeight + GAP_Y + Math.max(...ch.map(c => sizes[c.id].height)) }
-    } else if (node.layout === 'ABAIXO_L') {
-      sizes[id] = { rootX: 0, width: nw + GAP_X + Math.max(...ch.map(c => sizes[c.id].width)), height: nodeHeight + childrenHeight + GAP_Y * ch.length }
+      sizes[id] = { width, rootX: (width - nw) / 2, rootY: 0, height: H + GAP_Y + Math.max(...ch.map(c => c.height)) }
+    } else if (layout === 'DIREITA' || layout === 'ESQUERDA') {
+      // Linha vertical no centro do pai; filhos a indentDe(nw) dela.
+      const width = Math.max(nw, nw / 2 + indentDe(nw) + maxChildW)
+      sizes[id] = {
+        width,
+        rootX: layout === 'DIREITA' ? 0 : width - nw,
+        rootY: 0,
+        height: H + GAP_Y / 2 + stackH,
+      }
     } else {
-      const rootCenter = Math.max(nw / 2, ...ch.map(c => sizes[c.id].rootX + (nodeWidths[c.id] ?? NODE_W) / 2))
-      const right = Math.max(nw / 2, ...ch.map(c => sizes[c.id].width - sizes[c.id].rootX - (nodeWidths[c.id] ?? NODE_W) / 2))
-      sizes[id] = { rootX: rootCenter - nw / 2, width: rootCenter + right, height: nodeHeight + childrenHeight + GAP_Y * ch.length }
+      // Horizontais: pai à esquerda; o centro dele vai ao meio, ao primeiro ou ao último filho.
+      const tops = stackTops(ch.map(c => c.height))
+      const centers = ch.map((c, k) => tops[k] + c.rootY + H / 2)
+      const parentCenter = layout === 'HORIZONTAL_TOPO' ? centers[0]
+        : layout === 'HORIZONTAL_BASE' ? centers[centers.length - 1]
+        : (centers[0] + centers[centers.length - 1]) / 2
+      const rootY = parentCenter - H / 2
+      sizes[id] = { width: nw + GAP_X + maxChildW, rootX: 0, rootY, height: Math.max(stackH, rootY + H) }
     }
   }
 
@@ -131,75 +176,72 @@ export function computeLayout(
   const sizes = buildSubtreeSizes(rootId, nodes, nodeWidths, nodeHeight)
   const geometry: Record<string, WbsNodeGeometry> = {}
   const connectors: WbsConnector[] = []
+  const H = nodeHeight
 
-  const stack: Array<{ id: string; x: number; y: number }> = [
-    { id: rootId, x: sizes[rootId].rootX, y: 0 },
-  ]
+  // Cada item é a caixa da subárvore (canto superior esquerdo).
+  const stack: Array<{ id: string; left: number; top: number }> = [{ id: rootId, left: 0, top: 0 }]
 
   while (stack.length > 0) {
-    const { id, x, y } = stack.pop()!
+    const { id, left, top } = stack.pop()!
     const node = nodes[id]
     if (!node || geometry[id]) continue
 
+    const size = sizes[id]
     const nw = nodeWidths[id] ?? NODE_W
-    geometry[id] = { id, x, y, width: nw, height: nodeHeight }
+    const x = left + size.rootX
+    const y = top + size.rootY
+    geometry[id] = { id, x, y, width: nw, height: H }
 
     const ch = visibleChildren(node, nodes)
     if (ch.length === 0) continue
+    const layout = layoutDe(node)
+    const widthOf = (c: WbsNodeClient) => nodeWidths[c.id] ?? NODE_W
 
-    if (node.layout === 'LADO_A_LADO') {
-      const childSubtreeWidths = ch.map(c => sizes[c.id]?.width ?? NODE_W)
-      const totalW = childSubtreeWidths.reduce((s, w) => s + w, 0) + GAP_X * (ch.length - 1)
-      const childY = y + nodeHeight + GAP_Y
+    if (layout === 'LADO_A_LADO') {
+      const totalW = ch.reduce((s, c) => s + sizes[c.id].width, 0) + GAP_X * (ch.length - 1)
+      const childTop = y + H + GAP_Y
       const pCx = x + nw / 2
-      const midY = y + nodeHeight + GAP_Y / 2
-      let subtreeLeft = x - sizes[id].rootX + (sizes[id].width - totalW) / 2
+      const midY = y + H + GAP_Y / 2
+      let subtreeLeft = left + (size.width - totalW) / 2
 
-      for (let i = 0; i < ch.length; i++) {
-        const sw = childSubtreeWidths[i]
-        const chW = nodeWidths[ch[i].id] ?? NODE_W
-        const childX = subtreeLeft + sizes[ch[i].id].rootX
-        stack.push({ id: ch[i].id, x: childX, y: childY })
-
-        // Centro da subárvore (independente da largura do card filho)
-        const cCx = childX + chW / 2
-        connectors.push({
-          fromId: id,
-          toId: ch[i].id,
-          path: `M ${pCx} ${y + nodeHeight} V ${midY} H ${cCx} V ${childY}`,
-        })
-        subtreeLeft += sw + GAP_X
+      for (const c of ch) {
+        const cs = sizes[c.id]
+        stack.push({ id: c.id, left: subtreeLeft, top: childTop })
+        const cCx = subtreeLeft + cs.rootX + widthOf(c) / 2
+        connectors.push({ fromId: id, toId: c.id, path: `M ${pCx} ${y + H} V ${midY} H ${cCx} V ${childTop + cs.rootY}` })
+        subtreeLeft += cs.width + GAP_X
       }
-    } else if (node.layout === 'ABAIXO') {
-      const pCx = x + nw / 2
-      let childY = y + nodeHeight + GAP_Y
+    } else if (layout === 'DIREITA' || layout === 'ESQUERDA') {
+      // Linha desce do centro do pai; um ramal entra em cada filho (o último fecha a linha).
+      const direita = layout === 'DIREITA'
+      const spineX = x + nw / 2
+      let childTop = y + H + GAP_Y / 2
 
-      for (const child of ch) {
-        stack.push({ id: child.id, x: x + nw / 2 - (nodeWidths[child.id] ?? NODE_W) / 2, y: childY })
-        connectors.push({
-          fromId: id,
-          toId: child.id,
-          path: `M ${pCx} ${y + nodeHeight} V ${childY}`,
-        })
-        childY += (sizes[child.id]?.height ?? nodeHeight) + GAP_Y
+      for (const c of ch) {
+        const cs = sizes[c.id]
+        const cLeft = direita ? spineX + indentDe(nw) : spineX - indentDe(nw) - cs.width
+        stack.push({ id: c.id, left: cLeft, top: childTop })
+        const cx = cLeft + cs.rootX
+        const mid = childTop + cs.rootY + H / 2
+        const edge = direita ? cx : cx + widthOf(c)
+        connectors.push({ fromId: id, toId: c.id, path: `M ${spineX} ${y + H} V ${mid} H ${edge}` })
+        childTop += cs.height + GAP_STACK
       }
-    } else {
-      // ABAIXO_L — pai à esquerda, filhos indentados à direita, conector em cotovelo
-      // (sai do meio-direito do pai, desce/sobe e entra na borda esquerda do filho).
-      const spineX = x + nw + 10
-      const parentMidY = y + nodeHeight / 2
-      let childY = y + nodeHeight + GAP_Y
+    } else if (isHorizontal(layout)) {
+      // Pai à esquerda: sai do meio-direito dele até a linha vertical, que liga os filhos.
+      const spineX = x + nw + GAP_X / 2
+      const pMid = y + H / 2
+      const tops = stackTops(ch.map(c => sizes[c.id].height))
 
-      for (const child of ch) {
-        const childX = x + nw + GAP_X + sizes[child.id].rootX
-        stack.push({ id: child.id, x: childX, y: childY })
-        connectors.push({
-          fromId: id,
-          toId: child.id,
-          path: `M ${x + nw} ${parentMidY} H ${spineX} V ${childY + NODE_H / 2} H ${childX}`,
-        })
-        childY += (sizes[child.id]?.height ?? nodeHeight) + GAP_Y
-      }
+      ch.forEach((c, k) => {
+        const cs = sizes[c.id]
+        const cLeft = x + nw + GAP_X
+        // A coluna de filhos começa no topo da subárvore; o pai é que desce (rootY).
+        const cTop = top + tops[k]
+        stack.push({ id: c.id, left: cLeft, top: cTop })
+        const mid = cTop + cs.rootY + H / 2
+        connectors.push({ fromId: id, toId: c.id, path: `M ${x + nw} ${pMid} H ${spineX} V ${mid} H ${cLeft + cs.rootX}` })
+      })
     }
   }
 

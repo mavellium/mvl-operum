@@ -459,16 +459,6 @@ function WbsCanvasInner({ projetoId, canEdit, initialView = 'chart', canViewCost
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
 
-  // ── Cards legados (criados antes da correção) nasciam em ABAIXO; o card
-  // raiz deve abrir sempre com os filhos lado a lado ─────────────────────────
-  useEffect(() => {
-    const root = state.rootId ? state.nodes[state.rootId] : null
-    if (root && root.layout === 'ABAIXO') {
-      dispatch({ type: 'SET_LAYOUT', payload: { nodeId: root.id, layout: 'LADO_A_LADO' } })
-    }
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [])
-
   // ── Node selection (multi-select via Ctrl/Cmd+click) ──────────────────────
   const handleNodeSelect = useCallback((nodeId: string, multi: boolean) => {
     const s = stateRef.current

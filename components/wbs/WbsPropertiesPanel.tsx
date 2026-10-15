@@ -1,5 +1,7 @@
 'use client'
 
+import { OPCOES_ORGANIZAR } from './OrganizarIcons'
+
 import { useEffect, useRef, useState, type Dispatch } from 'react'
 import { X } from 'lucide-react'
 import type { WbsNodeClient, WbsNodeStyle, WbsLayoutOrientation } from '@/types/wbs'
@@ -286,9 +288,7 @@ export default function WbsPropertiesPanel({ selectedNodeIds, nodes, canEdit, di
               className="text-[11px] border border-gray-200 rounded px-1.5 py-1 text-gray-800 focus:outline-none focus:ring-1 focus:ring-blue-400 disabled:bg-gray-50 disabled:text-gray-400 cursor-pointer"
             >
               {!layoutC.same && <option value="">—</option>}
-              <option value="LADO_A_LADO">Lado a lado</option>
-              <option value="ABAIXO">Abaixo</option>
-              <option value="ABAIXO_L">Abaixo com L</option>
+              {OPCOES_ORGANIZAR.map(o => <option key={o.value} value={o.value}>{o.label}</option>)}
             </select>
           </FieldRow>
 
