@@ -10,7 +10,7 @@ funcionalidade depois disso é uma versão MINOR.
 ## [1.24.0] — 2026-10-15
 
 ### Adicionado
-- **Anexos:** arquivos `.svg` podem ser anexados aos cards (também pelo MCP), com miniatura e lightbox. Por segurança, só é aceito SVG sem conteúdo ativo: script, atributos `on*`, `javascript:`, `foreignObject`, links e recursos externos e DOCTYPE/ENTITY são recusados com uma mensagem clara. O SVG é gravado para baixar quando aberto direto, e a pré-visualização é servida com CSP `sandbox` (ADR-042).
+- **Anexos:** arquivos `.svg` podem ser anexados aos cards (também pelo MCP), com miniatura e lightbox. Por segurança, só é aceito SVG sem conteúdo ativo: script, atributos de evento (como `onload`), `javascript:`, `foreignObject`, links e recursos externos e DOCTYPE/ENTITY são recusados com uma mensagem clara. O SVG é gravado para baixar quando aberto direto, e a pré-visualização é servida com CSP `sandbox` (ADR-042).
 
 ## [1.22.1] — 2026-10-15
 
