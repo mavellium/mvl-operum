@@ -1,5 +1,6 @@
 'use client'
 
+import { useState } from 'react'
 import { useProjectPermissions } from '@/components/permissoes/ProjectPermissions'
 
 import { Draggable, Droppable } from '@hello-pangea/dnd'
@@ -7,6 +8,8 @@ import { Column as ColumnType, Card as CardType, CardColor } from '@/types/kanba
 import ColumnHeader from './ColumnHeader'
 import CardComponent from '@/components/card/Card'
 import { isColunaConcluida } from '@/lib/cardUtils'
+import { buscarCards } from '@/lib/cardFilters'
+import { ColumnSearchInput } from './ColumnSearch'
 
 interface User { id: string; name: string; email: string }
 interface Tag { id: string; name: string; color: string }
@@ -40,6 +43,14 @@ export default function Column({
 
   const permissions = useProjectPermissions()
   const concluida = !isBacklog && isColunaConcluida(column.title)
+  const [searchOpen, setSearchOpen] = useState(false)
+  const [search, setSearch] = useState('')
+  const searching = search.trim() !== ''
+  const shownCards = searching ? buscarCards(cards, search) : cards
+  // Com a busca, os índices exibidos não batem com os reais: a coluna não
+  // arrasta nem recebe cards até a busca ser limpa.
+  const cardDragDisabled = dragDisabled || searching
+  function closeSearch() { setSearch(''); setSearchOpen(false) }
 
   const columnBg = isBacklog
     ? 'bg-slate-700/80 border-slate-500/30 backdrop-blur-md'
@@ -70,14 +81,27 @@ export default function Column({
             ) : (
               <ColumnHeader
                 title={column.title}
-                cardCount={cards.length}
+                cardCount={searching ? `${shownCards.length}/${cards.length}` : cards.length}
+                searchOpen={searchOpen}
+                onToggleSearch={() => (searchOpen ? closeSearch() : setSearchOpen(true))}
                 onRename={permissions.has('quadro:sprints') && onRenameColumn ? (title) => onRenameColumn(column.id, title) : undefined}
                 onDelete={permissions.has('quadro:sprints') && onDeleteColumn ? () => onDeleteColumn(column.id) : undefined}
               />
             )}
           </div>
 
-          <Droppable droppableId={column.id} type="CARD">
+          {searchOpen && !isBacklog && (
+            <ColumnSearchInput
+              columnTitle={column.title}
+              value={search}
+              onChange={setSearch}
+              onClose={closeSearch}
+              shown={shownCards.length}
+              total={cards.length}
+            />
+          )}
+
+          <Droppable droppableId={column.id} type="CARD" isDropDisabled={searching}>
             {(dropProvided, dropSnapshot) => (
               <div
                 ref={dropProvided.innerRef}
@@ -92,13 +116,18 @@ export default function Column({
                     ? isBacklog ? 'bg-slate-500/20' : 'bg-blue-50/50'
                     : ''}`}
               >
-                {cards.length === 0 && !dropSnapshot.isDraggingOver && (
+                {searching && shownCards.length === 0 && (
+                  <div className="flex items-center justify-center h-16 rounded-xl text-xs mx-2 mt-2 shrink-0 text-gray-400">
+                    Nenhum card corresponde à busca
+                  </div>
+                )}
+                {!searching && cards.length === 0 && !dropSnapshot.isDraggingOver && (
                   <div className={`flex items-center justify-center h-16 border-2 border-dashed rounded-xl text-xs mx-2 mt-2 shrink-0
                     ${isBacklog ? 'border-slate-500/30 text-slate-400' : 'border-gray-300 text-gray-400'}`}>
                     {isBacklog ? 'Sem tasks no backlog' : 'Arraste cards aqui'}
                   </div>
                 )}
-                {cards.map((card, i) => (
+                {shownCards.map((card, i) => (
                   <div key={card.id} className="shrink-0">
                     <CardComponent
                       card={card}
@@ -111,7 +140,7 @@ export default function Column({
                       onClick={() => onCardClick(card.id)}
                       onTimerStarted={onTimerStarted}
                       concluido={concluida}
-                      dragDisabled={dragDisabled}
+                      dragDisabled={cardDragDisabled}
                     />
                   </div>
                 ))}

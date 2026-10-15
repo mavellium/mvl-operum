@@ -31,7 +31,8 @@ import { createCommentAction, getCommentsAction, updateCommentAction, deleteComm
 import { deleteAttachmentAction, setCoverAction, renameAttachmentAction } from '@/app/actions/attachments'
 import { addResponsibleAction, removeResponsibleAction } from '@/app/actions/cardResponsible'
 import { fetchWithSession } from '@/lib/clientFetch'
-import { aplicarFiltros, filtrosAtivos, FILTROS_PADRAO, type CardFilters } from '@/lib/cardFilters'
+import { aplicarFiltros, buscarCards, filtrosAtivos, FILTROS_PADRAO, type CardFilters } from '@/lib/cardFilters'
+import { ColumnSearchButton, ColumnSearchInput } from '@/components/board/ColumnSearch'
 import { isColunaConcluida } from '@/lib/cardUtils'
 import { useClientNow } from '@/hooks/useClientNow'
 
@@ -176,6 +177,12 @@ export default function SprintBoard({ sprint, columns: initialColumns, backlogCa
   const visibleCards = (cards: SprintCard[], concluida: boolean) =>
     filtering && now ? aplicarFiltros(cards, filters, { now, userId: currentUser?.id, concluida }) : cards
   const [addingBacklogCard, setAddingBacklogCard] = useState(false)
+  const [backlogSearchOpen, setBacklogSearchOpen] = useState(false)
+  const [backlogSearch, setBacklogSearch] = useState('')
+  const backlogSearching = backlogSearch.trim() !== ''
+  const backlogVisible = visibleCards(backlogCards, false)
+  const backlogShown = backlogSearching ? buscarCards(backlogVisible, backlogSearch) : backlogVisible
+  function closeBacklogSearch() { setBacklogSearch(''); setBacklogSearchOpen(false) }
   const [pendingMove, setPendingMove] = useState<{
     cardId: string
     srcColumnId: string
@@ -462,13 +469,29 @@ export default function SprintBoard({ sprint, columns: initialColumns, backlogCa
                   <div className="flex items-center gap-2.5">
                     <span className="font-bold text-gray-800 text-sm tracking-tight">Backlog</span>
                     <span className="bg-gray-200/50 text-gray-600 text-[10px] font-bold rounded-md px-1.5 py-0.5 min-w-[20px] text-center border border-black/5">
-                      {backlogCards.length}
+                      {backlogSearching ? `${backlogShown.length}/${backlogVisible.length}` : backlogCards.length}
                     </span>
                   </div>
+                  <ColumnSearchButton
+                    columnTitle="Backlog"
+                    open={backlogSearchOpen}
+                    onToggle={() => (backlogSearchOpen ? closeBacklogSearch() : setBacklogSearchOpen(true))}
+                  />
                 </div>
 
+                {backlogSearchOpen && (
+                  <ColumnSearchInput
+                    columnTitle="Backlog"
+                    value={backlogSearch}
+                    onChange={setBacklogSearch}
+                    onClose={closeBacklogSearch}
+                    shown={backlogShown.length}
+                    total={backlogVisible.length}
+                  />
+                )}
+
                 {/* Cards */}
-                <Droppable droppableId="BACKLOG" type="CARD">
+                <Droppable droppableId="BACKLOG" type="CARD" isDropDisabled={backlogSearching}>
                   {(provided, snapshot) => (
                     <div
                       ref={provided.innerRef}
@@ -477,12 +500,17 @@ export default function SprintBoard({ sprint, columns: initialColumns, backlogCa
                         [&::-webkit-scrollbar]:w-1.5 [&::-webkit-scrollbar-thumb]:bg-black/10 [&::-webkit-scrollbar-thumb]:rounded-full hover:[&::-webkit-scrollbar-thumb]:bg-black/20
                         ${snapshot.isDraggingOver ? 'bg-blue-50/50' : ''}`}
                     >
-                      {backlogCards.length === 0 && !snapshot.isDraggingOver && (
+                      {backlogSearching && backlogShown.length === 0 && (
+                        <div className="flex items-center justify-center h-16 rounded-xl text-xs text-gray-400 mx-2 mt-2 shrink-0">
+                          Nenhum card corresponde à busca
+                        </div>
+                      )}
+                      {!backlogSearching && backlogCards.length === 0 && !snapshot.isDraggingOver && (
                         <div className="flex items-center justify-center h-16 border-2 border-dashed border-gray-300 rounded-xl text-xs text-gray-400 mx-2 mt-2 shrink-0">
                           Arraste cards aqui
                         </div>
                       )}
-                      {visibleCards(backlogCards, false).map((card, index) => (
+                      {backlogShown.map((card, index) => (
                         <div key={card.id} className="shrink-0">
                           <CardComponent
                             card={toCardType(card, sprint.id)}
@@ -494,7 +522,7 @@ export default function SprintBoard({ sprint, columns: initialColumns, backlogCa
                             boardTags={tags}
                             onClick={() => setOpenCardId(card.id)}
                             onTimerStarted={handleCardTimerStarted}
-                            dragDisabled={filtering}
+                            dragDisabled={filtering || backlogSearching}
                           />
                         </div>
                       ))}

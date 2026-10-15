@@ -3,15 +3,19 @@
 import { useState } from 'react'
 import InlineEdit from '@/components/ui/InlineEdit'
 import ConfirmDialog from '@/components/ui/ConfirmDialog'
+import { ColumnSearchButton } from './ColumnSearch'
 
 interface ColumnHeaderProps {
   title: string
-  cardCount: number
+  /** Número exibido no selo; durante a busca, "encontrados/total". */
+  cardCount: number | string
   onRename?: (title: string) => void
   onDelete?: () => void
+  searchOpen?: boolean
+  onToggleSearch?: () => void
 }
 
-export default function ColumnHeader({ title, cardCount, onRename, onDelete }: ColumnHeaderProps) {
+export default function ColumnHeader({ title, cardCount, onRename, onDelete, searchOpen = false, onToggleSearch }: ColumnHeaderProps) {
   const [confirmOpen, setConfirmOpen] = useState(false)
 
   return (
@@ -35,7 +39,11 @@ export default function ColumnHeader({ title, cardCount, onRename, onDelete }: C
           </span>
         </div>
 
-        {/* Lado Direito: Botão Lixeira (apenas quando onDelete disponível) */}
+        {/* Lado Direito: Busca e Lixeira (apenas quando onDelete disponível) */}
+        <div className="flex items-center gap-0.5 shrink-0">
+        {onToggleSearch && (
+          <ColumnSearchButton columnTitle={title} open={searchOpen} onToggle={onToggleSearch} />
+        )}
         {onDelete && (
           <button
             onClick={e => { e.stopPropagation(); setConfirmOpen(true) }}
@@ -47,6 +55,7 @@ export default function ColumnHeader({ title, cardCount, onRename, onDelete }: C
             </svg>
           </button>
         )}
+        </div>
 
       </div>
 
