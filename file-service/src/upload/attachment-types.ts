@@ -9,6 +9,8 @@ export const ATTACHMENT_EXT_BY_MIME: Record<string, string> = {
   'image/jpeg': '.jpg',
   'image/webp': '.webp',
   'image/gif': '.gif',
+  // SVG só sem conteúdo ativo (svg-safety.ts) e gravado como download.
+  'image/svg+xml': '.svg',
   // Vídeos
   'video/mp4': '.mp4',
   'video/webm': '.webm',

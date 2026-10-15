@@ -3,7 +3,17 @@ import { filesApi } from '@/lib/api-client'
 import { isSafeStorageUrl } from '@/lib/storageUrl'
 
 const CUID_RE = /^c[a-z0-9]{20,30}$/
-const ALLOWED_TYPES = new Set(['image/jpeg', 'image/png', 'image/webp', 'image/gif'])
+const ALLOWED_TYPES = new Set(['image/jpeg', 'image/png', 'image/webp', 'image/gif', 'image/svg+xml'])
+
+/**
+ * SVG sai pela origem do app: com CSP sandbox e default-src 'none', nada nele
+ * executa nem carrega, mesmo se alguém abrir esta URL direto (ADR-042). O
+ * file-service já recusa SVG com conteúdo ativo; esta é a segunda barreira.
+ */
+const SVG_HEADERS = {
+  'Content-Security-Policy': "default-src 'none'; style-src 'unsafe-inline'; sandbox",
+  'X-Content-Type-Options': 'nosniff',
+}
 
 export async function GET(
   request: Request,
@@ -52,6 +62,7 @@ export async function GET(
     headers: {
       'Content-Type': contentType,
       'Cache-Control': 'private, max-age=3600',
+      ...(contentType === 'image/svg+xml' ? SVG_HEADERS : { 'X-Content-Type-Options': 'nosniff' }),
     },
   })
 }

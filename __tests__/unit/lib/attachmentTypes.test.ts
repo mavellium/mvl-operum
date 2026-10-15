@@ -61,13 +61,14 @@ describe('tipoDoAnexo', () => {
     ['apresentacao.pptx', '', 'application/vnd.openxmlformats-officedocument.presentationml.presentation'],
     // sem extensão: vale o tipo informado, se for aceito
     ['imagem', 'image/png', 'image/png'],
+    // SVG: aceito aqui; o file-service recusa o que tiver conteúdo ativo
+    ['organizar-padrao.svg', '', 'image/svg+xml'],
   ])('%s (%s) → %s', (name, type, esperado) => {
     expect(tipoDoAnexo({ name, type })).toBe(esperado)
   })
 
   it.each([
     ['pagina.html', 'text/html'],
-    ['logo.svg', 'image/svg+xml'],
     ['setup.exe', 'application/x-msdownload'],
     ['sem-extensao', ''],
     ['estranho', 'constructor'],
@@ -88,15 +89,15 @@ describe('erroDoAnexo', () => {
 
   it('recusa tipo não aceito dizendo a extensão e o que é aceito', () => {
     const erro = erroDoAnexo({ name: 'setup.exe', type: 'application/x-msdownload', size: 10 })
-    expect(erro).toMatch(/^Tipo de arquivo não aceito \(\.exe\)\. Envie imagens, vídeos/)
+    expect(erro).toMatch(/^Tipo de arquivo não aceito \(\.exe\)\. Envie imagens \(PNG, JPG, WebP, GIF, SVG\), vídeos/)
   })
 })
 
 describe('ATTACHMENT_ACCEPT', () => {
-  it('inclui vídeos e documentos por MIME e por extensão, sem SVG nem HTML', () => {
+  it('inclui vídeos, documentos e SVG por MIME e por extensão, sem HTML', () => {
     const itens = ATTACHMENT_ACCEPT.split(',')
     expect(itens).toEqual(expect.arrayContaining(['video/mp4', '.mov', '.pdf', '.jpeg', '.csv']))
-    expect(itens).not.toContain('.svg')
+    expect(itens).toEqual(expect.arrayContaining(['image/svg+xml', '.svg']))
     expect(itens).not.toContain('.html')
   })
 })

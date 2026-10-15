@@ -502,6 +502,8 @@ Admin cria usuário com forcePasswordChange=true
 - Variável `SPRINT_SERVICE_URL`, com padrão `http://sprint-service:4003`.
 - `/files/avatar` e `/files/logo` foram removidas em 30/09: estavam expostas pelo gateway, sem uso e sem conferência de dono. Avatar e logo são gravados pelo app direto no MinIO (`uploadAvatarAction`).
 
+**SVG (1.24.0, ADR-042):** aceito como anexo (`image/svg+xml`) em três barreiras. (1) O file-service recusa no upload SVG com conteúdo ativo (`src/upload/svg-safety.ts`: DOCTYPE/ENTITY, `script`, `foreignObject`, `iframe`/`embed`/`object`/`a`/`image`/`use`/`animate`/`set`, atributos `on*`, `href`, `javascript:`, `@import` e `url()` externo, também escondidos por entidades numéricas). (2) O objeto é gravado no MinIO com `Content-Disposition: attachment`: aberto pela URL do storage, baixa em vez de renderizar. (3) A pré-visualização do app (`/api/files/:id/image`, mesma origem) serve SVG com `Content-Security-Policy: default-src 'none'; style-src 'unsafe-inline'; sandbox` e `nosniff`. Miniatura, capa e lightbox usam `<img>`, onde SVG não executa script. HTML continua recusado.
+
 **URL assinada (SDD 4.2):** um segundo `S3Client`, que só assina e não faz chamada de rede, usa `MINIO_PUBLIC_URL`. A assinatura SigV4 inclui o host, então a URL assinada com o endpoint interno (`minio:9000`) não abria no navegador.
 
 ### mcp-server (`/mcp`)

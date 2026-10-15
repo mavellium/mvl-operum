@@ -436,6 +436,18 @@ Ao substituir uma decisão, manter o texto histórico, alterar seu status e liga
 - **Condições de revisão:** múltiplas réplicas exigem reserva Redis atômica; rate limit por IP real exige proxy explicitamente confiável; importações concorrentes podem exigir lock por projeto.
 - **Referências:** `mcp-server/src/uploadLink.ts`, `uploadRoute.ts`, `migration/importer.ts`, `mcp-server/README.md`, SDD 8.1/8.3.
 
+## ADR-042 — SVG como anexo, só sem conteúdo ativo e sem execução
+
+- **Data:** 2026-10-15
+- **Status:** implementada; substitui a exclusão de SVG da lista de anexos (registrada só no comentário de `lib/attachmentTypes.ts`: "SVG e HTML ficam de fora de propósito: executariam script ao abrir o link"; sem ADR própria).
+- **Contexto:** o usuário precisou anexar ícones `.svg` (menu Organizar da EAP) e o anexo recusava. SVG é XML que o navegador executa: script, handlers, links e recursos externos.
+- **Escolha:** aceitar `image/svg+xml` com três barreiras: recusa no upload de qualquer conteúdo ativo (regra de recusa, não de limpeza), objeto gravado com `Content-Disposition: attachment` e pré-visualização da origem do app com CSP `sandbox` + `default-src 'none'` e `nosniff`.
+- **Justificativa:** ícones e desenhos comuns não usam nada do que é recusado; recusar é determinístico e não depende de um sanitizador manter a lista em dia. As barreiras de entrega cobrem um eventual SVG que passe pela validação, inclusive arquivos antigos gravados por outros caminhos.
+- **Alternativas consideradas:** sanitizar com DOMPurify no file-service (mais SVGs aceitos, mas nova dependência e o arquivo gravado deixa de ser o enviado); converter para PNG no upload (perde o vetor); continuar recusando (o usuário pediu).
+- **Consequências:** SVG com `<a>`, `<use>`, `<image>`, animação ou links é recusado com mensagem pedindo um SVG simples ou PNG. Abrir o SVG pela URL do storage baixa o arquivo; a visualização fica no lightbox.
+- **Condições de revisão:** pedido de SVG com `use`/gradientes externos ou animações, ou migração do storage para um domínio que aceite cabeçalhos de CSP por objeto.
+- **Referências:** `file-service/src/upload/svg-safety.ts`, `file-service/src/upload/upload.service.ts`, `file-service/src/minio/minio.service.ts`, `app/api/files/[attachmentId]/image/route.ts`, `lib/attachmentTypes.ts`, `mcp-server/src/attachmentTypes.ts`.
+
 ## ADR-040 — Funções e departamentos sem associação por projeto
 
 - **Data:** 2026-10-14

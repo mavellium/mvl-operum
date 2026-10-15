@@ -11,6 +11,7 @@ import { v4 as uuidv4 } from 'uuid'
 import { MinioService } from '../minio/minio.service'
 import { CardScope } from './card-scope'
 import { ATTACHMENT_EXT_BY_MIME, LINK_ATTACHMENT_TYPE, MAX_LINK_URL_LENGTH } from './attachment-types'
+import { SVG_MIME, assertSvgSeguro } from './svg-safety'
 
 const MAX_FILENAME_LENGTH = 255
 // Reject path separators and null bytes to prevent traversal / injection
@@ -106,6 +107,7 @@ export class UploadService {
       throw new BadRequestException(`Tipo de arquivo não permitido: ${file.mimetype}`)
     }
     validateFileName(file.originalname)
+    if (file.mimetype === SVG_MIME) assertSvgSeguro(file.buffer)
     // Antes do MinIO: arquivo para card de outro tenant nem chega a ser gravado.
     await this.scope.assert(tenantId, cardId)
 
@@ -114,7 +116,10 @@ export class UploadService {
 
     let fileUrl: string
     try {
-      fileUrl = await this.minio.upload(key, file.buffer, file.mimetype)
+      // SVG aberto direto pela URL baixa em vez de renderizar (script não roda);
+      // a pré-visualização usa <img>, onde ele aparece normalmente.
+      fileUrl = await this.minio.upload(key, file.buffer, file.mimetype,
+        file.mimetype === SVG_MIME ? `attachment; filename="${key.split('/').pop()}"` : undefined)
     } catch (error) {
       this.logger.error(
         `upload: falha no armazenamento — key=${key} cardId=${cardId} mimetype=${file.mimetype} originalname=${file.originalname}`,

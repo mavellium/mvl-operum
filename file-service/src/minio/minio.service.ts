@@ -43,13 +43,14 @@ export class MinioService {
     })
   }
 
-  async upload(key: string, buffer: Buffer, contentType: string): Promise<string> {
+  async upload(key: string, buffer: Buffer, contentType: string, contentDisposition?: string): Promise<string> {
     await this.s3.send(
       new PutObjectCommand({
         Bucket: this.bucket,
         Key: key,
         Body: buffer,
         ContentType: contentType,
+        ...(contentDisposition ? { ContentDisposition: contentDisposition } : {}),
       }),
     )
     return `${this.publicUrl}/${this.bucket}/${key}`

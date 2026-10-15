@@ -10,6 +10,7 @@ export const ATTACHMENT_EXT_BY_MIME: Record<string, string> = {
   'image/jpeg': '.jpg',
   'image/webp': '.webp',
   'image/gif': '.gif',
+  'image/svg+xml': '.svg',
   // Vídeos
   'video/mp4': '.mp4',
   'video/webm': '.webm',
@@ -44,7 +45,7 @@ export const LINK_ATTACHMENT_TYPE = 'text/uri-list'
 export const MAX_LINK_URL_LENGTH = 2048
 
 export const ACCEPTED_TYPES_LABEL =
-  'imagens (PNG, JPG, WebP, GIF), vídeos (MP4, WebM, MOV), PDF, Word, Excel, PowerPoint, OpenDocument, TXT, CSV e ZIP'
+  'imagens (PNG, JPG, WebP, GIF, SVG sem script), vídeos (MP4, WebM, MOV), PDF, Word, Excel, PowerPoint, OpenDocument, TXT, CSV e ZIP'
 
 const MIME_BY_EXT: Record<string, string> = { '.jpeg': 'image/jpeg' }
 for (const [mime, ext] of Object.entries(ATTACHMENT_EXT_BY_MIME)) {
