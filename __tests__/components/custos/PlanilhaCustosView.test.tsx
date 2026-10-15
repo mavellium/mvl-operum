@@ -29,6 +29,7 @@ const planilha: PlanilhaDeCustos = {
       atividades: [
         {
           nodeId: 'a1', codigo: 'A1', titulo: 'Atividade 1',
+          descricao: 'Levantar os requisitos\ncom o cliente',
           elaboradoPor: 'Maria', elaboradoPorUserId: 'u1',
           vpm: 1, jornadaDiaria: 8,
           minOrcado: 90, materiaisOrcado: 0, dataPrevista: null,
@@ -304,5 +305,31 @@ describe('PlanilhaCustosView — permissões do realizado', () => {
       expect(screen.getByText('Sem permissão para editar')).toBeInTheDocument()
       expect(updateNodePropertiesAction).toHaveBeenCalledWith('p1', 'a1', { tempoRealMinutos: 150 })
     } finally { vi.useRealTimers() }
+  })
+})
+
+describe('descrição da tarefa ao passar o mouse', () => {
+  it('mostra a descrição completa no hover e no foco pelo teclado', () => {
+    renderizar()
+    const tarefa = screen.getByText('A1 Atividade 1')
+    expect(screen.queryByRole('tooltip')).toBeNull()
+    fireEvent.mouseEnter(tarefa.parentElement!)
+    const dica = screen.getByRole('tooltip')
+    expect(dica.textContent).toBe('Levantar os requisitos\ncom o cliente')
+    expect(dica.className).toContain('whitespace-pre-line')
+    fireEvent.mouseLeave(tarefa.parentElement!)
+    expect(screen.queryByRole('tooltip')).toBeNull()
+    expect(tarefa).toHaveAttribute('tabindex', '0')
+  })
+
+  it('tarefa sem descrição não ganha dica nem foco extra', () => {
+    const semDescricao: PlanilhaDeCustos = {
+      ...planilha,
+      macrofases: planilha.macrofases.map(f => ({ ...f, atividades: f.atividades.map(a => ({ ...a, descricao: '' })) })),
+    }
+    render(<ToastProvider><PlanilhaCustosView {...props} planilha={semDescricao} /></ToastProvider>)
+    const tarefa = screen.getByText('A1 Atividade 1')
+    expect(tarefa.tagName).toBe('TD')
+    expect(screen.queryByRole('tooltip')).toBeNull()
   })
 })

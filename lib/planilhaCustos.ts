@@ -23,6 +23,8 @@ export interface LinhaAtividade {
   nodeId: string
   codigo: string
   titulo: string
+  /** Descrição da tarefa (do card ligado, quando houver; senão a do nó da EAP). Vazia sem descrição. */
+  descricao: string
   elaboradoPor: string
   elaboradoPorUserId: string | null
   /** valor por minuto do elaborador da linha; null quando sem elaborador, sem salário ou sem jornada */
@@ -204,6 +206,7 @@ export function computarPlanilhaCustos(
           nodeId: n.id,
           codigo: n.code,
           titulo: n.title,
+          descricao: (p.description ?? '').trim(),
           elaboradoPor: p.elaboradoPor ?? '',
           elaboradoPorUserId: p.elaboradoPorUserId ?? null,
           vpm,
@@ -271,4 +274,30 @@ export function computarPlanilhaCustos(
       elaboradores: quadroElaboradores,
     },
   }
+}
+/**
+ * A descrição só converge na criação (EAP ↔ sprint, ADR-033): depois, quem a edita
+ * é o card. Para linhas ligadas a um card, vale a descrição atual dele.
+ */
+export function aplicarDescricoesDosCards(
+  planilha: PlanilhaDeCustos,
+  nodes: Record<string, WbsNodeClient>,
+  descricaoPorCard: ReadonlyMap<string, string>,
+): PlanilhaDeCustos {
+  return {
+    ...planilha,
+    macrofases: planilha.macrofases.map(f => ({
+      ...f,
+      atividades: f.atividades.map(a => {
+        const cardId = nodes[a.nodeId]?.properties.cardId
+        return cardId && descricaoPorCard.has(cardId) ? { ...a, descricao: descricaoPorCard.get(cardId)!.trim() } : a
+      }),
+    })),
+  }
+}
+
+/** Ids dos cards ligados às atividades da planilha. */
+export function cardsDasAtividades(planilha: PlanilhaDeCustos, nodes: Record<string, WbsNodeClient>): string[] {
+  const ids = planilha.macrofases.flatMap(f => f.atividades.map(a => nodes[a.nodeId]?.properties.cardId))
+  return [...new Set(ids.filter((id): id is string => typeof id === 'string' && id.length > 0))]
 }
