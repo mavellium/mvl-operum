@@ -45,6 +45,29 @@ describe('upload e link: card de outro tenant não recebe anexo', () => {
     expect(db.attachment.create).toHaveBeenCalledWith({ data: expect.objectContaining({ cardId: 'c1' }) })
   })
 
+  it('SVG simples é gravado como download (Content-Disposition: attachment)', async () => {
+    db.attachment.create.mockResolvedValue({ id: 'a1' })
+    const svg = { mimetype: 'image/svg+xml', originalname: 'organizar-padrao.svg', size: 60, buffer: Buffer.from('<svg xmlns="http://www.w3.org/2000/svg"><rect width="1" height="1"/></svg>') } as Express.Multer.File
+    await service.upload(svg, 'c1', 'u1', 't1')
+    const [key, , tipo, disposicao] = minio.upload.mock.calls[0] as unknown as [string, Buffer, string, string]
+    expect(key).toMatch(/\.svg$/)
+    expect(tipo).toBe('image/svg+xml')
+    expect(disposicao).toMatch(/^attachment; filename="[^"]+\.svg"$/)
+  })
+
+  it('SVG com script é recusado (400) antes de tocar no MinIO', async () => {
+    const svg = { mimetype: 'image/svg+xml', originalname: 'x.svg', size: 40, buffer: Buffer.from('<svg><script>alert(1)</script></svg>') } as Express.Multer.File
+    await expect(service.upload(svg, 'c1', 'u1', 't1')).rejects.toThrow('SVG recusado')
+    expect(minio.upload).not.toHaveBeenCalled()
+  })
+
+  it('PNG continua sem Content-Disposition', async () => {
+    db.attachment.create.mockResolvedValue({ id: 'a1' })
+    await service.upload(png, 'c1', 'u1', 't1')
+    expect(minio.upload.mock.calls[0]).toHaveLength(4)
+    expect((minio.upload.mock.calls[0] as unknown[])[3]).toBeUndefined()
+  })
+
   it('upload para card de outro tenant: 404 antes de tocar no MinIO', async () => {
     await expect(service.upload(png, 'c-outro', 'u1', 't1')).rejects.toThrow(NotFoundException)
     expect(minio.upload).not.toHaveBeenCalled()

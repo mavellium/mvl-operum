@@ -7,6 +7,10 @@ As versões até 1.6.0 foram reconstruídas retroativamente a partir do históri
 1.0.0 marca a entrada em produção na arquitetura de microsserviços, e cada marco de
 funcionalidade depois disso é uma versão MINOR.
 
+## [1.24.0] — 2026-10-15
+
+### Adicionado
+- **Anexos:** arquivos `.svg` podem ser anexados aos cards (também pelo MCP), com miniatura e lightbox. Por segurança, só é aceito SVG sem conteúdo ativo: script, atributos de evento (como `onload`), `javascript:`, `foreignObject`, links e recursos externos e DOCTYPE/ENTITY são recusados com uma mensagem clara. O SVG é gravado para baixar quando aberto direto, e a pré-visualização é servida com CSP `sandbox` (ADR-042).
 ## [1.23.0] — 2026-10-15
 
 ### Adicionado
