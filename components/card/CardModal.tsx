@@ -89,7 +89,7 @@ function formatDate(dateStr: string) {
 }
 
 /** Tipos que a rota /api/files/:id/image serve (e o lightbox mostra). */
-const PREVIEW_TYPES = new Set(['image/png', 'image/jpeg', 'image/webp', 'image/gif'])
+const PREVIEW_TYPES = new Set(['image/png', 'image/jpeg', 'image/webp', 'image/gif', 'image/svg+xml'])
 
 /** Link para abrir o arquivo: a rota confere a sessão e redireciona para a URL assinada (SDD 4.2). */
 function downloadHref(attachmentId: string, cardId: string): string {

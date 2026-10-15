@@ -4,7 +4,7 @@ import { useRef } from 'react'
 import { Attachment } from '@/types/kanban'
 import { ATTACHMENT_ACCEPT } from '@/lib/attachmentTypes'
 
-const IMAGE_TYPES = ['image/png', 'image/jpeg', 'image/webp', 'image/gif']
+const IMAGE_TYPES = ['image/png', 'image/jpeg', 'image/webp', 'image/gif', 'image/svg+xml']
 
 interface CardAttachmentsProps {
   attachments: Attachment[]

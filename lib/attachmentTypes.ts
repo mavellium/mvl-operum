@@ -2,7 +2,9 @@
  * Tipos aceitos como anexo de card: MIME → extensão gravada no MinIO.
  * O file-service tem a mesma tabela em `file-service/src/upload/attachment-types.ts`
  * (o teste de paridade em __tests__/unit/lib/attachmentTypes.test.ts garante).
- * SVG e HTML ficam de fora de propósito: executariam script ao abrir o link.
+ * HTML fica de fora. SVG entra só sem conteúdo ativo: o file-service recusa script,
+ * handlers e links (svg-safety.ts) e grava como download; a pré-visualização
+ * (/api/files/:id/image) serve com CSP sandbox (ADR-042).
  */
 export const ATTACHMENT_EXT_BY_MIME: Record<string, string> = {
   // Imagens
@@ -10,6 +12,7 @@ export const ATTACHMENT_EXT_BY_MIME: Record<string, string> = {
   'image/jpeg': '.jpg',
   'image/webp': '.webp',
   'image/gif': '.gif',
+  'image/svg+xml': '.svg',
   // Vídeos
   'video/mp4': '.mp4',
   'video/webm': '.webm',
@@ -36,7 +39,7 @@ export const MAX_ATTACHMENT_MB = 50
 export const MAX_ATTACHMENT_BYTES = MAX_ATTACHMENT_MB * 1024 * 1024
 
 export const ATTACHMENT_TYPES_LABEL =
-  'imagens, vídeos (MP4, WebM, MOV), PDF, Word, Excel, PowerPoint, OpenDocument, TXT, CSV ou ZIP'
+  'imagens (PNG, JPG, WebP, GIF, SVG), vídeos (MP4, WebM, MOV), PDF, Word, Excel, PowerPoint, OpenDocument, TXT, CSV ou ZIP'
 
 /** Extensão → MIME. A primeira entrada de cada extensão vence (.zip → application/zip). */
 const MIME_BY_EXT: Record<string, string> = { '.jpeg': 'image/jpeg' }
