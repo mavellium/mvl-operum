@@ -12,6 +12,12 @@ funcionalidade depois disso é uma versão MINOR.
 ### Alterado
 - **Planilha de custos:** "Elaborado por" passa a aceitar várias pessoas e é o mesmo dado dos responsáveis do card da tarefa: mudar de um lado muda do outro. Na primeira sincronização de cada projeto, os dois lados são juntados (quem estava no Elaborado por entra como responsável do card, sem notificação); depois disso, o card manda. Só membros ativos do projeto podem ser escolhidos, e quem passa a ser elaborador pela planilha recebe o aviso "Nova tarefa atribuída".
 - **Custos com várias pessoas:** o custo da tarefa soma o valor por minuto de cada elaborador (todos trabalham o tempo inteiro), na planilha e em "Horas e custos" da EAP. A conversão de minutos em dias usa a menor jornada entre elas. O quadro de elaboradores conta a tarefa para cada um. Qualquer um dos elaboradores pode lançar o realizado próprio.
+
+## [1.26.1] — 2026-10-15
+
+### Corrigido
+- **Card:** ao abrir um card, título, descrição, prioridade, cor, etiquetas e datas levavam de 3 a 10 s para aparecer. O modal começava vazio e preenchia os campos dentro de uma transição do React, e o React 19 segura transições enquanto houver Server Action pendente; como o Next executa as Server Actions do cliente uma de cada vez, o card só era preenchido depois que tempo, movimentações e comentários carregavam. Agora o modal já nasce com os dados que o quadro tem, e só o histórico de tempo, as movimentações e os comentários chegam depois. Cada card aberto (e cada modal de criação) é montado do zero, então o formulário não herda o card anterior.
+
 ## [1.26.0] — 2026-10-15
 
 ### Adicionado
