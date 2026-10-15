@@ -7,6 +7,8 @@ const tx = vi.hoisted(() => ({
   $queryRaw: vi.fn(),
   wbsNode: { findFirst: vi.fn(), update: vi.fn() },
   auditLog: { create: vi.fn() },
+  userProject: { findMany: vi.fn() },
+  cardResponsible: { findMany: vi.fn(), deleteMany: vi.fn(), createMany: vi.fn() },
 }))
 vi.mock('@/lib/prisma', () => ({ default: { $transaction: (fn: (db: typeof tx) => unknown) => fn(tx) } }))
 import { updateNodeProperties } from '@/services/wbsService'
@@ -50,9 +52,50 @@ describe('Custos — permissões por campo e responsável persistido', () => {
     expect(tx.wbsNode.update).not.toHaveBeenCalled()
   })
   it('bloqueia a linha antes de conferir responsável; merge e auditoria usam a mesma transação', async () => {
-    expect(await updateNodeProperties(input, { userId: 'u1', permissoes: permissions('planilha:realizado-proprio') })).toEqual({ serverVersion: 2 })
+    expect(await updateNodeProperties(input, { userId: 'u1', permissoes: permissions('planilha:realizado-proprio') })).toEqual({ serverVersion: 2, responsaveisAdicionados: [], cardId: null })
     expect(tx.$queryRaw.mock.invocationCallOrder[0]).toBeLessThan(tx.wbsNode.findFirst.mock.invocationCallOrder[0])
     expect(tx.wbsNode.update).toHaveBeenCalledWith({ where: { id: 'n1' }, data: { properties: { elaboradoPorUserId: 'u1', tempoMinutos: 100, tempoRealMinutos: 30 } } })
     expect(tx.auditLog.create).toHaveBeenCalledWith({ data: { tenantId: 't1', userId: 'u1', action: 'PLANILHA_EDITAR', entity: 'WbsNode', entityId: 'n1', details: { projetoId: 'p1', campos: ['tempoRealMinutos'] } } })
+  })
+})
+
+describe('Elaborado por = responsáveis do card', () => {
+  const orcado = permissions('planilha:orcado')
+  const membros = (...ids: string[]) => ids.map(id => ({ userId: id, user: { name: id.toUpperCase() } }))
+
+  it('grava a lista com nomes do cadastro e acerta os responsáveis do card ligado', async () => {
+    tx.wbsNode.findFirst.mockReset()
+      .mockResolvedValueOnce({ id: 'n1', properties: { cardId: 'c1', elaboradoPorUserId: 'ana' } })
+      .mockResolvedValue({ id: 'root', version: 1 })
+    tx.userProject.findMany.mockResolvedValue(membros('ana', 'caio'))
+    tx.cardResponsible.findMany.mockResolvedValue([{ userId: 'ana' }, { userId: 'bia' }])
+    const r = await updateNodeProperties({ ...input, properties: { elaboradoPorUserIds: ['ana', 'caio'], elaboradoPor: 'nome do cliente' } }, { userId: 'g', permissoes: orcado })
+    expect(r).toMatchObject({ responsaveisAdicionados: ['caio'], cardId: 'c1' })
+    expect(tx.cardResponsible.deleteMany).toHaveBeenCalledWith({ where: { cardId: 'c1', userId: { in: ['bia'] } } })
+    expect(tx.cardResponsible.createMany).toHaveBeenCalledWith({ data: [{ cardId: 'c1', userId: 'caio' }], skipDuplicates: true })
+    expect(tx.wbsNode.update.mock.calls[0][0].data.properties).toMatchObject({
+      elaboradoPorUserIds: ['ana', 'caio'], elaboradoPorUserId: 'ana', elaboradoPor: 'ANA, CAIO', elaboradoSincronizado: true,
+    })
+  })
+
+  it('recusa quem não é membro ativo do projeto, sem gravar nada', async () => {
+    tx.wbsNode.findFirst.mockReset().mockResolvedValueOnce({ id: 'n1', properties: { cardId: 'c1' } })
+    tx.userProject.findMany.mockResolvedValue(membros('ana'))
+    await expect(updateNodeProperties({ ...input, properties: { elaboradoPorUserIds: ['ana', 'estranho'] } }, { userId: 'g', permissoes: orcado })).rejects.toThrow('membros ativos')
+    expect(tx.cardResponsible.createMany).not.toHaveBeenCalled()
+    expect(tx.wbsNode.update).not.toHaveBeenCalled()
+  })
+
+  it('nó sem card: só grava a lista no nó', async () => {
+    tx.wbsNode.findFirst.mockReset().mockResolvedValueOnce({ id: 'n1', properties: {} }).mockResolvedValue({ id: 'root', version: 1 })
+    tx.userProject.findMany.mockResolvedValue(membros('ana'))
+    const r = await updateNodeProperties({ ...input, properties: { elaboradoPorUserIds: ['ana'] } }, { userId: 'g', permissoes: orcado })
+    expect(r).toMatchObject({ responsaveisAdicionados: [], cardId: null })
+    expect(tx.cardResponsible.findMany).not.toHaveBeenCalled()
+  })
+
+  it('quem só edita o realizado não troca os elaboradores', async () => {
+    tx.wbsNode.findFirst.mockReset().mockResolvedValueOnce({ id: 'n1', properties: { elaboradoPorUserIds: ['u1'] } })
+    await expect(updateNodeProperties({ ...input, properties: { elaboradoPorUserIds: ['u1', 'u2'] } }, { userId: 'u1', permissoes: permissions('planilha:realizado-proprio') })).rejects.toThrow('Sem permissão')
   })
 })

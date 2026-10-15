@@ -1,6 +1,7 @@
 'use server'
 
 import type { WbsLayoutOrientation } from '@/types/wbs'
+import { notifyAssignedResponsible } from '@/services/responsavelNotificacao'
 
 import { propagarPlanilhaDeCustos } from '@/services/planilhaService'
 import { exigirPermissao, permissoesNoProjeto } from '@/services/authz'
@@ -202,7 +203,9 @@ export async function updateNodePropertiesAction(
     await exigirPermissao(sessao, projetoId, 'projeto:ver')
     await exigirPermissao(sessao, projetoId, 'planilha:ver')
     const permissoes = await permissoesNoProjeto(sessao.userId, tenantId, sessao.role, projetoId)
-    const result = await updateNodeProperties(parsed.data, { userId: sessao.userId, permissoes })
+    const { responsaveisAdicionados, cardId, ...result } = await updateNodeProperties(parsed.data, { userId: sessao.userId, permissoes })
+    // Quem entrou como elaborador virou responsável do card: recebe o mesmo aviso do card.
+    if (cardId) await Promise.all(responsaveisAdicionados.map(uid => notifyAssignedResponsible(cardId, uid)))
     // Data prevista / orçado mudaram: atualiza data fim da fase/sprint/projeto e custo da fase.
     await propagarPlanilhaDeCustos(projetoId, tenantId).catch(error => console.error('[planilha] falha ao propagar', error))
     revalidatePath(`/projetos/${projetoId}/planilha-custos`)

@@ -7,6 +7,11 @@ As versões até 1.6.0 foram reconstruídas retroativamente a partir do históri
 1.0.0 marca a entrada em produção na arquitetura de microsserviços, e cada marco de
 funcionalidade depois disso é uma versão MINOR.
 
+## [1.27.0] — 2026-10-15
+
+### Alterado
+- **Planilha de custos:** "Elaborado por" passa a aceitar várias pessoas e é o mesmo dado dos responsáveis do card da tarefa: mudar de um lado muda do outro. Na primeira sincronização de cada projeto, os dois lados são juntados (quem estava no Elaborado por entra como responsável do card, sem notificação); depois disso, o card manda. Só membros ativos do projeto podem ser escolhidos, e quem passa a ser elaborador pela planilha recebe o aviso "Nova tarefa atribuída".
+- **Custos com várias pessoas:** o custo da tarefa soma o valor por minuto de cada elaborador (todos trabalham o tempo inteiro), na planilha e em "Horas e custos" da EAP. A conversão de minutos em dias usa a menor jornada entre elas. O quadro de elaboradores conta a tarefa para cada um. Qualquer um dos elaboradores pode lançar o realizado próprio.
 ## [1.26.0] — 2026-10-15
 
 ### Adicionado

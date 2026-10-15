@@ -436,6 +436,18 @@ Ao substituir uma decisão, manter o texto histórico, alterar seu status e liga
 - **Condições de revisão:** múltiplas réplicas exigem reserva Redis atômica; rate limit por IP real exige proxy explicitamente confiável; importações concorrentes podem exigir lock por projeto.
 - **Referências:** `mcp-server/src/uploadLink.ts`, `uploadRoute.ts`, `migration/importer.ts`, `mcp-server/README.md`, SDD 8.1/8.3.
 
+## ADR-044 — Elaborado por da planilha são os responsáveis do card
+
+- **Data:** 2026-10-15
+- **Status:** implementada.
+- **Contexto:** o card "Elaborado por e responsáveis tem que estar conectados" apontou que uma tarefa podia ter responsável no card e nenhum Elaborado por na planilha, e que a planilha aceitava só uma pessoa. O usuário definiu em 15/10: os dois são o mesmo dado, com várias pessoas, sincronizado nos dois sentidos; na primeira vez, juntar o que existe dos dois lados; com várias pessoas, o custo da tarefa é a soma (todos trabalham o tempo inteiro).
+- **Escolha:** os responsáveis do card (`CardResponsible`) são a fonte; o nó da EAP espelha a lista em `elaboradoPorUserIds`, mantendo `elaboradoPorUserId` e `elaboradoPor` preenchidos. A planilha grava no card na mesma transação; o modal do card espelha no nó na hora; a sincronização EAP ↔ sprint junta os dois lados uma vez por nó (`elaboradoSincronizado`) e depois só espelha o card. Custo = tempo × soma dos valores por minuto; dias pela menor jornada.
+- **Justificativa:** uma fonte única evita que os dois lados divirjam; o card já tem notificação, filtros e regras (membro inativo, ADR-041), então a planilha passa a herdar isso. A marca de "já sincronizado" impede que alguém removido do card volte pelo valor antigo do nó.
+- **Alternativas consideradas:** planilha como fonte (o card perderia responsáveis definidos no quadro); sincronizar sempre por união (ninguém sairia do card); custo pela média ou dividindo o tempo (o usuário escolheu a soma); dias pela maior jornada (subestimaria a duração).
+- **Consequências:** na primeira sincronização de cada projeto após o deploy, quem estava no Elaborado por entra como responsável do card, **sem notificação** (carga em lote). O quadro de elaboradores pode somar mais de 100%. A escrita pela planilha toca `CardResponsible` direto pelo Prisma, como a sincronização EAP ↔ sprint já faz com `Card`, e não pelo sprint-service. Mudanças de responsáveis feitas pelo MCP/API só aparecem na planilha na próxima sincronização.
+- **Condições de revisão:** pedido de custo por fração de tempo de cada pessoa, ou de notificar quem entrou pela carga inicial.
+- **Referências:** `lib/elaboradores.ts`, `services/wbsService.ts` (`updateNodeProperties`, `refletirResponsaveisNoNo`, passo 5b de `sincronizarEapComSprint`), `lib/planilhaCustos.ts`, `lib/wbsRollup.ts`, `lib/permissoesCustos.ts`, `components/custos/ElaboradoresSelect.tsx`, `app/actions/cardResponsible.ts`.
+
 ## ADR-043 — Seis layouts do menu Organizar da EAP, sem "Abaixo"
 
 - **Data:** 2026-10-15
