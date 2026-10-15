@@ -13,6 +13,11 @@ funcionalidade depois disso é uma versão MINOR.
 - **EAP → Organizar:** o menu virou um select com os 6 ícones desenhados pelo Vinícius, e cada um desenha os filhos do item selecionado do jeito do ícone: Padrão (organograma), Direita e Esquerda (filhos empilhados ao lado da linha que desce do centro do pai), Horizontal, Horizontal (topo) e Horizontal (base) (pai à esquerda, no meio, no topo ou na base da coluna de filhos). O layout "Abaixo" foi removido, e quem usava "Abaixo" ou "Abaixo com L" passa a ver "Direita" (migration `20261015010000_wbs_layouts_organizar`; arquivos `.wbs` antigos também são convertidos ao importar).
 - **EAP → Visualização:** o seletor de modo usa o mesmo select com ícone, dentro da barra, com os nomes em português: EAP (gráfico), EAP com detalhes, Horas e custos e Gantt.
 
+## [1.24.1] — 2026-10-15
+
+### Corrigido
+- **Esqueci minha senha:** sem SMTP configurado, o auth-service não enviava o e-mail, respondia sucesso e **gravava o código no log**. Em produção ele agora nunca registra o código e registra um erro claro, na subida e a cada pedido. Com SMTP, testa a conexão ao subir, e os logs mostram o e-mail mascarado. O deploy avisa quando falta SMTP no `.env` da VPS, e as variáveis (`SMTP_HOST`, `SMTP_PORT`, `SMTP_USER`, `SMTP_PASSWORD`, `SMTP_FROM`, `APP_PUBLIC_URL`) foram documentadas no `.env.example`. Para o e-mail chegar, é preciso preencher o SMTP no `.env` da VPS.
+
 ## [1.24.0] — 2026-10-15
 
 ### Adicionado

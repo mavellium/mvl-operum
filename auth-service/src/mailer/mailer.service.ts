@@ -1,40 +1,78 @@
-import { Injectable, Logger } from '@nestjs/common'
+import { Injectable, Logger, type OnModuleInit } from '@nestjs/common'
 import nodemailer from 'nodemailer'
 
+const isProduction = () => process.env.NODE_ENV === 'production'
+
+export function smtpConfigurado(env: NodeJS.ProcessEnv = process.env): boolean {
+  return Boolean(env.SMTP_HOST && env.SMTP_PORT && env.SMTP_USER && env.SMTP_PASSWORD)
+}
+
+/** "vinicius.mota@mavellium.com.br" → "vi***@mavellium.com.br": log sem o e-mail completo. */
+export function mascararEmail(email: string): string {
+  const [user, domain] = email.split('@')
+  if (!domain) return '***'
+  return `${user.slice(0, 2)}***@${domain}`
+}
+
+function criarTransporte() {
+  return nodemailer.createTransport({
+    host: process.env.SMTP_HOST,
+    port: Number(process.env.SMTP_PORT ?? 587),
+    secure: Number(process.env.SMTP_PORT) === 465,
+    auth: {
+      user: process.env.SMTP_USER,
+      pass: process.env.SMTP_PASSWORD,
+    },
+  })
+}
+
 @Injectable()
-export class MailerService {
+export class MailerService implements OnModuleInit {
   private readonly logger = new Logger(MailerService.name)
 
-  async sendPasswordResetCode(email: string, code: string, tenantName: string): Promise<void> {
-    const smtpConfigured =
-      process.env.SMTP_HOST && process.env.SMTP_PORT && process.env.SMTP_USER && process.env.SMTP_PASSWORD
-
-    if (!smtpConfigured) {
-      this.logger.warn(`[DEV] Código de redefinição para ${email}: ${code}`)
+  /**
+   * Na subida, diz se o e-mail de redefinição vai funcionar: sem SMTP em produção é
+   * erro (o código não chegaria a ninguém); com SMTP, testa a conexão e o login.
+   * Não bloqueia a subida: login e o resto do serviço continuam.
+   */
+  async onModuleInit(): Promise<void> {
+    if (!smtpConfigurado()) {
+      if (isProduction()) {
+        this.logger.error('SMTP não configurado (SMTP_HOST, SMTP_PORT, SMTP_USER, SMTP_PASSWORD): o e-mail de "Esqueci minha senha" NÃO será enviado.')
+      }
       return
     }
+    try {
+      await criarTransporte().verify()
+      this.logger.log(`SMTP verificado: ${process.env.SMTP_HOST}:${process.env.SMTP_PORT}`)
+    } catch (err) {
+      this.logger.error(`SMTP configurado, mas a conexão falhou (${process.env.SMTP_HOST}:${process.env.SMTP_PORT}): ${err instanceof Error ? err.message : err}`)
+    }
+  }
 
-    const transporter = nodemailer.createTransport({
-      host: process.env.SMTP_HOST,
-      port: Number(process.env.SMTP_PORT ?? 587),
-      secure: Number(process.env.SMTP_PORT) === 465,
-      auth: {
-        user: process.env.SMTP_USER,
-        pass: process.env.SMTP_PASSWORD,
-      },
-    })
+  async sendPasswordResetCode(email: string, code: string, tenantName: string): Promise<void> {
+    if (!smtpConfigurado()) {
+      if (isProduction()) {
+        // Nunca registrar o código em produção: quem lê o log trocaria a senha de outra pessoa.
+        this.logger.error(`SMTP não configurado: e-mail de redefinição NÃO enviado para ${mascararEmail(email)}.`)
+      } else {
+        this.logger.warn(`[DEV] Código de redefinição para ${email}: ${code}`)
+      }
+      return
+    }
 
     const appUrl = (process.env.APP_PUBLIC_URL ?? 'https://operum.adm.br').replace(/\/$/, '')
 
     try {
-      await transporter.sendMail({
+      await criarTransporte().sendMail({
         from: process.env.SMTP_FROM ?? `"Operum" <no-reply@mavellium.com.br>`,
         to: email,
         subject: `[${tenantName}] Código de redefinição de senha`,
         html: buildTemplate(code, tenantName, appUrl),
       })
+      this.logger.log(`E-mail de redefinição enviado para ${mascararEmail(email)}.`)
     } catch (err) {
-      this.logger.error(`Falha ao enviar e-mail de reset para ${email}: ${err instanceof Error ? err.message : err}`)
+      this.logger.error(`Falha ao enviar e-mail de reset para ${mascararEmail(email)}: ${err instanceof Error ? err.message : err}`)
       // Falha de SMTP nunca vaza para o cliente — a resposta HTTP já foi retornada com sucesso.
     }
   }

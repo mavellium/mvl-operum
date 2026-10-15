@@ -19,6 +19,11 @@ if '--check' in sys.argv[1:]:
     raise SystemExit(0)
 if not webhook:
     print('::warning::ALERT_WEBHOOK_URL ausente; alertas locais ativos, envio externo não configurado',file=sys.stderr)
+# Mesmo ponto do deploy que lê o ambiente: sem SMTP o "Esqueci minha senha" não envia e-mail.
+auth_env=config['services'].get('auth-service',{}).get('environment') or {}
+faltando=[k for k in ('SMTP_HOST','SMTP_PORT','SMTP_USER','SMTP_PASSWORD') if not str(auth_env.get(k) or '').strip()]
+if faltando:
+    print('::warning::SMTP incompleto no .env da VPS ('+', '.join(faltando)+'): o código de "Esqueci minha senha" não será enviado por e-mail',file=sys.stderr)
 os.makedirs('observability/private',mode=0o700,exist_ok=True)
 os.chmod('observability/private',0o700)
 # UID 65534 in Prometheus must read this; directory stays private to deployment.
