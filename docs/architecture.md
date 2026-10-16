@@ -1093,6 +1093,14 @@ Na planilha de custos, o "Elaborado por" de uma tarefa ligada a card é a lista 
 - **Sincronização (`sincronizarEapComSprint`, passo 5b):** na primeira vez de cada nó, junta os dois lados (responsáveis do card primeiro) e marca `elaboradoSincronizado`; daí em diante o card é a fonte e o nó só espelha. Nós e cards sem ninguém não são gravados.
 - **Custos:** o valor por minuto da tarefa é a soma dos elaboradores com salário e jornada (todos trabalham o tempo inteiro). A conversão de minutos em dias usa a menor jornada entre eles. O mesmo vale para "Horas e custos" da EAP (`computeFinancialRollups`). O quadro de elaboradores conta a tarefa para cada um, então a soma dos percentuais pode passar de 100%. "Realizado próprio" vale para qualquer um dos elaboradores.
 
+### Lançamentos de tempo: edição, validação e limite do timer (1.29.0, ADR-046)
+
+Regras em `sprint-service/src/time-entry/regras-tempo.ts`:
+
+- **Edição:** `PATCH /time-entries/:id` (duração, `startedAt`, `endedAt`, `description`) edita um lançamento já encerrado. Com nova duração, o fim é recalculado a partir do início. Timer rodando não é editado. Quem pode (dono ou admin, com `quadro:cards`) é conferido no gateway (`services/apiAuthorization.ts`). Antes desta versão a tela chamava essa rota e recebia 404.
+- **Validação** (manual e edição): fim depois do início, fim não no futuro (folga de 1 min), no máximo 12 h por lançamento e nenhuma sobreposição com outro lançamento do mesmo usuário (timer rodando vale até agora). A recusa (400/409) diz qual lançamento conflita.
+- **Limite do timer:** 12 h. Ao parar, ou ao ler um timer vencido (início de outro timer, timer ativo do card ou do usuário, lista e total do card), ele é encerrado no limite, recebe `[Revisar] Timer encerrado no limite de 12 h.` na descrição e o dono é avisado. O aviso vai por `POST /notifications` no notification-service, com `x-internal-api-key` (`NOTIFICATION_SERVICE_URL`, best-effort). A tela do card avisa a partir de 8 h de sessão (`lib/avisoTimer.ts`, com teste de paridade do limite).
+
 ### Responsável obrigatório a partir de "Em andamento" (1.28.0, ADR-045)
 
 Até "A Fazer" (e no backlog), um card pode ficar sem responsável. A partir de "Em andamento" (`colunaExigeResponsavel`: a coluna "Em andamento" da sprint e as de posição maior; sem ela, toda coluna depois da primeira), o card precisa de pelo menos um.

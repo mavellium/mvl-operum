@@ -97,6 +97,17 @@ describe('TimeEntryList', () => {
     await waitFor(() => expect(screen.getAllByRole('listitem')).toHaveLength(1))
   })
 
+  it('recusa ao excluir aparece como mensagem e o registro continua na lista', async () => {
+    const user = userEvent.setup()
+    mockDelete.mockResolvedValue({ error: 'Não autorizado' })
+    render(<TimeEntryList cardId="c1" />)
+    await waitFor(() => screen.getAllByRole('button', { name: /excluir registro/i }))
+    const antes = screen.getAllByRole('listitem').length
+    await user.click(screen.getAllByRole('button', { name: /excluir registro/i })[0])
+    expect(await screen.findByRole('alert')).toHaveTextContent('Não autorizado')
+    expect(screen.getAllByRole('listitem')).toHaveLength(antes)
+  })
+
   it('calls onChanged after delete', async () => {
     const user = userEvent.setup()
     const onChanged = vi.fn()

@@ -2,6 +2,7 @@ import {
   Controller,
   Get,
   Post,
+  Patch,
   Delete,
   Param,
   Body,
@@ -11,7 +12,7 @@ import {
   BadRequestException,
 } from '@nestjs/common'
 import { TenantId } from '../common/tenant-scope'
-import { TimeEntryService } from './time-entry.service'
+import { TimeEntryService, type UpdateTimeEntryDto } from './time-entry.service'
 
 @Controller()
 export class TimeEntryController {
@@ -67,6 +68,17 @@ export class TimeEntryController {
   ) {
     if (!body.startedAt || !body.endedAt) throw new BadRequestException('startedAt e endedAt são obrigatórios')
     return this.timeEntryService.createManual(tenantId, cardId, userId, body)
+  }
+
+  @Patch('time-entries/:id')
+  update(@TenantId() tenantId: string, @Param('id') id: string, @Body() body: UpdateTimeEntryDto) {
+    const dto: UpdateTimeEntryDto = {}
+    if (body?.duration !== undefined) dto.duration = Number(body.duration)
+    if (typeof body?.startedAt === 'string') dto.startedAt = body.startedAt
+    if (typeof body?.endedAt === 'string') dto.endedAt = body.endedAt
+    if (body?.description === null || typeof body?.description === 'string') dto.description = body.description === null ? null : body.description.slice(0, 500)
+    if (Object.keys(dto).length === 0) throw new BadRequestException('Nada para alterar')
+    return this.timeEntryService.update(tenantId, id, dto)
   }
 
   @Delete('time-entries/:id')

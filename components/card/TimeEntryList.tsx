@@ -36,6 +36,7 @@ export default function TimeEntryList({ cardId, refreshKey, onChanged }: Props) 
   const [editMinutes, setEditMinutes] = useState('0')
   const [editDescription, setEditDescription] = useState('')
   const [editError, setEditError] = useState('')
+  const [deleteError, setDeleteError] = useState('')
   const [loading, setLoading] = useState(false)
 
   useEffect(() => {
@@ -83,10 +84,11 @@ export default function TimeEntryList({ cardId, refreshKey, onChanged }: Props) 
   }
 
   async function handleDelete(entryId: string) {
+    setDeleteError('')
     setLoading(true)
     const result = await deleteTimeEntryAction(entryId)
     setLoading(false)
-    if ('error' in result) return
+    if ('error' in result) { setDeleteError(result.error ?? 'Não foi possível excluir o registro.'); return }
     setEntries(prev => prev.filter(e => e.id !== entryId))
     onChanged?.()
   }
@@ -96,6 +98,8 @@ export default function TimeEntryList({ cardId, refreshKey, onChanged }: Props) 
   }
 
   return (
+    <>
+    {deleteError && <p role="alert" className="text-xs text-red-500 mt-2">{deleteError}</p>}
     <ul className="flex flex-col gap-1 mt-2" aria-label="Registros de tempo">
       {entries.map(entry => (
         <li key={entry.id} className="rounded-lg border border-gray-100 bg-gray-50 px-3 py-2">
@@ -189,5 +193,6 @@ export default function TimeEntryList({ cardId, refreshKey, onChanged }: Props) 
         </li>
       ))}
     </ul>
+    </>
   )
 }
