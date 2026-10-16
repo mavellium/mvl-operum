@@ -3,6 +3,7 @@
 import { useRef, useState } from 'react'
 import { addManualTimeAction } from '@/app/actions/time'
 import { useCardTimer } from '@/hooks/useCardTimer'
+import { avisoTimerLongo } from '@/lib/avisoTimer'
 
 function formatDuration(seconds: number): string {
   const h = Math.floor(seconds / 3600)
@@ -89,6 +90,11 @@ export default function CardTimer({ cardId, onEntryChanged, timerKey, onTimerSta
           </button>
         )}
       </div>
+
+      {isRunning && (() => {
+        const aviso = avisoTimerLongo(timer.entry?.startedAt, new Date())
+        return aviso ? <p role="status" className="text-xs font-medium text-amber-700 bg-amber-50 border border-amber-200 rounded px-2 py-1">{aviso}</p> : null
+      })()}
 
       {error && <p role="alert" className="text-xs text-red-500">{error} <button type="button" disabled={loading} onClick={() => void timer.refresh()}>Atualizar timer</button></p>}
 

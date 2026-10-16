@@ -8,6 +8,16 @@ As versões até 1.6.0 foram reconstruídas retroativamente a partir do históri
 funcionalidade depois disso é uma versão MINOR.
 
 
+## [1.29.0] — 2026-10-16
+
+### Corrigido
+- **Tempo:** editar um lançamento pelo card (duração e descrição) dava erro, porque a rota não existia no servidor. Agora funciona; com nova duração, o fim é recalculado a partir do início, e timer ainda rodando não pode ser editado.
+- **Tempo:** recusas ao excluir um lançamento passam a aparecer como mensagem (antes eram ignoradas).
+
+### Alterado
+- **Timer com limite de 12 h:** um timer esquecido é encerrado no limite, marcado com "[Revisar]" na descrição, e quem o iniciou recebe uma notificação. O card avisa a partir de 8 h de sessão. Antes, um timer contou 312h45 em 13 dias.
+- **Lançamento manual e edição validados:** fim depois do início e não no futuro, no máximo 12 h por lançamento e sem sobrepor outro lançamento da mesma pessoa (inclusive um timer rodando). A mensagem de recusa diz qual lançamento conflita.
+
 ## [1.28.1] — 2026-10-15
 
 ### Corrigido

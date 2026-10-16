@@ -241,6 +241,8 @@ services:
       - DATABASE_URL=${DATABASE_URL}
       - INTERNAL_API_KEY=${INTERNAL_API_KEY}
       - PORT=4003
+      # Aviso ao dono de timer encerrado no limite de 12 h (ADR-046). Sem ela, só não avisa.
+      - NOTIFICATION_SERVICE_URL=http://notification-service:4004
     healthcheck:
       test: ["CMD-SHELL", "wget -qO- http://localhost:4003/health/ready || exit 1"]
       interval: 15s

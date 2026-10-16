@@ -436,6 +436,18 @@ Ao substituir uma decisão, manter o texto histórico, alterar seu status e liga
 - **Condições de revisão:** múltiplas réplicas exigem reserva Redis atômica; rate limit por IP real exige proxy explicitamente confiável; importações concorrentes podem exigir lock por projeto.
 - **Referências:** `mcp-server/src/uploadLink.ts`, `uploadRoute.ts`, `migration/importer.ts`, `mcp-server/README.md`, SDD 8.1/8.3.
 
+## ADR-046 — Lançamentos de tempo editáveis, validados e com limite de 12 h no timer
+
+- **Data:** 2026-10-16
+- **Status:** implementada.
+- **Contexto:** ao corrigir os tempos do projeto Operum em 16/10, apareceram três falhas: um timer esquecido contou 312h45 (30/09 a 13/10); a tela oferecia editar lançamento, mas a rota `PATCH /time-entries/:id` não existia (404 em produção); e o lançamento manual aceitava sobreposição com outro do mesmo usuário e qualquer duração.
+- **Escolha:** rota de edição no sprint-service; validação única para manual e edição (intervalo válido, não no futuro, até 12 h, sem sobreposição do mesmo usuário); timer limitado a 12 h, encerrado no limite ao parar ou ao ser lido, marcado com `[Revisar]` e com aviso ao dono pelo notification-service.
+- **Justificativa:** fechar o timer vencido nas leituras evita depender de um agendador, que o sprint-service não tem, e garante que nenhum total passe do limite. Recusar sobreposição mantém a soma de horas fiel (uma pessoa não trabalha em dois cards ao mesmo tempo). 12 h cobre um dia longo de trabalho sem permitir que um esquecimento vire dias.
+- **Alternativas consideradas:** job periódico para encerrar timers (precisaria de agendador e fila no sprint-service); encerrar no momento da última atividade do usuário (não há sinal de atividade confiável); permitir sobreposição com aviso (deixaria somas erradas).
+- **Consequências:** lançamentos manuais acima de 12 h precisam ser divididos. O aviso ao dono depende de `NOTIFICATION_SERVICE_URL` e é best-effort. A edição muda o fim do lançamento (o início é mantido quando só a duração muda). O teto de 168 h do MCP passa a ser, na prática, 12 h, porque a API recusa acima disso.
+- **Condições de revisão:** pedido de limite configurável por projeto ou de turnos maiores que 12 h.
+- **Referências:** `sprint-service/src/time-entry/regras-tempo.ts`, `time-entry.service.ts`, `time-entry.controller.ts`, `aviso-timer.ts`, `lib/avisoTimer.ts`, `components/card/CardTimer.tsx`, `components/card/TimeEntryList.tsx`.
+
 ## ADR-045 — Card precisa de responsável a partir de "Em andamento"
 
 - **Data:** 2026-10-15
