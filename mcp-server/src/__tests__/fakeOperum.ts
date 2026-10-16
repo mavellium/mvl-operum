@@ -112,6 +112,13 @@ export class FakeOperum {
     if (!c || this.cardTenant(c) !== t) throw httpError(404, 'Card não encontrado')
     return c
   }
+  private ownEntry(t: string, id: string, user: FakeUser) {
+    const e = this.timeEntries.find(e => e.id === id && !e.deletedAt)
+    const c = e && this.cards.find(c => c.id === e.cardId && !c.deletedAt)
+    if (!e || !c || this.cardTenant(c) !== t) throw httpError(404, 'Time entry não encontrada')
+    if (e.userId !== user.id && user.role !== 'admin') throw httpError(403, 'Não autorizado')
+    return e
+  }
   private hydrateCard(c: Row, withComments = false) {
     return {
       ...c,
@@ -398,6 +405,28 @@ export class FakeOperum {
         this.timeEntries.push(e)
         return e
       }
+      case 'GET /cards/:id/time-entries':
+        this.card(t, seg[1])
+        return this.timeEntries
+          .filter(e => e.cardId === seg[1] && !e.deletedAt)
+          .sort((a, b) => String(b.startedAt).localeCompare(String(a.startedAt)))
+      // Como o gateway (apiAuthorization) e o sprint-service: só o dono ou admin altera; timer rodando não se edita.
+      case 'PATCH /time-entries/:id': {
+        const e = this.ownEntry(t, seg[1], user)
+        if (e.isRunning) throw httpError(409, 'Pare o timer antes de editar este lançamento.')
+        const startedAt = String(body.startedAt ?? e.startedAt)
+        const endedAt = body.endedAt
+          ? String(body.endedAt)
+          : body.duration !== undefined ? new Date(Date.parse(startedAt) + Number(body.duration) * 1000).toISOString() : String(e.endedAt)
+        Object.assign(e, {
+          startedAt, endedAt, duration: Math.floor((Date.parse(endedAt) - Date.parse(startedAt)) / 1000),
+          ...(body.description !== undefined ? { description: body.description } : {}),
+        })
+        return e
+      }
+      case 'DELETE /time-entries/:id':
+        this.ownEntry(t, seg[1], user).deletedAt = now
+        return undefined
 
       case 'POST /files/upload': {
         const bytes = body.bytes as Buffer
