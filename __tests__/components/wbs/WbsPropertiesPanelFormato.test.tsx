@@ -1,0 +1,45 @@
+import { describe, it, expect, vi } from 'vitest'
+import { render, screen } from '@testing-library/react'
+import userEvent from '@testing-library/user-event'
+import WbsPropertiesPanel from '@/components/wbs/WbsPropertiesPanel'
+import type { WbsNodeClient } from '@/types/wbs'
+
+const S = { backgroundColor: '#fff', borderColor: '#000', textColor: '#000', borderWidth: 1, fontSize: 14, borderRadius: 4 }
+const no = (id: string, parentId: string | null, layout: WbsNodeClient['layout'], childrenIds: string[] = []): WbsNodeClient =>
+  ({ id, parentId, order: 0, code: '', title: id, layout, collapsed: false, style: S, properties: {}, childrenIds })
+const nodes = {
+  r: no('r', null, 'LADO_A_LADO', ['f1', 'f2']),
+  f1: no('f1', 'r', 'ESQUERDA', ['a']),
+  f2: no('f2', 'r', 'LADO_A_LADO'),
+  a: no('a', 'f1', 'LADO_A_LADO'),
+}
+
+function abrir(selectedNodeIds: string[]) {
+  const dispatch = vi.fn()
+  render(<WbsPropertiesPanel selectedNodeIds={selectedNodeIds} nodes={nodes} canEdit dispatch={dispatch} onClose={vi.fn()} />)
+  return dispatch
+}
+
+describe('formato no painel de propriedades da EAP', () => {
+  it('raiz: formato da EAP inteira', async () => {
+    const dispatch = abrir(['r'])
+    const campo = screen.getByText('Formato da EAP').parentElement!.querySelector('select')!
+    expect(campo).toHaveValue('LADO_A_LADO')
+    await userEvent.selectOptions(campo, 'HORIZONTAL')
+    expect(dispatch).toHaveBeenCalledWith({ type: 'SET_LAYOUT', payload: { nodeId: 'r', layout: 'HORIZONTAL' } })
+  })
+
+  it('fases: formato da fase, com "—" quando diferem; aplica a todas as selecionadas', async () => {
+    const dispatch = abrir(['f1', 'f2'])
+    const campo = screen.getByText('Formato da fase').parentElement!.querySelector('select')!
+    expect(campo).toHaveValue('')
+    await userEvent.selectOptions(campo, 'DIREITA')
+    expect(dispatch).toHaveBeenCalledWith({ type: 'SET_LAYOUT', payload: { nodeId: 'f1', layout: 'DIREITA' } })
+    expect(dispatch).toHaveBeenCalledWith({ type: 'SET_LAYOUT', payload: { nodeId: 'f2', layout: 'DIREITA' } })
+  })
+
+  it('itens abaixo das fases não têm formato próprio', () => {
+    abrir(['a'])
+    expect(screen.queryByText(/Formato da/)).toBeNull()
+  })
+})

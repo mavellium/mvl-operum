@@ -11,7 +11,13 @@ vi.mock('@/lib/wbsExportSvg', () => ({ exportWbsSvg: vi.fn(), exportWbsPng: vi.f
 vi.mock('@/lib/wbsExportMspdi', () => ({ exportMspdi: vi.fn() }))
 
 const S = { backgroundColor: '#fff', borderColor: '#000', textColor: '#000', borderWidth: 1, fontSize: 14, borderRadius: 4 }
-const r: WbsNodeClient = { id: 'r', parentId: null, order: 0, code: '1', title: 'Operum', layout: 'DIREITA', collapsed: false, style: S, properties: {}, childrenIds: [] }
+const no = (id: string, parentId: string | null, layout: WbsNodeClient['layout'], childrenIds: string[] = []): WbsNodeClient =>
+  ({ id, parentId, order: 0, code: '', title: id, layout, collapsed: false, style: S, properties: {}, childrenIds })
+const arvore = (formato: WbsNodeClient['layout'] = 'DIREITA') => ({
+  r: no('r', null, formato, ['f1']),
+  f1: no('f1', 'r', 'LADO_A_LADO', ['a']),
+  a: no('a', 'f1', 'LADO_A_LADO'),
+})
 
 function renderBar(over: Partial<WbsMenubarProps> = {}) {
   const dispatch = vi.fn()
@@ -20,7 +26,7 @@ function renderBar(over: Partial<WbsMenubarProps> = {}) {
     <WbsMenubar
       syncStatus="IDLE" lastSavedAt={null} zoom={1} panX={0} panY={0}
       canUndo={false} canRedo={false} canEdit
-      nodes={{ r }} rootId="r" selectedNodeIds={['r']} projetoId="p1"
+      nodes={arvore()} rootId="r" selectedNodeIds={['r']} projetoId="p1"
       dispatch={dispatch} hasCopiedStyle={false} hasClipboardNodes={false}
       onFitScreen={vi.fn()} onManualSave={vi.fn()} onRequestDelete={vi.fn()} onPasteStyle={vi.fn()}
       showStylePanel={false} onToggleStylePanel={vi.fn()}
@@ -32,25 +38,34 @@ function renderBar(over: Partial<WbsMenubarProps> = {}) {
 }
 
 describe('menu Organizar da EAP', () => {
-  it('mostra o layout atual e lista os 6 ícones, sem "Abaixo"', async () => {
+  it('mostra o formato da EAP e lista Padrão, Esquerda, Direita e Horizontal, sem topo e base', async () => {
     renderBar()
-    const botao = screen.getByRole('button', { name: 'Organizar: Direita' })
-    await userEvent.click(botao)
+    await userEvent.click(screen.getByRole('button', { name: 'Organizar: Direita' }))
     const lista = screen.getByRole('listbox', { name: 'Organizar' })
     expect(within(lista).getAllByRole('option').map(o => o.textContent?.replace('✓', '').trim())).toEqual([
-      'Padrão', 'Direita', 'Esquerda', 'Horizontal', 'Horizontal (topo)', 'Horizontal (base)',
+      'Padrão', 'Esquerda', 'Direita', 'Horizontal',
     ])
     expect(within(lista).getByRole('option', { name: /Direita/ })).toHaveAttribute('aria-selected', 'true')
-    expect(within(lista).queryByText(/Abaixo/)).toBeNull()
+    expect(within(lista).queryByText(/topo|base|Abaixo/)).toBeNull()
     expect(within(lista).getAllByRole('option').every(o => o.querySelector('svg'))).toBe(true)
   })
 
-  it('escolher um ícone aplica o layout aos filhos do item selecionado', async () => {
-    const { dispatch } = renderBar()
+  it('o formato vale para a EAP inteira, qualquer que seja o item selecionado', async () => {
+    const { dispatch } = renderBar({ selectedNodeIds: ['a'] })
     await userEvent.click(screen.getByRole('button', { name: 'Organizar: Direita' }))
-    await userEvent.click(screen.getByRole('option', { name: /Horizontal \(topo\)/ }))
-    expect(dispatch).toHaveBeenCalledWith({ type: 'SET_LAYOUT', payload: { nodeId: 'r', layout: 'HORIZONTAL_TOPO' } })
+    await userEvent.click(screen.getByRole('option', { name: /Horizontal/ }))
+    expect(dispatch).toHaveBeenCalledWith({ type: 'SET_LAYOUT', payload: { nodeId: 'r', layout: 'HORIZONTAL' } })
     expect(screen.queryByRole('listbox')).toBeNull()
+  })
+
+  it('funciona sem item selecionado', () => {
+    renderBar({ selectedNodeIds: [] })
+    expect(screen.getByRole('button', { name: 'Organizar: Direita' })).toBeEnabled()
+  })
+
+  it('sem permissão de edição fica desabilitado', () => {
+    renderBar({ canEdit: false })
+    expect(screen.getByRole('button', { name: 'Organizar: Direita' })).toBeDisabled()
   })
 
   it('teclado: seta para baixo e Enter escolhem; Esc fecha sem escolher', async () => {
@@ -61,17 +76,33 @@ describe('menu Organizar da EAP', () => {
     const lista = screen.getByRole('listbox')
     fireEvent.keyDown(lista, { key: 'ArrowDown' })
     fireEvent.keyDown(lista, { key: 'Enter' })
-    expect(dispatch).toHaveBeenCalledWith({ type: 'SET_LAYOUT', payload: { nodeId: 'r', layout: 'ESQUERDA' } })
+    expect(dispatch).toHaveBeenCalledWith({ type: 'SET_LAYOUT', payload: { nodeId: 'r', layout: 'HORIZONTAL' } })
 
     fireEvent.keyDown(botao, { key: 'ArrowDown' })
     fireEvent.keyDown(screen.getByRole('listbox'), { key: 'Escape' })
     expect(screen.queryByRole('listbox')).toBeNull()
     expect(dispatch).toHaveBeenCalledTimes(1)
   })
+})
 
-  it('sem item selecionado ou sem permissão de edição fica desabilitado', () => {
-    renderBar({ selectedNodeIds: [] })
-    expect(screen.getByRole('button', { name: 'Organizar: Selecione um item' })).toBeDisabled()
+describe('menu Fase da EAP', () => {
+  it('só com uma fase selecionada; fora disso pede para selecionar uma fase', () => {
+    renderBar({ selectedNodeIds: ['a'] })
+    expect(screen.getByRole('button', { name: 'Fase: Selecione uma fase' })).toBeDisabled()
+  })
+
+  it('fase selecionada: "Igual à EAP" por padrão; Esquerda vale só para ela', async () => {
+    const { dispatch } = renderBar({ selectedNodeIds: ['f1'] })
+    await userEvent.click(screen.getByRole('button', { name: 'Fase: Igual à EAP' }))
+    const lista = screen.getByRole('listbox', { name: 'Fase' })
+    expect(within(lista).getAllByRole('option').map(o => o.textContent?.replace('✓', '').trim())).toEqual(['Igual à EAP', 'Esquerda', 'Direita'])
+    await userEvent.click(within(lista).getByRole('option', { name: /Esquerda/ }))
+    expect(dispatch).toHaveBeenCalledWith({ type: 'SET_LAYOUT', payload: { nodeId: 'f1', layout: 'ESQUERDA' } })
+  })
+
+  it('no Horizontal não se aplica', () => {
+    renderBar({ nodes: arvore('HORIZONTAL'), selectedNodeIds: ['f1'] })
+    expect(screen.getByRole('button', { name: 'Fase: Não se aplica ao Horizontal' })).toBeDisabled()
   })
 })
 

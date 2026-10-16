@@ -1,6 +1,7 @@
 'use client'
 
-import { OPCOES_ORGANIZAR } from './OrganizarIcons'
+import { OPCOES_FASE, OPCOES_ORGANIZAR } from './OrganizarIcons'
+import { formatoDaEap, formatoDaFase } from '@/lib/wbsLayout'
 
 import { useEffect, useRef, useState, type Dispatch } from 'react'
 import { X } from 'lucide-react'
@@ -190,7 +191,12 @@ export default function WbsPropertiesPanel({ selectedNodeIds, nodes, canEdit, di
   const bwC = commonNum(selectedNodes, n => n.style.borderWidth)
   const fsC = commonNum(selectedNodes, n => n.style.fontSize)
   const brC = commonNum(selectedNodes, n => n.style.borderRadius)
-  const layoutC = commonStr(selectedNodes, n => n.layout)
+  // Formato (ADR-047): da EAP inteira quando a raiz está selecionada; da fase quando só há fases.
+  const raiz = Object.values(nodes).find(n => n.parentId === null)
+  const formatoEap = formatoDaEap(raiz?.layout)
+  const ehRaiz = count === 1 && selectedNodes[0].parentId === null
+  const soFases = !!raiz && selectedNodes.every(n => n.parentId === raiz.id)
+  const formatoC = commonStr(selectedNodes, n => ehRaiz ? formatoEap : formatoDaFase(n.layout, formatoEap) ?? 'LADO_A_LADO')
 
   const updateStyle = (patch: Partial<WbsNodeStyle>) => {
     dispatch({ type: 'UPDATE_STYLE', payload: { style: patch } })
@@ -280,17 +286,20 @@ export default function WbsPropertiesPanel({ selectedNodeIds, nodes, canEdit, di
             onChange={v => updateStyle({ borderRadius: v })}
           />
 
-          <FieldRow label="Layout dos filhos">
-            <select
-              value={layoutC.same ? layoutC.value : ''}
-              disabled={!canEdit}
-              onChange={e => updateLayout(e.target.value as WbsLayoutOrientation)}
-              className="text-[11px] border border-gray-200 rounded px-1.5 py-1 text-gray-800 focus:outline-none focus:ring-1 focus:ring-blue-400 disabled:bg-gray-50 disabled:text-gray-400 cursor-pointer"
-            >
-              {!layoutC.same && <option value="">—</option>}
-              {OPCOES_ORGANIZAR.map(o => <option key={o.value} value={o.value}>{o.label}</option>)}
-            </select>
-          </FieldRow>
+          {(ehRaiz || soFases) && (
+            <FieldRow label={ehRaiz ? 'Formato da EAP' : 'Formato da fase'}>
+              <select
+                value={formatoC.same ? formatoC.value : ''}
+                disabled={!canEdit || (!ehRaiz && formatoEap === 'HORIZONTAL')}
+                title={!ehRaiz && formatoEap === 'HORIZONTAL' ? 'No Horizontal, todas as fases seguem a EAP' : undefined}
+                onChange={e => updateLayout(e.target.value as WbsLayoutOrientation)}
+                className="text-[11px] border border-gray-200 rounded px-1.5 py-1 text-gray-800 focus:outline-none focus:ring-1 focus:ring-blue-400 disabled:bg-gray-50 disabled:text-gray-400 cursor-pointer"
+              >
+                {!formatoC.same && <option value="">—</option>}
+                {(ehRaiz ? OPCOES_ORGANIZAR : OPCOES_FASE).map(o => <option key={o.value} value={o.value}>{o.label}</option>)}
+              </select>
+            </FieldRow>
+          )}
 
           {canEdit && (
             <div className="flex gap-1 mt-2">

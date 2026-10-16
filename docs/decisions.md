@@ -436,6 +436,37 @@ Ao substituir uma decisão, manter o texto histórico, alterar seu status e liga
 - **Condições de revisão:** múltiplas réplicas exigem reserva Redis atômica; rate limit por IP real exige proxy explicitamente confiável; importações concorrentes podem exigir lock por projeto.
 - **Referências:** `mcp-server/src/uploadLink.ts`, `uploadRoute.ts`, `migration/importer.ts`, `mcp-server/README.md`, SDD 8.1/8.3.
 
+## ADR-047 — Organizar define o formato da EAP inteira, com formato próprio por fase
+
+- **Data:** 2026-10-16
+- **Status:** implementada. Substitui a ADR-043 na regra de layout por nó e nos layouts "Horizontal (topo)" e "Horizontal (base)". Os ícones e o select da ADR-043 continuam.
+- **Contexto:** o documento "08 - Ajustes e melhorias sistema Operum 16-10-26" mostra como cada opção do Organizar deve desenhar a EAP. Os modelos são:
+  - Padrão: Churrasco;
+  - Esquerda: Projeto Café e Citrolente, com 4 níveis;
+  - Direita: suporte para vara de pesca;
+  - Horizontal: Pintar uma sala.
+
+  O documento também pede para remover "Horizontal (topo)" e "Horizontal (base)" e permitir que cada fase tenha formato próprio, Esquerda ou Direita. Na ADR-043, o layout valia só para os filhos do item selecionado. Assim, nenhum modelo saía com um clique só: na Direita, por exemplo, as fases ficavam empilhadas em vez de lado a lado.
+- **Escolha:** o layout da raiz passa a ser o formato da EAP inteira: `LADO_A_LADO` (Padrão), `ESQUERDA`, `DIREITA` ou `HORIZONTAL`. Numa fase (1º nível), `ESQUERDA` ou `DIREITA` vira formato próprio dela e de tudo abaixo; qualquer outro valor faz a fase seguir a EAP. O layout guardado abaixo das fases não é usado. O motor (`lib/wbsLayout.ts`, função `planejar`) decide o arranjo dos filhos de cada nó pelo formato e pela profundidade:
+  - Padrão: filhos lado a lado; se todos os filhos visíveis forem folhas, eles empilham com a linha perto da borda esquerda do pai.
+  - Esquerda e Direita: fases lado a lado; abaixo delas, filhos empilhados à esquerda ou à direita da linha que desce do centro do pai.
+  - Horizontal: a raiz fica em pé à esquerda, com texto na vertical, só na visão gráfica, e cada nível ocupa uma coluna.
+
+  A barra ganha o select "Fase". O painel de propriedades mostra "Formato da EAP" ou "Formato da fase". A migration `20261016010000_wbs_remover_horizontal_topo_base` recria o enum e converte topo e base em `HORIZONTAL`.
+- **Justificativa:** o documento descreve formatos de árvore inteira, não de um nó. Guardar o formato na raiz evita gravar o layout em todos os nós e faz itens novos seguirem o formato sem nenhuma ação. Reaproveitar o valor da fase como formato próprio atende o pedido sem nova coluna no banco.
+- **Alternativas consideradas:**
+  - aplicar o layout escolhido a toda a subárvore: itens criados depois ficariam com o padrão e quebrariam o desenho;
+  - uma coluna nova de formato no projeto ou na EAP: exigiria migration de dados e mais um contrato no `.wbs`, sem ganho sobre a raiz;
+  - manter o layout por nó em qualquer nível: o documento só pede variação por fase.
+- **Consequências:**
+  - EAPs cuja raiz estava em Direita ou Esquerda passam a mostrar as fases lado a lado.
+  - Fases que já estavam em Direita ou Esquerda passam a ter formato próprio.
+  - Layouts gravados em níveis mais fundos deixam de ter efeito, mas continuam no banco.
+  - `.wbs` antigos com topo ou base viram Horizontal na importação.
+  - Na visão com detalhes, a raiz do Horizontal fica deitada, porque o texto dos cartões não caberia em pé.
+- **Condições de revisão:** pedido de formato próprio em níveis abaixo das fases, de outros formatos por fase (ex.: Horizontal) ou de cores por nível, como nos modelos.
+- **Referências:** `lib/wbsLayout.ts`, `components/wbs/WbsMenubar.tsx`, `components/wbs/WbsPropertiesPanel.tsx`, `components/wbs/OrganizarIcons.tsx`, `components/wbs/WbsNode.tsx`, `lib/wbsExportSvg.ts`, `lib/validation/wbsSchemas.ts`, migration `20261016010000_wbs_remover_horizontal_topo_base`.
+
 ## ADR-046 — Lançamentos de tempo editáveis, validados e com limite de 12 h no timer
 
 - **Data:** 2026-10-16
@@ -475,7 +506,7 @@ Ao substituir uma decisão, manter o texto histórico, alterar seu status e liga
 ## ADR-043 — Seis layouts do menu Organizar da EAP, sem "Abaixo"
 
 - **Data:** 2026-10-15
-- **Status:** implementada; substitui os layouts `ABAIXO` e `ABAIXO_L` da fase 6 (SDD 6.2; não havia ADR própria).
+- **Status:** substituída em parte pela [ADR-047](#adr-047--organizar-define-o-formato-da-eap-inteira-com-formato-próprio-por-fase) (formato da EAP inteira e remoção de topo e base). Antes, tinha substituído os layouts `ABAIXO` e `ABAIXO_L` da fase 6 (SDD 6.2; não havia ADR própria).
 - **Contexto:** o card "Em EAP, adicionar o jeito de visualizar que está no vídeo" voltou com 6 ícones SVG desenhados pelo usuário, com o pedido de seguir exatamente esses desenhos, apresentá-los como um select (como no vídeo de referência) e remover o "Abaixo".
 - **Escolha:** o enum `WbsLayoutOrientation` passa a ter `LADO_A_LADO`, `DIREITA`, `ESQUERDA`, `HORIZONTAL`, `HORIZONTAL_TOPO` e `HORIZONTAL_BASE`. A migration recria o tipo, porque o PostgreSQL não remove valores de enum, e converte os valores antigos para `DIREITA`. A validação normaliza `.wbs` antigos e o motor desenha valores desconhecidos como Direita. O motor (`lib/wbsLayout.ts`) passa a guardar `rootY` por subárvore. Organizar e Visualização usam um select de ícones (`ToolbarSelect`).
 - **Justificativa:** um conjunto fechado com o desenho do usuário evita opções parecidas entre si. "Abaixo com L" era o mesmo arranjo da Direita, com outro recuo. Recriar o enum mantém o schema igual ao banco, sem valores mortos.

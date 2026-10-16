@@ -1,12 +1,10 @@
 export type WbsViewMode = 'chart' | 'details' | 'costs' | 'gantt';
 /**
- * Como os filhos de um nó são organizados (menu Organizar, ícones em components/wbs/OrganizarIcons):
- * LADO_A_LADO = padrão (organograma); DIREITA/ESQUERDA = pai no topo e filhos empilhados
- * à direita/esquerda da linha que desce do centro dele; HORIZONTAL* = pai à esquerda e
- * filhos empilhados à direita, com o pai no meio, no topo ou na base da coluna.
+ * Menu Organizar (ADR-047, desenho em lib/wbsLayout.ts). Na raiz é o formato da EAP inteira:
+ * LADO_A_LADO = Padrão, DIREITA, ESQUERDA ou HORIZONTAL. Numa fase (1º nível), ESQUERDA/DIREITA
+ * é o formato próprio dela e de tudo abaixo; outro valor = segue a EAP. Abaixo das fases não é usado.
  */
-export type WbsLayoutOrientation =
-  | 'LADO_A_LADO' | 'DIREITA' | 'ESQUERDA' | 'HORIZONTAL' | 'HORIZONTAL_TOPO' | 'HORIZONTAL_BASE';
+export type WbsLayoutOrientation = 'LADO_A_LADO' | 'DIREITA' | 'ESQUERDA' | 'HORIZONTAL';
 export type ClipboardActionType = 'COPY' | 'CUT' | null;
 export type DropPosition = 'INSIDE' | 'BEFORE' | 'AFTER';
 
@@ -84,6 +82,8 @@ export interface WbsNodeGeometry {
   y: number;
   width: number;
   height: number;
+  /** Card em pé, com o texto na vertical (raiz do formato Horizontal). */
+  vertical?: boolean;
 }
 
 export interface WbsConnector {

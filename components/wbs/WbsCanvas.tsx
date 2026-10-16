@@ -138,7 +138,11 @@ function WbsCanvasInner({ projetoId, canEdit, initialView = 'chart', canViewCost
   useIsomorphicLayoutEffect(() => { setNodeWidths(measureNodeWidths(state.nodes)) }, [state.nodes])
   const nodeHeight = viewMode === 'chart' ? NODE_H : 162
   const displayWidths = useMemo(() => viewMode === 'chart' ? nodeWidths : Object.fromEntries(Object.entries(nodeWidths).map(([id, width]) => [id, Math.max(width, 250)])), [nodeWidths, viewMode])
-  const layout = useMemo(() => computeLayout(state.nodes, state.rootId, displayWidths, nodeHeight), [state.nodes, state.rootId, displayWidths, nodeHeight])
+  // A raiz em pé do Horizontal só vale no gráfico: nos cartões detalhados o texto não caberia.
+  const layout = useMemo(
+    () => computeLayout(state.nodes, state.rootId, displayWidths, nodeHeight, { raizEmPe: viewMode === 'chart' }),
+    [state.nodes, state.rootId, displayWidths, nodeHeight, viewMode],
+  )
   const rollups = useMemo(() => computeRollups(state.nodes, state.rootId), [state.nodes, state.rootId])
   const finances = useMemo(() => canViewCosts ? computeFinancialRollups(state.nodes, state.rootId, rates) : {}, [state.nodes, state.rootId, rates, canViewCosts])
 

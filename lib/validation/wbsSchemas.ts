@@ -8,11 +8,16 @@ export const WBS_LIMITS = {
 } as const
 
 // ── Enums ────────────────────────────────────────────────────────────────────
-export const WBS_LAYOUTS = ['LADO_A_LADO', 'DIREITA', 'ESQUERDA', 'HORIZONTAL', 'HORIZONTAL_TOPO', 'HORIZONTAL_BASE'] as const
+export const WBS_LAYOUTS = ['LADO_A_LADO', 'DIREITA', 'ESQUERDA', 'HORIZONTAL'] as const
 
-/** Layouts removidos em 1.25.0 ("Abaixo" e "Abaixo com L"): arquivos .wbs e versões antigas viram "Direita". */
+/**
+ * Layouts removidos, para arquivos .wbs e versões antigas: "Abaixo" e "Abaixo com L" (1.25.0)
+ * viram "Direita"; "Horizontal (topo)" e "Horizontal (base)" (1.31.0) viram "Horizontal".
+ */
 export function normalizarLayout(valor: unknown): unknown {
-  return valor === 'ABAIXO' || valor === 'ABAIXO_L' ? 'DIREITA' : valor
+  if (valor === 'ABAIXO' || valor === 'ABAIXO_L') return 'DIREITA'
+  if (valor === 'HORIZONTAL_TOPO' || valor === 'HORIZONTAL_BASE') return 'HORIZONTAL'
+  return valor
 }
 
 export const WbsLayoutOrientationSchema = z.preprocess(normalizarLayout, z.enum(WBS_LAYOUTS))

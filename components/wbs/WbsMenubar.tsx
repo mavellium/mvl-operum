@@ -1,6 +1,6 @@
 'use client'
 
-import { type Dispatch, useEffect, useRef, useState } from 'react'
+import { type Dispatch, Fragment, useEffect, useRef, useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { useToast } from '@/components/ui/Toast'
 import {
@@ -13,7 +13,8 @@ import {
 import Modal from '@/components/ui/Modal'
 import Tooltip from '@/components/ui/Tooltip'
 import ToolbarSelect from './ToolbarSelect'
-import { IconeOrganizar, OPCOES_ORGANIZAR } from './OrganizarIcons'
+import { IconeOrganizar, OPCOES_FASE, OPCOES_ORGANIZAR } from './OrganizarIcons'
+import { formatoDaEap, formatoDaFase } from '@/lib/wbsLayout'
 import { exportMspdi } from '@/lib/wbsExportMspdi'
 import { exportWbsSvg, exportWbsPng } from '@/lib/wbsExportSvg'
 import { importWbsAction, getWbsTreeAction } from '@/app/actions/wbs'
@@ -193,11 +194,13 @@ function ManualContent() {
               terceiro filho do segundo filho do elemento raiz.
             </p>
             <p>
-              Quanto ao <strong>layout</strong> (menu <em>Organizar</em>, vale para os filhos do
-              item selecionado), use <em>Padrão</em> para ver o primeiro nível de decomposição de
-              forma ampla; <em>Direita</em> ou <em>Esquerda</em> para árvores profundas, pois
-              economizam espaço horizontal; e os <em>Horizontais</em> para ler a EAP da esquerda
-              para a direita, com o item pai no meio, no topo ou na base dos filhos.
+              O menu <em>Organizar</em> define o formato da EAP inteira. Em <em>Padrão</em>, os itens
+              ficam lado a lado, e os que têm só folhas empilham as folhas na vertical. Em
+              <em> Esquerda</em> ou <em>Direita</em>, as fases ficam lado a lado e o restante fica
+              empilhado à esquerda ou à direita de cada fase, o que economiza espaço em árvores
+              profundas. Em <em>Horizontal</em>, a EAP é lida da esquerda para a direita, com a raiz
+              em pé. Com uma fase selecionada, o menu <em>Fase</em> deixa só aquela fase em Esquerda
+              ou Direita.
             </p>
           </>
         )}
@@ -294,6 +297,10 @@ export default function WbsMenubar({
 
   const firstSelected = selectedNodeIds[0]
   const selectedNode = firstSelected ? nodes[firstSelected] : null
+  // Organizar vale para a EAP inteira (formato na raiz); Fase, para a fase selecionada (ADR-047).
+  const root = rootId ? nodes[rootId] : null
+  const formatoEap = formatoDaEap(root?.layout)
+  const faseSelecionada = selectedNode && rootId && selectedNode.parentId === rootId ? selectedNode : null
   const canDelete = selectedNodeIds.some(id => nodes[id]?.parentId)
 
   // File import
@@ -429,15 +436,23 @@ export default function WbsMenubar({
         )}
 
         {cards.map(card => card.title === 'Organizar' ? (
-          <ToolbarSelect
-            key={card.title}
-            title="Organizar"
-            value={selectedNode?.layout ?? null}
-            placeholder="Selecione um item"
-            disabled={!firstSelected || !canEdit}
-            onChange={layout => { if (firstSelected) dispatch({ type: 'SET_LAYOUT', payload: { nodeId: firstSelected, layout } }) }}
-            options={OPCOES_ORGANIZAR.map(o => ({ ...o, icon: <IconeOrganizar layout={o.value} size={28} /> }))}
-          />
+          <Fragment key={card.title}>
+            <ToolbarSelect
+              title="Organizar"
+              value={formatoEap}
+              disabled={!root || !canEdit}
+              onChange={layout => { if (rootId) dispatch({ type: 'SET_LAYOUT', payload: { nodeId: rootId, layout } }) }}
+              options={OPCOES_ORGANIZAR.map(o => ({ ...o, icon: <IconeOrganizar layout={o.value} size={28} /> }))}
+            />
+            <ToolbarSelect
+              title="Fase"
+              value={faseSelecionada && formatoEap !== 'HORIZONTAL' ? (formatoDaFase(faseSelecionada.layout, formatoEap) ?? 'LADO_A_LADO') : null}
+              placeholder={formatoEap === 'HORIZONTAL' ? 'Não se aplica ao Horizontal' : 'Selecione uma fase'}
+              disabled={!faseSelecionada || formatoEap === 'HORIZONTAL' || !canEdit}
+              onChange={layout => { if (faseSelecionada) dispatch({ type: 'SET_LAYOUT', payload: { nodeId: faseSelecionada.id, layout } }) }}
+              options={OPCOES_FASE.map(o => ({ ...o, icon: <IconeOrganizar layout={o.value === 'LADO_A_LADO' ? formatoEap : o.value} size={28} /> }))}
+            />
+          </Fragment>
         ) : (
           <ToolbarCard key={card.title} title={card.title} items={card.items} />
         ))}
