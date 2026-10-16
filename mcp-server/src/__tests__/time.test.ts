@@ -34,9 +34,12 @@ beforeEach(async () => {
 })
 
 describe('as tools aparecem no MCP', () => {
-  it('start, stop e log estão na lista', async () => {
+  it('start, stop, log, listar, editar e apagar lançamentos estão na lista', async () => {
     const names = (await h.client.listTools()).tools.map(t => t.name)
-    expect(names).toEqual(expect.arrayContaining(['operum_start_timer', 'operum_stop_timer', 'operum_log_time']))
+    expect(names).toEqual(expect.arrayContaining([
+      'operum_start_timer', 'operum_stop_timer', 'operum_log_time',
+      'operum_list_time_entries', 'operum_update_time_entry', 'operum_delete_time_entry',
+    ]))
   })
 })
 
@@ -161,7 +164,7 @@ describe('operum_log_time', () => {
 
   it.each([
     ['fim antes do início', '2026-09-29T10:00:00Z', '2026-09-29T09:00:00Z', /depois de started_at/],
-    ['mais de 168 h', '2026-09-01T00:00:00Z', '2026-09-08T00:00:01Z', /168 h/],
+    ['mais de 12 h', '2026-09-01T00:00:00Z', '2026-09-01T12:00:01Z', /12 h/],
     ['fim no futuro', new Date(Date.now() + 3600e3).toISOString(), new Date(Date.now() + 7200e3).toISOString(), /futuro/],
     ['data inválida', 'ontem', '2026-09-29T09:00:00Z', /started_at: data inválida/],
   ])('recusa %s', async (_caso, started_at, ended_at, erro) => {
@@ -174,6 +177,111 @@ describe('operum_log_time', () => {
   it('tarefa de outro tenant: 404', async () => {
     const res = await h.raw('operum_log_time', { task_id: tarefaFabio, started_at: '2026-09-29T09:00:00Z', ended_at: '2026-09-29T10:00:00Z' })
     expect(res.content[0].text).toBe('Não encontrado neste tenant: Tarefa.')
+  })
+})
+
+const lancar = (task_id: string, started_at: string, ended_at: string, description?: string) =>
+  h.call('operum_log_time', { task_id, started_at, ended_at, ...(description ? { description } : {}) }) as Promise<{ entry: { id: string } }>
+
+describe('operum_list_time_entries', () => {
+  it('lista os lançamentos da tarefa, mais recentes primeiro, com o total e a marca de revisão', async () => {
+    await lancar(aFazer, '2026-09-29T09:00:00Z', '2026-09-29T10:00:00Z', 'Pesquisa')
+    await lancar(aFazer, '2026-09-30T09:00:00Z', '2026-09-30T09:30:00Z', '[Revisar] Timer encerrado no limite de 12 h.')
+    await lancar(outraTarefa, '2026-09-30T11:00:00Z', '2026-09-30T12:00:00Z')
+    const res = await h.call('operum_list_time_entries', { task_id: aFazer })
+    expect(res).toMatchObject({ task_id: aFazer, total_seconds: 5400, total_formatted: '1h 30min' })
+    expect(res.entries).toMatchObject([
+      { started_at: '2026-09-30T09:00:00.000Z', duration_formatted: '30min', needs_review: true },
+      { started_at: '2026-09-29T09:00:00.000Z', duration_formatted: '1h 00min', needs_review: false, description: 'Pesquisa' },
+    ])
+  })
+
+  it('filtra por usuário e não conta o timer rodando no total', async () => {
+    await lancar(aFazer, '2026-09-29T09:00:00Z', '2026-09-29T10:00:00Z')
+    await h.call('operum_start_timer', { task_id: aFazer })
+    const res = await h.call('operum_list_time_entries', { task_id: aFazer, user_id: 'u-vini-mav' })
+    expect(res.entries).toHaveLength(2)
+    expect(res.total_seconds).toBe(3600)
+    expect((await h.call('operum_list_time_entries', { task_id: aFazer, user_id: 'u-ana-mav' })).entries).toEqual([])
+  })
+
+  it('tarefa de outro tenant: 404', async () => {
+    const res = await h.raw('operum_list_time_entries', { task_id: tarefaFabio })
+    expect(res.content[0].text).toBe('Não encontrado neste tenant: Tarefa.')
+  })
+})
+
+describe('operum_update_time_entry', () => {
+  it('corrige início e fim, recalcula a duração e audita', async () => {
+    const { entry } = await lancar(aFazer, '2026-09-29T09:00:00Z', '2026-09-29T13:00:00Z')
+    const res = await h.call('operum_update_time_entry', {
+      entry_id: entry.id, started_at: '2026-09-29T09:00:00-03:00', ended_at: '2026-09-29T09:45:00-03:00', description: 'Corrigido',
+    })
+    expect(res.entry).toMatchObject({ id: entry.id, duration_seconds: 2700, duration_formatted: '45min', description: 'Corrigido' })
+    expect(h.op.calls.find(c => c.method === 'PATCH' && c.path === `/time-entries/${entry.id}`)?.body).toEqual({
+      startedAt: '2026-09-29T12:00:00.000Z', endedAt: '2026-09-29T12:45:00.000Z', description: 'Corrigido',
+    })
+    expect(h.op.audit.at(-1)).toMatchObject({ action: 'UPDATE', entity: 'time_entry', entityId: entry.id, details: { cardId: aFazer } })
+  })
+
+  it('só a descrição: não manda datas; "" apaga a descrição', async () => {
+    const { entry } = await lancar(aFazer, '2026-09-29T09:00:00Z', '2026-09-29T10:00:00Z', 'Antiga')
+    const res = await h.call('operum_update_time_entry', { entry_id: entry.id, description: '' })
+    expect(res.entry).toMatchObject({ description: null, duration_seconds: 3600 })
+    expect(h.op.calls.at(-2)?.body).toEqual({ description: null })
+  })
+
+  it.each([
+    ['nada para alterar', {}, /Informe started_at/],
+    ['fim antes do início', { started_at: '2026-09-29T10:00:00Z', ended_at: '2026-09-29T09:00:00Z' }, /depois de started_at/],
+    ['mais de 12 h', { started_at: '2026-09-29T00:00:00Z', ended_at: '2026-09-29T12:00:01Z' }, /12 h/],
+    ['fim no futuro', { ended_at: new Date(Date.now() + 3600e3).toISOString() }, /futuro/],
+  ])('recusa %s sem chamar a API', async (_caso, input, erro) => {
+    const { entry } = await lancar(aFazer, '2026-09-29T09:00:00Z', '2026-09-29T10:00:00Z')
+    const res = await h.raw('operum_update_time_entry', { entry_id: entry.id, ...input })
+    expect(res.isError).toBe(true)
+    expect(res.content[0].text).toMatch(erro)
+    expect(h.op.calls.some(c => c.method === 'PATCH')).toBe(false)
+  })
+
+  it('timer rodando: repassa a recusa da API', async () => {
+    const { entry } = await h.call('operum_start_timer', { task_id: aFazer }) as { entry: { id: string } }
+    const res = await h.raw('operum_update_time_entry', { entry_id: entry.id, description: 'x' })
+    expect(res.content[0].text).toBe('Pare o timer antes de editar este lançamento.')
+  })
+
+  it('lançamento de outra pessoa sem ser admin: sem permissão', async () => {
+    const outro = await h.op.gateway('u-ana-fab').post<{ id: string }>(`/cards/${tarefaFabio}/time-entries/manual`, {
+      startedAt: '2026-09-29T09:00:00Z', endedAt: '2026-09-29T10:00:00Z',
+    })
+    const res = await h.raw('operum_update_time_entry', { tenant_id: 't-fab', entry_id: outro.id, description: 'x' })
+    expect(res.content[0].text).toBe('Sem permissão: Não autorizado')
+    expect(h.op.timeEntries.find(e => e.id === outro.id)?.description).toBeNull()
+  })
+})
+
+describe('operum_delete_time_entry', () => {
+  it('sem confirm: recusa e não apaga', async () => {
+    const { entry } = await lancar(aFazer, '2026-09-29T09:00:00Z', '2026-09-29T10:00:00Z')
+    const res = await h.raw('operum_delete_time_entry', { entry_id: entry.id })
+    expect(res.content[0].text).toMatch(/confirm: true/)
+    expect(h.op.timeEntries.find(e => e.id === entry.id)?.deletedAt).toBeNull()
+  })
+
+  it('com confirm: apaga, some da lista e audita', async () => {
+    const { entry } = await lancar(aFazer, '2026-09-29T09:00:00Z', '2026-09-29T10:00:00Z')
+    await expect(h.call('operum_delete_time_entry', { entry_id: entry.id, confirm: true })).resolves.toMatchObject({ deleted: true, entry_id: entry.id })
+    expect((await h.call('operum_list_time_entries', { task_id: aFazer })).entries).toEqual([])
+    expect(h.op.audit.at(-1)).toMatchObject({ action: 'DELETE', entity: 'time_entry', entityId: entry.id })
+  })
+
+  it('lançamento de outra pessoa sem ser admin: sem permissão', async () => {
+    const outro = await h.op.gateway('u-ana-fab').post<{ id: string }>(`/cards/${tarefaFabio}/time-entries/manual`, {
+      startedAt: '2026-09-29T09:00:00Z', endedAt: '2026-09-29T10:00:00Z',
+    })
+    const res = await h.raw('operum_delete_time_entry', { tenant_id: 't-fab', entry_id: outro.id, confirm: true })
+    expect(res.content[0].text).toBe('Sem permissão: Não autorizado')
+    expect(h.op.timeEntries.find(e => e.id === outro.id)?.deletedAt).toBeNull()
   })
 })
 

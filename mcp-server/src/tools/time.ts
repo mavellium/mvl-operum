@@ -1,7 +1,7 @@
 import { z } from 'zod'
 import type { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js'
 import type { TenantContext, TenantRegistry } from '../tenants.js'
-import { audit, defineTool, idSchema } from '../tool.js'
+import { audit, confirmShape, defineTool, idSchema, requireConfirm } from '../tool.js'
 import { serializeTimeEntry } from '../serializers.js'
 import { UserError } from '../errors.js'
 import { dateInput, toIso } from '../dates.js'
@@ -10,8 +10,8 @@ import { nextSprintPosition, type RawCard } from './tasks.js'
 type RawEntry = Record<string, unknown> & { id: string; cardId: string; card?: { title?: string } | null }
 type RawColumn = Record<string, unknown> & { id: string; title: string; position: number }
 
-/** Iguais ao app (app/actions/time.ts): lançamento manual de até 168 h e descrição de até 500 caracteres. */
-const MAX_MANUAL_SECONDS = 168 * 3600
+/** Iguais ao sprint-service (regras-tempo.ts, ADR-046): lançamento de até 12 h e descrição de até 500 caracteres. */
+const MAX_MANUAL_SECONDS = 12 * 3600
 const MAX_DESCRIPTION = 500
 /** Folga para relógio fora de sincronia ao lançar tempo que termina "agora". */
 const FUTURE_TOLERANCE_MS = 5 * 60 * 1000
@@ -34,6 +34,18 @@ async function runningEntry(ctx: TenantContext): Promise<RawEntry | null> {
 
 function taskLabel(entry: RawEntry): string {
   return entry.card?.title ? `"${entry.card.title}" (${entry.cardId})` : entry.cardId
+}
+
+/** Marca que o sprint-service põe na descrição de um timer encerrado no limite (regras-tempo.ts). */
+const REVIEW_MARK = '[Revisar]'
+
+function withDuration(entry: RawEntry) {
+  const e = serializeTimeEntry(entry)
+  return {
+    ...e,
+    duration_formatted: formatDuration(e.duration_seconds ?? 0),
+    needs_review: (e.description ?? '').startsWith(REVIEW_MARK),
+  }
 }
 
 function stopped(entry: RawEntry) {
@@ -173,7 +185,7 @@ export function registerTimeTools(server: McpServer, registry: TenantRegistry) {
     {
       title: 'Lançar tempo manual',
       description:
-        'Registra na tarefa um período já trabalhado (sem timer), em nome do dono do token. Até 168 h por lançamento; o fim não pode estar no futuro.',
+        'Registra na tarefa um período já trabalhado (sem timer), em nome do dono do token. Até 12 h por lançamento; o fim não pode estar no futuro e o período não pode se sobrepor a outro lançamento do mesmo usuário (a API recusa e diz qual conflita).',
       inputSchema: {
         task_id: idSchema,
         started_at: dateInput,
@@ -188,7 +200,7 @@ export function registerTimeTools(server: McpServer, registry: TenantRegistry) {
       const end = toIso(ended_at, 'ended_at')!
       const seconds = (Date.parse(end) - Date.parse(start)) / 1000
       if (seconds <= 0) throw new UserError('ended_at deve ser depois de started_at.')
-      if (seconds > MAX_MANUAL_SECONDS) throw new UserError('Um lançamento manual tem no máximo 168 h. Divida em mais de um.')
+      if (seconds > MAX_MANUAL_SECONDS) throw new UserError('Um lançamento tem no máximo 12 h. Divida em mais de um.')
       if (Date.parse(end) > Date.now() + FUTURE_TOLERANCE_MS) throw new UserError('ended_at não pode estar no futuro.')
 
       const entry = await ctx.gw.post<RawEntry>(`/cards/${task_id}/time-entries/manual`, {
@@ -198,6 +210,97 @@ export function registerTimeTools(server: McpServer, registry: TenantRegistry) {
       })
       await audit(ctx, 'operum_log_time', 'CREATE', 'time_entry', entry.id, { cardId: task_id, seconds })
       return { entry: { ...serializeTimeEntry(entry), duration_formatted: formatDuration(seconds) } }
+    },
+  )
+
+  defineTool(
+    server,
+    registry,
+    'operum_list_time_entries',
+    {
+      title: 'Listar lançamentos de tempo da tarefa',
+      description:
+        'Lista os lançamentos de tempo da tarefa (mais recentes primeiro), com quem lançou, início, fim, duração e descrição. ' +
+        'needs_review=true marca um timer que o Operum encerrou no limite de 12 h e precisa de conferência. ' +
+        'Use o id do lançamento em operum_update_time_entry ou operum_delete_time_entry.',
+      inputSchema: {
+        task_id: idSchema,
+        user_id: idSchema.optional().describe('Só os lançamentos deste usuário (ids em operum_list_users).'),
+      },
+      entity: 'Tarefa',
+      annotations: { readOnlyHint: true },
+    },
+    async ({ task_id, user_id }, ctx) => {
+      const all = await ctx.gw.get<RawEntry[]>(`/cards/${task_id}/time-entries`)
+      const entries = all.filter(e => !user_id || e.userId === user_id).map(withDuration)
+      const total = entries.filter(e => !e.is_running).reduce((sum, e) => sum + (e.duration_seconds ?? 0), 0)
+      return { task_id, entries, total_seconds: total, total_formatted: formatDuration(total) }
+    },
+  )
+
+  defineTool(
+    server,
+    registry,
+    'operum_update_time_entry',
+    {
+      title: 'Corrigir lançamento de tempo',
+      description:
+        'Corrige início, fim e/ou descrição de um lançamento (id em operum_list_time_entries). Só o dono do lançamento ou um admin altera; timer rodando não se edita (pare antes). ' +
+        'Informar só started_at mantém o fim atual. Valem as mesmas regras do lançamento manual: até 12 h, fim não no futuro e sem sobreposição com outro lançamento do mesmo usuário. ' +
+        'description vazia apaga a descrição.',
+      inputSchema: {
+        entry_id: idSchema,
+        started_at: dateInput.optional(),
+        ended_at: dateInput.optional(),
+        description: z.string().trim().max(MAX_DESCRIPTION).optional().describe('Nova descrição; "" apaga.'),
+      },
+      entity: 'Lançamento de tempo',
+      annotations: { destructiveHint: false, idempotentHint: true },
+    },
+    async ({ entry_id, started_at, ended_at, description }, ctx) => {
+      const start = toIso(started_at, 'started_at')
+      const end = toIso(ended_at, 'ended_at')
+      if (!start && !end && description === undefined) throw new UserError('Informe started_at, ended_at ou description.')
+      if (start && end) {
+        const seconds = (Date.parse(end) - Date.parse(start)) / 1000
+        if (seconds <= 0) throw new UserError('ended_at deve ser depois de started_at.')
+        if (seconds > MAX_MANUAL_SECONDS) throw new UserError('Um lançamento tem no máximo 12 h. Divida em mais de um.')
+      }
+      if (end && Date.parse(end) > Date.now() + FUTURE_TOLERANCE_MS) throw new UserError('ended_at não pode estar no futuro.')
+
+      const entry = await ctx.gw.patch<RawEntry>(`/time-entries/${entry_id}`, {
+        ...(start ? { startedAt: start } : {}),
+        ...(end ? { endedAt: end } : {}),
+        ...(description !== undefined ? { description: description || null } : {}),
+      })
+      await audit(ctx, 'operum_update_time_entry', 'UPDATE', 'time_entry', entry_id, {
+        cardId: entry.cardId,
+        ...(start ? { startedAt: start } : {}),
+        ...(end ? { endedAt: end } : {}),
+        ...(description !== undefined ? { description: true } : {}),
+      })
+      return { entry: withDuration(entry) }
+    },
+  )
+
+  defineTool(
+    server,
+    registry,
+    'operum_delete_time_entry',
+    {
+      title: 'Apagar lançamento de tempo',
+      description:
+        'Apaga um lançamento de tempo (id em operum_list_time_entries); o total da tarefa diminui. Só o dono do lançamento ou um admin apaga. ' +
+        'Exige confirm: true — confirme com o usuário antes.',
+      inputSchema: { entry_id: idSchema, ...confirmShape },
+      entity: 'Lançamento de tempo',
+      annotations: { readOnlyHint: false, destructiveHint: true, idempotentHint: true },
+    },
+    async ({ entry_id, confirm }, ctx) => {
+      requireConfirm(confirm, 'Apagar lançamento de tempo')
+      await ctx.gw.delete(`/time-entries/${entry_id}`)
+      await audit(ctx, 'operum_delete_time_entry', 'DELETE', 'time_entry', entry_id)
+      return { deleted: true, entry_id }
     },
   )
 }

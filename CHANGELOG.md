@@ -8,6 +8,19 @@ As versões até 1.6.0 foram reconstruídas retroativamente a partir do históri
 funcionalidade depois disso é uma versão MINOR.
 
 
+## [1.30.0] — 2026-10-16
+
+### Adicionado
+- **MCP: corrigir lançamentos de tempo.** Três tools novas:
+  - `operum_list_time_entries` lista os lançamentos da tarefa, com total e marca de revisão;
+  - `operum_update_time_entry` corrige início, fim e descrição;
+  - `operum_delete_time_entry` apaga um lançamento e exige `confirm: true`.
+
+  Antes, corrigir um tempo errado exigia a tela ou uma chamada direta à API.
+
+### Alterado
+- **MCP:** `operum_log_time` passa a aceitar no máximo 12 h por lançamento (era 168 h), igual à API desde a 1.29.0.
+
 ## [1.29.0] — 2026-10-16
 
 ### Corrigido
