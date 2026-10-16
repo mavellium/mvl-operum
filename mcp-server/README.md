@@ -75,7 +75,7 @@ Toda tool aceita `tenant_id` (omitido = tenant do token padrão) e responde JSON
 | Tarefas | `operum_list_tasks`, `operum_get_task`, `operum_create_task`, `operum_update_task`, `operum_move_task`, `operum_delete_task`, `operum_set_task_tags`, `operum_set_task_responsibles`, `operum_bulk_update_tasks` |
 | Etiquetas | `operum_list_tags`, `operum_create_tag` |
 | Anexos | `operum_upload_attachment`, `operum_create_upload_link`, `operum_add_link`, `operum_delete_attachment` (a leitura vem em `operum_get_task` e `operum_list_tasks` com `fields="full"`) |
-| Tempo | `operum_start_timer`, `operum_stop_timer`, `operum_log_time` (o total e os timers rodando vêm em `operum_get_task`, no campo `time`) |
+| Tempo | `operum_start_timer`, `operum_stop_timer`, `operum_log_time`, `operum_list_time_entries`, `operum_update_time_entry`, `operum_delete_time_entry` (o total e os timers rodando vêm em `operum_get_task`, no campo `time`) |
 | Comentários | `operum_list_comments`, `operum_create_comment`, `operum_update_comment`, `operum_delete_comment` |
 | Histórico | `operum_get_activity` |
 | Migração | `operum_export_project`, `operum_import_project`, `operum_copy_project` |
@@ -99,7 +99,11 @@ Segurança das escritas:
 - `operum_start_timer` inicia o timer do dono do token. Como na tela do quadro, leva o card para a coluna "Em andamento" só se ele estiver numa coluna anterior. Card do backlog, em "Em teste" ou em "Concluído" não muda de lugar.
 - Só pode haver um timer rodando por usuário. Com `stop_running: true`, o timer da outra tarefa é parado antes; sem isso, o erro diz qual tarefa está com o timer. Chamar de novo na mesma tarefa não cria outro (`already_running: true`).
 - `operum_stop_timer` para o timer rodando e devolve a duração. Sem timer rodando, responde `stopped: false`.
-- `operum_log_time` lança um período já trabalhado. Aceita até 168 h por lançamento (igual ao app) e recusa fim antes do início ou no futuro.
+- `operum_log_time` lança um período já trabalhado. Aceita até 12 h por lançamento e recusa fim antes do início ou no futuro. O sprint-service também recusa sobreposição com outro lançamento do mesmo usuário, inclusive um timer rodando, e a mensagem diz qual lançamento conflita (ADR-046).
+- `operum_list_time_entries` lista os lançamentos da tarefa, os mais recentes primeiro. O filtro `user_id` é opcional. A resposta traz o total, sem o timer rodando, e `needs_review: true` nos timers que o Operum encerrou no limite de 12 h.
+- `operum_update_time_entry` corrige início, fim e descrição de um lançamento por `PATCH /time-entries/:id`, com as mesmas regras do lançamento manual. Se só o início mudar, o fim atual é mantido. Timer rodando não pode ser editado.
+- `operum_delete_time_entry` apaga um lançamento e exige `confirm: true`.
+- Editar e apagar exigem ser o dono do lançamento ou admin. O gateway confere isso e devolve "Sem permissão" quando falta.
 
 ### Migração entre tenants
 
