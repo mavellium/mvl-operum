@@ -767,13 +767,13 @@ model AtaAnexo {
 
 // ── WBS / EAP ─────────────────────────────────────────────
 
+/// Na raiz: formato da EAP inteira. Numa fase (1º nível): ESQUERDA/DIREITA = formato próprio
+/// da fase; outro valor = segue a EAP. Abaixo das fases não é usado (ADR-047, lib/wbsLayout.ts).
 enum WbsLayoutOrientation {
-  LADO_A_LADO // padrão: filhos lado a lado abaixo do pai (organograma / WBS-chart)
-  DIREITA // pai no topo, filhos empilhados à direita da linha que desce do centro dele
+  LADO_A_LADO // Padrão: lado a lado; itens com filhos só folhas empilham com a linha à esquerda
+  DIREITA // fases lado a lado; abaixo delas, filhos empilhados à direita da linha do centro
   ESQUERDA // espelho de DIREITA: filhos empilhados à esquerda
-  HORIZONTAL // pai à esquerda, centralizado na coluna de filhos à direita
-  HORIZONTAL_TOPO // pai à esquerda, alinhado ao primeiro filho
-  HORIZONTAL_BASE // pai à esquerda, alinhado ao último filho
+  HORIZONTAL // raiz em pé à esquerda; cada nível numa coluna à direita do anterior
 }
 
 model WbsNode {

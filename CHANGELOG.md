@@ -8,6 +8,23 @@ As versões até 1.6.0 foram reconstruídas retroativamente a partir do históri
 funcionalidade depois disso é uma versão MINOR.
 
 
+## [1.31.0] — 2026-10-16
+
+### Alterado
+- **EAP > Organizar:** a opção escolhida passa a valer para a EAP inteira, seguindo os modelos do documento de 16/10:
+  - **Padrão:** itens lado a lado; um item que só tem folhas as empilha na vertical (modelo do Churrasco).
+  - **Esquerda** e **Direita:** fases lado a lado, com os itens de cada fase empilhados à esquerda ou à direita, em qualquer nível.
+  - **Horizontal:** raiz em pé à esquerda e cada nível numa coluna (modelo "Pintar uma sala").
+
+  Antes, a opção valia só para os filhos do item selecionado.
+- **EAP:** EAPs que estavam com a raiz em Direita ou Esquerda passam a mostrar as fases lado a lado.
+
+### Adicionado
+- **EAP > Fase:** com uma fase selecionada, é possível deixar só ela em Esquerda ou Direita, ou fazê-la voltar a seguir a EAP. O painel de propriedades tem o mesmo campo.
+
+### Removido
+- **EAP > Organizar:** "Horizontal (topo)" e "Horizontal (base)". As EAPs e os arquivos `.wbs` que usavam essas opções passam a usar Horizontal.
+
 ## [1.30.0] — 2026-10-16
 
 ### Adicionado

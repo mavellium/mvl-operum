@@ -159,7 +159,11 @@ const WbsNodeCard = React.memo(function WbsNodeCard({
             />
           </div>
         ) : (
-          <span style={{ whiteSpace: 'nowrap', fontWeight: 500, lineHeight: 1.3 }}>
+          <span style={{
+            whiteSpace: 'nowrap', fontWeight: 500, lineHeight: 1.3,
+            // Raiz em pé do Horizontal: lida de baixo para cima, como no modelo "Pintar uma sala".
+            ...(geom.vertical ? { writingMode: 'vertical-rl' as const, transform: 'rotate(180deg)' } : {}),
+          }}>
             {node.code} {node.title}
           </span>
         )}

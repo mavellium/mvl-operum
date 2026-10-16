@@ -72,8 +72,11 @@ export function generateWbsSvg(
 
     // Title — nudge up when chips present
     const titleY = chips.length > 0 ? g.y + g.height * 0.42 : g.y + g.height / 2
+    const titleX = g.x + g.width / 2
+    // Raiz em pé do Horizontal: texto girado, lido de baixo para cima.
+    const rotate = g.vertical ? ` transform="rotate(-90 ${titleX} ${g.y + g.height / 2})"` : ''
     lines.push(
-      `    <text x="${g.x + g.width / 2}" y="${titleY}"` +
+      `    <text x="${titleX}" y="${g.vertical ? g.y + g.height / 2 : titleY}"${rotate}` +
       ` font-size="${s.fontSize}" fill="${esc(s.textColor)}" font-family="system-ui,Arial,sans-serif"` +
       ` font-weight="500" text-anchor="middle" dominant-baseline="middle">${esc(trunc(node.title, 26))}</text>`
     )

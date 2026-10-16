@@ -1079,7 +1079,20 @@ Ver ADR-032.
 ### Visualizações da EAP (fase 6)
 `/projetos/:id/wbs` mantém uma árvore e o autosave ao alternar `view=chart|details|costs|gantt`. Chart Details exibe responsável, duração agregada, datas e custo; Hours and Cost agrega folhas inclusive recolhidas, usando as funções da planilha e o valor por minuto de cada elaborador. A página consulta salários/jornadas e envia apenas as taxas derivadas quando o usuário tem `planilha:ver`; os demais usuários não recebem esses valores. Sem taxa válida, o custo e seus ancestrais são indicados como incompletos.
 
-O layout calcula a caixa de cada subárvore e a posição relativa da raiz antes de posicionar os nós; cartões detalhados têm altura uniforme maior. O menu **Organizar** (1.25.0, ADR-043) é um select de ícones (`components/wbs/ToolbarSelect.tsx`, ícones do usuário em `components/wbs/OrganizarIcons.tsx`) e define como ficam os filhos do item selecionado. São seis layouts (`WbsLayoutOrientation`): `LADO_A_LADO` (Padrão, organograma), `DIREITA` e `ESQUERDA` (pai no topo e linha descendo do centro dele; filhos empilhados a 5/12 da largura do pai depois da linha) e `HORIZONTAL`, `HORIZONTAL_TOPO` e `HORIZONTAL_BASE` (pai à esquerda e coluna de filhos à direita, com o pai no meio, no topo ou na base). Cada subárvore guarda `rootX` e `rootY`, a posição do card dentro da caixa dela, necessária para os horizontais. Cada nó mantém a sua orientação, para árvores mistas. Os valores antigos `ABAIXO` e `ABAIXO_L` foram convertidos para `DIREITA` pela migration `20261015010000_wbs_layouts_organizar`, que recria o enum; arquivos `.wbs` antigos são normalizados na validação (`normalizarLayout`) e o motor desenha qualquer valor desconhecido como Direita. A Visualização usa o mesmo select, com os modos em português: EAP (gráfico), EAP com detalhes, Horas e custos e Gantt.
+O layout calcula a caixa de cada subárvore e a posição relativa da raiz antes de posicionar os nós; cartões detalhados têm altura uniforme maior. O menu **Organizar** é um select de ícones (`components/wbs/ToolbarSelect.tsx`; ícones do usuário em `components/wbs/OrganizarIcons.tsx`). Desde a 1.31.0 (ADR-047), ele define o formato da EAP inteira, guardado no `layout` da raiz. São quatro formatos (`WbsLayoutOrientation`):
+- `LADO_A_LADO` (Padrão): filhos lado a lado. Um item cujos filhos visíveis são todos folhas empilha as folhas, com a linha a `PADRAO_INSET` da borda esquerda dele.
+- `ESQUERDA` e `DIREITA`: fases lado a lado. Abaixo delas, os filhos ficam empilhados à esquerda ou à direita da linha que desce do centro do pai, a 5/12 da largura dele.
+- `HORIZONTAL`: a raiz fica em pé à esquerda (`vertical` na geometria, texto girado), só na visão gráfica, e cada nível ocupa uma coluna à direita do anterior, com o pai no meio dos filhos.
+
+O select **Fase** e o painel de propriedades dão a uma fase (1º nível) o formato próprio `ESQUERDA` ou `DIREITA`, que vale para tudo abaixo dela. "Igual à EAP" grava `LADO_A_LADO`, e no Horizontal toda fase segue a EAP. O layout dos níveis abaixo das fases não é usado.
+
+`planejar` decide o arranjo dos filhos de cada nó, e cada subárvore guarda `rootX` e `rootY`, a posição do card dentro da caixa dela.
+
+Valores antigos têm conversão própria:
+- `ABAIXO` e `ABAIXO_L` viraram `DIREITA` (migration `20261015010000_wbs_layouts_organizar`);
+- `HORIZONTAL_TOPO` e `HORIZONTAL_BASE` viraram `HORIZONTAL` (migration `20261016010000_wbs_remover_horizontal_topo_base`).
+
+Os dois recriam o enum. Arquivos `.wbs` antigos são normalizados na validação (`normalizarLayout`), e um valor desconhecido na raiz é desenhado como Padrão. A Visualização usa o mesmo select, com os modos em português: EAP (gráfico), EAP com detalhes, Horas e custos e Gantt.
 
 Gantt é uma projeção somente leitura. `dataPrevista` define o último dia e `durationDays` estima os dias corridos anteriores. Não cria datas nem persiste o estado de expansão/zoom. Nós sem prazo permanecem visíveis sem barra. O estado da árvore continua no provider ao alternar de volta; as exportações existentes permanecem no formato clássico da EAP.
 

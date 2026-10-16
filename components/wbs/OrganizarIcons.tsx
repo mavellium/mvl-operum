@@ -2,7 +2,7 @@ import type { WbsLayoutOrientation } from '@/types/wbs'
 
 /**
  * Ícones do menu Organizar desenhados pelo usuário (15/10), sem alterar a geometria.
- * O layout calculado em lib/wbsLayout.ts segue o desenho de cada um.
+ * O desenho da EAP em cada formato está em lib/wbsLayout.ts (ADR-047).
  */
 const BASE = {
   viewBox: '0 0 32 32', fill: 'none', stroke: 'currentColor', strokeWidth: 1.2,
@@ -43,26 +43,6 @@ export function IconeOrganizar({ layout, size = 32 }: { layout: WbsLayoutOrienta
           <rect x="18" y="21" width="12" height="5" rx="1.2" fill={CAIXA} />
         </Icone>
       )
-    case 'HORIZONTAL_TOPO':
-      return (
-        <Icone size={size}>
-          <path d="M12 6.5h6M15 6.5v19M15 16h3M15 25.5h3" />
-          <rect x="2" y="4" width="10" height="5" rx="1.2" fill={CAIXA} />
-          <rect x="18" y="4" width="12" height="5" rx="1.2" fill={CAIXA} />
-          <rect x="18" y="13.5" width="12" height="5" rx="1.2" fill={CAIXA} />
-          <rect x="18" y="23" width="12" height="5" rx="1.2" fill={CAIXA} />
-        </Icone>
-      )
-    case 'HORIZONTAL_BASE':
-      return (
-        <Icone size={size}>
-          <path d="M12 25.5h6M15 6.5v19M15 6.5h3M15 16h3" />
-          <rect x="2" y="23" width="10" height="5" rx="1.2" fill={CAIXA} />
-          <rect x="18" y="4" width="12" height="5" rx="1.2" fill={CAIXA} />
-          <rect x="18" y="13.5" width="12" height="5" rx="1.2" fill={CAIXA} />
-          <rect x="18" y="23" width="12" height="5" rx="1.2" fill={CAIXA} />
-        </Icone>
-      )
     default:
       return (
         <Icone size={size}>
@@ -75,12 +55,17 @@ export function IconeOrganizar({ layout, size = 32 }: { layout: WbsLayoutOrienta
   }
 }
 
-/** Ordem do menu: a do vídeo de referência (organograma primeiro), depois os horizontais. */
+/** Formato da EAP inteira, na ordem do documento de 16/10 (Padrão, Esquerda, Direita, Horizontal). */
 export const OPCOES_ORGANIZAR: { value: WbsLayoutOrientation; label: string }[] = [
   { value: 'LADO_A_LADO', label: 'Padrão' },
-  { value: 'DIREITA', label: 'Direita' },
   { value: 'ESQUERDA', label: 'Esquerda' },
+  { value: 'DIREITA', label: 'Direita' },
   { value: 'HORIZONTAL', label: 'Horizontal' },
-  { value: 'HORIZONTAL_TOPO', label: 'Horizontal (topo)' },
-  { value: 'HORIZONTAL_BASE', label: 'Horizontal (base)' },
+]
+
+/** Formato de uma fase: "Igual à EAP" é guardado como LADO_A_LADO (lib/wbsLayout.ts → formatoDaFase). */
+export const OPCOES_FASE: { value: WbsLayoutOrientation; label: string }[] = [
+  { value: 'LADO_A_LADO', label: 'Igual à EAP' },
+  { value: 'ESQUERDA', label: 'Esquerda' },
+  { value: 'DIREITA', label: 'Direita' },
 ]
