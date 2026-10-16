@@ -203,6 +203,8 @@ export default function WbsPropertiesPanel({ selectedNodeIds, nodes, canEdit, di
   }
 
   const updateLayout = (layout: WbsLayoutOrientation) => {
+    // Na raiz é o formato da EAP inteira: as fases voltam a seguir a EAP, como no Organizar.
+    if (ehRaiz) { dispatch({ type: 'SET_EAP_FORMAT', payload: { layout } }); return }
     for (const id of selectedNodeIds) {
       dispatch({ type: 'SET_LAYOUT', payload: { nodeId: id, layout } })
     }

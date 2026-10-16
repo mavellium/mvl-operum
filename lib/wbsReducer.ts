@@ -26,6 +26,8 @@ export type WbsAction =
   | { type: 'MOVE_NODE'; payload: { nodeId: string; targetId: string; position: DropPosition } }
   | { type: 'MOVE_NODES'; payload: { nodeIds: string[]; targetId: string; position: DropPosition } }
   | { type: 'SET_LAYOUT'; payload: { nodeId: string; layout: WbsLayoutOrientation } }
+  /** Organizar sem fase selecionada: formato na raiz e todas as fases de volta a "Igual à EAP" (ADR-047). */
+  | { type: 'SET_EAP_FORMAT'; payload: { layout: WbsLayoutOrientation } }
   | { type: 'UPDATE_STYLE'; payload: { style: Partial<WbsNodeStyle> } }
   | { type: 'UPDATE_PROPERTIES'; payload: { nodeId: string; properties: Partial<WbsNodeProperties> } }
   | { type: 'SET_COLLAPSED'; payload: { nodeId: string; collapsed: boolean } }
@@ -423,6 +425,17 @@ export function wbsReducer(state: WbsTreeState, action: WbsAction): WbsTreeState
       const node = state.nodes[nodeId]
       if (!node) return state
       return { ...state, nodes: { ...state.nodes, [nodeId]: { ...node, layout } }, sync: { ...state.sync, status: 'DIRTY' } }
+    }
+
+    case 'SET_EAP_FORMAT': {
+      const { layout } = action.payload
+      if (!state.rootId || !state.nodes[state.rootId]) return state
+      const nodes: typeof state.nodes = {}
+      for (const [id, n] of Object.entries(state.nodes)) {
+        const alvo = id === state.rootId ? layout : 'LADO_A_LADO'
+        nodes[id] = n.layout === alvo ? n : { ...n, layout: alvo }
+      }
+      return { ...state, nodes, history: pushHistory(state), sync: { ...state.sync, status: 'DIRTY' } }
     }
 
     case 'UPDATE_STYLE': {

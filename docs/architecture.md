@@ -1084,13 +1084,14 @@ O layout calcula a caixa de cada subárvore e a posição relativa da raiz antes
 - `ESQUERDA` e `DIREITA`: fases lado a lado. Abaixo delas, os filhos ficam empilhados à esquerda ou à direita da linha que desce do centro do pai, a 5/12 da largura dele.
 - `HORIZONTAL`: a raiz fica em pé à esquerda (`vertical` na geometria, texto girado), só na visão gráfica, e cada nível ocupa uma coluna à direita do anterior, com o pai no meio dos filhos.
 
-O select **Fase** e o painel de propriedades dão a uma fase (1º nível) o formato próprio `ESQUERDA` ou `DIREITA`, que vale para tudo abaixo dela. "Igual à EAP" grava `LADO_A_LADO`, e no Horizontal toda fase segue a EAP. O layout dos níveis abaixo das fases não é usado.
+Sem fase selecionada, com nada, com a raiz ou com itens mais fundos selecionados, o Organizar muda a EAP inteira: a ação `SET_EAP_FORMAT` grava o formato na raiz e põe `LADO_A_LADO` em todos os outros nós. Com uma ou mais fases selecionadas, ele vira **Organizar fase** e dá a elas o formato próprio `ESQUERDA` ou `DIREITA`, que vale para tudo abaixo delas. O painel de propriedades faz o mesmo. "Igual à EAP" grava `LADO_A_LADO`, e no Horizontal toda fase segue a EAP. O layout dos níveis abaixo das fases não é usado.
 
 `planejar` decide o arranjo dos filhos de cada nó, e cada subárvore guarda `rootX` e `rootY`, a posição do card dentro da caixa dela.
 
 Valores antigos têm conversão própria:
 - `ABAIXO` e `ABAIXO_L` viraram `DIREITA` (migration `20261015010000_wbs_layouts_organizar`);
-- `HORIZONTAL_TOPO` e `HORIZONTAL_BASE` viraram `HORIZONTAL` (migration `20261016010000_wbs_remover_horizontal_topo_base`).
+- `HORIZONTAL_TOPO` e `HORIZONTAL_BASE` viraram `HORIZONTAL` (migration `20261016010000_wbs_remover_horizontal_topo_base`);
+- o `DIREITA` herdado do padrão antigo em todos os nós abaixo da raiz voltou a `LADO_A_LADO` (migration `20261016020000_wbs_fases_seguem_eap`, 1.31.1).
 
 Os dois recriam o enum. Arquivos `.wbs` antigos são normalizados na validação (`normalizarLayout`), e um valor desconhecido na raiz é desenhado como Padrão. A Visualização usa o mesmo select, com os modos em português: EAP (gráfico), EAP com detalhes, Horas e custos e Gantt.
 

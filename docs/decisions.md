@@ -452,7 +452,13 @@ Ao substituir uma decisão, manter o texto histórico, alterar seu status e liga
   - Esquerda e Direita: fases lado a lado; abaixo delas, filhos empilhados à esquerda ou à direita da linha que desce do centro do pai.
   - Horizontal: a raiz fica em pé à esquerda, com texto na vertical, só na visão gráfica, e cada nível ocupa uma coluna.
 
-  A barra ganha o select "Fase". O painel de propriedades mostra "Formato da EAP" ou "Formato da fase". A migration `20261016010000_wbs_remover_horizontal_topo_base` recria o enum e converte topo e base em `HORIZONTAL`.
+  O painel de propriedades mostra "Formato da EAP" ou "Formato da fase". A migration `20261016010000_wbs_remover_horizontal_topo_base` recria o enum e converte topo e base em `HORIZONTAL`.
+
+  **Correção em 1.31.1:** a 1.31.0 tinha um select "Fase" separado e mudava só a raiz. Como o padrão antigo `ABAIXO` virou `DIREITA` em todos os nós, toda fase antiga tinha formato próprio Direita, e só o Horizontal mudava o desenho. Agora o Organizar:
+  - sem fase selecionada, muda a EAP inteira (`SET_EAP_FORMAT`): a raiz recebe o formato e todos os outros nós voltam a `LADO_A_LADO`;
+  - com fases selecionadas, vira "Organizar fase" e muda só elas.
+
+  A migration `20261016020000_wbs_fases_seguem_eap` põe `LADO_A_LADO` em todos os nós abaixo da raiz.
 - **Justificativa:** o documento descreve formatos de árvore inteira, não de um nó. Guardar o formato na raiz evita gravar o layout em todos os nós e faz itens novos seguirem o formato sem nenhuma ação. Reaproveitar o valor da fase como formato próprio atende o pedido sem nova coluna no banco.
 - **Alternativas consideradas:**
   - aplicar o layout escolhido a toda a subárvore: itens criados depois ficariam com o padrão e quebrariam o desenho;
@@ -460,12 +466,12 @@ Ao substituir uma decisão, manter o texto histórico, alterar seu status e liga
   - manter o layout por nó em qualquer nível: o documento só pede variação por fase.
 - **Consequências:**
   - EAPs cuja raiz estava em Direita ou Esquerda passam a mostrar as fases lado a lado.
-  - Fases que já estavam em Direita ou Esquerda passam a ter formato próprio.
+  - Fases que estavam em Direita ou Esquerda voltam a seguir a EAP (migration da 1.31.1), inclusive as ajustadas entre a 1.31.0 e a 1.31.1.
   - Layouts gravados em níveis mais fundos deixam de ter efeito, mas continuam no banco.
   - `.wbs` antigos com topo ou base viram Horizontal na importação.
   - Na visão com detalhes, a raiz do Horizontal fica deitada, porque o texto dos cartões não caberia em pé.
 - **Condições de revisão:** pedido de formato próprio em níveis abaixo das fases, de outros formatos por fase (ex.: Horizontal) ou de cores por nível, como nos modelos.
-- **Referências:** `lib/wbsLayout.ts`, `components/wbs/WbsMenubar.tsx`, `components/wbs/WbsPropertiesPanel.tsx`, `components/wbs/OrganizarIcons.tsx`, `components/wbs/WbsNode.tsx`, `lib/wbsExportSvg.ts`, `lib/validation/wbsSchemas.ts`, migration `20261016010000_wbs_remover_horizontal_topo_base`.
+- **Referências:** `lib/wbsLayout.ts`, `components/wbs/WbsMenubar.tsx`, `components/wbs/WbsPropertiesPanel.tsx`, `components/wbs/OrganizarIcons.tsx`, `components/wbs/WbsNode.tsx`, `lib/wbsExportSvg.ts`, `lib/validation/wbsSchemas.ts`, migrations `20261016010000_wbs_remover_horizontal_topo_base` e `20261016020000_wbs_fases_seguem_eap`, `lib/wbsReducer.ts` (`SET_EAP_FORMAT`).
 
 ## ADR-046 — Lançamentos de tempo editáveis, validados e com limite de 12 h no timer
 

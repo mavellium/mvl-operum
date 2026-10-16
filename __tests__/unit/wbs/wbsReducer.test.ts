@@ -723,3 +723,32 @@ describe('cópias e vínculo com card/sprint', () => {
     expect(colado.properties).toEqual({ cardId: 'c1', tempoMinutos: 30 })
   })
 })
+
+describe('SET_EAP_FORMAT (Organizar sem fase selecionada)', () => {
+  // EAP antiga: o padrão era ABAIXO, convertido em DIREITA em todos os nós.
+  const antiga = () => {
+    const s = makeState({
+      r: node('r', null, 0, ['f1', 'f2']), f1: node('f1', 'r', 0, ['a']), f2: node('f2', 'r', 1, []), a: node('a', 'f1', 0, []),
+    })
+    for (const n of Object.values(s.nodes)) n.layout = 'DIREITA'
+    return s
+  }
+
+  it('põe o formato na raiz e todas as fases e itens voltam a "Igual à EAP"', () => {
+    const s = act(antiga(), { type: 'SET_EAP_FORMAT', payload: { layout: 'ESQUERDA' } })
+    expect(Object.fromEntries(Object.values(s.nodes).map(n => [n.id, n.layout]))).toEqual({
+      r: 'ESQUERDA', f1: 'LADO_A_LADO', f2: 'LADO_A_LADO', a: 'LADO_A_LADO',
+    })
+    expect(s.sync.status).toBe('DIRTY')
+  })
+
+  it('desfazer volta os formatos anteriores', () => {
+    const s = act(act(antiga(), { type: 'SET_EAP_FORMAT', payload: { layout: 'LADO_A_LADO' } }), { type: 'UNDO' })
+    expect(Object.values(s.nodes).every(n => n.layout === 'DIREITA')).toBe(true)
+  })
+
+  it('sem raiz não faz nada', () => {
+    const s = makeState({}, null)
+    expect(act(s, { type: 'SET_EAP_FORMAT', payload: { layout: 'ESQUERDA' } })).toBe(s)
+  })
+})
