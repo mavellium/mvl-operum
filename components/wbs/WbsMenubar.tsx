@@ -1,6 +1,6 @@
 'use client'
 
-import { type Dispatch, Fragment, useEffect, useRef, useState } from 'react'
+import { type Dispatch, useEffect, useRef, useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { useToast } from '@/components/ui/Toast'
 import {
@@ -199,8 +199,9 @@ function ManualContent() {
               <em> Esquerda</em> ou <em>Direita</em>, as fases ficam lado a lado e o restante fica
               empilhado à esquerda ou à direita de cada fase, o que economiza espaço em árvores
               profundas. Em <em>Horizontal</em>, a EAP é lida da esquerda para a direita, com a raiz
-              em pé. Com uma fase selecionada, o menu <em>Fase</em> deixa só aquela fase em Esquerda
-              ou Direita.
+              em pé. Sem nada selecionado, a escolha vale para a EAP inteira e todas as fases passam a
+              segui-la. Com uma ou mais fases selecionadas, o menu vira <em>Organizar fase</em> e deixa
+              só essas fases em Esquerda ou Direita.
             </p>
           </>
         )}
@@ -297,10 +298,14 @@ export default function WbsMenubar({
 
   const firstSelected = selectedNodeIds[0]
   const selectedNode = firstSelected ? nodes[firstSelected] : null
-  // Organizar vale para a EAP inteira (formato na raiz); Fase, para a fase selecionada (ADR-047).
+  // Organizar (ADR-047): só com fases selecionadas muda o formato delas; em qualquer outro caso
+  // (nada selecionado, raiz ou itens mais fundos) muda a EAP inteira e todas as fases voltam a segui-la.
   const root = rootId ? nodes[rootId] : null
   const formatoEap = formatoDaEap(root?.layout)
-  const faseSelecionada = selectedNode && rootId && selectedNode.parentId === rootId ? selectedNode : null
+  const fasesSelecionadas = selectedNodeIds.map(id => nodes[id]).filter((n): n is WbsNodeClient => !!n && !!rootId && n.parentId === rootId)
+  const modoFase = formatoEap !== 'HORIZONTAL' && selectedNodeIds.length > 0 && fasesSelecionadas.length === selectedNodeIds.length
+  const formatosFases = new Set(fasesSelecionadas.map(f => formatoDaFase(f.layout, formatoEap) ?? 'LADO_A_LADO'))
+  const formatoFases = formatosFases.size === 1 ? [...formatosFases][0] : null
   const canDelete = selectedNodeIds.some(id => nodes[id]?.parentId)
 
   // File import
@@ -436,23 +441,19 @@ export default function WbsMenubar({
         )}
 
         {cards.map(card => card.title === 'Organizar' ? (
-          <Fragment key={card.title}>
-            <ToolbarSelect
-              title="Organizar"
-              value={formatoEap}
-              disabled={!root || !canEdit}
-              onChange={layout => { if (rootId) dispatch({ type: 'SET_LAYOUT', payload: { nodeId: rootId, layout } }) }}
-              options={OPCOES_ORGANIZAR.map(o => ({ ...o, icon: <IconeOrganizar layout={o.value} size={28} /> }))}
-            />
-            <ToolbarSelect
-              title="Fase"
-              value={faseSelecionada && formatoEap !== 'HORIZONTAL' ? (formatoDaFase(faseSelecionada.layout, formatoEap) ?? 'LADO_A_LADO') : null}
-              placeholder={formatoEap === 'HORIZONTAL' ? 'Não se aplica ao Horizontal' : 'Selecione uma fase'}
-              disabled={!faseSelecionada || formatoEap === 'HORIZONTAL' || !canEdit}
-              onChange={layout => { if (faseSelecionada) dispatch({ type: 'SET_LAYOUT', payload: { nodeId: faseSelecionada.id, layout } }) }}
-              options={OPCOES_FASE.map(o => ({ ...o, icon: <IconeOrganizar layout={o.value === 'LADO_A_LADO' ? formatoEap : o.value} size={28} /> }))}
-            />
-          </Fragment>
+          <ToolbarSelect
+            key={card.title}
+            title={modoFase ? 'Organizar fase' : 'Organizar'}
+            value={modoFase ? formatoFases : formatoEap}
+            disabled={!root || !canEdit}
+            onChange={layout => {
+              if (modoFase) for (const f of fasesSelecionadas) dispatch({ type: 'SET_LAYOUT', payload: { nodeId: f.id, layout } })
+              else dispatch({ type: 'SET_EAP_FORMAT', payload: { layout } })
+            }}
+            options={(modoFase ? OPCOES_FASE : OPCOES_ORGANIZAR).map(o => ({
+              ...o, icon: <IconeOrganizar layout={modoFase && o.value === 'LADO_A_LADO' ? formatoEap : o.value} size={28} />,
+            }))}
+          />
         ) : (
           <ToolbarCard key={card.title} title={card.title} items={card.items} />
         ))}

@@ -299,3 +299,17 @@ it.each(['LADO_A_LADO', 'ESQUERDA', 'DIREITA', 'HORIZONTAL'] as WbsLayoutOrienta
     }
   },
 )
+
+it('regressão 16/10: EAP antiga com todos os nós em DIREITA muda de formato depois do Organizar universal', async () => {
+  const { wbsReducer } = await import('@/lib/wbsReducer')
+  const nodes = arvore({ r: ['f1', 'f2'], f1: ['a', 'b'], f2: ['c'] })
+  for (const n of Object.values(nodes)) n.layout = 'DIREITA'
+  const base = {
+    nodes, rootId: 'r', selectedNodeIds: [], editingNodeId: null, focusNodeId: null,
+    clipboard: { nodes: [], copiedStyle: null, actionType: null }, history: { past: [], future: [] },
+    viewport: { zoom: 1, panX: 0, panY: 0 }, sync: { status: 'IDLE' as const, lastSavedAt: null, serverVersion: 0 },
+  }
+  const s = wbsReducer(base, { type: 'SET_EAP_FORMAT', payload: { layout: 'ESQUERDA' } })
+  const { geometry } = computeLayout(s.nodes, 'r')
+  expect(geometry.a.x + NODE_W).toBe(geometry.f1.x + NODE_W / 2 - indentDe(NODE_W))
+})

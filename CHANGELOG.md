@@ -8,6 +8,12 @@ As versões até 1.6.0 foram reconstruídas retroativamente a partir do históri
 funcionalidade depois disso é uma versão MINOR.
 
 
+## [1.31.1] — 2026-10-16
+
+### Corrigido
+- **EAP > Organizar:** em EAPs antigas, só o Horizontal mudava o desenho. O layout padrão antigo, convertido em "Direita" na 1.25.0, estava gravado em todas as fases e passou a valer como formato próprio delas na 1.31.0. Uma migration faz todos os itens abaixo da raiz voltarem a seguir o formato da EAP.
+- **EAP > Organizar:** sem nada selecionado (ou com a raiz ou um item que não é fase selecionados), a escolha vale para a EAP inteira e todas as fases voltam a segui-la. Com fases selecionadas, o menu vira "Organizar fase" e muda só elas. O select "Fase" separado foi removido. A mudança pode ser desfeita com Ctrl+Z.
+
 ## [1.31.0] — 2026-10-16
 
 ### Alterado

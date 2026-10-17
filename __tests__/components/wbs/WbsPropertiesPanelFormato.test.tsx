@@ -21,12 +21,12 @@ function abrir(selectedNodeIds: string[]) {
 }
 
 describe('formato no painel de propriedades da EAP', () => {
-  it('raiz: formato da EAP inteira', async () => {
+  it('raiz: formato da EAP inteira, com as fases voltando a seguir a EAP', async () => {
     const dispatch = abrir(['r'])
     const campo = screen.getByText('Formato da EAP').parentElement!.querySelector('select')!
     expect(campo).toHaveValue('LADO_A_LADO')
     await userEvent.selectOptions(campo, 'HORIZONTAL')
-    expect(dispatch).toHaveBeenCalledWith({ type: 'SET_LAYOUT', payload: { nodeId: 'r', layout: 'HORIZONTAL' } })
+    expect(dispatch).toHaveBeenCalledWith({ type: 'SET_EAP_FORMAT', payload: { layout: 'HORIZONTAL' } })
   })
 
   it('fases: formato da fase, com "—" quando diferem; aplica a todas as selecionadas', async () => {

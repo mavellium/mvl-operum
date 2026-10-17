@@ -50,11 +50,11 @@ describe('menu Organizar da EAP', () => {
     expect(within(lista).getAllByRole('option').every(o => o.querySelector('svg'))).toBe(true)
   })
 
-  it('o formato vale para a EAP inteira, qualquer que seja o item selecionado', async () => {
-    const { dispatch } = renderBar({ selectedNodeIds: ['a'] })
+  it.each([[[]], [['r']], [['a']]])('sem fase selecionada (%j): muda a EAP inteira', async selecionados => {
+    const { dispatch } = renderBar({ selectedNodeIds: selecionados })
     await userEvent.click(screen.getByRole('button', { name: 'Organizar: Direita' }))
     await userEvent.click(screen.getByRole('option', { name: /Horizontal/ }))
-    expect(dispatch).toHaveBeenCalledWith({ type: 'SET_LAYOUT', payload: { nodeId: 'r', layout: 'HORIZONTAL' } })
+    expect(dispatch).toHaveBeenCalledWith({ type: 'SET_EAP_FORMAT', payload: { layout: 'HORIZONTAL' } })
     expect(screen.queryByRole('listbox')).toBeNull()
   })
 
@@ -76,7 +76,7 @@ describe('menu Organizar da EAP', () => {
     const lista = screen.getByRole('listbox')
     fireEvent.keyDown(lista, { key: 'ArrowDown' })
     fireEvent.keyDown(lista, { key: 'Enter' })
-    expect(dispatch).toHaveBeenCalledWith({ type: 'SET_LAYOUT', payload: { nodeId: 'r', layout: 'HORIZONTAL' } })
+    expect(dispatch).toHaveBeenCalledWith({ type: 'SET_EAP_FORMAT', payload: { layout: 'HORIZONTAL' } })
 
     fireEvent.keyDown(botao, { key: 'ArrowDown' })
     fireEvent.keyDown(screen.getByRole('listbox'), { key: 'Escape' })
@@ -85,24 +85,25 @@ describe('menu Organizar da EAP', () => {
   })
 })
 
-describe('menu Fase da EAP', () => {
-  it('só com uma fase selecionada; fora disso pede para selecionar uma fase', () => {
-    renderBar({ selectedNodeIds: ['a'] })
-    expect(screen.getByRole('button', { name: 'Fase: Selecione uma fase' })).toBeDisabled()
-  })
-
-  it('fase selecionada: "Igual à EAP" por padrão; Esquerda vale só para ela', async () => {
+describe('Organizar com fase selecionada', () => {
+  it('vira "Organizar fase": "Igual à EAP" por padrão; Esquerda vale só para a fase', async () => {
     const { dispatch } = renderBar({ selectedNodeIds: ['f1'] })
-    await userEvent.click(screen.getByRole('button', { name: 'Fase: Igual à EAP' }))
-    const lista = screen.getByRole('listbox', { name: 'Fase' })
+    await userEvent.click(screen.getByRole('button', { name: 'Organizar fase: Igual à EAP' }))
+    const lista = screen.getByRole('listbox', { name: 'Organizar fase' })
     expect(within(lista).getAllByRole('option').map(o => o.textContent?.replace('✓', '').trim())).toEqual(['Igual à EAP', 'Esquerda', 'Direita'])
     await userEvent.click(within(lista).getByRole('option', { name: /Esquerda/ }))
     expect(dispatch).toHaveBeenCalledWith({ type: 'SET_LAYOUT', payload: { nodeId: 'f1', layout: 'ESQUERDA' } })
+    expect(dispatch).not.toHaveBeenCalledWith(expect.objectContaining({ type: 'SET_EAP_FORMAT' }))
   })
 
-  it('no Horizontal não se aplica', () => {
+  it('fase junto com outro item: muda a EAP inteira', () => {
+    renderBar({ selectedNodeIds: ['f1', 'a'] })
+    expect(screen.getByRole('button', { name: 'Organizar: Direita' })).toBeEnabled()
+  })
+
+  it('no Horizontal, fase selecionada também muda a EAP inteira', () => {
     renderBar({ nodes: arvore('HORIZONTAL'), selectedNodeIds: ['f1'] })
-    expect(screen.getByRole('button', { name: 'Fase: Não se aplica ao Horizontal' })).toBeDisabled()
+    expect(screen.getByRole('button', { name: 'Organizar: Horizontal' })).toBeEnabled()
   })
 })
 
